@@ -1,9 +1,10 @@
 # bio
 
 Simulación de vida acuática microscópica en C++20 (ver `AGENTS.md` y `docs/`).
-Estado actual: **fase 2 — célula soft-body**: células gelatinosas con membrana, núcleo, vacuola
-contráctil y gránulos, que chocan, se aplastan y recuperan su forma, sobre el medio de la
-fase 1 (agua a bajo Reynolds, química disuelta, detritos y 50.000 bacterias con quimiotaxis).
+Estado actual: **fase 3 — jugador**: una célula controlable con locomoción real (cilios,
+flagelo o pseudópodos), que come bacterias y detritos y, como ameba, envuelve células enteras por
+fagocitosis. Todo sobre las fases 1–2 (agua a bajo Reynolds, química, bacterias con quimiotaxis,
+células gelatinosas que chocan y recuperan su forma).
 
 ## Compilar, ejecutar y testear
 
@@ -17,12 +18,14 @@ Las dependencias se descargan solas con FetchContent la primera vez.
 
 ## Controles
 
-- Click izquierdo + arrastrar: revolver el agua
-- T (mantener): soltar tinta · D: soltar un detrito
-- F1 velocidad · F2 O₂ · F3 nutrientes · F4 luz (overlays de debug)
-- C: crear una célula · K: escena de 50 células · X: borrar la célula bajo el cursor
-- Shift + click izquierdo + arrastrar: estirar una membrana · Q (mantener): apretar las células hacia el cursor
-- Rueda: zoom · Click derecho + arrastrar: mover cámara · Espacio: pausa
+- **1** cilios (*Paramecium*) · **2** flagelo (*Euglena*) · **3** pseudópodos (*Amoeba*)
+- Cilios: **W/S** avanzar/retroceder, **A/D** girar
+- Flagelo: **W** o click izquierdo para batir; gira hacia el mouse
+- Ameba: **click izquierdo** extiende un pseudópodo hacia el mouse; al tocar una célula más chica, la envuelve sola
+- **F** cámara que sigue al jugador · rueda: zoom · click derecho + arrastrar: mover cámara · Espacio: pausa
+- Laboratorio: **Ctrl+click** revolver el agua · **Shift+click** estirar una membrana · **T** tinta · **B** detrito
+- **C** crear célula · **K** 50 células · **X** borrar célula · **Q** apretar células hacia el cursor
+- **F1–F4** overlays (velocidad del agua, O₂, nutrientes, luz)
 
 ## Estructura
 
@@ -34,6 +37,9 @@ src/
                         cuerpos blandos (XPBD sin inercia), contactos, polígonos
   bio/bacteria.*        run & tumble + quimiotaxis temporal (E. coli)
   bio/cell.*            creación de células (membrana, núcleo, vacuola, gránulos)
+  bio/locomotion.*      cilios, flagelo y pseudópodos; fuerzas del nadador sobre el agua
+  bio/feeding.*         vacuolas digestivas, ingestión y digestión
+  bio/phagocytosis.*    copa fagocítica (cremallera) y fusión de membranas
   game/world.*          coordina el medio y los organismos
   render/               campo claro (shader de células) + overlays de campos
 assets/shaders/         GLSL 330

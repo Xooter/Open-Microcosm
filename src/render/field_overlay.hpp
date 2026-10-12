@@ -18,11 +18,14 @@ class FieldOverlay {
     FieldOverlay& operator=(const FieldOverlay&) = delete;
     ~FieldOverlay();
 
-    void draw(const World& world, Overlay overlay);
+    // Recalcula la textura (una vez por frame) y la dibuja en una copia del mundo.
+    void update(const World& world, Overlay overlay);
+    void draw(const World& world, float offsetX, float offsetY) const;
 
   private:
     void ensureTexture(int width, int height);
 
     Texture2D texture_{};
+    bool visible_ = false;
     std::vector<Color> pixels_;
 };

@@ -1,0 +1,89 @@
+#include "bio/feeding.hpp"
+
+#include "core/units.hpp"
+#include "sim/soft_body.hpp"
+
+#include <algorithm>
+#include <cmath>
+
+namespace {
+
+float vacuoleRadius(float contentArea) {
+    // El fagosoma lleva agua además de la presa: ~30% más de área.
+    return std::max(1.5f, std::sqrt(1.3f * contentArea / units::kPi));
+}
+
+std::size_t interiorIndex(const RingBody& body, std::uint32_t slot) {
+    return static_cast<std::size_t>(std::find(body.interior.begin(), body.interior.end(), slot) -
+                                    body.interior.begin());
+}
+
+} // namespace
+
+float cellMassPmol(float area) {
+    const float r = std::sqrt(std::abs(area) / units::kPi);
+    return 4.0f / 3.0f * units::kPi * r * r * r / 180.0f;
+}
+
+void ingest(Digestion& dig, RingBody& body, BodyParticles& bp, Vec2 where, float area, float pmol,
+            std::uint8_t r, std::uint8_t g, std::uint8_t b, bool forceNew, bool grow) {
+    FoodVacuole* target = nullptr;
+    if (!forceNew) {
+        for (FoodVacuole& v : dig.vacuoles)
+            if (v.open)
+                target = &v;
+    }
+    if (!target) {
+        const std::uint32_t slot = bp.allocate(BodyKind::Interior, where.x, where.y,
+                                               vacuoleRadius(area), 0.5f, body.id);
+        soft_body::addOrganelle(body, slot, soft_body::toLocal(body, where), 2.0f);
+        dig.vacuoles.push_back({slot});
+        target = &dig.vacuoles.back();
+        target->r = r;
+        target->g = g;
+        target->b = b;
+        target->open = !forceNew;
+    }
+    target->contentArea += area;
+    target->contentPmol += pmol;
+    target->initialPmol += pmol;
+    ++target->items;
+    bp.radius[target->slot] = vacuoleRadius(target->contentArea);
+    dig.pmolIngested += pmol;
+    // Lo ingerido suma volumen a la célula.
+    if (grow)
+        soft_body::setRestArea(body, body.restArea + (body.restArea >= 0.0f ? area : -area));
+}
+
+void digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingParams& params, float dt) {
+    const float fraction = 1.0f - std::exp(-params.digestionRate * dt);
+    for (std::size_t k = 0; k < dig.vacuoles.size();) {
+        FoodVacuole& v = dig.vacuoles[k];
+        v.age += dt;
+        const std::size_t idx = interiorIndex(body, v.slot);
+        if (v.open && (v.age > params.vacuoleOpenTime || v.items >= params.vacuoleCapacity)) {
+            // La vacuola se cierra y se suelta del citostoma: queda flotando en el citoplasma.
+            v.open = false;
+            if (idx < body.anchorRate.size()) {
+                body.anchorRate[idx] = 0.3f;
+                body.restInterior[idx] = soft_body::toLocal(body, {bp.x[v.slot], bp.y[v.slot]});
+            }
+        }
+        if (!v.open) {
+            const float d = v.contentPmol * fraction;
+            const float before = v.contentPmol;
+            v.contentPmol -= d;
+            dig.pmolDigested += d;
+            v.contentArea *= before > 0.0f ? v.contentPmol / before : 0.0f;
+            bp.radius[v.slot] = vacuoleRadius(v.contentArea);
+        }
+        if (!v.open && v.contentPmol < 0.02f * v.initialPmol) {
+            if (idx < body.interior.size())
+                soft_body::removeInterior(body, idx);
+            bp.release(v.slot);
+            dig.vacuoles.erase(dig.vacuoles.begin() + static_cast<std::ptrdiff_t>(k));
+            continue;
+        }
+        ++k;
+    }
+}

@@ -40,6 +40,8 @@ class Bacteria {
 
     void spawn(std::size_t count, float width, float height, std::uint64_t seed);
     void resetMemory(const Grid2D& nutrients);
+    // Swap-and-pop: O(1), mueve la última bacteria al índice i.
+    void remove(std::size_t i);
     void step(const Fluid& fluid, const Grid2D& nutrients, float dt, std::uint64_t seed,
               std::uint64_t stepIndex, float width, float height);
 

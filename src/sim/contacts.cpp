@@ -76,7 +76,11 @@ void ContactSolver::iterate(BodyParticles& bp, const std::vector<ContactMember>&
                         if (d2 >= minD * minD || d2 < 1e-12f)
                             continue;
                         const float d = std::sqrt(d2);
-                        const float push = 0.5f * (minD - d) / d; // cada lado corrige la mitad
+                        // Reparto por masa inversa: la membrana más deformable cede más.
+                        const float wk = bp.invMass[me.slot];
+                        const float wm = 0.5f * (bp.invMass[a.slot] + bp.invMass[b.slot]);
+                        const float share = wk + wm > 0.0f ? wk / (wk + wm) : 0.5f;
+                        const float push = share * (minD - d) / d;
                         ax += dx * push;
                         ay += dy * push;
                     }

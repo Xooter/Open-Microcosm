@@ -21,6 +21,13 @@ class Fluid {
     void solve(const Fft2D& fft);
 
     Vec2 velocityAt(Vec2 p) const { return {ux_.sample(p.x, p.y), uy_.sample(p.x, p.y)}; }
+    // Guarda la solución actual como "fondo": la que siente un nadador sin su propio flujo
+    // (a bajo Reynolds, su velocidad de nado ya incluye el efecto de su propio flujo).
+    void keepAsBackground() {
+        bgx_.v = ux_.v;
+        bgy_.v = uy_.v;
+    }
+    Vec2 backgroundAt(Vec2 p) const { return {bgx_.sample(p.x, p.y), bgy_.sample(p.x, p.y)}; }
     const Grid2D& ux() const { return ux_; }
     const Grid2D& uy() const { return uy_; }
 
@@ -30,6 +37,6 @@ class Fluid {
     float gapHeight = 200.0f;                          // espesor de la película [µm]
 
   private:
-    Grid2D fx_, fy_, ux_, uy_;
+    Grid2D fx_, fy_, ux_, uy_, bgx_, bgy_;
     std::vector<Complex> bx_, by_;
 };

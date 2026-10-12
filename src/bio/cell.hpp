@@ -14,6 +14,7 @@ struct CellSpec {
     float angle = 0.0f;                     // [rad]
     float shapeRate = 8.0f; // memoria de forma [1/s]: película rígida (Paramecium) ~8,
                             // córtex blando (Amoeba) ~0.3
+    float nucleusFraction = 0.32f;          // radio del núcleo / semieje menor
     std::uint8_t r = 180, g = 185, b = 160; // tinte del citoplasma
 };
 

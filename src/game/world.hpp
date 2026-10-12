@@ -2,6 +2,8 @@
 
 #include "bio/bacteria.hpp"
 #include "bio/cell.hpp"
+#include "bio/feeding.hpp"
+#include "bio/locomotion.hpp"
 #include "core/rng.hpp"
 #include "core/vec2.hpp"
 #include "sim/chem_field.hpp"
@@ -34,6 +36,15 @@ struct MediumParams {
     float inkLifetime = 120.0f;       // [s] la tinta es una herramienta de debug
 };
 
+// Controles del jugador en el frame actual.
+struct PlayerInput {
+    float forward = 0.0f; // cilios: W/S
+    float turn = 0.0f;    // cilios: A/D
+    bool propel = false;  // flagelo: batir
+    bool pseudopod = false;
+    Vec2 aim;             // posición del mouse en el mundo [µm]
+};
+
 // Mundo toroidal visto desde arriba (vista cenital del microscopio). Coordina el medio
 // (agua y química), las partículas ambientales, las bacterias y las células (cuerpos blandos).
 class World {
@@ -55,6 +66,14 @@ class World {
     // Compresión: empuja todos los cuerpos hacia un punto [µm/s].
     void setSqueeze(Vec2 center, float speed);
     void clearSqueeze() { squeezeActive_ = false; }
+    // Jugador.
+    entt::entity spawnPlayer(LocomotionType type, Vec2 center);
+    void setPlayerType(LocomotionType type); // reemplaza al jugador en el mismo lugar
+    entt::entity player() const { return player_; }
+    void setPlayerInput(const PlayerInput& input) { playerInput_ = input; }
+    LocomotionParams& locomotionParams() { return locomotionParams_; }
+    FeedingParams& feedingParams() { return feedingParams_; }
+
     // Agarrar y estirar un punto de membrana con el mouse.
     bool beginGrab(Vec2 position);
     void moveGrab(Vec2 position) { grabTarget_ = position; }
@@ -89,7 +108,17 @@ class World {
     void computeLight();
     void spawnDetritus(float dt);
     void addDetritus(Rng& rng, Vec2 position);
+    void collectBodies();
     void stepBodies(float dt);
+    void applyPlayerMotion(float dt);
+    void updatePlayerFeeding(float dt);
+    std::vector<const RingBody*> preyFor(const RingBody& predator) const;
+    void engulf(const struct Closure& closure, entt::entity prey);
+    Vec2 imageShift(const RingBody& of, Vec2 near) const;
+    void feedAtMouth(RingBody& body, const Locomotion& loco, Digestion& dig, float dt);
+    void feedByContact(RingBody& body, Digestion& dig, float dt);
+    void removeBacteria(std::vector<std::size_t>& indices);
+    void removeAmbient(std::vector<std::size_t>& indices);
     void excludeFromCells();
     void rebuildBuckets();
     void resolvePenetrations();
@@ -118,6 +147,12 @@ class World {
     float bucketSize_ = 32.0f;
     int bucketsX_ = 0, bucketsY_ = 0;
     std::vector<std::vector<std::uint32_t>> buckets_;
+
+    entt::entity player_ = entt::null;
+    PlayerInput playerInput_;
+    LocomotionParams locomotionParams_;
+    FeedingParams feedingParams_;
+    std::vector<std::size_t> eatenBacteria_, eatenAmbient_;
 
     bool squeezeActive_ = false;
     Vec2 squeezeCenter_;

@@ -69,13 +69,17 @@ que nada, come, crece y se divide en un medio vivo. Antes de sumar contenido se 
 - Medido con 50 células comprimidas 10 s: área ≤ 3,6%, aristas ≤ 1,9×, **0 intrusiones**, y
   recuperación de forma tras soltar. ~3,5 ms por paso con 50 células + 50k bacterias.
 
-## Fase 3 — Jugador: locomoción y fagocitosis
-- Locomoción física por tipo: flagelo (impulso), cilios (deslizamiento continuo) y pseudópodo
-  (clic y arrastre). Sin inercia: al dejar de propulsarse, la célula frena.
-- Fagocitosis física: envolver a la presa con la membrana y cerrar una vacuola (cambio de
-  topología). La presa se escapa si el cierre falla.
-- Cámara de microscopio con zoom y paneo suave.
-- **Hecho cuando:** se puede perseguir, envolver y comer una presa usando solo física.
+## Fase 3 — Jugador: locomoción y fagocitosis ✅ (hecha)
+- Tres locomociones reales sin inercia: cilios (*Paramecium*, 600 µm/s), flagelo (*Euglena*,
+  80 µm/s, bamboleo helicoidal) y pseudópodo (*Amoeba*, ~6 µm/s).
+- El nadador empuja el agua (fuerza neta cero) y siente solo el flujo de fondo.
+- Alimentación: citostoma con corriente oral y caudal máximo (ciliado), polo anterior
+  (flagelado), contacto (ameba). Vacuolas digestivas que se cierran, digieren y expulsan.
+- **Fagocitosis física de células** por la ameba: copa por cremallera, inserción de membrana en
+  los labios y fusión de membranas al cerrarse (~9 s para una presa de 40 µm).
+- Cámara de microscopio que sigue al jugador en el mundo toroidal. Render de cilios con onda
+  metacrónica, flagelo con desenfoque de movimiento, estigma, citostoma y vacuolas.
+- Medido: ~4,6 ms por paso con 30 células + ameba + 50k bacterias.
 
 ## Fase 4 — Metabolismo y ciclo de vida
 - Metabolismo real simplificado: respiración con O₂ (mucho ATP), fermentación sin O₂ (poco ATP,

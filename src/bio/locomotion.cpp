@@ -1,0 +1,145 @@
+#include "bio/locomotion.hpp"
+
+#include "sim/fluid.hpp"
+#include "sim/grid2d.hpp"
+#include "sim/polygon.hpp"
+#include "sim/soft_body.hpp"
+
+#include <algorithm>
+#include <cmath>
+
+namespace {
+
+Vec2 pos(const BodyParticles& bp, std::uint32_t s) { return {bp.x[s], bp.y[s]}; }
+
+void addVelocity(BodyParticles& bp, std::uint32_t s, Vec2 v) {
+    bp.vx[s] += v.x;
+    bp.vy[s] += v.y;
+}
+
+Vec2 normalized(Vec2 v) {
+    const float len = length(v);
+    return len > 1e-6f ? v * (1.0f / len) : Vec2{1.0f, 0.0f};
+}
+
+// Normal hacia afuera de la membrana en el punto i del anillo.
+Vec2 outwardNormal(const RingBody& body, const BodyParticles& bp, std::size_t i) {
+    const std::size_t n = body.ring.size();
+    const Vec2 t = normalized(pos(bp, body.ring[(i + 1) % n]) - pos(bp, body.ring[(i + n - 1) % n]));
+    return polygon::inwardNormal(t, body.restArea) * -1.0f;
+}
+
+// Fuerza en el agua tal que el agua bajo el punto se mueva a ~`speed` (Stokes–Brinkman).
+void pushWater(Fluid& fluid, Vec2 at, Vec2 dir, float speed, float radius) {
+    const float response = fluid.viscosity / (radius * radius) + fluid.brinkmanFriction();
+    fluid.addForce(at, dir * (speed * response), radius);
+}
+
+float halfLength(const RingBody& body) {
+    float l = 0.0f;
+    for (const Vec2& q : body.restRing)
+        l = std::max(l, std::abs(q.x));
+    return l;
+}
+
+} // namespace
+
+const char* locomotionName(LocomotionType type) {
+    switch (type) {
+    case LocomotionType::Cilia: return "cilios";
+    case LocomotionType::Flagellum: return "flagelo";
+    case LocomotionType::Pseudopod: return "pseudopodo";
+    }
+    return "";
+}
+
+Vec2 bodyHeading(const RingBody& body) { return {std::cos(body.angle), std::sin(body.angle)}; }
+
+void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
+                     const LocomotionParams& p, float simTime, float width, float height) {
+    const Vec2 c = body.centroid;
+    const Vec2 h = bodyHeading(body);
+    const Vec2 side = {-h.y, h.x};
+    Vec2 linear;
+    float omega = 0.0f;
+
+    switch (loco.type) {
+    case LocomotionType::Cilia: {
+        const float f = loco.forward >= 0.0f ? loco.forward : loco.forward * p.ciliaReverse;
+        loco.speed = f * p.ciliaSpeed;
+        linear = h * loco.speed;
+        omega = loco.turn * p.ciliaTurnRate;
+        break;
+    }
+    case LocomotionType::Flagellum: {
+        loco.speed = loco.active ? p.flagellumSpeed : 0.0f;
+        if (loco.active) {
+            const Vec2 to = {minImage(loco.target.x - c.x, width), minImage(loco.target.y - c.y, height)};
+            const Vec2 u = normalized(to);
+            const float delta = std::atan2(cross(h, u), dot(h, u));
+            omega = std::clamp(3.0f * delta, -p.flagellumTurnRate, p.flagellumTurnRate);
+            const float wobble = p.wobble * std::sin(6.2831853f * p.wobbleHz * simTime);
+            linear = (h + side * wobble) * loco.speed;
+        }
+        break;
+    }
+    case LocomotionType::Pseudopod: {
+        loco.speed = 0.0f;
+        if (!loco.active)
+            return;
+        const Vec2 to = {minImage(loco.target.x - c.x, width), minImage(loco.target.y - c.y, height)};
+        if (length(to) < 1.0f)
+            return;
+        const Vec2 u = normalized(to);
+        // Frente: la membrana orientada hacia el objetivo protruye; cola: se contrae.
+        for (std::size_t i = 0; i < body.ring.size(); ++i) {
+            const Vec2 o = outwardNormal(body, bp, i);
+            const float w = dot(o, u);
+            if (w > 0.6f)
+                addVelocity(bp, body.ring[i], o * (p.pseudopodSpeed * (w - 0.6f) / 0.4f));
+            else if (w < -0.2f)
+                addVelocity(bp, body.ring[i], o * (p.retractSpeed * w));
+        }
+        for (std::size_t k = body.organelleCount; k < body.interior.size(); ++k)
+            addVelocity(bp, body.interior[k], u * p.streamingSpeed);
+        return;
+    }
+    }
+
+    // Cuerpo rígido en el plano: traslación + rotación alrededor del centroide.
+    auto drive = [&](std::uint32_t s) {
+        const Vec2 r = pos(bp, s) - c;
+        addVelocity(bp, s, linear + Vec2{-r.y, r.x} * omega);
+    };
+    for (std::uint32_t s : body.ring)
+        drive(s);
+    for (std::uint32_t s : body.interior)
+        drive(s);
+}
+
+void applySwimmerForces(const RingBody& body, const BodyParticles& bp, const Locomotion& loco,
+                        const LocomotionParams& p, Fluid& fluid) {
+    const Vec2 c = body.centroid;
+    const Vec2 h = bodyHeading(body);
+    const float half = halfLength(body);
+
+    if (loco.type == LocomotionType::Flagellum && loco.speed > 0.0f) {
+        // "Puller" (como Chlamydomonas): el flagelo anterior empuja agua hacia atrás y el
+        // cuerpo arrastra agua hacia adelante. Fuerzas opuestas, fuerza neta cero.
+        const float r = std::max(4.0f, 0.4f * half);
+        pushWater(fluid, c + h * (half + r), h * -1.0f, 0.5f * loco.speed, r);
+        pushWater(fluid, c - h * (half + r), h, 0.5f * loco.speed, r);
+    }
+    if (loco.type == LocomotionType::Cilia && !body.ring.empty()) {
+        // Corriente oral: los cilios del surco oral llevan agua (y bacterias) a la boca.
+        const std::size_t i = loco.mouthRing % body.ring.size();
+        const std::size_t n = body.ring.size();
+        const Vec2 m = pos(bp, body.ring[i]);
+        const Vec2 t = normalized(pos(bp, body.ring[(i + 1) % n]) - pos(bp, body.ring[(i + n - 1) % n]));
+        const Vec2 out = polygon::inwardNormal(t, body.restArea) * -1.0f;
+        constexpr float kR = 8.0f;
+        pushWater(fluid, m + out * kR, out * -1.0f, p.oralCurrent, kR);
+        // Reacción del lado opuesto de la célula: fuerza neta cero.
+        pushWater(fluid, c - out * (length(m - c) + kR), out, p.oralCurrent, kR);
+    }
+}

@@ -11,11 +11,12 @@ struct ToolState {
     float inkRadius = 15.0f;  // [µm]
     float squeezeSpeed = 40.0f; // [µm/s]
     bool grabbing = false;
+    bool follow = true; // la cámara sigue al jugador
     bool paused = false;
     Overlay overlay = Overlay::None;
 };
 
-inline constexpr Rectangle kUiPanel = {10, 10, 300, 470};
+inline constexpr Rectangle kUiPanel = {10, 10, 320, 560};
 
 // Panel de debug para tunear el medio en vivo.
 void drawUi(World& world, ToolState& tools);

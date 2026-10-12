@@ -8,7 +8,6 @@
 #include <cmath>
 
 namespace {
-constexpr float kMembraneRadius = 0.6f * kMembraneSpacing; // vecinos solapados: sin huecos
 constexpr float kGranuleRadius = 0.4f;                     // [µm]
 } // namespace
 
@@ -28,13 +27,15 @@ entt::entity createCell(entt::registry& registry, BodyParticles& bodies, const C
     const float h = (rx - ry) * (rx - ry) / ((rx + ry) * (rx + ry));
     const float perimeter =
         units::kPi * (rx + ry) * (1.0f + 3.0f * h / (10.0f + std::sqrt(4.0f - 3.0f * h)));
-    const int n = std::max(16, static_cast<int>(perimeter / kMembraneSpacing));
+    // Al menos 48 puntos: en células chicas (Euglena, ~14 µm de ancho) la membrana se afina.
+    const int n = std::max(48, static_cast<int>(perimeter / kMembraneSpacing));
+    const float membraneRadius = 0.6f * perimeter / static_cast<float>(n);
 
     for (int i = 0; i < n; ++i) {
         const float t = 2.0f * units::kPi * static_cast<float>(i) / static_cast<float>(n);
         const Vec2 local = {rx * std::cos(t), ry * std::sin(t)};
         const Vec2 p = place(local);
-        body.ring.push_back(bodies.allocate(BodyKind::Membrane, p.x, p.y, kMembraneRadius, 1.0f, id));
+        body.ring.push_back(bodies.allocate(BodyKind::Membrane, p.x, p.y, membraneRadius, 1.0f, id));
         body.restRing.push_back(local);
     }
     for (int i = 0; i < n; ++i) {
@@ -53,7 +54,7 @@ entt::entity createCell(entt::registry& registry, BodyParticles& bodies, const C
     // Organelos: núcleo central anclado al citoesqueleto y vacuola contráctil hacia un extremo.
     const float minR = std::min(rx, ry);
     CellAnatomy anatomy{};
-    anatomy.nucleus = addInterior({0.1f * rx, 0.0f}, 0.32f * minR, 0.2f, 3.0f);
+    anatomy.nucleus = addInterior({0.1f * rx, 0.0f}, spec.nucleusFraction * minR, 0.2f, 3.0f);
     anatomy.contractileVacuole = addInterior({-0.6f * rx, 0.25f * ry}, 0.18f * minR, 0.5f, 2.0f);
     body.organelleCount = 2;
 

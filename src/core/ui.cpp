@@ -2,13 +2,15 @@
 
 #include "game/world.hpp"
 
+#include <cmath>
+
 #define RAYGUI_IMPLEMENTATION
 #include <raygui.h>
 
 void drawUi(World& world, ToolState& tools) {
     MediumParams& m = world.medium();
 
-    GuiPanel(kUiPanel, "Medio y celulas (fase 2)");
+    GuiPanel(kUiPanel, "BioGame (fase 3)");
     float y = kUiPanel.y + 35;
     auto slider = [&](const char* label, float* value, float lo, float hi, const char* fmt) {
         GuiSliderBar({kUiPanel.x + 120, y, 110, 16}, label, TextFormat(fmt, *value), value, lo,
@@ -44,11 +46,33 @@ void drawUi(World& world, ToolState& tools) {
     GuiLabel({kUiPanel.x + 10, y, 280, 16},
              TextFormat("Overlay: %s", overlayName(tools.overlay)));
     y += 22;
-    GuiLabel({kUiPanel.x + 10, y, 280, 16}, "Izq: revolver | T: tinta | D: detrito");
+    y += 4;
+    const entt::registry& reg = world.registry();
+    if (reg.valid(world.player())) {
+        const Locomotion& loco = reg.get<Locomotion>(world.player());
+        const Digestion& dig = reg.get<Digestion>(world.player());
+        GuiLabel({kUiPanel.x + 10, y, 300, 16},
+                 TextFormat("Jugador: %s  |  %.0f um/s", locomotionName(loco.type), std::abs(loco.speed)));
+        y += 18;
+        GuiLabel({kUiPanel.x + 10, y, 300, 16},
+                 TextFormat("Comido: %d bact. %d detr. %d cel. | %zu vacuolas", dig.bacteriaEaten,
+                            dig.detritusEaten, dig.cellsEaten, dig.vacuoles.size()));
+        y += 18;
+        GuiLabel({kUiPanel.x + 10, y, 300, 16},
+                 TextFormat("Alimento: %.2f pmol ingerido, %.2f digerido", dig.pmolIngested, dig.pmolDigested));
+        y += 22;
+    }
+    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "1 cilios | 2 flagelo | 3 ameba | F seguir");
     y += 16;
-    GuiLabel({kUiPanel.x + 10, y, 280, 16}, "F1-F4: overlays | Der: mover | Rueda: zoom");
+    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Cilios: W/S avanzar, A/D girar");
     y += 16;
-    GuiLabel({kUiPanel.x + 10, y, 280, 16}, "C: celula | K: 50 celulas | X: borrar");
+    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Flagelo: W o click, gira hacia el mouse");
     y += 16;
-    GuiLabel({kUiPanel.x + 10, y, 280, 16}, "Shift+Izq: estirar | Q: apretar al cursor");
+    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Ameba: click = pseudopodo; toca y envuelve");
+    y += 20;
+    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Ctrl+Izq revolver | Shift+Izq estirar | T tinta");
+    y += 16;
+    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "B detrito | C celula | K 50 celulas | X borrar");
+    y += 16;
+    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Q apretar | F1-F4 overlays | Der mover | Rueda");
 }

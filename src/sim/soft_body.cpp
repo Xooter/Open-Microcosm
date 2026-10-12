@@ -18,9 +18,12 @@ void move(BodyParticles& bp, std::uint32_t s, Vec2 d) {
     bp.y[s] += d.y;
 }
 
-void distanceStep(BodyParticles& bp, std::uint32_t a, std::uint32_t b, float rest, float f) {
+void distanceStep(BodyParticles& bp, std::uint32_t a, std::uint32_t b, float rest, float f,
+                  bool tensionOnly = false) {
     const Vec2 d = pos(bp, b) - pos(bp, a);
     const float len = length(d);
+    if (tensionOnly && len <= rest)
+        return;
     const float w = bp.invMass[a] + bp.invMass[b];
     if (len < 1e-6f || w <= 0.0f)
         return;
@@ -133,15 +136,25 @@ void predict(RingBody& body, BodyParticles& bp, float h) {
 void solve(RingBody& body, BodyParticles& bp, const SoftBodyTuning& tuning, float h) {
     const std::size_t n = body.ring.size();
 
-    const float fe = relax(tuning.edgeRate, h);
+    const float fe = relax(tuning.edgeRate * body.edgeScale, h);
     for (std::size_t i = 0; i < n; ++i)
-        distanceStep(bp, body.ring[i], body.ring[(i + 1) % n], body.restEdge[i], fe);
+        distanceStep(bp, body.ring[i], body.ring[(i + 1) % n], body.restEdge[i], fe,
+                     body.edgeTensionOnly);
 
-    const float fb = relax(tuning.bendRate, h);
+    const float fb = relax(tuning.bendRate * body.bendScale, h);
     for (std::size_t i = 0; i < n; ++i)
         localShapeStep(body, bp, i, fb);
 
-    areaStep(body, bp, relax(tuning.areaRate, h));
+    if (body.corticalTension > 0.0f) {
+        const float fc = relax(body.corticalTension, h);
+        for (std::size_t i = 0; i < n; ++i) {
+            const std::uint32_t s = body.ring[i];
+            const Vec2 mid = (pos(bp, body.ring[(i + n - 1) % n]) + pos(bp, body.ring[(i + 1) % n])) * 0.5f;
+            move(bp, s, (mid - pos(bp, s)) * fc);
+        }
+    }
+
+    areaStep(body, bp, relax(tuning.areaRate * body.areaScale, h));
 
     // Memoria de forma: la membrana tiende a la forma de reposo rotada y trasladada.
     bestFit(body, bp, body.centroid, body.angle);
@@ -239,6 +252,173 @@ float area(const RingBody& body, const BodyParticles& bp) {
         a += cross(pos(bp, body.ring[i]), pos(bp, body.ring[(i + 1) % n]));
     return 0.5f * a;
 }
+
+float perimeter(const RingBody& body, const BodyParticles& bp) {
+    float p = 0.0f;
+    const std::size_t n = body.ring.size();
+    for (std::size_t i = 0; i < n; ++i)
+        p += length(pos(bp, body.ring[(i + 1) % n]) - pos(bp, body.ring[i]));
+    return p;
+}
+
+void addOrganelle(RingBody& body, std::uint32_t slot, Vec2 restLocal, float anchorRate) {
+    const auto at = static_cast<std::ptrdiff_t>(body.organelleCount);
+    body.interior.insert(body.interior.begin() + at, slot);
+    body.restInterior.insert(body.restInterior.begin() + at, restLocal);
+    body.anchorRate.insert(body.anchorRate.begin() + at, anchorRate);
+    ++body.organelleCount;
+}
+
+void removeInterior(RingBody& body, std::size_t index) {
+    const auto at = static_cast<std::ptrdiff_t>(index);
+    body.interior.erase(body.interior.begin() + at);
+    body.restInterior.erase(body.restInterior.begin() + at);
+    body.anchorRate.erase(body.anchorRate.begin() + at);
+    if (index < body.organelleCount)
+        --body.organelleCount;
+}
+
+Vec2 toLocal(const RingBody& body, Vec2 worldPos) {
+    return rotate(worldPos - body.centroid, std::cos(body.angle), -std::sin(body.angle));
+}
+
+void setRestArea(RingBody& body, float newSignedArea) {
+    if (body.restArea == 0.0f || newSignedArea * body.restArea <= 0.0f)
+        return;
+    const float s = std::sqrt(newSignedArea / body.restArea);
+    for (Vec2& q : body.restRing)
+        q = q * s;
+    for (float& e : body.restEdge)
+        e *= s;
+    for (Vec2& q : body.restInterior)
+        q = q * s;
+    body.restArea = newSignedArea;
+}
+
+namespace {
+void setCircularRest(RingBody& body, float perim) {
+    const std::size_t n = body.ring.size();
+    const float radius = perim / (2.0f * 3.14159265f);
+    const float dir = body.restArea >= 0.0f ? 1.0f : -1.0f; // misma orientación que el anillo
+    body.restRing.resize(n);
+    body.restEdge.assign(n, perim / static_cast<float>(n));
+    for (std::size_t i = 0; i < n; ++i) {
+        const float t = dir * 2.0f * 3.14159265f * static_cast<float>(i) / static_cast<float>(n);
+        body.restRing[i] = {radius * std::cos(t), radius * std::sin(t)};
+    }
+}
+} // namespace
+
+void makePlastic(RingBody& body, BodyParticles& bp, float reservoirRate) {
+    body.membraneReservoirRate = reservoirRate;
+    body.shapeRate = 0.0f;
+    // Córtex de ameba: membrana fluida que se estira y se dobla con facilidad.
+    // Membrana de ameba: tensión casi nula (grandes reservorios de membrana; el remallado
+    // mantiene el espaciado) y citoplasma que fluye: el volumen se conserva en ~1 s, no al
+    // instante, para que los pseudópodos y los labios de la copa puedan llenarse.
+    body.edgeScale = 0.0f;
+    body.bendScale = 0.05f;
+    body.areaScale = 0.001f;
+    body.corticalTension = 5.0f;
+    body.edgeTensionOnly = true;
+    // La membrana activa cede en los contactos (las células pasivas descansan sobre el vidrio).
+    for (std::uint32_t s : body.ring)
+        bp.invMass[s] = 4.0f;
+    body.restArea = area(body, bp);
+    setCircularRest(body, perimeter(body, bp));
+    // El interior se re-expresa en el marco nuevo (el ángulo cambia con la forma de reposo).
+    bestFit(body, bp, body.centroid, body.angle);
+    for (std::size_t k = 0; k < body.interior.size(); ++k)
+        body.restInterior[k] = toLocal(body, pos(bp, body.interior[k]));
+}
+
+void adaptPlastic(RingBody& body, const BodyParticles& bp, float dt) {
+    if (body.membraneReservoirRate <= 0.0f || body.restEdge.empty())
+        return;
+    const float rest = body.restEdge[0] * static_cast<float>(body.restEdge.size());
+    const float target = perimeter(body, bp);
+    const float s = 1.0f + (target / rest - 1.0f) * relax(body.membraneReservoirRate, dt);
+    for (Vec2& q : body.restRing)
+        q = q * s;
+    for (float& e : body.restEdge)
+        e *= s;
+}
+
+namespace {
+void rebuildRest(RingBody& body, const BodyParticles& bp, bool keepArea);
+} // namespace
+
+void replaceRing(RingBody& body, const BodyParticles& bp, std::vector<std::uint32_t> ring) {
+    body.ring = std::move(ring);
+    rebuildRest(body, bp, false);
+}
+
+void resizeRing(RingBody& body, const BodyParticles& bp, std::vector<std::uint32_t> ring) {
+    body.ring = std::move(ring);
+    rebuildRest(body, bp, true);
+}
+
+bool remesh(RingBody& body, BodyParticles& bp, float spacing) {
+    if (body.membraneReservoirRate <= 0.0f)
+        return false;
+    const std::size_t n = body.ring.size();
+    std::vector<std::uint32_t> ring;
+    ring.reserve(n + 8);
+    bool changed = false;
+    for (std::size_t i = 0; i < n; ++i) {
+        const std::uint32_t a = body.ring[i], b = body.ring[(i + 1) % n];
+        ring.push_back(a);
+        const Vec2 pa = pos(bp, a), pb = pos(bp, b);
+        // Tope de seguridad: una membrana no crece sin límite aunque algo la estire.
+        if (length(pb - pa) > 1.6f * spacing && n + ring.size() - i < 4096) {
+            const Vec2 mid = (pa + pb) * 0.5f;
+            ring.push_back(bp.allocate(BodyKind::Membrane, mid.x, mid.y, bp.radius[a], bp.invMass[a], body.id));
+            changed = true;
+        }
+    }
+    for (std::size_t k = 0; ring.size() > 16 && k < ring.size();) {
+        const std::uint32_t a = ring[k], b = ring[(k + 1) % ring.size()];
+        if (length(pos(bp, b) - pos(bp, a)) < 0.5f * spacing) {
+            bp.release(b);
+            ring.erase(ring.begin() + static_cast<std::ptrdiff_t>((k + 1) % ring.size()));
+            changed = true;
+            continue;
+        }
+        ++k;
+    }
+    if (changed) {
+        body.ring = std::move(ring);
+        rebuildRest(body, bp, true);
+    }
+    return changed;
+}
+
+namespace {
+void rebuildRest(RingBody& body, const BodyParticles& bp, bool keepArea) {
+    const std::size_t n = body.ring.size();
+    if (!keepArea)
+        body.restArea = area(body, bp);
+    if (body.membraneReservoirRate > 0.0f) {
+        setCircularRest(body, perimeter(body, bp));
+    } else {
+        // Sin forma circular: la geometría actual (alineada al ángulo actual) es la de reposo.
+        body.restRing.resize(n);
+        body.restEdge.resize(n);
+        Vec2 c;
+        for (std::uint32_t s : body.ring)
+            c = c + pos(bp, s);
+        body.centroid = c * (1.0f / static_cast<float>(n));
+        for (std::size_t i = 0; i < n; ++i)
+            body.restRing[i] = toLocal(body, pos(bp, body.ring[i]));
+        for (std::size_t i = 0; i < n; ++i)
+            body.restEdge[i] = length(body.restRing[(i + 1) % n] - body.restRing[i]);
+    }
+    bestFit(body, bp, body.centroid, body.angle);
+    for (std::size_t k = 0; k < body.interior.size(); ++k)
+        body.restInterior[k] = toLocal(body, pos(bp, body.interior[k]));
+    refresh(body, bp);
+}
+} // namespace
 
 float shapeError(const RingBody& body, const BodyParticles& bp) {
     Vec2 c;

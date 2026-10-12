@@ -30,6 +30,22 @@ float Bacteria::signal(const Grid2D& nutrients, float px, float py) const {
     return std::log1p(c / params.sensingKd);
 }
 
+void Bacteria::remove(std::size_t i) {
+    const std::size_t last = size() - 1;
+    x[i] = x[last];
+    y[i] = y[last];
+    heading[i] = heading[last];
+    tumbleTimer[i] = tumbleTimer[last];
+    memory[i] = memory[last];
+    tumbling[i] = tumbling[last];
+    x.pop_back();
+    y.pop_back();
+    heading.pop_back();
+    tumbleTimer.pop_back();
+    memory.pop_back();
+    tumbling.pop_back();
+}
+
 void Bacteria::resetMemory(const Grid2D& nutrients) {
     for (std::size_t i = 0; i < size(); ++i)
         memory[i] = signal(nutrients, x[i], y[i]);

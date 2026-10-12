@@ -54,10 +54,11 @@ void FieldOverlay::ensureTexture(int width, int height) {
     pixels_.resize(static_cast<std::size_t>(width) * height);
 }
 
-void FieldOverlay::draw(const World& world, Overlay overlay) {
-    if (overlay == Overlay::None)
+void FieldOverlay::update(const World& world, Overlay overlay) {
+    visible_ = overlay != Overlay::None;
+    if (!visible_)
         return;
-    PROFILE_SCOPE("FieldOverlay::draw");
+    PROFILE_SCOPE("FieldOverlay::update");
 
     const Grid2D& ux = world.fluid().ux();
     const Grid2D& uy = world.fluid().uy();
@@ -102,7 +103,12 @@ void FieldOverlay::draw(const World& world, Overlay overlay) {
     for (std::size_t k = 0; k < n; ++k)
         pixels_[k] = colormap(values[k]);
     UpdateTexture(texture_, pixels_.data());
+}
 
-    DrawTexturePro(texture_, {0, 0, static_cast<float>(ux.nx), static_cast<float>(ux.ny)},
-                   {0, 0, world.width(), world.height()}, {0, 0}, 0.0f, Fade(WHITE, 0.6f));
+void FieldOverlay::draw(const World& world, float offsetX, float offsetY) const {
+    if (!visible_)
+        return;
+    const auto w = static_cast<float>(texture_.width), h = static_cast<float>(texture_.height);
+    DrawTexturePro(texture_, {0, 0, w, h}, {offsetX, offsetY, world.width(), world.height()},
+                   {0, 0}, 0.0f, Fade(WHITE, 0.6f));
 }

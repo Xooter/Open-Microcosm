@@ -21,16 +21,17 @@ class CellRenderer {
     ~CellRenderer();
 
     // Debe llamarse fuera de BeginMode2D (usa su propio render target).
-    void renderCoverage(const World& world, const Camera2D& camera);
+    void renderCoverage(const World& world, const Camera2D& camera, Rectangle view);
     // Composición en pantalla (fuera de BeginMode2D).
     void composite(const Camera2D& camera);
     // Membranas y organelos (dentro de BeginMode2D).
-    void drawDetails(const World& world, const Camera2D& camera);
+    void drawDetails(const World& world, const Camera2D& camera, Rectangle view);
 
   private:
     void ensureTarget();
     void fillCell(const RingBody& body, Color tint);
-    template <typename Fn> void forEachImage(const World& world, const RingBody& body, Fn&& fn);
+    template <typename Fn>
+    void forEachImage(const World& world, const RingBody& body, Rectangle view, Fn&& fn);
 
     RenderTexture2D target_{};
     Shader shader_{};

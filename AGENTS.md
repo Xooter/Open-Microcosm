@@ -120,6 +120,27 @@ El LOD (fase 9) degrada las células lejanas a menos partículas o a simulación
   en cada iteración del sub-paso. Al final del paso, una pasada saca cualquier partícula de
   membrana que haya quedado dentro de otra célula.
 - Las bacterias y los detritos se excluyen del interior de las células.
+- **Membrana plástica** (ameba, `soft_body::makePlastic`): sin tensión de aristas ni memoria de
+  forma; tensión cortical (flujo de curvatura) que alisa arrugas sin frenar lóbulos; área
+  conservada en ~1 s (el citoplasma fluye); remallado que agrega o quita membrana. Su membrana
+  tiene más masa inversa, así que cede en los contactos.
+- **Topología:** `replaceRing` / `resizeRing` cambian el anillo (fusión, inserción de membrana).
+  Los eventos de topología se aplican al final del paso.
+
+### Jugador (`bio/locomotion`, `bio/feeding`, `bio/phagocytosis`)
+
+- **Locomoción:** suma velocidad a las partículas del cuerpo (sin inercia), con velocidades de
+  laboratorio: cilios ~600 µm/s, flagelo ~80 µm/s con bamboleo, pseudópodo ~6 µm/s.
+- **Agua:** el nadador ejerce un par de fuerzas opuestas (fuerza neta cero). El agua se resuelve
+  dos veces: sin las fuerzas del nadador (`Fluid::backgroundAt`, que es lo que él siente) y con
+  ellas (lo que siente todo lo demás). Si no, el nadador se arrastraría con su propio flujo.
+- **Comer:** el ciliado por el citostoma (con corriente oral y caudal máximo), el flagelado por el
+  polo anterior (despacio) y la ameba por contacto. Lo ingerido forma **vacuolas digestivas**
+  (organelos) que se cierran, se digieren y se expulsan.
+- **Fagocitosis de células** (ameba, componente `PhagocyticCup`): el contacto con una presa
+  elegible inicia la copa; la presa queda sujeta (unión ligando–receptor); el frente de cada labio
+  avanza y la membrana se agrega en el labio; cuando los labios se tocan, `findClosure` valida
+  que el anillo exterior conserve orientación y área, y la presa pasa a un fagosoma.
 
 ### Datos
 

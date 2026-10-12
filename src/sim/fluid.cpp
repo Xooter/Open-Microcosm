@@ -7,7 +7,7 @@
 
 Fluid::Fluid(int nx, int ny, float cellSize)
     : fx_(nx, ny, cellSize), fy_(nx, ny, cellSize), ux_(nx, ny, cellSize),
-      uy_(nx, ny, cellSize), bx_(static_cast<std::size_t>(nx) * ny),
+      uy_(nx, ny, cellSize), bgx_(nx, ny, cellSize), bgy_(nx, ny, cellSize), bx_(static_cast<std::size_t>(nx) * ny),
       by_(static_cast<std::size_t>(nx) * ny) {}
 
 void Fluid::clearForces() {
