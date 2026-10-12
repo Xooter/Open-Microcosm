@@ -6,8 +6,16 @@
 #include <fstream>
 #include <sstream>
 
-std::vector<LocomotionType> Progress::recordRun(std::uint32_t generation, float share, bool won) {
+Genome Progress::founderGenome(LocomotionType t, Rng& rng) const {
+    const int i = static_cast<int>(t);
+    return hasLegacy[i] ? inherit(t, legacy[i], rng) : speciesGenome(t);
+}
+
+std::vector<LocomotionType> Progress::recordRun(std::uint32_t generation, float share, bool won,
+                                                LocomotionType founder, const Genome& lineageGenome) {
     ++runs;
+    hasLegacy[static_cast<int>(founder)] = true;
+    legacy[static_cast<int>(founder)] = lineageGenome;
     if (won)
         ++wins;
     bestGeneration = std::max(bestGeneration, generation);
@@ -52,6 +60,16 @@ Progress loadProgress(const std::string& path) {
         else if (key == "wins") value >> p.wins;
         else if (key == "best_generation") value >> p.bestGeneration;
         else if (key == "best_share") value >> p.bestShare;
+        else if (key.rfind("legacy_", 0) == 0) {
+            const int i = key.back() - '0';
+            if (i < 0 || i > 2)
+                continue;
+            std::string item;
+            std::size_t g = 0;
+            while (std::getline(value, item, ',') && g < kGeneCount)
+                p.legacy[i].v[g++] = std::stof(item);
+            p.hasLegacy[i] = g == kGeneCount;
+        }
     }
     return p;
 }
@@ -69,5 +87,13 @@ bool saveProgress(const Progress& p, const std::string& path) {
         << "wins=" << p.wins << '\n'
         << "best_generation=" << p.bestGeneration << '\n'
         << "best_share=" << p.bestShare << '\n';
+    for (int i = 0; i < 3; ++i) {
+        if (!p.hasLegacy[i])
+            continue;
+        out << "legacy_" << i << '=';
+        for (std::size_t g = 0; g < kGeneCount; ++g)
+            out << (g ? "," : "") << p.legacy[i].v[g];
+        out << '\n';
+    }
     return static_cast<bool>(out);
 }

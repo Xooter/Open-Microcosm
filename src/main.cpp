@@ -44,6 +44,8 @@ void startRun(Game& game, LocomotionType founder) {
     RunConfig rc;
     rc.founder = founder;
     rc.seed = config.seed;
+    Rng rng(config.seed, 0, 0, 0);
+    rc.genome = game.progress.founderGenome(founder, rng); // legado de partidas anteriores
     game.run.start(*game.world, rc, ++game.runCounter);
     game.screen = Screen::Playing;
     game.recorded = false;
@@ -55,7 +57,8 @@ void recordRun(Game& game) {
     if (game.recorded || !game.world)
         return;
     game.recorded = true;
-    game.unlockedNow = game.progress.recordRun(game.run.bestGeneration(), game.run.bestShare(), game.run.won());
+    game.unlockedNow = game.progress.recordRun(game.run.bestGeneration(), game.run.bestShare(), game.run.won(),
+                                               game.run.config().founder, game.run.lineageGenome());
     saveProgress(game.progress, game.progressPath);
 }
 
@@ -108,6 +111,7 @@ void handlePlayInput(World& world, ToolState& tools, const Camera2D& camera) {
     if (IsKeyPressed(KEY_K)) world.spawnTestScene(50);
     if (IsKeyPressed(KEY_X)) world.removeCellAt(pos);
     if (IsKeyPressed(KEY_L)) world.lyseAt(pos);
+    if (IsKeyPressed(KEY_V)) world.tryConjugate(world.player()); // conjugar con una pareja cercana
     if (IsKeyDown(KEY_Q))
         world.setSqueeze(pos, tools.squeezeSpeed);
     else
@@ -253,7 +257,7 @@ int main() {
         if (game.run.simulationPaused())
             drawCandidates(game, camera);
         drawUi(world, tools);
-        drawRunHud(game.run);
+        drawRunHud(game.run, world);
         if (game.screen == Screen::Over)
             drawGameOver(game.run, game.progress, game.unlockedNow);
         EndDrawing();

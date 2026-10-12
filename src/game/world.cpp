@@ -82,6 +82,7 @@ void World::step(float dt) {
     stepBodies(dt);
     updateFeeding(dt);       // eventos de topología (fagocitosis): al final del paso
     updateLifecycle(dt);     // metabolismo, división y muerte
+    tickDefenses(dt);
     excludeFromCells();
 
     spawnDetritus(dt);
@@ -504,10 +505,8 @@ void World::pushOutOfCells(float& x, float& y) const {
 // Jugador: locomoción y alimentación
 // ---------------------------------------------------------------------------
 
-entt::entity World::spawnPlayer(LocomotionType type, Vec2 center) {
+CellSpec speciesSpec(LocomotionType type) {
     CellSpec spec;
-    spec.center = center;
-    spec.angle = 0.0f;
     switch (type) {
     case LocomotionType::Cilia: // Paramecium caudatum: ~180 × 50 µm, película rígida
         spec.radiusX = 90.0f;
@@ -529,6 +528,40 @@ entt::entity World::spawnPlayer(LocomotionType type, Vec2 center) {
         spec.r = 188; spec.g = 176; spec.b = 160;
         break;
     }
+    return spec;
+}
+
+namespace {
+// Biomasa de nacimiento de la especie con un gen de tamaño dado (masa ∝ tamaño³).
+float targetBirthBiomassOf(LocomotionType type, float size) {
+    const CellSpec base = speciesSpec(type);
+    return cellMassPmol(units::kPi * base.radiusX * base.radiusY) * size * size * size;
+}
+} // namespace
+
+void World::applyTraits(entt::entity e) {
+    const Heredity& h = registry_.get<Heredity>(e);
+    Locomotion& loco = registry_.get<Locomotion>(e);
+    loco.power = h.traits.speed;
+    registry_.get<Digestion>(e).rateScale = h.traits.digestion;
+    Metabolism& meta = registry_.get<Metabolism>(e);
+    meta.photosynthetic = h.traits.photosynthesis > 0.0f;
+    meta.targetBirthBiomass = targetBirthBiomassOf(loco.type, h.traits.sizeScale);
+    CellShape& shape = registry_.get<CellShape>(e);
+    shape.shapeRate = speciesSpec(loco.type).shapeRate * h.traits.rigidity;
+    RingBody& body = registry_.get<RingBody>(e);
+    if (body.membraneReservoirRate <= 0.0f && !registry_.all_of<Dividing>(e))
+        body.shapeRate = shape.shapeRate;
+}
+
+entt::entity World::spawnOrganism(LocomotionType type, Vec2 center, const Genome& genome) {
+    CellSpec spec = speciesSpec(type);
+    spec.center = center;
+    spec.angle = 0.0f;
+    const Traits traits = traitsOf(genome, type);
+    spec.radiusX *= traits.sizeScale;
+    spec.radiusY *= traits.sizeScale;
+    spec.shapeRate *= traits.rigidity;
     const entt::entity e = spawnCell(spec);
     RingBody& body = registry_.get<RingBody>(e);
     Locomotion loco;
@@ -542,12 +575,20 @@ entt::entity World::spawnPlayer(LocomotionType type, Vec2 center) {
     Metabolism meta;
     meta.biomass = meta.birthBiomass = cellMassPmol(body.restArea);
     meta.reserves = 0.3f * meta.biomass;
-    meta.photosynthetic = type == LocomotionType::Flagellum; // Euglena: cloroplastos
-    registry_.emplace<Player>(e);
     registry_.emplace<Locomotion>(e, loco);
     registry_.emplace<Digestion>(e);
     registry_.emplace<Metabolism>(e, meta);
     registry_.emplace<Lineage>(e, Lineage{run_, 0});
+    registry_.emplace<Heredity>(e, Heredity{genome, traits});
+    applyTraits(e);
+    Rng rng(config_.seed, rng_stream::kOrganelles, body.id, step_);
+    refillOrganelles(body, bodies_, genome, rng);
+    return e;
+}
+
+entt::entity World::spawnPlayer(LocomotionType type, Vec2 center, const Genome* genome) {
+    const entt::entity e = spawnOrganism(type, center, genome ? *genome : speciesGenome(type));
+    registry_.emplace<Player>(e);
     player_ = e;
     return e;
 }
@@ -573,6 +614,9 @@ std::vector<const RingBody*> World::preyFor(const RingBody& predator) const {
     const float margin = feedingParams_.wrapReach + feedingParams_.contactGap + 10.0f;
     for (auto [e, body] : registry_.view<RingBody>().each()) {
         if (&body == &predator || std::abs(body.restArea) > maxArea)
+            continue;
+        // Una lórica o testa gruesa no se puede fagocitar.
+        if (const Heredity* h = registry_.try_get<Heredity>(e); h && h->traits.armor >= 0.5f)
             continue;
         const Vec2 pc = (body.aabbMax + body.aabbMin) * 0.5f;
         const Vec2 d = {minImage(pc.x - center.x, width_), minImage(pc.y - center.y, height_)};
@@ -607,6 +651,13 @@ void World::applyMotion(float dt) {
         // La ameba deja de desplazarse mientras forma una copa fagocítica.
         if (loco.type == LocomotionType::Pseudopod && engulfing)
             loco.active = false;
+        // Durante la conjugación la pareja queda unida por la región oral y no nada.
+        if (const Conjugating* cj = registry_.try_get<Conjugating>(e);
+            cj && registry_.valid(cj->partner) && registry_.all_of<RingBody>(cj->partner)) {
+            loco.forward = loco.turn = 0.0f;
+            loco.active = false;
+            pullTogether(body, registry_.get<RingBody>(cj->partner));
+        }
         applyLocomotion(body, bodies_, loco, locomotionParams_, simTime_, width_, height_);
         if (loco.type == LocomotionType::Pseudopod)
             updateCup(e, body, dt);
@@ -643,13 +694,36 @@ void World::updateCup(entt::entity e, RingBody& body, float dt) {
             continue; // no se come a su propio linaje
         if (registry_.any_of<PhagocyticCup>(static_cast<entt::entity>(prey->id)))
             continue;
+        const auto preyEntity = static_cast<entt::entity>(prey->id);
+        if (registry_.all_of<Discharge>(preyEntity))
+            continue; // acaba de disparar sus tricocistos: el depredador retrocede
         const std::uint32_t contact =
             findContact(body, bodies_, *prey, imageShift(*prey, body.centroid), feedingParams_);
-        if (contact != ~0u) {
-            PhagocyticCup& cup = registry_.emplace<PhagocyticCup>(e, PhagocyticCup{prey->id, contact});
-            holdPrey(*prey, bodies_, cup);
-            return;
+        if (contact == ~0u)
+            continue;
+        // Defensa: al sentir el ataque, la presa dispara sus tricocistos (arpones de proteína
+        // que eyecta en milisegundos) y puede rechazar al depredador.
+        if (const Heredity* h = registry_.try_get<Heredity>(preyEntity); h && h->traits.trichocystDefense > 0.0f) {
+            Rng rng(config_.seed, rng_stream::kDefense, prey->id, step_);
+            if (rng.uniform() < h->traits.trichocystDefense) {
+                registry_.emplace<Discharge>(preyEntity, Discharge{5.0f});
+                if (Metabolism* pm = registry_.try_get<Metabolism>(preyEntity))
+                    pm->reserves = std::max(0.0f, pm->reserves - 0.02f * pm->biomass); // rearmar cuesta
+                const Vec2 pc = prey->centroid + imageShift(*prey, body.centroid) - prey->centroid;
+                for (std::uint32_t s : body.ring) { // los arpones empujan la membrana atacante
+                    const Vec2 d = Vec2{bodies_.x[s], bodies_.y[s]} - (prey->centroid + pc);
+                    const float len = length(d);
+                    if (len < 1e-3f || len > 0.8f * length(prey->aabbMax - prey->aabbMin) + 20.0f)
+                        continue;
+                    bodies_.vx[s] += d.x / len * 20.0f;
+                    bodies_.vy[s] += d.y / len * 20.0f;
+                }
+                continue;
+            }
         }
+        PhagocyticCup& cup = registry_.emplace<PhagocyticCup>(e, PhagocyticCup{prey->id, contact});
+        holdPrey(*prey, bodies_, cup);
+        return;
     }
 }
 
@@ -934,6 +1008,7 @@ void World::updateLifecycle(float dt) {
     const MetabolismParams& mp = metabolismParams_;
     dying_.clear();
     splits_.clear();
+    conjugationsDone_.clear();
 
     for (auto [e, body, meta] : registry_.view<RingBody, Metabolism>().each()) {
         Digestion* dig = registry_.try_get<Digestion>(e);
@@ -952,6 +1027,13 @@ void World::updateLifecycle(float dt) {
                               : std::min(1.0f, std::abs(loco->speed) / maxSpeedOf(locomotionParams_, loco->type));
         }
         in.bioDt = bioDt;
+        const Heredity* her = registry_.try_get<Heredity>(e);
+        if (her) {
+            in.growthScale = her->traits.growthMax;
+            in.maintenanceScale = her->traits.maintenance;
+            in.photosynthesisScale = her->traits.photosynthesis;
+            in.motilityCostScale = her->traits.motilityCost;
+        }
         const MetabolicOutput out = updateMetabolism(meta, mp, in);
         // El intercambio de gases con el agua ocurre a la tasa REAL: comprimir el tiempo
         // biológico no debe acelerar la difusión ni el intercambio con el aire (agotaría o
@@ -964,7 +1046,8 @@ void World::updateLifecycle(float dt) {
         }
 
         // Tamaño: biomasa + lo que hay en las vacuolas. Los organelos crecen con la célula.
-        const float target = cellAreaForMass(meta.biomass) + (dig ? vacuoleContentArea(*dig) : 0.0f);
+        const float target = cellAreaForMass(meta.biomass) * (her ? her->traits.volume : 1.0f) +
+                             (dig ? vacuoleContentArea(*dig) : 0.0f);
         const float before = std::abs(body.restArea);
         soft_body::setRestArea(body, body.restArea >= 0.0f ? target : -target);
         if (before > 0.0f) {
@@ -978,6 +1061,16 @@ void World::updateLifecycle(float dt) {
             }
         }
 
+        if (Conjugating* cj = registry_.try_get<Conjugating>(e)) {
+            if (!registry_.valid(cj->partner)) { // la pareja murió: se separa
+                abandonedConjugations_.push_back(e);
+                continue;
+            }
+            cj->progress += bioDt / (kConjugationHours * 3600.0f);
+            if (cj->progress >= 1.0f && e < cj->partner) // cada pareja se resuelve una sola vez
+                conjugationsDone_.push_back({e, cj->partner});
+            continue; // no se divide mientras conjuga
+        }
         Dividing* dv = registry_.try_get<Dividing>(e);
         const float cost = registry_.all_of<Player>(e) ? mp.playerDivisionCost : mp.npcDivisionCost;
         if (!dv && readyToDivide(meta, cost)) {
@@ -1003,6 +1096,11 @@ void World::updateLifecycle(float dt) {
                 splits_.push_back({e, ta, tb});
         }
     }
+    for (entt::entity e : abandonedConjugations_)
+        registry_.remove<Conjugating>(e);
+    abandonedConjugations_.clear();
+    for (const auto& [a, b] : conjugationsDone_)
+        finishConjugation(a, b);
     for (const PendingSplit& sp : splits_)
         divide(sp.cell, sp.tipA, sp.tipB);
     for (entt::entity e : dying_)
@@ -1198,6 +1296,25 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
         ++lin->generation;
         registry_.emplace<Lineage>(child, *lin);
     }
+    // Cada hija recibe una copia del genoma con sus propias mutaciones, y completa sus
+    // organelos (se replican al crecer).
+    if (const Heredity* mh = registry_.try_get<Heredity>(cell)) {
+        const LocomotionType type = registry_.get<Locomotion>(cell).type;
+        Heredity hb = *mh;
+        Heredity ha = *mh;
+        Rng ra(config_.seed, rng_stream::kMutation, entt::to_integral(cell) * 2ull, step_);
+        Rng rb(config_.seed, rng_stream::kMutation, entt::to_integral(cell) * 2ull + 1, step_);
+        mutate(ha.genome, type, ra);
+        mutate(hb.genome, type, rb);
+        ha.traits = traitsOf(ha.genome, type);
+        hb.traits = traitsOf(hb.genome, type);
+        registry_.replace<Heredity>(cell, ha);
+        registry_.emplace<Heredity>(child, hb);
+        applyTraits(cell);
+        applyTraits(child);
+        refillOrganelles(registry_.get<RingBody>(cell), bodies_, ha.genome, ra);
+        refillOrganelles(registry_.get<RingBody>(child), bodies_, hb.genome, rb);
+    }
     if (cell == player_)
         events_.push_back({WorldEvent::Type::PlayerDivided, cell, child, ""});
     if (grabSlot_ != kNoGrab && bodies_.owner[grabSlot_] == childId)
@@ -1323,4 +1440,97 @@ void World::populate(int cells) {
         spawnCell(randomCellSpec(rng, p));
         ++placed;
     }
+}
+
+// ---------------------------------------------------------------------------
+// Conjugación (Paramecium)
+// ---------------------------------------------------------------------------
+
+void World::pullTogether(RingBody& body, const RingBody& partner) {
+    // Adhesión de las regiones orales: los puntos cercanos a la pareja se acercan a ella.
+    const Vec2 pc = partner.centroid + imageShift(partner, body.centroid) - partner.centroid;
+    const Vec2 to = (partner.centroid + pc) - body.centroid;
+    const float dist = length(to);
+    if (dist < 1e-3f)
+        return;
+    const Vec2 dir = to * (1.0f / dist);
+    for (std::uint32_t s : body.ring) {
+        const Vec2 r = Vec2{bodies_.x[s], bodies_.y[s]} - body.centroid;
+        if (dot(r, dir) <= 0.0f)
+            continue;
+        bodies_.vx[s] += dir.x * 3.0f;
+        bodies_.vy[s] += dir.y * 3.0f;
+    }
+}
+
+entt::entity World::conjugationPartner(entt::entity cell) const {
+    if (!registry_.valid(cell) || registry_.any_of<Conjugating, Dividing>(cell))
+        return entt::null;
+    const Locomotion* loco = registry_.try_get<Locomotion>(cell);
+    const Heredity* h = registry_.try_get<Heredity>(cell);
+    if (!loco || !h || loco->type != LocomotionType::Cilia)
+        return entt::null;
+    const RingBody& body = registry_.get<RingBody>(cell);
+    entt::entity best = entt::null;
+    float bestDist = 40.0f; // [µm] entre membranas, aproximado por las cajas
+    for (auto [e, other, ol, oh] : registry_.view<RingBody, Locomotion, Heredity>().each()) {
+        if (e == cell || ol.type != LocomotionType::Cilia || registry_.any_of<Conjugating, Dividing>(e))
+            continue;
+        if (oh.genome[Gene::MatingType] == h->genome[Gene::MatingType])
+            continue; // mismo tipo de apareamiento: no se reconocen como pareja
+        const Vec2 d = {minImage(other.centroid.x - body.centroid.x, width_),
+                        minImage(other.centroid.y - body.centroid.y, height_)};
+        const float gap = length(d) - 0.5f * (std::min(body.aabbMax.x - body.aabbMin.x, body.aabbMax.y - body.aabbMin.y) +
+                                                std::min(other.aabbMax.x - other.aabbMin.x, other.aabbMax.y - other.aabbMin.y));
+        if (gap < bestDist) {
+            bestDist = gap;
+            best = e;
+        }
+    }
+    return best;
+}
+
+bool World::tryConjugate(entt::entity cell) {
+    const entt::entity partner = conjugationPartner(cell);
+    if (partner == entt::null)
+        return false;
+    registry_.emplace<Conjugating>(cell, Conjugating{partner, 0.0f});
+    registry_.emplace<Conjugating>(partner, Conjugating{cell, 0.0f});
+    return true;
+}
+
+void World::finishConjugation(entt::entity a, entt::entity b) {
+    if (!registry_.valid(a) || !registry_.valid(b))
+        return;
+    Heredity& ha = registry_.get<Heredity>(a);
+    Heredity& hb = registry_.get<Heredity>(b);
+    Rng rng(config_.seed, rng_stream::kMutation, entt::to_integral(a) * 7919ull + entt::to_integral(b), step_);
+    // Intercambio recíproco de pronúcleos: los dos exconjugantes quedan con el mismo genotipo
+    // (el tipo de apareamiento de cada uno se vuelve a determinar).
+    const Genome child = recombine(ha.genome, hb.genome, rng);
+    const LocomotionType type = registry_.get<Locomotion>(a).type;
+    for (entt::entity e : {a, b}) {
+        Heredity& h = registry_.get<Heredity>(e);
+        h.genome = child;
+        h.genome[Gene::MatingType] = rng.uniform() < 0.5f ? 0.0f : 1.0f;
+        h.traits = traitsOf(h.genome, type);
+        applyTraits(e);
+        refillOrganelles(registry_.get<RingBody>(e), bodies_, h.genome, rng);
+        registry_.remove<Conjugating>(e);
+    }
+    (void)ha;
+    (void)hb;
+    if (a == player_ || b == player_)
+        events_.push_back({WorldEvent::Type::PlayerConjugated, a, b, ""});
+}
+
+void World::tickDefenses(float dt) {
+    std::vector<entt::entity> expired;
+    for (auto [e, d] : registry_.view<Discharge>().each()) {
+        d.timer -= dt;
+        if (d.timer <= 0.0f)
+            expired.push_back(e);
+    }
+    for (entt::entity e : expired) // no se quita mientras se recorre la vista
+        registry_.remove<Discharge>(e);
 }

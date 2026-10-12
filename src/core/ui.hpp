@@ -31,7 +31,7 @@ void drawUi(World& world, ToolState& tools);
 
 // Pantalla de inicio: elegir la especie fundadora (dibuja un frame completo).
 std::optional<LocomotionType> drawTitleScreen(const Progress& progress);
-// Objetivo de la partida y estado del linaje.
-void drawRunHud(const Run& run);
+// Objetivo de la partida, estado del linaje y genoma (del jugador o de la candidata elegida).
+void drawRunHud(const Run& run, const World& world);
 // Fin de partida: estadísticas y desbloqueos.
 void drawGameOver(const Run& run, const Progress& progress, const std::vector<LocomotionType>& unlocked);

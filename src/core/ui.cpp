@@ -92,7 +92,7 @@ void drawUi(World& world, ToolState& tools) {
     }
     slider("luz", &world.medium().surfaceLight, 0.0f, 1.0f, "%.2f");
     slider("tiempo bio x", &world.bioTimeScale(), 1.0f, 600.0f, "%.0f");
-    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "F seguir camara | N nueva partida");
+    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "F seguir | N nueva partida | V conjugar");
     y += 16;
     GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Cilios: W/S avanzar, A/D girar");
     y += 16;
@@ -163,7 +163,50 @@ std::optional<LocomotionType> drawTitleScreen(const Progress& progress) {
     return chosen;
 }
 
-void drawRunHud(const Run& run) {
+namespace {
+
+// Genes de la célula `cell`; si `compare` es válida, marca las diferencias con ella.
+void drawGenome(const World& world, entt::entity cell, entt::entity compare, float x, float y, const char* title) {
+    const entt::registry& reg = world.registry();
+    if (!reg.valid(cell) || !reg.all_of<Heredity, Locomotion>(cell))
+        return;
+    const Genome& g = reg.get<Heredity>(cell).genome;
+    const Genome* other = reg.valid(compare) && reg.all_of<Heredity>(compare) ? &reg.get<Heredity>(compare).genome : nullptr;
+    const LocomotionType type = reg.get<Locomotion>(cell).type;
+    int rows = 0;
+    for (std::size_t i = 0; i < kGeneCount; ++i)
+        rows += geneAllowed(type, static_cast<Gene>(i)) ? 1 : 0;
+    DrawRectangle(static_cast<int>(x) - 10, static_cast<int>(y), 330, 26 + rows * 18, Fade({236, 231, 214, 255}, 0.85f));
+    DrawText(title, static_cast<int>(x), static_cast<int>(y) + 6, 16, {60, 64, 52, 255});
+    float yy = y + 26;
+    for (std::size_t i = 0; i < kGeneCount; ++i) {
+        const auto gene = static_cast<Gene>(i);
+        if (!geneAllowed(type, gene))
+            continue;
+        const GeneInfo& info = geneInfo(gene);
+        Color col = DARKGRAY;
+        const char* mark = "";
+        if (other && std::abs(other->v[i] - g.v[i]) > 0.005f) {
+            const bool up = g.v[i] > other->v[i];
+            col = up ? Color{40, 120, 40, 255} : Color{160, 50, 40, 255};
+            mark = up ? "  +" : "  -";
+        }
+        if (gene == Gene::MatingType) {
+            DrawText(TextFormat("%-13s %s%s", info.name, g.v[i] > 0.5f ? "II" : "I", mark), static_cast<int>(x),
+                     static_cast<int>(yy), 14, col);
+        } else {
+            const float t = (g.v[i] - info.min) / (info.max - info.min);
+            DrawText(TextFormat("%-13s %.2f%s", info.name, g.v[i], mark), static_cast<int>(x), static_cast<int>(yy), 14, col);
+            DrawRectangle(static_cast<int>(x) + 190, static_cast<int>(yy) + 3, 110, 8, Fade(GRAY, 0.3f));
+            DrawRectangle(static_cast<int>(x) + 190, static_cast<int>(yy) + 3, static_cast<int>(110 * t), 8, col);
+        }
+        yy += 18;
+    }
+}
+
+} // namespace
+
+void drawRunHud(const Run& run, const World& world) {
     const Census& c = run.census();
     const float x = GetScreenWidth() - 330.0f;
     DrawRectangle(static_cast<int>(x) - 10, 10, 330, 104, Fade({236, 231, 214, 255}, 0.85f));
@@ -174,6 +217,18 @@ void drawRunHud(const Run& run) {
     DrawText(TextFormat("Competidoras: %d | divisiones %d", c.otherCells, run.divisions()), static_cast<int>(x), 62, 16, DARKGRAY);
     DrawText(TextFormat("Tiempo %.0f s (%.1f h bio)", run.elapsed(), run.elapsed() * units::kBioTimeScale / 3600.0f),
              static_cast<int>(x), 82, 16, DARKGRAY);
+
+    // Genoma: el de la candidata durante una elección (comparado con la otra), si no el propio.
+    if (run.simulationPaused() && !run.candidates().empty()) {
+        const auto& cands = run.candidates();
+        const entt::entity sel = cands[run.selected()];
+        const entt::entity alt = cands.size() == 2 ? cands[1 - run.selected()] : entt::null;
+        drawGenome(world, sel, alt, x, 124, cands.size() == 2 ? "Genoma de esta hija (vs. la otra)" : "Genoma del descendiente");
+    } else {
+        drawGenome(world, world.player(), entt::null, x, 124, "Genoma");
+        if (world.conjugationPartner(world.player()) != entt::null)
+            centered("Pareja compatible cerca: V para conjugar", GetScreenHeight() - 90.0f, 20, {60, 90, 140, 255});
+    }
 
     if (run.won())
         centered("Tu linaje domina la gota!  (segui jugando o N para una partida nueva)", 20, 22, {40, 110, 40, 255});

@@ -1,10 +1,10 @@
 # bio
 
 Simulación de vida acuática microscópica en C++20 (ver `AGENTS.md` y `docs/`).
-Estado actual: **fase 5 — partida roguelite**: elegís especie fundadora, tu linaje crece por
-divisiones (elegís con qué hija seguir; las otras deambulan y comen solas), si morís seguís en un
-descendiente, y ganás cuando tu linaje domina la biomasa de la gota. Récords y especies
-desbloqueadas se guardan en `~/.local/share/biogame/progress.txt`.
+Estado actual: **fase 6 — genoma y organelos**: cada célula tiene un genoma (tamaño, motor,
+mitocondrias, cloroplastos, lisosomas, tricocistos, coraza, rigidez, tipo de apareamiento) que
+cambia cómo se juega; muta en cada mitosis (al elegir hija ves qué cambió), se recombina por
+conjugación y parte de él pasa a la siguiente partida. Sobre las fases 1–5.
 
 ## Compilar, ejecutar y testear
 
@@ -23,6 +23,7 @@ Las dependencias se descargan solas con FetchContent la primera vez.
 - Flagelo: **W** o click izquierdo para batir; gira hacia el mouse
 - Ameba: **click izquierdo** extiende un pseudópodo hacia el mouse; al tocar una célula más chica, la envuelve sola
 - **Al dividirte o morir:** Tab/flechas o click para elegir la célula, **Enter** para confirmar
+- **V** conjugar con un ciliado compatible cercano (otro tipo de apareamiento)
 - **N** nueva partida · **F** cámara que sigue al jugador · **H** ocultar el panel · rueda: zoom · Espacio: pausa
 - Laboratorio: **Ctrl+click** revolver · **Shift+click** estirar membrana · **T** tinta · **B** detrito ·
   **C** célula · **K** 50 células · **X** borrar · **L** lisar · **Q** apretar · **F1–F4** overlays
@@ -42,6 +43,8 @@ src/
   bio/phagocytosis.*    copa fagocítica (cremallera) y fusión de membranas
   bio/metabolism.*      respiración, fermentación, fotosíntesis, crecimiento, inanición
   bio/division.*        mitosis: surco de división y forma de reposo de las hijas
+  bio/genome.*          genes, mutación, recombinación, herencia y rasgos fisiológicos
+  bio/organelles.*      organelos visibles según el genoma (mitocondrias, cloroplastos, lisosomas)
   ai/autopilot.*        comportamiento mínimo de las células del linaje que no controlás
   game/run.*            partida: elección de hija/heredero, censo de biomasa, victoria, extinción
   game/progress.*       meta-progresión persistente (desbloqueos y récords)

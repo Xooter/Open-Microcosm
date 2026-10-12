@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bio/genome.hpp"
 #include "bio/locomotion.hpp"
 #include "game/lineage.hpp"
 
@@ -15,6 +16,7 @@ struct RunConfig {
     std::uint64_t seed = 1;
     float targetShare = 0.5f; // ganar: el linaje suma esta fracción de la biomasa viva
     int competitors = 24;     // células pasivas que compiten por la biomasa (hasta la fase 7)
+    Genome genome = speciesGenome(LocomotionType::Cilia); // genoma del fundador
 };
 
 // Una partida roguelite: una gota, un linaje.
@@ -48,7 +50,10 @@ class Run {
     float bestShare() const { return bestShare_; }
     std::uint32_t bestGeneration() const { return bestGeneration_; }
     int divisions() const { return divisions_; }
+    int conjugations() const { return conjugations_; }
     const char* deathCause() const { return deathCause_; }
+    // Genoma más reciente del jugador (el legado que queda al terminar la partida).
+    const Genome& lineageGenome() const { return lineageGenome_; }
 
   private:
     RunConfig config_;
@@ -61,6 +66,8 @@ class Run {
     float bestShare_ = 0.0f;
     std::uint32_t bestGeneration_ = 0;
     int divisions_ = 0;
+    int conjugations_ = 0;
     bool won_ = false, justWon_ = false;
     const char* deathCause_ = "";
+    Genome lineageGenome_;
 };

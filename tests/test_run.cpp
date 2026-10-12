@@ -123,10 +123,10 @@ TEST_CASE("la meta-progresión se guarda, se carga y desbloquea especies") {
     CHECK(p.isUnlocked(LocomotionType::Cilia));
     CHECK_FALSE(p.isUnlocked(LocomotionType::Flagellum));
 
-    auto fresh = p.recordRun(3, 0.2f, false);
+    auto fresh = p.recordRun(3, 0.2f, false, LocomotionType::Cilia, speciesGenome(LocomotionType::Cilia));
     REQUIRE(fresh.size() == 1);
     CHECK(fresh[0] == LocomotionType::Flagellum);
-    fresh = p.recordRun(1, 0.6f, true);
+    fresh = p.recordRun(1, 0.6f, true, LocomotionType::Cilia, speciesGenome(LocomotionType::Cilia));
     REQUIRE(fresh.size() == 1);
     CHECK(fresh[0] == LocomotionType::Pseudopod);
 

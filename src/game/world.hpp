@@ -5,6 +5,8 @@
 #include "bio/cell.hpp"
 #include "bio/division.hpp"
 #include "bio/feeding.hpp"
+#include "bio/genome.hpp"
+#include "bio/organelles.hpp"
 #include "bio/locomotion.hpp"
 #include "bio/metabolism.hpp"
 #include "bio/phagocytosis.hpp"
@@ -45,6 +47,20 @@ struct MediumParams {
     float inkLifetime = 120.0f;       // [s] la tinta es una herramienta de debug
 };
 
+// Componente: conjugación en curso (Paramecium). Dura unas horas biológicas.
+struct Conjugating {
+    entt::entity partner;
+    float progress = 0.0f;
+};
+inline constexpr float kConjugationHours = 2.0f;
+
+// Componente: tricocistos recién disparados (el depredador retrocede un rato).
+struct Discharge {
+    float timer; // [s]
+};
+
+CellSpec speciesSpec(LocomotionType type);
+
 // Controles del jugador en el frame actual.
 struct PlayerInput {
     float forward = 0.0f; // cilios: W/S
@@ -76,7 +92,12 @@ class World {
     void setSqueeze(Vec2 center, float speed);
     void clearSqueeze() { squeezeActive_ = false; }
     // Jugador y linaje.
-    entt::entity spawnPlayer(LocomotionType type, Vec2 center);
+    entt::entity spawnPlayer(LocomotionType type, Vec2 center, const Genome* genome = nullptr);
+    // Organismo de una especie con un genoma dado (del linaje actual, sin control).
+    entt::entity spawnOrganism(LocomotionType type, Vec2 center, const Genome& genome);
+    // Conjugación: busca una pareja compatible cerca (ciliado de otro tipo de apareamiento).
+    entt::entity conjugationPartner(entt::entity cell) const;
+    bool tryConjugate(entt::entity cell);
     // El control pasa a otra célula (del linaje): la anterior queda con piloto automático.
     void setPlayer(entt::entity cell);
     void setRun(std::uint32_t run) { run_ = run; }
@@ -151,6 +172,10 @@ class World {
     void duplicateOrganelles(entt::entity cell);
     void divide(entt::entity cell, std::size_t tipA, std::size_t tipB);
     void lyse(entt::entity cell, const char* cause);
+    void applyTraits(entt::entity cell);
+    void pullTogether(RingBody& body, const RingBody& partner);
+    void finishConjugation(entt::entity a, entt::entity b);
+    void tickDefenses(float dt);
     void exchangeO2(Vec2 at, float pmol);
     float microMolarPerPmol() const;
     void excludeFromCells();
@@ -195,6 +220,8 @@ class World {
         std::size_t tipA, tipB;
     };
     std::vector<PendingSplit> splits_;
+    std::vector<std::pair<entt::entity, entt::entity>> conjugationsDone_;
+    std::vector<entt::entity> abandonedConjugations_;
     std::vector<std::size_t> eatenBacteria_, eatenAmbient_;
     std::vector<std::uint8_t> takenBacteria_, takenAmbient_;
     SpatialGrid bacteriaGrid_;

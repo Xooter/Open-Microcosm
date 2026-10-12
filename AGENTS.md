@@ -145,6 +145,21 @@ El LOD (fase 9) degrada las células lejanas a menos partículas o a simulación
   Las hijas se re-muestrean (`resampleRing`) y vuelven a la forma de su especie (`CellShape`).
 - **Lisis:** ~40% del contenido se disuelve en nutrientes y el resto queda como detritos.
 
+### Genoma (`bio/genome`, `bio/organelles`)
+
+- Componente `Heredity` = `Genome` (genes cuantitativos, relativos a la especie) + `Traits`
+  (multiplicadores fisiológicos derivados con `traitsOf`). `World::applyTraits` los vuelca en
+  `Locomotion::power`, `Digestion::rateScale`, `Metabolism` y la forma (`CellShape`).
+- `geneAllowed` impone la biología: cloroplastos solo en Euglena, tricocistos solo en ciliados,
+  coraza solo en flagelados (lórica) y amebas (testa). Sin endosimbiosis, un gen ausente no
+  aparece por mutación.
+- Mitosis: cada hija muta su propia copia. Conjugación (`Conjugating`): requiere tipos de
+  apareamiento distintos; ambos exconjugantes quedan con el mismo genotipo recombinado.
+- Los organelos son partículas interiores con `BodyParticles::tag`; ocupan lugar (`Traits::volume`
+  agranda la célula) y cuestan mantenimiento.
+- Defensas: coraza ≥ 0,5 impide la fagocitosis; los tricocistos pueden rechazar una copa
+  (componente `Discharge`, el depredador retrocede).
+
 ### Partida y linaje (`game/run`, `game/lineage`, `game/progress`, `ai/autopilot`)
 
 - `World` no sabe de reglas de partida: emite `WorldEvent` (el jugador se dividió o murió) y
@@ -156,7 +171,8 @@ El LOD (fase 9) degrada las células lejanas a menos partículas o a simulación
 - La alimentación de muchas bocas usa una grilla de bacterias; lo comido se marca y se quita todo
   junto al final del paso. Las fagocitosis (que destruyen entidades) se aplican después de
   recorrer la vista de EnTT.
-- `Progress` se guarda como texto clave=valor en `defaultProgressPath()`.
+- `Progress` se guarda como texto clave=valor en `defaultProgressPath()`, incluido el legado
+  genético por especie (`legacy_N`); el fundador lo hereda gen a gen con probabilidad 1/2.
 
 ### Jugador (`bio/locomotion`, `bio/feeding`, `bio/phagocytosis`)
 

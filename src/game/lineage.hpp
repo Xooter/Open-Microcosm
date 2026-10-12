@@ -12,7 +12,7 @@ struct Lineage {
 
 // Eventos que el mundo le avisa a la capa de juego (se consumen con World::takeEvents).
 struct WorldEvent {
-    enum class Type { PlayerDivided, PlayerDied };
+    enum class Type { PlayerDivided, PlayerDied, PlayerConjugated };
     Type type;
     entt::entity a = entt::null; // PlayerDivided: madre (sigue siendo el jugador por ahora)
     entt::entity b = entt::null; // PlayerDivided: la otra hija

@@ -67,7 +67,7 @@ void ingest(Digestion& dig, RingBody& body, BodyParticles& bp, Vec2 where, float
 
 float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingParams& params,
              float dt, float bioDt) {
-    const float fraction = 1.0f - std::exp(-params.digestionRate * bioDt);
+    const float fraction = 1.0f - std::exp(-params.digestionRate * dig.rateScale * bioDt);
     float digested = 0.0f;
     for (std::size_t k = 0; k < dig.vacuoles.size();) {
         FoodVacuole& v = dig.vacuoles[k];

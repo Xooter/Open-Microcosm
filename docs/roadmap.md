@@ -110,14 +110,20 @@ que nada, come, crece y se divide en un medio vivo. Antes de sumar contenido se 
   - Las competidoras son pasivas (no comen ni mueren) hasta que exista el ecosistema real.
 - Pendiente para la fase 6: la herencia de genoma entre partidas.
 
-## Fase 6 — Genoma y organelos físicos
-- Genoma: cada rasgo es un gen. La mitosis copia el genoma con mutaciones y la conjugación lo
-  mezcla con otra célula.
-- Los organelos ocupan espacio real: más organelos hacen una célula más grande, lenta y visible.
-  La posición importa (por ejemplo, el flagelo atrás).
-- Locomoción, armas y defensas: flagelo, cilios, pseudópodo, tricocistos, toxicistos, pared,
-  teca o caparazón, y frústula.
-- **Hecho cuando:** dos linajes con genomas distintos se juegan claramente distinto.
+## Fase 6 — Genoma y organelos físicos ✅ (hecha)
+- Genoma con 9 genes de efecto real: tamaño, motor (velocidad ∝ √motor, costo ∝ motor),
+  mitocondrias (crecimiento), cloroplastos (fotosíntesis), lisosomas (digestión), tricocistos
+  (defensa), coraza (inmune a la fagocitosis, más lenta y cara), rigidez y tipo de apareamiento.
+- Restricciones de especie (sin endosimbiosis no aparecen organelos ajenos).
+- Mutaciones independientes en cada hija; la elección de hija muestra los genes que cambiaron.
+- Conjugación de ciliados (tipos de apareamiento distintos, genotipo recombinado compartido).
+- Organelos visibles y con volumen; tricocistos bajo la película; lórica/testa; disparos.
+- Herencia entre partidas: legado genético por especie en el archivo de progreso.
+- Verificado: dos genomas distintos se juegan distinto (motor 0,5 vs 2: 424 vs 848 µm/s;
+  Euglena grande más lenta; más cloroplastos crecen 1,4× vs 1,0×; más lisosomas digieren 3×;
+  la lórica impide ser fagocitado).
+- Pendiente: la posición de los organelos (p. ej., flagelo anterior o posterior) no se modeló;
+  la conjugación solo tiene parejas dentro del propio linaje hasta que haya ciliados NPC (fase 7).
 
 ## Fase 7 — Ecosistema NPC (núcleo)
 - IA por quimiotaxis (*run & tumble*), caza, huida y fototaxis. Comportamiento data-driven por

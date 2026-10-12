@@ -40,6 +40,7 @@ struct Locomotion {
     bool active = false;  // flagelo batiendo / pseudópodo extendiéndose
     Vec2 target;          // hacia dónde gira el flagelado o se estira el pseudópodo
     float speed = 0.0f;   // velocidad de nado actual [µm/s] (para el agua y el render)
+    float power = 1.0f;   // multiplicador genético de la velocidad
     std::uint32_t mouthRing = 0; // índice del anillo con el citostoma (boca)
 };
 

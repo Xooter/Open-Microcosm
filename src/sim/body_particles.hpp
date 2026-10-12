@@ -18,6 +18,7 @@ struct BodyParticles {
     std::vector<float> invMass; // reparte las correcciones: los organelos pesados se mueven menos
     std::vector<std::uint32_t> owner;
     std::vector<BodyKind> kind;
+    std::vector<std::uint8_t> tag; // tipo visual libre para capas superiores (organelo, etc.)
     std::vector<std::uint8_t> alive;
     std::vector<std::uint32_t> freeSlots;
 
@@ -38,6 +39,7 @@ struct BodyParticles {
             invMass.push_back(0);
             owner.push_back(0);
             kind.push_back(k);
+            tag.push_back(0);
             alive.push_back(0);
         }
         x[s] = px;
@@ -47,6 +49,7 @@ struct BodyParticles {
         invMass[s] = w;
         owner[s] = own;
         kind[s] = k;
+        tag[s] = 0;
         alive[s] = 1;
         return s;
     }

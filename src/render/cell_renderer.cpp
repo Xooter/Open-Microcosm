@@ -3,9 +3,13 @@
 #include "bio/cell.hpp"
 #include "bio/division.hpp"
 #include "bio/feeding.hpp"
+#include "bio/genome.hpp"
 #include "bio/locomotion.hpp"
+#include "bio/organelles.hpp"
 #include "core/profiling.hpp"
 #include "game/world.hpp"
+
+#include <cmath>
 #include "sim/polygon.hpp"
 #include "sim/soft_body.hpp"
 
@@ -25,6 +29,12 @@ constexpr Color kCilia = {70, 76, 62, 90};
 constexpr Color kFlagellum = {60, 66, 52, 70};
 constexpr Color kEyespot = {205, 80, 40, 220};  // estigma de Euglena (carotenoides)
 constexpr Color kMouth = {60, 58, 48, 200};
+constexpr Color kMitochondrion = {120, 96, 70, 190};
+constexpr Color kChloroplast = {70, 140, 55, 210};
+constexpr Color kLysosome = {150, 78, 70, 200};
+constexpr Color kTrichocyst = {90, 96, 80, 150};
+constexpr Color kArmor = {150, 112, 62, 200};   // lórica/testa con hierro y manganeso
+constexpr Color kDischarge = {80, 80, 70, 170};
 constexpr float kRimMicrometers = 5.0f;
 constexpr float kPi = 3.14159265f;
 
@@ -216,6 +226,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
         const Locomotion* loco = reg.try_get<Locomotion>(e);
         const Digestion* dig = reg.try_get<Digestion>(e);
         const Dividing* dividing = reg.try_get<Dividing>(e);
+        const Heredity* her = reg.try_get<Heredity>(e);
         forEachImage(world, body, view, [&] {
             const std::size_t n = body.poly.size();
             for (std::size_t i = 0; i < n; ++i)
@@ -231,10 +242,56 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             if (loco && loco->type == LocomotionType::Flagellum)
                 drawFlagellum(bp, body, *loco, time, px);
 
+            // Gránulos y organelos del citoplasma, por tipo.
             for (std::size_t k = body.organelleCount; k < body.interior.size(); ++k) {
                 const std::uint32_t s = body.interior[k];
-                const float d = std::max(2.0f * bp.radius[s], 1.5f * px);
-                DrawRectangleV({bp.x[s] - 0.5f * d, bp.y[s] - 0.5f * d}, {d, d}, kGranule);
+                const float r = std::max(bp.radius[s], 0.75f * px);
+                switch (static_cast<OrganelleTag>(bp.tag[s])) {
+                case OrganelleTag::Mitochondrion: // bastoncitos
+                    DrawRectanglePro({bp.x[s], bp.y[s], 2.6f * r, 1.2f * r}, {1.3f * r, 0.6f * r},
+                                     static_cast<float>(s % 180), kMitochondrion);
+                    break;
+                case OrganelleTag::Chloroplast:
+                    DrawEllipse(static_cast<int>(bp.x[s]), static_cast<int>(bp.y[s]), 1.4f * r, r, kChloroplast);
+                    DrawCircleV({bp.x[s], bp.y[s]}, r, kChloroplast);
+                    break;
+                case OrganelleTag::Lysosome:
+                    DrawCircleV({bp.x[s], bp.y[s]}, r, kLysosome);
+                    break;
+                case OrganelleTag::Granule:
+                    DrawRectangleV({bp.x[s] - r, bp.y[s] - r}, {2 * r, 2 * r}, kGranule);
+                    break;
+                }
+            }
+
+            if (her) {
+                // Tricocistos: husos bajo la película, más densos con el gen.
+                const float tri = her->genome[Gene::Trichocysts];
+                if (tri > 0.05f) {
+                    const std::size_t step = std::max<std::size_t>(1, static_cast<std::size_t>(std::lround(2.0f / tri)));
+                    for (std::size_t i = 0; i < n; i += step) {
+                        const Vec2 b = ringPos(bp, body, i);
+                        const Vec2 in = outwardAt(bp, body, i) * -1.0f;
+                        DrawLineEx(toRay(b + in * 1.5f), toRay(b + in * 4.5f), std::max(0.4f, px), kTrichocyst);
+                    }
+                }
+                // Coraza: una capa externa gruesa (lórica o testa).
+                if (her->traits.armor > 0.05f) {
+                    const float t = 1.0f + 4.0f * her->traits.armor;
+                    for (std::size_t i = 0; i < n; ++i) {
+                        const Vec2 a = ringPos(bp, body, i) + outwardAt(bp, body, i) * (0.5f * t + 1.0f);
+                        const Vec2 b = ringPos(bp, body, i + 1) + outwardAt(bp, body, i + 1) * (0.5f * t + 1.0f);
+                        DrawLineEx(toRay(a), toRay(b), t, kArmor);
+                    }
+                }
+            }
+            // Tricocistos disparados: arpones largos hacia afuera.
+            if (const Discharge* dis = reg.try_get<Discharge>(e)) {
+                const float len = 25.0f * std::min(1.0f, dis->timer / 2.0f);
+                for (std::size_t i = 0; i < n; i += 3) {
+                    const Vec2 b = ringPos(bp, body, i);
+                    DrawLineEx(toRay(b), toRay(b + outwardAt(bp, body, i) * len), std::max(0.4f, px), kDischarge);
+                }
             }
 
             // Vacuolas digestivas: el color de la presa, que se aclara al digerirse.

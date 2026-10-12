@@ -26,6 +26,7 @@ struct Digestion {
     int bacteriaEaten = 0, detritusEaten = 0, cellsEaten = 0;
     float pmolIngested = 0.0f, pmolDigested = 0.0f;
     float mouthBudget = 0.0f; // presas que todavía puede tragar en este paso (boca o contacto)
+    float rateScale = 1.0f;   // lisosomas: multiplicador genético de la digestión
 };
 
 struct FeedingParams {

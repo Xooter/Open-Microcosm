@@ -30,6 +30,7 @@ struct MetabolismParams {
 struct Metabolism {
     float biomass = 0.0f;      // [pmol]
     float birthBiomass = 0.0f; // biomasa al nacer (tras la última división)
+    float targetBirthBiomass = 0.0f; // la que pide su genoma: se divide al duplicarla
     float reserves = 0.0f;     // glucógeno/paramilón y otras reservas [pmol]
     float ageHours = 0.0f;
     bool photosynthetic = false;
@@ -45,6 +46,11 @@ struct MetabolicInput {
     float digested;      // alimento digerido en este paso [pmol]
     float activity;      // [0, 1] fracción de la velocidad máxima de nado
     float bioDt;         // [s biológicos]
+    // Multiplicadores genéticos (ver Traits).
+    float growthScale = 1.0f;
+    float maintenanceScale = 1.0f;
+    float photosynthesisScale = 1.0f;
+    float motilityCostScale = 1.0f;
 };
 
 struct MetabolicOutput {
@@ -55,7 +61,8 @@ struct MetabolicOutput {
 MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const MetabolicInput& in);
 
 inline bool readyToDivide(const Metabolism& m, float cost) {
-    return m.biomass >= 2.0f * m.birthBiomass && m.reserves >= cost * m.biomass;
+    const float birth = m.targetBirthBiomass > 0.0f ? m.targetBirthBiomass : m.birthBiomass;
+    return m.biomass >= 2.0f * birth && m.reserves >= cost * m.biomass;
 }
 
 inline bool isDead(const Metabolism& m, const MetabolismParams& p) {

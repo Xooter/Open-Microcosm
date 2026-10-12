@@ -9,7 +9,8 @@ void Run::start(World& world, const RunConfig& config, std::uint32_t runId) {
     config_ = config;
     world.setRun(runId);
     world.populate(config.competitors);
-    world.spawnPlayer(config.founder, {0.5f * world.width(), 0.5f * world.height()});
+    world.spawnPlayer(config.founder, {0.5f * world.width(), 0.5f * world.height()}, &config.genome);
+    lineageGenome_ = config.genome;
     census_ = world.census();
 }
 
@@ -27,6 +28,9 @@ void Run::update(World& world, float dt) {
             selected_ = 0;
             state_ = State::ChoosingDaughter;
             break;
+        case WorldEvent::Type::PlayerConjugated:
+            ++conjugations_;
+            break;
         case WorldEvent::Type::PlayerDied:
             deathCause_ = ev.cause;
             candidates_ = world.lineageMembers();
@@ -43,6 +47,8 @@ void Run::update(World& world, float dt) {
     if (censusTimer_ <= 0.0f) { // el censo recorre todas las células: una vez por segundo
         censusTimer_ = 1.0f;
         census_ = world.census();
+        if (const Heredity* h = world.registry().try_get<Heredity>(world.player()))
+            lineageGenome_ = h->genome;
         bestShare_ = std::max(bestShare_, census_.share());
         bestGeneration_ = std::max(bestGeneration_, census_.maxGeneration);
         if (!won_ && census_.share() >= config_.targetShare)
@@ -70,6 +76,8 @@ void Run::confirm(World& world) {
     if (candidates_.empty())
         return;
     world.setPlayer(candidates_[selected_]);
+    if (const Heredity* h = world.registry().try_get<Heredity>(world.player()))
+        lineageGenome_ = h->genome;
     candidates_.clear();
     state_ = State::Playing;
 }

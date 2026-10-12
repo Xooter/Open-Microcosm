@@ -66,13 +66,13 @@ void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
     switch (loco.type) {
     case LocomotionType::Cilia: {
         const float f = loco.forward >= 0.0f ? loco.forward : loco.forward * p.ciliaReverse;
-        loco.speed = f * p.ciliaSpeed;
+        loco.speed = f * p.ciliaSpeed * loco.power;
         linear = h * loco.speed;
         omega = loco.turn * p.ciliaTurnRate;
         break;
     }
     case LocomotionType::Flagellum: {
-        loco.speed = loco.active ? p.flagellumSpeed : 0.0f;
+        loco.speed = loco.active ? p.flagellumSpeed * loco.power : 0.0f;
         if (loco.active) {
             const Vec2 to = {minImage(loco.target.x - c.x, width), minImage(loco.target.y - c.y, height)};
             const Vec2 u = normalized(to);
@@ -96,9 +96,9 @@ void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
             const Vec2 o = outwardNormal(body, bp, i);
             const float w = dot(o, u);
             if (w > 0.6f)
-                addVelocity(bp, body.ring[i], o * (p.pseudopodSpeed * (w - 0.6f) / 0.4f));
+                addVelocity(bp, body.ring[i], o * (p.pseudopodSpeed * loco.power * (w - 0.6f) / 0.4f));
             else if (w < -0.2f)
-                addVelocity(bp, body.ring[i], o * (p.retractSpeed * w));
+                addVelocity(bp, body.ring[i], o * (p.retractSpeed * loco.power * w));
         }
         for (std::size_t k = body.organelleCount; k < body.interior.size(); ++k)
             addVelocity(bp, body.interior[k], u * p.streamingSpeed);
