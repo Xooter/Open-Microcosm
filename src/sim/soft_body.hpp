@@ -36,6 +36,7 @@ struct RingBody {
     // Tensión cortical [1/s]: cada punto tiende al punto medio de sus vecinos (flujo de
     // curvatura). Alisa arrugas de escala chica sin frenar lóbulos grandes.
     float corticalTension = 0.0f;
+    float baseCorticalTension = 0.0f; // la tensión sube cuando se agota el reservorio de membrana
     bool edgeTensionOnly = false; // membrana fluida: las aristas solo resisten estirarse
 
     // Interior: los primeros `organelleCount` son organelos (chocan y empujan la membrana);
@@ -88,6 +89,11 @@ void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry);
 // Membrana plástica: inserta partículas donde la membrana se estiró y quita donde se juntó
 // (la célula real agrega membrana desde reservorios internos). Devuelve true si cambió.
 bool remesh(RingBody& body, BodyParticles& bp, float spacing);
+// Perímetro actual / perímetro de un círculo de igual área (1 = redonda).
+float membraneExcess(const RingBody& body, const BodyParticles& bp);
+// Reservorio de membrana limitado (~2–3× el área aparente): al agotarse, la tensión cortical
+// sube bruscamente y frena cualquier estiramiento adicional.
+void updateMembraneTension(RingBody& body, const BodyParticles& bp);
 // Distancia RMS de la membrana a su forma de reposo alineada [µm].
 float shapeError(const RingBody& body, const BodyParticles& bp);
 

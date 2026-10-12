@@ -1,5 +1,7 @@
 #include "bio/phagocytosis.hpp"
 
+#include "core/profiling.hpp"
+
 #include "core/units.hpp"
 #include "sim/polygon.hpp"
 #include "sim/soft_body.hpp"
@@ -219,9 +221,28 @@ void applyCup(const RingBody& predator, BodyParticles& bp, const RingBody& prey,
 
 bool findClosure(const RingBody& predator, const BodyParticles& bp, Vec2 preyCenter,
                  const FeedingParams& params, Closure& out) {
+    PROFILE_SCOPE("findClosure");
     const int n = static_cast<int>(predator.ring.size());
     const float touch = 2.5f * bp.radius[predator.ring[0]];
     const float bodyArea = std::abs(soft_body::area(predator, bp));
+    // Número de giro: ángulo acumulado del anillo alrededor de la presa. Un tramo i→j cerrado
+    // por la cuerda j→i rodea a la presa si su giro total es ±2π (|giro| > π). Así cada par
+    // cuesta O(1) y el polígono de la copa se arma solo para los candidatos.
+    auto wrapAngle = [](float a) {
+        while (a > units::kPi)
+            a -= 2.0f * units::kPi;
+        while (a < -units::kPi)
+            a += 2.0f * units::kPi;
+        return a;
+    };
+    std::vector<float> angle(static_cast<std::size_t>(n)), cumulative(static_cast<std::size_t>(n) + 1, 0.0f);
+    for (int k = 0; k < n; ++k) {
+        const Vec2 d = pos(bp, predator.ring[k]) - preyCenter;
+        angle[k] = std::atan2(d.y, d.x);
+    }
+    for (int k = 0; k < n; ++k)
+        cumulative[k + 1] = cumulative[k] + wrapAngle(angle[(k + 1) % n] - angle[k]);
+
     std::vector<Vec2> pocket, outer;
     for (int i = 0; i < n; ++i) {
         const Vec2 xi = pos(bp, predator.ring[i]);
@@ -231,14 +252,15 @@ bool findClosure(const RingBody& predator, const BodyParticles& bp, Vec2 preyCen
             const Vec2 d = pos(bp, predator.ring[j]) - xi;
             if (dot(d, d) > touch * touch)
                 continue;
-            // Dos candidatos de copa: el tramo i→j o el tramo j→i (dando la vuelta).
+            const float forward = cumulative[j] - cumulative[i] + wrapAngle(angle[i] - angle[j]);
+            const float backward = (cumulative[n] - cumulative[j]) + cumulative[i] + wrapAngle(angle[j] - angle[i]);
             for (int side = 0; side < 2; ++side) {
+                if (std::abs(side == 0 ? forward : backward) < units::kPi)
+                    continue; // ese tramo no rodea a la presa
                 pocket.clear();
                 const int from = side == 0 ? i : j, to = side == 0 ? j : i + n;
                 for (int k = from; k <= to; ++k)
                     pocket.push_back(pos(bp, predator.ring[k % n]));
-                if (!polygon::contains(pocket.data(), static_cast<int>(pocket.size()), preyCenter))
-                    continue;
                 // El anillo que queda tiene que ser el cuerpo: misma orientación y la mayor
                 // parte del área (un par de puntos en el pliegue de un labio no sirve).
                 outer.clear();

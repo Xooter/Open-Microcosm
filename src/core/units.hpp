@@ -23,6 +23,7 @@ inline constexpr float kWaterKinematicViscosity = 1.0e6f; // 1e-6 m²/s [µm²/s
 inline constexpr float kDiffusionO2 = 2000.0f;     // O₂ en agua a 20 °C [µm²/s]
 inline constexpr float kDiffusionGlucose = 600.0f; // glucosa en agua [µm²/s]
 inline constexpr float kO2Saturation = 280.0f;     // O₂ en equilibrio con el aire, 20 °C [µM]
+inline constexpr float kDiffusionPhosphate = 800.0f; // fosfato en agua [µm²/s]
 
 inline constexpr double kLitersPerCubicMicrometer = 1e-15;
 inline constexpr float kPi = 3.14159265358979323846f;

@@ -10,6 +10,7 @@
 #include "bio/locomotion.hpp"
 #include "bio/metabolism.hpp"
 #include "bio/phagocytosis.hpp"
+#include "bio/species.hpp"
 #include "game/lineage.hpp"
 #include "core/rng.hpp"
 #include "core/units.hpp"
@@ -27,6 +28,7 @@
 
 #include <cstdint>
 #include <functional>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -40,11 +42,12 @@ struct WorldConfig {
 
 struct MediumParams {
     float o2AirExchange = 0.05f;      // intercambio con el aire por la superficie [1/s]
-    float nutrientUptake = 0.02f;     // consumo por microbios no simulados [1/s]
-    float detritusDecay = 0.002f;     // descomposición de detritos [1/s]
-    float detritusSpawnRate = 0.1f;   // detritos que llegan al campo de visión [1/s]
+    float nutrientUptake = 0.0f;      // consumo extra por microbios no simulados [1/s]
+    float detritusDecay = 0.0002f;    // descomposición (biológica) de detritos [1/s biológico]
+    float detritusSpawnRate = 0.5f;   // detritos que llegan de afuera (hojas, nieve marina) [1/s]
     float surfaceLight = 1.0f;        // irradiancia relativa de la lámpara
     float inkLifetime = 120.0f;       // [s] la tinta es una herramienta de debug
+    float phosphate = 5.0f;           // fosfato disuelto inicial [µM] (limita a las algas)
 };
 
 // Componente: conjugación en curso (Paramecium). Dura unas horas biológicas.
@@ -95,6 +98,9 @@ class World {
     entt::entity spawnPlayer(LocomotionType type, Vec2 center, const Genome* genome = nullptr);
     // Organismo de una especie con un genoma dado (del linaje actual, sin control).
     entt::entity spawnOrganism(LocomotionType type, Vec2 center, const Genome& genome);
+    entt::entity spawnOrganism(SpeciesId species, Vec2 center, const Genome& genome, std::uint32_t run);
+    // Ecosistema silvestre: las especies con sus poblaciones iniciales (× scale).
+    void populateEcosystem(float scale = 1.0f);
     // Conjugación: busca una pareja compatible cerca (ciliado de otro tipo de apareamiento).
     entt::entity conjugationPartner(entt::entity cell) const;
     bool tryConjugate(entt::entity cell);
@@ -133,6 +139,10 @@ class World {
     const ChemField& oxygen() const { return oxygen_; }
     ChemField& oxygen() { return oxygen_; }
     const ChemField& nutrients() const { return nutrients_; }
+    ChemField& nutrients() { return nutrients_; }
+    const ChemField& phosphate() const { return phosphate_; }
+    // Fósforo total [pmol P]: agua + fotótrofas + vacuolas (se conserva).
+    double totalPhosphorus() const;
     const Grid2D& light() const { return light_; }
     const AmbientParticles& ambient() const { return ambient_; }
     Bacteria& bacteria() { return bacteria_; }
@@ -159,6 +169,11 @@ class World {
     void applyMotion(float dt);
     void updateCup(entt::entity e, RingBody& body, float dt);
     void updateFeeding(float dt);
+    Perception perceive(entt::entity e, const RingBody& body, SpeciesId species) const;
+    bool repelledByTrichocysts(entt::entity predator, entt::entity prey);
+    void hunt(entt::entity predator, const RingBody& body);
+    void swallow(entt::entity predator, entt::entity prey);
+    bool smallPrey(const RingBody& prey) const;
     void forBacteriaInBox(Vec2 lo, Vec2 hi, const std::function<void(std::size_t)>& fn) const;
     std::vector<const RingBody*> preyFor(const RingBody& predator) const;
     void engulf(entt::entity predator, const Closure& closure, entt::entity prey);
@@ -177,6 +192,10 @@ class World {
     void finishConjugation(entt::entity a, entt::entity b);
     void tickDefenses(float dt);
     void exchangeO2(Vec2 at, float pmol);
+    // Suma (o quita, hasta lo disponible) `pmol` en las 3×3 celdas alrededor de `at`.
+    // Devuelve lo que realmente se intercambió.
+    float exchange(ChemField& field, Vec2 at, float pmol);
+    void growBacteria(float dt);
     float microMolarPerPmol() const;
     void excludeFromCells();
     void rebuildBuckets();
@@ -190,7 +209,7 @@ class World {
 
     Fft2D fft_;
     Fluid fluid_;
-    ChemField oxygen_, nutrients_;
+    ChemField oxygen_, nutrients_, phosphate_;
     Grid2D light_, shading_;
     AmbientParticles ambient_;
     Bacteria bacteria_;
@@ -222,14 +241,18 @@ class World {
     std::vector<PendingSplit> splits_;
     std::vector<std::pair<entt::entity, entt::entity>> conjugationsDone_;
     std::vector<entt::entity> abandonedConjugations_;
+    std::vector<entt::entity> encysting_, excysting_;
     std::vector<std::size_t> eatenBacteria_, eatenAmbient_;
     std::vector<std::uint8_t> takenBacteria_, takenAmbient_;
+    std::vector<float> bacterialDemand_;
     SpatialGrid bacteriaGrid_;
     struct EngulfEvent {
         entt::entity predator, prey;
         Closure closure;
     };
     std::vector<EngulfEvent> engulfs_;
+    std::vector<std::pair<entt::entity, entt::entity>> swallows_;
+    std::unordered_map<entt::entity, Vec2> smallPreyCenter_;
     std::vector<WorldEvent> events_;
     std::uint32_t run_ = 1;
 

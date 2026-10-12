@@ -3,6 +3,7 @@
 #include "core/profiling.hpp"
 #include "core/rng.hpp"
 #include "core/units.hpp"
+#include "bio/feeding.hpp"
 #include "sim/fluid.hpp"
 
 #include <algorithm>
@@ -15,11 +16,35 @@ void Bacteria::spawn(std::size_t count, float width, float height, std::uint64_t
     tumbleTimer.assign(count, 0.0f);
     memory.assign(count, 0.0f);
     tumbling.assign(count, 0);
+    mass.resize(count);
     for (std::size_t i = 0; i < count; ++i) {
         Rng rng(seed, rng_stream::kInit, i, 0);
         x[i] = rng.uniform(0.0f, width);
         y[i] = rng.uniform(0.0f, height);
         heading[i] = rng.uniform(0.0f, 2.0f * units::kPi);
+        mass[i] = rng.uniform(1.0f, 2.0f); // población en distintas etapas del ciclo
+    }
+}
+
+void Bacteria::add(float px, float py, float h, float m) {
+    x.push_back(px);
+    y.push_back(py);
+    heading.push_back(h);
+    tumbleTimer.push_back(0.0f);
+    memory.push_back(0.0f);
+    tumbling.push_back(0);
+    mass.push_back(m);
+}
+
+void Bacteria::grow(const Grid2D& nutrients, float bioDt, std::vector<float>& demand) const {
+    const float hours = bioDt / 3600.0f;
+    const auto n = static_cast<std::ptrdiff_t>(size());
+    demand.resize(size());
+#pragma omp parallel for schedule(static)
+    for (std::ptrdiff_t i = 0; i < n; ++i) {
+        const float c = std::max(0.0f, nutrients.sample(x[i], y[i]));
+        const float growth = params.growthPerHourMax * c / (c + params.halfSaturation) * mass[i] * hours;
+        demand[i] = growth / params.yield * kBacteriumPmol;
     }
 }
 
@@ -38,6 +63,8 @@ void Bacteria::remove(std::size_t i) {
     tumbleTimer[i] = tumbleTimer[last];
     memory[i] = memory[last];
     tumbling[i] = tumbling[last];
+    mass[i] = mass[last];
+    mass.pop_back();
     x.pop_back();
     y.pop_back();
     heading.pop_back();

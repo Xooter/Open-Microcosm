@@ -41,6 +41,7 @@ World::World(const WorldConfig& config)
       oxygen_(config.gridX, config.gridY, config.cellSize, units::kDiffusionO2,
               units::kO2Saturation),
       nutrients_(config.gridX, config.gridY, config.cellSize, units::kDiffusionGlucose, 0.0f),
+      phosphate_(config.gridX, config.gridY, config.cellSize, units::kDiffusionPhosphate, MediumParams{}.phosphate),
       light_(config.gridX, config.gridY, config.cellSize, 1.0f),
       shading_(config.gridX, config.gridY, config.cellSize) {
     bucketsX_ = std::max(1, static_cast<int>(width_ / bucketSize_));
@@ -72,13 +73,16 @@ void World::step(float dt) {
 
     oxygen_.advect(fluid_, dt);
     nutrients_.advect(fluid_, dt);
+    phosphate_.advect(fluid_, dt);
     updateChemistrySources(dt);
     stepAmbient(dt); // deposita nutrientes de los detritos y su sombra
     oxygen_.diffuse(fft_, dt);
     nutrients_.diffuse(fft_, dt);
+    phosphate_.diffuse(fft_, dt);
     computeLight();
 
     bacteria_.step(fluid_, nutrients_.grid(), dt, config_.seed, step_, width_, height_);
+    growBacteria(dt);
     stepBodies(dt);
     updateFeeding(dt);       // eventos de topología (fagocitosis): al final del paso
     updateLifecycle(dt);     // metabolismo, división y muerte
@@ -143,7 +147,8 @@ void World::stepAmbient(float dt) {
     const double cellLiters = static_cast<double>(cellArea) * fluid_.gapHeight *
                               units::kLitersPerCubicMicrometer;
     const auto microMolarPerPmol = static_cast<float>(1e-6 / cellLiters);
-    const float decayed = 1.0f - std::exp(-medium_.detritusDecay * dt);
+    // La descomposición la hacen bacterias y hongos: corre en tiempo biológico.
+    const float decayed = 1.0f - std::exp(-medium_.detritusDecay * dt * bioTimeScale_);
 
     for (std::size_t i = 0; i < ambient_.size();) {
         if (ambient_.kind[i] == ParticleKind::Ink) {
@@ -349,8 +354,10 @@ void World::stepBodies(float dt) {
 
     applyMotion(dt);
     applyDivisionForces();
-    for (RingBody* body : bodyList_)
+    for (RingBody* body : bodyList_) {
         soft_body::adaptPlastic(*body, bodies_, dt);
+        soft_body::updateMembraneTension(*body, bodies_);
+    }
 
     members_.clear();
     float maxRadius = 0.0f;
@@ -385,9 +392,12 @@ void World::stepBodies(float dt) {
         const float hIter = h / static_cast<float>(iterations);
         contacts_.prepare(bodies_, members_, width_, height_, maxRadius);
         for (int it = 0; it < iterations; ++it) {
+            {
+                PROFILE_SCOPE("soft_body::solve");
 #pragma omp parallel for schedule(dynamic, 1)
-            for (std::ptrdiff_t b = 0; b < nb; ++b)
-                soft_body::solve(*bodyList_[b], bodies_, softTuning_, hIter);
+                for (std::ptrdiff_t b = 0; b < nb; ++b)
+                    soft_body::solve(*bodyList_[b], bodies_, softTuning_, hIter);
+            }
             contacts_.iterate(bodies_, members_, width_, height_);
         }
     }
@@ -505,107 +515,124 @@ void World::pushOutOfCells(float& x, float& y) const {
 // Jugador: locomoción y alimentación
 // ---------------------------------------------------------------------------
 
-CellSpec speciesSpec(LocomotionType type) {
-    CellSpec spec;
-    switch (type) {
-    case LocomotionType::Cilia: // Paramecium caudatum: ~180 × 50 µm, película rígida
-        spec.radiusX = 90.0f;
-        spec.radiusY = 25.0f;
-        spec.shapeRate = 8.0f;
-        spec.r = 160; spec.g = 176; spec.b = 138;
-        break;
-    case LocomotionType::Flagellum: // Euglena gracilis: ~50 × 14 µm, verde por los cloroplastos
-        spec.radiusX = 25.0f;
-        spec.radiusY = 7.0f;
-        spec.shapeRate = 4.0f;
-        spec.r = 120; spec.g = 172; spec.b = 92;
-        break;
-    case LocomotionType::Pseudopod: // Amoeba proteus (chica): ~180 µm, sin forma propia
-        spec.radiusX = 90.0f;
-        spec.radiusY = 90.0f;
-        spec.shapeRate = 0.0f;
-        spec.nucleusFraction = 0.2f;
-        spec.r = 188; spec.g = 176; spec.b = 160;
-        break;
-    }
-    return spec;
-}
+CellSpec speciesSpec(LocomotionType type) { return speciesInfo(playerSpecies(type)).spec; }
 
 namespace {
 // Biomasa de nacimiento de la especie con un gen de tamaño dado (masa ∝ tamaño³).
-float targetBirthBiomassOf(LocomotionType type, float size) {
-    const CellSpec base = speciesSpec(type);
+float targetBirthBiomassOf(SpeciesId species, float size) {
+    const CellSpec base = speciesInfo(species).spec;
     return cellMassPmol(units::kPi * base.radiusX * base.radiusY) * size * size * size;
+}
+
+SpeciesId speciesOfEntity(const entt::registry& reg, entt::entity e) {
+    if (const Species* sp = reg.try_get<Species>(e))
+        return sp->id;
+    return playerSpecies(reg.get<Locomotion>(e).type);
 }
 } // namespace
 
 void World::applyTraits(entt::entity e) {
     const Heredity& h = registry_.get<Heredity>(e);
+    const SpeciesInfo& info = speciesInfo(speciesOfEntity(registry_, e));
     Locomotion& loco = registry_.get<Locomotion>(e);
-    loco.power = h.traits.speed;
+    loco.power = h.traits.speed * info.speedScale;
     registry_.get<Digestion>(e).rateScale = h.traits.digestion;
     Metabolism& meta = registry_.get<Metabolism>(e);
     meta.photosynthetic = h.traits.photosynthesis > 0.0f;
-    meta.targetBirthBiomass = targetBirthBiomassOf(loco.type, h.traits.sizeScale);
+    meta.targetBirthBiomass = targetBirthBiomassOf(speciesOfEntity(registry_, e), h.traits.sizeScale);
+    meta.fissions = info.fissions;
     CellShape& shape = registry_.get<CellShape>(e);
-    shape.shapeRate = speciesSpec(loco.type).shapeRate * h.traits.rigidity;
+    shape.shapeRate = info.spec.shapeRate * h.traits.rigidity;
     RingBody& body = registry_.get<RingBody>(e);
-    if (body.membraneReservoirRate <= 0.0f && !registry_.all_of<Dividing>(e))
+    if (body.membraneReservoirRate <= 0.0f && !registry_.any_of<Dividing, Cyst>(e))
         body.shapeRate = shape.shapeRate;
 }
 
-entt::entity World::spawnOrganism(LocomotionType type, Vec2 center, const Genome& genome) {
-    CellSpec spec = speciesSpec(type);
+entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& genome, std::uint32_t run) {
+    const SpeciesInfo& info = speciesInfo(species);
+    CellSpec spec = info.spec;
     spec.center = center;
     spec.angle = 0.0f;
-    const Traits traits = traitsOf(genome, type);
+    const Traits traits = traitsOf(genome, info.locomotion);
     spec.radiusX *= traits.sizeScale;
     spec.radiusY *= traits.sizeScale;
     spec.shapeRate *= traits.rigidity;
     const entt::entity e = spawnCell(spec);
     RingBody& body = registry_.get<RingBody>(e);
     Locomotion loco;
-    loco.type = type;
+    loco.type = info.locomotion;
     // Citostoma: en el ciliado, en el surco oral (lado ventral); en el flagelado, en el polo
     // anterior junto al flagelo.
-    if (type == LocomotionType::Cilia)
+    if (info.feeding == FeedingMode::OralGroove)
         loco.mouthRing = static_cast<std::uint32_t>(0.15f * static_cast<float>(body.ring.size()));
-    if (type == LocomotionType::Pseudopod)
+    if (info.locomotion == LocomotionType::Pseudopod)
         soft_body::makePlastic(body, bodies_, 1.0f);
     Metabolism meta;
     meta.biomass = meta.birthBiomass = cellMassPmol(body.restArea);
     meta.reserves = 0.3f * meta.biomass;
+    registry_.emplace<Species>(e, Species{species});
     registry_.emplace<Locomotion>(e, loco);
     registry_.emplace<Digestion>(e);
     registry_.emplace<Metabolism>(e, meta);
-    registry_.emplace<Lineage>(e, Lineage{run_, 0});
+    registry_.emplace<Lineage>(e, Lineage{run, 0});
     registry_.emplace<Heredity>(e, Heredity{genome, traits});
     applyTraits(e);
+    if (Metabolism& m = registry_.get<Metabolism>(e); m.photosynthetic)
+        m.phosphorus = -exchange(phosphate_, center, -metabolismParams_.phosphorusRatio * m.biomass);
     Rng rng(config_.seed, rng_stream::kOrganelles, body.id, step_);
     refillOrganelles(body, bodies_, genome, rng);
     return e;
 }
 
+entt::entity World::spawnOrganism(LocomotionType type, Vec2 center, const Genome& genome) {
+    return spawnOrganism(playerSpecies(type), center, genome, run_);
+}
+
 entt::entity World::spawnPlayer(LocomotionType type, Vec2 center, const Genome* genome) {
-    const entt::entity e = spawnOrganism(type, center, genome ? *genome : speciesGenome(type));
+    const entt::entity e = spawnOrganism(playerSpecies(type), center, genome ? *genome : speciesGenome(type), run_);
     registry_.emplace<Player>(e);
     player_ = e;
     return e;
 }
 
-void World::setPlayerType(LocomotionType type) {
-    Vec2 center = {0.5f * width_, 0.5f * height_};
-    if (registry_.valid(player_)) {
-        center = registry_.get<RingBody>(player_).centroid;
-        endGrab();
-        destroyCell(registry_, bodies_, player_);
-        player_ = entt::null;
+void World::populateEcosystem(float scale) {
+    // Especies silvestres (linaje 0), con algo de variación genética y tipos de apareamiento
+    // mezclados. Se ubican sin superponerse y lejos del centro, donde nace el jugador.
+    const Vec2 middle = {0.5f * width_, 0.5f * height_};
+    std::uint64_t k = 0;
+    for (int sp = 0; sp < kSpeciesCount; ++sp) {
+        const auto id = static_cast<SpeciesId>(sp);
+        const SpeciesInfo& info = speciesInfo(id);
+        const int count = static_cast<int>(std::round(static_cast<float>(info.initialCount) * scale));
+        for (int placed = 0, attempts = 0; placed < count && attempts < 200 * count; ++attempts) {
+            Rng rng(config_.seed, rng_stream::kPopulate, 1000 + k++, 0);
+            const Vec2 p = {rng.uniform(0.0f, width_), rng.uniform(0.0f, height_)};
+            if (std::abs(minImage(p.x - middle.x, width_)) < 250.0f && std::abs(minImage(p.y - middle.y, height_)) < 200.0f)
+                continue;
+            const float clearance = info.spec.radiusX + 15.0f;
+            bool free = true;
+            for (auto [e, b] : registry_.view<RingBody>().each()) {
+                const Vec2 d = {minImage(b.centroid.x - p.x, width_), minImage(b.centroid.y - p.y, height_)};
+                if (length(d) < clearance + 0.5f * length(b.aabbMax - b.aabbMin))
+                    free = false;
+            }
+            if (!free)
+                continue;
+            Genome g = speciesGenome(id);
+            mutate(g, info.locomotion, rng, 0.5f);
+            g[Gene::MatingType] = rng.uniform() < 0.5f ? 0.0f : 1.0f;
+            const entt::entity e = spawnOrganism(id, p, g, 0);
+            registry_.emplace<Autopilot>(e);
+            ++placed;
+        }
     }
-    spawnPlayer(type, center);
 }
 
 std::vector<const RingBody*> World::preyFor(const RingBody& predator) const {
     std::vector<const RingBody*> prey;
+    const auto predatorEntity = static_cast<entt::entity>(predator.id);
+    const Species* predatorSpecies = registry_.try_get<Species>(predatorEntity);
+    const Lineage* predatorLineage = registry_.try_get<Lineage>(predatorEntity);
     const float maxArea = feedingParams_.maxPreyAreaRatio * std::abs(predator.restArea);
     // Solapamiento de cajas (con margen de alcance), comparando CENTROS de caja: el
     // pseudópodo puede extenderse lejos del centroide.
@@ -618,6 +645,16 @@ std::vector<const RingBody*> World::preyFor(const RingBody& predator) const {
         // Una lórica o testa gruesa no se puede fagocitar.
         if (const Heredity* h = registry_.try_get<Heredity>(e); h && h->traits.armor >= 0.5f)
             continue;
+        // Solo las especies de su dieta; nunca la propia especie ni el propio linaje.
+        if (const Species* ps = registry_.try_get<Species>(e); ps && predatorSpecies) {
+            if (ps->id == predatorSpecies->id || !(speciesInfo(predatorSpecies->id).preyMask & speciesBit(ps->id)))
+                continue;
+        }
+        if (const Lineage* pl = registry_.try_get<Lineage>(e);
+            pl && predatorLineage && pl->run > 0 && pl->run == predatorLineage->run)
+            continue;
+        if (registry_.all_of<Cyst>(e))
+            continue; // la pared del quiste no se digiere
         const Vec2 pc = (body.aabbMax + body.aabbMin) * 0.5f;
         const Vec2 d = {minImage(pc.x - center.x, width_), minImage(pc.y - center.y, height_)};
         const Vec2 pe = (body.aabbMax - body.aabbMin) * 0.5f;
@@ -633,6 +670,7 @@ Vec2 World::imageShift(const RingBody& of, Vec2 near) const {
 }
 
 void World::applyMotion(float dt) {
+    PROFILE_SCOPE("World::applyMotion");
     // Controles: el jugador por input; el resto del linaje, por su piloto automático.
     for (auto [e, body, loco] : registry_.view<RingBody, Locomotion>().each()) {
         const bool engulfing = registry_.all_of<PhagocyticCup>(e);
@@ -643,8 +681,14 @@ void World::applyMotion(float dt) {
             loco.active = (loco.type == LocomotionType::Flagellum && playerInput_.propel) ||
                           (loco.type == LocomotionType::Pseudopod && playerInput_.pseudopod);
         } else if (Autopilot* pilot = registry_.try_get<Autopilot>(e)) {
+            if (registry_.all_of<Cyst>(e))
+                continue; // el quiste no se mueve
             Rng rng(config_.seed, rng_stream::kAutopilot, body.id, step_);
-            steerAutopilot(*pilot, loco, body, rng, dt);
+            const SpeciesId sp = speciesOfEntity(registry_, e);
+            Perception sense = perceive(e, body, sp);
+            if (const Digestion* d = registry_.try_get<Digestion>(e); d && satiated(*d))
+                sense.hasPrey = false; // saciada: no persigue presas
+            steerAutopilot(*pilot, loco, body, speciesInfo(sp), sense, rng, dt);
         } else {
             continue;
         }
@@ -665,6 +709,7 @@ void World::applyMotion(float dt) {
 }
 
 void World::updateCup(entt::entity e, RingBody& body, float dt) {
+    PROFILE_SCOPE("World::updateCup");
     // Fagocitosis: el contacto con una presa elegible inicia una copa; la copa la forra.
     if (PhagocyticCup* cup = registry_.try_get<PhagocyticCup>(e)) {
         const auto preyEntity = static_cast<entt::entity>(cup->preyId);
@@ -683,15 +728,22 @@ void World::updateCup(entt::entity e, RingBody& body, float dt) {
             }
             cup->anchorSlot = again;
         }
+        if (body.ring.size() > 1500) { // tope de seguridad: se abandona la copa
+            releasePrey(prey, bodies_, *cup);
+            registry_.remove<PhagocyticCup>(e);
+            return;
+        }
         growLips(body, bodies_, prey, shift, *cup, feedingParams_, dt);
         applyCup(body, bodies_, prey, shift, *cup, feedingParams_, dt);
         return;
     }
+    if (const Digestion* d = registry_.try_get<Digestion>(e); d && satiated(*d))
+        return; // digiriendo una presa entera
+    if (body.ring.size() > 1500)
+        return; // tope de seguridad: la membrana no sigue creciendo
     for (const RingBody* prey : preyFor(body)) {
-        if (registry_.all_of<Lineage>(static_cast<entt::entity>(prey->id)) &&
-            registry_.all_of<Lineage>(e) &&
-            registry_.get<Lineage>(static_cast<entt::entity>(prey->id)).run == registry_.get<Lineage>(e).run)
-            continue; // no se come a su propio linaje
+        if (smallPrey(*prey))
+            continue; // las presas chicas se fagocitan por contacto (updateFeeding)
         if (registry_.any_of<PhagocyticCup>(static_cast<entt::entity>(prey->id)))
             continue;
         const auto preyEntity = static_cast<entt::entity>(prey->id);
@@ -701,26 +753,8 @@ void World::updateCup(entt::entity e, RingBody& body, float dt) {
             findContact(body, bodies_, *prey, imageShift(*prey, body.centroid), feedingParams_);
         if (contact == ~0u)
             continue;
-        // Defensa: al sentir el ataque, la presa dispara sus tricocistos (arpones de proteína
-        // que eyecta en milisegundos) y puede rechazar al depredador.
-        if (const Heredity* h = registry_.try_get<Heredity>(preyEntity); h && h->traits.trichocystDefense > 0.0f) {
-            Rng rng(config_.seed, rng_stream::kDefense, prey->id, step_);
-            if (rng.uniform() < h->traits.trichocystDefense) {
-                registry_.emplace<Discharge>(preyEntity, Discharge{5.0f});
-                if (Metabolism* pm = registry_.try_get<Metabolism>(preyEntity))
-                    pm->reserves = std::max(0.0f, pm->reserves - 0.02f * pm->biomass); // rearmar cuesta
-                const Vec2 pc = prey->centroid + imageShift(*prey, body.centroid) - prey->centroid;
-                for (std::uint32_t s : body.ring) { // los arpones empujan la membrana atacante
-                    const Vec2 d = Vec2{bodies_.x[s], bodies_.y[s]} - (prey->centroid + pc);
-                    const float len = length(d);
-                    if (len < 1e-3f || len > 0.8f * length(prey->aabbMax - prey->aabbMin) + 20.0f)
-                        continue;
-                    bodies_.vx[s] += d.x / len * 20.0f;
-                    bodies_.vy[s] += d.y / len * 20.0f;
-                }
-                continue;
-            }
-        }
+        if (repelledByTrichocysts(e, preyEntity))
+            continue;
         PhagocyticCup& cup = registry_.emplace<PhagocyticCup>(e, PhagocyticCup{prey->id, contact});
         holdPrey(*prey, bodies_, cup);
         return;
@@ -739,8 +773,34 @@ void World::updateFeeding(float dt) {
     takenAmbient_.assign(ambient_.size(), 0);
     engulfs_.clear();
 
+    swallows_.clear();
     for (auto [e, body, loco, dig] : feeders.each()) {
-        if (loco.type == LocomotionType::Pseudopod) {
+        if (registry_.all_of<Cyst>(e))
+            continue;
+        const FeedingMode mode = speciesInfo(speciesOfEntity(registry_, e)).feeding;
+        if (mode == FeedingMode::None)
+            continue;
+        if (mode == FeedingMode::Raptorial) {
+            hunt(e, body);
+            continue;
+        }
+        if (mode == FeedingMode::Phagocytosis) {
+            // Presas más chicas que la resolución de la membrana (~4 puntos): la copa no se
+            // distingue a esta escala; se fagocitan por contacto, de a una.
+            if (!satiated(dig) && !registry_.all_of<PhagocyticCup>(e)) {
+                for (const RingBody* prey : preyFor(body)) {
+                    const auto pe = static_cast<entt::entity>(prey->id);
+                    if (!smallPrey(*prey) || registry_.all_of<Discharge>(pe))
+                        continue;
+                    if (std::any_of(swallows_.begin(), swallows_.end(), [&](const auto& sw) { return sw.second == pe; }))
+                        continue;
+                    if (findContact(body, bodies_, *prey, imageShift(*prey, body.centroid), feedingParams_) == ~0u)
+                        continue;
+                    if (!repelledByTrichocysts(e, pe))
+                        swallows_.push_back({e, pe});
+                    break;
+                }
+            }
             if (PhagocyticCup* cup = registry_.try_get<PhagocyticCup>(e)) {
                 const auto preyEntity = static_cast<entt::entity>(cup->preyId);
                 if (registry_.valid(preyEntity) && registry_.all_of<RingBody>(preyEntity)) {
@@ -767,6 +827,9 @@ void World::updateFeeding(float dt) {
         }
     }
     // Las fagocitosis destruyen entidades: después de recorrer la vista.
+    for (const auto& [predator, prey] : swallows_)
+        if (registry_.valid(predator) && registry_.valid(prey))
+            swallow(predator, prey);
     for (EngulfEvent& ev : engulfs_) {
         if (!registry_.valid(ev.predator) || !registry_.valid(ev.prey))
             continue;
@@ -804,14 +867,19 @@ void World::removeAmbient(std::vector<std::size_t>& indices) {
 }
 
 void World::engulf(entt::entity predator, const Closure& closure, entt::entity preyEntity) {
-    RingBody& body = registry_.get<RingBody>(predator);
-    Digestion& dig = registry_.get<Digestion>(predator);
+    PROFILE_SCOPE("World::engulf");
+    const RingBody& predatorBefore = registry_.get<RingBody>(predator);
     const CellLook look = registry_.get<CellLook>(preyEntity);
     const RingBody& preyBody = registry_.get<RingBody>(preyEntity);
     const float preyArea = std::abs(preyBody.restArea);
-    float preyMass = cellMassPmol(preyArea);
-    if (const Metabolism* m = registry_.try_get<Metabolism>(preyEntity))
+    float preyMass = cellMassPmol(preyArea), preyPhosphorus = 0.0f;
+    if (const Metabolism* m = registry_.try_get<Metabolism>(preyEntity)) {
         preyMass = m->biomass + m->reserves;
+        preyPhosphorus = m->phosphorus;
+    }
+    if (const Digestion* pd = registry_.try_get<Digestion>(preyEntity))
+        for (const FoodVacuole& v : pd->vacuoles)
+            preyPhosphorus += v.phosphorus;
     const int pn = static_cast<int>(closure.pocket.size());
 
     // Todo lo que quedó dentro de la copa entra al fagosoma junto con la presa.
@@ -820,18 +888,16 @@ void World::engulf(entt::entity predator, const Closure& closure, entt::entity p
     for (std::size_t i = 0; i < bacteria_.size(); ++i) {
         if (takenBacteria_[i])
             continue;
-        const Vec2 q = body.centroid + Vec2{minImage(bacteria_.x[i] - body.centroid.x, width_),
-                                            minImage(bacteria_.y[i] - body.centroid.y, height_)};
+        const Vec2 q = predatorBefore.centroid + Vec2{minImage(bacteria_.x[i] - predatorBefore.centroid.x, width_),
+                                                      minImage(bacteria_.y[i] - predatorBefore.centroid.y, height_)};
         if (polygon::contains(closure.pocket.data(), pn, q)) {
             takenBacteria_[i] = 1;
             eatenBacteria_.push_back(i);
             extraArea += kBacteriumArea;
-            extraPmol += kBacteriumPmol;
+            extraPmol += kBacteriumPmol * bacteria_.mass[i];
             ++bacteriaInside;
         }
     }
-    dig.bacteriaEaten += bacteriaInside;
-
     if (preyEntity == player_) {
         events_.push_back({WorldEvent::Type::PlayerDied, preyEntity, entt::null, "fagocitada"});
         player_ = entt::null;
@@ -839,6 +905,9 @@ void World::engulf(entt::entity predator, const Closure& closure, entt::entity p
     }
     // El predador pudo tener a la presa sujeta en otra copa: se quita al destruirla.
     destroyCell(registry_, bodies_, preyEntity);
+    // Destruir compacta el almacenamiento de EnTT: se vuelven a obtener las referencias.
+    RingBody& body = registry_.get<RingBody>(predator);
+    Digestion& dig = registry_.get<Digestion>(predator);
 
     // Fusión de membranas: el tramo de la copa pasa a ser la membrana del fagosoma.
     for (std::uint32_t s : body.ring)
@@ -849,11 +918,13 @@ void World::engulf(entt::entity predator, const Closure& closure, entt::entity p
     soft_body::replaceRing(body, bodies_, closure.outerRing);
 
     ingest(dig, body, bodies_, closure.preyCenter, preyArea + extraArea, preyMass + extraPmol,
-           look.r, look.g, look.b, true);
+           look.r, look.g, look.b, true, preyPhosphorus);
     ++dig.cellsEaten;
+    dig.bacteriaEaten += bacteriaInside;
 }
 
 void World::feedAtMouth(RingBody& body, const Locomotion& loco, Digestion& dig, float dt) {
+    PROFILE_SCOPE("World::feedAtMouth");
     const std::size_t n = body.ring.size();
     const std::size_t i = loco.mouthRing % n;
     const Vec2 m = {bodies_.x[body.ring[i]], bodies_.y[body.ring[i]]};
@@ -879,7 +950,8 @@ void World::feedAtMouth(RingBody& body, const Locomotion& loco, Digestion& dig, 
             takenBacteria_[k] = 1;
             eatenBacteria_.push_back(k);
             ++dig.bacteriaEaten;
-            ingest(dig, body, bodies_, site, kBacteriumArea, kBacteriumPmol, 170, 150, 140, false);
+            ingest(dig, body, bodies_, site, kBacteriumArea, kBacteriumPmol * bacteria_.mass[k], 170, 150, 140, false,
+                   0.0f, bioTimeScale_);
         }
     });
 
@@ -894,12 +966,13 @@ void World::feedAtMouth(RingBody& body, const Locomotion& loco, Digestion& dig, 
             eatenAmbient_.push_back(k);
             ++dig.detritusEaten;
             const float a = units::kPi * ambient_.radius[k] * ambient_.radius[k];
-            ingest(dig, body, bodies_, site, a, ambient_.mass[k], 140, 112, 72, false);
+            ingest(dig, body, bodies_, site, a, ambient_.mass[k], 140, 112, 72, false, 0.0f, bioTimeScale_);
         }
     }
 }
 
 void World::feedByContact(RingBody& body, Digestion& dig, float dt) {
+    PROFILE_SCOPE("World::feedByContact");
     const int n = static_cast<int>(body.poly.size());
     const float reach = bodies_.radius[body.ring[0]] + feedingParams_.contactGap;
     const float chance = 1.0f - std::exp(-feedingParams_.contactRate * dt);
@@ -934,7 +1007,8 @@ void World::feedByContact(RingBody& body, Digestion& dig, float dt) {
             takenBacteria_[k] = 1;
             eatenBacteria_.push_back(k);
             ++dig.bacteriaEaten;
-            ingest(dig, body, bodies_, site, kBacteriumArea, kBacteriumPmol, 170, 150, 140, false);
+            ingest(dig, body, bodies_, site, kBacteriumArea, kBacteriumPmol * bacteria_.mass[k], 170, 150, 140, false,
+                   0.0f, bioTimeScale_);
         }
     });
 
@@ -947,7 +1021,7 @@ void World::feedByContact(RingBody& body, Digestion& dig, float dt) {
             eatenAmbient_.push_back(k);
             ++dig.detritusEaten;
             const float a = units::kPi * ambient_.radius[k] * ambient_.radius[k];
-            ingest(dig, body, bodies_, site, a, ambient_.mass[k], 140, 112, 72, false);
+            ingest(dig, body, bodies_, site, a, ambient_.mass[k], 140, 112, 72, false, 0.0f, bioTimeScale_);
         }
     }
 }
@@ -990,16 +1064,70 @@ float World::microMolarPerPmol() const {
     return static_cast<float>(1e-6 / cellLiters);
 }
 
-void World::exchangeO2(Vec2 at, float pmol) {
-    // Se reparte en las 3×3 celdas alrededor de la célula.
-    Grid2D& g = oxygen_.grid();
-    const float perCell = pmol * microMolarPerPmol() / 9.0f;
+void World::exchangeO2(Vec2 at, float pmol) { exchange(oxygen_, at, pmol); }
+
+float World::exchange(ChemField& field, Vec2 at, float pmol) {
+    // Se reparte en las 3×3 celdas alrededor de la célula; lo que se quita no puede superar lo
+    // que hay (así la masa se conserva).
+    Grid2D& g = field.grid();
+    const float k = microMolarPerPmol();
     const int cx = g.cellX(at.x), cy = g.cellY(at.y);
+    float available = 0.0f;
+    if (pmol < 0.0f) {
+        for (int dy = -1; dy <= 1; ++dy)
+            for (int dx = -1; dx <= 1; ++dx)
+                available += std::max(0.0f, g.at(wrapIndex(cx + dx, g.nx), wrapIndex(cy + dy, g.ny))) / k;
+        pmol = std::max(pmol, -available);
+    }
+    const float perCell = pmol * k / 9.0f;
     for (int dy = -1; dy <= 1; ++dy)
         for (int dx = -1; dx <= 1; ++dx) {
             float& v = g.at(wrapIndex(cx + dx, g.nx), wrapIndex(cy + dy, g.ny));
             v = std::max(0.0f, v + perCell);
         }
+    return pmol;
+}
+
+void World::growBacteria(float dt) {
+    PROFILE_SCOPE("World::growBacteria");
+    const float bioDt = dt * bioTimeScale_;
+    const BacteriaParams& bp = bacteria_.params;
+    bacteria_.grow(nutrients_.grid(), bioDt, bacterialDemand_);
+    // Serial: cada bacteria toma de su celda lo que pide, si hay (conserva la masa).
+    Grid2D& food = nutrients_.grid();
+    const float k = microMolarPerPmol();
+    const float maintenance = bp.maintenancePerHour * bioDt / 3600.0f;
+    eatenBacteria_.clear();
+    const std::size_t n = bacteria_.size();
+    for (std::size_t i = 0; i < n; ++i) {
+        float& c = food.at(food.cellX(bacteria_.x[i]), food.cellY(bacteria_.y[i]));
+        const float taken = std::min(bacterialDemand_[i], std::max(0.0f, c) / k);
+        c -= taken * k;
+        float& m = bacteria_.mass[i];
+        m += taken * bp.yield / kBacteriumPmol - maintenance * m;
+        if (m < 0.5f) { // muere de hambre: su materia vuelve al agua
+            c += m * kBacteriumPmol * k;
+            eatenBacteria_.push_back(i);
+        } else if (m >= 2.0f && bacteria_.size() < bp.maxCount) {
+            // Fisión binaria: la hija sale al lado, con otra orientación.
+            m *= 0.5f;
+            Rng rng(config_.seed, rng_stream::kBacteria + 100, i, step_);
+            bacteria_.add(wrapCoord(bacteria_.x[i] + std::cos(bacteria_.heading[i]), width_),
+                          wrapCoord(bacteria_.y[i] + std::sin(bacteria_.heading[i]), height_),
+                          rng.uniform(0.0f, 2.0f * units::kPi), m);
+        }
+    }
+    removeBacteria(eatenBacteria_);
+}
+
+double World::totalPhosphorus() const {
+    double total = phosphate_.grid().sum() / microMolarPerPmol();
+    for (auto [e, m] : registry_.view<Metabolism>().each())
+        total += m.phosphorus;
+    for (auto [e, d] : registry_.view<Digestion>().each())
+        for (const FoodVacuole& v : d.vacuoles)
+            total += v.phosphorus;
+    return total;
 }
 
 void World::updateLifecycle(float dt) {
@@ -1019,7 +1147,11 @@ void World::updateLifecycle(float dt) {
         // La alimentación es mecánica y corre en tiempo REAL; el metabolismo, comprimido. Sin
         // compensar, la célula comería bioTimeScale veces menos por hora biológica que en la
         // realidad. Cada presa digerida rinde por todas las que habría recolectado en ese tiempo.
-        in.digested = dig ? digest(*dig, body, bodies_, feedingParams_, dt, bioDt) * bioTimeScale_ : 0.0f;
+        float excreted = 0.0f;
+        in.digested = dig ? digest(*dig, body, bodies_, feedingParams_, dt, bioDt, excreted) : 0.0f;
+        if (excreted > 0.0f)
+            exchange(phosphate_, body.centroid, excreted);
+        in.phosphate = phosphate_.grid().sample(body.centroid.x, body.centroid.y);
         in.activity = 0.0f;
         if (loco) {
             in.activity = loco->type == LocomotionType::Pseudopod
@@ -1027,18 +1159,33 @@ void World::updateLifecycle(float dt) {
                               : std::min(1.0f, std::abs(loco->speed) / maxSpeedOf(locomotionParams_, loco->type));
         }
         in.bioDt = bioDt;
+        const SpeciesInfo& info = speciesInfo(speciesOfEntity(registry_, e));
+        Cyst* cyst = registry_.try_get<Cyst>(e);
         const Heredity* her = registry_.try_get<Heredity>(e);
         if (her) {
             in.growthScale = her->traits.growthMax;
             in.maintenanceScale = her->traits.maintenance;
-            in.photosynthesisScale = her->traits.photosynthesis;
+            in.photosynthesisScale = her->traits.photosynthesis * info.photosynthesisScale;
             in.motilityCostScale = her->traits.motilityCost;
         }
+        if (cyst) { // metabolismo mínimo dentro de la pared del quiste
+            in.maintenanceScale *= 0.05f;
+            in.activity = 0.0f;
+            in.photosynthesisScale = 0.0f;
+        }
+        const float phosphorusBefore = meta.phosphorus;
         const MetabolicOutput out = updateMetabolism(meta, mp, in);
+        if (out.phosphateTaken > 0.0f) {
+            // El fosfato sale del agua cercana; si no alcanza, la célula toma lo que hay.
+            const float taken = -exchange(phosphate_, body.centroid, -out.phosphateTaken);
+            meta.phosphorus = phosphorusBefore + taken;
+        }
         // El intercambio de gases con el agua ocurre a la tasa REAL: comprimir el tiempo
         // biológico no debe acelerar la difusión ni el intercambio con el aire (agotaría o
         // sobresaturaría el O₂ alrededor de cada célula de forma irreal).
         exchangeO2(body.centroid, (out.o2Produced - out.o2Consumed) / bioTimeScale_);
+        if (out.exudate > 0.0f) // bucle microbiano: las algas alimentan a las bacterias
+            exchange(nutrients_, body.centroid, out.exudate);
 
         if (isDead(meta, mp)) {
             dying_.push_back(e);
@@ -1061,6 +1208,18 @@ void World::updateLifecycle(float dt) {
             }
         }
 
+        // Quistes (Didinium): se enquista con hambre y sale cuando vuelve a haber presas cerca.
+        if (cyst) {
+            cyst->age += dt;
+            const Perception sense = perceive(e, body, speciesOfEntity(registry_, e));
+            if (cyst->age > 30.0f && sense.hasPrey && sense.preyDistance < 300.0f)
+                excysting_.push_back(e);
+            continue;
+        }
+        if (info.encysts && meta.starving && !registry_.any_of<Dividing, Conjugating>(e)) {
+            encysting_.push_back(e);
+            continue;
+        }
         if (Conjugating* cj = registry_.try_get<Conjugating>(e)) {
             if (!registry_.valid(cj->partner)) { // la pareja murió: se separa
                 abandonedConjugations_.push_back(e);
@@ -1096,6 +1255,23 @@ void World::updateLifecycle(float dt) {
                 splits_.push_back({e, ta, tb});
         }
     }
+    for (entt::entity e : encysting_) {
+        registry_.emplace<Cyst>(e);
+        RingBody& b = registry_.get<RingBody>(e);
+        const float r = std::sqrt(std::abs(soft_body::area(b, bodies_)) / units::kPi);
+        soft_body::reshapeRest(b, bodies_, r, r); // pared redonda
+        b.shapeRate = 8.0f;
+    }
+    for (entt::entity e : excysting_) {
+        registry_.remove<Cyst>(e);
+        RingBody& b = registry_.get<RingBody>(e);
+        const CellShape& shape = registry_.get<CellShape>(e);
+        const float k = std::sqrt(std::abs(soft_body::area(b, bodies_)) / (units::kPi * shape.radiusX * shape.radiusY));
+        soft_body::reshapeRest(b, bodies_, shape.radiusX * k, shape.radiusY * k);
+        b.shapeRate = shape.shapeRate;
+    }
+    encysting_.clear();
+    excysting_.clear();
     for (entt::entity e : abandonedConjugations_)
         registry_.remove<Conjugating>(e);
     abandonedConjugations_.clear();
@@ -1247,11 +1423,15 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
     registry_.remove<Dividing>(cell);
 
     Metabolism& meta = registry_.get<Metabolism>(cell);
+    // Palintomía: las hijas siguen dividiéndose hasta completar el ciclo.
+    meta.pendingFissions = meta.pendingFissions > 0 ? meta.pendingFissions - 1 : meta.fissions - 1;
     Metabolism childMeta = meta;
     childMeta.biomass = meta.biomass * (1.0f - fA);
     childMeta.reserves = meta.reserves * (1.0f - fA);
+    childMeta.phosphorus = meta.phosphorus * (1.0f - fA);
     meta.biomass *= fA;
     meta.reserves *= fA;
+    meta.phosphorus *= fA;
     meta.birthBiomass = meta.biomass;
     childMeta.birthBiomass = childMeta.biomass;
     meta.ageHours = childMeta.ageHours = 0.0f;
@@ -1274,11 +1454,16 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
     // Ojo: emplace puede realocar el almacenamiento de EnTT; se copia todo antes y no se usan
     // referencias a la madre tomadas antes de este punto.
     const CellLook look = registry_.get<CellLook>(cell);
+    const Species* motherSpecies = registry_.try_get<Species>(cell);
+    const bool hasSpecies = motherSpecies != nullptr;
+    const Species species = hasSpecies ? *motherSpecies : Species{};
     const Locomotion* motherLoco = registry_.try_get<Locomotion>(cell);
     const bool motile = motherLoco != nullptr;
     Locomotion childLoco = motile ? *motherLoco : Locomotion{};
     registry_.emplace<RingBody>(child, std::move(child_body));
     registry_.emplace<CellLook>(child, look);
+    if (hasSpecies)
+        registry_.emplace<Species>(child, species);
     registry_.emplace<CellShape>(child, shape);
     registry_.emplace<CellAnatomy>(child, anB);
     registry_.emplace<Metabolism>(child, childMeta);
@@ -1351,6 +1536,16 @@ void World::lyse(entt::entity cell, const char* cause) {
     for (const auto& [cx, cy] : cells)
         food.at(cx, cy) += dissolved;
 
+    // El fósforo de la célula y de sus vacuolas vuelve al agua.
+    float phosphorus = 0.0f;
+    if (const Metabolism* m = registry_.try_get<Metabolism>(cell))
+        phosphorus += m->phosphorus;
+    if (const Digestion* d = registry_.try_get<Digestion>(cell))
+        for (const FoodVacuole& v : d->vacuoles)
+            phosphorus += v.phosphorus;
+    if (phosphorus > 0.0f)
+        exchange(phosphate_, body.centroid, phosphorus);
+
     const float particulate = 0.6f * total;
     const int count = std::clamp(static_cast<int>(particulate / 0.05f), 4, 60);
     const float each = particulate / static_cast<float>(count);
@@ -1409,6 +1604,8 @@ Census World::census() const {
         const Metabolism* m = registry_.try_get<Metabolism>(e);
         const float mass = m ? m->biomass : cellMassPmol(body.restArea);
         c.totalBiomass += mass;
+        if (const Species* sp = registry_.try_get<Species>(e))
+            ++c.species[static_cast<int>(sp->id)];
         const Lineage* lin = registry_.try_get<Lineage>(e);
         if (lin && lin->run == run_) {
             c.lineageBiomass += mass;
@@ -1418,7 +1615,9 @@ Census World::census() const {
             ++c.otherCells;
         }
     }
-    c.totalBiomass += static_cast<float>(bacteria_.size()) * kBacteriumPmol;
+    for (float m : bacteria_.mass)
+        c.totalBiomass += m * kBacteriumPmol;
+    c.bacteria = static_cast<int>(bacteria_.size());
     return c;
 }
 
@@ -1533,4 +1732,187 @@ void World::tickDefenses(float dt) {
     }
     for (entt::entity e : expired) // no se quita mientras se recorre la vista
         registry_.remove<Discharge>(e);
+}
+
+// ---------------------------------------------------------------------------
+// Ecosistema: percepción, caza y defensas
+// ---------------------------------------------------------------------------
+
+Perception World::perceive(entt::entity e, const RingBody& body, SpeciesId species) const {
+    PROFILE_SCOPE("World::perceive");
+    Perception p;
+    const SpeciesInfo& info = speciesInfo(species);
+    const float maxPreyArea = feedingParams_.maxPreyAreaRatio * std::abs(body.restArea);
+    const float myRadius = 0.25f * ((body.aabbMax.x - body.aabbMin.x) + (body.aabbMax.y - body.aabbMin.y));
+    float bestPrey = 1e9f, bestThreat = 1e9f;
+    for (const auto [oe, other, os] : registry_.view<RingBody, Species>().each()) {
+        if (oe == e)
+            continue;
+        const std::uint32_t bit = speciesBit(os.id);
+        const bool prey = (info.preyMask & bit) && !registry_.any_of<Cyst, Discharge>(oe) &&
+                          (info.feeding != FeedingMode::Phagocytosis || std::abs(other.restArea) <= maxPreyArea);
+        const bool threat = (info.fleeMask & bit) && !registry_.all_of<Cyst>(oe);
+        if (!prey && !threat)
+            continue;
+        const Vec2 d = {minImage(other.centroid.x - body.centroid.x, width_),
+                        minImage(other.centroid.y - body.centroid.y, height_)};
+        const float otherRadius = 0.25f * ((other.aabbMax.x - other.aabbMin.x) + (other.aabbMax.y - other.aabbMin.y));
+        const float gap = std::max(0.0f, length(d) - myRadius - otherRadius);
+        if (prey && gap < bestPrey) {
+            bestPrey = gap;
+            p.hasPrey = true;
+            p.prey = body.centroid + d;
+            p.preyDistance = gap;
+        }
+        if (threat && gap < bestThreat) {
+            bestThreat = gap;
+            p.hasThreat = true;
+            p.threat = body.centroid + d;
+            p.threatDistance = gap;
+        }
+    }
+    p.food = std::log1p(std::max(0.0f, nutrients_.grid().sample(body.centroid.x, body.centroid.y)));
+    // Choque del polo anterior contra otra célula.
+    {
+        const Vec2 head = bodyHeading(body);
+        float half = 0.0f;
+        for (const Vec2& q : body.restRing)
+            half = std::max(half, q.x);
+        const Vec2 tip = body.centroid + head * half;
+        for (const RingBody* other : bodyList_) {
+            if (other == &body)
+                continue;
+            const Vec2 shift = imageShift(*other, tip);
+            const Vec2 t = tip - shift;
+            if (t.x < other->aabbMin.x - 6.0f || t.x > other->aabbMax.x + 6.0f || t.y < other->aabbMin.y - 6.0f ||
+                t.y > other->aabbMax.y + 6.0f)
+                continue;
+            if (polygon::closestOnBoundary(other->poly.data(), static_cast<int>(other->poly.size()), t).dist2 < 36.0f) {
+                p.bumped = true;
+                break;
+            }
+        }
+    }
+    // Luz a cada lado del polo anterior (estigma y fotorreceptor de los flagelados).
+    const Vec2 h = bodyHeading(body), side = {-h.y, h.x};
+    const Vec2 front = body.centroid + h * myRadius;
+    const Vec2 l = front + side * 15.0f, r = front - side * 15.0f;
+    p.lightLeft = light_.sample(l.x, l.y);
+    p.lightRight = light_.sample(r.x, r.y);
+    return p;
+}
+
+bool World::repelledByTrichocysts(entt::entity predator, entt::entity preyEntity) {
+    // Defensa: al sentir el ataque, la presa dispara sus tricocistos (arpones de proteína que
+    // eyecta en milisegundos) y puede rechazar al depredador.
+    const Heredity* h = registry_.try_get<Heredity>(preyEntity);
+    if (!h || h->traits.trichocystDefense <= 0.0f)
+        return false;
+    const RingBody& prey = registry_.get<RingBody>(preyEntity);
+    Rng rng(config_.seed, rng_stream::kDefense, prey.id, step_);
+    if (rng.uniform() >= h->traits.trichocystDefense)
+        return false;
+    registry_.emplace_or_replace<Discharge>(preyEntity, Discharge{5.0f});
+    if (Metabolism* pm = registry_.try_get<Metabolism>(preyEntity))
+        pm->reserves = std::max(0.0f, pm->reserves - 0.02f * pm->biomass); // rearmar cuesta
+    RingBody& body = registry_.get<RingBody>(predator);
+    const Vec2 preyCenter = prey.centroid + imageShift(prey, body.centroid) - prey.centroid + prey.centroid;
+    const float reach = 0.8f * length(prey.aabbMax - prey.aabbMin) + 20.0f;
+    for (std::uint32_t s : body.ring) { // los arpones empujan la membrana atacante
+        const Vec2 d = Vec2{bodies_.x[s], bodies_.y[s]} - preyCenter;
+        const float len = length(d);
+        if (len < 1e-3f || len > reach)
+            continue;
+        bodies_.vx[s] += d.x / len * 20.0f;
+        bodies_.vy[s] += d.y / len * 20.0f;
+    }
+    if (Autopilot* pilot = registry_.try_get<Autopilot>(predator))
+        pilot->reverse = 1.5f; // el depredador retrocede
+    return true;
+}
+
+void World::hunt(entt::entity predator, const RingBody& body) {
+    PROFILE_SCOPE("World::hunt");
+    // Didinium: la probóscide (polo anterior) toca a la presa, los toxicistos la paralizan y la
+    // traga entera por el citostoma, que se dilata enormemente.
+    std::size_t front = 0;
+    for (std::size_t i = 1; i < body.restRing.size(); ++i)
+        if (body.restRing[i].x > body.restRing[front].x)
+            front = i;
+    const Vec2 mouth = {bodies_.x[body.ring[front]], bodies_.y[body.ring[front]]};
+    if (satiated(registry_.get<Digestion>(predator)))
+        return; // digiriendo: Didinium caza ~1 paramecio cada pocas horas
+    const std::uint32_t preyMask = speciesInfo(speciesOfEntity(registry_, predator)).preyMask;
+    for (const RingBody* other : bodyList_) {
+        const auto oe = static_cast<entt::entity>(other->id);
+        const Species* os = registry_.try_get<Species>(oe);
+        if (!os || !(preyMask & speciesBit(os->id)) || registry_.any_of<Cyst, Discharge>(oe))
+            continue;
+        if (std::any_of(swallows_.begin(), swallows_.end(), [&](const auto& sw) { return sw.second == oe; }))
+            continue;
+        const Vec2 shift = imageShift(*other, mouth);
+        const polygon::Closest cl = polygon::closestOnBoundary(other->poly.data(), static_cast<int>(other->poly.size()),
+                                                               mouth - shift);
+        if (cl.dist2 > 8.0f * 8.0f)
+            continue;
+        if (!repelledByTrichocysts(predator, oe))
+            swallows_.push_back({predator, oe});
+        return;
+    }
+}
+
+void World::swallow(entt::entity predator, entt::entity preyEntity) {
+    PROFILE_SCOPE("World::swallow");
+    smallPreyCenter_.clear();
+    {
+        const RingBody& pb = registry_.get<RingBody>(predator);
+        const RingBody& py = registry_.get<RingBody>(preyEntity);
+        if (smallPrey(py)) {
+            // Dentro de la membrana, hacia la presa.
+            const Vec2 c = py.centroid + imageShift(py, pb.centroid) - py.centroid + py.centroid;
+            const Vec2 d = c - pb.centroid;
+            const float len = std::max(1e-3f, length(d));
+            const float radius = 0.25f * ((pb.aabbMax.x - pb.aabbMin.x) + (pb.aabbMax.y - pb.aabbMin.y));
+            smallPreyCenter_[preyEntity] = pb.centroid + d * (std::max(0.0f, std::min(len, radius) - 10.0f) / len);
+        }
+    }
+    const CellLook look = registry_.get<CellLook>(preyEntity);
+    const RingBody& prey = registry_.get<RingBody>(preyEntity);
+    const float preyArea = std::abs(prey.restArea);
+    float preyMass = cellMassPmol(preyArea), preyPhosphorus = 0.0f;
+    if (const Metabolism* m = registry_.try_get<Metabolism>(preyEntity)) {
+        preyMass = m->biomass + m->reserves;
+        preyPhosphorus = m->phosphorus;
+    }
+    if (const Digestion* pd = registry_.try_get<Digestion>(preyEntity))
+        for (const FoodVacuole& v : pd->vacuoles) {
+            preyMass += v.contentPmol;
+            preyPhosphorus += v.phosphorus;
+        }
+    if (preyEntity == player_) {
+        events_.push_back({WorldEvent::Type::PlayerDied, preyEntity, entt::null, "devorada por Didinium"});
+        player_ = entt::null;
+        lastDeathCause_ = "devorada por Didinium";
+    }
+    if (grabSlot_ != kNoGrab && bodies_.owner[grabSlot_] == prey.id)
+        endGrab();
+    destroyCell(registry_, bodies_, preyEntity);
+    // Destruir la presa compacta el almacenamiento de EnTT: las referencias al depredador
+    // tomadas antes pueden quedar colgadas. Se vuelven a obtener.
+    RingBody& predatorBody = registry_.get<RingBody>(predator);
+    Digestion& predatorDig = registry_.get<Digestion>(predator);
+    // Didinium: la presa ocupa casi todo el depredador hinchado (vacuola central). Ameba con
+    // presa chica: la vacuola se forma cerca de donde la tocó.
+    const Vec2 site = smallPreyCenter_.count(preyEntity) ? smallPreyCenter_[preyEntity] : predatorBody.centroid;
+    ingest(predatorDig, predatorBody, bodies_, site, preyArea, preyMass, look.r, look.g, look.b, true,
+           preyPhosphorus);
+    ++predatorDig.cellsEaten;
+}
+
+bool World::smallPrey(const RingBody& prey) const {
+    // Espesor efectivo 2·área/perímetro: una Euglena es larga pero fina (~10 µm), un paramecio
+    // es ancho (~35 µm). Por debajo de ~4 puntos de membrana del depredador, la copa no se
+    // resuelve.
+    const float perimeter = soft_body::perimeter(prey, bodies_);
+    return perimeter > 0.0f && 2.0f * std::abs(prey.restArea) / perimeter < 12.0f;
 }

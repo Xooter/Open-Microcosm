@@ -214,8 +214,11 @@ void drawRunHud(const Run& run, const World& world) {
     GuiProgressBar({x + 70, 18, 180, 16}, "dominio", TextFormat("%.1f%% / %.0f%%", 100 * share, 100 * run.config().targetShare),
                    &share, 0.0f, run.config().targetShare);
     DrawText(TextFormat("Linaje: %d celulas | generacion %u", c.lineageCells, c.maxGeneration), static_cast<int>(x), 42, 16, DARKGRAY);
-    DrawText(TextFormat("Competidoras: %d | divisiones %d", c.otherCells, run.divisions()), static_cast<int>(x), 62, 16, DARKGRAY);
-    DrawText(TextFormat("Tiempo %.0f s (%.1f h bio)", run.elapsed(), run.elapsed() * units::kBioTimeScale / 3600.0f),
+    DrawText(TextFormat("Param %d  Eugl %d  Ameb %d  Chlam %d  Didin %d", c.species[0], c.species[1], c.species[2],
+                        c.species[3], c.species[4]),
+             static_cast<int>(x), 62, 16, DARKGRAY);
+    DrawText(TextFormat("Bacterias %d | %.0f s (%.1f h bio) | div. %d", c.bacteria, run.elapsed(),
+                        run.elapsed() * units::kBioTimeScale / 3600.0f, run.divisions()),
              static_cast<int>(x), 82, 16, DARKGRAY);
 
     // Genoma: el de la candidata durante una elección (comparado con la otra), si no el propio.

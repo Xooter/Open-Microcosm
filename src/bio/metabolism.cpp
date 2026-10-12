@@ -19,7 +19,9 @@ MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const
     if (m.photosynthetic) {
         const float fixed = p.photosynthesisPerHour * in.photosynthesisScale * std::clamp(in.light, 0.0f, 1.0f) *
                             m.biomass * hours;
-        m.reserves += fixed;
+        // Parte de lo fijado se exuda como materia orgánica disuelta (alimento de bacterias).
+        out.exudate = p.exudation * fixed;
+        m.reserves += fixed - out.exudate;
         out.o2Produced = kO2PerGlucose * fixed;
     }
 
@@ -40,11 +42,25 @@ MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const
         m.starving = true;
     }
 
+    // Fotótrofas: captan fosfato del agua hasta 1,5 veces su cuota (consumo de lujo).
+    if (m.photosynthetic) {
+        const float quota = p.phosphorusRatio * m.biomass;
+        if (m.phosphorus < 1.5f * quota) {
+            const float c = std::max(0.0f, in.phosphate);
+            const float take = std::min(1.5f * quota - m.phosphorus,
+                                        p.phosphorusUptakePerHour * quota * c / (c + p.phosphorusHalfSaturation) * hours);
+            m.phosphorus += take;
+            out.phosphateTaken = take;
+        }
+    }
+
     // Crecimiento con lo que sobra por encima del colchón.
     const float spare = m.reserves - p.reserveBuffer * m.biomass;
     if (spare > 0.0f) {
-        const float invest =
-            std::min(spare, p.growthPerHourMax * in.growthScale * m.biomass * hours / p.growthYield);
+        float invest = std::min(spare, p.growthPerHourMax * in.growthScale * m.biomass * hours / p.growthYield);
+        // Sin fósforo no hay biomasa nueva (ácidos nucleicos, fosfolípidos).
+        if (m.photosynthetic)
+            invest = std::min(invest, std::max(0.0f, m.phosphorus / p.phosphorusRatio - m.biomass) / p.growthYield);
         m.reserves -= invest;
         m.biomass += invest * p.growthYield;
     }

@@ -54,8 +54,11 @@ void localShapeStep(const RingBody& body, BodyParticles& bp, std::size_t i, floa
         sdot += dot(r, p);
         scross += cross(r, p);
     }
-    const float a = std::atan2(scross, sdot);
-    const Vec2 goal = c + rotate(body.restRing[i] - q, std::cos(a), std::sin(a));
+    // La rotación óptima sale directo de las sumas: cos = Σ·/|Σ|, sen = Σ×/|Σ| (sin atan2).
+    const float len = std::sqrt(sdot * sdot + scross * scross);
+    if (len < 1e-12f)
+        return;
+    const Vec2 goal = c + rotate(body.restRing[i] - q, sdot / len, scross / len);
     move(bp, body.ring[i], (goal - pos(bp, body.ring[i])) * f);
 }
 
@@ -320,6 +323,7 @@ void makePlastic(RingBody& body, BodyParticles& bp, float reservoirRate) {
     body.bendScale = 0.05f;
     body.areaScale = 0.001f;
     body.corticalTension = 5.0f;
+    body.baseCorticalTension = 5.0f;
     body.edgeTensionOnly = true;
     // La membrana activa cede en los contactos (las células pasivas descansan sobre el vidrio).
     for (std::uint32_t s : body.ring)
@@ -428,9 +432,23 @@ void resizeRing(RingBody& body, const BodyParticles& bp, std::vector<std::uint32
     rebuildRest(body, bp, true);
 }
 
+float membraneExcess(const RingBody& body, const BodyParticles& bp) {
+    const float circle = 2.0f * std::sqrt(3.14159265f * std::abs(body.restArea));
+    return circle > 0.0f ? perimeter(body, bp) / circle : 1.0f;
+}
+
+void updateMembraneTension(RingBody& body, const BodyParticles& bp) {
+    if (body.membraneReservoirRate <= 0.0f)
+        return;
+    const float excess = membraneExcess(body, bp);
+    const float over = std::max(1.0f, excess / 2.0f);
+    body.corticalTension = body.baseCorticalTension * over * over * over * over;
+}
+
 bool remesh(RingBody& body, BodyParticles& bp, float spacing) {
     if (body.membraneReservoirRate <= 0.0f)
         return false;
+    const bool reservoirLeft = membraneExcess(body, bp) < 3.0f;
     const std::size_t n = body.ring.size();
     std::vector<std::uint32_t> ring;
     ring.reserve(n + 8);
@@ -440,7 +458,7 @@ bool remesh(RingBody& body, BodyParticles& bp, float spacing) {
         ring.push_back(a);
         const Vec2 pa = pos(bp, a), pb = pos(bp, b);
         // Tope de seguridad: una membrana no crece sin límite aunque algo la estire.
-        if (length(pb - pa) > 1.6f * spacing && n + ring.size() - i < 4096) {
+        if (reservoirLeft && length(pb - pa) > 1.6f * spacing && n + ring.size() - i < 2000) {
             const Vec2 mid = (pa + pb) * 0.5f;
             ring.push_back(bp.allocate(BodyKind::Membrane, mid.x, mid.y, bp.radius[a], bp.invMass[a], body.id));
             changed = true;

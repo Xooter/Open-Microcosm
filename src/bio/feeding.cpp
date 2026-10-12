@@ -39,7 +39,8 @@ float vacuoleContentArea(const Digestion& dig) {
 }
 
 void ingest(Digestion& dig, RingBody& body, BodyParticles& bp, Vec2 where, float area, float pmol,
-            std::uint8_t r, std::uint8_t g, std::uint8_t b, bool forceNew) {
+            std::uint8_t r, std::uint8_t g, std::uint8_t b, bool forceNew, float phosphorus,
+            float nutritionScale) {
     FoodVacuole* target = nullptr;
     if (!forceNew) {
         for (FoodVacuole& v : dig.vacuoles)
@@ -49,25 +50,32 @@ void ingest(Digestion& dig, RingBody& body, BodyParticles& bp, Vec2 where, float
     if (!target) {
         const std::uint32_t slot = bp.allocate(BodyKind::Interior, where.x, where.y,
                                                vacuoleRadius(area), 0.5f, body.id);
-        soft_body::addOrganelle(body, slot, soft_body::toLocal(body, where), 2.0f);
+        // En una ameba (sin forma propia) el marco del cuerpo no significa nada: las vacuolas
+        // flotan libres con la corriente citoplasmática en vez de anclarse.
+        const float anchor = body.membraneReservoirRate > 0.0f ? 0.0f : 2.0f;
+        soft_body::addOrganelle(body, slot, soft_body::toLocal(body, where), anchor);
         dig.vacuoles.push_back({slot});
         target = &dig.vacuoles.back();
         target->r = r;
         target->g = g;
         target->b = b;
         target->open = !forceNew;
+        target->wholeCell = forceNew;
+        target->nutritionScale = nutritionScale;
     }
     target->contentArea += area;
     target->contentPmol += pmol;
     target->initialPmol += pmol;
+    target->phosphorus += phosphorus;
     ++target->items;
     bp.radius[target->slot] = vacuoleRadius(target->contentArea);
     dig.pmolIngested += pmol;
 }
 
 float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingParams& params,
-             float dt, float bioDt) {
+             float dt, float bioDt, float& excreted) {
     const float fraction = 1.0f - std::exp(-params.digestionRate * dig.rateScale * bioDt);
+    const float wholeFraction = 1.0f - std::exp(-dig.rateScale * bioDt / (params.wholeCellDigestionHours * 3600.0f));
     float digested = 0.0f;
     for (std::size_t k = 0; k < dig.vacuoles.size();) {
         FoodVacuole& v = dig.vacuoles[k];
@@ -77,20 +85,26 @@ float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingPar
             // La vacuola se cierra y se suelta del citostoma: queda flotando en el citoplasma.
             v.open = false;
             if (idx < body.anchorRate.size()) {
-                body.anchorRate[idx] = 0.3f;
+                body.anchorRate[idx] = body.membraneReservoirRate > 0.0f ? 0.0f : 0.3f;
                 body.restInterior[idx] = soft_body::toLocal(body, {bp.x[v.slot], bp.y[v.slot]});
             }
         }
         if (!v.open) {
-            const float d = v.contentPmol * fraction;
+            const float f = v.wholeCell ? wholeFraction : fraction;
+            const float d = v.contentPmol * f;
             const float before = v.contentPmol;
             v.contentPmol -= d;
             dig.pmolDigested += d;
-            digested += d;
+            digested += d * v.nutritionScale;
+            // El fósforo de la presa se excreta al agua a medida que se digiere.
+            const float pOut = v.phosphorus * f;
+            v.phosphorus -= pOut;
+            excreted += pOut;
             v.contentArea *= before > 0.0f ? v.contentPmol / before : 0.0f;
             bp.radius[v.slot] = vacuoleRadius(v.contentArea);
         }
         if (!v.open && v.contentPmol < 0.02f * v.initialPmol) {
+            excreted += v.phosphorus; // lo que quedaba se expulsa con la vacuola
             if (idx < body.interior.size())
                 soft_body::removeInterior(body, idx);
             bp.release(v.slot);
@@ -100,4 +114,11 @@ float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingPar
         ++k;
     }
     return digested;
+}
+
+bool satiated(const Digestion& dig) {
+    for (const FoodVacuole& v : dig.vacuoles)
+        if (v.wholeCell && v.contentPmol > 0.2f * v.initialPmol)
+            return true;
+    return false;
 }

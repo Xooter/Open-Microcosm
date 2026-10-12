@@ -6,6 +6,7 @@
 #include "bio/genome.hpp"
 #include "bio/locomotion.hpp"
 #include "bio/organelles.hpp"
+#include "bio/species.hpp"
 #include "core/profiling.hpp"
 #include "game/world.hpp"
 
@@ -35,6 +36,7 @@ constexpr Color kLysosome = {150, 78, 70, 200};
 constexpr Color kTrichocyst = {90, 96, 80, 150};
 constexpr Color kArmor = {150, 112, 62, 200};   // lórica/testa con hierro y manganeso
 constexpr Color kDischarge = {80, 80, 70, 170};
+constexpr Color kCystWall = {110, 96, 70, 220};
 constexpr float kRimMicrometers = 5.0f;
 constexpr float kPi = 3.14159265f;
 
@@ -156,11 +158,20 @@ Vec2 outwardAt(const BodyParticles& bp, const RingBody& body, std::size_t i) {
 }
 
 // Cilios: pelos cortos con onda metacrónica (la fase avanza a lo largo de la célula).
-void drawCilia(const BodyParticles& bp, const RingBody& body, float time, float px) {
+// `girdles`: solo dos cinturones (Didinium) en vez de toda la superficie.
+void drawCilia(const BodyParticles& bp, const RingBody& body, float time, float px, bool girdles = false) {
     constexpr float kLength = 7.0f;   // cilios de Paramecium: ~10 µm
     constexpr float kBeatHz = 2.0f;   // visual: la real (~30 Hz) es un borrón al microscopio
     const float width = std::max(0.4f, px);
+    float half = 0.0f;
+    for (const Vec2& q : body.restRing)
+        half = std::max(half, q.x);
     for (std::size_t i = 0; i < body.ring.size(); ++i) {
+        if (girdles) {
+            const float along = body.restRing[i].x / std::max(1e-3f, half);
+            if (std::abs(along - 0.55f) > 0.12f && std::abs(along + 0.1f) > 0.12f)
+                continue;
+        }
         const Vec2 base = ringPos(bp, body, i);
         const Vec2 o = outwardAt(bp, body, i);
         const float phase = 0.35f * static_cast<float>(i) - 2.0f * kPi * kBeatHz * time;
@@ -172,6 +183,31 @@ void drawCilia(const BodyParticles& bp, const RingBody& body, float time, float 
 
 // Flagelo anterior: onda sinusoidal. Batiendo a ~25 Hz se ve como un borrón: se dibujan
 // tres fases superpuestas (desenfoque de movimiento, como en el microscopio).
+// Chlamydomonas: dos flagelos anteriores que baten "en brazada" (puller).
+void drawTwinFlagella(const RingBody& body, const Locomotion& loco, float time, float px) {
+    const Vec2 h = bodyHeading(body);
+    float half = 0.0f;
+    for (const Vec2& q : body.restRing)
+        half = std::max(half, q.x);
+    const Vec2 base = body.centroid + h * half;
+    const float length = 2.4f * half;
+    const float stroke = loco.speed > 0.0f ? std::sin(6.2831853f * 5.0f * time) : 0.3f;
+    for (float side : {-1.0f, 1.0f}) {
+        Vec2 prev = base;
+        constexpr int kSegments = 12;
+        for (int k = 1; k <= kSegments; ++k) {
+            const float t = static_cast<float>(k) / kSegments;
+            const float angle = side * (0.6f + 0.9f * stroke * t); // los brazos se abren y se cierran
+            const Vec2 dir = rotate(h, std::cos(angle), std::sin(angle));
+            const Vec2 p = prev + dir * (length / kSegments);
+            DrawLineEx({prev.x, prev.y}, {p.x, p.y}, std::max(0.4f, px), kFlagellum);
+            prev = p;
+        }
+    }
+    const Vec2 eye = base - h * (0.5f * half) + Vec2{-h.y, h.x} * (0.4f * half);
+    DrawCircleV({eye.x, eye.y}, std::max(0.8f, 0.15f * half), kEyespot);
+}
+
 void drawFlagellum(const BodyParticles& bp, const RingBody& body, const Locomotion& loco,
                    float time, float px) {
     const Vec2 h = bodyHeading(body);
@@ -227,19 +263,37 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
         const Digestion* dig = reg.try_get<Digestion>(e);
         const Dividing* dividing = reg.try_get<Dividing>(e);
         const Heredity* her = reg.try_get<Heredity>(e);
+        const Species* species = reg.try_get<Species>(e);
+        const bool cyst = reg.all_of<Cyst>(e);
         forEachImage(world, body, view, [&] {
             const std::size_t n = body.poly.size();
             for (std::size_t i = 0; i < n; ++i)
                 DrawLineEx(toRay(body.poly[i]), toRay(body.poly[(i + 1) % n]), membraneWidth, kMembrane);
 
-            if (loco && loco->type == LocomotionType::Cilia) {
+            const SpeciesId sid = species ? species->id : SpeciesId::Paramecium;
+            if (cyst) { // quiste: pared gruesa y sin apéndices
+                for (std::size_t i = 0; i < n; ++i)
+                    DrawLineEx(toRay(body.poly[i]), toRay(body.poly[(i + 1) % n]), std::max(2.5f, 3.0f * px), kCystWall);
+            } else if (loco && sid == SpeciesId::Didinium) {
+                drawCilia(bp, body, time, px, true);
+                // Probóscide: el cono del polo anterior con el que ataca.
+                float half = 0.0f;
+                for (const Vec2& q : body.restRing)
+                    half = std::max(half, q.x);
+                const Vec2 h = bodyHeading(body);
+                const Vec2 tip = body.centroid + h * half;
+                DrawTriangle(toRay(tip + h * 8.0f), toRay(tip + Vec2{-h.y, h.x} * 5.0f), toRay(tip - Vec2{-h.y, h.x} * 5.0f), kMouth);
+                DrawTriangle(toRay(tip + h * 8.0f), toRay(tip - Vec2{-h.y, h.x} * 5.0f), toRay(tip + Vec2{-h.y, h.x} * 5.0f), kMouth);
+            } else if (loco && sid == SpeciesId::Chlamydomonas) {
+                drawTwinFlagella(body, *loco, time, px);
+            } else if (loco && loco->type == LocomotionType::Cilia) {
                 drawCilia(bp, body, time, px);
                 // Citostoma: la boca al final del surco oral.
                 const Vec2 m = ringPos(bp, body, loco->mouthRing);
                 const Vec2 in = outwardAt(bp, body, loco->mouthRing) * -1.0f;
                 DrawCircleV(toRay(m + in * 2.5f), 2.5f, kMouth);
             }
-            if (loco && loco->type == LocomotionType::Flagellum)
+            if (!cyst && loco && loco->type == LocomotionType::Flagellum && sid != SpeciesId::Chlamydomonas)
                 drawFlagellum(bp, body, *loco, time, px);
 
             // Gránulos y organelos del citoplasma, por tipo.

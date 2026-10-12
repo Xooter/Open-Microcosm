@@ -15,7 +15,8 @@ struct RunConfig {
     LocomotionType founder = LocomotionType::Cilia;
     std::uint64_t seed = 1;
     float targetShare = 0.5f; // ganar: el linaje suma esta fracción de la biomasa viva
-    int competitors = 24;     // células pasivas que compiten por la biomasa (hasta la fase 7)
+    float wildlife = 1.0f;    // escala de las poblaciones silvestres iniciales (ecosistema)
+    int competitors = 0;      // células pasivas extra (debug)
     Genome genome = speciesGenome(LocomotionType::Cilia); // genoma del fundador
 };
 

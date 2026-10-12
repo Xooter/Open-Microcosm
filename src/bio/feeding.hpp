@@ -14,6 +14,12 @@ struct FoodVacuole {
     float contentArea = 0.0f;   // área 2D del contenido [µm²] (define el tamaño)
     float contentPmol = 0.0f;   // alimento [pmol equivalentes de glucosa]
     float initialPmol = 0.0f;
+    float phosphorus = 0.0f;    // [pmol P] de presas fotótrofas: se excreta al digerirse
+    // Rinde por pmol digerido. Presas chicas (bacterias, detritos) se comen a ritmo MECÁNICO
+    // (tiempo real) y rinden ×bioTimeScale; las células enteras las limita la digestión, que
+    // ya corre en tiempo biológico, y rinden ×1.
+    float nutritionScale = 1.0f;
+    bool wholeCell = false;
     std::uint8_t r = 150, g = 130, b = 120;
     bool open = true;           // la vacuola en formación sigue recibiendo presas
     float age = 0.0f;
@@ -31,6 +37,7 @@ struct Digestion {
 
 struct FeedingParams {
     float digestionRate = 1.0f / 600.0f; // Paramecium: vacuolas de ~5–30 min [1/s biológico]
+    float wholeCellDigestionHours = 3.0f; // Didinium digiere un paramecio en ~2–4 h
     float mouthRadius = 6.0f;            // alcance del citostoma [µm]
     float ciliateMaxParticle = 5.0f;     // radio máximo que entra por la boca del ciliado [µm]
     float flagellateMaxParticle = 3.0f;
@@ -57,14 +64,19 @@ inline constexpr float kBacteriumPmol = 0.3f / 180.0f;  // pmol eq. glucosa (mat
 float cellMassPmol(float area);
 float cellAreaForMass(float pmol);
 
-// Agrega presa a la vacuola abierta, o crea una nueva en `where`. El tamaño de la célula lo
+// Agrega presa a la vacuola abierta, o crea una nueva en `where` (`phosphorus`: P de la presa). El tamaño de la célula lo
 // fija el metabolismo (biomasa + contenido de las vacuolas).
 void ingest(Digestion& dig, RingBody& body, BodyParticles& bp, Vec2 where, float area, float pmol,
-            std::uint8_t r, std::uint8_t g, std::uint8_t b, bool forceNew);
+            std::uint8_t r, std::uint8_t g, std::uint8_t b, bool forceNew, float phosphorus = 0.0f,
+            float nutritionScale = 1.0f);
+
+// Saciedad: digiriendo una presa entera, el depredador no ataca otra (tiempo de manipulación).
+bool satiated(const Digestion& dig);
 
 // Cierra vacuolas llenas o viejas (tiempo real, `dt`), digiere (tiempo biológico, `bioDt`) y
 // expulsa las vacías por el citoprocto. Devuelve el alimento digerido [pmol].
+// `excreted` suma el fósforo liberado al agua [pmol P].
 float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingParams& params,
-             float dt, float bioDt);
+             float dt, float bioDt, float& excreted);
 
 float vacuoleContentArea(const Digestion& dig);

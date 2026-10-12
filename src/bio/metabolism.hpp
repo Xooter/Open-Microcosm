@@ -20,10 +20,16 @@ struct MetabolismParams {
     float o2HalfSaturation = 2.0f;       // [µM]
     float fermentationPenalty = 15.0f;   // 30 ATP/glucosa (respiración) vs 2 (fermentación)
     float photosynthesisPerHour = 0.08f; // Euglena a plena luz: duplicación ~1 día
+    float exudation = 0.2f;              // fracción de lo fijado que las algas liberan al agua
     float divisionHours = 0.5f;          // citocinesis
     float playerDivisionCost = 0.25f;    // la reproducción del jugador es la más costosa
     float npcDivisionCost = 0.1f;
     float deathFraction = 0.5f;          // muere al perder la mitad de su biomasa de nacimiento
+    // Fósforo (limita a las algas): las fotótrofas lo toman del agua para crecer. Una célula
+    // con poco fósforo sigue fotosintetizando y acumula reservas (almidón, paramilón).
+    float phosphorusRatio = 0.01f;       // pmol P por pmol de biomasa (Redfield, aprox.)
+    float phosphorusHalfSaturation = 0.5f; // [µM]
+    float phosphorusUptakePerHour = 0.3f;  // captación máxima relativa a su cuota
 };
 
 // Componente.
@@ -32,6 +38,9 @@ struct Metabolism {
     float birthBiomass = 0.0f; // biomasa al nacer (tras la última división)
     float targetBirthBiomass = 0.0f; // la que pide su genoma: se divide al duplicarla
     float reserves = 0.0f;     // glucógeno/paramilón y otras reservas [pmol]
+    float phosphorus = 0.0f;   // [pmol P] (solo se contabiliza en fotótrofas)
+    int fissions = 1;          // divisiones por ciclo (2 = palintomía en 4 hijas)
+    int pendingFissions = 0;   // divisiones que faltan del ciclo actual
     float ageHours = 0.0f;
     bool photosynthetic = false;
     // Estado del último paso (para el HUD).
@@ -51,18 +60,23 @@ struct MetabolicInput {
     float maintenanceScale = 1.0f;
     float photosynthesisScale = 1.0f;
     float motilityCostScale = 1.0f;
+    float phosphate = 0.0f;   // [µM] en la célula
 };
 
 struct MetabolicOutput {
     float o2Consumed = 0.0f; // [pmol]
     float o2Produced = 0.0f; // [pmol]
+    float phosphateTaken = 0.0f; // [pmol P]
+    float exudate = 0.0f;        // materia orgánica liberada al agua [pmol]
 };
 
 MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const MetabolicInput& in);
 
 inline bool readyToDivide(const Metabolism& m, float cost) {
     const float birth = m.targetBirthBiomass > 0.0f ? m.targetBirthBiomass : m.birthBiomass;
-    return m.biomass >= 2.0f * birth && m.reserves >= cost * m.biomass;
+    // En palintomía la célula crece 2^n veces y después se divide n veces seguidas.
+    const float need = m.pendingFissions > 0 ? 1.8f * birth : static_cast<float>(1 << m.fissions) * birth;
+    return m.biomass >= need && m.reserves >= cost * m.biomass;
 }
 
 inline bool isDead(const Metabolism& m, const MetabolismParams& p) {
