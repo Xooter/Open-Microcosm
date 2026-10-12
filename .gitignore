@@ -1,0 +1,32 @@
+# Builds de CMake (incluye las dependencias descargadas en build/*/_deps)
+build/
+out/
+cmake-build-*/
+CMakeUserPresets.json
+compile_commands.json
+
+# Caches de herramientas (clangd, ccache)
+.cache/
+.ccache/
+
+# IDEs / editores
+.vscode/
+.idea/
+.vs/
+*.swp
+*~
+
+# Binarios y objetos sueltos
+*.o
+*.obj
+*.a
+*.so
+*.exe
+
+# Capturas del profiler Tracy
+*.tracy
+
+# Sistema
+.DS_Store
+Thumbs.db
+.claude
