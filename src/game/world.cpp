@@ -3,7 +3,6 @@
 #include "core/profiling.hpp"
 #include "core/rng.hpp"
 #include "core/units.hpp"
-#include "bio/phagocytosis.hpp"
 #include "sim/polygon.hpp"
 
 #include <cmath>
@@ -81,7 +80,7 @@ void World::step(float dt) {
 
     bacteria_.step(fluid_, nutrients_.grid(), dt, config_.seed, step_, width_, height_);
     stepBodies(dt);
-    updatePlayerFeeding(dt); // eventos de topología (fagocitosis): al final del paso
+    updateFeeding(dt);       // eventos de topología (fagocitosis): al final del paso
     updateLifecycle(dt);     // metabolismo, división y muerte
     excludeFromCells();
 
@@ -347,7 +346,7 @@ void World::stepBodies(float dt) {
         }
     }
 
-    applyPlayerMotion(dt);
+    applyMotion(dt);
     applyDivisionForces();
     for (RingBody* body : bodyList_)
         soft_body::adaptPlastic(*body, bodies_, dt);
@@ -548,6 +547,7 @@ entt::entity World::spawnPlayer(LocomotionType type, Vec2 center) {
     registry_.emplace<Locomotion>(e, loco);
     registry_.emplace<Digestion>(e);
     registry_.emplace<Metabolism>(e, meta);
+    registry_.emplace<Lineage>(e, Lineage{run_, 0});
     player_ = e;
     return e;
 }
@@ -588,27 +588,37 @@ Vec2 World::imageShift(const RingBody& of, Vec2 near) const {
            near - of.centroid;
 }
 
-void World::applyPlayerMotion(float dt) {
-    if (!registry_.valid(player_))
-        return;
-    RingBody& body = registry_.get<RingBody>(player_);
-    Locomotion& loco = registry_.get<Locomotion>(player_);
-    loco.forward = playerInput_.forward;
-    loco.turn = playerInput_.turn;
-    loco.target = playerInput_.aim;
-    // La ameba deja de desplazarse mientras forma una copa fagocítica.
-    const bool engulfing = registry_.all_of<PhagocyticCup>(player_);
-    loco.active = (loco.type == LocomotionType::Flagellum && playerInput_.propel) ||
-                  (loco.type == LocomotionType::Pseudopod && playerInput_.pseudopod && !engulfing);
-    applyLocomotion(body, bodies_, loco, locomotionParams_, simTime_, width_, height_);
-    if (loco.type != LocomotionType::Pseudopod)
-        return;
+void World::applyMotion(float dt) {
+    // Controles: el jugador por input; el resto del linaje, por su piloto automático.
+    for (auto [e, body, loco] : registry_.view<RingBody, Locomotion>().each()) {
+        const bool engulfing = registry_.all_of<PhagocyticCup>(e);
+        if (e == player_) {
+            loco.forward = playerInput_.forward;
+            loco.turn = playerInput_.turn;
+            loco.target = playerInput_.aim;
+            loco.active = (loco.type == LocomotionType::Flagellum && playerInput_.propel) ||
+                          (loco.type == LocomotionType::Pseudopod && playerInput_.pseudopod);
+        } else if (Autopilot* pilot = registry_.try_get<Autopilot>(e)) {
+            Rng rng(config_.seed, rng_stream::kAutopilot, body.id, step_);
+            steerAutopilot(*pilot, loco, body, rng, dt);
+        } else {
+            continue;
+        }
+        // La ameba deja de desplazarse mientras forma una copa fagocítica.
+        if (loco.type == LocomotionType::Pseudopod && engulfing)
+            loco.active = false;
+        applyLocomotion(body, bodies_, loco, locomotionParams_, simTime_, width_, height_);
+        if (loco.type == LocomotionType::Pseudopod)
+            updateCup(e, body, dt);
+    }
+}
 
+void World::updateCup(entt::entity e, RingBody& body, float dt) {
     // Fagocitosis: el contacto con una presa elegible inicia una copa; la copa la forra.
-    if (PhagocyticCup* cup = registry_.try_get<PhagocyticCup>(player_)) {
+    if (PhagocyticCup* cup = registry_.try_get<PhagocyticCup>(e)) {
         const auto preyEntity = static_cast<entt::entity>(cup->preyId);
         if (!registry_.valid(preyEntity) || !registry_.all_of<RingBody>(preyEntity)) {
-            registry_.remove<PhagocyticCup>(player_);
+            registry_.remove<PhagocyticCup>(e);
             return;
         }
         const RingBody& prey = registry_.get<RingBody>(preyEntity);
@@ -617,7 +627,7 @@ void World::applyPlayerMotion(float dt) {
             const std::uint32_t again = findContact(body, bodies_, prey, shift, feedingParams_);
             if (again == ~0u) {
                 releasePrey(prey, bodies_, *cup);
-                registry_.remove<PhagocyticCup>(player_); // la presa se soltó
+                registry_.remove<PhagocyticCup>(e); // la presa se soltó
                 return;
             }
             cup->anchorSlot = again;
@@ -627,49 +637,82 @@ void World::applyPlayerMotion(float dt) {
         return;
     }
     for (const RingBody* prey : preyFor(body)) {
+        if (registry_.all_of<Lineage>(static_cast<entt::entity>(prey->id)) &&
+            registry_.all_of<Lineage>(e) &&
+            registry_.get<Lineage>(static_cast<entt::entity>(prey->id)).run == registry_.get<Lineage>(e).run)
+            continue; // no se come a su propio linaje
+        if (registry_.any_of<PhagocyticCup>(static_cast<entt::entity>(prey->id)))
+            continue;
         const std::uint32_t contact =
             findContact(body, bodies_, *prey, imageShift(*prey, body.centroid), feedingParams_);
         if (contact != ~0u) {
-            PhagocyticCup& cup = registry_.emplace<PhagocyticCup>(player_, PhagocyticCup{prey->id, contact});
+            PhagocyticCup& cup = registry_.emplace<PhagocyticCup>(e, PhagocyticCup{prey->id, contact});
             holdPrey(*prey, bodies_, cup);
             return;
         }
     }
 }
 
-void World::updatePlayerFeeding(float dt) {
-    PROFILE_SCOPE("World::updatePlayerFeeding");
-    if (!registry_.valid(player_))
+void World::updateFeeding(float dt) {
+    PROFILE_SCOPE("World::updateFeeding");
+    auto feeders = registry_.view<RingBody, Locomotion, Digestion>();
+    if (feeders.begin() == feeders.end())
         return;
-    RingBody& body = registry_.get<RingBody>(player_);
-    const Locomotion& loco = registry_.get<Locomotion>(player_);
-    Digestion& dig = registry_.get<Digestion>(player_);
+    // Grilla de bacterias para las consultas de todas las bocas; las presas se marcan como
+    // tomadas y se quitan todas juntas al final (quitar antes cambiaría los índices).
+    bacteriaGrid_.build(bacteria_.x, bacteria_.y, width_, height_, 8.0f);
+    takenBacteria_.assign(bacteria_.size(), 0);
+    takenAmbient_.assign(ambient_.size(), 0);
+    engulfs_.clear();
 
-    if (loco.type == LocomotionType::Pseudopod) {
-        if (PhagocyticCup* cup = registry_.try_get<PhagocyticCup>(player_)) {
-            const auto preyEntity = static_cast<entt::entity>(cup->preyId);
-            const RingBody& prey = registry_.get<RingBody>(preyEntity);
-            const Vec2 preyCenter = prey.centroid + imageShift(prey, body.centroid);
-            Closure closure;
-            if (findClosure(body, bodies_, preyCenter, feedingParams_, closure)) {
-                registry_.remove<PhagocyticCup>(player_);
-                engulf(closure, preyEntity);
-            } else if (cup->coverage > cup->bestCoverage + 0.02f) {
-                cup->bestCoverage = cup->coverage;
-                cup->stalled = 0.0f;
-            } else {
-                cup->stalled += dt;
-                if (cup->stalled > 10.0f) { // la copa dejó de avanzar: se abandona
-                    releasePrey(prey, bodies_, *cup);
-                    registry_.remove<PhagocyticCup>(player_);
+    for (auto [e, body, loco, dig] : feeders.each()) {
+        if (loco.type == LocomotionType::Pseudopod) {
+            if (PhagocyticCup* cup = registry_.try_get<PhagocyticCup>(e)) {
+                const auto preyEntity = static_cast<entt::entity>(cup->preyId);
+                if (registry_.valid(preyEntity) && registry_.all_of<RingBody>(preyEntity)) {
+                    const RingBody& prey = registry_.get<RingBody>(preyEntity);
+                    const Vec2 preyCenter = prey.centroid + imageShift(prey, body.centroid);
+                    Closure closure;
+                    if (findClosure(body, bodies_, preyCenter, feedingParams_, closure)) {
+                        engulfs_.push_back({e, preyEntity, std::move(closure)});
+                    } else if (cup->coverage > cup->bestCoverage + 0.02f) {
+                        cup->bestCoverage = cup->coverage;
+                        cup->stalled = 0.0f;
+                    } else {
+                        cup->stalled += dt;
+                        if (cup->stalled > 10.0f) { // la copa dejó de avanzar: se abandona
+                            releasePrey(prey, bodies_, *cup);
+                            registry_.remove<PhagocyticCup>(e);
+                        }
+                    }
                 }
             }
+            feedByContact(body, dig, dt);
+        } else {
+            feedAtMouth(body, loco, dig, dt);
         }
-        feedByContact(body, dig, dt);
-    } else {
-        feedAtMouth(body, loco, dig, dt);
     }
-    soft_body::refresh(body, bodies_);
+    // Las fagocitosis destruyen entidades: después de recorrer la vista.
+    for (EngulfEvent& ev : engulfs_) {
+        if (!registry_.valid(ev.predator) || !registry_.valid(ev.prey))
+            continue;
+        registry_.remove<PhagocyticCup>(ev.predator);
+        engulf(ev.predator, ev.closure, ev.prey);
+    }
+    removeBacteria(eatenBacteria_);
+    removeAmbient(eatenAmbient_);
+}
+
+void World::forBacteriaInBox(Vec2 lo, Vec2 hi, const std::function<void(std::size_t)>& fn) const {
+    const int gw = bacteriaGrid_.cellsX(), gh = bacteriaGrid_.cellsY();
+    const float cw = width_ / static_cast<float>(gw), ch = height_ / static_cast<float>(gh);
+    const int x0 = static_cast<int>(std::floor(lo.x / cw)), x1 = static_cast<int>(std::floor(hi.x / cw));
+    const int y0 = static_cast<int>(std::floor(lo.y / ch)), y1 = static_cast<int>(std::floor(hi.y / ch));
+    const auto& order = bacteriaGrid_.order();
+    for (int cy = y0; cy <= std::min(y1, y0 + gh - 1); ++cy)
+        for (int cx = x0; cx <= std::min(x1, x0 + gw - 1); ++cx)
+            for (std::uint32_t it = bacteriaGrid_.cellBegin(cx, cy); it < bacteriaGrid_.cellEnd(cx, cy); ++it)
+                fn(order[it]);
 }
 
 void World::removeBacteria(std::vector<std::size_t>& indices) {
@@ -686,27 +729,41 @@ void World::removeAmbient(std::vector<std::size_t>& indices) {
     indices.clear();
 }
 
-void World::engulf(const Closure& closure, entt::entity preyEntity) {
-    RingBody& body = registry_.get<RingBody>(player_);
-    Digestion& dig = registry_.get<Digestion>(player_);
+void World::engulf(entt::entity predator, const Closure& closure, entt::entity preyEntity) {
+    RingBody& body = registry_.get<RingBody>(predator);
+    Digestion& dig = registry_.get<Digestion>(predator);
     const CellLook look = registry_.get<CellLook>(preyEntity);
-    const float preyArea = std::abs(registry_.get<RingBody>(preyEntity).restArea);
+    const RingBody& preyBody = registry_.get<RingBody>(preyEntity);
+    const float preyArea = std::abs(preyBody.restArea);
+    float preyMass = cellMassPmol(preyArea);
+    if (const Metabolism* m = registry_.try_get<Metabolism>(preyEntity))
+        preyMass = m->biomass + m->reserves;
     const int pn = static_cast<int>(closure.pocket.size());
 
     // Todo lo que quedó dentro de la copa entra al fagosoma junto con la presa.
     float extraArea = 0.0f, extraPmol = 0.0f;
+    int bacteriaInside = 0;
     for (std::size_t i = 0; i < bacteria_.size(); ++i) {
+        if (takenBacteria_[i])
+            continue;
         const Vec2 q = body.centroid + Vec2{minImage(bacteria_.x[i] - body.centroid.x, width_),
                                             minImage(bacteria_.y[i] - body.centroid.y, height_)};
         if (polygon::contains(closure.pocket.data(), pn, q)) {
+            takenBacteria_[i] = 1;
             eatenBacteria_.push_back(i);
             extraArea += kBacteriumArea;
             extraPmol += kBacteriumPmol;
+            ++bacteriaInside;
         }
     }
-    dig.bacteriaEaten += static_cast<int>(eatenBacteria_.size());
-    removeBacteria(eatenBacteria_);
+    dig.bacteriaEaten += bacteriaInside;
 
+    if (preyEntity == player_) {
+        events_.push_back({WorldEvent::Type::PlayerDied, preyEntity, entt::null, "fagocitada"});
+        player_ = entt::null;
+        lastDeathCause_ = "fagocitada";
+    }
+    // El predador pudo tener a la presa sujeta en otra copa: se quita al destruirla.
     destroyCell(registry_, bodies_, preyEntity);
 
     // Fusión de membranas: el tramo de la copa pasa a ser la membrana del fagosoma.
@@ -717,8 +774,8 @@ void World::engulf(const Closure& closure, entt::entity preyEntity) {
         endGrab();
     soft_body::replaceRing(body, bodies_, closure.outerRing);
 
-    ingest(dig, body, bodies_, closure.preyCenter, preyArea + extraArea,
-           cellMassPmol(preyArea) + extraPmol, look.r, look.g, look.b, true);
+    ingest(dig, body, bodies_, closure.preyCenter, preyArea + extraArea, preyMass + extraPmol,
+           look.r, look.g, look.b, true);
     ++dig.cellsEaten;
 }
 
@@ -737,32 +794,35 @@ void World::feedAtMouth(RingBody& body, const Locomotion& loco, Digestion& dig, 
 
     // El citostoma tiene un caudal máximo: no traga todo lo que pasa cerca.
     dig.mouthBudget = std::min(dig.mouthBudget + maxRate * dt, maxRate);
-    for (std::size_t k = 0; k < bacteria_.size() && dig.mouthBudget >= 1.0f; ++k) {
+    const Vec2 wm = {wrapCoord(m.x, width_), wrapCoord(m.y, height_)};
+    forBacteriaInBox(wm - Vec2{reach, reach}, wm + Vec2{reach, reach}, [&](std::size_t k) {
+        if (takenBacteria_[k] || dig.mouthBudget < 1.0f)
+            return;
         const float dx = minImage(bacteria_.x[k] - m.x, width_);
         const float dy = minImage(bacteria_.y[k] - m.y, height_);
         if (dx * dx + dy * dy < reach * reach) {
             dig.mouthBudget -= 1.0f;
+            takenBacteria_[k] = 1;
             eatenBacteria_.push_back(k);
+            ++dig.bacteriaEaten;
             ingest(dig, body, bodies_, site, kBacteriumArea, kBacteriumPmol, 170, 150, 140, false);
         }
-    }
-    dig.bacteriaEaten += static_cast<int>(eatenBacteria_.size());
-    removeBacteria(eatenBacteria_);
+    });
 
     for (std::size_t k = 0; k < ambient_.size(); ++k) {
-        if (ambient_.kind[k] != ParticleKind::Detritus || ambient_.radius[k] > maxParticle)
+        if (takenAmbient_[k] || ambient_.kind[k] != ParticleKind::Detritus || ambient_.radius[k] > maxParticle)
             continue;
         const float dx = minImage(ambient_.x[k] - m.x, width_);
         const float dy = minImage(ambient_.y[k] - m.y, height_);
         const float r = reach + ambient_.radius[k];
         if (dx * dx + dy * dy < r * r) {
+            takenAmbient_[k] = 1;
             eatenAmbient_.push_back(k);
+            ++dig.detritusEaten;
             const float a = units::kPi * ambient_.radius[k] * ambient_.radius[k];
             ingest(dig, body, bodies_, site, a, ambient_.mass[k], 140, 112, 72, false);
         }
     }
-    dig.detritusEaten += static_cast<int>(eatenAmbient_.size());
-    removeAmbient(eatenAmbient_);
 }
 
 void World::feedByContact(RingBody& body, Digestion& dig, float dt) {
@@ -789,28 +849,33 @@ void World::feedByContact(RingBody& body, Digestion& dig, float dt) {
     dig.mouthBudget = std::min(dig.mouthBudget + feedingParams_.contactMaxRate * dt,
                                feedingParams_.contactMaxRate);
     Vec2 site;
-    for (std::size_t k = 0; k < bacteria_.size() && dig.mouthBudget >= 1.0f; ++k) {
+    // La caja del cuerpo puede salirse del mundo: se consulta su versión envuelta.
+    const Vec2 lo = body.aabbMin - Vec2{reach, reach}, hi = body.aabbMax + Vec2{reach, reach};
+    const Vec2 shift = {wrapCoord(lo.x, width_) - lo.x, wrapCoord(lo.y, height_) - lo.y};
+    forBacteriaInBox(lo + shift, hi + shift, [&](std::size_t k) {
+        if (takenBacteria_[k] || dig.mouthBudget < 1.0f)
+            return;
         if (tryEat(bacteria_.x[k], bacteria_.y[k], k, site)) {
             dig.mouthBudget -= 1.0f;
+            takenBacteria_[k] = 1;
             eatenBacteria_.push_back(k);
+            ++dig.bacteriaEaten;
             ingest(dig, body, bodies_, site, kBacteriumArea, kBacteriumPmol, 170, 150, 140, false);
         }
-    }
-    dig.bacteriaEaten += static_cast<int>(eatenBacteria_.size());
-    removeBacteria(eatenBacteria_);
+    });
 
     for (std::size_t k = 0; k < ambient_.size() && dig.mouthBudget >= 1.0f; ++k) {
-        if (ambient_.kind[k] != ParticleKind::Detritus)
+        if (takenAmbient_[k] || ambient_.kind[k] != ParticleKind::Detritus)
             continue;
         if (tryEat(ambient_.x[k], ambient_.y[k], bacteria_.size() + k, site)) {
             dig.mouthBudget -= 1.0f;
+            takenAmbient_[k] = 1;
             eatenAmbient_.push_back(k);
+            ++dig.detritusEaten;
             const float a = units::kPi * ambient_.radius[k] * ambient_.radius[k];
             ingest(dig, body, bodies_, site, a, ambient_.mass[k], 140, 112, 72, false);
         }
     }
-    dig.detritusEaten += static_cast<int>(eatenAmbient_.size());
-    removeAmbient(eatenAmbient_);
 }
 
 // ---------------------------------------------------------------------------
@@ -1126,7 +1191,15 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
         placeMouth(registry_.get<RingBody>(child), childLoco);
         registry_.emplace<Locomotion>(child, childLoco);
         placeMouth(registry_.get<RingBody>(cell), registry_.get<Locomotion>(cell));
+        registry_.emplace<Autopilot>(child); // la hija que no controla el jugador deambula sola
     }
+    // Las dos hijas son una generación nueva del linaje.
+    if (Lineage* lin = registry_.try_get<Lineage>(cell)) {
+        ++lin->generation;
+        registry_.emplace<Lineage>(child, *lin);
+    }
+    if (cell == player_)
+        events_.push_back({WorldEvent::Type::PlayerDivided, cell, child, ""});
     if (grabSlot_ != kNoGrab && bodies_.owner[grabSlot_] == childId)
         endGrab();
 }
@@ -1181,8 +1254,73 @@ void World::lyse(entt::entity cell, const char* cause) {
     if (cell == player_) {
         player_ = entt::null;
         lastDeathCause_ = cause;
+        events_.push_back({WorldEvent::Type::PlayerDied, cell, entt::null, cause});
     }
     if (grabSlot_ != kNoGrab && bodies_.owner[grabSlot_] == entt::to_integral(cell))
         endGrab();
     destroyCell(registry_, bodies_, cell);
+}
+
+// ---------------------------------------------------------------------------
+// Linaje
+// ---------------------------------------------------------------------------
+
+void World::setPlayer(entt::entity cell) {
+    if (!registry_.valid(cell) || !registry_.all_of<Locomotion>(cell))
+        return;
+    if (registry_.valid(player_) && player_ != cell) {
+        registry_.remove<Player>(player_);
+        registry_.emplace_or_replace<Autopilot>(player_);
+    }
+    registry_.remove<Autopilot>(cell);
+    registry_.emplace_or_replace<Player>(cell);
+    player_ = cell;
+}
+
+std::vector<entt::entity> World::lineageMembers() const {
+    std::vector<entt::entity> out;
+    for (auto [e, lin] : registry_.view<Lineage>().each())
+        if (lin.run == run_ && registry_.all_of<Metabolism>(e))
+            out.push_back(e);
+    std::sort(out.begin(), out.end());
+    return out;
+}
+
+Census World::census() const {
+    Census c;
+    for (auto [e, body] : registry_.view<RingBody>().each()) {
+        const Metabolism* m = registry_.try_get<Metabolism>(e);
+        const float mass = m ? m->biomass : cellMassPmol(body.restArea);
+        c.totalBiomass += mass;
+        const Lineage* lin = registry_.try_get<Lineage>(e);
+        if (lin && lin->run == run_) {
+            c.lineageBiomass += mass;
+            ++c.lineageCells;
+            c.maxGeneration = std::max(c.maxGeneration, lin->generation);
+        } else {
+            ++c.otherCells;
+        }
+    }
+    c.totalBiomass += static_cast<float>(bacteria_.size()) * kBacteriumPmol;
+    return c;
+}
+
+void World::populate(int cells) {
+    // Grilla con jitter: las células no se superponen al aparecer y dejan libre el centro.
+    constexpr float kSpacing = 180.0f;
+    const int cols = static_cast<int>(width_ / kSpacing), rows = static_cast<int>(height_ / kSpacing);
+    const Vec2 middle = {0.5f * width_, 0.5f * height_};
+    int placed = 0;
+    for (int k = 0; k < cols * rows && placed < cells; ++k) {
+        Rng rng(config_.seed, rng_stream::kPopulate, static_cast<std::uint64_t>(k), 0);
+        const int idx = static_cast<int>(rng.uniform() * static_cast<float>(cols * rows));
+        const Vec2 p = {(static_cast<float>(idx % cols) + 0.5f) * kSpacing + rng.uniform(-30.0f, 30.0f),
+                        (static_cast<float>(idx / cols) + 0.5f) * kSpacing + rng.uniform(-30.0f, 30.0f)};
+        if (std::abs(p.x - middle.x) < 250.0f && std::abs(p.y - middle.y) < 200.0f)
+            continue;
+        if (cellAt(p) != entt::null)
+            continue;
+        spawnCell(randomCellSpec(rng, p));
+        ++placed;
+    }
 }

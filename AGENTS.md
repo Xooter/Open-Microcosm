@@ -145,6 +145,19 @@ El LOD (fase 9) degrada las células lejanas a menos partículas o a simulación
   Las hijas se re-muestrean (`resampleRing`) y vuelven a la forma de su especie (`CellShape`).
 - **Lisis:** ~40% del contenido se disuelve en nutrientes y el resto queda como detritos.
 
+### Partida y linaje (`game/run`, `game/lineage`, `game/progress`, `ai/autopilot`)
+
+- `World` no sabe de reglas de partida: emite `WorldEvent` (el jugador se dividió o murió) y
+  ofrece `census()` y `lineageMembers()`. `Run` consume los eventos, pausa para elegir hija o
+  heredero, calcula el dominio de biomasa y detecta victoria o extinción.
+- Componente `Lineage` (partida y generación). Las hijas que el jugador no controla llevan
+  `Autopilot` (deambular y comer). Movimiento, copas fagocíticas y alimentación son genéricos
+  para toda célula con `Locomotion`; el jugador solo se distingue por de dónde salen sus controles.
+- La alimentación de muchas bocas usa una grilla de bacterias; lo comido se marca y se quita todo
+  junto al final del paso. Las fagocitosis (que destruyen entidades) se aplican después de
+  recorrer la vista de EnTT.
+- `Progress` se guarda como texto clave=valor en `defaultProgressPath()`.
+
 ### Jugador (`bio/locomotion`, `bio/feeding`, `bio/phagocytosis`)
 
 - **Locomoción:** suma velocidad a las partículas del cuerpo (sin inercia), con velocidades de
@@ -198,7 +211,7 @@ src/
   sim/              fft, fluid, chem_field, grid2d, particles, body_particles, soft_body (XPBD),
                     contacts, polygon, spatial_grid
   bio/              cell, membrane, metabolism, lifecycle, genome, organelles, species
-  ai/               quimiotaxis, caza, huida, fototaxis
+  ai/               autopilot (deambular); luego quimiotaxis, caza, huida, fototaxis
   game/             linaje, run roguelite, objetivo de biomasa, enciclopedia
   render/           renderer, shaders de membrana, post-proceso de microscopio
 assets/

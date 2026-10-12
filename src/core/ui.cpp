@@ -1,17 +1,24 @@
 #include "core/ui.hpp"
 
 #include "bio/division.hpp"
+#include "game/progress.hpp"
+#include "game/run.hpp"
 #include "game/world.hpp"
 
 #include <cmath>
+#include <optional>
 
 #define RAYGUI_IMPLEMENTATION
 #include <raygui.h>
 
 void drawUi(World& world, ToolState& tools) {
+    if (!tools.showLab) {
+        DrawText("H: panel de laboratorio", 12, 12, 16, DARKGRAY);
+        return;
+    }
     MediumParams& m = world.medium();
 
-    GuiPanel(kUiPanel, "BioGame (fase 3)");
+    GuiPanel(kUiPanel, "BioGame - laboratorio (H oculta)");
     float y = kUiPanel.y + 35;
     auto slider = [&](const char* label, float* value, float lo, float hi, const char* fmt) {
         GuiSliderBar({kUiPanel.x + 120, y, 110, 16}, label, TextFormat(fmt, *value), value, lo,
@@ -82,14 +89,10 @@ void drawUi(World& world, ToolState& tools) {
                  TextFormat("Comido: %d bact. %d detr. %d cel. | %zu vacuolas", dig.bacteriaEaten,
                             dig.detritusEaten, dig.cellsEaten, dig.vacuoles.size()));
         y += 22;
-    } else {
-        GuiLabel({kUiPanel.x + 10, y, 300, 16},
-                 TextFormat("Tu celula murio (%s). R: reaparecer", world.lastDeathCause()));
-        y += 22;
     }
     slider("luz", &world.medium().surfaceLight, 0.0f, 1.0f, "%.2f");
     slider("tiempo bio x", &world.bioTimeScale(), 1.0f, 600.0f, "%.0f");
-    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "1 cilios | 2 flagelo | 3 ameba | F seguir");
+    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "F seguir camara | N nueva partida");
     y += 16;
     GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Cilios: W/S avanzar, A/D girar");
     y += 16;
@@ -102,4 +105,98 @@ void drawUi(World& world, ToolState& tools) {
     GuiLabel({kUiPanel.x + 10, y, 300, 16}, "B detrito | C celula | K 50 celulas | X borrar");
     y += 16;
     GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Q apretar | L lisar | F1-F4 overlays | Rueda");
+}
+
+namespace {
+
+const char* speciesName(LocomotionType t) {
+    switch (t) {
+    case LocomotionType::Cilia: return "Paramecium (cilios)";
+    case LocomotionType::Flagellum: return "Euglena (flagelo)";
+    case LocomotionType::Pseudopod: return "Amoeba (pseudopodos)";
+    }
+    return "";
+}
+
+const char* unlockHint(LocomotionType t) {
+    switch (t) {
+    case LocomotionType::Cilia: return "";
+    case LocomotionType::Flagellum: return "Llega a la generacion 3";
+    case LocomotionType::Pseudopod: return "Llega a la generacion 5 o gana una partida";
+    }
+    return "";
+}
+
+void centered(const char* text, float y, int size, Color color) {
+    DrawText(text, (GetScreenWidth() - MeasureText(text, size)) / 2, static_cast<int>(y), size, color);
+}
+
+} // namespace
+
+std::optional<LocomotionType> drawTitleScreen(const Progress& progress) {
+    std::optional<LocomotionType> chosen;
+    BeginDrawing();
+    ClearBackground({236, 231, 214, 255});
+    const float cx = GetScreenWidth() * 0.5f, cy = GetScreenHeight() * 0.5f;
+    centered("BioGame", cy - 220, 56, {60, 64, 52, 255});
+    centered("Una gota de agua. Un linaje. Domina la biomasa o extinguite.", cy - 150, 22, {90, 92, 80, 255});
+
+    const LocomotionType types[] = {LocomotionType::Cilia, LocomotionType::Flagellum, LocomotionType::Pseudopod};
+    for (int i = 0; i < 3; ++i) {
+        const LocomotionType t = types[i];
+        const Rectangle r = {cx - 220, cy - 90 + i * 70.0f, 440, 56};
+        const bool open = progress.isUnlocked(t);
+        if (!open)
+            GuiDisable();
+        if (GuiButton(r, TextFormat("%d  %s", i + 1, speciesName(t))) && open)
+            chosen = t;
+        GuiEnable();
+        if (!open)
+            DrawText(TextFormat("Bloqueada: %s", unlockHint(t)), static_cast<int>(r.x + 450), static_cast<int>(r.y + 20), 16, GRAY);
+        if (open && IsKeyPressed(KEY_ONE + i))
+            chosen = t;
+    }
+    centered(TextFormat("Partidas %d | victorias %d | mejor generacion %u | mejor dominio %.0f%%", progress.runs,
+                        progress.wins, progress.bestGeneration, 100 * progress.bestShare),
+             cy + 150, 18, {90, 92, 80, 255});
+    EndDrawing();
+    return chosen;
+}
+
+void drawRunHud(const Run& run) {
+    const Census& c = run.census();
+    const float x = GetScreenWidth() - 330.0f;
+    DrawRectangle(static_cast<int>(x) - 10, 10, 330, 104, Fade({236, 231, 214, 255}, 0.85f));
+    float share = c.share();
+    GuiProgressBar({x + 70, 18, 180, 16}, "dominio", TextFormat("%.1f%% / %.0f%%", 100 * share, 100 * run.config().targetShare),
+                   &share, 0.0f, run.config().targetShare);
+    DrawText(TextFormat("Linaje: %d celulas | generacion %u", c.lineageCells, c.maxGeneration), static_cast<int>(x), 42, 16, DARKGRAY);
+    DrawText(TextFormat("Competidoras: %d | divisiones %d", c.otherCells, run.divisions()), static_cast<int>(x), 62, 16, DARKGRAY);
+    DrawText(TextFormat("Tiempo %.0f s (%.1f h bio)", run.elapsed(), run.elapsed() * units::kBioTimeScale / 3600.0f),
+             static_cast<int>(x), 82, 16, DARKGRAY);
+
+    if (run.won())
+        centered("Tu linaje domina la gota!  (segui jugando o N para una partida nueva)", 20, 22, {40, 110, 40, 255});
+    if (run.state() == Run::State::ChoosingDaughter)
+        centered("Te dividiste: elegi con que hija seguir  (Tab / flechas / click, Enter)", GetScreenHeight() - 60.0f, 24, {150, 80, 10, 255});
+    if (run.state() == Run::State::ChoosingHeir)
+        centered(TextFormat("Tu celula murio (%s): elegi un descendiente  (Tab / click, Enter)", run.deathCause()),
+                 GetScreenHeight() - 60.0f, 24, {150, 40, 30, 255});
+}
+
+void drawGameOver(const Run& run, const Progress& progress, const std::vector<LocomotionType>& unlocked) {
+    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.45f));
+    const float cy = GetScreenHeight() * 0.5f;
+    centered("Tu linaje se extinguio", cy - 120, 48, RAYWHITE);
+    centered(TextFormat("Ultima muerte: %s", run.deathCause()), cy - 60, 22, RAYWHITE);
+    centered(TextFormat("Generacion maxima %u | mejor dominio %.1f%% | %d divisiones | %.0f s", run.bestGeneration(),
+                        100 * run.bestShare(), run.divisions(), run.elapsed()),
+             cy - 25, 22, RAYWHITE);
+    float y = cy + 20;
+    for (LocomotionType t : unlocked) {
+        centered(TextFormat("Nueva especie desbloqueada: %s", speciesName(t)), y, 24, {250, 210, 120, 255});
+        y += 32;
+    }
+    centered(TextFormat("Partidas jugadas: %d", progress.runs), y + 10, 18, LIGHTGRAY);
+    centered("Enter: volver al inicio", y + 50, 22, RAYWHITE);
 }

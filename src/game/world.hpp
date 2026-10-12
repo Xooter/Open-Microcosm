@@ -1,11 +1,14 @@
 #pragma once
 
+#include "ai/autopilot.hpp"
 #include "bio/bacteria.hpp"
 #include "bio/cell.hpp"
 #include "bio/division.hpp"
 #include "bio/feeding.hpp"
 #include "bio/locomotion.hpp"
 #include "bio/metabolism.hpp"
+#include "bio/phagocytosis.hpp"
+#include "game/lineage.hpp"
 #include "core/rng.hpp"
 #include "core/units.hpp"
 #include "core/vec2.hpp"
@@ -16,10 +19,13 @@
 #include "sim/contacts.hpp"
 #include "sim/particles.hpp"
 #include "sim/soft_body.hpp"
+#include "sim/spatial_grid.hpp"
 
 #include <entt/entity/registry.hpp>
 
 #include <cstdint>
+#include <functional>
+#include <utility>
 #include <vector>
 
 struct WorldConfig {
@@ -69,8 +75,17 @@ class World {
     // Compresión: empuja todos los cuerpos hacia un punto [µm/s].
     void setSqueeze(Vec2 center, float speed);
     void clearSqueeze() { squeezeActive_ = false; }
-    // Jugador.
+    // Jugador y linaje.
     entt::entity spawnPlayer(LocomotionType type, Vec2 center);
+    // El control pasa a otra célula (del linaje): la anterior queda con piloto automático.
+    void setPlayer(entt::entity cell);
+    void setRun(std::uint32_t run) { run_ = run; }
+    std::uint32_t run() const { return run_; }
+    std::vector<entt::entity> lineageMembers() const;
+    Census census() const;
+    std::vector<WorldEvent> takeEvents() { return std::exchange(events_, {}); }
+    // Puebla la gota con células pasivas (competidoras por la biomasa, hasta la fase 7).
+    void populate(int cells);
     void setPlayerType(LocomotionType type); // reemplaza al jugador en el mismo lugar
     entt::entity player() const { return player_; }
     void setPlayerInput(const PlayerInput& input) { playerInput_ = input; }
@@ -120,10 +135,12 @@ class World {
     void addDetritus(Rng& rng, Vec2 position);
     void collectBodies();
     void stepBodies(float dt);
-    void applyPlayerMotion(float dt);
-    void updatePlayerFeeding(float dt);
+    void applyMotion(float dt);
+    void updateCup(entt::entity e, RingBody& body, float dt);
+    void updateFeeding(float dt);
+    void forBacteriaInBox(Vec2 lo, Vec2 hi, const std::function<void(std::size_t)>& fn) const;
     std::vector<const RingBody*> preyFor(const RingBody& predator) const;
-    void engulf(const struct Closure& closure, entt::entity prey);
+    void engulf(entt::entity predator, const Closure& closure, entt::entity prey);
     Vec2 imageShift(const RingBody& of, Vec2 near) const;
     void feedAtMouth(RingBody& body, const Locomotion& loco, Digestion& dig, float dt);
     void feedByContact(RingBody& body, Digestion& dig, float dt);
@@ -179,6 +196,15 @@ class World {
     };
     std::vector<PendingSplit> splits_;
     std::vector<std::size_t> eatenBacteria_, eatenAmbient_;
+    std::vector<std::uint8_t> takenBacteria_, takenAmbient_;
+    SpatialGrid bacteriaGrid_;
+    struct EngulfEvent {
+        entt::entity predator, prey;
+        Closure closure;
+    };
+    std::vector<EngulfEvent> engulfs_;
+    std::vector<WorldEvent> events_;
+    std::uint32_t run_ = 1;
 
     bool squeezeActive_ = false;
     Vec2 squeezeCenter_;

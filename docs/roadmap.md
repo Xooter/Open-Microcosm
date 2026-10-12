@@ -94,12 +94,21 @@ que nada, come, crece y se divide en un medio vivo. Antes de sumar contenido se 
 - Medido: ~5 ms por paso con 30 células + ameba + 50k bacterias.
 - **Siguiente:** playtest del vertical slice antes de seguir con la fase 5.
 
-## Fase 5 — Linaje y estructura roguelite
-- Al dividirse, el jugador elige con qué hija seguir; las demás quedan como NPC de su linaje.
-- Al morir salta a un descendiente vivo. Si el linaje se extingue, termina la partida.
-- Objetivo de la partida: alcanzar X % de la biomasa de la gota.
-- Herencia entre partidas (parte del genoma) y especies iniciales desbloqueables.
-- **Hecho cuando:** se puede jugar una partida completa de principio a fin y empezar otra.
+## Fase 5 — Linaje y estructura roguelite ✅ (hecha)
+- Pantalla de inicio con especie fundadora; Euglena se desbloquea en la generación 3 y Amoeba en
+  la 5 (o al ganar). Récords y desbloqueos persistentes en disco.
+- Al dividirse, el jugador elige hija (simulación en pausa); la otra queda con piloto automático
+  (deambula y come). Al morir elige un descendiente; sin descendientes, el linaje se extingue.
+- Objetivo: el linaje alcanza el 50% de la biomasa viva de la gota (se puede seguir jugando).
+- Movimiento, fagocitosis y alimentación generalizados a cualquier célula móvil.
+- Medido: ~3,2 ms por paso en una partida real (24 competidoras + 50k bacterias).
+- **Hallazgos de balance (para la fase 7):**
+  - Las bacterias no se reproducen: el linaje agota la comida de la gota y crece cada vez más
+    lento (un paramecio pasa de 12% a 19% de dominio en 10 min sin llegar a dividirse).
+  - El dominio por biomasa favorece a los organismos grandes: con competidoras pasivas de
+    ~200 pmol, un linaje de Euglena (~9 pmol por célula) necesitaría cientos de células.
+  - Las competidoras son pasivas (no comen ni mueren) hasta que exista el ecosistema real.
+- Pendiente para la fase 6: la herencia de genoma entre partidas.
 
 ## Fase 6 — Genoma y organelos físicos
 - Genoma: cada rasgo es un gen. La mitosis copia el genoma con mutaciones y la conjugación lo
