@@ -1,16 +1,16 @@
 #pragma once
 
-#include "sim/rules.hpp"
+#include "render/field_overlay.hpp"
 
 #include <raylib.h>
 
 class World;
 
+// Estilo campo claro (brightfield): fondo luminoso, organismos oscuros y semitransparentes.
 class Renderer {
   public:
-    Renderer();
-    void drawWorld(const World& world, const Camera2D& camera) const;
+    void drawWorld(const World& world, const Camera2D& camera, Overlay overlay);
 
   private:
-    Color palette_[kMaxSpecies];
+    FieldOverlay overlay_;
 };

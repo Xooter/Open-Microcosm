@@ -39,15 +39,22 @@ que nada, come, crece y se divide en un medio vivo. Antes de sumar contenido se 
 ---
 
 ## Fase 0 — Base técnica ✅ (hecha)
-- CMake + presets, raylib, raygui, EnTT, OpenMP y Tracy.
+- CMake + presets, raylib, raygui, EnTT, OpenMP, Tracy y doctest.
 - Partículas SoA, grilla espacial, timestep fijo y demo de Particle Life.
 
-## Fase 1 — El medio
-- Fluido 2D en grilla (*stable fluids*) con corrientes y arrastre viscoso (bajo Reynolds).
-- Partículas ambientales: nutrientes, detritos y **bacterias como partículas simples**, con movimiento browniano.
-- Campos internos mínimos: O₂, luz (gradiente desde la superficie) y nutrientes disueltos.
-- Overlay de debug (solo para desarrollo) que muestra cada campo.
-- **Hecho cuando:** soltar tinta en la gota muestra corrientes creíbles a 60 FPS.
+## Fase 1 — El medio ✅ (hecha)
+- Mundo toroidal con vista cenital (decidido).
+- Agua Stokes–Brinkman resuelta con FFT: sin inercia, corrientes locales según el espesor de la
+  película.
+- Partículas ambientales (detritos, tinta) y **bacterias como partículas simples**, con browniano
+  de Stokes–Einstein.
+- Bacterias con run & tumble y quimiotaxis temporal de *E. coli*: se acumulan ~11× alrededor de
+  una fuente aislada.
+- Campos internos: O₂ (intercambio con el aire), nutrientes (de detritos que se descomponen) y
+  luz (uniforme, atenuada por sombra).
+- Overlay de debug (F1–F4) y tests doctest: incompresibilidad, conservación de masa y
+  determinismo con distinta cantidad de hilos.
+- Medido: ~0,9 ms por paso de simulación con 50k bacterias.
 
 ## Fase 2 — Célula soft-body
 - Membrana como anillo de partículas con restricciones XPBD: distancia, flexión y área (presión).

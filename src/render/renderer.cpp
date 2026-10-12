@@ -1,26 +1,45 @@
 #include "render/renderer.hpp"
 
 #include "core/profiling.hpp"
-#include "sim/world.hpp"
+#include "game/world.hpp"
 
-Renderer::Renderer() {
-    for (int s = 0; s < kMaxSpecies; ++s)
-        palette_[s] = ColorFromHSV(360.0f * s / kMaxSpecies, 0.75f, 1.0f);
-}
+#include <algorithm>
+#include <cmath>
 
-void Renderer::drawWorld(const World& world, const Camera2D& camera) const {
+namespace {
+constexpr Color kBackground = {236, 231, 214, 255}; // luz de lámpara halógena filtrada
+constexpr Color kInk = {25, 30, 45, 170};
+constexpr Color kDetritus = {120, 92, 55, 190};
+constexpr Color kBacteria = {70, 80, 70, 150};
+} // namespace
+
+void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay overlay) {
     PROFILE_SCOPE("Renderer::drawWorld");
-    const Particles& p = world.particles();
-
+    ClearBackground(kBackground);
     BeginMode2D(camera);
-    DrawRectangleLinesEx({0, 0, world.width(), world.height()}, 2.0f / camera.zoom, DARKGRAY);
 
-    // raylib agrupa los quads en un único batch, así que miles de llamadas son baratas.
-    // Si escalás a cientos de miles de partículas, el siguiente paso es un VBO propio
-    // con instancing o point sprites (ver rlgl.h).
-    const float size = 2.5f;
-    for (std::size_t i = 0; i < p.size(); ++i)
-        DrawRectangleV({p.x[i] - size * 0.5f, p.y[i] - size * 0.5f}, {size, size},
-                       palette_[p.species[i]]);
+    overlay_.draw(world, overlay);
+
+    // Todo se dibuja a tamaño real en µm, con un mínimo de ~1.5 px para que se vea al alejarse.
+    const float minSize = 1.5f / camera.zoom;
+
+    const AmbientParticles& a = world.ambient();
+    for (std::size_t i = 0; i < a.size(); ++i) {
+        const float d = std::max(2.0f * a.radius[i], minSize);
+        const Color c = a.kind[i] == ParticleKind::Ink ? kInk : kDetritus;
+        DrawRectangleV({a.x[i] - d * 0.5f, a.y[i] - d * 0.5f}, {d, d}, c);
+    }
+
+    // Bacterias como bastoncitos orientados (E. coli: ~2 × 1 µm).
+    const Bacteria& b = world.bacteria();
+    const float len = std::max(b.params.length, minSize);
+    const float thick = std::max(b.params.radius * 2.0f, minSize * 0.6f);
+    for (std::size_t i = 0; i < b.size(); ++i) {
+        DrawRectanglePro({b.x[i], b.y[i], len, thick}, {len * 0.5f, thick * 0.5f},
+                         b.heading[i] * RAD2DEG, kBacteria);
+    }
+
+    DrawRectangleLinesEx({0, 0, world.width(), world.height()}, 1.5f / camera.zoom,
+                         Fade(DARKGRAY, 0.5f));
     EndMode2D();
 }

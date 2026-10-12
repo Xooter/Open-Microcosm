@@ -1,0 +1,50 @@
+#include "sim/chem_field.hpp"
+
+#include "core/profiling.hpp"
+#include "sim/fluid.hpp"
+
+#include <cmath>
+#include <utility>
+
+ChemField::ChemField(int nx, int ny, float cellSize, float diffusion_, float initial)
+    : diffusion(diffusion_), c_(nx, ny, cellSize, initial), tmp_(nx, ny, cellSize),
+      spec_(static_cast<std::size_t>(nx) * ny) {}
+
+void ChemField::advect(const Fluid& fluid, float dt) {
+    PROFILE_SCOPE("ChemField::advect");
+    const int nx = c_.nx, ny = c_.ny;
+    const float dx = c_.dx;
+#pragma omp parallel for schedule(static)
+    for (int j = 0; j < ny; ++j) {
+        for (int i = 0; i < nx; ++i) {
+            const float x = (i + 0.5f) * dx, y = (j + 0.5f) * dx;
+            const float ux = fluid.ux().at(i, j), uy = fluid.uy().at(i, j);
+            tmp_.at(i, j) = c_.sample(x - ux * dt, y - uy * dt);
+        }
+    }
+    std::swap(c_.v, tmp_.v);
+}
+
+void ChemField::diffuse(const Fft2D& fft, float dt) {
+    PROFILE_SCOPE("ChemField::diffuse");
+    const int nx = c_.nx, ny = c_.ny;
+    const std::size_t n = c_.v.size();
+    for (std::size_t k = 0; k < n; ++k)
+        spec_[k] = c_.v[k];
+    fft.forward(spec_);
+
+    const float w = c_.width(), h = c_.height();
+#pragma omp parallel for schedule(static)
+    for (int j = 0; j < ny; ++j) {
+        const float ky = wavenumber(j, ny, h);
+        for (int i = 0; i < nx; ++i) {
+            const float kx = wavenumber(i, nx, w);
+            spec_[static_cast<std::size_t>(j) * nx + i] *=
+                std::exp(-diffusion * (kx * kx + ky * ky) * dt);
+        }
+    }
+
+    fft.inverse(spec_);
+    for (std::size_t k = 0; k < n; ++k)
+        c_.v[k] = spec_[k].real();
+}

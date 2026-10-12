@@ -1,33 +1,41 @@
 #include "core/ui.hpp"
 
-#include "sim/world.hpp"
-
-#include <raylib.h>
+#include "game/world.hpp"
 
 #define RAYGUI_IMPLEMENTATION
 #include <raygui.h>
 
-UiActions drawUi(World& world, bool& paused) {
-    UiActions actions;
-    Rules& r = world.rules();
+void drawUi(World& world, ToolState& tools) {
+    MediumParams& m = world.medium();
 
-    GuiPanel({10, 10, 260, 250}, "Simulacion");
-    float y = 45;
-    auto slider = [&](const char* label, float* value, float lo, float hi) {
-        GuiSliderBar({90, y, 120, 18}, label, TextFormat("%.2f", *value), value, lo, hi);
-        y += 26;
+    GuiPanel(kUiPanel, "Medio (fase 1)");
+    float y = kUiPanel.y + 35;
+    auto slider = [&](const char* label, float* value, float lo, float hi, const char* fmt) {
+        GuiSliderBar({kUiPanel.x + 120, y, 110, 16}, label, TextFormat(fmt, *value), value, lo,
+                     hi);
+        y += 22;
     };
-    slider("rMax", &r.rMax, 10.0f, 120.0f);
-    slider("beta", &r.beta, 0.05f, 0.9f);
-    slider("fuerza", &r.forceScale, 0.0f, 40.0f);
-    slider("friccion", &r.frictionHalfLife, 0.005f, 0.3f);
+    slider("espesor [um]", &world.fluid().gapHeight, 20.0f, 500.0f, "%.0f");
+    slider("radio revolver", &tools.stirRadius, 5.0f, 120.0f, "%.0f");
+    slider("radio tinta", &tools.inkRadius, 2.0f, 60.0f, "%.0f");
+    slider("quimiotaxis", &world.bacteria().params.chemotaxisGain, 0.0f, 20.0f, "%.1f");
+    slider("descomposicion", &m.detritusDecay, 0.0f, 0.02f, "%.4f");
+    slider("consumo nutr.", &m.nutrientUptake, 0.0f, 0.05f, "%.3f");
+    slider("detritos/s", &m.detritusSpawnRate, 0.0f, 5.0f, "%.1f");
 
-    actions.randomizeRules = GuiButton({20, y, 115, 24}, "Nuevas reglas");
-    actions.respawn = GuiButton({145, y, 115, 24}, "Respawn");
-    y += 32;
-    GuiCheckBox({20, y, 18, 18}, "Pausa [Espacio]", &paused);
-    y += 28;
-    GuiLabel({20, y, 240, 18},
-             TextFormat("%zu particulas  |  %d FPS", world.particles().size(), GetFPS()));
-    return actions;
+    GuiCheckBox({kUiPanel.x + 10, y + 2, 16, 16}, "Pausa [Espacio]", &tools.paused);
+    y += 26;
+    GuiLabel({kUiPanel.x + 10, y, 280, 16},
+             TextFormat("t = %.1f s  |  %d FPS", world.simTime(), GetFPS()));
+    y += 18;
+    GuiLabel({kUiPanel.x + 10, y, 280, 16},
+             TextFormat("%zu bacterias  |  %zu particulas", world.bacteria().size(),
+                        world.ambient().size()));
+    y += 18;
+    GuiLabel({kUiPanel.x + 10, y, 280, 16},
+             TextFormat("Overlay: %s", overlayName(tools.overlay)));
+    y += 22;
+    GuiLabel({kUiPanel.x + 10, y, 280, 16}, "Izq: revolver | T: tinta | D: detrito");
+    y += 16;
+    GuiLabel({kUiPanel.x + 10, y, 280, 16}, "F1-F4: overlays | Der: mover | Rueda: zoom");
 }

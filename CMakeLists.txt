@@ -8,6 +8,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(BIO_NATIVE    "Compilar con -march=native (SIMD de la CPU local)" ON)
 option(BIO_PROFILING "Habilitar el profiler Tracy" OFF)
+option(BIO_BUILD_TESTS "Compilar los tests (doctest)" ON)
 
 # ---------------------------------------------------------------------------
 # Dependencias
@@ -46,7 +47,50 @@ if(BIO_PROFILING)
     FetchContent_MakeAvailable(tracy)
 endif()
 
+if(BIO_BUILD_TESTS)
+    FetchContent_Declare(doctest
+        URL https://github.com/doctest/doctest/archive/refs/tags/v2.4.11.tar.gz
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+    FetchContent_MakeAvailable(doctest)
+endif()
+
 find_package(OpenMP REQUIRED)
+
+# ---------------------------------------------------------------------------
+# Opciones de compilación comunes
+# ---------------------------------------------------------------------------
+add_library(bio_options INTERFACE)
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
+    target_compile_options(bio_options INTERFACE -Wall -Wextra -Wpedantic
+        $<$<CONFIG:Release,RelWithDebInfo>:-O3 -ffast-math>)
+    if(BIO_NATIVE)
+        target_compile_options(bio_options INTERFACE -march=native)
+    endif()
+elseif(MSVC)
+    target_compile_options(bio_options INTERFACE /W4 $<$<CONFIG:Release,RelWithDebInfo>:/O2 /fp:fast>)
+endif()
+
+include(CheckIPOSupported)
+check_ipo_supported(RESULT ipo_ok OUTPUT ipo_msg)
+
+# ---------------------------------------------------------------------------
+# biosim: simulación sin dependencias de render (la usan el juego y los tests)
+# ---------------------------------------------------------------------------
+add_library(biosim STATIC
+    src/sim/fft.cpp
+    src/sim/fluid.cpp
+    src/sim/chem_field.cpp
+    src/sim/spatial_grid.cpp
+    src/bio/bacteria.cpp
+    src/game/world.cpp)
+
+target_include_directories(biosim PUBLIC src)
+target_link_libraries(biosim PUBLIC OpenMP::OpenMP_CXX bio_options)
+
+if(BIO_PROFILING)
+    target_link_libraries(biosim PUBLIC Tracy::TracyClient)
+    target_compile_definitions(biosim PUBLIC BIO_PROFILING)
+endif()
 
 # ---------------------------------------------------------------------------
 # Ejecutable
@@ -54,30 +98,22 @@ find_package(OpenMP REQUIRED)
 add_executable(bio
     src/main.cpp
     src/core/ui.cpp
-    src/sim/rules.cpp
-    src/sim/world.cpp
-    src/render/renderer.cpp)
+    src/render/renderer.cpp
+    src/render/field_overlay.cpp)
 
-target_include_directories(bio PRIVATE src ${raygui_SOURCE_DIR}/src)
-target_link_libraries(bio PRIVATE raylib EnTT::EnTT OpenMP::OpenMP_CXX)
+target_include_directories(bio PRIVATE ${raygui_SOURCE_DIR}/src)
+target_link_libraries(bio PRIVATE biosim raylib EnTT::EnTT)
 
-if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(bio PRIVATE -Wall -Wextra -Wpedantic
-        $<$<CONFIG:Release,RelWithDebInfo>:-O3 -ffast-math>)
-    if(BIO_NATIVE)
-        target_compile_options(bio PRIVATE -march=native)
-    endif()
-elseif(MSVC)
-    target_compile_options(bio PRIVATE /W4 $<$<CONFIG:Release,RelWithDebInfo>:/O2 /fp:fast>)
-endif()
-
-include(CheckIPOSupported)
-check_ipo_supported(RESULT ipo_ok OUTPUT ipo_msg)
 if(ipo_ok)
-    set_property(TARGET bio PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+    set_property(TARGET biosim bio PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 endif()
 
-if(BIO_PROFILING)
-    target_link_libraries(bio PRIVATE Tracy::TracyClient)
-    target_compile_definitions(bio PRIVATE BIO_PROFILING)
+# ---------------------------------------------------------------------------
+# Tests
+# ---------------------------------------------------------------------------
+if(BIO_BUILD_TESTS)
+    enable_testing()
+    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp)
+    target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
+    add_test(NAME bio_tests COMMAND bio_tests)
 endif()

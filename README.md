@@ -1,12 +1,14 @@
 # bio
 
-Plantilla de juego/simulación en C++20 con muchas partículas y reglas biológicas
-(demo inicial: *Particle Life*, especies que se atraen o repelen de forma asimétrica).
+Simulación de vida acuática microscópica en C++20 (ver `AGENTS.md` y `docs/`).
+Estado actual: **fase 1 — el medio**: agua a bajo Reynolds, química disuelta, detritos,
+tinta y 50.000 bacterias con quimiotaxis.
 
-## Compilar
+## Compilar, ejecutar y testear
 
 ```sh
 cmake --preset release && cmake --build --preset release && ./build/release/bio
+ctest --test-dir build/release        # o ./build/release/bio_tests
 ```
 
 Presets: `debug`, `release`, `profile` (RelWithDebInfo + Tracy).
@@ -14,42 +16,20 @@ Las dependencias se descargan solas con FetchContent la primera vez.
 
 ## Controles
 
+- Click izquierdo + arrastrar: revolver el agua
+- T (mantener): soltar tinta · D: soltar un detrito
+- F1 velocidad · F2 O₂ · F3 nutrientes · F4 luz (overlays de debug)
 - Rueda: zoom · Click derecho + arrastrar: mover cámara · Espacio: pausa
-- Panel: sliders de reglas, "Nuevas reglas" (matriz aleatoria), "Respawn"
-
-## Librerías
-
-| Lib | Para qué |
-|---|---|
-| raylib 5.5 | ventana, input, render batcheado, audio |
-| raygui 4.0 | UI de debug para tunear parámetros en vivo |
-| EnTT 3.14 | ECS para entidades de alto nivel (organismos, colonias) — enlazada, aún sin uso |
-| OpenMP | paralelismo multinúcleo en los loops de simulación |
-| Tracy 0.11 | profiler de frames (solo con `-DBIO_PROFILING=ON`) |
 
 ## Estructura
 
 ```
 src/
-  main.cpp             loop principal con timestep fijo
-  core/profiling.hpp   macros PROFILE_SCOPE / PROFILE_FRAME
-  core/ui.*            panel raygui
-  sim/particles.hpp    datos de partículas en SoA
-  sim/rules.*          matriz de interacción entre especies + kernel de fuerza
-  sim/world.*          grilla espacial, fuerzas (OpenMP), integración, mundo toroidal
-  render/renderer.*    dibujo de partículas
+  main.cpp              loop con timestep fijo, cámara y herramientas
+  core/                 unidades físicas, RNG determinista, profiling, UI de debug
+  sim/                  FFT, fluido Stokes–Brinkman, campos químicos, partículas, grilla espacial
+  bio/bacteria.*        run & tumble + quimiotaxis temporal (E. coli)
+  game/world.*          coordina el medio y los organismos
+  render/               campo claro + overlays de campos
+tests/                  doctest: incompresibilidad, conservación, determinismo
 ```
-
-## Decisiones de performance
-
-- **SoA** en lugar de array de structs: loops vectorizables y cache-friendly.
-- **Grilla espacial** con counting sort cada paso: vecinos en O(n·k), y copias
-  ordenadas por celda para leer memoria contigua.
-- **Timestep fijo** desacoplado del render.
-- `-O3 -ffast-math -march=native` + LTO en Release.
-
-## Próximos pasos sugeridos
-
-- Agregar energía/edad/genoma como nuevos arrays en `Particles` (metabolismo,
-  reproducción, muerte) — reemplazar el `resize` por un pool con swap-and-pop.
-- Más de ~100k partículas: render con instancing/VBO propio y/o sim en compute shader.

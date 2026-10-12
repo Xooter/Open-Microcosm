@@ -61,8 +61,10 @@ Usá **solo** estas. Para agregar otra, primero hay que proponerla y esperar apr
 | OpenMP | sistema | Paralelismo de los loops de simulación |
 | Tracy | 0.11 | Profiling (preset `profile`) |
 
-Candidatas aprobables cuando su fase lo requiera: **toml++** (datos de especies, fase 7),
-**FastNoiseLite** (generación procedural, fase 11) y **doctest** (tests de invariantes físicos).
+| doctest | 2.4.11 | Tests de invariantes físicos (`tests/`, target `bio_tests`) |
+
+Candidatas aprobables cuando su fase lo requiera: **toml++** (datos de especies, fase 7) y
+**FastNoiseLite** (generación procedural, fase 11).
 
 Todas las dependencias se traen con `FetchContent` y versión fija en `CMakeLists.txt`. No se usan
 paquetes del sistema, salvo OpenMP.
@@ -74,15 +76,27 @@ cmake --preset release && cmake --build --preset release && ./build/release/bio
 ```
 
 Hay presets `debug`, `release` y `profile`. El código tiene que compilar **sin warnings** con
-`-Wall -Wextra -Wpedantic`.
+`-Wall -Wextra -Wpedantic`, y `ctest --test-dir build/release` tiene que pasar.
 
 ## Arquitectura
+
+### Mundo
+
+- **Vista cenital** (se mira desde arriba, como en el microscopio).
+- **Mundo toroidal:** los bordes se envuelven. Todas las grillas son periódicas, con tamaños
+  potencia de 2.
+- **Agua:** Stokes–Brinkman resuelto exacto con FFT (`sim/fluid`). No hay inercia: la velocidad
+  es la respuesta instantánea a las fuerzas. El espesor de la película (`gapHeight`) controla
+  qué tan locales son las corrientes.
+- **Química:** difusión exacta en Fourier + advección semi-lagrangiana (`sim/chem_field`). El O₂
+  entra por intercambio con el aire en toda la superficie.
+- **Luz:** la lámpara ilumina uniforme y los objetos la atenúan (Beer–Lambert).
 
 ### Capas de simulación (tiers por escala)
 
 | Tier | Qué | Representación |
 |---|---|---|
-| Medio | Agua, corrientes y química | Grilla de fluido (*stable fluids*) + campos escalares (O₂, luz, nutrientes, señales) |
+| Medio | Agua, corrientes y química | Grilla de fluido Stokes–Brinkman (FFT) + campos escalares (O₂, luz, nutrientes, señales) |
 | Ambiental | Nutrientes, detritos y bacterias | Partículas simples con browniano y arrastre (las bacterias son agentes livianos) |
 | Célula | Protistas, algas y levaduras | Soft-body: anillo de membrana + partículas internas, resuelto con XPBD |
 | Compuesto | Colonias, filamentos y multicelulares | Varios soft-bodies unidos por restricciones de adhesión |
@@ -109,9 +123,10 @@ El LOD (fase 9) degrada las células lejanas a menos partículas o a simulación
 - Orden de cada paso: fluido → química → fuerzas y propulsión → restricciones XPBD → colisiones
   → metabolismo y ciclo de vida → IA → eventos de topología (fagocitosis, división, lisis,
   fusión) aplicados al final, nunca a mitad de un paso.
-- **Determinismo por seed:** toda aleatoriedad sale de RNGs sembrados (nada de `rand()` ni de
-  `std::random_device` dentro de la simulación). Los loops paralelos solo escriben en su propio
-  índice.
+- **Determinismo por seed:** toda aleatoriedad sale de `Rng` (`core/rng.hpp`), que se calcula
+  a partir de (seed, stream, índice, paso), así que no depende del hilo que lo ejecuta. Nada de
+  `rand()` ni de `std::random_device` dentro de la simulación. Los loops paralelos solo escriben
+  en su propio índice. El test de determinismo compara corridas con 1 y 4 hilos.
 
 ### Estructura de carpetas (objetivo)
 
@@ -119,7 +134,7 @@ El LOD (fase 9) degrada las células lejanas a menos partículas o a simulación
 src/
   main.cpp          loop principal
   core/             profiling, UI de debug, utilidades
-  sim/              particles, springs/constraints (XPBD), spatial grid, fluid, chem_field
+  sim/              fft, fluid, chem_field, grid2d, particles, spatial_grid, constraints (XPBD)
   bio/              cell, membrane, metabolism, lifecycle, genome, organelles, species
   ai/               quimiotaxis, caza, huida, fototaxis
   game/             linaje, run roguelite, objetivo de biomasa, enciclopedia
@@ -128,7 +143,11 @@ assets/
   shaders/          GLSL 330
   species/          datos de especies
 docs/               gameplay.md, roadmap.md
+tests/              doctest
 ```
+
+`biosim` (todo menos `main`, `render/` y `core/ui`) es una librería sin raylib: la usan el juego
+y los tests.
 
 `sim/` no conoce a `bio/`, y `bio/` no conoce a `render/`. El render solo lee estado de
 simulación.

@@ -1,11 +1,19 @@
 #pragma once
 
+#include "render/field_overlay.hpp"
+
+#include <raylib.h>
+
 class World;
 
-struct UiActions {
-    bool randomizeRules = false;
-    bool respawn = false;
+struct ToolState {
+    float stirRadius = 30.0f; // [µm]
+    float inkRadius = 15.0f;  // [µm]
+    bool paused = false;
+    Overlay overlay = Overlay::None;
 };
 
-// Panel de debug para tunear las reglas en vivo.
-UiActions drawUi(World& world, bool& paused);
+inline constexpr Rectangle kUiPanel = {10, 10, 300, 330};
+
+// Panel de debug para tunear el medio en vivo.
+void drawUi(World& world, ToolState& tools);
