@@ -1,10 +1,10 @@
 # bio
 
 Simulación de vida acuática microscópica en C++20 (ver `AGENTS.md` y `docs/`).
-Estado actual: **fase 3 — jugador**: una célula controlable con locomoción real (cilios,
-flagelo o pseudópodos), que come bacterias y detritos y, como ameba, envuelve células enteras por
-fagocitosis. Todo sobre las fases 1–2 (agua a bajo Reynolds, química, bacterias con quimiotaxis,
-células gelatinosas que chocan y recuperan su forma).
+Estado actual: **fase 4 — ciclo de vida (vertical slice)**: la célula del jugador respira,
+fermenta o hace fotosíntesis, crece al comer, se divide por mitosis física en dos hijas, y si no
+come se consume, muere y se lisa. Sobre las fases 1–3 (agua a bajo Reynolds, química, bacterias,
+células gelatinosas, locomoción real y fagocitosis).
 
 ## Compilar, ejecutar y testear
 
@@ -26,6 +26,8 @@ Las dependencias se descargan solas con FetchContent la primera vez.
 - Laboratorio: **Ctrl+click** revolver el agua · **Shift+click** estirar una membrana · **T** tinta · **B** detrito
 - **C** crear célula · **K** 50 células · **X** borrar célula · **Q** apretar células hacia el cursor
 - **F1–F4** overlays (velocidad del agua, O₂, nutrientes, luz)
+- **R** reaparecer si tu célula murió · **L** lisar la célula bajo el cursor
+- Panel: sliders de **luz** (la *Euglena* necesita luz) y **tiempo bio** (compresión del tiempo biológico)
 
 ## Estructura
 
@@ -40,6 +42,8 @@ src/
   bio/locomotion.*      cilios, flagelo y pseudópodos; fuerzas del nadador sobre el agua
   bio/feeding.*         vacuolas digestivas, ingestión y digestión
   bio/phagocytosis.*    copa fagocítica (cremallera) y fusión de membranas
+  bio/metabolism.*      respiración, fermentación, fotosíntesis, crecimiento, inanición
+  bio/division.*        mitosis: surco de división y forma de reposo de las hijas
   game/world.*          coordina el medio y los organismos
   render/               campo claro (shader de células) + overlays de campos
 assets/shaders/         GLSL 330

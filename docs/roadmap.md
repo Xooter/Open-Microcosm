@@ -81,15 +81,18 @@ que nada, come, crece y se divide en un medio vivo. Antes de sumar contenido se 
   metacrónica, flagelo con desenfoque de movimiento, estigma, citostoma y vacuolas.
 - Medido: ~4,6 ms por paso con 30 células + ameba + 50k bacterias.
 
-## Fase 4 — Metabolismo y ciclo de vida
-- Metabolismo real simplificado: respiración con O₂ (mucho ATP), fermentación sin O₂ (poco ATP,
-  acidifica el medio) y fotosíntesis con luz (libera O₂).
-- Crecimiento de área, **mitosis física** (duplicar organelos, anillo contráctil, partir la
-  membrana en dos) y muerte por **lisis** (el contenido se dispersa como comida).
-- La reproducción del jugador es la más costosa en energía y tiempo.
-- HUD mínimo de energía, tamaño y edad.
-- **Hecho cuando:** la célula come, crece y se divide; si no come, muere y se lisa.
-- 🎯 **Vertical slice completo**: hacer playtest y decidir el rumbo.
+## Fase 4 — Metabolismo y ciclo de vida ✅ (hecha) — 🎯 vertical slice
+- Escala de tiempo: física en tiempo real, biología comprimida ×60 (decisión tomada).
+- Metabolismo: respiración/fermentación según el O₂ local, fotosíntesis (*Euglena*) con la luz,
+  mantenimiento + costo de nadar, crecimiento con rendimiento y tasa máxima, autofagia.
+- Mitosis física para las tres especies: duplicación de núcleo y vacuola, reorganización del
+  córtex de madre a dos hijas, surco y partición de la membrana (~25–60 s reales).
+- Muerte por inanición y lisis (nutrientes disueltos + detritos).
+- HUD: reservas, biomasa, progreso de división, O₂, luz y edad; R para reaparecer.
+- Pendiente: la fermentación todavía no acidifica el medio (falta un campo de pH; entra cuando
+  el pH tenga efectos sobre otras especies).
+- Medido: ~5 ms por paso con 30 células + ameba + 50k bacterias.
+- **Siguiente:** playtest del vertical slice antes de seguir con la fase 5.
 
 ## Fase 5 — Linaje y estructura roguelite
 - Al dividirse, el jugador elige con qué hija seguir; las demás quedan como NPC de su linaje.

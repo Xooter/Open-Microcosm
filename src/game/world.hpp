@@ -2,9 +2,12 @@
 
 #include "bio/bacteria.hpp"
 #include "bio/cell.hpp"
+#include "bio/division.hpp"
 #include "bio/feeding.hpp"
 #include "bio/locomotion.hpp"
+#include "bio/metabolism.hpp"
 #include "core/rng.hpp"
+#include "core/units.hpp"
 #include "core/vec2.hpp"
 #include "sim/chem_field.hpp"
 #include "sim/fft.hpp"
@@ -72,6 +75,12 @@ class World {
     entt::entity player() const { return player_; }
     void setPlayerInput(const PlayerInput& input) { playerInput_ = input; }
     LocomotionParams& locomotionParams() { return locomotionParams_; }
+    MetabolismParams& metabolismParams() { return metabolismParams_; }
+    // Compresión del tiempo biológico (por defecto units::kBioTimeScale; ajustable para debug).
+    float& bioTimeScale() { return bioTimeScale_; }
+    const char* lastDeathCause() const { return lastDeathCause_; }
+    // Debug: mata (lisa) a la célula bajo el cursor.
+    void lyseAt(Vec2 position);
     FeedingParams& feedingParams() { return feedingParams_; }
 
     // Agarrar y estirar un punto de membrana con el mouse.
@@ -86,6 +95,7 @@ class World {
     Fluid& fluid() { return fluid_; }
     const Fluid& fluid() const { return fluid_; }
     const ChemField& oxygen() const { return oxygen_; }
+    ChemField& oxygen() { return oxygen_; }
     const ChemField& nutrients() const { return nutrients_; }
     const Grid2D& light() const { return light_; }
     const AmbientParticles& ambient() const { return ambient_; }
@@ -119,6 +129,13 @@ class World {
     void feedByContact(RingBody& body, Digestion& dig, float dt);
     void removeBacteria(std::vector<std::size_t>& indices);
     void removeAmbient(std::vector<std::size_t>& indices);
+    void updateLifecycle(float dt);
+    void applyDivisionForces();
+    void duplicateOrganelles(entt::entity cell);
+    void divide(entt::entity cell, std::size_t tipA, std::size_t tipB);
+    void lyse(entt::entity cell, const char* cause);
+    void exchangeO2(Vec2 at, float pmol);
+    float microMolarPerPmol() const;
     void excludeFromCells();
     void rebuildBuckets();
     void resolvePenetrations();
@@ -152,6 +169,15 @@ class World {
     PlayerInput playerInput_;
     LocomotionParams locomotionParams_;
     FeedingParams feedingParams_;
+    MetabolismParams metabolismParams_;
+    float bioTimeScale_ = units::kBioTimeScale;
+    const char* lastDeathCause_ = "";
+    std::vector<entt::entity> dying_;
+    struct PendingSplit {
+        entt::entity cell;
+        std::size_t tipA, tipB;
+    };
+    std::vector<PendingSplit> splits_;
     std::vector<std::size_t> eatenBacteria_, eatenAmbient_;
 
     bool squeezeActive_ = false;

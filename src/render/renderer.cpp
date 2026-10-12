@@ -48,8 +48,10 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
                 if (!visible(amb.x[i], amb.y[i]))
                     continue;
                 const float d = std::max(2.0f * amb.radius[i], minSize);
-                const Color c = amb.kind[i] == ParticleKind::Ink ? kInk : kDetritus;
-                DrawRectangleV({amb.x[i] + offX - d * 0.5f, amb.y[i] + offY - d * 0.5f}, {d, d}, c);
+                if (amb.kind[i] == ParticleKind::Ink)
+                    DrawRectangleV({amb.x[i] + offX - d * 0.5f, amb.y[i] + offY - d * 0.5f}, {d, d}, kInk);
+                else // detritos: grumos redondeados
+                    DrawCircleV({amb.x[i] + offX, amb.y[i] + offY}, d * 0.5f, kDetritus);
             }
             // Bacterias como bastoncitos orientados (E. coli: ~2 × 1 µm).
             for (std::size_t i = 0; i < bac.size(); ++i) {

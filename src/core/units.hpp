@@ -4,8 +4,17 @@
 // Las conversiones a píxeles viven solo en el render.
 namespace units {
 
-// Segundos de simulación por segundo real. Es la ÚNICA constante de compresión temporal.
+// Segundos de simulación por segundo real para la FÍSICA (nado, agua, difusión).
 inline constexpr float kTimeScale = 1.0f;
+
+// Compresión del tiempo BIOLÓGICO (metabolismo, crecimiento, digestión, división): una sola
+// constante, así las proporciones entre procesos se respetan. 60 → 1 minuto real = 1 hora
+// biológica: un paramecio bien alimentado se divide en ~5 min reales (real: ~5–8 h).
+inline constexpr float kBioTimeScale = 60.0f;
+
+// Fracción seca de la biomasa (~70% de una célula es agua). Las masas se expresan en pmol
+// equivalentes de glucosa de materia SECA.
+inline constexpr float kDryMassFraction = 0.3f;
 
 inline constexpr double kBoltzmannTemperature = 4.05e-21; // k_B·T a 20 °C [J]
 inline constexpr double kWaterDynamicViscosity = 1.0e-3;  // agua a 20 °C [Pa·s]

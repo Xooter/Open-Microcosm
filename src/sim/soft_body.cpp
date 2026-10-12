@@ -353,6 +353,76 @@ void replaceRing(RingBody& body, const BodyParticles& bp, std::vector<std::uint3
     rebuildRest(body, bp, false);
 }
 
+void resampleRing(RingBody& body, BodyParticles& bp, std::size_t count) {
+    const std::size_t n = body.ring.size();
+    std::vector<Vec2> pts(n);
+    std::vector<float> cum(n + 1, 0.0f);
+    for (std::size_t i = 0; i < n; ++i)
+        pts[i] = pos(bp, body.ring[i]);
+    for (std::size_t i = 0; i < n; ++i)
+        cum[i + 1] = cum[i] + length(pts[(i + 1) % n] - pts[i]);
+    const float total = cum[n];
+    std::vector<std::uint32_t> ring;
+    ring.reserve(count);
+    std::size_t seg = 0;
+    for (std::size_t k = 0; k < count; ++k) {
+        const float target = total * static_cast<float>(k) / static_cast<float>(count);
+        while (seg + 1 < n && cum[seg + 1] < target)
+            ++seg;
+        const float len = cum[seg + 1] - cum[seg];
+        const float t = len > 0.0f ? (target - cum[seg]) / len : 0.0f;
+        const Vec2 p = pts[seg] + (pts[(seg + 1) % n] - pts[seg]) * t;
+        std::uint32_t s;
+        if (k < n) {
+            s = body.ring[k];
+        } else {
+            s = bp.allocate(BodyKind::Membrane, p.x, p.y, bp.radius[body.ring[0]],
+                            bp.invMass[body.ring[0]], body.id);
+        }
+        bp.x[s] = p.x;
+        bp.y[s] = p.y;
+        ring.push_back(s);
+    }
+    for (std::size_t k = count; k < n; ++k)
+        bp.release(body.ring[k]);
+    body.ring = std::move(ring);
+}
+
+void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry) {
+    const std::size_t n = body.ring.size();
+    Vec2 c;
+    for (std::uint32_t s : body.ring)
+        c = c + pos(bp, s);
+    c = c * (1.0f / static_cast<float>(n));
+    // Eje principal por momentos de segundo orden.
+    float sxx = 0.0f, syy = 0.0f, sxy = 0.0f;
+    for (std::uint32_t s : body.ring) {
+        const Vec2 d = pos(bp, s) - c;
+        sxx += d.x * d.x;
+        syy += d.y * d.y;
+        sxy += d.x * d.y;
+    }
+    const float theta = 0.5f * std::atan2(2.0f * sxy, sxx - syy);
+    const float co = std::cos(theta), si = std::sin(theta);
+    body.restRing.resize(n);
+    body.restEdge.resize(n);
+    for (std::size_t i = 0; i < n; ++i) {
+        const Vec2 d = rotate(pos(bp, body.ring[i]) - c, co, -si);
+        const float phi = std::atan2(d.y, d.x);
+        const float cp = std::cos(phi), sp = std::sin(phi);
+        const float r = 1.0f / std::sqrt(cp * cp / (rx * rx) + sp * sp / (ry * ry));
+        body.restRing[i] = {r * cp, r * sp};
+    }
+    for (std::size_t i = 0; i < n; ++i)
+        body.restEdge[i] = length(body.restRing[(i + 1) % n] - body.restRing[i]);
+    body.restArea = polygon::signedArea(body.restRing.data(), static_cast<int>(n));
+    body.centroid = c;
+    body.angle = theta;
+    for (std::size_t k = 0; k < body.interior.size(); ++k)
+        body.restInterior[k] = toLocal(body, pos(bp, body.interior[k]));
+    refresh(body, bp);
+}
+
 void resizeRing(RingBody& body, const BodyParticles& bp, std::vector<std::uint32_t> ring) {
     body.ring = std::move(ring);
     rebuildRest(body, bp, true);

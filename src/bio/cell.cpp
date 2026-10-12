@@ -1,5 +1,6 @@
 #include "bio/cell.hpp"
 
+#include "bio/division.hpp"
 #include "core/units.hpp"
 #include "sim/polygon.hpp"
 #include "sim/soft_body.hpp"
@@ -71,6 +72,7 @@ entt::entity createCell(entt::registry& registry, BodyParticles& bodies, const C
     registry.emplace<RingBody>(e, std::move(body));
     registry.emplace<CellLook>(e, spec.r, spec.g, spec.b);
     registry.emplace<CellAnatomy>(e, anatomy);
+    registry.emplace<CellShape>(e, CellShape{rx, ry, spec.shapeRate, spec.nucleusFraction});
     return e;
 }
 

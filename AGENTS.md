@@ -42,8 +42,13 @@ Documentos de referencia:
 
 - Solo especies y mecanismos **reales**. Antes de implementar un comportamiento, verificá que
   exista en la biología; si se simplifica, dejá un comentario con lo que hace el organismo real.
-- Las escalas de tiempo se comprimen con **una sola constante global**, respetando las
-  proporciones entre especies (una bacteria se divide mucho más rápido que un paramecio).
+- **Tiempo:** la física (nado, agua, difusión, intercambio de gases) corre en tiempo REAL
+  (`units::kTimeScale = 1`). La biología (metabolismo, crecimiento, digestión, división) se
+  comprime con **una sola constante**, `units::kBioTimeScale` (60: 1 min real = 1 h biológica),
+  respetando las proporciones entre procesos y especies. Consecuencias que hay que mantener:
+  - lo digerido rinde ×`bioTimeScale` (la alimentación es mecánica, en tiempo real);
+  - el intercambio de O₂ de cada célula con el agua se hace a la tasa real (÷`bioTimeScale`).
+- **Masas:** pmol equivalentes de glucosa de materia SECA (`units::kDryMassFraction` = 0,3).
 - Unidades internas: **micrómetros (µm)** y **segundos de simulación**. Las conversiones a
   píxeles van solo en el render.
 - No hay inercia a escala de célula: la velocidad depende de la fuerza de propulsión actual, más
@@ -126,6 +131,19 @@ El LOD (fase 9) degrada las células lejanas a menos partículas o a simulación
   tiene más masa inversa, así que cede en los contactos.
 - **Topología:** `replaceRing` / `resizeRing` cambian el anillo (fusión, inserción de membrana).
   Los eventos de topología se aplican al final del paso.
+
+### Ciclo de vida (`bio/metabolism`, `bio/division`, `World::updateLifecycle`)
+
+- **Metabolismo** (componente `Metabolism`): biomasa, reservas y edad. Respiración (~30 ATP por
+  glucosa) o fermentación (2 ATP, 15× más glucosa) según el O₂ local; mantenimiento proporcional a
+  la biomasa y a la actividad; crecimiento con rendimiento 0,6 y tasa máxima; fotosíntesis con la
+  luz local. Sin reservas hay autofagia; con menos de la mitad de la biomasa de nacimiento, muere.
+- **Tamaño:** el área de reposo es la de la biomasa más el contenido de las vacuolas.
+- **Mitosis** (componente `Dividing`): con biomasa ×2 y reservas para el costo (el del jugador es
+  el más caro), se duplican núcleo y vacuola contráctil, la forma de reposo se transforma de la
+  madre en dos hijas (`divisionRestShape`), el surco estrangula y, al cerrarse, el anillo se parte.
+  Las hijas se re-muestrean (`resampleRing`) y vuelven a la forma de su especie (`CellShape`).
+- **Lisis:** ~40% del contenido se disuelve en nutrientes y el resto queda como detritos.
 
 ### Jugador (`bio/locomotion`, `bio/feeding`, `bio/phagocytosis`)
 

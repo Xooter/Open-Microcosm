@@ -71,6 +71,9 @@ void handleInput(World& world, ToolState& tools, const Camera2D& camera) {
     if (IsKeyPressed(KEY_C)) world.spawnCell(pos);
     if (IsKeyPressed(KEY_K)) world.spawnTestScene(50);
     if (IsKeyPressed(KEY_X)) world.removeCellAt(pos);
+    if (IsKeyPressed(KEY_L)) world.lyseAt(pos);
+    if (IsKeyPressed(KEY_R) && !world.registry().valid(world.player()))
+        world.spawnPlayer(LocomotionType::Cilia, pos);
     if (IsKeyDown(KEY_Q))
         world.setSqueeze(pos, tools.squeezeSpeed);
     else

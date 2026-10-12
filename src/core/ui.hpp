@@ -16,7 +16,7 @@ struct ToolState {
     Overlay overlay = Overlay::None;
 };
 
-inline constexpr Rectangle kUiPanel = {10, 10, 320, 560};
+inline constexpr Rectangle kUiPanel = {10, 10, 320, 640};
 
 // Panel de debug para tunear el medio en vivo.
 void drawUi(World& world, ToolState& tools);

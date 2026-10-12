@@ -89,6 +89,8 @@ add_library(biosim STATIC
     src/bio/locomotion.cpp
     src/bio/feeding.cpp
     src/bio/phagocytosis.cpp
+    src/bio/metabolism.cpp
+    src/bio/division.cpp
     src/game/world.cpp)
 
 target_include_directories(biosim PUBLIC src)
@@ -123,7 +125,7 @@ endif()
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp)
+    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp)
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
     add_test(NAME bio_tests COMMAND bio_tests)
 endif()

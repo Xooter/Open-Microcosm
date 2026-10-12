@@ -29,7 +29,7 @@ struct Digestion {
 };
 
 struct FeedingParams {
-    float digestionRate = 1.0f / 600.0f; // Paramecium: vacuolas de ~5–30 min [1/s]
+    float digestionRate = 1.0f / 600.0f; // Paramecium: vacuolas de ~5–30 min [1/s biológico]
     float mouthRadius = 6.0f;            // alcance del citostoma [µm]
     float ciliateMaxParticle = 5.0f;     // radio máximo que entra por la boca del ciliado [µm]
     float flagellateMaxParticle = 3.0f;
@@ -50,15 +50,20 @@ struct FeedingParams {
 
 // Presas pequeñas (1 µm³ de E. coli; densidad ≈ agua).
 inline constexpr float kBacteriumArea = 2.0f;           // 2 × 1 µm
-inline constexpr float kBacteriumPmol = 1.0f / 180.0f;  // pmol eq. glucosa
+inline constexpr float kBacteriumPmol = 0.3f / 180.0f;  // pmol eq. glucosa (materia seca)
 
-// Masa de una célula a partir de su área 2D (esfera de igual sección).
+// Biomasa seca de una célula a partir de su área 2D (esfera de igual sección), y la inversa.
 float cellMassPmol(float area);
+float cellAreaForMass(float pmol);
 
-// Agrega presa a la vacuola abierta, o crea una nueva en `where`. `grow`: la célula suma el
-// volumen ingerido (false cuando la fusión de membranas ya incorporó ese volumen).
+// Agrega presa a la vacuola abierta, o crea una nueva en `where`. El tamaño de la célula lo
+// fija el metabolismo (biomasa + contenido de las vacuolas).
 void ingest(Digestion& dig, RingBody& body, BodyParticles& bp, Vec2 where, float area, float pmol,
-            std::uint8_t r, std::uint8_t g, std::uint8_t b, bool forceNew, bool grow);
+            std::uint8_t r, std::uint8_t g, std::uint8_t b, bool forceNew);
 
-// Digiere, cierra vacuolas llenas o viejas y expulsa las vacías (por el citoprocto).
-void digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingParams& params, float dt);
+// Cierra vacuolas llenas o viejas (tiempo real, `dt`), digiere (tiempo biológico, `bioDt`) y
+// expulsa las vacías por el citoprocto. Devuelve el alimento digerido [pmol].
+float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingParams& params,
+             float dt, float bioDt);
+
+float vacuoleContentArea(const Digestion& dig);

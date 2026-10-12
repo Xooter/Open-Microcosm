@@ -79,6 +79,12 @@ void adaptPlastic(RingBody& body, const BodyParticles& bp, float dt);
 void replaceRing(RingBody& body, const BodyParticles& bp, std::vector<std::uint32_t> ring);
 // Igual, pero conserva el área objetivo (inserción de membrana sin cambiar el volumen).
 void resizeRing(RingBody& body, const BodyParticles& bp, std::vector<std::uint32_t> ring);
+// Re-muestrea el anillo con `count` puntos equiespaciados sobre el contorno actual (reusa los
+// slots existentes, asigna o libera la diferencia). Después hay que rehacer la forma de reposo.
+void resampleRing(RingBody& body, BodyParticles& bp, std::size_t count);
+// Forma de reposo elíptica (semiejes rx, ry) alineada al eje principal actual del anillo.
+// Para las hijas de una división: cada punto toma el radio de la elipse en su dirección.
+void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry);
 // Membrana plástica: inserta partículas donde la membrana se estiró y quita donde se juntó
 // (la célula real agrega membrana desde reservorios internos). Devuelve true si cambió.
 bool remesh(RingBody& body, BodyParticles& bp, float spacing);

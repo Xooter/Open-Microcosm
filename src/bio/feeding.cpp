@@ -22,11 +22,24 @@ std::size_t interiorIndex(const RingBody& body, std::uint32_t slot) {
 
 float cellMassPmol(float area) {
     const float r = std::sqrt(std::abs(area) / units::kPi);
-    return 4.0f / 3.0f * units::kPi * r * r * r / 180.0f;
+    return units::kDryMassFraction * 4.0f / 3.0f * units::kPi * r * r * r / 180.0f;
+}
+
+float cellAreaForMass(float pmol) {
+    const float r = std::cbrt(std::max(0.0f, pmol) * 180.0f * 3.0f /
+                              (4.0f * units::kPi * units::kDryMassFraction));
+    return units::kPi * r * r;
+}
+
+float vacuoleContentArea(const Digestion& dig) {
+    float a = 0.0f;
+    for (const FoodVacuole& v : dig.vacuoles)
+        a += v.contentArea;
+    return a;
 }
 
 void ingest(Digestion& dig, RingBody& body, BodyParticles& bp, Vec2 where, float area, float pmol,
-            std::uint8_t r, std::uint8_t g, std::uint8_t b, bool forceNew, bool grow) {
+            std::uint8_t r, std::uint8_t g, std::uint8_t b, bool forceNew) {
     FoodVacuole* target = nullptr;
     if (!forceNew) {
         for (FoodVacuole& v : dig.vacuoles)
@@ -50,13 +63,12 @@ void ingest(Digestion& dig, RingBody& body, BodyParticles& bp, Vec2 where, float
     ++target->items;
     bp.radius[target->slot] = vacuoleRadius(target->contentArea);
     dig.pmolIngested += pmol;
-    // Lo ingerido suma volumen a la célula.
-    if (grow)
-        soft_body::setRestArea(body, body.restArea + (body.restArea >= 0.0f ? area : -area));
 }
 
-void digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingParams& params, float dt) {
-    const float fraction = 1.0f - std::exp(-params.digestionRate * dt);
+float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingParams& params,
+             float dt, float bioDt) {
+    const float fraction = 1.0f - std::exp(-params.digestionRate * bioDt);
+    float digested = 0.0f;
     for (std::size_t k = 0; k < dig.vacuoles.size();) {
         FoodVacuole& v = dig.vacuoles[k];
         v.age += dt;
@@ -74,6 +86,7 @@ void digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingPara
             const float before = v.contentPmol;
             v.contentPmol -= d;
             dig.pmolDigested += d;
+            digested += d;
             v.contentArea *= before > 0.0f ? v.contentPmol / before : 0.0f;
             bp.radius[v.slot] = vacuoleRadius(v.contentArea);
         }
@@ -86,4 +99,5 @@ void digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingPara
         }
         ++k;
     }
+    return digested;
 }

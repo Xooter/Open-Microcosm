@@ -1,6 +1,7 @@
 #include "render/cell_renderer.hpp"
 
 #include "bio/cell.hpp"
+#include "bio/division.hpp"
 #include "bio/feeding.hpp"
 #include "bio/locomotion.hpp"
 #include "core/profiling.hpp"
@@ -214,6 +215,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
     for (const auto [e, body, anatomy] : reg.view<RingBody, CellAnatomy>().each()) {
         const Locomotion* loco = reg.try_get<Locomotion>(e);
         const Digestion* dig = reg.try_get<Digestion>(e);
+        const Dividing* dividing = reg.try_get<Dividing>(e);
         forEachImage(world, body, view, [&] {
             const std::size_t n = body.poly.size();
             for (std::size_t i = 0; i < n; ++i)
@@ -247,16 +249,25 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 }
             }
 
-            const Vector2 nuc = {bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]};
-            const float rn = bp.radius[anatomy.nucleus];
-            DrawCircleV(nuc, rn, kNucleus);
-            DrawRing(nuc, rn - std::max(0.8f, px), rn, 0.0f, 360.0f, 40, kNucleusRim);
-            DrawCircleV({nuc.x + 0.2f * rn, nuc.y - 0.15f * rn}, 0.3f * rn, kNucleolus);
-
-            const Vector2 vac = {bp.x[anatomy.contractileVacuole], bp.y[anatomy.contractileVacuole]};
-            const float rv = bp.radius[anatomy.contractileVacuole];
-            DrawCircleV(vac, rv, kVacuole);
-            DrawRing(vac, rv - std::max(0.6f, px), rv, 0.0f, 360.0f, 32, kVacuoleRim);
+            auto nucleus = [&](std::uint32_t slot) {
+                const Vector2 c = {bp.x[slot], bp.y[slot]};
+                const float r = bp.radius[slot];
+                DrawCircleV(c, r, kNucleus);
+                DrawRing(c, r - std::max(0.8f, px), r, 0.0f, 360.0f, 40, kNucleusRim);
+                DrawCircleV({c.x + 0.2f * r, c.y - 0.15f * r}, 0.3f * r, kNucleolus);
+            };
+            auto contractile = [&](std::uint32_t slot) {
+                const Vector2 c = {bp.x[slot], bp.y[slot]};
+                const float r = bp.radius[slot];
+                DrawCircleV(c, r, kVacuole);
+                DrawRing(c, r - std::max(0.6f, px), r, 0.0f, 360.0f, 32, kVacuoleRim);
+            };
+            nucleus(anatomy.nucleus);
+            contractile(anatomy.contractileVacuole);
+            if (dividing && dividing->nucleus2 != ~0u) {
+                nucleus(dividing->nucleus2);
+                contractile(dividing->vacuole2);
+            }
         });
     }
 }

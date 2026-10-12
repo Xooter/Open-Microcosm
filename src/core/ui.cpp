@@ -1,5 +1,6 @@
 #include "core/ui.hpp"
 
+#include "bio/division.hpp"
 #include "game/world.hpp"
 
 #include <cmath>
@@ -49,19 +50,45 @@ void drawUi(World& world, ToolState& tools) {
     y += 4;
     const entt::registry& reg = world.registry();
     if (reg.valid(world.player())) {
-        const Locomotion& loco = reg.get<Locomotion>(world.player());
-        const Digestion& dig = reg.get<Digestion>(world.player());
+        const entt::entity p = world.player();
+        const Locomotion& loco = reg.get<Locomotion>(p);
+        const Digestion& dig = reg.get<Digestion>(p);
+        const Metabolism& meta = reg.get<Metabolism>(p);
+        const Dividing* div = reg.try_get<Dividing>(p);
         GuiLabel({kUiPanel.x + 10, y, 300, 16},
-                 TextFormat("Jugador: %s  |  %.0f um/s", locomotionName(loco.type), std::abs(loco.speed)));
+                 TextFormat("Jugador: %s  |  %.0f um/s  |  %.1f h", locomotionName(loco.type),
+                            std::abs(loco.speed), meta.ageHours));
+        y += 20;
+        // Barras de estado: reservas, crecimiento hacia la división y progreso de la división.
+        float reserves = meta.reserves / std::max(1e-6f, meta.biomass);
+        GuiProgressBar({kUiPanel.x + 90, y, 160, 14}, "reservas", TextFormat("%.0f%%", 100 * reserves),
+                       &reserves, 0.0f, 0.6f);
+        y += 18;
+        float growth = meta.biomass / std::max(1e-6f, meta.birthBiomass);
+        GuiProgressBar({kUiPanel.x + 90, y, 160, 14}, "biomasa", TextFormat("x%.2f", growth), &growth,
+                       0.5f, 2.0f);
+        y += 18;
+        if (div) {
+            float pr = std::min(1.0f, div->progress);
+            GuiProgressBar({kUiPanel.x + 90, y, 160, 14}, "division", TextFormat("%.0f%%", 100 * pr), &pr,
+                           0.0f, 1.0f);
+            y += 18;
+        }
+        GuiLabel({kUiPanel.x + 10, y, 300, 16},
+                 TextFormat("O2 %.0f uM (%.0f%% aerobico) | luz %.2f%s", meta.o2, 100 * meta.aerobic,
+                            meta.light, meta.starving ? " | AYUNO" : ""));
         y += 18;
         GuiLabel({kUiPanel.x + 10, y, 300, 16},
                  TextFormat("Comido: %d bact. %d detr. %d cel. | %zu vacuolas", dig.bacteriaEaten,
                             dig.detritusEaten, dig.cellsEaten, dig.vacuoles.size()));
-        y += 18;
+        y += 22;
+    } else {
         GuiLabel({kUiPanel.x + 10, y, 300, 16},
-                 TextFormat("Alimento: %.2f pmol ingerido, %.2f digerido", dig.pmolIngested, dig.pmolDigested));
+                 TextFormat("Tu celula murio (%s). R: reaparecer", world.lastDeathCause()));
         y += 22;
     }
+    slider("luz", &world.medium().surfaceLight, 0.0f, 1.0f, "%.2f");
+    slider("tiempo bio x", &world.bioTimeScale(), 1.0f, 600.0f, "%.0f");
     GuiLabel({kUiPanel.x + 10, y, 300, 16}, "1 cilios | 2 flagelo | 3 ameba | F seguir");
     y += 16;
     GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Cilios: W/S avanzar, A/D girar");
@@ -74,5 +101,5 @@ void drawUi(World& world, ToolState& tools) {
     y += 16;
     GuiLabel({kUiPanel.x + 10, y, 300, 16}, "B detrito | C celula | K 50 celulas | X borrar");
     y += 16;
-    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Q apretar | F1-F4 overlays | Der mover | Rueda");
+    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Q apretar | L lisar | F1-F4 overlays | Rueda");
 }
