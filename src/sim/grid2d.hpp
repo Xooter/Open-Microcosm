@@ -14,6 +14,9 @@ inline float wrapCoord(float v, float size) {
     return v < size ? v : 0.0f; // por redondeo float, v puede quedar exactamente en size
 }
 
+// Diferencia mínima en un eje periódico (convención de imagen mínima).
+inline float minImage(float d, float size) { return d - size * std::round(d / size); }
+
 // Grilla escalar periódica, valores en el centro de cada celda: (i + 0.5)·dx.
 struct Grid2D {
     int nx = 0, ny = 0;

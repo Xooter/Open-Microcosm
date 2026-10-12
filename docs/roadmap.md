@@ -56,12 +56,18 @@ que nada, come, crece y se divide en un medio vivo. Antes de sumar contenido se 
   determinismo con distinta cantidad de hilos.
 - Medido: ~0,9 ms por paso de simulación con 50k bacterias.
 
-## Fase 2 — Célula soft-body
-- Membrana como anillo de partículas con restricciones XPBD: distancia, flexión y área (presión).
-- Citoplasma y organelos como partículas internas confinadas por la membrana.
-- Render gelatinoso semitransparente con SDF o metaballs, en **campo claro**.
-- Colisión célula–célula: se deforman y se empujan sin atravesarse.
-- **Hecho cuando:** 50 células chocan, se aplastan y recuperan la forma sin explotar.
+## Fase 2 — Célula soft-body ✅ (hecha)
+- Membrana como anillo de partículas con XPBD **sin inercia** (tasas de relajación [1/s]):
+  aristas, flexión por shape matching local, área conservada y memoria de forma por célula
+  (película rígida vs. córtex blando).
+- Interior: núcleo con nucléolo y vacuola contráctil anclados al citoesqueleto, y gránulos con
+  browniano.
+- Colisiones punto–arista entre células y auto-colisión, más una pasada anti-penetración. Las
+  bacterias y los detritos no entran en las células.
+- Render en campo claro: relleno triangulado (ear clipping) + shader con borde óptico y halo.
+- Herramientas: crear (C), escena de 50 (K), borrar (X), estirar (Shift + arrastrar), apretar (Q).
+- Medido con 50 células comprimidas 10 s: área ≤ 3,6%, aristas ≤ 1,9×, **0 intrusiones**, y
+  recuperación de forma tras soltar. ~3,5 ms por paso con 50 células + 50k bacterias.
 
 ## Fase 3 — Jugador: locomoción y fagocitosis
 - Locomoción física por tipo: flagelo (impulso), cilios (deslizamiento continuo) y pseudópodo

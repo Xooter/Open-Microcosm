@@ -44,4 +44,6 @@ inline constexpr std::uint64_t kAmbient = 2;
 inline constexpr std::uint64_t kBacteria = 3;
 inline constexpr std::uint64_t kSpawn = 4;
 inline constexpr std::uint64_t kTools = 5;
+inline constexpr std::uint64_t kCells = 6;
+inline constexpr std::uint64_t kBodies = 7;
 } // namespace rng_stream

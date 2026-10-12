@@ -81,11 +81,15 @@ add_library(biosim STATIC
     src/sim/fluid.cpp
     src/sim/chem_field.cpp
     src/sim/spatial_grid.cpp
+    src/sim/polygon.cpp
+    src/sim/soft_body.cpp
+    src/sim/contacts.cpp
     src/bio/bacteria.cpp
+    src/bio/cell.cpp
     src/game/world.cpp)
 
 target_include_directories(biosim PUBLIC src)
-target_link_libraries(biosim PUBLIC OpenMP::OpenMP_CXX bio_options)
+target_link_libraries(biosim PUBLIC OpenMP::OpenMP_CXX EnTT::EnTT bio_options)
 
 if(BIO_PROFILING)
     target_link_libraries(biosim PUBLIC Tracy::TracyClient)
@@ -99,10 +103,13 @@ add_executable(bio
     src/main.cpp
     src/core/ui.cpp
     src/render/renderer.cpp
-    src/render/field_overlay.cpp)
+    src/render/field_overlay.cpp
+    src/render/cell_renderer.cpp)
 
 target_include_directories(bio PRIVATE ${raygui_SOURCE_DIR}/src)
-target_link_libraries(bio PRIVATE biosim raylib EnTT::EnTT)
+target_link_libraries(bio PRIVATE biosim raylib)
+# Ruta absoluta a assets/ para desarrollo (el empaquetado queda para más adelante).
+target_compile_definitions(bio PRIVATE BIO_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 
 if(ipo_ok)
     set_property(TARGET biosim bio PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
@@ -113,7 +120,7 @@ endif()
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp)
+    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp)
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
     add_test(NAME bio_tests COMMAND bio_tests)
 endif()

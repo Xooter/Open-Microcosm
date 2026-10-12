@@ -15,6 +15,7 @@ constexpr Color kBacteria = {70, 80, 70, 150};
 
 void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay overlay) {
     PROFILE_SCOPE("Renderer::drawWorld");
+    cells_.renderCoverage(world, camera);
     ClearBackground(kBackground);
     BeginMode2D(camera);
 
@@ -39,6 +40,12 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
                          b.heading[i] * RAD2DEG, kBacteria);
     }
 
+    EndMode2D();
+
+    cells_.composite(camera);
+
+    BeginMode2D(camera);
+    cells_.drawDetails(world, camera);
     DrawRectangleLinesEx({0, 0, world.width(), world.height()}, 1.5f / camera.zoom,
                          Fade(DARKGRAY, 0.5f));
     EndMode2D();

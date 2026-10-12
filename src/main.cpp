@@ -47,10 +47,30 @@ void handleTools(World& world, ToolState& tools, const Camera2D& camera) {
     const Vec2 pos = {mouse.x, mouse.y};
     if (IsKeyDown(KEY_T)) world.dropInk(pos, tools.inkRadius, 40);
     if (IsKeyPressed(KEY_D)) world.dropDetritus(pos);
+    if (IsKeyPressed(KEY_C)) world.spawnCell(pos);
+    if (IsKeyPressed(KEY_K)) world.spawnTestScene(50);
+    if (IsKeyPressed(KEY_X)) world.removeCellAt(pos);
+    if (IsKeyDown(KEY_Q))
+        world.setSqueeze(pos, tools.squeezeSpeed);
+    else
+        world.clearSqueeze();
 
     const bool overUi = CheckCollisionPointRec(GetMousePosition(), kUiPanel);
+    const bool shift = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && shift && !overUi)
+        tools.grabbing = world.beginGrab(pos);
+    if (tools.grabbing) {
+        if (IsMouseButtonDown(MOUSE_BUTTON_LEFT)) {
+            world.moveGrab(pos);
+        } else {
+            world.endGrab();
+            tools.grabbing = false;
+        }
+    }
+
     const float frameDt = GetFrameTime();
-    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !overUi && frameDt > 0.0f) {
+    if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !tools.grabbing && !shift && !overUi &&
+        frameDt > 0.0f) {
         // Velocidad del mouse en µm por segundo de simulación.
         const Vector2 d = Vector2Scale(GetMouseDelta(), 1.0f / (camera.zoom * frameDt * units::kTimeScale));
         world.setStir(pos, {d.x, d.y}, tools.stirRadius);

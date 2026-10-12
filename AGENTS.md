@@ -103,10 +103,32 @@ Hay presets `debug`, `release` y `profile`. El código tiene que compilar **sin 
 
 El LOD (fase 9) degrada las células lejanas a menos partículas o a simulación estadística.
 
+### Cuerpos blandos (`sim/soft_body`, `sim/contacts`)
+
+- **XPBD sin inercia:** cada paso predice x* = x + v_externa·dt, sin velocidad acumulada, y
+  después proyecta las restricciones. Cada restricción relaja su error con una **tasa [1/s]**:
+  corrección = 1 − exp(−tasa·h). Así el resultado no depende del sub-paso y el comportamiento
+  es viscoelástico.
+- **Restricciones por cuerpo:**
+  - largo de aristas;
+  - flexión por *shape matching* local en ventanas de 5 puntos (la rotación nunca refleja, así
+    que deshace pliegues; una restricción de distancia i↔i+2 no lo hace);
+  - área (agua incompresible);
+  - memoria de forma global (`shapeRate`: película rígida alta, córtex ameboide ~0);
+  - anclaje de organelos al citoesqueleto.
+- **Contactos:** punto contra arista, con esquema Jacobi. Se **intercalan** con las restricciones
+  en cada iteración del sub-paso. Al final del paso, una pasada saca cualquier partícula de
+  membrana que haya quedado dentro de otra célula.
+- Las bacterias y los detritos se excluyen del interior de las células.
+
 ### Datos
 
-- **Partículas en SoA** (`src/sim/particles.hpp`): un array contiguo por campo. Toda partícula
-  tiene tipo (membrana, citoplasma, organelo, ambiental) y dueño (entidad de célula).
+- **Partículas en SoA**, en dos pools:
+  - `sim/particles.hpp` (ambientales: tinta, detritos): compacto, con swap-and-pop.
+  - `sim/body_particles.hpp` (membranas, organelos, gránulos): **slots estables** con lista
+    libre, así el índice sirve como ID en las restricciones. Cada partícula tiene tipo y dueño
+    (entidad de célula). Las posiciones de un cuerpo son contiguas (no se envuelven por
+    partícula); el cuerpo entero se traslada cuando su centroide cruza un borde.
 - **Organismos en EnTT:** una célula es una entidad con componentes (membrana: rango de partículas
   y área objetivo; metabolismo; genoma; especie; IA). **Nunca** pongas partículas individuales
   como entidades del ECS.
@@ -134,7 +156,8 @@ El LOD (fase 9) degrada las células lejanas a menos partículas o a simulación
 src/
   main.cpp          loop principal
   core/             profiling, UI de debug, utilidades
-  sim/              fft, fluid, chem_field, grid2d, particles, spatial_grid, constraints (XPBD)
+  sim/              fft, fluid, chem_field, grid2d, particles, body_particles, soft_body (XPBD),
+                    contacts, polygon, spatial_grid
   bio/              cell, membrane, metabolism, lifecycle, genome, organelles, species
   ai/               quimiotaxis, caza, huida, fototaxis
   game/             linaje, run roguelite, objetivo de biomasa, enciclopedia

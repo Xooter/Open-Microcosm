@@ -1,5 +1,6 @@
 #pragma once
 
+#include "render/cell_renderer.hpp"
 #include "render/field_overlay.hpp"
 
 #include <raylib.h>
@@ -13,4 +14,5 @@ class Renderer {
 
   private:
     FieldOverlay overlay_;
+    CellRenderer cells_;
 };
