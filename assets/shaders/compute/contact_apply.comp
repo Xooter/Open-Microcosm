@@ -1,0 +1,10 @@
+// Aplica las correcciones de contacto pendientes (al empezar cada sub-paso y al final del paso).
+layout(local_size_x = 256) in;
+
+void main() {
+    uint m = gl_GlobalInvocationID.x;
+    if (m >= uNumMembers || contact[m].z < 0.5)
+        return;
+    pos[members[m].slot].xy += contact[m].xy;
+    contact[m] = vec4(0.0);
+}

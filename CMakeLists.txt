@@ -20,6 +20,8 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
 # raylib: ventana, input, render 2D/3D batcheado, audio.
 set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+# Fase 14: contexto OpenGL 4.3 para los compute shaders de XPBD (los shaders siguen en GLSL 330).
+set(OPENGL_VERSION "4.3" CACHE STRING "" FORCE)
 set(BUILD_GAMES    OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(raylib
     URL https://github.com/raysan5/raylib/archive/refs/tags/5.5.tar.gz
@@ -125,7 +127,8 @@ add_executable(bio
     src/render/renderer.cpp
     src/render/field_overlay.cpp
     src/render/cell_renderer.cpp
-    src/render/instanced_particles.cpp)
+    src/render/instanced_particles.cpp
+    src/gpu/gpu_substep_solver.cpp)
 
 # SYSTEM: los warnings de headers de terceros no son nuestros.
 target_include_directories(bio SYSTEM PRIVATE ${raygui_SOURCE_DIR}/src)
@@ -142,7 +145,7 @@ endif()
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp)
+    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp)
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
     add_test(NAME bio_tests COMMAND bio_tests)
 endif()

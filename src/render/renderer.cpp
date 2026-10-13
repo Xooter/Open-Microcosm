@@ -29,6 +29,44 @@ Renderer::Renderer() {
         resolutionLoc_ = GetShaderLocation(post_, "resolution");
         timeLoc_ = GetShaderLocation(post_, "time");
     }
+    glass_ = LoadShader(nullptr, BIO_ASSET_DIR "/shaders/dish_glass.fs");
+    glassOk_ = glass_.id != 0 && glass_.id != rlGetShaderIdDefault();
+    if (glassOk_) {
+        glassLoc_.resolution = GetShaderLocation(glass_, "resolution");
+        glassLoc_.offset = GetShaderLocation(glass_, "camOffset");
+        glassLoc_.target = GetShaderLocation(glass_, "camTarget");
+        glassLoc_.zoom = GetShaderLocation(glass_, "zoom");
+        glassLoc_.dish = GetShaderLocation(glass_, "dish");
+    }
+}
+
+// Pared de vidrio de la placa, en campo claro: afuera el vidrio sin agua (más claro, con
+// rayas y polvo), en el borde la línea oscura de refracción y la línea de Becke brillante del
+// lado del agua, y hacia adentro el menisco, que desvía la luz y oscurece el campo.
+void Renderer::drawDish(const World& world, const Camera2D& camera) {
+    const Dish& dish = world.dish();
+    if (!dish.active())
+        return;
+    const auto sw = static_cast<float>(GetScreenWidth()), sh = static_cast<float>(GetScreenHeight());
+    if (!glassOk_) { // sin shader: solo el contorno
+        BeginMode2D(camera);
+        DrawRing({dish.center.x, dish.center.y}, dish.radius, dish.radius + 3.0f / camera.zoom, 0, 360, 256,
+                 {60, 62, 56, 220});
+        EndMode2D();
+        return;
+    }
+    const float res[2] = {sw, sh};
+    const float offset[2] = {camera.offset.x, camera.offset.y};
+    const float target[2] = {camera.target.x, camera.target.y};
+    const float d[3] = {dish.center.x, dish.center.y, dish.radius};
+    SetShaderValue(glass_, glassLoc_.resolution, res, SHADER_UNIFORM_VEC2);
+    SetShaderValue(glass_, glassLoc_.offset, offset, SHADER_UNIFORM_VEC2);
+    SetShaderValue(glass_, glassLoc_.target, target, SHADER_UNIFORM_VEC2);
+    SetShaderValue(glass_, glassLoc_.zoom, &camera.zoom, SHADER_UNIFORM_FLOAT);
+    SetShaderValue(glass_, glassLoc_.dish, d, SHADER_UNIFORM_VEC3);
+    BeginShaderMode(glass_);
+    DrawRectangle(0, 0, static_cast<int>(sw), static_cast<int>(sh), WHITE);
+    EndShaderMode();
 }
 
 Renderer::~Renderer() {
@@ -36,6 +74,8 @@ Renderer::~Renderer() {
         UnloadRenderTexture(scene_);
     if (postOk_)
         UnloadShader(post_);
+    if (glassOk_)
+        UnloadShader(glass_);
 }
 
 void Renderer::ensureScene() {
@@ -64,8 +104,10 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
     ClearBackground(kBackground);
     BeginMode2D(camera);
 
-    // El mundo es un toro: se dibujan las copias que caen dentro de la vista.
+    // Sin placa, el mundo es un toro: se dibujan las copias que caen dentro de la vista. Con
+    // placa es cerrado: una sola copia.
     const float w = world.width(), h = world.height();
+    const int reach = world.dish().active() ? 0 : 1;
     const float minSize = 1.5f / camera.zoom; // tamaño real en µm, con un mínimo visible
     const AmbientParticles& amb = world.ambient();
     const Bacteria& bac = world.bacteria();
@@ -75,8 +117,8 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
     const bool useInstancing = particles_.ready();
     if (useInstancing)
         particles_.upload(bac);
-    for (int oy = -1; oy <= 1; ++oy) {
-        for (int ox = -1; ox <= 1; ++ox) {
+    for (int oy = -reach; oy <= reach; ++oy) {
+        for (int ox = -reach; ox <= reach; ++ox) {
             const float offX = ox * w, offY = oy * h;
             const Rectangle copy = {offX, offY, w, h};
             if (!CheckCollisionRecs(copy, view))
@@ -185,8 +227,8 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
     for (const LysisMark& m : world.lysisMarks()) {
         const float age = world.simTime() - m.time;
         const float fade = std::clamp(1.0f - age / 3.0f, 0.0f, 1.0f);
-        for (int oy = -1; oy <= 1; ++oy)
-            for (int ox = -1; ox <= 1; ++ox) {
+        for (int oy = -reach; oy <= reach; ++oy)
+            for (int ox = -reach; ox <= reach; ++ox) {
                 const Vector2 c = {m.at.x + ox * world.width(), m.at.y + oy * world.height()};
                 if (c.x < view.x - m.radius * 3 || c.x > view.x + view.width + m.radius * 3 ||
                     c.y < view.y - m.radius * 3 || c.y > view.y + view.height + m.radius * 3)
@@ -202,6 +244,7 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
             }
     }
     EndMode2D();
+    drawDish(world, camera);
     EndTextureMode();
 
     const auto sw = static_cast<float>(scene_.texture.width), sh = static_cast<float>(scene_.texture.height);

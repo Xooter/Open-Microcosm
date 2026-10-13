@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <initializer_list>
 #include <utility>
 
@@ -147,6 +148,15 @@ const std::array<Biome, kBiomeCount> kBiomes = makeBiomes();
 
 const Biome& biome(BiomeId id) { return kBiomes[static_cast<int>(id)]; }
 
+float dropAreaScale(const WorldConfig& c) {
+    constexpr float kReferenceArea = 2048.0f * 1024.0f; // [µm²]
+    const float w = static_cast<float>(c.gridX) * c.cellSize, h = static_cast<float>(c.gridY) * c.cellSize;
+    if (!c.dish)
+        return w * h / kReferenceArea;
+    const float r = 0.5f * std::min(w, h) - c.dishMargin;
+    return 3.14159265f * r * r / kReferenceArea;
+}
+
 WorldConfig makeDrop(BiomeId id, std::uint64_t seed) {
     const Biome& b = biome(id);
     WorldConfig c;
@@ -173,5 +183,14 @@ WorldConfig makeDrop(BiomeId id, std::uint64_t seed) {
     c.zoophagus = b.zoophagus;
     c.chytridClusters = b.chytridClusters;
     c.patchiness = std::clamp(b.patchiness * rng.uniform(0.5f, 1.5f), 0.0f, 1.0f);
+    // Misma densidad en cualquier tamaño de placa.
+    const float area = dropAreaScale(c);
+    auto scaled = [&](float n) { return std::max(0.0f, std::round(n * area)); };
+    c.bacteria = static_cast<std::size_t>(scaled(static_cast<float>(c.bacteria)));
+    c.detritus = static_cast<std::size_t>(scaled(static_cast<float>(c.detritus)));
+    c.cyanoFilaments = static_cast<int>(scaled(static_cast<float>(c.cyanoFilaments)));
+    c.saprolegnia = static_cast<int>(scaled(static_cast<float>(c.saprolegnia)));
+    c.zoophagus = static_cast<int>(scaled(static_cast<float>(c.zoophagus)));
+    c.chytridClusters = static_cast<int>(scaled(static_cast<float>(c.chytridClusters)));
     return c;
 }

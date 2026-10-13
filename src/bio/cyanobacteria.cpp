@@ -15,7 +15,12 @@ void Cyanobacteria::spawn(int count, int cells, float width, float height, std::
         Rng rng(seed, rng_stream::kCyano, static_cast<std::uint64_t>(f), 0);
         CyanoFilament fil;
         const float a = rng.uniform(0.0f, 2.0f * units::kPi);
-        const float x0 = rng.uniform(0.0f, width), y0 = rng.uniform(0.0f, height);
+        float x0 = rng.uniform(0.0f, width), y0 = rng.uniform(0.0f, height);
+        if (dish.active()) { // el filamento entero dentro del agua
+            const Vec2 p = dish.sample(x0 / width, y0 / height, params.spacing * static_cast<float>(cells) + 4.0f);
+            x0 = p.x;
+            y0 = p.y;
+        }
         for (int k = 0; k < cells; ++k) {
             fil.x.push_back(x0 + std::cos(a) * params.spacing * static_cast<float>(k));
             fil.y.push_back(y0 + std::sin(a) * params.spacing * static_cast<float>(k));
@@ -93,6 +98,15 @@ void Cyanobacteria::move(const Fluid& fluid, float dt, std::uint64_t seed, std::
                 f.x[k] += (mid.x - f.x[k]) * 0.1f;
                 f.y[k] += (mid.y - f.y[k]) * 0.1f;
             }
+        }
+        // Pared de la placa: las células vuelven adentro y, si la punta que avanza chocó, el
+        // filamento invierte el deslizamiento (como ante cualquier obstáculo).
+        if (dish.active()) {
+            bool hit = false;
+            for (std::size_t k = 0; k < n; ++k)
+                hit |= dish.bounce(f.x[k], f.y[k], nullptr, 2.0f) && (f.direction > 0.0f ? k == n - 1 : k == 0);
+            if (hit)
+                f.direction = -f.direction;
         }
         // El filamento entero se traslada si su primera célula salió del mundo toroidal.
         const float sx = f.x[0] < 0.0f ? width : (f.x[0] >= width ? -width : 0.0f);

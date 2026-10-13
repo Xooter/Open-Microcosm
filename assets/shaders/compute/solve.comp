@@ -1,0 +1,348 @@
+// Restricciones internas de cada cuerpo (una iteración de XPBD). Un grupo por cuerpo.
+// Mismo orden que soft_body::solve: aristas, flexión local, tensión cortical, área, memoria de
+// forma, anclaje de organelos, confinamiento de organelos y choques entre organelos.
+layout(local_size_x = 256) in;
+
+const uint kThreads = 256u;
+
+shared float sA[kThreads];
+shared float sB[kThreads];
+shared float sC[kThreads];
+
+void sync() {
+    memoryBarrierBuffer();
+    memoryBarrierShared();
+    barrier();
+}
+
+// Suma de los tres acumuladores del grupo (resultado en sA[0], sB[0], sC[0]).
+void reduce3(float a, float b, float c) {
+    uint L = gl_LocalInvocationID.x;
+    sA[L] = a;
+    sB[L] = b;
+    sC[L] = c;
+    barrier();
+    for (uint stride = kThreads / 2u; stride > 0u; stride >>= 1u) {
+        if (L < stride) {
+            sA[L] += sA[L + stride];
+            sB[L] += sB[L + stride];
+            sC[L] += sC[L + stride];
+        }
+        barrier();
+    }
+}
+
+void distanceStep(uint a, uint b, float rest, float f, bool tensionOnly) {
+    vec4 pa = pos[a], pb = pos[b];
+    vec2 d = pb.xy - pa.xy;
+    float len = length(d);
+    if (tensionOnly && len <= rest)
+        return;
+    float w = pa.w + pb.w;
+    if (len < 1e-6 || w <= 0.0)
+        return;
+    vec2 corr = d * (f * (len - rest) / (len * w));
+    pos[a].xy += corr * pa.w;
+    pos[b].xy -= corr * pb.w;
+}
+
+vec2 ringPos(Body B, uint i) { return pos[ringSlot(B.ringOff + (i % B.ringCount))].xy; }
+
+// Una iteración de las restricciones internas del cuerpo B.
+void iterate(Body B, uint L, uint n, float h) {
+
+    // 1. Aristas por colores: pares, impares y (si n es impar) la que cierra el anillo.
+    float fe = relaxRate(uEdgeRate * B.edgeScale, h);
+    bool tensionOnly = (B.flags & 1u) != 0u;
+    uint even = n - (n & 1u);
+    for (uint color = 0u; color < 2u; ++color) {
+        for (uint i = 2u * L + color; i < even; i += 2u * kThreads)
+            distanceStep(ringSlot(B.ringOff + i), ringSlot(B.ringOff + (i + 1u) % n), ringPts[B.ringOff + i].edge, fe, tensionOnly);
+        sync();
+    }
+    if ((n & 1u) != 0u && L == 0u)
+        distanceStep(ringSlot(B.ringOff + n - 1u), ringSlot(B.ringOff), ringPts[B.ringOff + n - 1u].edge, fe, tensionOnly);
+    sync();
+
+    // 2. Flexión: shape matching local en ventanas de 5 puntos (Jacobi).
+    float fb = relaxRate(uBendRate * B.bendScale, h);
+    for (uint i = L; i < n; i += kThreads) {
+        vec2 c = vec2(0.0), q = vec2(0.0);
+        for (int k = -2; k <= 2; ++k) {
+            uint j = (i + n + uint(k + 2) - 2u) % n;
+            c += ringPos(B, j);
+            q += ringPts[B.ringOff + j].rest;
+        }
+        c *= 0.2;
+        q *= 0.2;
+        float sdot = 0.0, scross = 0.0;
+        for (int k = -2; k <= 2; ++k) {
+            uint j = (i + n + uint(k + 2) - 2u) % n;
+            vec2 p = ringPos(B, j) - c, r = ringPts[B.ringOff + j].rest - q;
+            sdot += dot(r, p);
+            scross += cross2(r, p);
+        }
+        float len = sqrt(sdot * sdot + scross * scross);
+        vec2 move = vec2(0.0);
+        if (len >= 1e-12) {
+            vec2 goal = c + rotate2(ringPts[B.ringOff + i].rest - q, sdot / len, scross / len);
+            move = (goal - ringPos(B, i)) * fb;
+        }
+        scratch[B.ringOff + i] = move;
+    }
+    sync();
+    for (uint i = L; i < n; i += kThreads)
+        pos[ringSlot(B.ringOff + i)].xy += scratch[B.ringOff + i];
+    sync();
+
+    // 3. Tensión cortical (membranas plásticas): cada punto hacia el medio de sus vecinos.
+    if (B.cortical > 0.0) {
+        float fc = relaxRate(B.cortical, h);
+        for (uint i = L; i < n; i += kThreads) {
+            vec2 mid = 0.5 * (ringPos(B, i + n - 1u) + ringPos(B, i + 1u));
+            scratch[B.ringOff + i] = (mid - ringPos(B, i)) * fc;
+        }
+        sync();
+        for (uint i = L; i < n; i += kThreads)
+            pos[ringSlot(B.ringOff + i)].xy += scratch[B.ringOff + i];
+        sync();
+    }
+
+    // 4. Área (agua incompresible): gradiente de A en cada punto, todos antes de mover.
+    {
+        float area = 0.0, denom = 0.0;
+        for (uint i = L; i < n; i += kThreads) {
+            vec2 p = ringPos(B, i), next = ringPos(B, i + 1u), prev = ringPos(B, i + n - 1u);
+            area += cross2(p, next);
+            vec2 g = vec2(0.5 * (next.y - prev.y), 0.5 * (prev.x - next.x));
+            denom += pos[ringSlot(B.ringOff + i)].w * dot(g, g);
+            scratch[B.ringOff + i] = g;
+        }
+        reduce3(area, denom, 0.0);
+        float A = 0.5 * sA[0], D = sB[0];
+        sync();
+        if (D > 0.0) {
+            float s = -relaxRate(uAreaRate * B.areaScale, h) * (A - B.restArea) / D;
+            for (uint i = L; i < n; i += kThreads) {
+                uint slot = ringSlot(B.ringOff + i);
+                pos[slot].xy += scratch[B.ringOff + i] * (s * pos[slot].w);
+            }
+        }
+        sync();
+    }
+
+    // 5. Mejor ajuste rígido (centroide y rotación) y memoria de forma.
+    float cx = 0.0, cy = 0.0;
+    {
+        float sx = 0.0, sy = 0.0;
+        for (uint i = L; i < n; i += kThreads) {
+            vec2 p = ringPos(B, i);
+            sx += p.x;
+            sy += p.y;
+        }
+        reduce3(sx, sy, 0.0);
+        cx = sA[0] / float(n);
+        cy = sB[0] / float(n);
+        sync();
+    }
+    vec2 cen = vec2(cx, cy);
+    float sdot = 0.0, scross = 0.0;
+    for (uint i = L; i < n; i += kThreads) {
+        vec2 p = ringPos(B, i) - cen, q = ringPts[B.ringOff + i].rest;
+        sdot += dot(q, p);
+        scross += cross2(q, p);
+    }
+    reduce3(sdot, scross, 0.0);
+    // atan(0, 0) es indefinido en GLSL (en C++ da 0): cuerpo degenerado, sin rotación.
+    float angle = abs(sA[0]) + abs(sB[0]) > 1e-20 ? atan(sB[0], sA[0]) : 0.0;
+    sync();
+    float ca = cos(angle), sa = sin(angle);
+    float fs = relaxRate(B.shapeRate * uShapeScale, h);
+    if (fs > 0.0) {
+        for (uint i = L; i < n; i += kThreads) {
+            uint slot = ringSlot(B.ringOff + i);
+            vec2 goal = cen + rotate2(ringPts[B.ringOff + i].rest, ca, sa);
+            pos[slot].xy += (goal - pos[slot].xy) * fs;
+        }
+    }
+    // Organelos anclados al citoesqueleto: siguen el marco de la célula.
+    for (uint k = L; k < B.intCount; k += kThreads) {
+        float rate = intPts[B.intOff + k].anchor;
+        if (rate <= 0.0)
+            continue;
+        uint slot = intPts[B.intOff + k].slot;
+        vec2 goal = cen + rotate2(intPts[B.intOff + k].rest, ca, sa);
+        pos[slot].xy += (goal - pos[slot].xy) * relaxRate(rate, h);
+    }
+    sync();
+
+    // 6. Confinamiento de organelos: para cada organelo, los 256 hilos buscan juntos la
+    //    arista más cercana (reducción) y cuentan cruces para saber si está adentro.
+    float orient = B.restArea >= 0.0 ? 1.0 : -1.0;
+    for (uint k = 0u; k < B.orgCount; ++k) {
+        uint slot = intPts[B.intOff + k].slot;
+        vec2 p = pos[slot].xy;
+        float best = 1e30;
+        uint bestEdge = 0u;
+        uint crossings = 0u;
+        for (uint i = L; i < n; i += kThreads) {
+            vec2 a = ringPos(B, i), c = ringPos(B, i + 1u);
+            vec2 e = c - a;
+            float len2 = dot(e, e);
+            float t = len2 > 0.0 ? clamp(dot(p - a, e) / len2, 0.0, 1.0) : 0.0;
+            vec2 q = a + e * t;
+            float d2 = dot(p - q, p - q);
+            if (d2 < best) {
+                best = d2;
+                bestEdge = i;
+            }
+            if ((a.y > p.y) != (c.y > p.y) && p.x < a.x + (p.y - a.y) * (c.x - a.x) / (c.y - a.y))
+                ++crossings;
+        }
+        sA[L] = best;
+        sB[L] = float(bestEdge);
+        sC[L] = float(crossings);
+        barrier();
+        for (uint stride = kThreads / 2u; stride > 0u; stride >>= 1u) {
+            if (L < stride) {
+                if (sA[L + stride] < sA[L]) {
+                    sA[L] = sA[L + stride];
+                    sB[L] = sB[L + stride];
+                }
+                sC[L] += sC[L + stride];
+            }
+            barrier();
+        }
+        if (L == 0u) {
+            float r = pos[slot].z;
+            bool inside = (uint(sC[0] + 0.5) & 1u) != 0u;
+            if (!(inside && sA[0] >= r * r)) {
+                uint e = uint(sB[0] + 0.5);
+                vec2 a = ringPos(B, e), c = ringPos(B, e + 1u);
+                vec2 ed = c - a;
+                float len2 = dot(ed, ed);
+                float t = len2 > 0.0 ? clamp(dot(p - a, ed) / len2, 0.0, 1.0) : 0.0;
+                vec2 dir = len2 > 0.0 ? ed / sqrt(len2) : vec2(1.0, 0.0);
+                vec2 target = a + ed * t + orient * vec2(-dir.y, dir.x) * r;
+                vec2 d = target - p;
+                // Mitad la absorbe el organelo y mitad la membrana: un núcleo grande abulta.
+                pos[slot].xy += 0.5 * d;
+                pos[ringSlot(B.ringOff + e)].xy -= 0.5 * d * (1.0 - t);
+                pos[ringSlot(B.ringOff + (e + 1u) % n)].xy -= 0.5 * d * t;
+            }
+        }
+        sync();
+    }
+
+    // 7. Los organelos no se superponen entre sí (Jacobi: cada hilo corrige el suyo).
+    for (uint base = 0u; base < B.orgCount; base += kThreads) {
+        uint i = base + L;
+        vec2 move = vec2(0.0);
+        if (i < B.orgCount) {
+            vec4 pi = pos[intPts[B.intOff + i].slot];
+            for (uint j = 0u; j < B.orgCount; ++j) {
+                if (j == i)
+                    continue;
+                vec4 pj = pos[intPts[B.intOff + j].slot];
+                vec2 d = pi.xy - pj.xy;
+                float len = length(d), minD = pi.z + pj.z, w = pi.w + pj.w;
+                if (len >= minD || len < 1e-6 || w <= 0.0)
+                    continue;
+                move += d * ((minD - len) / (len * w)) * pi.w;
+            }
+        }
+        sync();
+        if (i < B.orgCount)
+            pos[intPts[B.intOff + i].slot].xy += move;
+        sync();
+    }
+}
+
+// Uniones de adhesión con otros cuerpos: este cuerpo corrige solo sus extremos (el otro cuerpo
+// hace lo mismo con los suyos). Serial dentro del cuerpo: un punto puede tener varias uniones.
+void solveLinks(Body B, uint L, float h) {
+    if (L != 0u || B.linkCount == 0u)
+        return;
+    float f = relaxRate(uLinkRate, h);
+    for (uint k = 0u; k < B.linkCount; ++k) {
+        LinkRef r = linkRefs[B.linkOff + k];
+        Link l = links[r.link];
+        vec4 pa = pos[l.a], pb = pos[l.b];
+        vec2 d = vec2(minImage(pb.x - pa.x, uWorld.x), minImage(pb.y - pa.y, uWorld.y));
+        float len = length(d), w = pa.w + pb.w;
+        if (len < 1e-6 || w <= 0.0)
+            continue;
+        vec2 corr = d * (f * (len - l.rest) / (len * w));
+        if (r.end == 0u)
+            pos[l.a].xy += corr * pa.w;
+        else
+            pos[l.b].xy -= corr * pb.w;
+    }
+}
+
+// Pared de la placa (vidrio, no cede): igual que soft_body::confineToDish.
+void confineToDish(Body B, uint L, uint n) {
+    if (uDish.z <= 0.0)
+        return;
+    for (uint i = L; i < n; i += kThreads) {
+        uint s = ringSlot(B.ringOff + i);
+        vec4 p = pos[s];
+        vec2 d = p.xy - uDish.xy;
+        float len = length(d), limit = uDish.z - p.z;
+        if (len > limit && len > 1e-6)
+            pos[s].xy = uDish.xy + d * (limit / len);
+    }
+}
+
+void main() {
+    uint b = gl_WorkGroupID.x;
+    if (b >= uNumBodies)
+        return;
+    Body B = bodies[b];
+    uint L = gl_LocalInvocationID.x;
+    uint n = B.ringCount;
+
+    // Correcciones de contacto pendientes (la pasada anterior): se aplican primero.
+    if (uApply == 1u) {
+        for (uint i = L; i < n; i += kThreads) {
+            uint m = B.ringOff + i; // los puntos de contacto están en el mismo orden que el anillo
+            if (contact[m].z > 0.5) {
+                pos[ringSlot(m)].xy += contact[m].xy;
+                contact[m].xy = vec2(0.0);
+            }
+        }
+        sync();
+    }
+    // Predicción: x* = x + v·h (sin inercia).
+    if (uPredict == 1u) {
+        float hp = -1.0;
+        if (B.lod == 2u)
+            hp = uH;
+        else if (B.lod == 1u && farTurn())
+            hp = uH * float(uStride);
+        else if (B.lod == 0u && uSub == uSubsteps - 1u)
+            hp = uDt; // estadístico: un solo avance rígido por paso
+        if (hp > 0.0) {
+            for (uint i = L; i < n; i += kThreads) {
+                uint s = ringSlot(B.ringOff + i);
+                pos[s].xy += vel[s] * hp;
+            }
+            for (uint k = L; k < B.intCount; k += kThreads) {
+                uint s = intPts[B.intOff + k].slot;
+                pos[s].xy += vel[s] * hp;
+            }
+        }
+        sync();
+    }
+    if (!solving(B.lod) || n < 3u)
+        return;
+    float h = iterStep(B.lod);
+    for (uint it = 0u; it < uIterCount; ++it) {
+        iterate(B, L, n, h);
+        sync();
+        confineToDish(B, L, n);
+        sync();
+        solveLinks(B, L, h);
+        sync();
+    }
+}

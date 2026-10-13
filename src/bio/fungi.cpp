@@ -150,6 +150,7 @@ void Fungi::moveSpores(const Fluid& fluid, const std::vector<Vec2>& steer, float
         const Vec2 u = fluid.velocityAt({spores.x[i], spores.y[i]});
         spores.x[i] = wrapCoord(spores.x[i] + (u.x + std::cos(h) * speed) * dt, width);
         spores.y[i] = wrapCoord(spores.y[i] + (u.y + std::sin(h) * speed) * dt, height);
+        dish.bounce(spores.x[i], spores.y[i], &h, 2.0f);
     }
 }
 
@@ -251,6 +252,15 @@ void Fungi::grow(const FungiEnv& env, float bioDt, std::uint64_t seed, std::uint
                 if (m.reserves < nodeCost || m.x.size() >= p.maxNodesPerMycelium || totalNodes >= p.maxNodes)
                     break;
                 const Vec2 at = {m.x[k], m.y[k]};
+                const float h = m.heading[k] + rng.normal() * 0.25f;
+                // La punta no atraviesa el vidrio de la placa: se desvía y sigue junto a la pared.
+                auto inWater = [&](float angle, float len) {
+                    return dish.contains(at + Vec2{std::cos(angle), std::sin(angle)} * len, 8.0f);
+                };
+                if (!inWater(h, p.hyphaSpacing)) {
+                    m.heading[k] += rng.uniform() < 0.5f ? -0.6f : 0.6f;
+                    continue;
+                }
                 const float needP = p.nodePmol * p.phosphorusRatio;
                 const float haveP = m.phosphorus - p.phosphorusRatio * static_cast<float>(m.x.size()) * p.nodePmol;
                 if (haveP < needP)
@@ -259,19 +269,23 @@ void Fungi::grow(const FungiEnv& env, float bioDt, std::uint64_t seed, std::uint
                     break; // sin fósforo no hay hifa nueva
                 m.reserves -= nodeCost;
                 m.tip[k] = 0;
-                const float h = m.heading[k] + rng.normal() * 0.25f;
                 // Zoophagus: clavijas laterales cortas y adhesivas cada pocos nodos.
                 const bool wantPeg = m.kind == FungusKind::Zoophagus && (m.x.size() % static_cast<std::size_t>(p.pegSpacing)) == 0;
                 addNode(m, k, h, p.hyphaSpacing, false);
                 ++totalNodes;
                 if (wantPeg && m.reserves >= nodeCost) {
                     const float side = rng.uniform() < 0.5f ? -1.0f : 1.0f;
+                    if (!inWater(h + side * 1.4f, 0.6f * p.hyphaSpacing))
+                        continue;
                     addNode(m, k, h + side * 1.4f, 0.6f * p.hyphaSpacing, true);
                     m.reserves -= 0.3f * nodeCost;
                     ++totalNodes;
                 } else if (rng.uniform() < p.branchProbability && m.reserves >= nodeCost) {
                     const float side = rng.uniform() < 0.5f ? -1.0f : 1.0f;
-                    addNode(m, k, h + side * rng.uniform(0.5f, 1.0f), p.hyphaSpacing, false);
+                    const float branch = h + side * rng.uniform(0.5f, 1.0f);
+                    if (!inWater(branch, p.hyphaSpacing))
+                        continue;
+                    addNode(m, k, branch, p.hyphaSpacing, false);
                     m.reserves -= nodeCost;
                     ++totalNodes;
                 }

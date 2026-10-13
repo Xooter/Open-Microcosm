@@ -46,6 +46,7 @@ struct Options {
     bool fullscreen = false;
     bool postProcess = true;  // óptica del microscopio (viñeta, grano, aberración)
     bool lod = true;          // células lejanas simplificadas
+    bool gpuPhysics = true;   // XPBD y contactos en la GPU (compute shaders)
     bool labPanel = true;     // panel de laboratorio al empezar
     float bioTimeScale = 60.0f; // compresión del tiempo biológico (1 min real = 1 h)
 };

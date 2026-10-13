@@ -1,0 +1,26 @@
+// Grilla de contactos de este sub-paso. Cada hilo, de una vez:
+//  - aplica la corrección de contacto pendiente de su punto (la última pasada del sub-paso
+//    anterior) y anota el punto en su celda;
+//  - limpia una celda de la otra mitad del doble buffer (la usará el sub-paso siguiente).
+layout(local_size_x = 256) in;
+
+void main() {
+    uint t = gl_GlobalInvocationID.x;
+    if (t < uNumCells)
+        cellCount[(1u - uParity) * uNumCells + t] = 0u;
+    if (t >= uNumMembers)
+        return;
+    uint slot = members[t].slot;
+    if (contact[t].z > 0.5) {
+        pos[slot].xy += contact[t].xy;
+        contact[t] = vec4(0.0);
+    }
+    vec2 p = pos[slot].xy;
+    uint cx = min(uGridW - 1u, uint(wrapCoord(p.x, uWorld.x) / uCell.x));
+    uint cy = min(uGridH - 1u, uint(wrapCoord(p.y, uWorld.y) / uCell.y));
+    uint cell = cy * uGridW + cx;
+    memberCell[t] = cell;
+    uint idx = atomicAdd(cellCount[uParity * uNumCells + cell], 1u);
+    if (idx < kCellCapacity)
+        cellSlot[cell * kCellCapacity + idx] = t;
+}

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/vec2.hpp"
+#include "sim/dish.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -95,6 +96,7 @@ class Fungi {
     FungiParams params;
     std::vector<Mycelium> mycelia;
     Zoospores spores;
+    Dish dish; // pared de la placa
 
     std::uint32_t spawnMycelium(FungusKind kind, Vec2 at, float heading, float reserves, float phosphorus);
     // `phosphorus`: el fósforo total que se reparte entre las zoosporas.

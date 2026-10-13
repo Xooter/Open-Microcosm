@@ -1,5 +1,7 @@
 #pragma once
 
+#include "sim/dish.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -67,6 +69,7 @@ class Bacteria {
     std::vector<float> bdello;       // horas desde que entró un Bdellovibrio (< 0: libre)
 
     BacteriaParams params;
+    Dish dish; // pared de la placa (inactiva: mundo toroidal)
 
     std::size_t size() const { return x.size(); }
 

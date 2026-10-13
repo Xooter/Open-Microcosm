@@ -1,0 +1,27 @@
+// Predicción: x* = x + v·h (sin inercia). Un grupo de trabajo por cuerpo. Va antes de la
+// grilla de contactos para que los puntos que pueden chocar se elijan con las posiciones nuevas.
+layout(local_size_x = 64) in;
+
+void main() {
+    uint b = gl_WorkGroupID.x;
+    if (b >= uNumBodies)
+        return;
+    Body B = bodies[b];
+    float h;
+    if (B.lod == 2u)
+        h = uH;
+    else if (B.lod == 1u && farTurn())
+        h = uH * float(uStride);
+    else if (B.lod == 0u && uSub == uSubsteps - 1u)
+        h = uDt; // estadístico: un solo avance rígido por paso
+    else
+        return;
+    for (uint i = gl_LocalInvocationID.x; i < B.ringCount; i += gl_WorkGroupSize.x) {
+        uint s = ringSlot(B.ringOff + i);
+        pos[s].xy += vel[s] * h;
+    }
+    for (uint k = gl_LocalInvocationID.x; k < B.intCount; k += gl_WorkGroupSize.x) {
+        uint s = intPts[B.intOff + k].slot;
+        pos[s].xy += vel[s] * h;
+    }
+}

@@ -26,6 +26,11 @@ void Bacteria::spawn(std::size_t count, float width, float height, std::uint64_t
         Rng rng(seed, rng_stream::kInit, i, 0);
         x[i] = rng.uniform(0.0f, width);
         y[i] = rng.uniform(0.0f, height);
+        if (dish.active()) {
+            const Vec2 p = dish.sample(x[i] / width, y[i] / height, params.length);
+            x[i] = p.x;
+            y[i] = p.y;
+        }
         heading[i] = rng.uniform(0.0f, 2.0f * units::kPi);
         mass[i] = rng.uniform(1.0f, 2.0f); // población en distintas etapas del ciclo
         strain[i] = rng.uniform() < params.violaceumFraction ? 1 : 0;
@@ -146,5 +151,8 @@ void Bacteria::step(const Fluid& fluid, const Grid2D& nutrients, float dt, std::
         const Vec2 u = fluid.velocityAt({x[i], y[i]});
         x[i] = wrapCoord(x[i] + (vx + u.x) * dt + transStd * rng.normal(), width);
         y[i] = wrapCoord(y[i] + (vy + u.y) * dt + transStd * rng.normal(), height);
+        // Contra la pared de la placa el rumbo se refleja (las bacterias reales terminan
+        // nadando a lo largo de las superficies).
+        dish.bounce(x[i], y[i], &heading[i], p.radius);
     }
 }

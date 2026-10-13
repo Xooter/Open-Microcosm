@@ -125,6 +125,7 @@ Options loadOptions(const std::string& path) {
         if (key == "fullscreen") value >> o.fullscreen;
         else if (key == "post_process") value >> o.postProcess;
         else if (key == "lod") value >> o.lod;
+        else if (key == "gpu_physics") value >> o.gpuPhysics;
         else if (key == "lab_panel") value >> o.labPanel;
         else if (key == "bio_time_scale") value >> o.bioTimeScale;
     }
@@ -142,6 +143,7 @@ bool saveOptions(const Options& o, const std::string& path) {
     out << "fullscreen=" << o.fullscreen << '\n'
         << "post_process=" << o.postProcess << '\n'
         << "lod=" << o.lod << '\n'
+        << "gpu_physics=" << o.gpuPhysics << '\n'
         << "lab_panel=" << o.labPanel << '\n'
         << "bio_time_scale=" << o.bioTimeScale << '\n';
     return static_cast<bool>(out);

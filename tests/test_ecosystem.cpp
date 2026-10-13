@@ -82,7 +82,7 @@ TEST_CASE("reacción de evitación: el paramecio retrocede ante Didinium") {
 
 TEST_CASE("Chlamydomonas se divide en 4 hijas (palintomía)") {
     World world(ecoWorld());
-    const entt::entity c = world.spawnOrganism(SpeciesId::Chlamydomonas, {1000.0f, 512.0f}, speciesGenome(SpeciesId::Chlamydomonas), 0);
+    const entt::entity c = world.spawnOrganism(SpeciesId::Chlamydomonas, {1000.0f, 1024.0f}, speciesGenome(SpeciesId::Chlamydomonas), 0);
     Metabolism& m = world.registry().get<Metabolism>(c);
     m.biomass = 4.1f * m.targetBirthBiomass;
     m.reserves = 2.0f * m.biomass;

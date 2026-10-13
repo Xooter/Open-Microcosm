@@ -1,0 +1,10 @@
+// El punto agarrado con el mouse (las uniones se resuelven en solve.comp).
+layout(local_size_x = 1) in;
+
+void main() {
+    if (uGrab == 0xffffffffu)
+        return;
+    vec2 p = pos[uGrab].xy;
+    float f = 1.0 - exp(-300.0 * uH);
+    pos[uGrab].xy += vec2(minImage(uGrabTarget.x - p.x, uWorld.x), minImage(uGrabTarget.y - p.y, uWorld.y)) * f;
+}

@@ -248,6 +248,43 @@ void wrap(RingBody& body, BodyParticles& bp, float width, float height) {
     refresh(body, bp);
 }
 
+void confineToDish(RingBody& body, BodyParticles& bp, const Dish& dish) {
+    if (!dish.active())
+        return;
+    for (std::uint32_t s : body.ring) {
+        const Vec2 p = pos(bp, s);
+        const Vec2 q = dish.clampInside(p, bp.radius[s]);
+        if (q.x != p.x || q.y != p.y) {
+            bp.x[s] = q.x;
+            bp.y[s] = q.y;
+        }
+    }
+}
+
+void pushIntoDish(RingBody& body, BodyParticles& bp, const Dish& dish) {
+    if (!dish.active())
+        return;
+    for (int pass = 0; pass < 2; ++pass) {
+        Vec2 shift;
+        float worst = 0.0f;
+        for (std::uint32_t s : body.ring) {
+            const Vec2 p = pos(bp, s);
+            const Vec2 q = dish.clampInside(p, bp.radius[s]);
+            const Vec2 d = q - p;
+            if (dot(d, d) > worst) {
+                worst = dot(d, d);
+                shift = d;
+            }
+        }
+        if (worst == 0.0f)
+            return;
+        for (std::uint32_t s : body.ring)
+            move(bp, s, shift);
+        for (std::uint32_t s : body.interior)
+            move(bp, s, shift);
+    }
+}
+
 float area(const RingBody& body, const BodyParticles& bp) {
     float a = 0.0f;
     const std::size_t n = body.ring.size();
@@ -296,6 +333,27 @@ void setRestArea(RingBody& body, float newSignedArea) {
     for (Vec2& q : body.restInterior)
         q = q * s;
     body.restArea = newSignedArea;
+}
+
+void scaleToRestArea(RingBody& body, BodyParticles& bp) {
+    const float a = std::abs(area(body, bp)), rest = std::abs(body.restArea);
+    if (a <= 0.0f || rest <= 0.0f || std::abs(a - rest) < 0.02f * rest)
+        return;
+    // Gradual (≤ 5% por paso): un anillo retorcido tiene área aparente casi nula y escalarlo de
+    // golpe lo haría explotar.
+    const float k = std::clamp(std::sqrt(rest / a), 0.95f, 1.05f);
+    Vec2 c;
+    for (std::uint32_t s : body.ring)
+        c = c + pos(bp, s);
+    c = c * (1.0f / static_cast<float>(body.ring.size()));
+    auto scale = [&](std::uint32_t s) {
+        bp.x[s] = c.x + (bp.x[s] - c.x) * k;
+        bp.y[s] = c.y + (bp.y[s] - c.y) * k;
+    };
+    for (std::uint32_t s : body.ring)
+        scale(s);
+    for (std::uint32_t s : body.interior)
+        scale(s);
 }
 
 void setRestAreaAxial(RingBody& body, float newSignedArea) {

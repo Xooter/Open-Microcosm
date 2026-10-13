@@ -2,6 +2,7 @@
 
 #include "core/vec2.hpp"
 #include "sim/body_particles.hpp"
+#include "sim/dish.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -64,6 +65,10 @@ void confineGranules(RingBody& body, BodyParticles& bp);
 void refresh(RingBody& body, const BodyParticles& bp);
 // Traslada el cuerpo entero si su centroide salió del mundo toroidal.
 void wrap(RingBody& body, BodyParticles& bp, float width, float height);
+// Pared de la placa (vidrio, no cede): cada punto de membrana que la cruza vuelve adentro.
+void confineToDish(RingBody& body, BodyParticles& bp, const Dish& dish);
+// Igual, pero trasladando el cuerpo entero (sin deformarlo): cuerpos estadísticos del LOD.
+void pushIntoDish(RingBody& body, BodyParticles& bp, const Dish& dish);
 
 float area(const RingBody& body, const BodyParticles& bp);
 float perimeter(const RingBody& body, const BodyParticles& bp);
@@ -76,6 +81,8 @@ void removeInterior(RingBody& body, std::size_t index);
 Vec2 toLocal(const RingBody& body, Vec2 worldPos);
 // Escala la forma de reposo a un área nueva (crecimiento, ingestión).
 void setRestArea(RingBody& body, float newSignedArea);
+// Escala el cuerpo entero (membrana e interior) alrededor del centroide hasta el área de reposo.
+void scaleToRestArea(RingBody& body, BodyParticles& bp);
 // Igual, pero estirando solo el eje x local (células de filamento: crecen a lo largo).
 void setRestAreaAxial(RingBody& body, float newSignedArea);
 // Membrana plástica: forma de reposo circular con el perímetro actual.

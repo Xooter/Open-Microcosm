@@ -1,0 +1,8 @@
+// Grilla de contactos: pone en cero los contadores de las dos mitades (una vez por paso).
+layout(local_size_x = 256) in;
+
+void main() {
+    uint c = gl_GlobalInvocationID.x;
+    if (c < 2u * uNumCells)
+        cellCount[c] = 0u;
+}

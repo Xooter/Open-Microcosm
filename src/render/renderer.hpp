@@ -27,6 +27,7 @@ class Renderer {
 
   private:
     void ensureScene();
+    void drawDish(const World& world, const Camera2D& camera);
 
     FieldOverlay overlay_;
     CellRenderer cells_;
@@ -35,6 +36,11 @@ class Renderer {
     Shader post_{};
     bool postOk_ = false;
     int resolutionLoc_ = -1, timeLoc_ = -1;
+    Shader glass_{};
+    bool glassOk_ = false;
+    struct {
+        int resolution = -1, offset = -1, target = -1, zoom = -1, dish = -1;
+    } glassLoc_;
     Stain stain_ = Stain::None;
     bool postEnabled_ = true;
 };

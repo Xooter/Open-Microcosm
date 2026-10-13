@@ -42,7 +42,8 @@ int membraneCrossings(const RingBody& body, const BodyParticles& bp) {
 
 TEST_CASE("bajo Reynolds: el ciliado nada a su velocidad y frena en el acto") {
     World world(quietWorld());
-    const entt::entity e = world.spawnPlayer(LocomotionType::Cilia, {1024.0f, 512.0f});
+    // A la izquierda del centro de la placa, nadando hacia +x: ~900 µm sin llegar a la pared.
+    const entt::entity e = world.spawnPlayer(LocomotionType::Cilia, {624.0f, 1024.0f});
     const RingBody& body = world.registry().get<RingBody>(e);
     PlayerInput input;
     input.forward = 1.0f;

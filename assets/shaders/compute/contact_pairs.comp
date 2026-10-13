@@ -1,0 +1,11 @@
+// Una pasada Jacobi de contactos: cada punto calcula su propia corrección.
+layout(local_size_x = 256) in;
+
+void main() {
+    uint m = gl_GlobalInvocationID.x;
+    if (m >= uNumMembers)
+        return;
+    bool near;
+    if (contact[m].z > 0.5)
+        contact[m].xy = contactTerm(m, false, near);
+}

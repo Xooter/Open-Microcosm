@@ -52,7 +52,8 @@ void drawUi(World& world, ToolState& tools) {
                         tools.renderMs));
     y += 18;
     GuiLabel({kUiPanel.x + 10, y, 300, 16},
-             TextFormat("LOD: %zu en detalle | %zu con contactos", world.nearBodies(), world.touchingBodies()));
+             TextFormat("LOD: %zu en detalle | %zu con contactos | XPBD en %s", world.nearBodies(), world.touchingBodies(),
+                        world.substepSolver() ? world.substepSolver()->name() : "CPU"));
     y += 18;
     GuiLabel({kUiPanel.x + 10, y, 280, 16},
              TextFormat("%zu celulas | %zu bacterias | %zu part.", world.cellCount(),
@@ -319,6 +320,8 @@ bool drawOptions(Options& o) {
     GuiCheckBox({cx - 200, y, 24, 24}, "Optica del microscopio (vineta, grano)", &o.postProcess);
     y += 50;
     GuiCheckBox({cx - 200, y, 24, 24}, "LOD: simplificar las celulas lejanas", &o.lod);
+    y += 50;
+    GuiCheckBox({cx - 200, y, 24, 24}, "Fisica de celulas en la GPU", &o.gpuPhysics);
     y += 50;
     GuiCheckBox({cx - 200, y, 24, 24}, "Mostrar el panel de laboratorio", &o.labPanel);
     y += 60;

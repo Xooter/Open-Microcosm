@@ -19,6 +19,8 @@ class Fluid {
     // Fuerza por unidad de masa [µm/s²] con perfil gaussiano de radio `radius` [µm].
     void addForce(Vec2 center, Vec2 force, float radius);
     void solve(const Fft2D& fft);
+    // Atenuación por celda (0 en el vidrio de la placa, 1 en el agua libre). nullptr = sin pared.
+    void setFlowMask(const std::vector<float>* mask) { flowMask_ = mask; }
 
     Vec2 velocityAt(Vec2 p) const { return {ux_.sample(p.x, p.y), uy_.sample(p.x, p.y)}; }
     // Guarda la solución actual como "fondo": la que siente un nadador sin su propio flujo
@@ -39,4 +41,5 @@ class Fluid {
   private:
     Grid2D fx_, fy_, ux_, uy_, bgx_, bgy_;
     std::vector<Complex> bx_, by_;
+    const std::vector<float>* flowMask_ = nullptr;
 };

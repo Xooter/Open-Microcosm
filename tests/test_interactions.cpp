@@ -59,8 +59,11 @@ TEST_CASE("los heterocistos fijan N₂: el nitrógeno total aumenta") {
     WorldConfig config = quietWorld();
     config.cyanoFilaments = 20;
     World world(config);
+    // Tiempo biológico acelerado: lo fijado tiene que superar el redondeo de la grilla (float).
+    world.bioTimeScale() = 3600.0f;
     const double before = world.totalNitrogen();
     steps(world, 60 * 20);
+    MESSAGE("nitrógeno " << before << " → " << world.totalNitrogen() << ", fijado " << world.observations().nitrogenFixed);
     CHECK(world.totalNitrogen() > before);
     CHECK(world.observations().nitrogenFixed > 0.0f);
 }

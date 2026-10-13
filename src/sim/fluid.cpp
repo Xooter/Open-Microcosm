@@ -76,8 +76,12 @@ void Fluid::solve(const Fft2D& fft) {
 
     fft.inverse(bx_);
     fft.inverse(by_);
+    // Pared de la placa: el agua se frena junto al vidrio y no hay agua dentro de él.
+    // Simplificación: la FFT no admite una pared no-slip exacta; la máscara la aproxima.
+    const float* flow = flowMask_ ? flowMask_->data() : nullptr;
     for (std::size_t k = 0; k < n; ++k) {
-        ux_.v[k] = bx_[k].real();
-        uy_.v[k] = by_[k].real();
+        const float m = flow ? flow[k] : 1.0f;
+        ux_.v[k] = bx_[k].real() * m;
+        uy_.v[k] = by_[k].real() * m;
     }
 }

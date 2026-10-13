@@ -1,5 +1,7 @@
 #pragma once
 
+#include "sim/dish.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <vector>
@@ -60,6 +62,7 @@ class Cyanobacteria {
   public:
     CyanoParams params;
     std::vector<CyanoFilament> filaments;
+    Dish dish; // pared de la placa
 
     void spawn(int count, int cells, float width, float height, std::uint64_t seed);
     std::size_t cellCount() const;

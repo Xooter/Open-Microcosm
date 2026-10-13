@@ -1,0 +1,19 @@
+// Puntos con alguna membrana ajena a su alcance en este sub-paso (los demás no pueden chocar).
+layout(local_size_x = 256) in;
+
+void main() {
+    uint m = gl_GlobalInvocationID.x;
+    if (m >= uNumMembers)
+        return;
+    if (!memberActive(m)) {
+        contact[m] = vec4(0.0);
+        return;
+    }
+    if ((members[m].flags & 1u) != 0u) { // membrana plástica: puede chocar consigo misma
+        contact[m] = vec4(0.0, 0.0, 1.0, 0.0);
+        return;
+    }
+    bool near;
+    contactTerm(m, true, near);
+    contact[m] = vec4(0.0, 0.0, near ? 1.0 : 0.0, 0.0);
+}

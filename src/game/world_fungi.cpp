@@ -31,7 +31,7 @@ void World::seedFungi() {
     const FungiParams& p = fungi_.params;
     auto spawn = [&](FungusKind kind, std::uint64_t salt) {
         Rng rng(config_.seed, rng_stream::kFungi + 400, salt, 0);
-        Vec2 at = {rng.uniform(0.0f, width_), rng.uniform(0.0f, height_)};
+        Vec2 at = randomPoint(rng, 20.0f);
         if (ambient_.size() > 0 && kind == FungusKind::Saprolegnia) {
             const auto i = static_cast<std::size_t>(rng.uniform() * static_cast<float>(ambient_.size())) % ambient_.size();
             at = {ambient_.x[i], ambient_.y[i]};
@@ -46,7 +46,7 @@ void World::seedFungi() {
         spawn(FungusKind::Zoophagus, 100 + k);
     for (std::uint64_t k = 0; k < static_cast<std::uint64_t>(config_.chytridClusters); ++k) {
         Rng rng(config_.seed, rng_stream::kFungi + 500, k, 0);
-        const Vec2 at = {rng.uniform(0.0f, width_), rng.uniform(0.0f, height_)};
+        const Vec2 at = randomPoint(rng, 10.0f);
         const int count = 10;
         const float phosphorus = -exchange(phosphate_, at, -static_cast<float>(count) * p.sporePmol * p.phosphorusRatio);
         fungi_.spawnSpores(FungusKind::Chytrid, at, count, phosphorus, config_.seed, 9000 + k);

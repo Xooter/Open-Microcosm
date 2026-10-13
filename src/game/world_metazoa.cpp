@@ -228,8 +228,8 @@ void World::updateEggs(float bioDt) {
 }
 
 void World::arrivals(float dt) {
-    // Nauplios: eclosionan de los sacos de huevos de copépodos adultos (demasiado grandes para
-    // esta gota) que pasan por el agua de alrededor.
+    // Nauplios: eclosionan de huevos de resistencia de copépodos que quedaron en el sedimento
+    // de la placa (los adultos son demasiado grandes para esta escala).
     arrivalClock_ += medium_.naupliusArrivalsPerHour * dt * bioScale() / 3600.0f;
     if (arrivalClock_ < 1.0f)
         return;
@@ -240,7 +240,8 @@ void World::arrivals(float dt) {
     if (present >= 3)
         return;
     Rng rng(config_.seed, rng_stream::kSpawn + 50, spawnCounter_++, 0);
-    const Vec2 at = {rng.uniform(0.0f, width_), rng.uniform(0.0f, height_)};
+    const float reach = speciesInfo(SpeciesId::Nauplius).spec.radiusX * 2.0f + 20.0f;
+    const Vec2 at = randomPoint(rng, reach);
     const entt::entity n = spawnOrganism(SpeciesId::Nauplius, at, speciesGenome(SpeciesId::Nauplius), 0,
                                          rng.uniform(0.0f, 2.0f * units::kPi));
     registry_.emplace<Autopilot>(n);

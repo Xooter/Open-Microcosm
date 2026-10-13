@@ -92,13 +92,15 @@ void CellRenderer::ensureTarget() {
     SetTextureFilter(target_.texture, TEXTURE_FILTER_BILINEAR);
 }
 
-// Dibuja la célula en cada copia del mundo toroidal que cae dentro de la vista.
+// Dibuja la célula en cada copia del mundo toroidal que cae dentro de la vista (con placa,
+// el mundo es cerrado y hay una sola).
 template <typename Fn>
 void CellRenderer::forEachImage(const World& world, const RingBody& body, Rectangle view, Fn&& fn) {
     const float w = world.width(), h = world.height();
     constexpr float kMargin = 40.0f; // cilios y flagelos sobresalen de la caja
-    for (int oy = -2; oy <= 2; ++oy) {
-        for (int ox = -2; ox <= 2; ++ox) {
+    const int reach = world.dish().active() ? 0 : 2;
+    for (int oy = -reach; oy <= reach; ++oy) {
+        for (int ox = -reach; ox <= reach; ++ox) {
             const Vec2 off = {ox * w, oy * h};
             if (body.aabbMax.x + off.x + kMargin < view.x ||
                 body.aabbMin.x + off.x - kMargin > view.x + view.width ||

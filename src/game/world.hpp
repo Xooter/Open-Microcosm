@@ -18,6 +18,7 @@
 #include "core/units.hpp"
 #include "core/vec2.hpp"
 #include "sim/chem_field.hpp"
+#include "sim/dish.hpp"
 #include "sim/fft.hpp"
 #include "sim/fluid.hpp"
 #include "sim/body_particles.hpp"
@@ -25,6 +26,7 @@
 #include "sim/particles.hpp"
 #include "sim/soft_body.hpp"
 #include "sim/spatial_grid.hpp"
+#include "sim/substep_solver.hpp"
 
 #include <entt/entity/registry.hpp>
 
@@ -67,8 +69,12 @@ struct MediumParams {
 };
 
 struct WorldConfig {
-    int gridX = 256, gridY = 128; // potencias de 2 (FFT)
-    float cellSize = 8.0f;        // [µm] → mundo de 2048 × 1024 µm
+    int gridX = 256, gridY = 256; // potencias de 2 (FFT)
+    float cellSize = 8.0f;        // [µm] → grilla de 2048 × 2048 µm
+    // Placa circular centrada en la grilla: radio = mitad del lado menor − margen (el margen
+    // de vidrio aísla la placa de su imagen periódica en la FFT). false = mundo toroidal.
+    bool dish = true;
+    float dishMargin = 80.0f; // [µm]
     std::size_t bacteria = 50'000;
     std::size_t detritus = 60;
     int cyanoFilaments = 15;      // filamentos de Anabaena al empezar
@@ -139,7 +145,7 @@ struct PlayerInput {
     Vec2 aim;             // posición del mouse en el mundo [µm]
 };
 
-// Mundo toroidal visto desde arriba (vista cenital del microscopio). Coordina el medio
+// Placa circular (sobre grillas periódicas por dentro) vista desde arriba (vista cenital del microscopio). Coordina el medio
 // (agua y química), las partículas ambientales, las bacterias y las células (cuerpos blandos).
 class World {
   public:
@@ -215,6 +221,11 @@ class World {
 
     float width() const { return width_; }
     float height() const { return height_; }
+    // Placa: el límite del mundo (pared de vidrio).
+    const Dish& dish() const { return dish_; }
+    const DishMask& dishMask() const { return dishMask_; }
+    // Punto al azar en el agua de la placa, a `margin` de la pared.
+    Vec2 randomPoint(Rng& rng, float margin = 0.0f) const;
     float simTime() const { return simTime_; }
 
     Fluid& fluid() { return fluid_; }
@@ -263,6 +274,9 @@ class World {
     }
     void clearFocus() { focusActive_ = false; }
     int lodStride = 5;
+    // Fase 14: resolvedor alternativo del bucle de XPBD (GPU). nullptr = CPU. No es dueño.
+    void setSubstepSolver(SubstepSolver* solver) { substepSolver_ = solver; }
+    const SubstepSolver* substepSolver() const { return substepSolver_; }
     std::size_t nearBodies() const { return nearCount_; }
     std::size_t touchingBodies() const {
         std::size_t n = 0;
@@ -287,7 +301,9 @@ class World {
     void buildPerceptionGrid();
     void markTouching(float contactRange, float dt);
     std::uint32_t groupOf(std::uint32_t bodyId) const;
-    void stepBodies(float dt);
+    void beginBodies(float dt);
+    void cpuSubsteps(float dt, int stride, float maxRadius);
+    void finishBodies();
     void applyMotion(float dt);
     void updateCup(entt::entity e, RingBody& body, float dt);
     void updateFeeding(float dt);
@@ -362,6 +378,8 @@ class World {
     WorldConfig config_;
     MediumParams medium_;
     float width_, height_;
+    Dish dish_;
+    DishMask dishMask_;
 
     Fft2D fft_;
     Fluid fluid_;
@@ -390,6 +408,11 @@ class World {
     std::vector<std::uint8_t> bodyNear_, memberActive_;
     std::vector<std::uint32_t> memberBody_;
     std::vector<std::uint8_t> bodyTouch_;
+    SubstepSolver* substepSolver_ = nullptr;
+    bool gpuPending_ = false;
+    float pendingDt_ = 0.0f, pendingMaxRadius_ = 0.0f;
+    int pendingStride_ = 1;
+    std::vector<LinkConstraint> linkConstraints_;
     std::vector<std::vector<entt::entity>> percGrid_;
     int percGridX_ = 1, percGridY_ = 1;
     std::vector<float> bodyReach_;

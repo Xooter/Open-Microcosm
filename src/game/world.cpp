@@ -86,9 +86,18 @@ World::World(const WorldConfig& config)
     bucketsX_ = std::max(1, static_cast<int>(width_ / bucketSize_));
     bucketsY_ = std::max(1, static_cast<int>(height_ / bucketSize_));
     buckets_.resize(static_cast<std::size_t>(bucketsX_) * bucketsY_);
+    // Placa: pocillo circular centrado; afuera solo hay vidrio.
+    if (config.dish)
+        dish_ = {{0.5f * width_, 0.5f * height_}, 0.5f * std::min(width_, height_) - config.dishMargin};
+    // El agua se frena en las dos últimas celdas junto a la pared.
+    dishMask_.build(dish_, config.gridX, config.gridY, config.cellSize, 2.0f * config.cellSize);
+    fluid_.setFlowMask(dish_.active() ? &dishMask_.flow : nullptr);
+    bacteria_.dish = dish_;
+    cyano_.dish = dish_;
+    fungi_.dish = dish_;
     for (std::size_t i = 0; i < config.detritus; ++i) {
         Rng rng(config.seed, rng_stream::kSpawn, spawnCounter_++, 0);
-        addDetritus(rng, {rng.uniform(0.0f, width_), rng.uniform(0.0f, height_)});
+        addDetritus(rng, randomPoint(rng));
     }
     bacteria_.spawn(config.bacteria, width_, height_, config.seed);
     seedBdellovibrio(config.bacteria / 300);
@@ -98,9 +107,21 @@ World::World(const WorldConfig& config)
     cyano_.spawn(config.cyanoFilaments, config.cyanoCells, width_, height_, config.seed);
     if (config.patchiness > 0.0f)
         scatterPatches();
+    for (std::size_t k = 0; k < inflowPattern_.v.size(); ++k)
+        inflowPattern_.v[k] *= dishMask_.isWater(k) ? 1.0f : 0.0f; // sin aporte dentro del vidrio
+    for (ChemField* f : {&oxygen_, &nutrients_, &phosphate_, &nitrogen_, &co2_, &toxin_, &autoinducer_, &phage_})
+        f->setMask(&dishMask_);
     bacteria_.resetMemory(nutrients_.grid());
     fluid_.solve(fft_);
     computeLight();
+}
+
+Vec2 World::randomPoint(Rng& rng, float margin) const {
+    const float u = rng.uniform();
+    const float v = rng.uniform();
+    if (!dish_.active())
+        return {u * width_, v * height_};
+    return dish_.sample(u, v, margin);
 }
 
 void World::scatterPatches() {
@@ -137,9 +158,9 @@ void World::scatterPatches() {
     const auto extra = static_cast<std::size_t>(config_.patchiness * 80.0f);
     for (std::size_t k = 0; k < extra; ++k) {
         Rng rng(config_.seed, rng_stream::kSpawn + 71, k, 0);
-        Vec2 p = {rng.uniform(0.0f, width_), rng.uniform(0.0f, height_)};
+        Vec2 p = randomPoint(rng);
         for (int tries = 0; tries < 20 && noise(p.x, p.y) < 0.6f; ++tries)
-            p = {rng.uniform(0.0f, width_), rng.uniform(0.0f, height_)};
+            p = randomPoint(rng);
         addDetritus(rng, p);
     }
 }
@@ -165,6 +186,10 @@ void World::step(float dt) {
     }
     if (pushed)
         fluid_.solve(fft_);
+
+    // Los cuerpos blandos se lanzan ya (en la GPU, si hay): mientras tanto avanzan la química,
+    // la luz, las bacterias, las cianobacterias y los hongos, que no los mueven.
+    beginBodies(dt);
 
     oxygen_.advect(fluid_, dt);
     nutrients_.advect(fluid_, dt);
@@ -193,7 +218,7 @@ void World::step(float dt) {
     growBacteria(dt);
     stepCyanobacteria(dt);
     stepFungi(dt);
-    stepBodies(dt);
+    finishBodies();
     updateTentacles(dt);
     updateFeeding(dt);       // eventos de topología (fagocitosis): al final del paso
     updateLifecycle(dt);     // metabolismo, división y muerte
@@ -234,6 +259,8 @@ void World::updateChemistrySources(float dt) {
     auto& food = nutrients_.grid().v;
     const float inflow = medium_.organicInflow * dt * bioScale() / 3600.0f; // [µM]
     for (std::size_t k = 0; k < o2.size(); ++k) {
+        if (!dishMask_.isWater(k))
+            continue; // vidrio: sus celdas fantasma no intercambian con el aire
         o2[k] = o2Saturation_ + (o2[k] - o2Saturation_) * o2Keep;
         food[k] = food[k] * nutrientKeep + inflow * inflowPattern_.v[k];
     }
@@ -251,6 +278,7 @@ void World::stepAmbient(float dt) {
         const Vec2 u = fluid_.velocityAt({ambient_.x[i], ambient_.y[i]});
         ambient_.x[i] = wrapCoord(ambient_.x[i] + u.x * dt + s * rng.normal(), width_);
         ambient_.y[i] = wrapCoord(ambient_.y[i] + u.y * dt + s * rng.normal(), height_);
+        dish_.bounce(ambient_.x[i], ambient_.y[i], nullptr, ambient_.radius[i]);
         ambient_.age[i] += dt;
     }
 
@@ -302,12 +330,13 @@ void World::spawnDetritus(float dt) {
     while (spawnAccumulator_ >= 1.0f) {
         spawnAccumulator_ -= 1.0f;
         Rng rng(config_.seed, rng_stream::kSpawn, spawnCounter_++, 0);
-        addDetritus(rng, {rng.uniform(0.0f, width_), rng.uniform(0.0f, height_)});
+        addDetritus(rng, randomPoint(rng));
     }
 }
 
 void World::addDetritus(Rng& rng, Vec2 position) {
     const float radius = rng.uniform(1.0f, 5.0f);
+    position = dish_.clampInside(position, radius);
     ambient_.push(ParticleKind::Detritus, wrapCoord(position.x, width_),
                   wrapCoord(position.y, height_), radius, organicMassPmol(radius));
 }
@@ -317,8 +346,8 @@ void World::dropInk(Vec2 position, float radius, int count) {
     for (int k = 0; k < count; ++k) {
         const float r = radius * std::sqrt(rng.uniform());
         const float a = rng.uniform(0.0f, 2.0f * units::kPi);
-        ambient_.push(ParticleKind::Ink, wrapCoord(position.x + r * std::cos(a), width_),
-                      wrapCoord(position.y + r * std::sin(a), height_), kInkRadius, 0.0f);
+        const Vec2 p = dish_.clampInside(position + Vec2{r * std::cos(a), r * std::sin(a)}, kInkRadius);
+        ambient_.push(ParticleKind::Ink, wrapCoord(p.x, width_), wrapCoord(p.y, height_), kInkRadius, 0.0f);
     }
 }
 
@@ -432,8 +461,9 @@ void World::collectBodies() {
               [](const RingBody* a, const RingBody* b) { return a->id < b->id; });
 }
 
-void World::stepBodies(float dt) {
-    PROFILE_SCOPE("World::stepBodies");
+void World::beginBodies(float dt) {
+    PROFILE_SCOPE("World::beginBodies");
+    gpuPending_ = false;
     collectBodies();
     if (bodyList_.empty())
         return;
@@ -511,12 +541,48 @@ void World::stepBodies(float dt) {
     }
 
     const int substeps = std::max(1, softTuning_.substeps);
-    const float h = dt / static_cast<float>(substeps);
-    const float grabFraction = 1.0f - std::exp(-300.0f * h);
     classifyLod();
     markTouching(2.0f * maxRadius + 1.0f, dt);
     const int stride = substeps % std::max(1, lodStride) == 0 ? std::max(1, lodStride) : 1;
     memberActive_.resize(members_.size());
+    // Fase 14: el bucle de sub-pasos puede correr entero en la GPU.
+    if (substepSolver_) {
+        PROFILE_SCOPE("World::gpuSubsteps");
+        linkConstraints_.clear();
+        for (const AdhesionLink& l : links_)
+            linkConstraints_.push_back({l.a, l.b, l.rest});
+        SubstepInput in;
+        in.bodies = &bodyList_;
+        in.lod = &bodyNear_;
+        in.touch = &bodyTouch_;
+        in.members = &members_;
+        in.memberBody = &memberBody_;
+        in.links = &linkConstraints_;
+        in.tuning = &softTuning_;
+        in.grabSlot = grabSlot_;
+        in.grabTarget = grabTarget_;
+        in.dt = dt;
+        in.width = width_;
+        in.height = height_;
+        in.maxRadius = maxRadius;
+        in.stride = stride;
+        in.dish = dish_;
+        gpuPending_ = substepSolver_->submit(bodies_, in);
+    }
+    pendingDt_ = dt;
+    pendingStride_ = stride;
+    pendingMaxRadius_ = maxRadius;
+    if (!gpuPending_)
+        cpuSubsteps(dt, stride, maxRadius);
+}
+
+// Bucle de sub-pasos de XPBD en la CPU (predicción, restricciones, contactos y uniones).
+void World::cpuSubsteps(float dt, int stride, float maxRadius) {
+    PROFILE_SCOPE("World::cpuSubsteps");
+    const auto nb = static_cast<std::ptrdiff_t>(bodyList_.size());
+    const int substeps = std::max(1, softTuning_.substeps);
+    const float h = dt / static_cast<float>(substeps);
+    const float grabFraction = 1.0f - std::exp(-300.0f * h);
     for (int sub = 0; sub < substeps; ++sub) {
         // Las lejanas solo se resuelven en uno de cada `stride` sub-pasos, con paso × stride.
         const bool farTurn = (sub + 1) % stride == 0;
@@ -553,14 +619,28 @@ void World::stepBodies(float dt) {
                 PROFILE_SCOPE("soft_body::solve");
 #pragma omp parallel for schedule(dynamic, 1)
                 for (std::ptrdiff_t b = 0; b < nb; ++b)
-                    if (solving(b))
+                    if (solving(b)) {
                         soft_body::solve(*bodyList_[b], bodies_, softTuning_, bodyNear_[b] == 2 ? hIter : hIter * farScale);
+                        soft_body::confineToDish(*bodyList_[b], bodies_, dish_);
+                    }
             }
             if (it >= iterations - std::max(1, softTuning_.contactPasses))
                 contacts_.iterate(bodies_, members_, width_, height_, &memberActive_);
             solveLinks(hIter);
         }
     }
+}
+
+void World::finishBodies() {
+    PROFILE_SCOPE("World::finishBodies");
+    if (bodyList_.empty())
+        return;
+    if (gpuPending_) {
+        gpuPending_ = false;
+        if (!substepSolver_ || !substepSolver_->collect(bodies_))
+            cpuSubsteps(pendingDt_, pendingStride_, pendingMaxRadius_);
+    }
+    const auto nb = static_cast<std::ptrdiff_t>(bodyList_.size());
     resolvePenetrations();
 
     // Remallado de membranas plásticas: asigna slots en el pool compartido, por eso es serial.
@@ -569,6 +649,16 @@ void World::stepBodies(float dt) {
 
 #pragma omp parallel for schedule(dynamic, 1)
     for (std::ptrdiff_t b = 0; b < nb; ++b) {
+        // Estadísticas (fuera de pantalla): no resuelven restricciones, así que el crecimiento
+        // se refleja con un escalado uniforme alrededor del centroide.
+        if (bodyNear_[b] == 0)
+            soft_body::scaleToRestArea(*bodyList_[b], bodies_);
+        // Pared de la placa: los estadísticos se trasladan enteros, los demás ya la respetan
+        // en cada iteración y esto solo limpia lo que hayan dejado los contactos.
+        if (bodyNear_[b] == 0)
+            soft_body::pushIntoDish(*bodyList_[b], bodies_, dish_);
+        else
+            soft_body::confineToDish(*bodyList_[b], bodies_, dish_);
         soft_body::confineGranules(*bodyList_[b], bodies_);
         soft_body::refresh(*bodyList_[b], bodies_);
         soft_body::wrap(*bodyList_[b], bodies_, width_, height_);
@@ -682,6 +772,9 @@ void World::resolvePenetrations() {
 #pragma omp parallel for schedule(static)
     for (std::ptrdiff_t k = 0; k < n; ++k) {
         const ContactMember& me = members_[k];
+        // Un cuerpo que no se acerca a ningún otro no puede haber quedado adentro de otro.
+        if (memberBody_.size() == members_.size() && bodyTouch_.size() == bodyList_.size() && !bodyTouch_[memberBody_[k]])
+            continue;
         const float x = bodies_.x[me.slot], y = bodies_.y[me.slot];
         const int bx = wrapIndex(static_cast<int>(std::floor(wrapCoord(x, width_) / bucketSize_)), bucketsX_);
         const int by = wrapIndex(static_cast<int>(std::floor(wrapCoord(y, height_) / bucketSize_)), bucketsY_);
@@ -878,14 +971,16 @@ void World::populateEcosystem(float scale) {
         if (info.filament) {
             for (int f = 0; f < count; ++f) {
                 Rng rng(config_.seed, rng_stream::kPopulate, 5000 + k++, 0);
-                spawnFilament(id, {rng.uniform(0.0f, width_), rng.uniform(0.0f, height_)}, rng.uniform(0.0f, 6.2831853f),
-                              info.filamentCells, 0);
+                // El filamento entero dentro de la placa: el inicio, a su largo de la pared.
+                const float length = static_cast<float>(info.filamentCells) * (2.0f * info.spec.radiusX + 4.0f);
+                const Vec2 start = randomPoint(rng, length + info.spec.radiusY + 4.0f);
+                spawnFilament(id, start, rng.uniform(0.0f, 6.2831853f), info.filamentCells, 0);
             }
             continue;
         }
         for (int placed = 0, attempts = 0; placed < count && attempts < 200 * count; ++attempts) {
             Rng rng(config_.seed, rng_stream::kPopulate, 1000 + k++, 0);
-            const Vec2 p = {rng.uniform(0.0f, width_), rng.uniform(0.0f, height_)};
+            const Vec2 p = randomPoint(rng, std::max(info.spec.radiusX, info.spec.radiusY) * 1.5f + 10.0f);
             if (std::abs(minImage(p.x - middle.x, width_)) < 250.0f && std::abs(minImage(p.y - middle.y, height_)) < 200.0f)
                 continue;
             // Lugar libre: un círculo del tamaño de la nueva célula (más un margen) que no toque
@@ -975,7 +1070,7 @@ void World::buildPerceptionGrid() {
     percGrid_.resize(static_cast<std::size_t>(percGridX_) * percGridY_);
     for (auto& cell : percGrid_)
         cell.clear();
-    for (auto [e, body, sp] : registry_.view<RingBody, Species>().each()) {
+    for (auto [e, body] : registry_.view<RingBody>().each()) {
         const int cx = wrapIndex(static_cast<int>(body.centroid.x / width_ * percGridX_), percGridX_);
         const int cy = wrapIndex(static_cast<int>(body.centroid.y / height_ * percGridY_), percGridY_);
         percGrid_[static_cast<std::size_t>(cy) * percGridX_ + cx].push_back(e);
@@ -1545,7 +1640,7 @@ float World::carriedNitrogen(entt::entity e) const {
 }
 
 double World::totalNitrogen() const {
-    double total = nitrogen_.grid().sum() / microMolarPerPmol() + cyano_.nitrogen();
+    double total = nitrogen_.sum() / microMolarPerPmol() + cyano_.nitrogen();
     for (auto [e, m] : registry_.view<Metabolism>().each())
         total += m.nitrogen;
     for (auto [e, d] : registry_.view<Digestion>().each())
@@ -1555,7 +1650,7 @@ double World::totalNitrogen() const {
 }
 
 double World::totalPhosphorus() const {
-    double total = phosphate_.grid().sum() / microMolarPerPmol() + cyano_.phosphorus() + fungi_.phosphorus();
+    double total = phosphate_.sum() / microMolarPerPmol() + cyano_.phosphorus() + fungi_.phosphorus();
     for (auto [e, inf] : registry_.view<ChytridInfection>().each())
         total += inf.phosphorus;
     for (auto [e, m] : registry_.view<Metabolism>().each())
@@ -2244,15 +2339,17 @@ Census World::census() const {
     c.bdellovibrios = static_cast<int>(bdello_.size());
     double ph = 0.0;
     c.maxPH = 0.0f;
-    for (float v : ph_.v) {
-        ph += v;
-        c.maxPH = std::max(c.maxPH, v);
+    for (std::size_t k = 0; k < ph_.v.size(); ++k) {
+        if (!dishMask_.isWater(k))
+            continue;
+        ph += ph_.v[k];
+        c.maxPH = std::max(c.maxPH, ph_.v[k]);
     }
-    const auto cells = static_cast<double>(ph_.v.size());
+    const auto cells = static_cast<double>(dishMask_.waterCells);
     c.meanPH = static_cast<float>(ph / cells);
-    c.meanNitrogen = static_cast<float>(nitrogen_.grid().sum() / cells);
-    c.meanToxin = static_cast<float>(toxin_.grid().sum() / cells);
-    c.meanPhage = static_cast<float>(phage_.grid().sum() / cells);
+    c.meanNitrogen = static_cast<float>(nitrogen_.sum() / cells);
+    c.meanToxin = static_cast<float>(toxin_.sum() / cells);
+    c.meanPhage = static_cast<float>(phage_.sum() / cells);
     c.bacteria = static_cast<int>(bacteria_.size());
     return c;
 }
@@ -2435,14 +2532,24 @@ Perception World::perceive(entt::entity e, const RingBody& body, SpeciesId speci
     p.food = std::log1p(std::max(0.0f, nutrients_.grid().sample(body.centroid.x, body.centroid.y)));
     p.acid = std::log1p(std::max(0.0f, co2_.grid().sample(body.centroid.x, body.centroid.y) - units::kCO2Saturation) /
                         units::kCO2Saturation);
-    // Choque del polo anterior contra otra célula.
+    // Choque del polo anterior contra otra célula o contra la pared de la placa.
     {
         const Vec2 head = bodyHeading(body);
         float half = 0.0f;
         for (const Vec2& q : body.restRing)
             half = std::max(half, q.x);
         const Vec2 tip = body.centroid + head * half;
-        for (const RingBody* other : bodyList_) {
+        p.bumped = !dish_.contains(tip, 6.0f);
+        // Vecinos por la grilla de centroides (±2 celdas: alcanza a las células grandes).
+        const int tx = static_cast<int>(wrapCoord(tip.x, width_) / width_ * percGridX_);
+        const int ty = static_cast<int>(wrapCoord(tip.y, height_) / height_ * percGridY_);
+        bool done = p.bumped;
+        for (int gy = ty - 2; gy <= ty + 2 && !done; ++gy)
+        for (int gx = tx - 2; gx <= tx + 2 && !done; ++gx)
+        for (entt::entity oe : percGrid_[static_cast<std::size_t>(wrapIndex(gy, percGridY_)) * percGridX_ + wrapIndex(gx, percGridX_)]) {
+            if (!registry_.valid(oe) || !registry_.all_of<RingBody>(oe))
+                continue;
+            const RingBody* other = &registry_.get<RingBody>(oe);
             if (other == &body)
                 continue;
             const Vec2 shift = imageShift(*other, tip);
@@ -2452,6 +2559,7 @@ Perception World::perceive(entt::entity e, const RingBody& body, SpeciesId speci
                 continue;
             if (polygon::closestOnBoundary(other->poly.data(), static_cast<int>(other->poly.size()), t).dist2 < 36.0f) {
                 p.bumped = true;
+                done = true;
                 break;
             }
         }

@@ -25,4 +25,7 @@ const Biome& biome(BiomeId id);
 
 // Gota procedural: el bioma con variaciones según la seed (temperatura, luz, nutrientes,
 // manchas de materia orgánica y qué especies están y cuántas).
+// Área de agua de la gota relativa a la de referencia (2048 × 1024 µm, con la que se
+// calibraron las poblaciones de los biomas): las poblaciones se escalan para mantener la densidad.
+float dropAreaScale(const WorldConfig& config);
 WorldConfig makeDrop(BiomeId id, std::uint64_t seed);

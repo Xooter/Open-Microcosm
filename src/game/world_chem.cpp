@@ -74,6 +74,8 @@ void World::updateWaterChemistry(float dt) {
     auto& ahl = autoinducer_.grid().v;
     auto& phg = phage_.grid().v;
     for (std::size_t k = 0; k < co2.size(); ++k) {
+        if (!dishMask_.isWater(k))
+            continue; // vidrio de la placa (celdas fantasma)
         co2[k] = units::kCO2Saturation + (co2[k] - units::kCO2Saturation) * co2Keep;
         tox[k] *= toxinKeep;
         phg[k] *= phageKeep;
@@ -133,7 +135,8 @@ const char* World::applyEnvironmentStress(entt::entity e, const RingBody& body, 
 void World::seedBdellovibrio(std::size_t count) {
     for (std::size_t i = 0; i < count; ++i) {
         Rng rng(config_.seed, rng_stream::kBacteria + 400, i, 0);
-        bdello_.push(rng.uniform(0.0f, width_), rng.uniform(0.0f, height_), rng.uniform(0.0f, 2.0f * units::kPi));
+        const Vec2 p = randomPoint(rng, 2.0f);
+        bdello_.push(p.x, p.y, rng.uniform(0.0f, 2.0f * units::kPi));
     }
 }
 
@@ -211,6 +214,7 @@ void World::microbialInteractions(float dt) {
         const Vec2 u = fluid_.velocityAt({bdello_.x[i], bdello_.y[i]});
         bdello_.x[i] = wrapCoord(bdello_.x[i] + (u.x + std::cos(bdello_.heading[i]) * bp.bdelloSpeed) * dt, width_);
         bdello_.y[i] = wrapCoord(bdello_.y[i] + (u.y + std::sin(bdello_.heading[i]) * bp.bdelloSpeed) * dt, height_);
+        dish_.bounce(bdello_.x[i], bdello_.y[i], &bdello_.heading[i], 1.0f);
         ++i;
     }
     if (bdello_.size() == 0)

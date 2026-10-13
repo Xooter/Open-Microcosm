@@ -6,6 +6,7 @@
 #include "game/progress.hpp"
 #include "game/run.hpp"
 #include "game/world.hpp"
+#include "gpu/gpu_substep_solver.hpp"
 #include "render/renderer.hpp"
 #include "sim/polygon.hpp"
 
@@ -45,6 +46,7 @@ struct Game {
     std::vector<std::string> toasts; // descubrimientos recientes
     float toastTimer = 0.0f, discoveryTimer = 0.0f;
     std::uint32_t runCounter = 0;
+    GpuSubstepSolver* gpu = nullptr; // XPBD en GPU (fase 14); nullptr si no hay OpenGL 4.3
     Screen screen = Screen::Title;
     bool recorded = false;
 };
@@ -55,10 +57,13 @@ void startRun(Game& game) {
     game.world = std::make_unique<World>(config);
     game.world->bioTimeScale() = game.options.bioTimeScale;
     game.world->lodStride = game.options.lod ? 5 : 1;
+    if (game.options.gpuPhysics && game.gpu && game.gpu->ready())
+        game.world->setSubstepSolver(game.gpu);
     game.progress.biomesPlayed |= 1u << static_cast<unsigned>(game.setup.biome);
     const LocomotionType founder = game.setup.founder;
     RunConfig rc;
     rc.founder = founder;
+    rc.wildlife = dropAreaScale(config); // misma densidad de especies en cualquier placa
     rc.biome = game.setup.biome;
     rc.seed = config.seed;
     Rng rng(config.seed, 0, 0, 0);
@@ -80,7 +85,12 @@ void recordRun(Game& game) {
     saveProgress(game.progress, game.progressPath);
 }
 
-void updateCamera(Camera2D& cam, ToolState& tools) {
+void updateCamera(Camera2D& cam, ToolState& tools, const World& world) {
+    const Dish& dish = world.dish();
+    // Con placa, el alejamiento máximo muestra la placa entera (con el canto de vidrio).
+    const float minZoom = dish.active()
+        ? std::min(static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight())) / (2.3f * dish.radius)
+        : 0.4f;
     if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
         tools.follow = false; // mover la cámara a mano suelta el seguimiento
         Vector2 delta = Vector2Scale(GetMouseDelta(), -1.0f / cam.zoom);
@@ -92,11 +102,21 @@ void updateCamera(Camera2D& cam, ToolState& tools) {
             cam.offset = GetMousePosition();
             cam.target = mouseWorld;
         }
-        cam.zoom = Clamp(cam.zoom * (1.0f + 0.1f * wheel), 0.4f, 60.0f);
+        cam.zoom = Clamp(cam.zoom * (1.0f + 0.1f * wheel), minZoom, 60.0f);
+    }
+    cam.zoom = std::max(cam.zoom, minZoom);
+    if (dish.active()) {
+        // El centro de la vista no sale de la placa.
+        const Vector2 mid = {0.5f * static_cast<float>(GetScreenWidth()), 0.5f * static_cast<float>(GetScreenHeight())};
+        const Vector2 c = GetScreenToWorld2D(mid, cam);
+        const Vec2 inside = dish.clampInside({c.x, c.y});
+        cam.offset = mid;
+        cam.target = {inside.x, inside.y};
     }
 }
 
-// Cámara de microscopio: sigue a una célula con suavidad, por el camino corto del toro.
+// Cámara de microscopio: sigue a una célula con suavidad (sin placa, por el camino corto del
+// toro).
 void followCell(Camera2D& cam, const World& world, entt::entity cell, float dt) {
     if (!world.registry().valid(cell))
         return;
@@ -129,10 +149,13 @@ void handlePlayInput(World& world, ToolState& tools, const Camera2D& camera) {
     if (IsKeyPressed(KEY_H)) tools.showLab = !tools.showLab;
 
     const Vector2 mouse = GetScreenToWorld2D(GetMousePosition(), camera);
-    const Vec2 pos = {wrapCoord(mouse.x, world.width()), wrapCoord(mouse.y, world.height())};
+    // Con placa el mundo es cerrado: afuera del agua no hay nada que tocar.
+    const bool wrapMouse = !world.dish().active();
+    const Vec2 pos = wrapMouse ? Vec2{wrapCoord(mouse.x, world.width()), wrapCoord(mouse.y, world.height())}
+                               : world.dish().clampInside({mouse.x, mouse.y});
     if (IsKeyDown(KEY_T)) world.dropInk(pos, tools.inkRadius, 40);
     if (IsKeyPressed(KEY_B)) world.dropDetritus(pos);
-    if (IsKeyPressed(KEY_C)) world.spawnCell(pos);
+    if (IsKeyPressed(KEY_C)) world.spawnCell(world.dish().clampInside(pos, 60.0f));
     if (IsKeyPressed(KEY_K)) world.spawnTestScene(50);
     if (IsKeyPressed(KEY_X)) world.removeCellAt(pos);
     if (IsKeyPressed(KEY_L)) world.lyseAt(pos);
@@ -230,6 +253,9 @@ int main() {
         ToggleFullscreen();
     Renderer renderer;
     renderer.setPostProcess(game.options.postProcess);
+    GpuSubstepSolver gpu;
+    if (gpu.init())
+        game.gpu = &gpu;
     ToolState tools;
     tools.showLab = game.options.labPanel;
     Camera2D camera{};
@@ -273,6 +299,8 @@ int main() {
                 ToggleFullscreen();
             renderer.setPostProcess(game.options.postProcess);
             if (back) {
+                if (game.world)
+                    game.world->setSubstepSolver(game.options.gpuPhysics && game.gpu ? game.gpu : nullptr);
                 saveOptions(game.options, game.optionsPath);
                 game.screen = Screen::Title;
             }
@@ -280,7 +308,7 @@ int main() {
         }
 
         World& world = *game.world;
-        updateCamera(camera, tools);
+        updateCamera(camera, tools, world);
         const bool choosing = game.run.simulationPaused();
         if (game.screen == Screen::Playing && !choosing)
             handlePlayInput(world, tools, camera);

@@ -88,8 +88,19 @@ Hay presets `debug`, `release` y `profile`. El código tiene que compilar **sin 
 ### Mundo
 
 - **Vista cenital** (se mira desde arriba, como en el microscopio).
-- **Mundo toroidal:** los bordes se envuelven. Todas las grillas son periódicas, con tamaños
-  potencia de 2.
+- **Placa** (`sim/dish.hpp`, `World::dish()`): el mundo es un pocillo circular de vidrio
+  centrado en la grilla (radio = mitad del lado menor − `WorldConfig::dishMargin`); su pared es
+  el límite del mundo. Las grillas siguen siendo periódicas por dentro (tamaños potencia de 2,
+  la FFT lo necesita), pero nada vive ni cruza fuera del círculo:
+  - cuerpos blandos: `soft_body::confineToDish` en cada iteración de XPBD (también en GPU,
+    `solve.comp`); los estadísticos se trasladan enteros (`pushIntoDish`);
+  - partículas (bacterias, detritos, esporas, *Bdellovibrio*, cianobacterias): `Dish::bounce`;
+    las hifas no crecen hacia el vidrio; los spawns usan `World::randomPoint`;
+  - agua: máscara de velocidad (`DishMask::flow`), cero en el vidrio y rampa junto a la pared;
+  - química: las celdas de vidrio son fantasmas con el valor de su imagen especular (no-flujo
+    por imágenes) y la masa se conserva reescalando el agua (`ChemField::setMask`). Los totales
+    usan `ChemField::sum()` (solo agua), nunca `grid().sum()`.
+  - Con `WorldConfig::dish = false` vuelve el mundo toroidal (bordes envueltos).
 - **Agua:** Stokes–Brinkman resuelto exacto con FFT (`sim/fluid`). No hay inercia: la velocidad
   es la respuesta instantánea a las fuerzas. El espesor de la película (`gapHeight`) controla
   qué tan locales son las corrientes.
@@ -211,7 +222,9 @@ Las partes de un mismo organismo no chocan entre sí (`ContactMember::group`).
 
 ### Render (`render/`)
 
-- Campo claro: cobertura de las células → shader con borde óptico y halo. Todo ocurre en un
+- Campo claro: cobertura de las células → shader con borde óptico y halo. La pared de la placa
+  se dibuja con `dish_glass.fs` (vidrio, canto oscuro, línea de Becke y menisco) antes del
+  post-proceso. Con placa hay una sola copia del mundo (sin toro no se repite al alejar). Todo ocurre en un
   mismo plano (no hay plano focal). El campo se dibuja en una textura y pasa por
   `microscope_post.fs` (viñeta, aberración cromática, grano).
 - Bacterias con instancing (`InstancedParticles`): un buffer por frame, una llamada por copia
