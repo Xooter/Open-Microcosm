@@ -134,6 +134,25 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
         loco.target = pilot.target;
         return;
     }
+    case LocomotionType::Undulation: {
+        // Nematodo: ante un choque o una amenaza, reversa (la onda corre al revés) y después un
+        // giro brusco ("omega turn" de C. elegans); si no, avanza con cambios de rumbo lentos.
+        loco.active = true;
+        if (((sense.hasThreat && sense.threatDistance < 60.0f) || sense.bumped) && pilot.reverse <= 0.0f) {
+            pilot.reverse = rng.uniform(1.0f, 2.5f);
+            pilot.turn = rng.uniform() < 0.5f ? -1.0f : 1.0f;
+        }
+        if (pilot.reverse > 0.0f) {
+            pilot.reverse -= dt;
+            loco.forward = pilot.reverse > 0.8f ? -1.0f : 1.0f;
+            loco.turn = pilot.reverse > 0.8f ? 0.0f : pilot.turn;
+            return;
+        }
+        pilot.turn = clampTurn(pilot.turn - pilot.turn * 0.5f * dt + 0.6f * std::sqrt(dt) * rng.normal());
+        loco.forward = 1.0f;
+        loco.turn = 0.5f * pilot.turn;
+        return;
+    }
     case LocomotionType::Pseudopod: {
         loco.active = true;
         if (sense.hasPrey && sense.preyDistance < 300.0f) { // quimiotaxis hacia la presa

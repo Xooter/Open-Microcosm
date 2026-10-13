@@ -130,6 +130,7 @@ const char* speciesName(LocomotionType t) {
     case LocomotionType::Cilia: return "Paramecium (cilios)";
     case LocomotionType::Flagellum: return "Euglena (flagelo)";
     case LocomotionType::Pseudopod: return "Amoeba (pseudopodos)";
+    case LocomotionType::Undulation: return "Rhabditis (ondulacion)";
     }
     return "";
 }
@@ -139,6 +140,7 @@ const char* unlockHint(LocomotionType t) {
     case LocomotionType::Cilia: return "";
     case LocomotionType::Flagellum: return "Llega a la generacion 3";
     case LocomotionType::Pseudopod: return "Llega a la generacion 5 o gana una partida";
+    case LocomotionType::Undulation: return "Solo en el sandbox";
     }
     return "";
 }

@@ -4,6 +4,7 @@
 #include <doctest/doctest.h>
 
 #include <cmath>
+#include <vector>
 
 namespace {
 
@@ -111,4 +112,38 @@ TEST_CASE("el gastrotrico pone un huevo partenogenético que eclosiona") {
     steps(world, 60 * 160); // ~27 h biológicas: el huevo tarda ~24 h
     CHECK(world.observations().eggsLaid > 0);
     CHECK(world.observations().eggsHatched > 0);
+}
+
+TEST_CASE("Oedogonium libera zoósporas que nadan, se fijan y vuelven a ser filamento") {
+    World world(quietWorld());
+    const Vec2 c = world.dish().center;
+    std::vector<entt::entity> cells;
+    for (int f = 0; f < 3; ++f)
+        for (entt::entity e : world.spawnFilament(SpeciesId::Oedogonium, c + Vec2{-250.0f, -200.0f + 200.0f * f}, 0.0f, 7, 0))
+            cells.push_back(e);
+    const double phosphorus = world.totalPhosphorus();
+    for (entt::entity e : cells)
+        world.forceReproduction(e);
+    world.step(kDt);
+    REQUIRE(world.observations().zoospores > 0);
+    entt::entity z = entt::null;
+    for (auto e : world.registry().view<Zoospore>())
+        z = e;
+    REQUIRE(world.registry().valid(z));
+    CHECK(world.registry().get<Locomotion>(z).type == LocomotionType::Flagellum);
+    const Vec2 start = world.registry().get<RingBody>(z).centroid;
+    steps(world, 60 * 5);
+    REQUIRE(world.registry().valid(z));
+    const float swum = length(world.registry().get<RingBody>(z).centroid - start);
+    MESSAGE("la zoóspora nadó " << swum << " µm en 5 s");
+    CHECK(swum > 50.0f);
+    CHECK(world.totalPhosphorus() == doctest::Approx(phosphorus).epsilon(0.01));
+
+    world.bioTimeScale() = 1200.0f; // la zoóspora nada como mucho 1 h biológica
+    steps(world, 60 * 4);
+    CHECK(world.observations().zoosporesSettled > 0);
+    if (world.registry().valid(z)) {
+        CHECK_FALSE(world.registry().all_of<Zoospore>(z));
+        CHECK(world.registry().get<Locomotion>(z).type == LocomotionType::Cilia);
+    }
 }

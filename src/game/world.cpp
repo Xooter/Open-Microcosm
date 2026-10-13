@@ -195,6 +195,10 @@ void World::step(float dt) {
         if (registry_.any_of<Cyst, Captured>(e))
             continue;
         const bool oral = speciesInfo(speciesOfEntity(registry_, e)).feeding == FeedingMode::OralGroove;
+        if (const Undulation* und = registry_.try_get<Undulation>(e)) {
+            applyUndulationForces(*und, fluid_);
+            pushed = true;
+        }
         if (!oral && !(loco.type == LocomotionType::Flagellum && loco.speed > 0.0f))
             continue;
         applySwimmerForces(body, bodies_, loco, locomotionParams_, fluid_, oral);
@@ -983,6 +987,8 @@ entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& 
         buildCompoundParts(e, info, spec);
     if (info.tentacles > 0)
         growTentacles(e, info);
+    if (info.locomotion == LocomotionType::Undulation)
+        initUndulation(registry_.get<RingBody>(e), registry_.emplace<Undulation>(e));
     return e;
 }
 
@@ -1341,7 +1347,9 @@ void World::applyMotion(float dt) {
             loco.active = false;
             pullTogether(body, registry_.get<RingBody>(cj->partner));
         }
-        const RigidMotion motion = applyLocomotion(body, bodies_, loco, locomotionParams_, simTime_, width_, height_);
+        Undulation* und = registry_.try_get<Undulation>(e);
+        const RigidMotion motion = und ? undulate(body, bodies_, loco, *und, locomotionParams_, crowdingAround(body, *und), dt)
+                                       : applyLocomotion(body, bodies_, loco, locomotionParams_, simTime_, width_, height_);
         if (const Compound* comp = registry_.try_get<Compound>(e)) {
             // Las partes se mueven con el organismo como un sólido (la corona arrastra a todo).
             for (entt::entity part : comp->parts) {
@@ -1733,6 +1741,7 @@ float maxSpeedOf(const LocomotionParams& p, LocomotionType type) {
     case LocomotionType::Cilia: return p.ciliaSpeed;
     case LocomotionType::Flagellum: return p.flagellumSpeed;
     case LocomotionType::Pseudopod: return p.pseudopodSpeed;
+    case LocomotionType::Undulation: return p.undulationSpeed;
     }
     return 1.0f;
 }
@@ -1960,6 +1969,11 @@ void World::updateLifecycle(float dt) {
             if (tel->timer <= 0.0f)
                 settling_.push_back(e);
         }
+        if (Zoospore* zs = registry_.try_get<Zoospore>(e)) {
+            zs->hoursLeft -= bioDt / 3600.0f;
+            if (zs->hoursLeft <= 0.0f)
+                zoosporeSettling_.push_back(e);
+        }
         if (isDead(meta, mp)) {
             dying_.push_back({e, deathCause});
             continue;
@@ -1970,7 +1984,7 @@ void World::updateLifecycle(float dt) {
                              (dig ? vacuoleContentArea(*dig) : 0.0f);
         const float before = std::abs(body.restArea);
         // Las células de un filamento crecen solo a lo largo (pared rígida de ancho fijo).
-        if (info.filament)
+        if (info.filament && !registry_.all_of<Zoospore>(e))
             soft_body::setRestAreaAxial(body, body.restArea >= 0.0f ? target : -target);
         else
             soft_body::setRestArea(body, body.restArea >= 0.0f ? target : -target);
@@ -2014,8 +2028,8 @@ void World::updateLifecycle(float dt) {
         }
         Dividing* dv = registry_.try_get<Dividing>(e);
         const float cost = registry_.all_of<Player>(e) ? mp.playerDivisionCost : mp.npcDivisionCost;
-        if (registry_.any_of<ChytridInfection, Trapped, Stung>(e))
-            continue; // el parásito o la trampa le impiden reproducirse
+        if (registry_.any_of<ChytridInfection, Trapped, Stung, Zoospore>(e))
+            continue; // el parásito o la trampa le impiden reproducirse (y la zoóspora no se divide)
         if (info.eggHours > 0.0f) { // rotífero: pone huevos en vez de dividirse
             const float birth = meta.targetBirthBiomass > 0.0f ? meta.targetBirthBiomass : meta.birthBiomass;
             if (meta.biomass >= 1.4f * birth && meta.reserves >= cost * meta.biomass)
@@ -2026,6 +2040,15 @@ void World::updateLifecycle(float dt) {
             if (readyToDivide(meta, cost))
                 colonyReleases_.push_back(e);
             continue;
+        }
+        if (!dv && info.zoosporeChance > 0.0f && readyToDivide(meta, cost)) {
+            // Oedogonium: a veces el protoplasto entero sale como zoóspora en vez de dividirse.
+            Rng rng(config_.seed, rng_stream::kCells + 40, body.id, step_);
+            if (rng.uniform() < info.zoosporeChance) {
+                meta.reserves -= cost * meta.biomass;
+                zoosporeReleases_.push_back(e);
+                continue;
+            }
         }
         if (!dv && readyToDivide(meta, cost)) {
             meta.reserves -= cost * meta.biomass;
@@ -2084,6 +2107,14 @@ void World::updateLifecycle(float dt) {
         if (registry_.valid(e))
             releaseColonies(e);
     colonyReleases_.clear();
+    for (entt::entity e : zoosporeReleases_)
+        if (registry_.valid(e))
+            releaseZoospore(e);
+    zoosporeReleases_.clear();
+    for (entt::entity e : zoosporeSettling_)
+        if (registry_.valid(e))
+            settleZoospore(e);
+    zoosporeSettling_.clear();
     for (entt::entity e : eggsToLay_)
         if (registry_.valid(e))
             layEgg(e);
@@ -3220,4 +3251,75 @@ void World::releaseColonies(entt::entity mother) {
         meta.birthBiomass = share;
         meta.reserves *= 0.5f;
     }
+}
+
+// ---------------------------------------------------------------------------
+// Zoósporas de Oedogonium
+// ---------------------------------------------------------------------------
+
+void World::releaseZoospore(entt::entity mother) {
+    PROFILE_SCOPE("World::releaseZoospore");
+    // El protoplasto se contrae, la pared se abre en un anillo y sale como una sola zoóspora
+    // grande con una corona de flagelos (estefanoconte). Simplificación: la pared vacía no queda
+    // en el filamento; el filamento se corta ahí.
+    const SpeciesId sid = registry_.get<Species>(mother).id;
+    const RingBody& mb = registry_.get<RingBody>(mother);
+    const Vec2 at = mb.centroid;
+    const float angle = mb.angle;
+    const float area = std::abs(mb.restArea);
+    const Metabolism m = registry_.get<Metabolism>(mother);
+    const Genome genome = registry_.all_of<Heredity>(mother) ? registry_.get<Heredity>(mother).genome : speciesGenome(sid);
+    const Lineage lin = registry_.all_of<Lineage>(mother) ? registry_.get<Lineage>(mother) : Lineage{0, 0};
+    const bool wasPlayer = mother == player_;
+    if (grabSlot_ != kNoGrab && bodies_.owner[grabSlot_] == entt::to_integral(mother))
+        endGrab();
+    destroyOrganism(mother);
+    if (wasPlayer)
+        player_ = entt::null;
+
+    const entt::entity z = spawnOrganism(sid, at, genome, lin.run, angle);
+    registry_.get<Lineage>(z).generation = lin.generation;
+    Metabolism& zm = registry_.get<Metabolism>(z);
+    // spawnOrganism sacó del agua el P y el N de una célula nueva: vuelven, y la zoóspora se
+    // lleva todo lo de la madre (se conservan).
+    if (zm.phosphorus > 0.0f)
+        exchange(phosphate_, at, zm.phosphorus);
+    if (zm.nitrogen > 0.0f)
+        exchange(nitrogen_, at, zm.nitrogen);
+    zm.biomass = m.biomass;
+    zm.reserves = m.reserves;
+    zm.phosphorus = m.phosphorus;
+    zm.nitrogen = m.nitrogen;
+    zm.birthBiomass = m.birthBiomass;
+    RingBody& zb = registry_.get<RingBody>(z);
+    const float r = std::sqrt(area / units::kPi);
+    soft_body::reshapeRest(zb, bodies_, 1.15f * r, 0.87f * r); // ovoide
+    zb.shapeRate = 8.0f;
+    Locomotion& loco = registry_.get<Locomotion>(z);
+    loco.type = LocomotionType::Flagellum; // nada tirando de la corona de flagelos
+    loco.power = viscositySpeed_;
+    registry_.emplace<Autopilot>(z);
+    Rng rng(config_.seed, rng_stream::kCells + 41, zb.id, step_);
+    registry_.emplace<Zoospore>(z, Zoospore{rng.uniform(0.3f, 1.0f)}); // nada entre 20 min y 1 h
+    if (wasPlayer)
+        setPlayer(z);
+    ++observed_.zoospores;
+}
+
+void World::settleZoospore(entt::entity e) {
+    // La zoóspora se fija, pierde los flagelos y se alarga: es la primera célula de un filamento
+    // nuevo, que crece por división intercalar.
+    registry_.remove<Zoospore>(e);
+    Locomotion& loco = registry_.get<Locomotion>(e);
+    loco.type = speciesInfo(speciesOfEntity(registry_, e)).locomotion;
+    loco.forward = loco.turn = loco.speed = 0.0f;
+    loco.active = false;
+    applyTraits(e); // sin nado (las células del filamento no se mueven)
+    registry_.remove<Autopilot>(e);
+    RingBody& b = registry_.get<RingBody>(e);
+    const CellShape& shape = registry_.get<CellShape>(e);
+    const float k = std::sqrt(std::abs(soft_body::area(b, bodies_)) / (units::kPi * shape.radiusX * shape.radiusY));
+    soft_body::reshapeRest(b, bodies_, shape.radiusX * k, shape.radiusY * k, shape.squareness, shape.taper);
+    b.shapeRate = shape.shapeRate;
+    ++observed_.zoosporesSettled;
 }

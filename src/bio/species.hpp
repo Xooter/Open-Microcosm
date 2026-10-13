@@ -37,6 +37,7 @@ enum class SpeciesId : std::uint8_t {
     Zygnema,
     Oedogonium,
     Chaetonotus,
+    Rhabditis,
     Count
 };
 inline constexpr int kSpeciesCount = static_cast<int>(SpeciesId::Count);
@@ -87,6 +88,9 @@ struct SpeciesInfo {
     bool filament = false;          // células unidas extremo con extremo (Spirogyra)
     int filamentCells = 0;          // células por filamento al empezar
     float fragmentationPerHour = 0.0f; // probabilidad de que una unión se corte [1/h]
+    // Oedogonium: fracción de los ciclos en que el protoplasto sale como una zoóspora en vez de
+    // dividirse (reproducción asexual).
+    float zoosporeChance = 0.0f;
     int colonyDaughters = 0;        // colonias hijas que libera (Volvox, Pediastrum)
     bool motherDiesAtRelease = false; // Volvox: las hijas nacen rompiendo a la madre
     // Materia seca relativa a una célula maciza del mismo tamaño: Volvox es una esfera hueca
@@ -138,6 +142,12 @@ struct Anchored {
 // Componente: hija nadadora de una especie sésil (telotroco), antes de fijarse.
 struct Telotroch {
     float timer; // [s] hasta fijarse
+};
+
+// Componente: zoóspora de alga filamentosa (Oedogonium): nada con su corona de flagelos y,
+// cuando se le acaba el tiempo, se fija y crece como un filamento nuevo.
+struct Zoospore {
+    float hoursLeft; // [h biológicas] hasta fijarse
 };
 
 // Componente: presa atrapada por los tentáculos de un suctorio, que le succiona el citoplasma.

@@ -139,7 +139,7 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
     {.name = "Hydra", .locomotion = LocomotionType::Cilia,
      .spec = makeSpec(200.0f, 55.0f, 3.0f, 186, 160, 130, 0.15f, 2.4f, 0.4f), .speedScale = 0.0f,
      .feeding = FeedingMode::Raptorial,
-     .preyMask = speciesBit(SpeciesId::Rotifer) | speciesBit(SpeciesId::Philodina) | speciesBit(SpeciesId::Nauplius) | speciesBit(SpeciesId::Paramecium) | speciesBit(SpeciesId::Euplotes) | speciesBit(SpeciesId::Didinium) | speciesBit(SpeciesId::Lacrymaria) | speciesBit(SpeciesId::Chaetonotus),
+     .preyMask = speciesBit(SpeciesId::Rotifer) | speciesBit(SpeciesId::Philodina) | speciesBit(SpeciesId::Nauplius) | speciesBit(SpeciesId::Paramecium) | speciesBit(SpeciesId::Euplotes) | speciesBit(SpeciesId::Didinium) | speciesBit(SpeciesId::Lacrymaria) | speciesBit(SpeciesId::Chaetonotus) | speciesBit(SpeciesId::Rhabditis),
      .initialCount = 1, .sessile = true, .stalkLength = 5.0f, .handlingHours = 2.0f, .colonyDaughters = 1,
      .dryMassScale = 0.3f, .budding = true, .tMin = 5.0f, .tMax = 28.0f, .multicellular = true,
      .maintenanceScale = 0.3f, .tentacles = 6, .tentacleLength = 450.0f},
@@ -189,12 +189,13 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
      .cyclosis = 1.5f},
     // Oedogonium: células de ~70 × 22 µm con un cloroplasto parietal reticulado. Al dividirse,
     // la pared se rompe en un anillo y deja "capuchones" apilados en un extremo de la célula (se
-    // cuentan las divisiones). Simplificación: también se reproduce por zoósporas con una corona
-    // de flagelos que se fijan y forman un filamento nuevo; acá crece y se fragmenta.
+    // cuentan las divisiones). También se reproduce por zoósporas: todo el protoplasto sale como
+    // una célula grande con una corona de flagelos, nada ~1 h, se fija y forma un filamento nuevo.
     {.name = "Oedogonium", .locomotion = LocomotionType::Cilia,
      .spec = makeSpec(35.0f, 11.0f, 15.0f, 136, 182, 116, 0.3f, 6.0f), .speedScale = 0.0f,
      .photosynthesisScale = 1.4f, .initialCount = 2, .chloroplasts = true, .filament = true,
-     .filamentCells = 7, .fragmentationPerHour = 0.02f, .dryMassScale = 0.3f, .tMin = 5.0f, .tMax = 32.0f,
+     .filamentCells = 7, .fragmentationPerHour = 0.02f, .zoosporeChance = 0.25f, .dryMassScale = 0.3f,
+     .tMin = 5.0f, .tMax = 32.0f,
      .cyclosis = 1.5f},
     // Chaetonotus (gastrotrico): animal de ~150 µm con cabeza lobulada, el cuerpo cubierto de
     // escamas con espinas y una furca (cola bifurcada) con glándulas adhesivas. Se desliza sobre
@@ -206,6 +207,15 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
      .mouthPreyMask = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Candida) | speciesBit(SpeciesId::Navicula),
      .handlingHours = 0.05f, .tMin = 5.0f, .tMax = 30.0f, .salinityMax = 10.0f, .multicellular = true,
      .compound = true, .maintenanceScale = 0.7f, .mouthReach = 12.0f, .eggHours = 24.0f},
+    // Rhabditis (nematodo bacterívoro): ~400 × 20 µm, cutícula anillada, faringe con dos bulbos
+    // (el posterior tritura las bacterias) e intestino granuloso. Ondula el cuerpo entero: en
+    // agua libre se agita y avanza poco; entre partículas repta mucho mejor. Típico de charcos,
+    // musgo y suelo. Hermafrodita autofecundante: pone huevos que eclosionan en ~14 h a 20 °C.
+    {.name = "Rhabditis", .locomotion = LocomotionType::Undulation,
+     .spec = makeSpec(200.0f, 10.0f, 30.0f, 214, 208, 186, 0.25f, 2.6f),
+     .feeding = FeedingMode::OralGroove, .fleeMask = speciesBit(SpeciesId::Hydra), .initialCount = 3,
+     .mouthPreyMask = speciesBit(SpeciesId::Candida), .handlingHours = 0.05f, .tMin = 2.0f, .tMax = 32.0f,
+     .salinityMax = 10.0f, .multicellular = true, .maintenanceScale = 0.7f, .mouthReach = 8.0f, .eggHours = 14.0f},
 };
 
 } // namespace
@@ -217,6 +227,7 @@ SpeciesId playerSpecies(LocomotionType type) {
     case LocomotionType::Cilia: return SpeciesId::Paramecium;
     case LocomotionType::Flagellum: return SpeciesId::Euglena;
     case LocomotionType::Pseudopod: return SpeciesId::Amoeba;
+    case LocomotionType::Undulation: return SpeciesId::Rhabditis;
     }
     return SpeciesId::Paramecium;
 }

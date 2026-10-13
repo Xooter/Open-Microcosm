@@ -387,6 +387,58 @@ void drawGastrotrichHead(const BodyParticles& bp, const RingBody& body, Vec2 for
     }
 }
 
+// Nematodo: se dibuja a lo largo del eje que ondula. Cutícula anillada, estoma, faringe con el
+// bulbo medio y el bulbo terminal (con la válvula que tritura bacterias) e intestino granuloso.
+void drawOrientedEllipse(Vec2 c, Vec2 h, float a, float b, Color color);
+
+void drawNematode(const Undulation& und, float px) {
+    float width = 0.0f; // semiancho del cuerpo (la forma de reposo está doblada: se mide en la recta)
+    for (float o : und.ringOffset)
+        width = std::max(width, std::abs(o));
+    const std::vector<Vec2>& sp = und.spine;
+    const int n = static_cast<int>(sp.size());
+    if (n < 4)
+        return;
+    // Punto del eje a la fracción `f` desde la cabeza (el último punto es la cabeza).
+    auto at = [&](float f, Vec2* tangent) {
+        const float u = std::clamp(1.0f - f, 0.0f, 1.0f) * static_cast<float>(n - 1);
+        const int j = std::min(n - 2, static_cast<int>(u));
+        const float t = u - static_cast<float>(j);
+        if (tangent) {
+            const Vec2 d = sp[j + 1] - sp[j];
+            *tangent = d * (1.0f / std::max(1e-3f, length(d)));
+        }
+        return sp[j] + (sp[j + 1] - sp[j]) * t;
+    };
+    Vec2 t;
+    for (float f = 0.04f; f < 0.97f; f += 0.018f) { // anillos de la cutícula
+        const Vec2 p = at(f, &t);
+        const Vec2 side = {-t.y, t.x};
+        const float w = width * std::min(1.0f, std::min(f, 1.0f - f) * 6.0f);
+        DrawLineEx(toRay(p - side * w), toRay(p + side * w), std::max(0.3f, 0.5f * px), Fade(kLorica, 0.3f));
+    }
+    // Faringe: tubo muscular desde la boca hasta el bulbo terminal.
+    Vec2 prev = at(0.0f, nullptr);
+    for (float f = 0.02f; f <= 0.24f; f += 0.02f) {
+        const Vec2 p = at(f, nullptr);
+        DrawLineEx(toRay(prev), toRay(p), std::max(1.2f, 0.35f * width), Fade(kMastax, 0.55f));
+        prev = p;
+    }
+    const Vec2 mid = at(0.12f, &t);
+    drawOrientedEllipse(mid, t, 0.045f * und.length, 0.55f * width, Fade(kMastax, 0.45f)); // bulbo medio
+    const Vec2 bulb = at(0.23f, &t);
+    drawOrientedEllipse(bulb, t, 0.035f * und.length, 0.7f * width, Fade(kMastax, 0.55f)); // bulbo terminal
+    DrawCircleV(toRay(bulb), std::max(1.0f, 0.25f * width), kMastax);                      // válvula trituradora
+    // Intestino: células con gránulos de reserva, a los dos lados de la luz.
+    for (float f = 0.28f; f < 0.86f; f += 0.025f) {
+        const Vec2 p = at(f, &t);
+        const Vec2 side = {-t.y, t.x};
+        const float o = (static_cast<int>(f * 400.0f) % 2 ? 0.4f : -0.4f) * width;
+        DrawCircleV(toRay(p + side * o), std::max(0.8f, 0.22f * width), Fade(kGranule, 0.6f));
+    }
+    DrawCircleV(toRay(at(0.0f, nullptr)), std::max(0.8f, 0.15f * width), kMouth); // estoma
+}
+
 // Diatomea pennada: frústula de sílice con rafe central y estrías.
 void drawFrustule(const RingBody& body, float px) {
     const Frame f = frameOf(body);
@@ -694,6 +746,8 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 drawBdelloidTrunk(body, time, px);
             } else if (sid == SpeciesId::Chaetonotus) {
                 drawGastrotrichTrunk(bp, body, px);
+            } else if (const Undulation* und = reg.try_get<Undulation>(e)) {
+                drawNematode(*und, px);
             } else if (loco && sid == SpeciesId::Trichonympha) {
                 drawCilia(bp, body, time, px, CiliaPattern::Rostrum, 2.4f); // miles de flagelos
                 drawCilia(bp, body, time, px, CiliaPattern::Rostrum, 1.5f);
@@ -722,6 +776,8 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 drawPlatePlastid(body, mm ? mm->light : 0.5f);
             } else if (sid == SpeciesId::Zygnema) {
                 drawStellatePlastids(body, time);
+            } else if (sid == SpeciesId::Oedogonium && reg.all_of<Zoospore>(e)) {
+                drawCilia(bp, body, time, px, CiliaPattern::Crown, 1.6f); // corona de flagelos
             } else if (sid == SpeciesId::Oedogonium) {
                 const Lineage* lin = reg.try_get<Lineage>(e);
                 drawReticulatePlastid(body, lin ? static_cast<int>(std::min<std::uint32_t>(4, lin->generation)) : 0, px);
@@ -785,7 +841,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 DrawCircleV(toRay(m + in * 2.5f), 2.5f, kMouth);
             }
             if (!cyst && !metazoan && loco && loco->type == LocomotionType::Flagellum && sid != SpeciesId::Chlamydomonas &&
-                sid != SpeciesId::Volvox && sid != SpeciesId::Trichonympha)
+                sid != SpeciesId::Volvox && sid != SpeciesId::Trichonympha && sid != SpeciesId::Oedogonium)
                 drawFlagellum(bp, body, *loco, time, px);
 
             // Colonias (Volvox, Pediastrum): el interior es matriz gelatinosa, sin anatomía de una
@@ -802,7 +858,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     break;
                 case OrganelleTag::Chloroplast:
                     if (sid == SpeciesId::Spirogyra || sid == SpeciesId::Mougeotia || sid == SpeciesId::Zygnema ||
-                        sid == SpeciesId::Oedogonium)
+                        (sid == SpeciesId::Oedogonium && !reg.all_of<Zoospore>(e)))
                         break; // su cloroplasto se dibuja entero (cinta, placa, estrellas o red)
                     DrawCircleV({bp.x[s], bp.y[s]}, r, sid == SpeciesId::Navicula ? kGoldenPlastid : kChloroplast);
                     break;

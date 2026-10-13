@@ -25,7 +25,7 @@ bool geneAllowed(LocomotionType type, Gene gene) {
     switch (gene) {
     case Gene::Chloroplasts: return type == LocomotionType::Flagellum;    // Euglena
     case Gene::Trichocysts: return type == LocomotionType::Cilia;         // Paramecium
-    case Gene::Armor: return type != LocomotionType::Cilia;               // Trachelomonas, Arcella
+    case Gene::Armor: return type == LocomotionType::Flagellum || type == LocomotionType::Pseudopod; // Trachelomonas, Arcella
     case Gene::Rigidity: return type != LocomotionType::Pseudopod;        // la ameba no tiene película
     default: return true;
     }

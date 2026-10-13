@@ -136,6 +136,7 @@ struct Observations {
     int hydraCaptures = 0;
     int eggsLaid = 0, eggsHatched = 0;
     int arrivals = 0;
+    int zoospores = 0, zoosporesSettled = 0;
 };
 
 // Una célula que acaba de reventar (para el efecto visual de la lisis).
@@ -341,6 +342,7 @@ class World {
     void spawnDust(float dt);
     void rebuildFlowMask();
     entt::entity rockAt(Vec2 position) const;
+    float crowdingAround(const RingBody& body, const Undulation& und) const;
     void addDetritus(Rng& rng, Vec2 position);
     void collectBodies();
     void classifyLod();
@@ -366,6 +368,8 @@ class World {
     void relinkAfterDivision(entt::entity mother, entt::entity child);
     void maintainLinks(float bioDt);
     void releaseColonies(entt::entity mother);
+    void releaseZoospore(entt::entity mother);
+    void settleZoospore(entt::entity e);
     bool smallPrey(const RingBody& prey) const;
     void forBacteriaInBox(Vec2 lo, Vec2 hi, const std::function<void(std::size_t)>& fn) const;
     std::vector<const RingBody*> preyFor(const RingBody& predator) const;
@@ -484,7 +488,7 @@ class World {
     const char* lastDeathCause_ = "";
     std::map<std::pair<SpeciesId, std::string>, int> deathTally_;
     std::vector<std::pair<entt::entity, const char*>> dying_;
-    std::vector<entt::entity> settling_, released_, colonyReleases_, eggsToLay_;
+    std::vector<entt::entity> settling_, released_, colonyReleases_, eggsToLay_, zoosporeReleases_, zoosporeSettling_;
     std::vector<AdhesionLink> links_;
     struct PendingSplit {
         entt::entity cell;

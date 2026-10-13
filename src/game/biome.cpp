@@ -80,7 +80,7 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     setWeights(moss, 0.0f, {{S::Arcella, 3.0f}, {S::Philodina, 1.0f}, {S::Euplotes, 1.0f}, {S::Vorticella, 1.0f},
                             {S::Paramecium, 0.3f}, {S::Chlamydomonas, 0.4f}, {S::Euglena, 0.5f}, {S::Naegleria, 3.0f},
                             {S::Navicula, 0.5f}, {S::Candida, 1.0f}, {S::Amoeba, 1.0f}, {S::Zygnema, 0.5f},
-                            {S::Chaetonotus, 1.0f}});
+                            {S::Chaetonotus, 1.0f}, {S::Rhabditis, 1.5f}});
     moss.medium.naupliusArrivalsPerHour = 0.0f;
     moss.bacteria = 30'000;
     moss.cyanoFilaments = 8; // Nostoc

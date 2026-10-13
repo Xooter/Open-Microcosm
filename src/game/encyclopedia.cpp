@@ -68,6 +68,7 @@ const char* speciesBlurb(SpeciesId id) {
     case SpeciesId::Mougeotia: return "Alga filamentosa con un cloroplasto en placa que gira: de frente con poca luz y de canto con mucha.";
     case SpeciesId::Zygnema: return "Alga filamentosa con dos cloroplastos en estrella por celula. Vive en charcas y sobre el suelo humedo.";
     case SpeciesId::Oedogonium: return "Alga filamentosa: cada division deja un anillo (capuchon) en la pared, asi se cuentan las veces que se dividio.";
+    case SpeciesId::Rhabditis: return "Nematodo: ondula el cuerpo entero. En agua libre se agita sin avanzar mucho; entre granos repta con facilidad.";
     case SpeciesId::Chaetonotus: return "Gastrotrico: animal diminuto cubierto de espinas que se desliza con cilios y tiene una cola en horquilla.";
     default: return "";
     }
@@ -154,5 +155,7 @@ std::vector<std::string> recordBehaviors(Progress& progress, const World& world)
     if (o.eggsLaid > 0) add("Un rotifero pone un huevo sin macho");
     if (o.eggsHatched > 0) add("Eclosiona un huevo de rotifero");
     if (o.arrivals > 0) add("Llega un nauplio de copepodo");
+    if (o.zoospores > 0) add("Oedogonium libera una zoospora con una corona de flagelos");
+    if (o.zoosporesSettled > 0) add("Una zoospora se fija y empieza un filamento nuevo");
     return fresh;
 }
