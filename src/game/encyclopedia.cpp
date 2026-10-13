@@ -65,6 +65,10 @@ const char* speciesBlurb(SpeciesId id) {
     case SpeciesId::Naegleria: return "Ameboflagelado de suelos y aguas termales: tolera mas de 40 grados y se enquista si se seca.";
     case SpeciesId::Trichonympha: return "Flagelado con miles de flagelos del intestino de las termitas: digiere la madera por ellas y no tolera el oxigeno.";
     case SpeciesId::Philodina: return "Rotifero bdeloideo: se arrastra como una sanguijuela. Desde hace millones de anios son todas hembras.";
+    case SpeciesId::Mougeotia: return "Alga filamentosa con un cloroplasto en placa que gira: de frente con poca luz y de canto con mucha.";
+    case SpeciesId::Zygnema: return "Alga filamentosa con dos cloroplastos en estrella por celula. Vive en charcas y sobre el suelo humedo.";
+    case SpeciesId::Oedogonium: return "Alga filamentosa: cada division deja un anillo (capuchon) en la pared, asi se cuentan las veces que se dividio.";
+    case SpeciesId::Chaetonotus: return "Gastrotrico: animal diminuto cubierto de espinas que se desliza con cilios y tiene una cola en horquilla.";
     default: return "";
     }
 }

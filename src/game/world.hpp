@@ -67,7 +67,27 @@ struct MediumParams {
     // Aporte de materia orgánica disuelta desde afuera de la gota (hojas y barro que se
     // descomponen, como en una infusión de heno) [µM por hora biológica, en promedio].
     float organicInflow = 0.0f;
+    // Polvo que cae del aire a la película de agua (cuarzo, arcilla, mica) [partículas/s, tiempo
+    // real: es física, no biología].
+    float dustRate = 0.0f;
 };
+
+// Sedimento inicial de la gota: partículas minerales sueltas y granos de arena.
+struct Sediment {
+    int clay = 0, quartz = 0, mica = 0, ironOxide = 0, sulfur = 0, frustules = 0;
+    int rocks = 0;                              // granos de arena (obstáculos fijos)
+    float rockMin = 50.0f, rockMax = 120.0f;    // radio de los granos [µm] (arena fina: 60–250 µm de diámetro)
+};
+
+// Componente: grano de arena o piedra. Es un cuerpo con membrana inamovible (LOD "fijo": sin
+// XPBD ni arrastre), así los contactos, la exclusión de bacterias y la GPU lo tratan como a un
+// obstáculo. No es un organismo: no tiene metabolismo, no se come ni cuenta como biomasa.
+struct Rock {
+    MineralKind kind = MineralKind::Quartz;
+    std::uint32_t seed = 0; // detalles del render (fracturas, inclusiones)
+};
+
+const char* mineralName(MineralKind kind);
 
 struct WorldConfig {
     int gridX = 256, gridY = 256; // potencias de 2 (FFT)
@@ -80,6 +100,8 @@ struct WorldConfig {
     std::size_t detritus = 60;
     int cyanoFilaments = 15;      // filamentos de Anabaena al empezar
     int cyanoCells = 12;
+    int oscillatoriaFilaments = 0; // tricomas de Oscillatoria al empezar
+    int oscillatoriaCells = 20;
     std::uint64_t seed = 1;
     MediumParams medium;          // química y ambiente iniciales (bioma)
     // Hongos al empezar: micelios de Saprolegnia y de Zoophagus, y grupos de zoosporas de
@@ -88,6 +110,7 @@ struct WorldConfig {
     // Cianobacterias del bioma: rango térmico (Anabaena 10–35 °C; Mastigocladus 30–57 °C).
     float cyanoTMin = 10.0f, cyanoTMax = 35.0f;
     float patchiness = 0.0f;      // manchas iniciales de materia orgánica y detritos (0–1)
+    Sediment sediment;            // minerales y granos de arena iniciales
     // Multiplicador de la población inicial de cada especie (0 = ausente en esta gota).
     float speciesWeight[kSpeciesCount];
     WorldConfig() {
@@ -205,6 +228,12 @@ class World {
     // Sandbox: completa biomasa y reservas hasta el umbral de la especie para que se reproduzca
     // por su vía normal (fisión, palintomía, colonias, gemación o huevo). false si no puede.
     bool forceReproduction(entt::entity cell);
+    // Minerales: una partícula suelta, un grano de arena (false si se superpone con algo) o
+    // `count` partículas de sedimento mezclado alrededor de `at`.
+    void spawnMineral(MineralKind kind, Vec2 at, Rng& rng);
+    bool spawnRock(Vec2 at, float radius, MineralKind kind, Rng& rng);
+    void spawnSediment(Vec2 at, int count, Rng& rng);
+    std::size_t rockCount() const { return registry_.view<Rock>().size(); }
     // Organismo silvestre (linaje 0) con variación genética. `randomStage`: en una etapa al
     // azar del ciclo celular (población inicial).
     entt::entity spawnWild(SpeciesId species, Vec2 at, Rng& rng, bool randomStage);
@@ -308,6 +337,10 @@ class World {
     void stepAmbient(float dt);
     void computeLight();
     void spawnDetritus(float dt);
+    void scatterSediment();
+    void spawnDust(float dt);
+    void rebuildFlowMask();
+    entt::entity rockAt(Vec2 position) const;
     void addDetritus(Rng& rng, Vec2 position);
     void collectBodies();
     void classifyLod();
@@ -406,6 +439,8 @@ class World {
     std::vector<Vec2> sporeSteer_;
     std::vector<entt::entity> hostCells_;
     Grid2D hyphaCover_, ph_, inflowPattern_;
+    std::vector<float> flowMask_; // placa × granos de arena: el agua no fluye dentro de la roca
+    float dustAccumulator_ = 0.0f;
     Bdellovibrios bdello_;
     SpatialGrid bdelloGrid_;
     std::vector<float> cyanoDemandN_;

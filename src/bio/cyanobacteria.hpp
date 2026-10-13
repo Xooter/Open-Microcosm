@@ -18,6 +18,8 @@ struct Grid2D;
 //  - Cada ~10 células una se diferencia en heterocisto (pared gruesa, no se divide; fija N₂).
 //  - Los filamentos largos se fragmentan (hormogonios) y se deslizan despacio con inversiones.
 //  - Casi nadie se come un filamento largo: por eso forman blooms.
+// Oscillatoria: tricoma sin heterocistos (no fija N₂) de células cortas y anchas; se desliza más
+// rápido rotando sobre su eje, así que la punta que avanza oscila de lado a lado.
 struct CyanoParams {
     float spacing = 5.0f;              // distancia entre células [µm]
     float growthPerHourMax = 0.12f;    // Anabaena: duplicación ~6–8 h
@@ -42,6 +44,10 @@ struct CyanoParams {
     float exudation = 0.1f;                  // fracción de lo fijado que sale como materia orgánica
     // Rango térmico de crecimiento [°C] y temperatura del agua (la fija el bioma).
     float tMin = 10.0f, tMax = 35.0f, temperature = 20.0f;
+    // Oscillatoria: deslizamiento ~2–10 µm/s y vaivén de la punta (rotación del tricoma).
+    float oscillatoriaGlide = 4.0f;  // [µm/s]
+    float swayAmplitude = 6.0f;      // velocidad lateral máxima de la punta [µm/s]
+    float swayPeriod = 10.0f;        // [s]
 };
 
 // Lo que una célula muerta (o una exudación) devuelve al agua.
@@ -58,6 +64,8 @@ struct CyanoFilament {
     float nitrogen = 0.0f;       // [pmol N]
     float direction = 1.0f;      // sentido de deslizamiento
     float reverseTimer = 0.0f;   // [s]
+    std::uint8_t oscillatoria = 0; // 1: Oscillatoria (sin heterocistos); 0: Anabaena
+    float phase = 0.0f;          // vaivén de la punta [rad]
 };
 
 class Cyanobacteria {
@@ -66,9 +74,9 @@ class Cyanobacteria {
     std::vector<CyanoFilament> filaments;
     Dish dish; // pared de la placa
 
-    void spawn(int count, int cells, float width, float height, std::uint64_t seed);
+    void spawn(int count, int cells, float width, float height, std::uint64_t seed, bool oscillatoria = false);
     // Un filamento recto de `cells` células desde `start` (sin fósforo ni nitrógeno: los toma del agua al crecer).
-    void addFilament(Vec2 start, float angle, int cells, Rng& rng);
+    void addFilament(Vec2 start, float angle, int cells, Rng& rng, bool oscillatoria = false);
     std::size_t cellCount() const;
     float biomass() const; // [pmol]
     float phosphorus() const;

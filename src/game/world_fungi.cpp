@@ -11,9 +11,11 @@
 
 namespace {
 
-// Algas que parasitan los quitridios (Rhizophydium spp. infectan diatomeas y clorofitas).
+// Algas que parasitan los quitridios (Rhizophydium spp. infectan diatomeas y clorofitas; hay
+// quitridios específicos de Oedogonium y de las zignematales).
 constexpr std::uint32_t kChytridHosts =
-    speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Navicula) | speciesBit(SpeciesId::Pediastrum);
+    speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Navicula) | speciesBit(SpeciesId::Pediastrum) |
+    speciesBit(SpeciesId::Mougeotia) | speciesBit(SpeciesId::Zygnema) | speciesBit(SpeciesId::Oedogonium);
 
 // Zoophagus insidians atrapa rotíferos que muerden sus clavijas.
 constexpr std::uint32_t kZoophagusPrey = speciesBit(SpeciesId::Rotifer) | speciesBit(SpeciesId::Philodina);
@@ -33,7 +35,8 @@ void World::seedFungi() {
         Vec2 at = randomPoint(rng, 20.0f);
         if (ambient_.size() > 0 && kind == FungusKind::Saprolegnia) {
             const auto i = static_cast<std::size_t>(rng.uniform() * static_cast<float>(ambient_.size())) % ambient_.size();
-            at = {ambient_.x[i], ambient_.y[i]};
+            if (ambient_.kind[i] == ParticleKind::Detritus) // germina sobre materia orgánica, no sobre minerales
+                at = {ambient_.x[i], ambient_.y[i]};
         }
         spawnFungus(kind, at, rng.uniform(0.0f, 2.0f * units::kPi), salt);
     };

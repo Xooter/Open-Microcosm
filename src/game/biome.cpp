@@ -29,16 +29,21 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     puddle.description = "Agua de lluvia sobre barro y hojas: tibia, luminosa y muy rica. Casi todo vive aca.";
     puddle.medium.temperature = 22.0f;
     puddle.medium.organicInflow = 300.0f; // hojas y barro: una infusión natural
-    setWeights(puddle, 1.0f, {{S::Hydra, 0.0f}, {S::Philodina, 0.5f}, {S::Naegleria, 1.0f}, {S::Trichonympha, 0.0f}});
+    setWeights(puddle, 1.0f, {{S::Hydra, 0.0f}, {S::Philodina, 0.5f}, {S::Naegleria, 1.0f}, {S::Trichonympha, 0.0f},
+                              {S::Mougeotia, 0.5f}, {S::Zygnema, 0.5f}, {S::Oedogonium, 0.5f}, {S::Chaetonotus, 1.5f}});
     puddle.bacteria = 50'000;
     puddle.detritus = 60;
     puddle.cyanoFilaments = 15;
+    puddle.oscillatoriaFilaments = 8;
     puddle.cyanoTMin = 10.0f;
     puddle.cyanoTMax = 35.0f;
     puddle.saprolegnia = 4;
     puddle.zoophagus = 2;
     puddle.chytridClusters = 2;
     puddle.patchiness = 0.6f;
+    // Barro: mucha arcilla y limo, granos de arena y óxidos de hierro del suelo.
+    puddle.sediment = {.clay = 500, .quartz = 140, .mica = 15, .ironOxide = 40, .frustules = 10, .rocks = 5};
+    puddle.medium.dustRate = 0.03f;
 
     // Estanque: más frío y menos rico; algas coloniales, Hydra y rotíferos planctónicos.
     Biome& pond = all[static_cast<int>(BiomeId::Pond)];
@@ -51,10 +56,14 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     pond.medium.nitrogen = 300.0f;
     setWeights(pond, 1.0f, {{S::Volvox, 2.0f}, {S::Spirogyra, 1.5f}, {S::Hydra, 1.0f}, {S::Rotifer, 1.5f},
                             {S::Stentor, 1.5f}, {S::Philodina, 0.5f}, {S::Naegleria, 0.0f}, {S::Trichonympha, 0.0f},
-                            {S::Candida, 0.3f}});
+                            {S::Candida, 0.3f}, {S::Oedogonium, 1.5f}});
     pond.medium.naupliusArrivalsPerHour = 0.1f;
     pond.bacteria = 30'000;
+    pond.oscillatoriaFilaments = 5;
     pond.patchiness = 0.3f;
+    // Fondo fino y más limpio; muchas frústulas de diatomeas muertas.
+    pond.sediment = {.clay = 160, .quartz = 50, .mica = 8, .ironOxide = 12, .frustules = 30, .rocks = 2};
+    pond.medium.dustRate = 0.01f;
 
     // Musgo húmedo: película de agua fría, en sombra y ácida (pH ~5,5). Amebas tecadas,
     // rotíferos bdeloideos y Nostoc.
@@ -70,13 +79,18 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     moss.medium.nitrogen = 100.0f;
     setWeights(moss, 0.0f, {{S::Arcella, 3.0f}, {S::Philodina, 1.0f}, {S::Euplotes, 1.0f}, {S::Vorticella, 1.0f},
                             {S::Paramecium, 0.3f}, {S::Chlamydomonas, 0.4f}, {S::Euglena, 0.5f}, {S::Naegleria, 3.0f},
-                            {S::Navicula, 0.5f}, {S::Candida, 1.0f}, {S::Amoeba, 1.0f}});
+                            {S::Navicula, 0.5f}, {S::Candida, 1.0f}, {S::Amoeba, 1.0f}, {S::Zygnema, 0.5f},
+                            {S::Chaetonotus, 1.0f}});
     moss.medium.naupliusArrivalsPerHour = 0.0f;
     moss.bacteria = 30'000;
     moss.cyanoFilaments = 8; // Nostoc
+    moss.oscillatoriaFilaments = 4;
     moss.cyanoTMin = 0.0f;
     moss.zoophagus = 3;      // atrapa a los bdeloideos
     moss.patchiness = 0.4f;
+    // Suelo entre las hojitas: partículas minerales y humus ferruginoso.
+    moss.sediment = {.clay = 250, .quartz = 90, .mica = 12, .ironOxide = 60, .frustules = 5, .rocks = 3};
+    moss.medium.dustRate = 0.02f;
 
     // Intestino de termita: oscuro, sin oxígeno, lleno de astillas de madera y de bacterias.
     Biome& gut = all[static_cast<int>(BiomeId::TermiteGut)];
@@ -96,8 +110,12 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     gut.bacteria = 80'000;
     gut.detritus = 400;
     gut.cyanoFilaments = 0;
+    gut.oscillatoriaFilaments = 0;
     gut.saprolegnia = gut.zoophagus = gut.chytridClusters = 0;
     gut.patchiness = 0.8f;
+    // Algo de suelo que la termita traga junto con la madera; sin granos ni polvo del aire.
+    gut.sediment = {.clay = 60, .quartz = 10};
+    gut.medium.dustRate = 0.0f;
 
     // Fuente termal: 42 °C y alcalina. Tapetes de Mastigocladus y la ameba Naegleria.
     Biome& spring = all[static_cast<int>(BiomeId::HotSpring)];
@@ -113,10 +131,14 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     spring.medium.naupliusArrivalsPerHour = 0.0f;
     spring.bacteria = 60'000;
     spring.cyanoFilaments = 35; // Mastigocladus laminosus
+    spring.oscillatoriaFilaments = 15; // tapetes de Oscillatoria/Phormidium termófilas
     spring.cyanoTMin = 30.0f;
     spring.cyanoTMax = 57.0f;
     spring.saprolegnia = spring.zoophagus = spring.chytridClusters = 0;
     spring.patchiness = 0.2f;
+    // Sínter silíceo, glóbulos de azufre y precipitados de hierro.
+    spring.sediment = {.clay = 40, .quartz = 60, .ironOxide = 70, .sulfur = 140, .rocks = 3};
+    spring.medium.dustRate = 0.01f;
 
     // Hielo marino: canales de salmuera a −2 °C, muy salados y con poca luz. Diatomeas,
     // Chlamydomonas de hielo, Euplotes y nauplios de copépodo.
@@ -136,9 +158,13 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     ice.medium.naupliusArrivalsPerHour = 0.1f;
     ice.bacteria = 20'000;
     ice.cyanoFilaments = 0;
+    ice.oscillatoriaFilaments = 0;
     ice.saprolegnia = ice.zoophagus = 0;
     ice.chytridClusters = 3; // quitridios marinos de diatomeas
     ice.patchiness = 0.3f;
+    // Canales de salmuera: poco sedimento, frústulas de diatomeas del hielo.
+    ice.sediment = {.clay = 30, .quartz = 8, .frustules = 25};
+    ice.medium.dustRate = 0.005f;
     return all;
 }
 
@@ -177,20 +203,28 @@ WorldConfig makeDrop(BiomeId id, std::uint64_t seed) {
     c.bacteria = static_cast<std::size_t>(static_cast<float>(b.bacteria) * rng.uniform(0.7f, 1.3f));
     c.detritus = static_cast<std::size_t>(static_cast<float>(b.detritus) * rng.uniform(0.6f, 1.5f));
     c.cyanoFilaments = static_cast<int>(static_cast<float>(b.cyanoFilaments) * rng.uniform(0.5f, 1.5f));
+    c.oscillatoriaFilaments = static_cast<int>(static_cast<float>(b.oscillatoriaFilaments) * rng.uniform(0.5f, 1.5f));
     c.cyanoTMin = b.cyanoTMin;
     c.cyanoTMax = b.cyanoTMax;
     c.saprolegnia = b.saprolegnia;
     c.zoophagus = b.zoophagus;
     c.chytridClusters = b.chytridClusters;
     c.patchiness = std::clamp(b.patchiness * rng.uniform(0.5f, 1.5f), 0.0f, 1.0f);
+    c.sediment = b.sediment;
+    const float muddy = rng.uniform(0.5f, 1.6f); // algunas gotas son más barrosas que otras
     // Misma densidad en cualquier tamaño de placa.
     const float area = dropAreaScale(c);
     auto scaled = [&](float n) { return std::max(0.0f, std::round(n * area)); };
     c.bacteria = static_cast<std::size_t>(scaled(static_cast<float>(c.bacteria)));
     c.detritus = static_cast<std::size_t>(scaled(static_cast<float>(c.detritus)));
     c.cyanoFilaments = static_cast<int>(scaled(static_cast<float>(c.cyanoFilaments)));
+    c.oscillatoriaFilaments = static_cast<int>(scaled(static_cast<float>(c.oscillatoriaFilaments)));
     c.saprolegnia = static_cast<int>(scaled(static_cast<float>(c.saprolegnia)));
     c.zoophagus = static_cast<int>(scaled(static_cast<float>(c.zoophagus)));
     c.chytridClusters = static_cast<int>(scaled(static_cast<float>(c.chytridClusters)));
+    for (int* n : {&c.sediment.clay, &c.sediment.quartz, &c.sediment.mica, &c.sediment.ironOxide, &c.sediment.sulfur,
+                   &c.sediment.frustules})
+        *n = static_cast<int>(scaled(static_cast<float>(*n) * muddy));
+    c.sediment.rocks = static_cast<int>(scaled(static_cast<float>(c.sediment.rocks)));
     return c;
 }

@@ -59,6 +59,7 @@ void startRun(Game& game) {
     if (empty) { // sandbox: solo el agua, la química y los detritos del bioma
         config.bacteria = 0;
         config.cyanoFilaments = 0;
+        config.oscillatoriaFilaments = 0;
         config.saprolegnia = config.zoophagus = config.chytridClusters = 0;
         config.medium.phage = 0.0f;
     }

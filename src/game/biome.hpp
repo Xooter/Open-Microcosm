@@ -16,9 +16,11 @@ struct Biome {
     float weight[kSpeciesCount]; // multiplicador de la población inicial de cada especie
     std::size_t bacteria, detritus;
     int cyanoFilaments;
+    int oscillatoriaFilaments;
     float cyanoTMin, cyanoTMax;
     int saprolegnia, zoophagus, chytridClusters;
     float patchiness;
+    Sediment sediment; // minerales y granos de arena (por gota de referencia)
 };
 
 const Biome& biome(BiomeId id);

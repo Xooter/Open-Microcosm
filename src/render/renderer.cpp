@@ -2,6 +2,7 @@
 
 #include "core/profiling.hpp"
 #include "game/world.hpp"
+#include "render/minerals.hpp"
 
 #include <rlgl.h>
 
@@ -134,8 +135,21 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
                 const float d = std::max(2.0f * amb.radius[i], minSize);
                 if (amb.kind[i] == ParticleKind::Ink)
                     DrawRectangleV({amb.x[i] + offX - d * 0.5f, amb.y[i] + offY - d * 0.5f}, {d, d}, kInk);
+                else if (amb.kind[i] == ParticleKind::Mineral)
+                    drawMineral(amb.mineral[i], {amb.x[i] + offX, amb.y[i] + offY}, amb.radius[i], amb.angle[i], minSize);
                 else // detritos: grumos redondeados
                     DrawCircleV({amb.x[i] + offX, amb.y[i] + offY}, d * 0.5f, kDetritus);
+            }
+            // Granos de arena (debajo de las células, que se dibujan después).
+            for (const auto [e, body, rock] : world.registry().view<RingBody, Rock>().each()) {
+                if (body.aabbMax.x + offX < view.x || body.aabbMin.x + offX > view.x + view.width ||
+                    body.aabbMax.y + offY < view.y || body.aabbMin.y + offY > view.y + view.height)
+                    continue;
+                rockPts_.resize(body.poly.size());
+                for (std::size_t k = 0; k < body.poly.size(); ++k)
+                    rockPts_[k] = {body.poly[k].x + offX, body.poly[k].y + offY};
+                drawRock(rockPts_.data(), static_cast<int>(rockPts_.size()), {body.centroid.x + offX, body.centroid.y + offY},
+                         rock.kind, rock.seed, std::max(2.5f, 2.0f * minSize));
             }
             // Cianobacterias filamentosas: cadenas de células verde-azuladas; los heterocistos,
             // más grandes, pálidos y de pared gruesa.
@@ -146,6 +160,23 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
                 const float fx = wrapCoord(fil.x[0], w) - fil.x[0], fy = wrapCoord(fil.y[0], h) - fil.y[0];
                 if (!visible(fil.x[0] + fx, fil.y[0] + fy) && !visible(fil.x.back() + fx, fil.y.back() + fy))
                     continue;
+                if (fil.oscillatoria) {
+                    // Oscillatoria: tricoma continuo de células discoidales (paredes transversales
+                    // apretadas), verde azulado oscuro.
+                    for (std::size_t k = 0; k + 1 < fil.x.size(); ++k) {
+                        const Vector2 a = {fil.x[k] + fx + offX, fil.y[k] + fy + offY};
+                        const Vector2 b = {fil.x[k + 1] + fx + offX, fil.y[k + 1] + fy + offY};
+                        DrawLineEx(a, b, std::max(5.5f, minSize), {58, 104, 100, 215});
+                        const Vector2 d = {b.x - a.x, b.y - a.y};
+                        const float len = std::max(1e-3f, std::sqrt(d.x * d.x + d.y * d.y));
+                        const Vector2 m = {0.5f * (a.x + b.x), 0.5f * (a.y + b.y)}, n = {-d.y / len * 2.6f, d.x / len * 2.6f};
+                        DrawLineEx({m.x - n.x, m.y - n.y}, {m.x + n.x, m.y + n.y}, std::max(0.4f, 0.5f * minSize), {36, 70, 68, 200});
+                    }
+                    const Vector2 tip = {fil.x.back() + fx + offX, fil.y.back() + fy + offY};
+                    DrawCircleV(tip, std::max(2.75f, 0.5f * minSize), {58, 104, 100, 215}); // extremo redondeado
+                    DrawCircleV({fil.x[0] + fx + offX, fil.y[0] + fy + offY}, std::max(2.75f, 0.5f * minSize), {58, 104, 100, 215});
+                    continue;
+                }
                 for (std::size_t k = 0; k < fil.x.size(); ++k) {
                     const Vector2 p = {fil.x[k] + fx + offX, fil.y[k] + fy + offY};
                     if (fil.heterocyst[k]) {

@@ -223,7 +223,7 @@ TEST_CASE("sandbox: se puede spawnear cada ser del catálogo y la partida no se 
     CHECK(world.cellCount() >= cells + kSpeciesCount);
     CHECK(world.bacteria().size() > bacteria);
     CHECK(world.bdellovibrios().size() > 0);
-    CHECK(world.cyanobacteria().filaments.size() == filaments + 1);
+    CHECK(world.cyanobacteria().filaments.size() == filaments + 2); // Anabaena y Oscillatoria
     CHECK(world.fungi().mycelia.size() == mycelia + 2);
     CHECK(world.fungi().spores.size() > 0);
     CHECK(world.phage().sum() > 0.0);

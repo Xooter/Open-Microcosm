@@ -105,6 +105,7 @@ add_library(biosim STATIC
     src/game/progress.cpp
     src/game/world.cpp
     src/game/world_fungi.cpp
+    src/game/world_minerals.cpp
     src/game/world_chem.cpp
     src/game/world_metazoa.cpp
     src/game/biome.cpp
@@ -125,6 +126,7 @@ add_executable(bio
     src/main.cpp
     src/core/ui.cpp
     src/render/renderer.cpp
+    src/render/minerals.cpp
     src/render/field_overlay.cpp
     src/render/cell_renderer.cpp
     src/render/instanced_particles.cpp
@@ -145,7 +147,7 @@ endif()
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp)
+    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp)
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
     add_test(NAME bio_tests COMMAND bio_tests)
 endif()

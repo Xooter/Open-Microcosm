@@ -139,7 +139,7 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
     {.name = "Hydra", .locomotion = LocomotionType::Cilia,
      .spec = makeSpec(200.0f, 55.0f, 3.0f, 186, 160, 130, 0.15f, 2.4f, 0.4f), .speedScale = 0.0f,
      .feeding = FeedingMode::Raptorial,
-     .preyMask = speciesBit(SpeciesId::Rotifer) | speciesBit(SpeciesId::Philodina) | speciesBit(SpeciesId::Nauplius) | speciesBit(SpeciesId::Paramecium) | speciesBit(SpeciesId::Euplotes) | speciesBit(SpeciesId::Didinium) | speciesBit(SpeciesId::Lacrymaria),
+     .preyMask = speciesBit(SpeciesId::Rotifer) | speciesBit(SpeciesId::Philodina) | speciesBit(SpeciesId::Nauplius) | speciesBit(SpeciesId::Paramecium) | speciesBit(SpeciesId::Euplotes) | speciesBit(SpeciesId::Didinium) | speciesBit(SpeciesId::Lacrymaria) | speciesBit(SpeciesId::Chaetonotus),
      .initialCount = 1, .sessile = true, .stalkLength = 5.0f, .handlingHours = 2.0f, .colonyDaughters = 1,
      .dryMassScale = 0.3f, .budding = true, .tMin = 5.0f, .tMax = 28.0f, .multicellular = true,
      .maintenanceScale = 0.3f, .tentacles = 6, .tentacleLength = 450.0f},
@@ -172,6 +172,40 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
      .mouthPreyMask = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Candida), .walker = true,
      .handlingHours = 0.05f, .tMin = 0.0f, .tMax = 35.0f, .multicellular = true, .compound = true,
      .maintenanceScale = 0.7f, .mouthReach = 18.0f, .eggHours = 30.0f},
+    // Mougeotia: filamento de células largas y finas (~80 × 16 µm) con un único cloroplasto en
+    // placa axial que GIRA según la luz (fitocromo): con luz débil se pone de frente, con luz
+    // fuerte de canto. Es el ejemplo clásico de movimiento de cloroplastos.
+    {.name = "Mougeotia", .locomotion = LocomotionType::Cilia,
+     .spec = makeSpec(40.0f, 8.0f, 15.0f, 150, 190, 128, 0.3f, 6.0f), .speedScale = 0.0f,
+     .photosynthesisScale = 1.3f, .initialCount = 2, .chloroplasts = true, .filament = true,
+     .filamentCells = 6, .fragmentationPerHour = 0.03f, .dryMassScale = 0.3f, .tMin = 2.0f, .tMax = 32.0f,
+     .cyclosis = 1.5f},
+    // Zygnema: células de ~40 × 28 µm con dos cloroplastos estrellados (cada uno con un
+    // pirenoide) y el núcleo entre ambos. Vive en charcas y sobre suelo y musgo húmedos.
+    {.name = "Zygnema", .locomotion = LocomotionType::Cilia,
+     .spec = makeSpec(20.0f, 14.0f, 15.0f, 146, 186, 120, 0.25f, 6.0f), .speedScale = 0.0f,
+     .photosynthesisScale = 1.4f, .initialCount = 2, .chloroplasts = true, .filament = true,
+     .filamentCells = 8, .fragmentationPerHour = 0.02f, .dryMassScale = 0.35f, .tMin = 0.0f, .tMax = 30.0f,
+     .cyclosis = 1.5f},
+    // Oedogonium: células de ~70 × 22 µm con un cloroplasto parietal reticulado. Al dividirse,
+    // la pared se rompe en un anillo y deja "capuchones" apilados en un extremo de la célula (se
+    // cuentan las divisiones). Simplificación: también se reproduce por zoósporas con una corona
+    // de flagelos que se fijan y forman un filamento nuevo; acá crece y se fragmenta.
+    {.name = "Oedogonium", .locomotion = LocomotionType::Cilia,
+     .spec = makeSpec(35.0f, 11.0f, 15.0f, 136, 182, 116, 0.3f, 6.0f), .speedScale = 0.0f,
+     .photosynthesisScale = 1.4f, .initialCount = 2, .chloroplasts = true, .filament = true,
+     .filamentCells = 7, .fragmentationPerHour = 0.02f, .dryMassScale = 0.3f, .tMin = 5.0f, .tMax = 32.0f,
+     .cyclosis = 1.5f},
+    // Chaetonotus (gastrotrico): animal de ~150 µm con cabeza lobulada, el cuerpo cubierto de
+    // escamas con espinas y una furca (cola bifurcada) con glándulas adhesivas. Se desliza sobre
+    // el fondo con los cilios ventrales y succiona bacterias, algas chicas y diatomeas con la
+    // faringe. Partenogenético: pone pocos huevos grandes (~1 día de incubación).
+    {.name = "Chaetonotus", .locomotion = LocomotionType::Cilia,
+     .spec = makeSpec(45.0f, 16.0f, 10.0f, 206, 200, 178, 0.2f), .speedScale = 0.25f,
+     .feeding = FeedingMode::OralGroove, .fleeMask = speciesBit(SpeciesId::Hydra), .initialCount = 4,
+     .mouthPreyMask = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Candida) | speciesBit(SpeciesId::Navicula),
+     .handlingHours = 0.05f, .tMin = 5.0f, .tMax = 30.0f, .salinityMax = 10.0f, .multicellular = true,
+     .compound = true, .maintenanceScale = 0.7f, .mouthReach = 12.0f, .eggHours = 24.0f},
 };
 
 } // namespace
@@ -199,6 +233,7 @@ Genome speciesGenome(SpeciesId id) {
     case SpeciesId::Podophrya:
     case SpeciesId::Euplotes:
     case SpeciesId::Lacrymaria: // toxicistos en el cuello
+    case SpeciesId::Chaetonotus: // animal: sin extrusomas
         g[Gene::Trichocysts] = 0.0f;
         break;
     case SpeciesId::Arcella: g[Gene::Armor] = 0.9f; break; // testa

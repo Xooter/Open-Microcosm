@@ -7,6 +7,7 @@
 #include "game/run.hpp"
 #include "game/world.hpp"
 #include "render/cell_renderer.hpp"
+#include "render/minerals.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -537,6 +538,14 @@ void drawBeingIcon(Being b, Rectangle r, bool enabled) {
         }
         break;
     }
+    case BeingKind::Oscillatoria: // tricoma continuo con paredes transversales
+        for (int k = 0; k < 8; ++k) {
+            const float x = c.x - 16 + 4.0f * static_cast<float>(k), y = c.y + 6.0f * std::sin(0.5f * static_cast<float>(k));
+            const float x2 = x + 4.0f, y2 = c.y + 6.0f * std::sin(0.5f * static_cast<float>(k + 1));
+            DrawLineEx({x, y}, {x2, y2}, 5.0f, withAlpha({58, 104, 100, 255}, enabled));
+            DrawLineEx({x2, y2 - 2.5f}, {x2, y2 + 2.5f}, 0.8f, withAlpha({36, 70, 68, 255}, enabled));
+        }
+        break;
     case BeingKind::Cyanobacterium:
         for (int k = 0; k < 7; ++k) {
             const bool heterocyst = k == 3;
@@ -577,12 +586,46 @@ void drawBeingIcon(Being b, Rectangle r, bool enabled) {
         DrawLineEx({c.x, c.y + 10}, {c.x + 6, c.y + 15}, 1.0f, col);
         break;
     }
+    case BeingKind::Clay: { // un flóculo de partículas finas
+        const float pos[7][2] = {{-6, -3}, {-2, -6}, {3, -4}, {6, 1}, {1, 4}, {-4, 3}, {-1, -1}};
+        for (const auto& p : pos)
+            drawMineral(MineralKind::Clay, {c.x + p[0], c.y + p[1]}, 2.6f, 0.0f, 0.0f);
+        break;
+    }
+    case BeingKind::Quartz:
+    case BeingKind::Mica:
+    case BeingKind::IronOxide:
+    case BeingKind::Sulfur:
+        drawMineral(beingMineral(b.kind), c, 0.7f * half, 0.6f, 0.0f);
+        break;
+    case BeingKind::Frustule: drawMineral(MineralKind::Frustule, c, half, -0.5f, 0.0f); break;
+    case BeingKind::Rock: {
+        Vector2 pts[32];
+        for (int i = 0; i < 32; ++i) {
+            const float t = 6.2831853f * static_cast<float>(i) / 32.0f;
+            const float rr = half * (1.0f + 0.12f * std::cos(2.0f * t + 0.7f) + 0.05f * std::cos(3.0f * t + 2.0f));
+            pts[i] = {c.x + rr * std::cos(t), c.y + rr * std::sin(t)};
+        }
+        drawRock(pts, 32, c, MineralKind::Quartz, 12345u, 2.2f);
+        break;
+    }
+    case BeingKind::Sediment:
+        drawMineral(MineralKind::Quartz, {c.x - 6, c.y - 5}, 7.0f, 0.3f, 0.0f);
+        drawMineral(MineralKind::IronOxide, {c.x + 8, c.y + 2}, 5.0f, 1.1f, 0.0f);
+        drawMineral(MineralKind::Mica, {c.x - 5, c.y + 9}, 5.0f, 0.2f, 0.0f);
+        for (const float p : {-10.0f, 2.0f, 10.0f})
+            drawMineral(MineralKind::Clay, {c.x + p, c.y - 11 + 0.5f * p}, 1.6f, 0.0f, 0.0f);
+        break;
     case BeingKind::Count: break;
     }
 }
 
 // Tamaño aproximado del ser [µm] para el fantasma bajo el cursor.
 float beingReach(Being b) {
+    if (b.kind == BeingKind::Rock)
+        return 65.0f;
+    if (b.kind == BeingKind::Sediment)
+        return 25.0f;
     if (b.kind != BeingKind::Species)
         return 12.0f;
     const SpeciesInfo& info = speciesInfo(b.species);

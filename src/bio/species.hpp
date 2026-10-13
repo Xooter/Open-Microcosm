@@ -33,6 +33,10 @@ enum class SpeciesId : std::uint8_t {
     Naegleria,
     Trichonympha,
     Philodina,
+    Mougeotia,
+    Zygnema,
+    Oedogonium,
+    Chaetonotus,
     Count
 };
 inline constexpr int kSpeciesCount = static_cast<int>(SpeciesId::Count);

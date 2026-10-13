@@ -38,6 +38,20 @@ constexpr float kOsmotrophUptakePerHour = 1.0f;
 constexpr float kOsmotrophHalfSaturation = 5.0f; // [µM]
 constexpr float kViolaceinDose = 1e-3f;           // daño por bacteria violeta ingerida
 constexpr float kMinDetritusMass = 0.0003f; // [pmol] debajo de esto se disolvió del todo
+// Sedimentación de Stokes: v = 2/9·Δρ·g·r²/µ. Un grano de cuarzo (Δρ = 1650 kg/m³) de 2 µm de
+// radio cae a ~14 µm/s y toca el vidrio en segundos; la arcilla más fina tarda horas y sigue al
+// agua con browniano. Simplificación: las asentadas ya están en el fondo (el agua no las lleva).
+constexpr float kSettledRadius = 2.0f; // [µm]
+
+// Fracción de la luz que bloquea cada mineral (el cuarzo y la mica son transparentes).
+float mineralOpacity(MineralKind k) {
+    switch (k) {
+    case MineralKind::Clay: return 0.5f;
+    case MineralKind::IronOxide: return 1.0f;
+    case MineralKind::Sulfur: return 0.3f;
+    default: return 0.1f;
+    }
+}
 
 template <typename T> void hashVector(std::uint64_t& h, const std::vector<T>& v) {
     const auto* bytes = reinterpret_cast<const unsigned char*>(v.data());
@@ -99,12 +113,14 @@ World::World(const WorldConfig& config)
         Rng rng(config.seed, rng_stream::kSpawn, spawnCounter_++, 0);
         addDetritus(rng, randomPoint(rng));
     }
+    scatterSediment();
     bacteria_.spawn(config.bacteria, width_, height_, config.seed);
     seedBdellovibrio(config.bacteria / 300);
     cyano_.params.tMin = config.cyanoTMin;
     cyano_.params.tMax = config.cyanoTMax;
     cyano_.params.temperature = medium_.temperature;
     cyano_.spawn(config.cyanoFilaments, config.cyanoCells, width_, height_, config.seed);
+    cyano_.spawn(config.oscillatoriaFilaments, config.oscillatoriaCells, width_, height_, config.seed, true);
     if (config.patchiness > 0.0f)
         scatterPatches();
     for (std::size_t k = 0; k < inflowPattern_.v.size(); ++k)
@@ -226,6 +242,7 @@ void World::step(float dt) {
     excludeFromCells();
 
     spawnDetritus(dt);
+    spawnDust(dt);
     arrivals(dt);
     // Marcas de lisis (solo visuales): duran unos segundos.
     std::erase_if(lysisMarks_, [&](const LysisMark& m) { return simTime_ - m.time > 3.0f; });
@@ -273,6 +290,10 @@ void World::stepAmbient(float dt) {
     // Sin inercia: velocidad = la del agua + browniano (Stokes–Einstein según el radio).
 #pragma omp parallel for schedule(static)
     for (std::ptrdiff_t i = 0; i < n; ++i) {
+        if (ambient_.kind[i] == ParticleKind::Mineral && ambient_.radius[i] >= kSettledRadius) {
+            ambient_.age[i] += dt; // asentada en el fondo: solo la mueven las células
+            continue;
+        }
         Rng rng(config_.seed, rng_stream::kAmbient, static_cast<std::uint64_t>(i), step_);
         const float s = std::sqrt(2.0f * units::stokesEinsteinDiffusion(ambient_.radius[i]) * dt);
         const Vec2 u = fluid_.velocityAt({ambient_.x[i], ambient_.y[i]});
@@ -302,6 +323,11 @@ void World::stepAmbient(float dt) {
                 ambient_.swapRemove(i);
                 continue;
             }
+        } else if (ambient_.kind[i] == ParticleKind::Mineral) {
+            // Inerte: no se descompone; las opacas dan sombra.
+            const int cx = food.cellX(ambient_.x[i]), cy = food.cellY(ambient_.y[i]);
+            shading_.at(cx, cy) += mineralOpacity(ambient_.mineral[i]) * units::kPi * ambient_.radius[i] *
+                                   ambient_.radius[i] / cellArea;
         } else {
             const int cx = food.cellX(ambient_.x[i]), cy = food.cellY(ambient_.y[i]);
             const float released = ambient_.mass[i] * (hyphaCover_.at(cx, cy) > 0.0f ? decayedNearHyphae : decayed);
@@ -406,6 +432,8 @@ void World::spawnTestScene(int count) {
 
 entt::entity World::cellAt(Vec2 position) const {
     for (const auto [e, body] : registry_.view<RingBody>().each()) {
+        if (registry_.all_of<Rock>(e))
+            continue; // los granos no son células (ver rockAt)
         const Vec2 q = body.centroid + Vec2{minImage(position.x - body.centroid.x, width_),
                                             minImage(position.y - body.centroid.y, height_)};
         if (polygon::contains(body.poly.data(), static_cast<int>(body.poly.size()), q))
@@ -416,8 +444,13 @@ entt::entity World::cellAt(Vec2 position) const {
 
 void World::removeCellAt(Vec2 position) {
     const entt::entity e = cellAt(position);
-    if (e == entt::null)
+    if (e == entt::null) {
+        if (const entt::entity rock = rockAt(position); rock != entt::null) {
+            destroyCell(registry_, bodies_, rock);
+            rebuildFlowMask();
+        }
         return;
+    }
     if (grabSlot_ != kNoGrab && bodies_.owner[grabSlot_] == entt::to_integral(e))
         endGrab();
     if (e == player_)
@@ -483,6 +516,8 @@ void World::beginBodies(float dt) {
             if (len > 1.0f)
                 push = d * (squeezeSpeed_ / len);
         }
+        if (registry_.all_of<Rock>(static_cast<entt::entity>(body.id)))
+            continue; // el grano está apoyado en el vidrio: ni el agua ni la compresión lo mueven
         // Los nadadores (y las partes de su cuerpo) sienten solo el flujo de fondo.
         const bool swimmer = registry_.any_of<Locomotion, Segment>(static_cast<entt::entity>(body.id));
         auto external = [&](std::uint32_t s) {
@@ -674,15 +709,23 @@ std::uint32_t World::groupOf(std::uint32_t bodyId) const {
 void World::classifyLod() {
     // Niveles: 2 = en detalle (en la vista o cerca), 1 = simplificado (sub-pasos espaciados),
     // 0 = estadístico (fuera de pantalla: se traslada como un sólido, sin XPBD ni contactos).
+    // 3 = fijo (granos de arena): sin predicción ni XPBD, pero sus aristas siguen en la grilla de
+    // contactos, así las células chocan contra ellos (CPU y GPU).
     const std::size_t nb = bodyList_.size();
     bodyNear_.assign(nb, 2);
-    nearCount_ = nb;
-    if (!focusActive_ || lodStride <= 1)
-        return;
     nearCount_ = 0;
+    const bool lod = focusActive_ && lodStride > 1;
     for (std::size_t b = 0; b < nb; ++b) {
         const RingBody& body = *bodyList_[b];
         const auto e = static_cast<entt::entity>(body.id);
+        if (registry_.all_of<Rock>(e)) {
+            bodyNear_[b] = 3;
+            continue;
+        }
+        if (!lod) {
+            ++nearCount_;
+            continue;
+        }
         const Vec2 half = (body.aabbMax - body.aabbMin) * 0.5f;
         const float dx = std::abs(minImage(body.centroid.x - focusCenter_.x, width_));
         const float dy = std::abs(minImage(body.centroid.y - focusCenter_.y, height_));
@@ -775,6 +818,8 @@ void World::resolvePenetrations() {
         // Un cuerpo que no se acerca a ningún otro no puede haber quedado adentro de otro.
         if (memberBody_.size() == members_.size() && bodyTouch_.size() == bodyList_.size() && !bodyTouch_[memberBody_[k]])
             continue;
+        if (memberBody_.size() == members_.size() && bodyNear_.size() == bodyList_.size() && bodyNear_[memberBody_[k]] == 3)
+            continue; // el grano no se mueve: la célula es la que sale
         const float x = bodies_.x[me.slot], y = bodies_.y[me.slot];
         const int bx = wrapIndex(static_cast<int>(std::floor(wrapCoord(x, width_) / bucketSize_)), bucketsX_);
         const int by = wrapIndex(static_cast<int>(std::floor(wrapCoord(y, height_) / bucketSize_)), bucketsY_);
@@ -1064,10 +1109,12 @@ void World::spawnBeing(Being being, Vec2 at) {
             bdello_.push(p.x, p.y, rng.uniform(0.0f, 2.0f * units::kPi));
         }
         break;
-    case BeingKind::Cyanobacterium: {
-        const int cells = std::max(8, config_.cyanoCells);
+    case BeingKind::Cyanobacterium:
+    case BeingKind::Oscillatoria: {
+        const bool osc = being.kind == BeingKind::Oscillatoria;
+        const int cells = std::max(8, osc ? config_.oscillatoriaCells : config_.cyanoCells);
         const Vec2 start = dish_.clampInside(at, cyano_.params.spacing * static_cast<float>(cells) + 4.0f);
-        cyano_.addFilament(start, angle, cells, rng);
+        cyano_.addFilament(start, angle, cells, rng, osc);
         break;
     }
     case BeingKind::Chytrid: spawnFungus(FungusKind::Chytrid, dish_.clampInside(at, 10.0f), angle, 30000 + toolCounter_); break;
@@ -1085,6 +1132,19 @@ void World::spawnBeing(Being being, Vec2 at) {
             }
         break;
     }
+    case BeingKind::Clay:
+        for (int k = 0; k < 12; ++k) { // un flóculo: una sola partícula de arcilla apenas se ve
+            const float a = rng.uniform(0.0f, 2.0f * units::kPi), r = 6.0f * std::sqrt(rng.uniform());
+            spawnMineral(MineralKind::Clay, {at.x + r * std::cos(a), at.y + r * std::sin(a)}, rng);
+        }
+        break;
+    case BeingKind::Quartz:
+    case BeingKind::Mica:
+    case BeingKind::IronOxide:
+    case BeingKind::Sulfur:
+    case BeingKind::Frustule: spawnMineral(beingMineral(being.kind), at, rng); break;
+    case BeingKind::Rock: spawnRock(at, rng.uniform(40.0f, 90.0f), MineralKind::Quartz, rng); break;
+    case BeingKind::Sediment: spawnSediment(at, 40, rng); break;
     case BeingKind::Count: break;
     }
 }
@@ -1174,7 +1234,7 @@ std::vector<const RingBody*> World::preyFor(const RingBody& predator) const {
     const Vec2 center = (predator.aabbMax + predator.aabbMin) * 0.5f;
     const float margin = feedingParams_.wrapReach + feedingParams_.contactGap + 10.0f;
     for (auto [e, body] : registry_.view<RingBody>().each()) {
-        if (&body == &predator || std::abs(body.restArea) > maxArea)
+        if (&body == &predator || std::abs(body.restArea) > maxArea || registry_.all_of<Rock>(e))
             continue;
         // Una lórica o testa gruesa no se puede fagocitar.
         if (const Heredity* h = registry_.try_get<Heredity>(e); h && h->traits.armor >= 0.5f)
@@ -2397,6 +2457,15 @@ void World::lyse(entt::entity cell, const char* cause) {
         ambient_.push(ParticleKind::Detritus, wrapCoord(p.x, width_), wrapCoord(p.y, height_),
                       std::min(4.0f, radiusFromMass(each)), each);
     }
+    // Diatomeas: la frústula de sílice no se descompone; queda vacía en el sedimento (las que
+    // se ven en cualquier muestra de agua son, en buena parte, frústulas de células muertas).
+    if (const Species* sp = registry_.try_get<Species>(cell); sp && speciesInfo(sp->id).frustule) {
+        float half = speciesInfo(sp->id).spec.radiusX;
+        if (const CellShape* shape = registry_.try_get<CellShape>(cell))
+            half = shape->radiusX * std::sqrt(std::abs(body.restArea) / (units::kPi * shape->radiusX * shape->radiusY));
+        ambient_.push(ParticleKind::Mineral, wrapCoord(body.centroid.x, width_), wrapCoord(body.centroid.y, height_), half,
+                      0.0f, MineralKind::Frustule, body.angle);
+    }
 
     if (cell == player_) {
         player_ = entt::null;
@@ -2436,6 +2505,8 @@ std::vector<entt::entity> World::lineageMembers() const {
 Census World::census() const {
     Census c;
     for (auto [e, body] : registry_.view<RingBody>().each()) {
+        if (registry_.all_of<Rock>(e))
+            continue; // los granos de arena no son biomasa
         if (registry_.any_of<Segment, Egg>(e)) { // partes de un cuerpo y huevos: no son individuos
             if (const Egg* egg = registry_.try_get<Egg>(e)) {
                 c.totalBiomass += egg->biomass;

@@ -310,6 +310,83 @@ void drawSpiralPlastid(const RingBody& body, float time) {
     }
 }
 
+// Mougeotia: placa axial única. Con luz débil se ve de frente (llena el ancho de la célula); con
+// luz fuerte gira de canto y se ve como una línea (en la realidad tarda minutos en girar).
+void drawPlatePlastid(const RingBody& body, float light) {
+    const Frame f = frameOf(body);
+    const float edgeOn = std::clamp((light - 0.35f) / 0.5f, 0.0f, 1.0f);
+    const float w = f.width * (0.8f - 0.65f * edgeOn * edgeOn * (3.0f - 2.0f * edgeOn));
+    const Vec2 a = f.c - f.h * (0.88f * f.half), b = f.c + f.h * (0.88f * f.half);
+    DrawLineEx(toRay(a), toRay(b), std::max(1.0f, 2.0f * w), Fade(kChloroplast, 0.55f + 0.35f * edgeOn));
+    for (int k = -2; k <= 2; ++k) // pirenoides en fila sobre la placa
+        DrawCircleV(toRay(f.c + f.h * (0.32f * f.half * static_cast<float>(k))), std::max(0.8f, std::min(0.3f * f.width, 2.2f)),
+                    Fade(kColonyCell, 0.9f));
+}
+
+// Zygnema: dos cloroplastos estrellados con un pirenoide cada uno; el núcleo, entre ambos.
+void drawStellatePlastids(const RingBody& body, float time) {
+    const Frame f = frameOf(body);
+    for (float s : {-1.0f, 1.0f}) {
+        const Vec2 c = f.c + f.h * (0.48f * f.half * s);
+        const float r = 0.55f * std::min(f.width, 0.5f * f.half);
+        for (int k = 0; k < 9; ++k) { // brazos que irradian hasta la pared
+            const float a = 6.2831853f * static_cast<float>(k) / 9.0f + 0.3f * s + 0.02f * time;
+            const Vec2 d = f.h * std::cos(a) + f.side * std::sin(a);
+            DrawLineEx(toRay(c), toRay(c + d * (1.55f * r)), std::max(0.8f, 0.22f * r), kChloroplast);
+        }
+        DrawCircleV(toRay(c), std::max(1.2f, 0.55f * r), kChloroplast);
+        DrawCircleV(toRay(c), std::max(0.8f, 0.28f * r), kColonyCell); // pirenoide
+    }
+}
+
+// Oedogonium: cloroplasto parietal en red y capuchones (anillos de pared) junto a un polo, uno
+// por cada división de esa célula.
+void drawReticulatePlastid(const RingBody& body, int caps, float px) {
+    const Frame f = frameOf(body);
+    for (int i = -4; i <= 4; ++i)
+        for (int j = -1; j <= 1; ++j) {
+            const Vec2 p = f.c + f.h * (0.2f * f.half * static_cast<float>(i)) +
+                           f.side * (0.45f * f.width * static_cast<float>(j) + 0.12f * f.width * static_cast<float>(i % 2));
+            const Vec2 q = p + f.h * (0.2f * f.half) + f.side * (0.2f * f.width * static_cast<float>((i + j) % 2 ? 1 : -1));
+            if (i < 4)
+                DrawLineEx(toRay(p), toRay(q), std::max(0.7f, 0.18f * f.width), Fade(kChloroplast, 0.8f));
+            DrawCircleV(toRay(p), std::max(0.6f, 0.12f * f.width), kChloroplast);
+        }
+    for (int k = 0; k < caps; ++k) {
+        const Vec2 c = f.c + f.h * (f.half * (0.9f - 0.07f * static_cast<float>(k)));
+        DrawLineEx(toRay(c - f.side * (1.05f * f.width)), toRay(c + f.side * (1.05f * f.width)), std::max(0.6f, px), kLorica);
+    }
+}
+
+// Gastrotrico (Chaetonotus): escamas con espinas que apuntan hacia atrás sobre el tronco.
+void drawGastrotrichTrunk(const BodyParticles& bp, const RingBody& body, float px) {
+    const Frame f = frameOf(body);
+    const std::size_t n = body.ring.size();
+    for (std::size_t i = 0; i < n; i += 3) {
+        const Vec2 b = ringPos(bp, body, i);
+        const Vec2 o = outwardAt(bp, body, i);
+        Vec2 d = o * 0.5f - f.h;
+        d = d * (1.0f / std::max(1e-3f, length(d)));
+        DrawLineEx(toRay(b), toRay(b + d * 7.0f), std::max(0.5f, 0.8f * px), kLorica);
+    }
+    // Faringe muscular: el tubo que succiona, en el tercio anterior.
+    DrawLineEx(toRay(f.c + f.h * (0.95f * f.half)), toRay(f.c + f.h * (0.2f * f.half)), std::max(2.0f, 0.35f * f.width), Fade(kMastax, 0.6f));
+}
+
+// Gastrotrico: cabeza con penachos de cilios a los costados.
+void drawGastrotrichHead(const BodyParticles& bp, const RingBody& body, Vec2 forward, float time, float px) {
+    const std::size_t n = body.ring.size();
+    for (std::size_t i = 0; i < n; ++i) {
+        const Vec2 b = ringPos(bp, body, i);
+        const float ahead = dot(b - body.centroid, forward);
+        if (ahead < -0.2f * length(b - body.centroid))
+            continue;
+        const Vec2 o = outwardAt(bp, body, i);
+        const float sw = 0.5f * std::sin(0.5f * static_cast<float>(i) - 6.2831853f * 4.0f * time);
+        DrawLineEx(toRay(b), toRay(b + rotate(o, std::cos(sw), std::sin(sw)) * 5.0f), std::max(0.4f, 0.8f * px), kCilia);
+    }
+}
+
 // Diatomea pennada: frústula de sílice con rafe central y estrías.
 void drawFrustule(const RingBody& body, float px) {
     const Frame f = frameOf(body);
@@ -603,14 +680,20 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                                        : body.centroid;
                 Vec2 away = body.centroid - trunk;
                 away = away * (1.0f / std::max(1e-3f, length(away)));
-                if (comp && !comp->parts.empty() && comp->parts[0] == e)
-                    drawCorona(bp, body, away, time, px);
-                else
-                    drawFoot(body, away, px);
+                if (comp && !comp->parts.empty() && comp->parts[0] == e) {
+                    if (sid == SpeciesId::Chaetonotus)
+                        drawGastrotrichHead(bp, body, away, time, px);
+                    else
+                        drawCorona(bp, body, away, time, px);
+                } else {
+                    drawFoot(body, away, px); // pie con dedos del rotífero o furca del gastrotrico
+                }
             } else if (sid == SpeciesId::Rotifer) {
                 drawRotiferTrunk(bp, body, time, px);
             } else if (sid == SpeciesId::Philodina) {
                 drawBdelloidTrunk(body, time, px);
+            } else if (sid == SpeciesId::Chaetonotus) {
+                drawGastrotrichTrunk(bp, body, px);
             } else if (loco && sid == SpeciesId::Trichonympha) {
                 drawCilia(bp, body, time, px, CiliaPattern::Rostrum, 2.4f); // miles de flagelos
                 drawCilia(bp, body, time, px, CiliaPattern::Rostrum, 1.5f);
@@ -634,6 +717,14 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 DrawTriangle(toRay(tip + h * 8.0f), toRay(tip - Vec2{-h.y, h.x} * 5.0f), toRay(tip + Vec2{-h.y, h.x} * 5.0f), kMouth);
             } else if (sid == SpeciesId::Spirogyra) {
                 drawSpiralPlastid(body, time);
+            } else if (sid == SpeciesId::Mougeotia) {
+                const Metabolism* mm = reg.try_get<Metabolism>(e);
+                drawPlatePlastid(body, mm ? mm->light : 0.5f);
+            } else if (sid == SpeciesId::Zygnema) {
+                drawStellatePlastids(body, time);
+            } else if (sid == SpeciesId::Oedogonium) {
+                const Lineage* lin = reg.try_get<Lineage>(e);
+                drawReticulatePlastid(body, lin ? static_cast<int>(std::min<std::uint32_t>(4, lin->generation)) : 0, px);
             } else if (sid == SpeciesId::Navicula) {
                 drawFrustule(body, px);
             } else if (sid == SpeciesId::Volvox) {
@@ -710,8 +801,9 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                                      static_cast<float>(s % 180), kMitochondrion);
                     break;
                 case OrganelleTag::Chloroplast:
-                    if (sid == SpeciesId::Spirogyra)
-                        break; // su cloroplasto es la cinta helicoidal
+                    if (sid == SpeciesId::Spirogyra || sid == SpeciesId::Mougeotia || sid == SpeciesId::Zygnema ||
+                        sid == SpeciesId::Oedogonium)
+                        break; // su cloroplasto se dibuja entero (cinta, placa, estrellas o red)
                     DrawCircleV({bp.x[s], bp.y[s]}, r, sid == SpeciesId::Navicula ? kGoldenPlastid : kChloroplast);
                     break;
                 case OrganelleTag::Lysosome:

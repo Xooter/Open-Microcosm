@@ -26,7 +26,8 @@ std::size_t frontIndex(const RingBody& body) {
 } // namespace
 
 void World::buildCompoundParts(entt::entity organism, const SpeciesInfo& info, const CellSpec& spec) {
-    // Rotífero: corona (disco ciliado ancho) delante del tronco y pie con dedos detrás.
+    // Rotífero: corona (disco ciliado ancho) delante del tronco y pie con dedos detrás. El
+    // gastrotrico tiene el mismo plan: cabeza ciliada, tronco y furca.
     const Vec2 dir = {std::cos(spec.angle), std::sin(spec.angle)};
     CellSpec head = spec;
     head.radiusX = 0.42f * spec.radiusX;

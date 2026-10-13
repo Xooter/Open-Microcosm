@@ -10,9 +10,9 @@
 #include <algorithm>
 #include <cmath>
 
-void Cyanobacteria::spawn(int count, int cells, float width, float height, std::uint64_t seed) {
+void Cyanobacteria::spawn(int count, int cells, float width, float height, std::uint64_t seed, bool oscillatoria) {
     for (int f = 0; f < count; ++f) {
-        Rng rng(seed, rng_stream::kCyano, static_cast<std::uint64_t>(f), 0);
+        Rng rng(seed, rng_stream::kCyano, static_cast<std::uint64_t>(f) + (oscillatoria ? 50000u : 0u), 0);
         const float a = rng.uniform(0.0f, 2.0f * units::kPi);
         float x0 = rng.uniform(0.0f, width), y0 = rng.uniform(0.0f, height);
         if (dish.active()) { // el filamento entero dentro del agua
@@ -20,20 +20,22 @@ void Cyanobacteria::spawn(int count, int cells, float width, float height, std::
             x0 = p.x;
             y0 = p.y;
         }
-        addFilament({x0, y0}, a, cells, rng);
+        addFilament({x0, y0}, a, cells, rng, oscillatoria);
     }
 }
 
-void Cyanobacteria::addFilament(Vec2 start, float angle, int cells, Rng& rng) {
+void Cyanobacteria::addFilament(Vec2 start, float angle, int cells, Rng& rng, bool oscillatoria) {
     CyanoFilament fil;
+    fil.oscillatoria = oscillatoria ? 1 : 0;
     for (int k = 0; k < cells; ++k) {
         fil.x.push_back(start.x + std::cos(angle) * params.spacing * static_cast<float>(k));
         fil.y.push_back(start.y + std::sin(angle) * params.spacing * static_cast<float>(k));
         fil.mass.push_back(rng.uniform(1.0f, 2.0f));
-        fil.heterocyst.push_back(k % params.heterocystSpacing == params.heterocystSpacing / 2 ? 1 : 0);
+        fil.heterocyst.push_back(!oscillatoria && k % params.heterocystSpacing == params.heterocystSpacing / 2 ? 1 : 0);
     }
     fil.direction = rng.uniform() < 0.5f ? -1.0f : 1.0f;
     fil.reverseTimer = rng.uniform(10.0f, 40.0f);
+    fil.phase = rng.uniform(0.0f, 6.2831853f);
     filaments.push_back(std::move(fil));
 }
 
@@ -76,15 +78,21 @@ void Cyanobacteria::move(const Fluid& fluid, float dt, std::uint64_t seed, std::
             f.direction = -f.direction;
             f.reverseTimer = rng.uniform(10.0f, 40.0f);
         }
-        const float glide = params.glideSpeed * f.direction;
+        const float glide = (f.oscillatoria ? params.oscillatoriaGlide : params.glideSpeed) * f.direction;
+        // Oscillatoria: el tricoma rota mientras se desliza y la punta que avanza barre de lado a
+        // lado; el vaivén se apaga hacia atrás (las células de atrás siguen el camino).
+        f.phase += 6.2831853f * dt / params.swayPeriod;
+        const float sway = f.oscillatoria ? params.swayAmplitude * std::sin(f.phase) : 0.0f;
         for (std::size_t k = 0; k < n; ++k) {
             const std::size_t a = k == 0 ? 0 : k - 1, b = k + 1 < n ? k + 1 : n - 1;
             Vec2 t = {f.x[b] - f.x[a], f.y[b] - f.y[a]};
             const float len = length(t);
             t = len > 1e-4f ? t * (1.0f / len) : Vec2{1.0f, 0.0f};
             const Vec2 u = fluid.velocityAt({f.x[k], f.y[k]});
-            f.x[k] += (u.x + t.x * glide) * dt;
-            f.y[k] += (u.y + t.y * glide) * dt;
+            const float fromTip = static_cast<float>(f.direction > 0.0f ? n - 1 - k : k);
+            const float lateral = sway * std::exp(-fromTip / 3.0f);
+            f.x[k] += (u.x + t.x * glide - t.y * lateral) * dt;
+            f.y[k] += (u.y + t.y * glide + t.x * lateral) * dt;
         }
         // Cadena: distancias fijas entre células y algo de rigidez de flexión.
         for (int it = 0; it < 4; ++it) {
@@ -225,9 +233,10 @@ void Cyanobacteria::credit(const std::vector<float>& takenP, const std::vector<f
                 ++k;
             }
         }
-        // Heterocistos: una célula se diferencia si no hay otro a menos de ~10 células.
+        // Heterocistos: una célula se diferencia si no hay otro a menos de ~10 células
+        // (Oscillatoria no los forma).
         int sinceLast = params.heterocystSpacing / 2;
-        for (std::size_t k = 0; k < f.x.size(); ++k) {
+        for (std::size_t k = 0; k < f.x.size() && !f.oscillatoria; ++k) {
             sinceLast = f.heterocyst[k] ? 0 : sinceLast + 1;
             if (sinceLast >= params.heterocystSpacing) {
                 f.heterocyst[k] = 1;
@@ -267,6 +276,8 @@ void Cyanobacteria::credit(const std::vector<float>& takenP, const std::vector<f
             f.phosphorus -= part.phosphorus;
             f.nitrogen -= part.nitrogen;
             part.direction = -f.direction;
+            part.oscillatoria = f.oscillatoria;
+            part.phase = f.phase;
             part.reverseTimer = rng.uniform(10.0f, 40.0f);
             f.x.resize(cut);
             f.y.resize(cut);
@@ -290,6 +301,8 @@ void Cyanobacteria::credit(const std::vector<float>& takenP, const std::vector<f
             f.phosphorus -= part.phosphorus;
             f.nitrogen -= part.nitrogen;
             part.direction = -f.direction;
+            part.oscillatoria = f.oscillatoria;
+            part.phase = f.phase;
             part.reverseTimer = rng.uniform(10.0f, 40.0f);
             f.x.resize(half);
             f.y.resize(half);

@@ -6,6 +6,8 @@
 
 #include <raylib.h>
 
+#include <vector>
+
 class World;
 
 // Estilo campo claro (brightfield): fondo luminoso, organismos oscuros y semitransparentes.
@@ -42,5 +44,6 @@ class Renderer {
         int resolution = -1, offset = -1, target = -1, zoom = -1, dish = -1;
     } glassLoc_;
     Stain stain_ = Stain::None;
+    std::vector<Vector2> rockPts_; // contorno de un grano (se reusa entre frames)
     bool postEnabled_ = true;
 };
