@@ -13,6 +13,7 @@
 #include "bio/metabolism.hpp"
 #include "bio/phagocytosis.hpp"
 #include "bio/species.hpp"
+#include "game/inspect.hpp"
 #include "game/lineage.hpp"
 #include "game/sandbox.hpp"
 #include "core/rng.hpp"
@@ -53,6 +54,20 @@ struct MediumParams {
     // Nitrógeno inorgánico disuelto [µM]: con N:P = 10 (< 16) el agua termina limitada por N,
     // lo que favorece a las cianobacterias fijadoras (Smith 1983).
     float nitrogen = 1000.0f;
+    // Sílice disuelta (ácido silícico) [µM]: las diatomeas la necesitan para cada valva nueva.
+    // Aguas dulces 50–300 µM (medio WC/Chu: ~200-300); el mar abierto, 1–10 µM.
+    float silicate = 300.0f;
+    // Hierro disuelto biodisponible [µM]: en la naturaleza 0,01–1 µM (queda quelado); el medio
+    // de cultivo lo da con EDTA, ~1–10 µM. Limita a los fotótrofos en el mar abierto.
+    float iron = 1.0f;
+    // Vitamina B₁₂ disuelta [µM]: en la naturaleza ~1–10 pM; en cultivo ~100 pM–2 nM. Solo la
+    // sintetizan procariotas: las bacterias de la gota la liberan (por hora biológica y por
+    // cada 50.000 bacterias) y la luz la degrada.
+    float vitamin = 2e-3f;
+    float vitaminSourcePerHour = 2e-5f;
+    float vitaminDecayPerHour = 0.02f;
+    // Disolución de las frústulas muertas (la sílice biogénica es opal, apenas soluble): ~0,2%/h.
+    float frustuleDissolutionPerHour = 0.002f;
     float alkalinity = 1000.0f;       // bicarbonato [µM]: fija el pH con el CO₂ (pKa 6,35)
     float phage = 2e-7f;              // fagos libres iniciales [viriones/µm³] (2·10⁵/mL)
     float phageDecayPerHour = 0.05f;  // inactivación (UV, adsorción a partículas)
@@ -137,6 +152,17 @@ struct Observations {
     int eggsLaid = 0, eggsHatched = 0;
     int arrivals = 0;
     int zoospores = 0, zoosporesSettled = 0;
+};
+
+// Una muerte reciente de un individuo (la ficha de inspección dice de qué murió). `successor`:
+// el ser que ocupó su lugar (la zoóspora que salió de la célula, la cría que salió del huevo).
+struct DeathRecord {
+    entt::entity entity = entt::null;
+    entt::entity successor = entt::null;
+    SpeciesId species = SpeciesId::Paramecium;
+    std::string cause;
+    Vec2 at;
+    float time = 0.0f; // [s] de simulación
 };
 
 // Una célula que acaba de reventar (para el efecto visual de la lisis).
@@ -229,6 +255,9 @@ class World {
     // Sandbox: completa biomasa y reservas hasta el umbral de la especie para que se reproduzca
     // por su vía normal (fisión, palintomía, colonias, gemación o huevo). false si no puede.
     bool forceReproduction(entt::entity cell);
+    // Inspección: qué hay en `position` (a `tolerance` µm de su borde). Lo más grande y lo más
+    // cercano tienen prioridad: células, granos y después partículas.
+    Picked pick(Vec2 position, float tolerance) const;
     // Minerales: una partícula suelta, un grano de arena (false si se superpone con algo) o
     // `count` partículas de sedimento mezclado alrededor de `at`.
     void spawnMineral(MineralKind kind, Vec2 at, Rng& rng);
@@ -243,7 +272,9 @@ class World {
     entt::entity player() const { return player_; }
     void setPlayerInput(const PlayerInput& input) { playerInput_ = input; }
     LocomotionParams& locomotionParams() { return locomotionParams_; }
+    const LocomotionParams& locomotionParams() const { return locomotionParams_; }
     MetabolismParams& metabolismParams() { return metabolismParams_; }
+    const MetabolismParams& metabolismParams() const { return metabolismParams_; }
     // Compresión del tiempo biológico (por defecto units::kBioTimeScale; ajustable para debug).
     float& bioTimeScale() { return bioTimeScale_; }
     // Tiempo biológico por segundo real, con la temperatura (Q10 = 2 respecto de 20 °C).
@@ -253,6 +284,11 @@ class World {
     const char* lastDeathCause() const { return lastDeathCause_; }
     // Muertes por especie y causa desde el comienzo (enciclopedia, balance).
     const std::map<std::pair<SpeciesId, std::string>, int>& deathTally() const { return deathTally_; }
+    // Las últimas muertes de individuos (las más viejas se olvidan). nullptr si no está.
+    const DeathRecord* deathOf(entt::entity e) const;
+    // ¿Está saciada (manipulando una presa entera o con el citoplasma lleno)?
+    bool isSatiated(entt::entity e) const;
+    const MediumParams& medium() const { return medium_; }
     // Debug: mata (lisa) a la célula bajo el cursor.
     void lyseAt(Vec2 position);
     FeedingParams& feedingParams() { return feedingParams_; }
@@ -279,6 +315,19 @@ class World {
     ChemField& nutrients() { return nutrients_; }
     const ChemField& phosphate() const { return phosphate_; }
     const ChemField& nitrogen() const { return nitrogen_; }
+    const ChemField& silicate() const { return silicate_; }
+    const ChemField& iron() const { return iron_; }
+    const ChemField& vitamin() const { return vitamin_; }
+    // Totales conservados [pmol] (agua + células + frústulas): lo disuelto en la sílice y el hierro.
+    double totalSilicon() const;
+    double totalIron() const;
+    // Agrega a un campo disuelto una dosis [µM sobre toda la placa] (herramienta del laboratorio).
+    void dose(ChemField& field, Vec2 at, float radius, float micromolar);
+    ChemField& silicateField() { return silicate_; }
+    ChemField& ironField() { return iron_; }
+    ChemField& vitaminField() { return vitamin_; }
+    ChemField& phosphateField() { return phosphate_; }
+    ChemField& nitrogenField() { return nitrogen_; }
     const ChemField& co2() const { return co2_; }
     const ChemField& toxin() const { return toxin_; }
     const ChemField& autoinducer() const { return autoinducer_; }
@@ -301,6 +350,9 @@ class World {
     Bacteria& bacteria() { return bacteria_; }
     const Bacteria& bacteria() const { return bacteria_; }
     MediumParams& medium() { return medium_; }
+    // Recalcula lo que depende de la temperatura, la anoxia y la salinidad (Q10, viscosidad, O₂ de
+    // saturación) después de cambiar `medium()` a mano, y lo aplica a las células vivas.
+    void refreshMedium();
     SoftBodyTuning& softTuning() { return softTuning_; }
     const entt::registry& registry() const { return registry_; }
     entt::registry& registry() { return registry_; }
@@ -382,11 +434,12 @@ class World {
     void updateLifecycle(float dt);
     void applyDivisionForces();
     void duplicateOrganelles(entt::entity cell);
-    bool isSatiated(entt::entity e) const;
     bool septumTips(const RingBody& body, std::size_t& tipA, std::size_t& tipB) const;
     void divide(entt::entity cell, std::size_t tipA, std::size_t tipB);
     void lyse(entt::entity cell, const char* cause);
     void recordDeath(entt::entity cell, const std::string& cause);
+    void noteDeath(entt::entity e, SpeciesId species, Vec2 at, const std::string& cause,
+                   entt::entity successor = entt::null);
     void applyTraits(entt::entity cell);
     void pullTogether(RingBody& body, const RingBody& partner);
     void holdAt(RingBody& body, Vec2 point);
@@ -410,6 +463,11 @@ class World {
     void buildCompoundParts(entt::entity organism, const SpeciesInfo& info, const CellSpec& spec);
     void growTentacles(entt::entity e, const SpeciesInfo& info);
     void destroyOrganism(entt::entity e);
+    // Micronutrientes (Si, Fe, B₁₂) de una célula: tomar su cuota inicial del agua, crecer con
+    // más biomasa y devolverla al morir o ser comida.
+    void seedMicronutrients(Metabolism& m, const SpeciesInfo& info, Vec2 at);
+    void growMicronutrients(Metabolism& m, Vec2 at, float factor);
+    float releaseMicronutrients(entt::entity e, Vec2 at); // devuelve el Si (para la frústula)
     void updateTentacles(float dt);
     void layEgg(entt::entity mother);
     void updateEggs(float bioDt);
@@ -433,7 +491,7 @@ class World {
 
     Fft2D fft_;
     Fluid fluid_;
-    ChemField oxygen_, nutrients_, phosphate_, nitrogen_, co2_, toxin_, autoinducer_, phage_;
+    ChemField oxygen_, nutrients_, phosphate_, nitrogen_, silicate_, iron_, vitamin_, co2_, toxin_, autoinducer_, phage_;
     Grid2D light_, shading_;
     AmbientParticles ambient_;
     Bacteria bacteria_;
@@ -487,6 +545,7 @@ class World {
     float temperatureFactor_ = 1.0f, o2Saturation_ = units::kO2Saturation, viscositySpeed_ = 1.0f;
     const char* lastDeathCause_ = "";
     std::map<std::pair<SpeciesId, std::string>, int> deathTally_;
+    std::vector<DeathRecord> recentDeaths_; // las últimas kRecentDeaths
     std::vector<std::pair<entt::entity, const char*>> dying_;
     std::vector<entt::entity> settling_, released_, colonyReleases_, eggsToLay_, zoosporeReleases_, zoosporeSettling_;
     std::vector<AdhesionLink> links_;

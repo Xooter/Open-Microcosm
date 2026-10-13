@@ -34,6 +34,20 @@ struct MetabolismParams {
     float nitrogenRatio = 0.16f;           // pmol N por pmol de biomasa
     float nitrogenHalfSaturation = 1.0f;   // [µM]
     float nitrogenUptakePerHour = 0.3f;
+    // Micronutrientes. Cada uno es una cuota (pmol por pmol de biomasa) que la célula toma del agua
+    // con cinética de Monod y que limita su crecimiento (ley del mínimo de Liebig).
+    //  - Sílice: solo las diatomeas; cada valva nueva de la frústula la necesita (Si:C ~ 0,1–0,2).
+    //  - Hierro: las fotótrofas (fotosistemas, ferredoxina); Fe:C ~ 10⁻⁴ en cultivo.
+    //  - Vitamina B₁₂: auxótrofas (Euglena, diatomeas); la sintetizan solo bacterias y arqueas.
+    float siliconRatio = 0.02f; // (la frústula real: Si:C ~ 0,1; acá por pmol de materia seca)
+    float siliconHalfSaturation = 2.0f;   // [µM]
+    float siliconUptakePerHour = 0.3f;
+    float ironRatio = 1e-4f;
+    float ironHalfSaturation = 0.05f;     // [µM]
+    float ironUptakePerHour = 0.3f;
+    float vitaminRatio = 1e-7f;
+    float vitaminHalfSaturation = 2e-4f;  // [µM] (~200 pM)
+    float vitaminUptakePerHour = 0.3f;
     // pH: fuera del rango de la especie el mantenimiento se encarece (bombas de protones).
     float phStressPerUnit = 1.0f;
 };
@@ -46,6 +60,10 @@ struct Metabolism {
     float reserves = 0.0f;     // glucógeno/paramilón y otras reservas [pmol]
     float phosphorus = 0.0f;   // [pmol P] (solo se contabiliza en fotótrofas)
     float nitrogen = 0.0f;     // [pmol N] (ídem)
+    float silicon = 0.0f;      // [pmol Si] (diatomeas)
+    float iron = 0.0f;         // [pmol Fe] (fotótrofas)
+    float vitamin = 0.0f;      // [pmol B₁₂] (auxótrofas)
+    bool needsSilicon = false, needsVitamin = false;
     int fissions = 1;          // divisiones por ciclo (2 = palintomía en 4 hijas)
     int pendingFissions = 0;   // divisiones que faltan del ciclo actual
     float ageHours = 0.0f;
@@ -69,6 +87,9 @@ struct MetabolicInput {
     float motilityCostScale = 1.0f;
     float phosphate = 0.0f;   // [µM] en la célula
     float nitrogen = 0.0f;    // nitrógeno inorgánico disuelto [µM]
+    float silicate = 0.0f;    // [µM] ácido silícico disuelto
+    float iron = 0.0f;        // [µM] hierro disuelto biodisponible
+    float vitamin = 0.0f;     // [µM] vitamina B₁₂ disuelta
     float phStress = 0.0f;    // unidades de pH fuera del rango tolerado
     float toxin = 0.0f;       // daño por toxinas (microcistina, violaceína): multiplica el gasto
     // Anaerobias con hidrogenosomas (Trichonympha): ~4 ATP por glucosa en vez de 2.
@@ -80,6 +101,7 @@ struct MetabolicOutput {
     float o2Produced = 0.0f; // [pmol]
     float phosphateTaken = 0.0f; // [pmol P]
     float nitrogenTaken = 0.0f;  // [pmol N]
+    float siliconTaken = 0.0f, ironTaken = 0.0f, vitaminTaken = 0.0f; // [pmol]
     float co2Fermented = 0.0f;   // CO₂ de la fermentación [pmol] (2 por glucosa)
     float exudate = 0.0f;        // materia orgánica liberada al agua [pmol]
 };

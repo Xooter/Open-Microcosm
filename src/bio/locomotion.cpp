@@ -237,7 +237,11 @@ RigidMotion undulate(RingBody& body, BodyParticles& bp, Locomotion& loco, Undula
     const float c = und.crowding;
     const float hz = p.swimHz + (p.crawlHz - p.swimHz) * c;
     const float k = 6.2831853f / (L * (p.swimWavelength + (p.crawlWavelength - p.swimWavelength) * c));
-    const float amp = p.swimAmplitude + (p.crawlAmplitude - p.swimAmplitude) * c;
+    // Sin orden de avanzar los músculos se relajan y el cuerpo se estira (una S congelada a
+    // máxima amplitud no es una postura de reposo).
+    const float want = std::min(1.0f, std::max(std::abs(loco.forward), 0.0f));
+    und.effort += (want - und.effort) * std::min(1.0f, 4.0f * dt);
+    const float amp = (p.swimAmplitude + (p.crawlAmplitude - p.swimAmplitude) * c) * und.effort;
     und.dragRatio = p.dragRatioWater + (p.dragRatioSubstrate - p.dragRatioWater) * c;
     // La onda viaja de la cabeza a la cola (fase creciente) para avanzar; al revés, retrocede.
     // Más músculo (gen motor) late más rápido.

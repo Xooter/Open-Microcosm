@@ -1,8 +1,10 @@
 #pragma once
 
+#include "core/lab_panel.hpp"
 #include "render/field_overlay.hpp"
 
 #include "bio/locomotion.hpp"
+#include "game/inspect.hpp"
 #include "game/sandbox.hpp"
 
 #include <raylib.h>
@@ -12,33 +14,12 @@
 #include <vector>
 
 class World;
-class Run;
 struct Progress;
 
-struct ToolState {
-    float stirRadius = 30.0f; // [µm]
-    float inkRadius = 15.0f;  // [µm]
-    float squeezeSpeed = 40.0f; // [µm/s]
-    bool grabbing = false;
-    bool follow = true;   // la cámara sigue al jugador
-    bool showLab = true;  // panel de laboratorio (H para ocultar)
-    bool paused = false;
-    Overlay overlay = Overlay::None;
-    int stain = 0;          // Stain
-    // Profiling continuo (promedios suavizados) [ms].
-    float stepMs = 0.0f, renderMs = 0.0f;
-};
-
-inline constexpr Rectangle kUiPanel = {10, 10, 320, 640};
-
-// Panel de debug para tunear el medio en vivo.
-void drawUi(World& world, ToolState& tools);
-
-// Pantalla de inicio: elegir la especie fundadora (dibuja un frame completo).
 struct Options;
 
 // Pantalla de inicio (dibuja un frame completo).
-enum class TitleAction { None, Play, Sandbox, Encyclopedia, Options, Quit };
+enum class TitleAction { None, NewDrop, Encyclopedia, Options, Quit };
 TitleAction drawTitleScreen(const Progress& progress);
 
 // Preparar la gota: bioma, especie fundadora y semilla.
@@ -46,8 +27,7 @@ struct SetupState {
     int biome = 0;
     LocomotionType founder = LocomotionType::Cilia;
     unsigned seed = 1;
-    bool sandbox = false;   // modo de pruebas (todas las fundadoras, sin progreso)
-    bool emptyDrop = false; // sandbox: gota sin poblaciones iniciales
+    bool emptyDrop = false; // gota sin poblaciones iniciales
 };
 enum class SetupAction { None, Start, Back };
 SetupAction drawSetupScreen(const Progress& progress, SetupState& state);
@@ -58,17 +38,36 @@ bool drawEncyclopedia(const Progress& progress, float& scroll);
 bool drawOptions(Options& options);
 // Avisos breves (descubrimientos) en la esquina.
 void drawToasts(const std::vector<std::string>& lines, float alpha);
-// Objetivo de la partida, estado del linaje y genoma (del jugador o de la candidata elegida).
-void drawRunHud(const Run& run, const World& world);
+// Genoma del ser controlado y avisos de conjugación (esquina superior derecha).
+// `showGenome`: dibujarlo (el modo Explorar lo lleva dentro de la ficha).
+void drawControlHud(const World& world, bool showGenome = true);
 // Modo sandbox: barra de íconos con todos los seres.
 struct SandboxState {
     int armed = -1;       // índice del catálogo listo para spawnear (-1: ninguno)
+    int category = 0;     // pestaña abierta (BeingCategory)
     bool reshape = false; // modo Forma: el ícono transforma al jugador en esa especie
 };
 // true si el mouse está sobre la barra (los clicks no van al mundo).
 bool sandboxBarHovered();
 // Dibuja la barra y el fantasma del ser elegido bajo el cursor. Los clicks en los íconos
 // arman el spawn o (modo Forma) cambian la especie del jugador; el botón fuerza su reproducción.
-void drawSandboxBar(World& world, SandboxState& state, const Camera2D& camera);
-// Fin de partida: estadísticas y desbloqueos.
-void drawGameOver(const Run& run, const Progress& progress, const std::vector<LocomotionType>& unlocked);
+// Devuelve true si se pidió pasar al modo Explorar.
+bool drawSandboxBar(World& world, SandboxState& state, const Camera2D& camera);
+
+// Modo Explorar: click sobre cualquier cosa y se abre su ficha (qué es, qué hace y por qué).
+struct ExploreState {
+    bool active = false;
+    Picked picked;           // lo inspeccionado
+    Inspection inspection;   // su ficha (las vivas se rearman ~10 veces por segundo)
+    float refresh = 0.0f;    // [s] hasta rearmar la ficha
+    float scroll = 0.0f;     // [px] de la ficha
+    float pickedAge = 0.0f;  // [s] desde el click (el anillo de una foto se desvanece)
+    Picked hover;            // lo que está bajo el cursor
+    std::string hoverText;
+    float hoverTimer = 0.0f;
+};
+// ¿El mouse está sobre la ficha o sobre los botones del modo? (los clicks no van al mundo).
+bool exploreUiHovered(const ExploreState& state);
+// Dibuja el modo Explorar: resaltado del inspeccionado, tooltip, banner y ficha. Los botones
+// de la ficha (cerrar, seguir) actúan sobre `state` y `tools`. Devuelve true si se pidió salir.
+bool drawExplore(const World& world, ExploreState& state, ToolState& tools, const Camera2D& camera);

@@ -35,6 +35,7 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
         const bool preyAhead = sense.hasPrey && sense.preyDistance < 10.0f;
         if (((sense.hasThreat && sense.threatDistance < 40.0f) || (sense.bumped && !preyAhead)) &&
             pilot.reverse <= 0.0f) {
+            pilot.intent = sense.hasThreat && sense.threatDistance < 40.0f ? Intent::AvoidThreat : Intent::AvoidBump;
             pilot.reverse = 1.0f;
             pilot.turn = rng.uniform() < 0.5f ? -1.0f : 1.0f;
         }
@@ -46,6 +47,7 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
         }
         // Depredador: persigue a la presa que detecta (mecanorrecepción, corto alcance).
         if (sense.hasPrey && sense.preyDistance < 150.0f) {
+            pilot.intent = Intent::Chase;
             loco.forward = 1.0f;
             loco.turn = turnToward(h, sense.prey - body.centroid);
             return;
@@ -57,6 +59,7 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
             const float change = sense.acid - pilot.acidMemory;
             pilot.acidMemory += change * std::min(1.0f, 2.0f * dt);
             if (change < -0.01f && sense.acid > 0.02f) {
+                pilot.intent = Intent::AcidTrap;
                 pilot.reverse = 0.4f;
                 pilot.turn = rng.uniform() < 0.5f ? -1.0f : 1.0f;
                 loco.forward = -1.0f;
@@ -74,6 +77,7 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
         pilot.turn = clampTurn(pilot.turn - pilot.turn * dt + noise * std::sqrt(dt) * rng.normal());
         loco.forward = 0.6f;
         loco.turn = pilot.turn;
+        pilot.intent = Intent::Wander;
         if (species.glider) { // diatomea: se desliza por el rafe a lo largo de su eje, con inversiones
             pilot.retarget -= dt;
             if (pilot.retarget <= 0.0f) {
@@ -82,6 +86,7 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
             }
             loco.forward = pilot.walking ? 1.0f : -1.0f;
             loco.turn = 0.1f * rng.normal();
+            pilot.intent = Intent::Glide;
             return;
         }
         if (species.hopper) { // nauplio: golpe de los apéndices (salto) y pausa
@@ -94,6 +99,7 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
             }
             loco.forward = pilot.walking ? 1.0f : 0.0f;
             loco.turn = pilot.walking ? pilot.turn : 0.0f;
+            pilot.intent = pilot.walking ? Intent::Hop : Intent::Pause;
             return;
         }
         if (species.walker) { // Euplotes: camina sobre los cirros con paradas bruscas
@@ -104,18 +110,22 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
                 pilot.turn = rng.uniform(-1.0f, 1.0f);
             }
             loco.forward = pilot.walking ? 0.8f : 0.0f;
+            pilot.intent = pilot.walking ? Intent::Walk : Intent::Pause;
         }
         return;
     }
     case LocomotionType::Flagellum: {
         loco.active = true;
+        pilot.intent = Intent::Wander;
         if (sense.bumped) { // chocó: cambia de rumbo
             const float angle = rng.uniform(0.0f, 2.0f * units::kPi);
             pilot.target = body.centroid + Vec2{std::cos(angle), std::sin(angle)} * 300.0f;
             pilot.retarget = rng.uniform(3.0f, 8.0f);
+            pilot.intent = Intent::AvoidBump;
         }
         if (sense.hasThreat && sense.threatDistance < 60.0f) { // huye en línea recta
             loco.target = body.centroid + (body.centroid - sense.threat) * 4.0f;
+            pilot.intent = Intent::Flee;
             return;
         }
         pilot.retarget -= dt;
@@ -124,6 +134,7 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
             const Vec2 side = {-h.y, h.x};
             loco.target = body.centroid + (h + side * (sense.lightLeft > sense.lightRight ? 0.5f : -0.5f)) * 200.0f;
             pilot.retarget = 0.0f;
+            pilot.intent = Intent::Phototaxis;
             return;
         }
         if (pilot.retarget <= 0.0f) {
@@ -139,6 +150,7 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
         // giro brusco ("omega turn" de C. elegans); si no, avanza con cambios de rumbo lentos.
         loco.active = true;
         if (((sense.hasThreat && sense.threatDistance < 60.0f) || sense.bumped) && pilot.reverse <= 0.0f) {
+            pilot.intent = sense.hasThreat && sense.threatDistance < 60.0f ? Intent::AvoidThreat : Intent::AvoidBump;
             pilot.reverse = rng.uniform(1.0f, 2.5f);
             pilot.turn = rng.uniform() < 0.5f ? -1.0f : 1.0f;
         }
@@ -146,8 +158,11 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
             pilot.reverse -= dt;
             loco.forward = pilot.reverse > 0.8f ? -1.0f : 1.0f;
             loco.turn = pilot.reverse > 0.8f ? 0.0f : pilot.turn;
+            if (pilot.reverse <= 0.8f)
+                pilot.intent = Intent::OmegaTurn;
             return;
         }
+        pilot.intent = Intent::Wander;
         pilot.turn = clampTurn(pilot.turn - pilot.turn * 0.5f * dt + 0.6f * std::sqrt(dt) * rng.normal());
         loco.forward = 1.0f;
         loco.turn = 0.5f * pilot.turn;
@@ -157,8 +172,10 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
         loco.active = true;
         if (sense.hasPrey && sense.preyDistance < 300.0f) { // quimiotaxis hacia la presa
             loco.target = sense.prey;
+            pilot.intent = Intent::Chase;
             return;
         }
+        pilot.intent = Intent::Wander;
         pilot.retarget -= dt;
         if (pilot.retarget <= 0.0f) {
             const float angle = rng.uniform(0.0f, 2.0f * units::kPi);

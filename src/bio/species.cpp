@@ -27,7 +27,7 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
     {.name = "Euglena", .locomotion = LocomotionType::Flagellum,
      .spec = makeSpec(25.0f, 7.0f, 4.0f, 120, 172, 92), .feeding = FeedingMode::Anterior,
      .fleeMask = speciesBit(SpeciesId::Lacrymaria), .phototaxis = true, .initialCount = 20,
-     .chloroplasts = true, .phMin = 3.0f, .tMin = 10.0f, .tMax = 35.0f, .cyclosis = 1.0f},
+     .chloroplasts = true, .vitaminB12 = true, .phMin = 3.0f, .tMin = 10.0f, .tMax = 35.0f, .cyclosis = 1.0f},
     // Amoeba proteus (chica): ~180 µm, fagocita algas y ciliados.
     {.name = "Amoeba", .locomotion = LocomotionType::Pseudopod,
      .spec = makeSpec(90.0f, 90.0f, 0.0f, 188, 176, 160, 0.2f), .feeding = FeedingMode::Phagocytosis,
@@ -104,7 +104,7 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
     // a unos µm/s con inversiones. Cloroplastos dorados (fucoxantina).
     {.name = "Navicula", .locomotion = LocomotionType::Cilia,
      .spec = makeSpec(25.0f, 7.0f, 40.0f, 200, 182, 120), .speedScale = 0.012f, .photosynthesisScale = 1.5f,
-     .initialCount = 20, .chloroplasts = true, .glider = true, .frustule = true, .phMin = 6.5f, .tMin = -2.0f,
+     .initialCount = 20, .chloroplasts = true, .glider = true, .vitaminB12 = true, .frustule = true, .phMin = 6.5f, .tMin = -2.0f,
      .tMax = 35.0f, .salinityMax = 70.0f},
     // Volvox: colonia esférica de ~250 µm con cientos de células biflageladas en su superficie;
     // rueda nadando hacia la luz. Las colonias hijas crecen adentro y nacen rompiendo a la madre.

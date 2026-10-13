@@ -24,6 +24,15 @@ que nada, come, crece y se divide en un medio vivo. Antes de sumar contenido se 
 | Rejugabilidad | Gotas procedurales (A), herencia roguelite (B), biomas (C) |
 | Realismo | **Estricto** (A): solo especies y mecanismos reales, tiempo comprimido en proporción |
 
+## Giro a sandbox (2026-10)
+
+El programa deja de ser un juego: es un **sandbox educativo, científico y de código abierto**.
+Se retiran la partida roguelite (victoria, extinción, desbloqueos, legado genético y elección de
+hija o heredero) y se conserva el control de un ser con su locomoción real (`P` para controlar
+cualquier célula). El panel de laboratorio pasó a secciones plegables (`core/lab_panel`) y se
+sumaron **sílice** (diatomeas), **hierro** (fotótrofas) y **vitamina B₁₂** (auxótrofas) como
+nutrientes disueltos con limitación real. Las decisiones de jugabilidad de abajo son historia.
+
 ## Decisiones tomadas
 
 1. **Roguelite + linaje:** se usan ambos. **Dentro de la partida** jugás un linaje (al dividirte

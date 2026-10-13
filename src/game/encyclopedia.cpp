@@ -55,7 +55,7 @@ const char* speciesBlurb(SpeciesId id) {
     case SpeciesId::Arcella: return "Ameba que vive dentro de una testa parda en forma de cupula; asoma seudopodos por la abertura.";
     case SpeciesId::Lacrymaria: return "'Lagrima de cisne': estira un cuello hasta 7 veces su cuerpo en segundos para atrapar presas.";
     case SpeciesId::Spirogyra: return "Alga filamentosa con el cloroplasto en espiral. Crece a lo largo y se divide con un tabique.";
-    case SpeciesId::Navicula: return "Diatomea en una cajita de silice que se desliza por una ranura (rafe). Cada division achica a una hija.";
+    case SpeciesId::Navicula: return "Diatomea en una cajita de silice que se desliza por una ranura (rafe). Cada division achica a una hija. Necesita silice disuelta para cada valva nueva y vitamina B12 de las bacterias.";
     case SpeciesId::Volvox: return "Esfera hueca de cientos de celulas que rueda hacia la luz. Las colonias hijas crecen adentro y nacen rompiendo a la madre.";
     case SpeciesId::Pediastrum: return "Colonia plana en estrella de 16 celulas con cuernos; cada ciclo libera una colonia hija.";
     case SpeciesId::Candida: return "Levadura: absorbe azucares disueltos, respira o fermenta sin oxigeno, y se reproduce por gemacion.";

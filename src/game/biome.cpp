@@ -54,6 +54,9 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     pond.medium.organicInflow = 60.0f;
     pond.medium.phosphate = 20.0f;
     pond.medium.nitrogen = 300.0f;
+    pond.medium.silicate = 150.0f;
+    pond.medium.iron = 0.5f;
+    pond.medium.vitamin = 1e-3f;
     setWeights(pond, 1.0f, {{S::Volvox, 2.0f}, {S::Spirogyra, 1.5f}, {S::Hydra, 1.0f}, {S::Rotifer, 1.5f},
                             {S::Stentor, 1.5f}, {S::Philodina, 0.5f}, {S::Naegleria, 0.0f}, {S::Trichonympha, 0.0f},
                             {S::Candida, 0.3f}, {S::Oedogonium, 1.5f}});
@@ -77,6 +80,9 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     moss.medium.alkalinity = 80.0f; // agua blanda: el CO₂ del aire la acidifica
     moss.medium.phosphate = 10.0f;
     moss.medium.nitrogen = 100.0f;
+    moss.medium.silicate = 60.0f;  // aguas ácidas y blandas: poca sílice
+    moss.medium.iron = 1.5f;       // el hierro es más soluble a pH bajo
+    moss.medium.vitamin = 2e-3f;
     setWeights(moss, 0.0f, {{S::Arcella, 3.0f}, {S::Philodina, 1.0f}, {S::Euplotes, 1.0f}, {S::Vorticella, 1.0f},
                             {S::Paramecium, 0.3f}, {S::Chlamydomonas, 0.4f}, {S::Euglena, 0.5f}, {S::Naegleria, 3.0f},
                             {S::Navicula, 0.5f}, {S::Candida, 1.0f}, {S::Amoeba, 1.0f}, {S::Zygnema, 0.5f},
@@ -104,6 +110,9 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     gut.medium.detritusSpawnRate = 3.0f; // la termita sigue comiendo madera
     gut.medium.phosphate = 50.0f;
     gut.medium.nitrogen = 200.0f; // la madera es pobre en N: lo fijan las bacterias del intestino
+    gut.medium.silicate = 20.0f;
+    gut.medium.iron = 2.0f;
+    gut.medium.vitamin = 5e-3f;   // la microbiota intestinal sintetiza mucha B12
     setWeights(gut, 0.0f, {{S::Trichonympha, 1.0f}, {S::Candida, 0.5f}});
     gut.weight[static_cast<int>(S::Trichonympha)] = 1.0f;
     gut.medium.naupliusArrivalsPerHour = 0.0f;
@@ -127,6 +136,9 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     spring.medium.alkalinity = 3000.0f;
     spring.medium.phosphate = 30.0f;
     spring.medium.nitrogen = 50.0f; // pobre en N: domina la fijadora
+    spring.medium.silicate = 600.0f; // el agua caliente disuelve la sílice de la roca
+    spring.medium.iron = 3.0f;
+    spring.medium.vitamin = 1e-3f;
     setWeights(spring, 0.0f, {{S::Naegleria, 4.0f}, {S::Candida, 0.5f}});
     spring.medium.naupliusArrivalsPerHour = 0.0f;
     spring.bacteria = 60'000;
@@ -152,6 +164,9 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     ice.medium.surfaceLight = 0.3f;
     ice.medium.phosphate = 5.0f;
     ice.medium.nitrogen = 60.0f;
+    ice.medium.silicate = 100.0f;
+    ice.medium.iron = 0.2f;        // hierro escaso, como en el mar polar
+    ice.medium.vitamin = 5e-4f;
     ice.medium.alkalinity = 2300.0f; // agua de mar
     setWeights(ice, 0.0f, {{S::Navicula, 4.0f}, {S::Chlamydomonas, 0.6f}, {S::Euplotes, 2.0f}, {S::Candida, 0.5f},
                            {S::Nauplius, 1.0f}});
@@ -195,6 +210,11 @@ WorldConfig makeDrop(BiomeId id, std::uint64_t seed) {
     c.medium.phosphate *= rng.uniform(0.6f, 1.6f);
     c.medium.nitrogen *= rng.uniform(0.6f, 1.6f);
     c.medium.alkalinity *= rng.uniform(0.7f, 1.4f);
+    // Micronutrientes: otro flujo de azar, así no cambia el resto de la gota de una seed.
+    Rng micro(seed, rng_stream::kPopulate + 902, 0, 0);
+    c.medium.silicate *= micro.uniform(0.6f, 1.6f);
+    c.medium.iron *= micro.uniform(0.5f, 1.8f);
+    c.medium.vitamin *= micro.uniform(0.5f, 1.8f);
     for (int k = 0; k < kSpeciesCount; ++k) {
         Rng r(seed, rng_stream::kPopulate + 901, static_cast<std::uint64_t>(k), 0);
         const bool absent = r.uniform() < 0.15f; // algunas especies no llegaron a esta gota

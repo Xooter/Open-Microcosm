@@ -3,6 +3,8 @@
 #include "core/rng.hpp"
 #include "core/vec2.hpp"
 
+#include <cstdint>
+
 struct Locomotion;
 struct RingBody;
 struct SpeciesInfo;
@@ -21,6 +23,23 @@ struct Perception {
     float acid = 0.0f;  // log(1 + exceso de CO₂ sobre el equilibrio con el aire)
 };
 
+// Por qué la célula se mueve como se mueve en este momento (solo informativo: la ficha de
+// inspección lo muestra; no cambia ninguna decisión).
+enum class Intent : std::uint8_t {
+    Wander,      // deambula (giros al azar, objetivos cambiantes)
+    Chase,       // persigue una presa
+    Flee,        // huye de un depredador
+    AvoidThreat, // reacción de evitación ante una amenaza
+    AvoidBump,   // reacción de evitación: el polo anterior chocó (mecanorrecepción)
+    AcidTrap,    // trampa de ácido: vuelve a la zona con CO₂ (Jennings)
+    Phototaxis,  // gira hacia el lado más iluminado
+    Glide,       // diatomea: se desliza por el rafe, con inversiones
+    Walk,        // hipotrico: camina sobre los cirros
+    Pause,       // parada de un caminante o saltador
+    Hop,         // nauplio: golpe de los apéndices
+    OmegaTurn,   // nematodo: giro brusco tras retroceder
+};
+
 // Componente: comportamiento de las células que no controla el jugador. Sale de los datos de
 // la especie (SpeciesInfo), no de código por especie:
 //  - ciliados: nado con giros al azar; quimiocinesis (si la comida mejora, giran menos);
@@ -28,6 +47,7 @@ struct Perception {
 //  - flagelados: nado hacia objetivos que cambian; fototaxis; huida;
 //  - ameboides: pseudópodo hacia la presa más cercana o hacia direcciones al azar.
 struct Autopilot {
+    Intent intent = Intent::Wander;
     float turn = 0.0f;
     float retarget = 0.0f; // tiempo hasta elegir un objetivo nuevo [s]
     Vec2 target;

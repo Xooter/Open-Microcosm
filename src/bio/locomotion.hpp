@@ -67,6 +67,7 @@ struct Undulation {
     float length = 0.0f;    // largo del eje [µm]
     float phase = 0.0f;     // fase de la onda [rad]
     float crowding = 0.0f;  // 0: agua libre; 1: entre partículas y granos
+    float effort = 0.0f;    // 0: relajado (cuerpo recto); 1: ondulando a pleno (los músculos se activan)
     float dragRatio = 1.5f; // ξn/ξt del último paso
     std::vector<Vec2> spine;                 // eje en el mundo (render)
     std::vector<Vec2> waterAt, waterPush;    // fuerzas del cuerpo sobre el agua (paso anterior)

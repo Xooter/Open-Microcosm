@@ -6,7 +6,7 @@
 
 class World;
 
-enum class Overlay { None, Velocity, Oxygen, Nutrients, Light, Phosphate, Nitrogen, PH, Toxin, Autoinducer, Phage };
+enum class Overlay { None, Velocity, Oxygen, Nutrients, Light, Phosphate, Nitrogen, PH, Toxin, Autoinducer, Phage, Silicate, Iron, Vitamin };
 
 const char* overlayName(Overlay overlay);
 

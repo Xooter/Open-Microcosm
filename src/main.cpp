@@ -31,7 +31,7 @@ constexpr int kScreenH = 900;
 constexpr float kFixedDt = 1.0f / 60.0f;
 constexpr int kMaxStepsPerFrame = 4;
 
-enum class Screen { Title, Setup, Encyclopedia, Options, Playing, Over };
+enum class Screen { Title, Setup, Encyclopedia, Options, Playing };
 
 struct Game {
     std::unique_ptr<World> world;
@@ -42,20 +42,19 @@ struct Game {
     std::string optionsPath = defaultOptionsPath();
     SetupState setup;
     SandboxState sandbox;
+    ExploreState explore; // modo Explorar (inspeccionar seres)
     float encyclopediaScroll = 0.0f;
-    std::vector<LocomotionType> unlockedNow;
     std::vector<std::string> toasts; // descubrimientos recientes
     float toastTimer = 0.0f, discoveryTimer = 0.0f;
     std::uint32_t runCounter = 0;
     GpuSubstepSolver* gpu = nullptr; // XPBD en GPU (fase 14); nullptr si no hay OpenGL 4.3
     Screen screen = Screen::Title;
-    bool recorded = false;
 };
 
 void startRun(Game& game) {
     // Gota procedural: el bioma elegido con las variaciones de la semilla.
     WorldConfig config = makeDrop(static_cast<BiomeId>(game.setup.biome), game.setup.seed);
-    const bool empty = game.setup.sandbox && game.setup.emptyDrop;
+    const bool empty = game.setup.emptyDrop;
     if (empty) { // sandbox: solo el agua, la química y los detritos del bioma
         config.bacteria = 0;
         config.cyanoFilaments = 0;
@@ -73,31 +72,17 @@ void startRun(Game& game) {
     RunConfig rc;
     rc.founder = founder;
     rc.wildlife = empty ? 0.0f : dropAreaScale(config); // misma densidad de especies en cualquier placa
-    rc.sandbox = game.setup.sandbox;
     rc.biome = game.setup.biome;
     rc.seed = config.seed;
-    Rng rng(config.seed, 0, 0, 0);
-    // Legado de partidas anteriores (el sandbox arranca con el genoma de la especie).
-    rc.genome = rc.sandbox ? speciesGenome(founder) : game.progress.founderGenome(founder, rng);
+    rc.genome = speciesGenome(founder);
     game.sandbox = SandboxState{};
+    game.explore = ExploreState{}; // las entidades del mundo anterior ya no existen
     game.run.start(*game.world, rc, ++game.runCounter);
     game.screen = Screen::Playing;
-    game.recorded = false;
-    game.unlockedNow.clear();
 }
 
-// Guarda el resultado de la partida una sola vez (al perder o al abandonarla).
-void recordRun(Game& game) {
-    if (game.recorded || !game.world || game.run.config().sandbox) // el sandbox no cuenta
-        return;
-    game.recorded = true;
-    recordBehaviors(game.progress, *game.world);
-    game.unlockedNow = game.progress.recordRun(game.run.bestGeneration(), game.run.bestShare(), game.run.won(),
-                                               game.run.config().founder, game.run.lineageGenome());
-    saveProgress(game.progress, game.progressPath);
-}
-
-void updateCamera(Camera2D& cam, ToolState& tools, const World& world) {
+// `wheelCaptured`: la rueda es de la ficha (scroll), no del zoom.
+void updateCamera(Camera2D& cam, ToolState& tools, const World& world, bool wheelCaptured) {
     const Dish& dish = world.dish();
     // Con placa, el alejamiento máximo muestra la placa entera (con el canto de vidrio).
     const float minZoom = dish.active()
@@ -105,11 +90,12 @@ void updateCamera(Camera2D& cam, ToolState& tools, const World& world) {
         : 0.4f;
     if (IsMouseButtonDown(MOUSE_BUTTON_RIGHT)) {
         tools.follow = false; // mover la cámara a mano suelta el seguimiento
+        tools.followInspected = false;
         Vector2 delta = Vector2Scale(GetMouseDelta(), -1.0f / cam.zoom);
         cam.target = Vector2Add(cam.target, delta);
     }
-    if (float wheel = GetMouseWheelMove(); wheel != 0.0f) {
-        if (!tools.follow) { // zoom centrado en el cursor
+    if (float wheel = wheelCaptured ? 0.0f : GetMouseWheelMove(); wheel != 0.0f) {
+        if (!tools.follow && !tools.followInspected) { // zoom centrado en el cursor
             Vector2 mouseWorld = GetScreenToWorld2D(GetMousePosition(), cam);
             cam.offset = GetMousePosition();
             cam.target = mouseWorld;
@@ -145,7 +131,8 @@ void toggleOverlay(ToolState& tools, Overlay overlay) {
 
 // Herramientas de laboratorio y controles del jugador durante la partida.
 // `uiCaptured`: el click es de la barra del sandbox (o spawnea), no del jugador.
-void handlePlayInput(World& world, ToolState& tools, const Camera2D& camera, bool uiCaptured) {
+// `followKeyTaken`: F es de la ficha (seguir al inspeccionado), no de la cámara del jugador.
+void handlePlayInput(World& world, ToolState& tools, const Camera2D& camera, bool uiCaptured, bool followKeyTaken) {
     if (IsKeyPressed(KEY_SPACE)) tools.paused = !tools.paused;
     if (IsKeyPressed(KEY_F1)) toggleOverlay(tools, Overlay::Velocity);
     if (IsKeyPressed(KEY_F2)) toggleOverlay(tools, Overlay::Oxygen);
@@ -157,7 +144,7 @@ void handlePlayInput(World& world, ToolState& tools, const Camera2D& camera, boo
     if (IsKeyPressed(KEY_F8)) toggleOverlay(tools, Overlay::Toxin);
     if (IsKeyPressed(KEY_F9)) toggleOverlay(tools, Overlay::Autoinducer);
     if (IsKeyPressed(KEY_F10)) toggleOverlay(tools, Overlay::Phage);
-    if (IsKeyPressed(KEY_F)) tools.follow = !tools.follow;
+    if (IsKeyPressed(KEY_F) && !followKeyTaken) tools.follow = !tools.follow;
     if (IsKeyPressed(KEY_J)) tools.stain = (tools.stain + 1) % 3;
     if (IsKeyPressed(KEY_H)) tools.showLab = !tools.showLab;
 
@@ -171,6 +158,14 @@ void handlePlayInput(World& world, ToolState& tools, const Camera2D& camera, boo
     if (IsKeyPressed(KEY_C)) world.spawnCell(world.dish().clampInside(pos, 60.0f));
     if (IsKeyPressed(KEY_K)) world.spawnTestScene(50);
     if (IsKeyPressed(KEY_X)) world.removeCellAt(pos);
+    if (IsKeyDown(KEY_G)) applyDropper(world, tools, pos.x, pos.y, GetFrameTime());
+    if (IsKeyPressed(KEY_P)) { // controlar la célula bajo el cursor
+        const Picked hit = world.pick(pos, std::max(2.0f, 6.0f / camera.zoom));
+        if (hit.kind == Picked::Kind::Cell && world.registry().all_of<Locomotion>(hit.entity)) {
+            world.setPlayer(hit.entity);
+            tools.follow = true;
+        }
+    }
     if (IsKeyPressed(KEY_L)) world.lyseAt(pos);
     if (IsKeyPressed(KEY_V)) world.tryConjugate(world.player()); // conjugar con una pareja cercana
     if (IsKeyDown(KEY_Q))
@@ -178,7 +173,7 @@ void handlePlayInput(World& world, ToolState& tools, const Camera2D& camera, boo
     else
         world.clearSqueeze();
 
-    const bool overUi = uiCaptured || (tools.showLab && CheckCollisionPointRec(GetMousePosition(), kUiPanel));
+    const bool overUi = uiCaptured || (tools.showLab && CheckCollisionPointRec(GetMousePosition(), labPanelRect()));
     const bool shift = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
     const bool ctrl = IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL);
     const bool left = IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !overUi;
@@ -220,7 +215,7 @@ bool handleSandboxInput(World& world, SandboxState& sandbox, const ToolState& to
     if (IsKeyPressed(KEY_R))
         world.forceReproduction(world.player());
     const bool overBar = sandboxBarHovered();
-    const bool overLab = tools.showLab && CheckCollisionPointRec(GetMousePosition(), kUiPanel);
+    const bool overLab = tools.showLab && CheckCollisionPointRec(GetMousePosition(), labPanelRect());
     if (sandbox.armed < 0 || overBar)
         return overBar;
     if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !overLab) {
@@ -231,39 +226,71 @@ bool handleSandboxInput(World& world, SandboxState& sandbox, const ToolState& to
     return true; // con un ser armado, el click izquierdo no mueve al jugador
 }
 
-// Elegir hija o heredero: Tab / flechas para ciclar, click para señalar, Enter para confirmar.
-void handleChoiceInput(Game& game, const Camera2D& camera) {
-    if (IsKeyPressed(KEY_TAB) || IsKeyPressed(KEY_RIGHT)) game.run.cycle(1);
-    if (IsKeyPressed(KEY_LEFT)) game.run.cycle(-1);
-    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        const Vector2 m = GetScreenToWorld2D(GetMousePosition(), camera);
-        const World& w = *game.world;
-        for (entt::entity c : game.run.candidates()) {
-            const RingBody& b = w.registry().get<RingBody>(c);
-            const Vec2 q = b.centroid + Vec2{minImage(m.x - b.centroid.x, w.width()), minImage(m.y - b.centroid.y, w.height())};
-            if (polygon::contains(b.poly.data(), static_cast<int>(b.poly.size()), q))
-                game.run.select(c);
-        }
-    }
-    if (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_SPACE))
-        game.run.confirm(*game.world);
+// Modo Explorar: lo que está bajo el cursor se resalta (tooltip) y el click abre su ficha.
+// Las fichas vivas se rearman ~10 veces por segundo; si el ser fue reemplazado (la zoóspora que
+// salió de la célula, la cría que salió del huevo), la ficha pasa a su sucesor.
+bool exploreFollowable(const ExploreState& st) {
+    return st.inspection.valid && !st.inspection.dead &&
+           (st.picked.kind == Picked::Kind::Cell || st.picked.kind == Picked::Kind::Rock);
 }
 
-// Resalta a las candidatas en el mundo (la elegida, más fuerte).
-void drawCandidates(const Game& game, const Camera2D& camera) {
-    const World& w = *game.world;
-    BeginMode2D(camera);
-    const auto& cands = game.run.candidates();
-    for (std::size_t i = 0; i < cands.size(); ++i) {
-        const RingBody& b = w.registry().get<RingBody>(cands[i]);
-        const Vec2 c = {camera.target.x + minImage(b.centroid.x - camera.target.x, w.width()),
-                        camera.target.y + minImage(b.centroid.y - camera.target.y, w.height())};
-        const float r = 0.6f * length(b.aabbMax - b.aabbMin) + 6.0f;
-        const bool chosen = i == game.run.selected();
-        DrawRing({c.x, c.y}, r, r + (chosen ? 4.0f : 1.5f) / camera.zoom, 0, 360, 72,
-                 chosen ? Color{200, 120, 20, 230} : Color{80, 80, 70, 140});
+void handleExploreInput(const World& world, ExploreState& st, ToolState& tools, const Camera2D& camera, float dt) {
+    if (IsKeyPressed(KEY_ESCAPE)) {
+        st.picked = {};
+        st.inspection = {};
+        tools.followInspected = false;
     }
-    EndMode2D();
+    if (IsKeyPressed(KEY_F) && exploreFollowable(st))
+        tools.followInspected = !tools.followInspected;
+
+    const Vector2 m = GetScreenToWorld2D(GetMousePosition(), camera);
+    const Vec2 pos = world.dish().active() ? Vec2{m.x, m.y} : Vec2{wrapCoord(m.x, world.width()), wrapCoord(m.y, world.height())};
+    const float tolerance = std::max(2.0f, 6.0f / camera.zoom); // ~6 px en pantalla
+    const bool overUi = exploreUiHovered(st) || (tools.showLab && CheckCollisionPointRec(GetMousePosition(), labPanelRect()));
+
+    st.hoverTimer -= dt;
+    if (overUi) {
+        st.hover = {};
+        st.hoverText.clear();
+    } else if (st.hoverTimer <= 0.0f) {
+        st.hoverTimer = 0.05f;
+        st.hover = world.pick(pos, tolerance);
+        st.hoverText.clear();
+        if (st.hover) {
+            const Inspection h = buildInspection(world, st.hover);
+            st.hoverText = h.title;
+            if (!h.headline.empty())
+                st.hoverText += " - " + h.headline;
+        }
+    }
+
+    st.pickedAge += dt;
+    // Un click que no toca nada no cambia nada: con una tolerancia de pocos pixeles es facil
+    // errarle a algo chico, y no hay que perder la ficha que se estaba leyendo (Esc la cierra).
+    if (!overUi && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (const Picked hit = world.pick(pos, tolerance)) {
+            st.picked = hit;
+            st.inspection = buildInspection(world, hit);
+            st.scroll = 0.0f;
+            st.refresh = 0.1f;
+            st.pickedAge = 0.0f;
+        }
+    }
+
+    if (st.picked.live()) {
+        st.refresh -= dt;
+        if (st.refresh <= 0.0f) {
+            st.refresh = 0.1f;
+            st.inspection = buildInspection(world, st.picked);
+            const entt::entity next = st.inspection.successor;
+            if (st.inspection.dead && next != entt::null && world.registry().valid(next)) {
+                st.picked = {};
+                st.picked.kind = Picked::Kind::Cell;
+                st.picked.entity = next;
+                st.inspection = buildInspection(world, st.picked);
+            }
+        }
+    }
 }
 
 } // namespace
@@ -300,14 +327,7 @@ int main() {
 
         if (game.screen == Screen::Title) {
             switch (drawTitleScreen(game.progress)) {
-            case TitleAction::Play:
-                game.setup.sandbox = false;
-                game.screen = Screen::Setup;
-                break;
-            case TitleAction::Sandbox:
-                game.setup.sandbox = true;
-                game.screen = Screen::Setup;
-                break;
+            case TitleAction::NewDrop: game.screen = Screen::Setup; break;
             case TitleAction::Encyclopedia: game.screen = Screen::Encyclopedia; break;
             case TitleAction::Options: game.screen = Screen::Options; break;
             case TitleAction::Quit: CloseWindow(); return 0;
@@ -321,6 +341,7 @@ int main() {
                 game.screen = Screen::Title;
             if (a == SetupAction::Start) {
                 startRun(game);
+                tools.followInspected = false;
                 camera.target = {0.5f * game.world->width(), 0.5f * game.world->height()};
                 game.setup.seed = std::random_device{}() & 0x7fffffffu; // la próxima, otra gota
             }
@@ -347,29 +368,42 @@ int main() {
         }
 
         World& world = *game.world;
-        updateCamera(camera, tools, world);
-        const bool choosing = game.run.simulationPaused();
-        const bool sandbox = game.run.config().sandbox;
-        if (game.screen == Screen::Playing && !choosing) {
-            const bool captured = sandbox && handleSandboxInput(world, game.sandbox, tools, camera);
-            handlePlayInput(world, tools, camera, captured);
+        ExploreState& explore = game.explore;
+        // Dos modos: Crear (sandbox: spawnear, cambiar de forma, reproducir) y Explorar (inspeccionar).
+        auto setExplore = [&](bool on) {
+            if (explore.active == on)
+                return;
+            explore = ExploreState{};
+            explore.active = on;
+            tools.followInspected = false;
+            game.sandbox.armed = -1;
+        };
+        if (game.screen == Screen::Playing && IsKeyPressed(KEY_TAB))
+            setExplore(!explore.active);
+        updateCamera(camera, tools, world, (explore.active && exploreUiHovered(explore)) || labPanelHovered(tools));
+        if (game.screen == Screen::Playing) {
+            if (explore.active) {
+                handleExploreInput(world, explore, tools, camera, frameDt);
+                handlePlayInput(world, tools, camera, true, exploreFollowable(explore)); // el click es de la ficha
+            } else {
+                const bool captured = handleSandboxInput(world, game.sandbox, tools, camera);
+                handlePlayInput(world, tools, camera, captured, false);
+            }
         }
-        if (choosing)
-            handleChoiceInput(game, camera);
-        if (IsKeyPressed(KEY_N) && !choosing) { // abandonar y empezar otra partida
-            recordRun(game);
+        if (IsKeyPressed(KEY_N)) { // volver al inicio para armar otra gota
+            saveProgress(game.progress, game.progressPath);
             game.screen = Screen::Title;
             continue;
         }
 
-        if (game.screen == Screen::Playing && !tools.paused && !choosing) {
+        if (game.screen == Screen::Playing && !tools.paused) {
             // LOD: lo que se ve (más un margen) se simula en detalle.
             world.setFocus({camera.target.x, camera.target.y},
                            {0.5f * static_cast<float>(GetScreenWidth()) / camera.zoom,
                             0.5f * static_cast<float>(GetScreenHeight()) / camera.zoom});
             accumulator += frameDt * units::kTimeScale;
             int steps = 0;
-            while (accumulator >= kFixedDt && steps < kMaxStepsPerFrame && !game.run.simulationPaused()) {
+            while (accumulator >= kFixedDt && steps < kMaxStepsPerFrame) {
                 const double t0 = GetTime();
                 world.step(kFixedDt);
                 tools.stepMs += (static_cast<float>(1000.0 * (GetTime() - t0)) - tools.stepMs) * 0.1f;
@@ -380,23 +414,16 @@ int main() {
             if (steps == kMaxStepsPerFrame)
                 accumulator = 0.0f; // evita la "espiral de la muerte" si la sim no da abasto
         }
-        if (game.run.state() == Run::State::Lost && game.screen == Screen::Playing) {
-            recordRun(game);
-            game.screen = Screen::Over;
-        }
-        if (game.screen == Screen::Over && (IsKeyPressed(KEY_ENTER) || IsKeyPressed(KEY_N)))
-            game.screen = Screen::Title;
-
-        // La cámara sigue al jugador, o a la candidata elegida durante una elección.
-        entt::entity focus = world.player();
-        if (game.run.simulationPaused() && !game.run.candidates().empty())
-            focus = game.run.candidates()[game.run.selected()];
-        if (tools.follow || game.run.simulationPaused())
+        // La cámara sigue al ser controlado.
+        const entt::entity focus = world.player();
+        if (explore.active && tools.followInspected && exploreFollowable(explore) && world.registry().valid(explore.picked.entity))
+            followCell(camera, world, explore.picked.entity, frameDt);
+        else if (tools.follow)
             followCell(camera, world, focus, frameDt);
 
         // Enciclopedia: lo que se ve se cataloga (dos veces por segundo).
         game.discoveryTimer -= frameDt;
-        if (game.screen == Screen::Playing && !sandbox && game.discoveryTimer <= 0.0f) {
+        if (game.screen == Screen::Playing && game.discoveryTimer <= 0.0f) {
             game.discoveryTimer = 0.5f;
             const Vector2 a = GetScreenToWorld2D({0, 0}, camera);
             const Vector2 b = GetScreenToWorld2D({static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight())}, camera);
@@ -419,22 +446,25 @@ int main() {
         const double r0 = GetTime();
         renderer.drawWorld(world, camera, tools.overlay);
         tools.renderMs += (static_cast<float>(1000.0 * (GetTime() - r0)) - tools.renderMs) * 0.1f;
-        if (game.run.simulationPaused())
-            drawCandidates(game, camera);
-        drawUi(world, tools);
-        drawRunHud(game.run, world);
-        if (sandbox && !game.run.simulationPaused())
-            drawSandboxBar(world, game.sandbox, camera);
+        drawLabPanel(world, game.run, tools);
+        drawControlHud(world, !(explore.active && explore.inspection.valid));
+        bool leaveExplore = false, enterExplore = false;
+        if (explore.active)
+            leaveExplore = drawExplore(world, explore, tools, camera);
+        else
+            enterExplore = drawSandboxBar(world, game.sandbox, camera);
         drawToasts(game.toasts, std::min(1.0f, game.toastTimer));
-        if (game.screen == Screen::Over)
-            drawGameOver(game.run, game.progress, game.unlockedNow);
         EndDrawing();
+        if (leaveExplore)
+            setExplore(false);
+        else if (enterExplore)
+            setExplore(true);
 
         PROFILE_FRAME();
     }
 
     if (game.screen == Screen::Playing)
-        recordRun(game);
+        saveProgress(game.progress, game.progressPath);
     CloseWindow();
     return 0;
 }

@@ -224,6 +224,7 @@ void World::updateEggs(float bioDt) {
         m.reserves = 0.3f * m.biomass;
         registry_.get<Lineage>(young).generation = egg.generation;
         registry_.emplace<Autopilot>(young);
+        noteDeath(e, egg.species, at, "el huevo eclosiono", young);
         ++observed_.eggsHatched;
     }
 }

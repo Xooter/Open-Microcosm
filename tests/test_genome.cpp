@@ -198,34 +198,3 @@ TEST_CASE("conjugación: tipos de apareamiento distintos intercambian genes y qu
     CHECK((ra[Gene::Motor] == 1.8f || ra[Gene::Motor] == 0.6f));
 }
 
-TEST_CASE("el legado genético se guarda y la próxima partida lo hereda a medias") {
-    const auto path = (std::filesystem::temp_directory_path() / "biogame_test_legacy.txt").string();
-    std::remove(path.c_str());
-    Progress p;
-    Genome lineage = speciesGenome(LocomotionType::Cilia);
-    lineage[Gene::Motor] = 1.7f;
-    lineage[Gene::Size] = 1.2f;
-    lineage[Gene::Lysosomes] = 1.9f;
-    lineage[Gene::Mitochondria] = 0.6f;
-    p.recordRun(2, 0.1f, false, LocomotionType::Cilia, lineage);
-    REQUIRE(saveProgress(p, path));
-    const Progress q = loadProgress(path);
-    REQUIRE(q.hasLegacy[0]);
-    CHECK(q.legacy[0][Gene::Motor] == doctest::Approx(1.7f));
-
-    int fromLegacy = 0, total = 0;
-    for (std::uint64_t k = 0; k < 64; ++k) {
-        Rng rng(9, 9, k, 0);
-        const Genome f = q.founderGenome(LocomotionType::Cilia, rng);
-        for (Gene g : {Gene::Motor, Gene::Size, Gene::Lysosomes, Gene::Mitochondria}) {
-            const bool legacyValue = std::abs(f[g] - q.legacy[0][g]) < 1e-4f;
-            CHECK((legacyValue || f[g] == speciesGenome(LocomotionType::Cilia)[g]));
-            fromLegacy += legacyValue ? 1 : 0;
-            ++total;
-        }
-    }
-    MESSAGE(fromLegacy << " de " << total << " genes heredados del legado");
-    CHECK(fromLegacy > total / 4);
-    CHECK(fromLegacy < 3 * total / 4);
-    std::remove(path.c_str());
-}

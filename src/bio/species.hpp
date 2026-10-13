@@ -84,6 +84,7 @@ struct SpeciesInfo {
     // Algas.
     bool chloroplasts = false;      // fotótrofa (gen de cloroplastos activo)
     bool glider = false;            // diatomeas: se deslizan por el rafe, con inversiones
+    bool vitaminB12 = false;        // auxótrofa de cobalamina: la obtiene de las bacterias
     bool frustule = false;          // sílice: cada división achica a una hija (MacDonald–Pfitzer)
     bool filament = false;          // células unidas extremo con extremo (Spirogyra)
     int filamentCells = 0;          // células por filamento al empezar

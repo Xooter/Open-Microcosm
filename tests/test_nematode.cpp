@@ -122,3 +122,35 @@ TEST_CASE("nematodo: pone un huevo que eclosiona en un nematodo que ondula") {
         undulating += sp.id == SpeciesId::Rhabditis ? 1 : 0;
     CHECK(undulating >= 2);
 }
+
+TEST_CASE("nematodo: sin orden de avanzar se relaja y queda recto") {
+    World world(emptyWorld());
+    const Vec2 c = world.dish().center;
+    const entt::entity e = world.spawnOrganism(SpeciesId::Rhabditis, c, speciesGenome(SpeciesId::Rhabditis), 0, 0.0f);
+    world.setPlayer(e);
+    PlayerInput in;
+    in.forward = 1.0f;
+    world.setPlayerInput(in);
+    for (int s = 0; s < 60 * 2; ++s)
+        world.step(kDt);
+    // Curvatura: cuanto se aparta el eje de la recta que une sus extremos (con la onda a pleno).
+    auto bow = [&] {
+        const Undulation& u = world.registry().get<Undulation>(e);
+        const Vec2 a = u.spine.front(), b = u.spine.back();
+        Vec2 d = b - a;
+        d = d * (1.0f / std::max(1e-3f, length(d)));
+        float worst = 0.0f;
+        for (const Vec2& p : u.spine)
+            worst = std::max(worst, std::abs((p.x - a.x) * d.y - (p.y - a.y) * d.x));
+        return worst;
+    };
+    const float swimming = bow();
+    in.forward = 0.0f;
+    world.setPlayerInput(in);
+    for (int s = 0; s < 60 * 3; ++s)
+        world.step(kDt);
+    const float resting = bow();
+    MESSAGE("flecha del eje: nadando " << swimming << " um, en reposo " << resting << " um");
+    CHECK(swimming > 10.0f);
+    CHECK(resting < 0.2f * swimming);
+}

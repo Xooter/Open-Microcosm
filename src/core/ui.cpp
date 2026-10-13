@@ -16,113 +16,6 @@
 #define RAYGUI_IMPLEMENTATION
 #include <raygui.h>
 
-void drawUi(World& world, ToolState& tools) {
-    if (!tools.showLab) {
-        DrawText("H: panel de laboratorio", 12, 12, 16, DARKGRAY);
-        return;
-    }
-    MediumParams& m = world.medium();
-
-    GuiPanel(kUiPanel, "BioGame - laboratorio (H oculta)");
-    float y = kUiPanel.y + 35;
-    auto slider = [&](const char* label, float* value, float lo, float hi, const char* fmt) {
-        GuiSliderBar({kUiPanel.x + 120, y, 110, 16}, label, TextFormat(fmt, *value), value, lo,
-                     hi);
-        y += 22;
-    };
-    slider("espesor [um]", &world.fluid().gapHeight, 20.0f, 500.0f, "%.0f");
-    slider("radio revolver", &tools.stirRadius, 5.0f, 120.0f, "%.0f");
-    slider("radio tinta", &tools.inkRadius, 2.0f, 60.0f, "%.0f");
-    slider("quimiotaxis", &world.bacteria().params.chemotaxisGain, 0.0f, 20.0f, "%.1f");
-    slider("descomposicion", &m.detritusDecay, 0.0f, 0.02f, "%.4f");
-    slider("consumo nutr.", &m.nutrientUptake, 0.0f, 0.05f, "%.3f");
-    slider("detritos/s", &m.detritusSpawnRate, 0.0f, 5.0f, "%.1f");
-
-    SoftBodyTuning& t = world.softTuning();
-    float substeps = static_cast<float>(t.substeps);
-    slider("subpasos", &substeps, 1.0f, 30.0f, "%.0f");
-    t.substeps = static_cast<int>(substeps + 0.5f);
-    slider("memoria forma x", &t.shapeScale, 0.0f, 3.0f, "%.2f");
-    slider("flexion [1/s]", &t.bendRate, 0.0f, 400.0f, "%.0f");
-    slider("area [1/s]", &t.areaRate, 10.0f, 3000.0f, "%.0f");
-    slider("apretar [um/s]", &tools.squeezeSpeed, 5.0f, 120.0f, "%.0f");
-
-    GuiCheckBox({kUiPanel.x + 10, y + 2, 16, 16}, "Pausa [Espacio]", &tools.paused);
-    y += 26;
-    GuiLabel({kUiPanel.x + 10, y, 300, 16},
-             TextFormat("t = %.1f s | %d FPS | sim %.1f ms | render %.1f ms", world.simTime(), GetFPS(), tools.stepMs,
-                        tools.renderMs));
-    y += 18;
-    GuiLabel({kUiPanel.x + 10, y, 300, 16},
-             TextFormat("LOD: %zu en detalle | %zu con contactos | XPBD en %s", world.nearBodies(), world.touchingBodies(),
-                        world.substepSolver() ? world.substepSolver()->name() : "CPU"));
-    y += 18;
-    GuiLabel({kUiPanel.x + 10, y, 280, 16},
-             TextFormat("%zu celulas | %zu bacterias | %zu part.", world.cellCount(),
-                        world.bacteria().size(), world.ambient().size()));
-    y += 18;
-    GuiLabel({kUiPanel.x + 10, y, 280, 16},
-             TextFormat("Overlay: %s", overlayName(tools.overlay)));
-    y += 18;
-    GuiLabel({kUiPanel.x + 10, y, 300, 16},
-             TextFormat("Tincion: %s", stainName(static_cast<Stain>(tools.stain))));
-    y += 22;
-    y += 4;
-    const entt::registry& reg = world.registry();
-    if (reg.valid(world.player())) {
-        const entt::entity p = world.player();
-        const Locomotion& loco = reg.get<Locomotion>(p);
-        const Digestion& dig = reg.get<Digestion>(p);
-        const Metabolism& meta = reg.get<Metabolism>(p);
-        const Dividing* div = reg.try_get<Dividing>(p);
-        GuiLabel({kUiPanel.x + 10, y, 300, 16},
-                 TextFormat("Jugador: %s  |  %.0f um/s  |  %.1f h",
-                            reg.all_of<Species>(p) ? speciesInfo(reg.get<Species>(p).id).name : locomotionName(loco.type),
-                            std::abs(loco.speed), meta.ageHours));
-        y += 20;
-        // Barras de estado: reservas, crecimiento hacia la división y progreso de la división.
-        float reserves = meta.reserves / std::max(1e-6f, meta.biomass);
-        GuiProgressBar({kUiPanel.x + 90, y, 160, 14}, "reservas", TextFormat("%.0f%%", 100 * reserves),
-                       &reserves, 0.0f, 0.6f);
-        y += 18;
-        float growth = meta.biomass / std::max(1e-6f, meta.birthBiomass);
-        GuiProgressBar({kUiPanel.x + 90, y, 160, 14}, "biomasa", TextFormat("x%.2f", growth), &growth,
-                       0.5f, 2.0f);
-        y += 18;
-        if (div) {
-            float pr = std::min(1.0f, div->progress);
-            GuiProgressBar({kUiPanel.x + 90, y, 160, 14}, "division", TextFormat("%.0f%%", 100 * pr), &pr,
-                           0.0f, 1.0f);
-            y += 18;
-        }
-        GuiLabel({kUiPanel.x + 10, y, 300, 16},
-                 TextFormat("O2 %.0f uM (%.0f%% aerobico) | luz %.2f%s", meta.o2, 100 * meta.aerobic,
-                            meta.light, meta.starving ? " | AYUNO" : ""));
-        y += 18;
-        GuiLabel({kUiPanel.x + 10, y, 300, 16},
-                 TextFormat("Comido: %d bact. %d detr. %d cel. | %zu vacuolas", dig.bacteriaEaten,
-                            dig.detritusEaten, dig.cellsEaten, dig.vacuoles.size()));
-        y += 22;
-    }
-    slider("luz", &world.medium().surfaceLight, 0.0f, 1.0f, "%.2f");
-    slider("tiempo bio x", &world.bioTimeScale(), 1.0f, 600.0f, "%.0f");
-    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "F seguir | N nueva partida | V conjugar");
-    y += 16;
-    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Cilios: W/S avanzar, A/D girar");
-    y += 16;
-    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Flagelo: W o click, gira hacia el mouse");
-    y += 16;
-    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Ameba: click = pseudopodo; toca y envuelve");
-    y += 20;
-    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Ctrl+Izq revolver | Shift+Izq estirar | T tinta");
-    y += 16;
-    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "B detrito | C celula | K 50 celulas | X borrar");
-    y += 16;
-    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Q apretar | L lisar | F1-F10 overlays | Rueda");
-    y += 16;
-    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "J tincion");
-}
-
 namespace {
 
 const char* speciesName(LocomotionType t) {
@@ -131,16 +24,6 @@ const char* speciesName(LocomotionType t) {
     case LocomotionType::Flagellum: return "Euglena (flagelo)";
     case LocomotionType::Pseudopod: return "Amoeba (pseudopodos)";
     case LocomotionType::Undulation: return "Rhabditis (ondulacion)";
-    }
-    return "";
-}
-
-const char* unlockHint(LocomotionType t) {
-    switch (t) {
-    case LocomotionType::Cilia: return "";
-    case LocomotionType::Flagellum: return "Llega a la generacion 3";
-    case LocomotionType::Pseudopod: return "Llega a la generacion 5 o gana una partida";
-    case LocomotionType::Undulation: return "Solo en el sandbox";
     }
     return "";
 }
@@ -157,22 +40,19 @@ TitleAction drawTitleScreen(const Progress& progress) {
     ClearBackground({236, 231, 214, 255});
     const float cx = GetScreenWidth() * 0.5f, cy = GetScreenHeight() * 0.5f;
     centered("BioGame", cy - 220, 56, {60, 64, 52, 255});
-    centered("Una gota de agua. Un linaje. Domina la biomasa o extinguite.", cy - 150, 22, {90, 92, 80, 255});
-    const char* labels[] = {"Jugar", "Sandbox", "Enciclopedia", "Opciones", "Salir"};
-    const TitleAction actions[] = {TitleAction::Play, TitleAction::Sandbox, TitleAction::Encyclopedia, TitleAction::Options,
-                                   TitleAction::Quit};
-    for (int i = 0; i < 5; ++i)
+    centered("Sandbox de vida acuatica microscopica: simulacion fisica y biologia real.", cy - 150, 22, {90, 92, 80, 255});
+    const char* labels[] = {"Nueva gota", "Enciclopedia", "Opciones", "Salir"};
+    const TitleAction actions[] = {TitleAction::NewDrop, TitleAction::Encyclopedia, TitleAction::Options, TitleAction::Quit};
+    for (int i = 0; i < 4; ++i)
         if (GuiButton({cx - 160, cy - 110 + i * 58.0f, 320, 48}, labels[i]))
             action = actions[i];
     if (IsKeyPressed(KEY_ENTER))
-        action = TitleAction::Play;
+        action = TitleAction::NewDrop;
     int species = 0;
     for (int k = 0; k < kSpeciesCount; ++k)
         species += (progress.seenSpecies >> k) & 1u;
-    centered(TextFormat("Partidas %d | victorias %d | mejor generacion %u | mejor dominio %.0f%% | enciclopedia %d/%d",
-                        progress.runs, progress.wins, progress.bestGeneration, 100 * progress.bestShare, species,
-                        kSpeciesCount),
-             cy + 190, 18, {90, 92, 80, 255});
+    centered(TextFormat("Enciclopedia: %d/%d especies vistas", species, kSpeciesCount), cy + 150, 18, {90, 92, 80, 255});
+    centered("Codigo abierto, con fines educativos y cientificos", cy + 180, 16, {110, 112, 100, 255});
     EndDrawing();
     return action;
 }
@@ -182,7 +62,7 @@ SetupAction drawSetupScreen(const Progress& progress, SetupState& state) {
     BeginDrawing();
     ClearBackground({236, 231, 214, 255});
     const float cx = GetScreenWidth() * 0.5f;
-    centered(state.sandbox ? "Sandbox: elegir la gota" : "Elegir la gota", 40, 40, {60, 64, 52, 255});
+    centered("Nueva gota: elegir el ambiente", 40, 40, {60, 64, 52, 255});
     // Biomas.
     for (int b = 0; b < kBiomeCount; ++b) {
         const Biome& bio = biome(static_cast<BiomeId>(b));
@@ -218,29 +98,22 @@ SetupAction drawSetupScreen(const Progress& progress, SetupState& state) {
                             sel.medium.salinity, sel.medium.anoxic ? " | sin oxigeno" : ""),
                  static_cast<int>(cx - 220), static_cast<int>(y + 8), 18, {90, 92, 80, 255});
     }
-    // Especie fundadora.
+    // Ser que se controla al empezar (despues se puede controlar cualquier otra celula con P).
     const LocomotionType types[] = {LocomotionType::Cilia, LocomotionType::Flagellum, LocomotionType::Pseudopod};
     for (int i = 0; i < 3; ++i) {
         const LocomotionType t = types[i];
         const Rectangle r = {cx - 220, 420 + i * 62.0f, 440, 52};
-        const bool open = state.sandbox || progress.isUnlocked(t);
-        if (!open)
-            GuiDisable();
-        if (GuiButton(r, TextFormat("%d  %s", i + 1, speciesName(t))) && open)
+        if (GuiButton(r, TextFormat("%d  %s", i + 1, speciesName(t))))
             state.founder = t;
-        GuiEnable();
-        if (open && IsKeyPressed(KEY_ONE + i))
+        if (IsKeyPressed(KEY_ONE + i))
             state.founder = t;
         if (state.founder == t)
             DrawRectangleLinesEx(r, 3, {60, 110, 60, 255});
-        if (!open)
-            DrawText(TextFormat("Bloqueada: %s", unlockHint(t)), static_cast<int>(r.x + 450), static_cast<int>(r.y + 18), 16, GRAY);
     }
     DrawText(TextFormat("Semilla %u", state.seed), static_cast<int>(cx - 220), 620, 20, {80, 82, 70, 255});
     if (GuiButton({cx - 40, 612, 120, 36}, "Otra"))
         state.seed = static_cast<unsigned>(GetRandomValue(1, 2147483646));
-    if (state.sandbox)
-        GuiCheckBox({cx + 100, 622, 20, 20}, "Gota vacia", &state.emptyDrop);
+    GuiCheckBox({cx + 100, 622, 20, 20}, "Gota vacia", &state.emptyDrop);
     if (GuiButton({cx - 220, 680, 210, 56}, "Volver") || IsKeyPressed(KEY_ESCAPE))
         action = SetupAction::Back;
     if (GuiButton({cx + 10, 680, 210, 56}, "Empezar") || IsKeyPressed(KEY_ENTER))
@@ -356,20 +229,24 @@ void drawToasts(const std::vector<std::string>& lines, float alpha) {
 
 namespace {
 
-// Genes de la célula `cell`; si `compare` es válida, marca las diferencias con ella.
-void drawGenome(const World& world, entt::entity cell, entt::entity compare, float x, float y, const char* title) {
+// Genes de la célula `cell`; si `compare` es válida, marca las diferencias con ella. Sin
+// `framed` solo dibuja las filas (dentro de otro panel). Devuelve el alto usado.
+float drawGenome(const World& world, entt::entity cell, entt::entity compare, float x, float y, const char* title,
+                 bool framed = true) {
     const entt::registry& reg = world.registry();
     if (!reg.valid(cell) || !reg.all_of<Heredity, Locomotion>(cell))
-        return;
+        return 0.0f;
     const Genome& g = reg.get<Heredity>(cell).genome;
     const Genome* other = reg.valid(compare) && reg.all_of<Heredity>(compare) ? &reg.get<Heredity>(compare).genome : nullptr;
     const LocomotionType type = reg.get<Locomotion>(cell).type;
     int rows = 0;
     for (std::size_t i = 0; i < kGeneCount; ++i)
         rows += geneAllowed(type, static_cast<Gene>(i)) ? 1 : 0;
-    DrawRectangle(static_cast<int>(x) - 10, static_cast<int>(y), 330, 26 + rows * 18, Fade({236, 231, 214, 255}, 0.85f));
-    DrawText(title, static_cast<int>(x), static_cast<int>(y) + 6, 16, {60, 64, 52, 255});
-    float yy = y + 26;
+    if (framed) {
+        DrawRectangle(static_cast<int>(x) - 10, static_cast<int>(y), 330, 26 + rows * 18, Fade({236, 231, 214, 255}, 0.85f));
+        DrawText(title, static_cast<int>(x), static_cast<int>(y) + 6, 16, {60, 64, 52, 255});
+    }
+    float yy = y + (framed ? 26 : 0);
     for (std::size_t i = 0; i < kGeneCount; ++i) {
         const auto gene = static_cast<Gene>(i);
         if (!geneAllowed(type, gene))
@@ -393,64 +270,22 @@ void drawGenome(const World& world, entt::entity cell, entt::entity compare, flo
         }
         yy += 18;
     }
+    return (framed ? 26.0f : 0.0f) + static_cast<float>(rows) * 18.0f;
 }
 
 } // namespace
 
-void drawRunHud(const Run& run, const World& world) {
-    const Census& c = run.census();
+void drawControlHud(const World& world, bool showGenome) {
+    if (!showGenome)
+        return;
     const float x = GetScreenWidth() - 330.0f;
-    DrawRectangle(static_cast<int>(x) - 10, 10, 330, 116, Fade({236, 231, 214, 255}, 0.85f));
-    float share = c.share();
-    GuiProgressBar({x + 70, 18, 180, 16}, "dominio", TextFormat("%.1f%% / %.0f%%", 100 * share, 100 * run.config().targetShare),
-                   &share, 0.0f, run.config().targetShare);
-    DrawText(TextFormat("Linaje: %d celulas | generacion %u", c.lineageCells, c.maxGeneration), static_cast<int>(x), 42, 16, DARKGRAY);
-    DrawText(TextFormat("Par %d Eug %d Ame %d Chl %d Did %d Vor %d", c.species[0], c.species[1], c.species[2],
-                        c.species[3], c.species[4], c.species[5]),
-             static_cast<int>(x), 62, 16, DARKGRAY);
-    DrawText(TextFormat("Ste %d Pod %d Eup %d Arc %d Lac %d", c.species[6], c.species[7], c.species[8], c.species[9],
-                        c.species[10]),
-             static_cast<int>(x), 102, 16, DARKGRAY);
-    DrawText(TextFormat("Bacterias %d | %.0f s (%.1f h bio) | div. %d", c.bacteria, run.elapsed(),
-                        run.elapsed() * units::kBioTimeScale / 3600.0f, run.divisions()),
-             static_cast<int>(x), 82, 16, DARKGRAY);
-
-    // Genoma: el de la candidata durante una elección (comparado con la otra), si no el propio.
-    if (run.simulationPaused() && !run.candidates().empty()) {
-        const auto& cands = run.candidates();
-        const entt::entity sel = cands[run.selected()];
-        const entt::entity alt = cands.size() == 2 ? cands[1 - run.selected()] : entt::null;
-        drawGenome(world, sel, alt, x, 132, cands.size() == 2 ? "Genoma de esta hija (vs. la otra)" : "Genoma del descendiente");
-    } else {
-        drawGenome(world, world.player(), entt::null, x, 132, "Genoma");
-        if (world.conjugationPartner(world.player()) != entt::null)
-            centered("Pareja compatible cerca: V para conjugar", GetScreenHeight() - 90.0f, 20, {60, 90, 140, 255});
+    if (!world.registry().valid(world.player())) {
+        DrawText("Sin ser controlado (P: controlar la celula bajo el cursor)", static_cast<int>(x) - 80, 12, 16, DARKGRAY);
+        return;
     }
-
-    if (run.won())
-        centered("Tu linaje domina la gota!  (segui jugando o N para una partida nueva)", 20, 22, {40, 110, 40, 255});
-    if (run.state() == Run::State::ChoosingDaughter)
-        centered("Te dividiste: elegi con que hija seguir  (Tab / flechas / click, Enter)", GetScreenHeight() - 60.0f, 24, {150, 80, 10, 255});
-    if (run.state() == Run::State::ChoosingHeir)
-        centered(TextFormat("Tu celula murio (%s): elegi un descendiente  (Tab / click, Enter)", run.deathCause()),
-                 GetScreenHeight() - 60.0f, 24, {150, 40, 30, 255});
-}
-
-void drawGameOver(const Run& run, const Progress& progress, const std::vector<LocomotionType>& unlocked) {
-    DrawRectangle(0, 0, GetScreenWidth(), GetScreenHeight(), Fade(BLACK, 0.45f));
-    const float cy = GetScreenHeight() * 0.5f;
-    centered("Tu linaje se extinguio", cy - 120, 48, RAYWHITE);
-    centered(TextFormat("Ultima muerte: %s", run.deathCause()), cy - 60, 22, RAYWHITE);
-    centered(TextFormat("Generacion maxima %u | mejor dominio %.1f%% | %d divisiones | %.0f s", run.bestGeneration(),
-                        100 * run.bestShare(), run.divisions(), run.elapsed()),
-             cy - 25, 22, RAYWHITE);
-    float y = cy + 20;
-    for (LocomotionType t : unlocked) {
-        centered(TextFormat("Nueva especie desbloqueada: %s", speciesName(t)), y, 24, {250, 210, 120, 255});
-        y += 32;
-    }
-    centered(TextFormat("Partidas jugadas: %d", progress.runs), y + 10, 18, LIGHTGRAY);
-    centered("Enter: volver al inicio", y + 50, 22, RAYWHITE);
+    drawGenome(world, world.player(), entt::null, x, 12, "Genoma del ser controlado");
+    if (world.conjugationPartner(world.player()) != entt::null)
+        centered("Pareja compatible cerca: V para conjugar", GetScreenHeight() - 170.0f, 20, {60, 90, 140, 255});
 }
 
 // ---------------------------------------------------------------------------
@@ -459,27 +294,40 @@ void drawGameOver(const Run& run, const Progress& progress, const std::vector<Lo
 
 namespace {
 
-constexpr float kIcon = 44.0f, kIconGap = 6.0f, kSandboxButtonsH = 34.0f;
+constexpr float kIcon = 44.0f, kIconGap = 6.0f, kTabH = 26.0f, kButtonsH = 26.0f;
 
-int iconsPerRow() {
-    return std::max(1, static_cast<int>((static_cast<float>(GetScreenWidth()) - 20.0f) / (kIcon + kIconGap)));
+// Qué seres del catálogo hay en cada categoría (se arma una vez).
+const std::vector<int>& categoryItems(int category) {
+    static const std::vector<std::vector<int>> table = [] {
+        std::vector<std::vector<int>> t(kCategoryCount);
+        for (int i = 0; i < kBeingCount; ++i)
+            t[static_cast<std::size_t>(categoryOf(beingAt(i)))].push_back(i);
+        return t;
+    }();
+    return table[static_cast<std::size_t>(category)];
 }
 
-// Barra inferior: los íconos en filas centradas y, arriba, la fila de botones.
-Rectangle sandboxIconRect(int index) {
-    const int perRow = iconsPerRow();
-    const int rows = (kBeingCount + perRow - 1) / perRow;
-    const int row = index / perRow, col = index % perRow;
-    const int inRow = std::min(perRow, kBeingCount - row * perRow);
-    const float width = static_cast<float>(inRow) * (kIcon + kIconGap) - kIconGap;
-    const float top = static_cast<float>(GetScreenHeight()) - 10.0f - static_cast<float>(rows) * (kIcon + kIconGap);
-    return {0.5f * (static_cast<float>(GetScreenWidth()) - width) + static_cast<float>(col) * (kIcon + kIconGap),
-            top + static_cast<float>(row) * (kIcon + kIconGap), kIcon, kIcon};
+// Cuántos seres de la categoría se ven: en modo Forma solo las especies (lo único a lo que se
+// puede transformar al jugador).
+int visibleCount(int category, bool reshape) {
+    int n = 0;
+    for (int i : categoryItems(category))
+        n += !reshape || beingAt(i).kind == BeingKind::Species ? 1 : 0;
+    return n;
+}
+
+// Barra inferior, de abajo hacia arriba: una fila de íconos de la categoría abierta, la fila de
+// pestañas de categoría y la fila de botones (modo, reproducir, explorar).
+float iconsTop() { return static_cast<float>(GetScreenHeight()) - 10.0f - kIcon; }
+float tabsTop() { return iconsTop() - 8.0f - kTabH; }
+float buttonsTop() { return tabsTop() - 6.0f - kButtonsH; }
+
+Rectangle sandboxIconRect(int slot) {
+    return {10.0f + static_cast<float>(slot) * (kIcon + kIconGap), iconsTop(), kIcon, kIcon};
 }
 
 Rectangle sandboxBarRect() {
-    const Rectangle first = sandboxIconRect(0);
-    const float top = first.y - kSandboxButtonsH - 6.0f;
+    const float top = buttonsTop() - 6.0f;
     return {0, top, static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight()) - top};
 }
 
@@ -638,7 +486,7 @@ float beingReach(Being b) {
 
 bool sandboxBarHovered() { return CheckCollisionPointRec(GetMousePosition(), sandboxBarRect()); }
 
-void drawSandboxBar(World& world, SandboxState& state, const Camera2D& camera) {
+bool drawSandboxBar(World& world, SandboxState& state, const Camera2D& camera) {
     // Fantasma del ser armado bajo el cursor (en el mundo).
     if (state.armed >= 0 && !sandboxBarHovered()) {
         const Being b = beingAt(state.armed);
@@ -670,20 +518,49 @@ void drawSandboxBar(World& world, SandboxState& state, const Camera2D& camera) {
                        : state.armed >= 0 ? TextFormat("%s: click en la placa para spawnear | Esc cancela", beingName(beingAt(state.armed)))
                                           : "Click en un ser y despues en la placa";
     DrawText(TextFormat("SANDBOX | %s", hint), 410, static_cast<int>(by + 5), 18, {80, 82, 70, 255});
+    const bool toExplore = GuiButton({static_cast<float>(GetScreenWidth()) - 160.0f, by, 150, 26}, "Explorar (Tab)");
 
-    // Íconos.
+    // Pestañas de categoría. En modo Forma solo sirven las que tienen especies.
+    {
+        float x = 10.0f;
+        for (int c = 0; c < kCategoryCount; ++c) {
+            const char* label = TextFormat("%s (%d)", categoryName(static_cast<BeingCategory>(c)), visibleCount(c, state.reshape));
+            const float w = static_cast<float>(MeasureText(label, 10)) + 22.0f;
+            const bool usable = visibleCount(c, state.reshape) > 0;
+            bool on = state.category == c;
+            if (!usable)
+                GuiDisable();
+            // GuiToggle (raygui 4.0) siempre devuelve 0: el click se ve en que cambió `on`.
+            GuiToggle({x, tabsTop(), w, kTabH}, label, &on);
+            GuiEnable();
+            if (usable && on != (state.category == c))
+                state.category = c;
+            x += w + 4.0f;
+        }
+        if (visibleCount(state.category, state.reshape) == 0) { // se pasó a Forma desde una categoría sin especies
+            for (int c = 0; c < kCategoryCount; ++c)
+                if (visibleCount(c, state.reshape) > 0) {
+                    state.category = c;
+                    break;
+                }
+        }
+    }
+
+    // Íconos de la categoría abierta.
     const char* tooltip = nullptr;
-    for (int i = 0; i < kBeingCount; ++i) {
+    int slot = 0;
+    for (int i : categoryItems(state.category)) {
         const Being b = beingAt(i);
-        const Rectangle r = sandboxIconRect(i);
-        const bool enabled = !state.reshape || b.kind == BeingKind::Species;
+        if (state.reshape && b.kind != BeingKind::Species)
+            continue;
+        const Rectangle r = sandboxIconRect(slot++);
         const bool hover = CheckCollisionPointRec(GetMousePosition(), r);
-        DrawRectangleRec(r, hover && enabled ? Color{250, 247, 236, 255} : Color{244, 240, 226, 255});
+        DrawRectangleRec(r, hover ? Color{250, 247, 236, 255} : Color{244, 240, 226, 255});
         DrawRectangleLinesEx(r, state.armed == i ? 3.0f : 1.0f, state.armed == i ? Color{60, 110, 60, 255} : Color{170, 165, 145, 255});
-        drawBeingIcon(b, r, enabled);
+        drawBeingIcon(b, r, true);
         if (hover)
             tooltip = beingName(b);
-        if (hover && enabled && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+        if (hover && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
             if (state.reshape) {
                 const Vector2 mid = GetScreenToWorld2D({0.5f * GetScreenWidth(), 0.5f * GetScreenHeight()}, camera);
                 world.setPlayerSpecies(b.species, {mid.x, mid.y});
@@ -699,4 +576,222 @@ void drawSandboxBar(World& world, SandboxState& state, const Camera2D& camera) {
         DrawRectangle(x - 6, y - 4, w + 12, 26, Fade({60, 64, 52, 255}, 0.9f));
         DrawText(tooltip, x, y, 18, {244, 240, 226, 255});
     }
+    return toExplore;
+}
+
+// ---------------------------------------------------------------------------
+// Modo Explorar
+// ---------------------------------------------------------------------------
+
+namespace {
+
+constexpr int kFont = 14;
+constexpr float kPanelW = 330.0f, kPanelTop = 132.0f;
+constexpr Color kInk{60, 64, 52, 255}, kDim{110, 112, 98, 255}, kAccent{50, 90, 50, 255};
+
+Rectangle inspectorRect() {
+    return {static_cast<float>(GetScreenWidth()) - kPanelW - 10.0f, kPanelTop, kPanelW,
+            static_cast<float>(GetScreenHeight()) - kPanelTop - 10.0f};
+}
+
+Rectangle exploreExitRect() { return {0.5f * static_cast<float>(GetScreenWidth()) - 70.0f, 36.0f, 140.0f, 24.0f}; }
+
+// Parte `text` en renglones de a lo sumo `width` píxeles (por palabras).
+void wrapText(const std::string& text, int size, float width, std::vector<std::string>& out) {
+    std::size_t pos = 0;
+    std::string line;
+    while (pos < text.size()) {
+        std::size_t end = text.find(' ', pos);
+        if (end == std::string::npos)
+            end = text.size();
+        const std::string word = text.substr(pos, end - pos);
+        const std::string tryLine = line.empty() ? word : line + " " + word;
+        if (!line.empty() && static_cast<float>(MeasureText(tryLine.c_str(), size)) > width) {
+            out.push_back(line);
+            line = word;
+        } else {
+            line = tryLine;
+        }
+        pos = end + 1;
+    }
+    if (!line.empty())
+        out.push_back(line);
+}
+
+// Contenido de la ficha desde (x, y); con `draw` falso solo mide. Devuelve el alto.
+float inspectorContent(const World& world, const ExploreState& st, float x, float y, float width, bool draw) {
+    const Inspection& ins = st.inspection;
+    const float y0 = y;
+    std::vector<std::string> rows;
+    auto paragraph = [&](const std::string& text, int size, Color color) {
+        rows.clear();
+        wrapText(text, size, width, rows);
+        for (const std::string& r : rows) {
+            if (draw)
+                DrawText(r.c_str(), static_cast<int>(x), static_cast<int>(y), size, color);
+            y += static_cast<float>(size) + 3.0f;
+        }
+    };
+    if (draw)
+        DrawText(ins.title.c_str(), static_cast<int>(x), static_cast<int>(y), 20, ins.dead ? Color{150, 50, 40, 255} : kInk);
+    y += 24.0f;
+    paragraph(ins.subtitle, kFont, kDim);
+    y += 4.0f;
+    paragraph(ins.blurb, kFont, kInk);
+    y += 6.0f;
+    // Columna de rótulos: la del rótulo más largo (y un tope, para que el valor tenga lugar).
+    float labelW = 80.0f;
+    for (const InspectSection& s : ins.sections)
+        for (const InspectLine& l : s.lines)
+            if (!l.label.empty())
+                labelW = std::max(labelW, static_cast<float>(MeasureText(l.label.c_str(), kFont)) + 14.0f);
+    labelW = std::min(labelW, 0.45f * width);
+    for (const InspectSection& s : ins.sections) {
+        if (draw) {
+            DrawText(s.title.c_str(), static_cast<int>(x), static_cast<int>(y), 15, kAccent);
+            DrawLine(static_cast<int>(x), static_cast<int>(y) + 17, static_cast<int>(x + width), static_cast<int>(y) + 17, Fade(kAccent, 0.4f));
+        }
+        y += 22.0f;
+        for (const InspectLine& l : s.lines) {
+            rows.clear();
+            if (l.label.empty()) {
+                wrapText(l.value, kFont, width - 10.0f, rows);
+            } else {
+                wrapText(l.value, kFont, width - labelW, rows);
+                if (draw)
+                    DrawText(TextFormat("%s", l.label.c_str()), static_cast<int>(x), static_cast<int>(y), kFont, kDim);
+            }
+            for (const std::string& r : rows) {
+                if (draw)
+                    DrawText(r.c_str(), static_cast<int>(x + (l.label.empty() ? 10.0f : labelW)), static_cast<int>(y), kFont, kInk);
+                y += static_cast<float>(kFont) + 3.0f;
+            }
+            y += 2.0f;
+        }
+        y += 6.0f;
+    }
+    if (!ins.live && !ins.dead)
+        paragraph("Foto del momento del click: las bacterias y las particulas se reordenan en memoria y no se pueden seguir.", 12, kDim);
+    if (ins.hasGenome && !ins.dead) {
+        if (draw) {
+            DrawText("Genoma", static_cast<int>(x), static_cast<int>(y), 15, kAccent);
+            DrawLine(static_cast<int>(x), static_cast<int>(y) + 17, static_cast<int>(x + width), static_cast<int>(y) + 17, Fade(kAccent, 0.4f));
+        }
+        y += 22.0f;
+        if (draw) {
+            y += drawGenome(world, ins.entity, entt::null, x, y, "", false) + 6.0f;
+        } else { // medir sin dibujar: una fila de 18 px por gen que esta especie puede tener
+            const entt::registry& reg = world.registry();
+            if (reg.valid(ins.entity) && reg.all_of<Locomotion>(ins.entity)) {
+                const LocomotionType type = reg.get<Locomotion>(ins.entity).type;
+                for (std::size_t i = 0; i < kGeneCount; ++i)
+                    y += geneAllowed(type, static_cast<Gene>(i)) ? 18.0f : 0.0f;
+            }
+            y += 6.0f;
+        }
+    }
+    return y - y0;
+}
+
+// Anillo alrededor de lo inspeccionado (el centro de lo vivo se lee cada cuadro: la ficha se rearma menos seguido).
+Vec2 ringCenter(const World& world, const Picked& p, const Inspection& ins) {
+    if ((p.kind == Picked::Kind::Cell || p.kind == Picked::Kind::Rock) && world.registry().valid(p.entity) &&
+        world.registry().all_of<RingBody>(p.entity))
+        return world.registry().get<RingBody>(p.entity).centroid;
+    return ins.at;
+}
+
+void drawRing(Vec2 c, float r, float zoom, Color color, float thickness) {
+    DrawRing({c.x, c.y}, r, r + thickness / zoom, 0, 360, 72, color);
+}
+
+} // namespace
+
+bool exploreUiHovered(const ExploreState& state) {
+    if (!state.active)
+        return false;
+    const Vector2 m = GetMousePosition();
+    return CheckCollisionPointRec(m, exploreExitRect()) || (state.inspection.valid && CheckCollisionPointRec(m, inspectorRect()));
+}
+
+bool drawExplore(const World& world, ExploreState& st, ToolState& tools, const Camera2D& camera) {
+    // Resaltado en el mundo: lo elegido (grueso) y lo que está bajo el cursor (fino).
+    BeginMode2D(camera);
+    if (st.inspection.valid && !st.inspection.dead) {
+        // Lo que no tiene identidad estable (bacterias, partículas) es una foto: el anillo marca
+        // dónde estaba al hacer click y se desvanece, porque el ser ya se movió.
+        const float fade = st.picked.live() ? 1.0f : std::clamp(1.0f - (st.pickedAge - 0.6f) / 1.2f, 0.0f, 1.0f);
+        if (fade > 0.0f)
+            drawRing(ringCenter(world, st.picked, st.inspection), st.inspection.radius, camera.zoom,
+                     Fade({200, 120, 20, 230}, fade), 3.5f);
+    }
+    const bool hoverIsPicked = st.hover.kind == st.picked.kind && st.hover.entity == st.picked.entity &&
+                               st.hover.id == st.picked.id && (st.hover.live() || st.hover.index == st.picked.index);
+    if (st.hover && !hoverIsPicked) {
+        float r = 6.0f;
+        Vec2 c = st.hover.at;
+        if (st.hover.kind == Picked::Kind::Cell && world.registry().valid(st.hover.entity) &&
+            world.registry().all_of<RingBody>(st.hover.entity)) {
+            const RingBody& b = world.registry().get<RingBody>(st.hover.entity);
+            c = b.centroid;
+            r = 0.5f * std::max(b.aabbMax.x - b.aabbMin.x, b.aabbMax.y - b.aabbMin.y) + 3.0f;
+        }
+        drawRing(c, r, camera.zoom, {80, 80, 70, 150}, 1.5f);
+    }
+    EndMode2D();
+
+    // Banner del modo.
+    const char* banner = "EXPLORAR  |  click en un ser para inspeccionarlo  |  Esc cierra la ficha";
+    const int bw = MeasureText(banner, 16);
+    DrawRectangle(GetScreenWidth() / 2 - bw / 2 - 10, 8, bw + 20, 24, Fade({236, 231, 214, 255}, 0.85f));
+    DrawText(banner, GetScreenWidth() / 2 - bw / 2, 12, 16, kInk);
+    const bool exit = GuiButton(exploreExitRect(), "Salir (Tab)");
+
+    // Tooltip del cursor.
+    if (!st.hoverText.empty() && !exploreUiHovered(st)) {
+        const int w = MeasureText(st.hoverText.c_str(), 16);
+        const int x = std::min(GetMouseX() + 16, GetScreenWidth() - w - 14), y = GetMouseY() + 18;
+        DrawRectangle(x - 6, y - 4, w + 12, 24, Fade({60, 64, 52, 255}, 0.9f));
+        DrawText(st.hoverText.c_str(), x, y, 16, {244, 240, 226, 255});
+    }
+
+    // Ficha.
+    if (!st.inspection.valid)
+        return exit;
+    const Rectangle panel = inspectorRect();
+    DrawRectangleRec(panel, Fade({236, 231, 214, 255}, 0.92f));
+    DrawRectangleLinesEx(panel, 1.0f, Fade(kInk, 0.5f));
+    const float bodyTop = panel.y + 34.0f, bodyH = panel.height - 40.0f;
+    const float width = panel.width - 24.0f;
+    const float total = inspectorContent(world, st, 0.0f, 0.0f, width, false) + 8.0f;
+    const float maxScroll = std::max(0.0f, total - bodyH);
+    if (CheckCollisionPointRec(GetMousePosition(), panel))
+        st.scroll -= GetMouseWheelMove() * 36.0f;
+    st.scroll = std::clamp(st.scroll, 0.0f, maxScroll);
+
+    // Botones: seguir con la cámara (células y granos) y cerrar.
+    const bool followable = st.picked.kind == Picked::Kind::Cell || st.picked.kind == Picked::Kind::Rock;
+    if (followable && !st.inspection.dead) {
+        bool follow = tools.followInspected;
+        GuiToggle({panel.x + 8, panel.y + 6, 110, 22}, "Seguir (F)", &follow); // devuelve 0 siempre: `follow` ya cambió
+        tools.followInspected = follow;
+    }
+    if (GuiButton({panel.x + panel.width - 90.0f, panel.y + 6, 82, 22}, "Cerrar (Esc)")) {
+        st.picked = {};
+        st.inspection = {};
+        tools.followInspected = false;
+        return exit;
+    }
+    if (st.inspection.dead && st.inspection.successor != entt::null)
+        DrawText("el control pasa a su sucesor", static_cast<int>(panel.x) + 124, static_cast<int>(panel.y) + 10, 12, kDim);
+
+    BeginScissorMode(static_cast<int>(panel.x), static_cast<int>(bodyTop), static_cast<int>(panel.width), static_cast<int>(bodyH));
+    inspectorContent(world, st, panel.x + 12.0f, bodyTop - st.scroll, width, true);
+    EndScissorMode();
+    if (maxScroll > 0.0f) { // barra de scroll
+        const float th = std::max(24.0f, bodyH * bodyH / total);
+        const float ty = bodyTop + (bodyH - th) * (st.scroll / maxScroll);
+        DrawRectangle(static_cast<int>(panel.x + panel.width) - 6, static_cast<int>(ty), 4, static_cast<int>(th), Fade(kInk, 0.35f));
+    }
+    return exit;
 }

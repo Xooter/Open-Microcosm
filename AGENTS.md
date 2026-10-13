@@ -4,7 +4,8 @@ Guía para agentes (y humanos) que trabajen en este repo. Leela completa antes d
 
 ## Visión
 
-BioGame simula vida acuática microscópica **real**. Las células son cuerpos gelatinosos y
+BioGame es un **sandbox educativo, científico y de código abierto** que simula vida acuática
+microscópica **real**. Las células son cuerpos gelatinosos y
 semitransparentes, vistas como en un microscopio, con sus organelos visibles. Nadan, comen por
 fagocitosis, crecen, se dividen, se conjugan, mueren y se lisan, todo emergiendo de una
 simulación física de partículas y no de animaciones.
@@ -13,30 +14,33 @@ Documentos de referencia:
 - `docs/gameplay.md`: decisiones de diseño (las opciones marcadas con `[x]` son las elegidas).
 - `docs/roadmap.md`: fases, criterios de "hecho" y decisiones tomadas.
 
-## Jugabilidad
+## Sandbox
 
-- El jugador controla **una célula de un linaje**. Al dividirse elige con qué hija seguir y, al
-  morir, salta a un descendiente vivo.
-- **Locomoción física según el tipo de célula:** flagelo (impulso), cilios (deslizamiento) y
-  pseudópodo (clic y arrastre). Se respeta el **bajo número de Reynolds**: no hay inercia.
+No hay partida, puntaje ni victoria: es un laboratorio. El usuario arma una gota, la observa e
+interviene.
+
+- **Gota:** bioma + seed (reproducible), con o sin poblaciones iniciales. Se puede spawnear
+  cualquier ser del catálogo (barra inferior) y cambiar el ambiente en vivo desde el panel de
+  laboratorio (`core/lab_panel`): secciones plegables de simulación, ambiente, macro y
+  micronutrientes, química, microbiología, herramientas, cuerpos blandos, ser controlado y
+  estadísticas (con los totales conservados de P, N, Si y Fe).
+- **Controlar un ser** (`P` sobre una célula): cada especie conserva su **locomoción física**:
+  flagelo (impulso), cilios (deslizamiento), pseudópodo (clic y arrastre) y ondulación. Se respeta
+  el **bajo número de Reynolds**: no hay inercia. Al dividirse se sigue con la madre; si el ser
+  muere, se puede controlar otro.
+- **Modo Explorar** (`Tab`): click sobre cualquier cosa y se abre su ficha (qué es, qué hace y por
+  qué). La enciclopedia se llena con lo que la cámara ve.
 - **Comer es físico:** se envuelve a la presa con la membrana hasta cerrar una vacuola.
-- **Metabolismo real:** respiración con O₂, fermentación sin O₂ y fotosíntesis con luz.
-- **Progresión por genoma:** los organelos y rasgos son genes que mutan en la mitosis y se mezclan
-  en la conjugación. Los organelos ocupan espacio físico dentro de la célula.
-- **Reproducción:** cada especie se reproduce como en la realidad. La del jugador (mitosis o
-  conjugación) es la más costosa.
+- **Metabolismo real:** respiración con O₂, fermentación sin O₂ y fotosíntesis con luz, limitado
+  por P, N y, según la especie, **sílice** (diatomeas), **hierro** (fotótrofas) y **vitamina B₁₂**
+  (auxótrofas: *Euglena*, diatomeas), que aportan las bacterias.
+- **Genoma:** los organelos y rasgos son genes que mutan en la mitosis y se mezclan en la
+  conjugación. Los organelos ocupan espacio físico dentro de la célula.
 - **Ecosistema:** carnívoros (cazadores, envolvedores, emboscadores, parásitos y jefes
   multicelulares), herbívoros (algívoros y bacterívoros), algas, hongos, bacterias y fagos.
-- **Estilo visual:** microscopio de **campo claro** (fondo claro, células semitransparentes).
-
-## Objetivo final
-
-- **Por partida (roguelite):** llevar a tu linaje a dominar el ecosistema de la gota (un % de la
-  biomasa total). La partida termina si el linaje se extingue.
-- **Entre partidas:** parte del genoma se hereda, se desbloquean especies iniciales y se completa
-  la **enciclopedia** de especies y comportamientos observados.
 - **Rejugabilidad:** gotas procedurales por seed y biomas distintos (charco, estanque, musgo,
   intestino de termita, fuente hidrotermal, hielo).
+- **Estilo visual:** microscopio de **campo claro** (fondo claro, células semitransparentes).
 
 ## Principio rector: realismo estricto
 
@@ -105,7 +109,10 @@ Hay presets `debug`, `release` y `profile`. El código tiene que compilar **sin 
   es la respuesta instantánea a las fuerzas. El espesor de la película (`gapHeight`) controla
   qué tan locales son las corrientes.
 - **Química:** difusión exacta en Fourier + advección semi-lagrangiana (`sim/chem_field`). El O₂
-  entra por intercambio con el aire en toda la superficie.
+  entra por intercambio con el aire en toda la superficie. Macronutrientes (P, N, Si) y
+  micronutrientes (Fe, B₁₂) son campos disueltos; cada célula toma su cuota con cinética de Monod
+  (`bio/metabolism`) y el crecimiento lo limita el más escaso (Liebig). El Si de una diatomea
+  muerta queda en su frústula (`AmbientParticles::mass`) y se redisuelve despacio.
 - **Luz:** la lámpara ilumina uniforme y los objetos la atenúan (Beer–Lambert).
 
 ### Capas de simulación (tiers por escala)
@@ -230,19 +237,18 @@ Las partes de un mismo organismo no chocan entre sí (`ContactMember::group`).
 - Bacterias con instancing (`InstancedParticles`): un buffer por frame, una llamada por copia
   del mundo toroidal.
 
-### Partida y linaje (`game/run`, `game/lineage`, `game/progress`, `ai/autopilot`)
+### Sesión y control (`game/run`, `game/progress`, `ai/autopilot`)
 
-- `World` no sabe de reglas de partida: emite `WorldEvent` (el jugador se dividió o murió) y
-  ofrece `census()` y `lineageMembers()`. `Run` consume los eventos, pausa para elegir hija o
-  heredero, calcula el dominio de biomasa y detecta victoria o extinción.
-- Componente `Lineage` (partida y generación). Las hijas que el jugador no controla llevan
-  `Autopilot` (deambular y comer). Movimiento, copas fagocíticas y alimentación son genéricos
-  para toda célula con `Locomotion`; el jugador solo se distingue por de dónde salen sus controles.
+- `World` no sabe de reglas de sesión: emite `WorldEvent` (el ser controlado se dividió, conjugó o
+  murió) y ofrece `census()`. `Run` los cuenta y mantiene el censo; no hay victoria ni derrota.
+- Componente `Lineage` (sesión y generación). Las hijas que no se controlan llevan `Autopilot`
+  (deambular y comer). Movimiento, copas fagocíticas y alimentación son genéricos para toda célula
+  con `Locomotion`; el ser controlado solo se distingue por de dónde salen sus controles.
 - La alimentación de muchas bocas usa una grilla de bacterias; lo comido se marca y se quita todo
   junto al final del paso. Las fagocitosis (que destruyen entidades) se aplican después de
   recorrer la vista de EnTT.
-- `Progress` se guarda como texto clave=valor en `defaultProgressPath()`, incluido el legado
-  genético por especie (`legacy_N`); el fundador lo hereda gen a gen con probabilidad 1/2.
+- `Progress` guarda solo la enciclopedia (especies vistas, comportamientos, biomas) como texto
+  clave=valor en `defaultProgressPath()`. Todo el catálogo está disponible desde el inicio.
 
 ### Jugador (`bio/locomotion`, `bio/feeding`, `bio/phagocytosis`)
 
@@ -293,12 +299,12 @@ Las partes de un mismo organismo no chocan entre sí (`ContactMember::group`).
 ```
 src/
   main.cpp          loop principal
-  core/             profiling, UI de debug, utilidades
+  core/             profiling, UI y panel de laboratorio, utilidades
   sim/              fft, fluid, chem_field, grid2d, particles, body_particles, soft_body (XPBD),
                     contacts, polygon, spatial_grid
   bio/              cell, membrane, metabolism, lifecycle, genome, organelles, species
   ai/               autopilot (deambular); luego quimiotaxis, caza, huida, fototaxis
-  game/             linaje, run roguelite, objetivo de biomasa, enciclopedia
+  game/             sesión de sandbox, linaje, enciclopedia, biomas
   render/           renderer, shaders de membrana, post-proceso de microscopio
 assets/
   shaders/          GLSL 330

@@ -65,6 +65,23 @@ MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const
         }
     }
 
+    // Micronutrientes: mismo esquema (consumo de lujo hasta 1,5 cuotas).
+    auto uptake = [&](float& store, bool needed, float ratio, float halfSat, float perHour, float conc, float& taken) {
+        if (!needed)
+            return;
+        const float q = ratio * m.biomass;
+        if (store >= 1.5f * q)
+            return;
+        const float c = std::max(0.0f, conc);
+        taken = std::min(1.5f * q - store, perHour * q * c / (c + halfSat) * hours);
+        store += taken;
+    };
+    uptake(m.silicon, m.needsSilicon, p.siliconRatio, p.siliconHalfSaturation, p.siliconUptakePerHour, in.silicate,
+           out.siliconTaken);
+    uptake(m.iron, m.photosynthetic, p.ironRatio, p.ironHalfSaturation, p.ironUptakePerHour, in.iron, out.ironTaken);
+    uptake(m.vitamin, m.needsVitamin, p.vitaminRatio, p.vitaminHalfSaturation, p.vitaminUptakePerHour, in.vitamin,
+           out.vitaminTaken);
+
     // Crecimiento con lo que sobra por encima del colchón.
     const float spare = m.reserves - p.reserveBuffer * m.biomass;
     if (spare > 0.0f) {
@@ -75,6 +92,15 @@ MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const
             invest = std::min(invest, std::max(0.0f, m.phosphorus / p.phosphorusRatio - m.biomass) / p.growthYield);
             invest = std::min(invest, std::max(0.0f, m.nitrogen / p.nitrogenRatio - m.biomass) / p.growthYield);
         }
+        // Sin sílice la diatomea no arma la valva nueva; sin hierro no hay fotosistemas; sin B₁₂
+        // la auxótrofa no sintetiza metionina ni nucleótidos.
+        auto limit = [&](bool needed, float store, float ratio) {
+            if (needed)
+                invest = std::min(invest, std::max(0.0f, store / ratio - m.biomass) / p.growthYield);
+        };
+        limit(m.needsSilicon, m.silicon, p.siliconRatio);
+        limit(m.photosynthetic, m.iron, p.ironRatio);
+        limit(m.needsVitamin, m.vitamin, p.vitaminRatio);
         m.reserves -= invest;
         m.biomass += invest * p.growthYield;
     }

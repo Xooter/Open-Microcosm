@@ -39,6 +39,9 @@ const char* overlayName(Overlay overlay) {
     case Overlay::Toxin: return "microcistina";
     case Overlay::Autoinducer: return "autoinductor (quorum)";
     case Overlay::Phage: return "fagos (log)";
+    case Overlay::Silicate: return "silice disuelta";
+    case Overlay::Iron: return "hierro disuelto";
+    case Overlay::Vitamin: return "vitamina B12";
     }
     return "";
 }
@@ -105,10 +108,16 @@ void FieldOverlay::update(const World& world, Overlay overlay) {
     case Overlay::Phosphate:
     case Overlay::Nitrogen:
     case Overlay::Toxin:
+    case Overlay::Silicate:
+    case Overlay::Iron:
+    case Overlay::Vitamin:
     case Overlay::Autoinducer: {
         const auto& c = overlay == Overlay::Phosphate  ? world.phosphate().grid().v
                         : overlay == Overlay::Nitrogen ? world.nitrogen().grid().v
                         : overlay == Overlay::Toxin    ? world.toxin().grid().v
+                        : overlay == Overlay::Silicate ? world.silicate().grid().v
+                        : overlay == Overlay::Iron     ? world.iron().grid().v
+                        : overlay == Overlay::Vitamin  ? world.vitamin().grid().v
                                                        : world.autoinducer().grid().v;
         float top = 1e-6f; // escala relativa al máximo actual
         for (float v : c)

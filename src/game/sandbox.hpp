@@ -57,6 +57,74 @@ inline MineralKind beingMineral(BeingKind k) {
     }
 }
 
+// Categorías de la barra del sandbox (una pestaña cada una). Para las especies salen de los datos
+// de `SpeciesInfo`, no de código por especie.
+enum class BeingCategory : std::uint8_t {
+    Ciliates,    // protistas con cilios
+    Flagellates, // protistas con flagelo que no son algas (Euglena, Trichonympha)
+    Amoebae,     // ameboides
+    Algae,       // algas unicelulares, coloniales, filamentosas y diatomeas
+    Animals,     // metazoos: rotíferos, Hydra, nauplios, gastrotricos y nematodos
+    Fungi,       // levaduras y hongos
+    Bacteria,    // bacterias (también cianobacterias) y fagos
+    Sediment,    // minerales y granos de arena
+    Count
+};
+inline constexpr int kCategoryCount = static_cast<int>(BeingCategory::Count);
+
+inline BeingCategory categoryOf(Being b) {
+    switch (b.kind) {
+    case BeingKind::Species: {
+        const SpeciesInfo& s = speciesInfo(b.species);
+        if (s.multicellular)
+            return BeingCategory::Animals;
+        if (s.budding && s.feeding == FeedingMode::Osmotroph)
+            return BeingCategory::Fungi;
+        if (s.filament || s.glider || s.colonyDaughters > 0 || (s.feeding == FeedingMode::None && s.chloroplasts))
+            return BeingCategory::Algae;
+        if (s.locomotion == LocomotionType::Pseudopod)
+            return BeingCategory::Amoebae;
+        if (s.locomotion == LocomotionType::Flagellum)
+            return BeingCategory::Flagellates;
+        return BeingCategory::Ciliates;
+    }
+    case BeingKind::Chytrid:
+    case BeingKind::Saprolegnia:
+    case BeingKind::Zoophagus: return BeingCategory::Fungi;
+    case BeingKind::Bacterium:
+    case BeingKind::Violaceum:
+    case BeingKind::Bdellovibrio:
+    case BeingKind::Cyanobacterium:
+    case BeingKind::Oscillatoria:
+    case BeingKind::Phage: return BeingCategory::Bacteria;
+    case BeingKind::Clay:
+    case BeingKind::Quartz:
+    case BeingKind::Mica:
+    case BeingKind::IronOxide:
+    case BeingKind::Sulfur:
+    case BeingKind::Frustule:
+    case BeingKind::Rock:
+    case BeingKind::Sediment: return BeingCategory::Sediment;
+    case BeingKind::Count: break;
+    }
+    return BeingCategory::Sediment;
+}
+
+inline const char* categoryName(BeingCategory c) {
+    switch (c) {
+    case BeingCategory::Ciliates: return "Ciliados";
+    case BeingCategory::Flagellates: return "Flagelados";
+    case BeingCategory::Amoebae: return "Amebas";
+    case BeingCategory::Algae: return "Algas";
+    case BeingCategory::Animals: return "Animales";
+    case BeingCategory::Fungi: return "Hongos";
+    case BeingCategory::Bacteria: return "Bacterias y virus";
+    case BeingCategory::Sediment: return "Sedimento";
+    case BeingCategory::Count: break;
+    }
+    return "";
+}
+
 inline const char* beingName(Being b) {
     switch (b.kind) {
     case BeingKind::Species: return speciesInfo(b.species).name;
