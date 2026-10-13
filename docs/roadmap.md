@@ -234,3 +234,20 @@ nutrientes disueltos con limitación real. Las decisiones de jugabilidad de abaj
 - **Pendiente:** con ~540 células por gota (el doble de la población normal) el paso cuesta
   ~29 ms (≈ 35 FPS); con la población normal (~280) ~16 ms. Llegar a 60 FPS con 500+ requiere
   mover XPBD y contactos a GPU.
+
+## Hongos y mohos ampliados ✅
+- **Datos, no código por hongo:** `FungusInfo` (`bio/fungi`) concentra velocidad de espora, ancho de
+  hifa, absorción, clavijas, ramificación dicotómica, esporangios de resistencia, germinación y
+  fotobionte. Panel de laboratorio con sección "Hongos y mohos"; la enciclopedia y las fichas se
+  arman con esa tabla.
+- ***Allomyces*:** hifas dicotómicas, zoosporas uniflageladas y esporangios de resistencia (lista
+  `Fungi::resting`) que duermen con hambre y germinan con comida.
+- **Hongo liquenizante:** micobionte que busca algas verdes (*Chlamydomonas*, *Pediastrum*) por
+  quimiotropismo, las sujeta (`Lichenized`) y recibe su azúcar; devuelve fósforo y las protege de los
+  quitridios. Es ascomiceto: sin zoosporas.
+- ***Physarum polycephalum*** (`bio/plasmodium`): moho mucilaginoso, no un hongo. Red de tubos con
+  el modelo de Tero (flujo de Kirchhoff por gradiente conjugado serial, tubos que se ensanchan o se
+  retraen), exploración en abanico, anastomosis, rastro de baba que evitan las puntas, fotofobia,
+  copos de avena como cebo y esclerocio con hambre. Escala simplificada (placa de ~2 mm).
+- **Placa de Petri vacía** (`DropContent::EmptyPetri`): sin poblaciones, sedimento, polvo, granos de
+  arena ni detritos; queda el agua con la química del bioma.

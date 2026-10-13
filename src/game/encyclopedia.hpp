@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bio/fungi.hpp"
 #include "bio/species.hpp"
 #include "core/vec2.hpp"
 
@@ -23,10 +24,15 @@ enum class OtherOrganism : std::uint8_t {
     Zoophagus,
     Phage,
     Bdellovibrio,
+    Allomyces,
+    Lichen,
+    Physarum,
     Count
 };
 inline constexpr int kOtherCount = static_cast<int>(OtherOrganism::Count);
 
+// Entrada de enciclopedia de cada hongo.
+OtherOrganism otherOf(FungusKind kind);
 const char* otherName(OtherOrganism o);
 const char* otherBlurb(OtherOrganism o);
 const char* speciesBlurb(SpeciesId id);

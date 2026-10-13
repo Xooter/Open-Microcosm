@@ -113,7 +113,21 @@ SetupAction drawSetupScreen(const Progress& progress, SetupState& state) {
     DrawText(TextFormat("Semilla %u", state.seed), static_cast<int>(cx - 220), 620, 20, {80, 82, 70, 255});
     if (GuiButton({cx - 40, 612, 120, 36}, "Otra"))
         state.seed = static_cast<unsigned>(GetRandomValue(1, 2147483646));
-    GuiCheckBox({cx + 100, 622, 20, 20}, "Gota vacia", &state.emptyDrop);
+    // Contenido inicial: todo, solo agua y sedimento, o placa de Petri vacia.
+    const char* contents[] = {"Completa", "Sin vida", "Petri vacia"};
+    for (int i = 0; i < 3; ++i) {
+        const Rectangle r = {cx + 100 + i * 110.0f, 612, 104, 36};
+        if (GuiButton(r, contents[i]))
+            state.content = static_cast<DropContent>(i);
+        if (static_cast<int>(state.content) == i)
+            DrawRectangleLinesEx(r, 3, {60, 110, 60, 255});
+    }
+    {
+        const char* captions[] = {"Todas las poblaciones, el sedimento y el polvo del bioma.",
+                                  "Solo agua, quimica y sedimento: sin vida (agregala desde la barra).",
+                                  "Placa limpia: sin vida, minerales, polvo ni detritos. Solo agua y quimica."};
+        DrawText(captions[static_cast<int>(state.content)], static_cast<int>(cx - 220), 654, 16, {90, 92, 80, 255});
+    }
     if (GuiButton({cx - 220, 680, 210, 56}, "Volver") || IsKeyPressed(KEY_ESCAPE))
         action = SetupAction::Back;
     if (GuiButton({cx + 10, 680, 210, 56}, "Empezar") || IsKeyPressed(KEY_ENTER))
@@ -410,6 +424,36 @@ void drawBeingIcon(Being b, Rectangle r, bool enabled) {
             DrawCircleV({c.x + p[0], c.y + p[1]}, 3.0f, col);
             DrawLineEx({c.x + p[0] - 3, c.y + p[1]}, {c.x + p[0] - 10, c.y + p[1] + 3}, 1.0f, col);
         }
+        break;
+    }
+    case BeingKind::Allomyces: { // hifa que se bifurca en dos y esporangio de resistencia pardo
+        const Color col = withAlpha({150, 128, 84, 255}, enabled);
+        DrawLineEx({c.x - 14, c.y + 12}, {c.x - 2, c.y}, 2.2f, col);
+        DrawLineEx({c.x - 2, c.y}, {c.x + 12, c.y - 12}, 2.0f, col);
+        DrawLineEx({c.x - 2, c.y}, {c.x + 12, c.y + 8}, 2.0f, col);
+        DrawCircleV({c.x + 13, c.y - 12}, 4.0f, withAlpha({110, 78, 44, 255}, enabled));
+        break;
+    }
+    case BeingKind::Lichen: { // hifa abrazando un alga verde
+        DrawCircleV({c.x + 6, c.y}, 6.0f, withAlpha({96, 158, 80, 255}, enabled));
+        DrawLineEx({c.x - 14, c.y + 10}, {c.x - 4, c.y + 2}, 1.8f, withAlpha({120, 132, 104, 255}, enabled));
+        DrawLineEx({c.x - 4, c.y + 2}, {c.x + 2, c.y - 6}, 1.4f, withAlpha({120, 132, 104, 255}, enabled));
+        DrawLineEx({c.x - 4, c.y + 2}, {c.x + 2, c.y + 8}, 1.4f, withAlpha({120, 132, 104, 255}, enabled));
+        break;
+    }
+    case BeingKind::Physarum: { // red de tubos amarillos
+        const Color col = withAlpha({226, 190, 52, 255}, enabled);
+        const Vector2 n[5] = {{c.x - 14, c.y + 8}, {c.x - 2, c.y - 2}, {c.x + 12, c.y - 10}, {c.x + 10, c.y + 10}, {c.x - 8, c.y - 12}};
+        DrawLineEx(n[0], n[1], 4.0f, col);
+        DrawLineEx(n[1], n[2], 3.0f, col);
+        DrawLineEx(n[1], n[3], 2.4f, col);
+        DrawLineEx(n[1], n[4], 1.6f, col);
+        DrawLineEx(n[2], n[3], 1.4f, col);
+        break;
+    }
+    case BeingKind::OatFlake: {
+        DrawEllipse(static_cast<int>(c.x), static_cast<int>(c.y), 12.0f, 8.0f, withAlpha({224, 212, 176, 255}, enabled));
+        DrawEllipseLines(static_cast<int>(c.x), static_cast<int>(c.y), 12.0f, 8.0f, withAlpha({150, 136, 100, 255}, enabled));
         break;
     }
     case BeingKind::Saprolegnia:

@@ -5,6 +5,16 @@
 
 #include <cmath>
 
+OtherOrganism otherOf(FungusKind kind) {
+    switch (kind) {
+    case FungusKind::Chytrid: return OtherOrganism::Chytrid;
+    case FungusKind::Zoophagus: return OtherOrganism::Zoophagus;
+    case FungusKind::Allomyces: return OtherOrganism::Allomyces;
+    case FungusKind::Mycobiont: return OtherOrganism::Lichen;
+    default: return OtherOrganism::Saprolegnia;
+    }
+}
+
 const char* otherName(OtherOrganism o) {
     switch (o) {
     case OtherOrganism::Bacteria: return "Bacterias (bacilos)";
@@ -15,6 +25,9 @@ const char* otherName(OtherOrganism o) {
     case OtherOrganism::Zoophagus: return "Zoophagus insidians";
     case OtherOrganism::Phage: return "Bacteriofagos";
     case OtherOrganism::Bdellovibrio: return "Bdellovibrio bacteriovorus";
+    case OtherOrganism::Allomyces: return "Allomyces";
+    case OtherOrganism::Lichen: return "Hongo liquenizante (micobionte)";
+    case OtherOrganism::Physarum: return "Physarum polycephalum (moho mucilaginoso)";
     default: return "?";
     }
 }
@@ -37,6 +50,12 @@ const char* otherBlurb(OtherOrganism o) {
         return "Virus de bacterias: se pegan, inyectan su ADN y a la media hora la bacteria estalla liberando ~50 copias. Las resistentes sobreviven.";
     case OtherOrganism::Bdellovibrio:
         return "Bacteria cazadora de bacterias: nada a ~100 um/s, entra entre las membranas de su presa, crece adentro y sale con varias hijas.";
+    case OtherOrganism::Allomyces:
+        return "Hongo acuatico (Blastocladiomycota): hifas que se bifurcan en dos y zoosporas con un solo flagelo. Con hambre prolongada forma esporangios de resistencia pardos que duermen hasta que vuelve la comida.";
+    case OtherOrganism::Lichen:
+        return "Micobionte: hongo que vive unido a un alga verde. Ella le da azucar por fotosintesis; el le devuelve fosforo y la protege de parasitos como los quitridios. Solo no puede crecer casi nada.";
+    case OtherOrganism::Physarum:
+        return "NO es un hongo: es un moho mucilaginoso, una sola celula gigante con miles de nucleos. Explora en abanico, deja un rastro de baba que evita, y la red de tubos que lleva mas citoplasma se ensancha mientras el resto se retrae. Asi encuentra caminos eficientes entre trozos de comida (laberintos, redes parecidas a las del tren).";
     default: return "";
     }
 }
@@ -114,14 +133,17 @@ std::vector<std::string> discoverVisible(Progress& progress, const World& world,
     for (const CyanoFilament& f : world.cyanobacteria().filaments)
         cyano |= !f.x.empty() && inView({wrapCoord(f.x[0], w), wrapCoord(f.y[0], h)});
     see(OtherOrganism::Cyanobacteria, cyano);
-    bool sapro = false, zoo = false;
-    for (const Mycelium& m : world.fungi().mycelia) {
-        const bool v = !m.x.empty() && inView({wrapCoord(m.x[0], w), wrapCoord(m.y[0], h)});
-        sapro |= v && m.kind == FungusKind::Saprolegnia;
-        zoo |= v && m.kind == FungusKind::Zoophagus;
-    }
-    see(OtherOrganism::Saprolegnia, sapro);
-    see(OtherOrganism::Zoophagus, zoo);
+    for (const Mycelium& m : world.fungi().mycelia)
+        if (m.kind != FungusKind::Chytrid && !m.x.empty() && inView({wrapCoord(m.x[0], w), wrapCoord(m.y[0], h)}))
+            see(otherOf(m.kind), true);
+    for (std::size_t i = 0; i < world.fungi().resting.size(); ++i)
+        if (inView({world.fungi().resting.x[i], world.fungi().resting.y[i]}))
+            see(OtherOrganism::Allomyces, true);
+    for (const Plasmodium& pl : world.plasmodia().plasmodia)
+        if (!pl.x.empty() && inView({wrapCoord(pl.x[0], w), wrapCoord(pl.y[0], h)}))
+            see(OtherOrganism::Physarum, true);
+    for (auto [e, body, li] : reg.view<RingBody, Lichenized>().each())
+        see(OtherOrganism::Lichen, inView(body.centroid));
     bool chytrid = false;
     for (auto [e, body, inf] : reg.view<RingBody, ChytridInfection>().each())
         chytrid |= inView(body.centroid);
@@ -143,6 +165,12 @@ std::vector<std::string> recordBehaviors(Progress& progress, const World& world)
     const Observations& o = world.observations();
     if (o.chytridInfections > 0) add("Un quitridio infecta un alga");
     if (o.chytridReleases > 0) add("Esporangios de quitridio liberan zoosporas");
+    if (o.restingFormed > 0) add("Allomyces forma esporangios de resistencia con hambre");
+    if (o.restingGerminated > 0) add("Un esporangio de resistencia germina cuando vuelve la comida");
+    if (o.lichenLinks > 0) add("Un hongo liquenizante se une a un alga (simbiosis)");
+    if (o.physarumFusions > 0) add("Physarum fusiona dos tubos: la red es una sola celula");
+    if (o.sclerotiaFormed > 0) add("Physarum se endurece en esclerocio por hambre");
+    if (o.sclerotiaGerminated > 0) add("Un esclerocio revive cuando hay comida");
     if (o.zoophagusCaptures > 0) add("Zoophagus atrapa un rotifero con sus clavijas");
     if (o.buds > 0) add("Gemacion de levaduras o brotes de Hydra");
     if (o.colonyReleases > 0) add("Una colonia libera colonias hijas");

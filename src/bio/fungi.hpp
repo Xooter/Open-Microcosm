@@ -21,14 +21,42 @@ class Fluid;
 //    comida forma zoosporangios en las puntas, que liberan zoosporas biflageladas.
 //  - Zoophagus insidians: hifas finas con clavijas cortas y adhesivas; el rotífero que muerde
 //    una queda pegado, la hifa lo invade y lo digiere.
-enum class FungusKind : std::uint8_t { Chytrid, Saprolegnia, Zoophagus, Count };
+//  - Allomyces (Blastocladiomycota): hifas con ramificación dicotómica (la punta se parte en dos)
+//    y zoosporas uniflageladas. Con hambre prolonga su ciclo con esporangios de resistencia
+//    (paredes gruesas, pardos) que sobreviven secos y germinan cuando vuelve la comida.
+//  - Hongo liquenizante (micobionte, tipo Verrucaria): crece lento y casi no come por su cuenta;
+//    sus hifas buscan algas verdes (fotobionte), se pegan con haustorios y reciben su azúcar. A
+//    cambio le pasan fósforo y la protegen con metabolitos secundarios (antimicrobianos). Es
+//    ascomiceto: no tiene zoosporas, solo esporas inmóviles que arrastra el agua.
+enum class FungusKind : std::uint8_t { Chytrid, Saprolegnia, Zoophagus, Allomyces, Mycobiont, Count };
 inline constexpr int kFungusKinds = static_cast<int>(FungusKind::Count);
-const char* fungusName(FungusKind kind);
+
+// A qué responde la quimiotaxis de la zoospora.
+enum class SporeSense : std::uint8_t { None, Host, Food };
+
+// Datos de cada hongo (nada de código por especie: solo esta tabla).
+struct FungusInfo {
+    const char* name;
+    const char* group;       // grupo taxonómico (ficha)
+    float sporeSpeed;        // [µm/s]; 0 = espora inmóvil
+    SporeSense sense;
+    float hyphaWidth;        // [µm] para el render y la selección
+    float uptakeScale;       // absorción relativa (osmotrofia)
+    bool pegs;               // clavijas adhesivas (Zoophagus)
+    bool dichotomous;        // la punta se parte en dos hifas (Allomyces)
+    bool resting;            // esporangios de resistencia con hambre prolongada
+    bool germinates;         // sus esporas forman micelio sobre un sustrato
+    bool photobiont;         // asocia algas verdes (liquen)
+    float extensionPerHour;  // [µm/h] por punta
+    std::uint8_t r, g, b;    // color de la hifa
+};
+const FungusInfo& fungusInfo(FungusKind kind);
+inline const char* fungusName(FungusKind kind) { return fungusInfo(kind).name; }
 
 struct FungiParams {
     // Zoosporas.
-    float chytridSporeSpeed = 15.0f;  // [µm/s] (Rhizophydium, Batrachochytrium: 10–20)
-    float saproSporeSpeed = 80.0f;    // [µm/s] zoosporas secundarias de Saprolegnia
+    // La velocidad de nado de cada zoospora está en `FungusInfo::sporeSpeed` (Rhizophydium,
+    // Batrachochytrium: 10–20 µm/s; Saprolegnia: ~80).
     float sporeSenseRange = 150.0f;   // [µm] quimiotaxis hacia el hospedador
     float sporeLifeHours = 12.0f;     // nadan con sus reservas; después se enquistan y mueren
     float sporePmol = 0.02f;          // biomasa de una zoospora (~3–4 µm)
@@ -41,7 +69,7 @@ struct FungiParams {
     // Micelio.
     float hyphaSpacing = 10.0f;       // [µm] entre nodos
     float nodePmol = 0.57f;           // hifa de ~12 µm, muy vacuolada
-    float extensionPerHour = 200.0f;  // [µm/h] Saprolegnia: ~3 µm/min por punta
+    // La extensión por punta está en `FungusInfo::extensionPerHour` (Saprolegnia: ~3 µm/min).
     float branchProbability = 0.12f;  // por nodo nuevo
     float uptakePerHour = 1.0f;       // máxima, relativa a la biomasa
     float halfSaturation = 5.0f;      // [µM] (menos afín que las bacterias)
@@ -53,6 +81,17 @@ struct FungiParams {
     int sporesPerSporangium = 30;
     float detritusDecayBoost = 30.0f; // exoenzimas: los detritos junto a las hifas se disuelven más rápido
     int pegSpacing = 3;               // Zoophagus: una clavija cada 3 nodos
+    // Allomyces: esporangio de resistencia.
+    float restingStarveFactor = 3.0f; // veces el hambre que dispara la esporulación
+    float restingGerminateFood = 8.0f;// [µM] comida que lo despierta
+    float restingMinHours = 6.0f;     // reposo mínimo antes de germinar
+    int restingSpores = 40;
+    std::size_t maxResting = 200;
+    // Liquen: el alga cede parte de su azúcar y el hongo le devuelve fósforo.
+    float lichenSugarPerHour = 0.08f; // fracción de las reservas del alga que pasa al hongo por hora
+    float lichenPhosphorusPerHour = 0.10f; // fracción del fósforo sobrante del hongo que pasa al alga
+    float lichenSenseRange = 90.0f;   // [µm] quimiotropismo de la hifa hacia el fotobionte
+    int lichenMaxAlgae = 12;          // algas por micelio
     std::size_t maxNodesPerMycelium = 400;
     std::size_t maxNodes = 5000;      // tope de rendimiento
     std::size_t maxSpores = 3000;
@@ -71,7 +110,16 @@ struct Mycelium {
     float phosphorus = 0.0f;              // [pmol P]
     float starvingHours = 0.0f;
     float tipCredit = 0.0f;               // avance acumulado de las puntas [µm]
+    float gifts = 0.0f;                   // [pmol] recibidos de afuera (presas, azúcar del alga) desde el último paso
     float biomass(const FungiParams& p) const { return static_cast<float>(x.size()) * p.nodePmol + reserves; }
+};
+
+// Esporangio de resistencia (Allomyces): pared gruesa, vive sin comer y germina con comida.
+struct RestingSporangia {
+    std::vector<float> x, y, ageHours, pmol, phosphorus;
+    std::vector<FungusKind> kind;
+    std::size_t size() const { return x.size(); }
+    void swapRemove(std::size_t i);
 };
 
 struct Zoospores {
@@ -89,6 +137,7 @@ struct FungiEnv {
     std::function<void(Vec2, float, float)> release;  // devuelve (materia orgánica, fósforo)
     std::function<float(Vec2)> food;                  // materia orgánica disuelta [µM]
     std::function<bool(Vec2)> substrate;              // ¿hay detritos o materia orgánica para germinar?
+    std::function<bool(Vec2, float, Vec2&)> photobiont; // alga cercana (dentro de `range`): hacia dónde queda
 };
 
 class Fungi {
@@ -96,13 +145,17 @@ class Fungi {
     FungiParams params;
     std::vector<Mycelium> mycelia;
     Zoospores spores;
+    RestingSporangia resting;
     Dish dish; // pared de la placa
+    struct Stats {
+        int restingFormed = 0, restingGerminated = 0;
+    } stats;
 
     std::uint32_t spawnMycelium(FungusKind kind, Vec2 at, float heading, float reserves, float phosphorus);
     // `phosphorus`: el fósforo total que se reparte entre las zoosporas.
     void spawnSpores(FungusKind kind, Vec2 at, int count, float phosphorus, std::uint64_t seed, std::uint64_t salt);
     std::size_t nodeCount() const;
-    float biomass() const;                // [pmol] micelios + zoosporas
+    float biomass() const;                // [pmol] micelios + zoosporas + esporangios de resistencia
     float phosphorus() const;             // [pmol P]
     const Mycelium* find(std::uint32_t id) const;
     Mycelium* find(std::uint32_t id);
@@ -126,6 +179,13 @@ struct ChytridInfection {
     float mass = 0.0f;            // [pmol] absorbido por los esporangios
     float phosphorus = 0.0f;      // [pmol P]
     float ageHours = 0.0f;
+};
+
+// Componente: alga verde unida a un hongo liquenizante (fotobionte). Queda sujeta a la hifa.
+struct Lichenized {
+    std::uint32_t mycelium;
+    Vec2 point; // el haustorio [µm]
+    float transferred = 0.0f; // [pmol] de azúcar cedidos al hongo
 };
 
 // Componente: célula pegada a una clavija adhesiva de Zoophagus.

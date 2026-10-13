@@ -8,17 +8,24 @@
 #include <algorithm>
 #include <cmath>
 
-const char* fungusName(FungusKind kind) {
-    switch (kind) {
-    case FungusKind::Chytrid:
-        return "Rhizophydium";
-    case FungusKind::Saprolegnia:
-        return "Saprolegnia";
-    case FungusKind::Zoophagus:
-        return "Zoophagus";
-    default:
-        return "?";
-    }
+const FungusInfo& fungusInfo(FungusKind kind) {
+    // name, grupo, vel. espora, sentido, ancho hifa, absorción, clavijas, dicotómica, resistencia,
+    // germina, fotobionte, extensión, color.
+    static const FungusInfo kTable[kFungusKinds] = {
+        {"Rhizophydium", "Quitridio (Chytridiomycota)", 15.0f, SporeSense::Host, 4.0f, 1.0f, false, false, false, false, false,
+         0.0f, 130, 120, 95},
+        {"Saprolegnia", "Oomiceto (moho de agua)", 80.0f, SporeSense::Food, 11.0f, 1.0f, false, false, false, true, false, 200.0f,
+         150, 146, 128},
+        {"Zoophagus", "Hongo depredador", 0.0f, SporeSense::None, 4.0f, 0.3f, true, false, false, true, false, 200.0f, 150, 146,
+         128},
+        // Allomyces: hifas de ~9 µm que se bifurcan en dos; zoosporas de ~40 µm/s.
+        {"Allomyces", "Blastocladiomycota", 40.0f, SporeSense::Food, 9.0f, 1.0f, false, true, true, true, false, 150.0f, 176, 150,
+         96},
+        // Liquen: crecimiento muy lento (los líquenes crecen mm por año) y casi sin absorción propia.
+        {"Hongo liquenizante", "Ascomiceto (micobionte)", 0.0f, SporeSense::None, 5.0f, 0.12f, false, false, false, true, true,
+         25.0f, 120, 132, 104},
+    };
+    return kTable[static_cast<int>(kind)];
 }
 
 void Zoospores::push(FungusKind k, float px, float py, float h, float p) {
@@ -42,6 +49,22 @@ void Zoospores::swapRemove(std::size_t i) {
     y.pop_back();
     heading.pop_back();
     ageHours.pop_back();
+    phosphorus.pop_back();
+    kind.pop_back();
+}
+
+void RestingSporangia::swapRemove(std::size_t i) {
+    const std::size_t last = x.size() - 1;
+    x[i] = x[last];
+    y[i] = y[last];
+    ageHours[i] = ageHours[last];
+    pmol[i] = pmol[last];
+    phosphorus[i] = phosphorus[last];
+    kind[i] = kind[last];
+    x.pop_back();
+    y.pop_back();
+    ageHours.pop_back();
+    pmol.pop_back();
     phosphorus.pop_back();
     kind.pop_back();
 }
@@ -85,6 +108,8 @@ std::size_t Fungi::nodeCount() const {
 
 float Fungi::biomass() const {
     float b = static_cast<float>(spores.size()) * params.sporePmol;
+    for (float v : resting.pmol)
+        b += v;
     for (const Mycelium& m : mycelia)
         b += m.biomass(params);
     return b;
@@ -93,6 +118,8 @@ float Fungi::biomass() const {
 float Fungi::phosphorus() const {
     float p = 0.0f;
     for (float v : spores.phosphorus)
+        p += v;
+    for (float v : resting.phosphorus)
         p += v;
     for (const Mycelium& m : mycelia)
         p += m.phosphorus;
@@ -116,6 +143,7 @@ Mycelium* Fungi::find(std::uint32_t id) {
 void Fungi::feed(std::uint32_t id, float pmol, float phosphorus) {
     if (Mycelium* m = find(id)) {
         m->reserves += pmol;
+        m->gifts += pmol;
         m->phosphorus += phosphorus;
     }
 }
@@ -127,17 +155,7 @@ void Fungi::moveSpores(const Fluid& fluid, const std::vector<Vec2>& steer, float
 #pragma omp parallel for schedule(static)
     for (std::ptrdiff_t i = 0; i < n; ++i) {
         Rng rng(seed, rng_stream::kFungi, static_cast<std::uint64_t>(i), step);
-        float speed = 0.0f;
-        switch (spores.kind[i]) {
-        case FungusKind::Chytrid:
-            speed = params.chytridSporeSpeed;
-            break;
-        case FungusKind::Saprolegnia:
-            speed = params.saproSporeSpeed;
-            break;
-        default:
-            break; // Zoophagus: esporas inmóviles que arrastra el agua
-        }
+        const float speed = fungusInfo(spores.kind[i]).sporeSpeed; // 0: la arrastra el agua
         float& h = spores.heading[i];
         const Vec2 s = i < static_cast<std::ptrdiff_t>(steer.size()) ? steer[i] : Vec2{};
         if (s.x != 0.0f || s.y != 0.0f) {
@@ -226,7 +244,8 @@ void Fungi::grow(const FungiEnv& env, float bioDt, std::uint64_t seed, std::uint
         const float biomass = static_cast<float>(n) * p.nodePmol;
 
         // Absorción por toda la hifa (osmotrofia). Zoophagus vive sobre todo de sus presas.
-        const float uptakeScale = m.kind == FungusKind::Zoophagus ? 0.3f : 1.0f;
+        const FungusInfo& info = fungusInfo(m.kind);
+        const float uptakeScale = info.uptakeScale;
         float absorbed = 0.0f;
         for (std::size_t k = 0; k < n; ++k) {
             const Vec2 at = {m.x[k], m.y[k]};
@@ -236,13 +255,15 @@ void Fungi::grow(const FungiEnv& env, float bioDt, std::uint64_t seed, std::uint
                 absorbed += env.takeFood(at, want);
         }
         m.reserves += absorbed;
+        absorbed += m.gifts; // presas digeridas o azúcar del alga también alimentan
+        m.gifts = 0.0f;
         const float maintenance = biomass * p.maintenancePerHour * hours;
         m.reserves -= maintenance;
         m.starvingHours = absorbed < maintenance ? m.starvingHours + hours : std::max(0.0f, m.starvingHours - hours);
 
         // Crecimiento apical: las puntas avanzan si hay reservas y fósforo para la hifa nueva.
         if (m.reserves > 2.0f * nodeCost && m.starvingHours < p.starvationHoursToSporulate)
-            m.tipCredit += p.extensionPerHour * hours;
+            m.tipCredit += info.extensionPerHour * hours;
         while (m.tipCredit >= p.hyphaSpacing) {
             m.tipCredit -= p.hyphaSpacing;
             const std::size_t count = m.x.size();
@@ -252,7 +273,11 @@ void Fungi::grow(const FungiEnv& env, float bioDt, std::uint64_t seed, std::uint
                 if (m.reserves < nodeCost || m.x.size() >= p.maxNodesPerMycelium || totalNodes >= p.maxNodes)
                     break;
                 const Vec2 at = {m.x[k], m.y[k]};
-                const float h = m.heading[k] + rng.normal() * 0.25f;
+                float h = m.heading[k] + rng.normal() * 0.25f;
+                // Quimiotropismo del liquen: la hifa crece hacia el alga que huele (exudados).
+                Vec2 toward;
+                if (info.photobiont && env.photobiont && env.photobiont(at, p.lichenSenseRange, toward))
+                    h += std::clamp(std::remainder(std::atan2(toward.y, toward.x) - h, 2.0f * units::kPi), -0.5f, 0.5f);
                 // La punta no atraviesa el vidrio de la placa: se desvía y sigue junto a la pared.
                 auto inWater = [&](float angle, float len) {
                     return dish.contains(at + Vec2{std::cos(angle), std::sin(angle)} * len, 8.0f);
@@ -270,19 +295,20 @@ void Fungi::grow(const FungiEnv& env, float bioDt, std::uint64_t seed, std::uint
                 m.reserves -= nodeCost;
                 m.tip[k] = 0;
                 // Zoophagus: clavijas laterales cortas y adhesivas cada pocos nodos.
-                const bool wantPeg = m.kind == FungusKind::Zoophagus && (m.x.size() % static_cast<std::size_t>(p.pegSpacing)) == 0;
-                addNode(m, k, h, p.hyphaSpacing, false);
+                const bool wantPeg = info.pegs && (m.x.size() % static_cast<std::size_t>(p.pegSpacing)) == 0;
+                // Ramificación dicotómica (Allomyces): la punta se parte en dos hifas simétricas.
+                const bool fork = info.dichotomous && rng.uniform() < 0.35f;
+                const float side = rng.uniform() < 0.5f ? -1.0f : 1.0f;
+                addNode(m, k, fork ? h + 0.35f * side : h, p.hyphaSpacing, false);
                 ++totalNodes;
                 if (wantPeg && m.reserves >= nodeCost) {
-                    const float side = rng.uniform() < 0.5f ? -1.0f : 1.0f;
                     if (!inWater(h + side * 1.4f, 0.6f * p.hyphaSpacing))
                         continue;
                     addNode(m, k, h + side * 1.4f, 0.6f * p.hyphaSpacing, true);
                     m.reserves -= 0.3f * nodeCost;
                     ++totalNodes;
-                } else if (rng.uniform() < p.branchProbability && m.reserves >= nodeCost) {
-                    const float side = rng.uniform() < 0.5f ? -1.0f : 1.0f;
-                    const float branch = h + side * rng.uniform(0.5f, 1.0f);
+                } else if ((fork || rng.uniform() < p.branchProbability) && m.reserves >= nodeCost) {
+                    const float branch = fork ? h - 0.35f * side : h + side * rng.uniform(0.5f, 1.0f);
                     if (!inWater(branch, p.hyphaSpacing))
                         continue;
                     addNode(m, k, branch, p.hyphaSpacing, false);
@@ -325,6 +351,26 @@ void Fungi::grow(const FungiEnv& env, float bioDt, std::uint64_t seed, std::uint
             m.starvingHours = 0.0f;
         }
 
+        // Esporangio de resistencia (Allomyces): con hambre prolongada una punta se engrosa y se
+        // separa del micelio; vive sin comer hasta que vuelve el alimento.
+        if (info.resting && m.starvingHours >= p.starvationHoursToSporulate * p.restingStarveFactor && m.x.size() >= 4 &&
+            resting.size() < p.maxResting) {
+            const float pShare = m.phosphorus / static_cast<float>(m.x.size());
+            Vec2 at;
+            if (removeLeaf(m, at)) {
+                m.phosphorus -= pShare;
+                resting.x.push_back(at.x);
+                resting.y.push_back(at.y);
+                resting.ageHours.push_back(0.0f);
+                resting.pmol.push_back(p.nodePmol);
+                resting.phosphorus.push_back(pShare);
+                resting.kind.push_back(m.kind);
+                --totalNodes;
+                ++stats.restingFormed;
+                m.starvingHours -= 0.5f * p.starvationHoursToSporulate;
+            }
+        }
+
         // Autólisis: sin reservas, la hifa se consume desde las puntas.
         while (m.reserves < 0.0f && !m.x.empty()) {
             const std::size_t before = m.x.size();
@@ -346,6 +392,28 @@ void Fungi::grow(const FungiEnv& env, float bioDt, std::uint64_t seed, std::uint
         ++mi;
     }
 
+    // Esporangios de resistencia: sin metabolismo; germinan con comida y liberan zoosporas (la
+    // generación haploide del ciclo de Allomyces, simplificada).
+    for (std::size_t i = 0; i < resting.size();) {
+        resting.ageHours[i] += hours;
+        const Vec2 at = {resting.x[i], resting.y[i]};
+        if (resting.ageHours[i] < p.restingMinHours || env.food(at) < p.restingGerminateFood) {
+            ++i;
+            continue;
+        }
+        const int count = std::min(p.restingSpores, static_cast<int>(resting.pmol[i] / p.sporePmol));
+        if (count <= 0 || spores.size() + static_cast<std::size_t>(count) > p.maxSpores) {
+            ++i;
+            continue;
+        }
+        const float used = static_cast<float>(count) * p.sporePmol;
+        const float share = std::min(resting.phosphorus[i], static_cast<float>(count) * p.sporePmol * p.phosphorusRatio);
+        spawnSpores(resting.kind[i], at, count, share, seed, step * 2048ull + i);
+        env.release(at, resting.pmol[i] - used, resting.phosphorus[i] - share);
+        resting.swapRemove(i);
+        ++stats.restingGerminated;
+    }
+
     // Zoosporas: envejecen; las de los mohos germinan sobre sustrato y las viejas mueren.
     for (std::size_t i = 0; i < spores.size();) {
         spores.ageHours[i] += hours;
@@ -355,7 +423,7 @@ void Fungi::grow(const FungiEnv& env, float bioDt, std::uint64_t seed, std::uint
             spores.swapRemove(i);
             continue;
         }
-        if (spores.kind[i] != FungusKind::Chytrid && spores.ageHours[i] > 0.25f && totalNodes < p.maxNodes &&
+        if (fungusInfo(spores.kind[i]).germinates && spores.ageHours[i] > 0.25f && totalNodes < p.maxNodes &&
             env.substrate(at)) {
             Rng rng(seed, rng_stream::kFungi + 200, i, step);
             spawnMycelium(spores.kind[i], at, rng.uniform(0.0f, 2.0f * units::kPi), p.sporePmol, spores.phosphorus[i]);

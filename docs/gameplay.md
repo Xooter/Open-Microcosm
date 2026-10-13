@@ -157,8 +157,18 @@ ideas en **Notas**. Después uso tus elecciones para ajustar el roadmap.
       ecosistema.
 - [x] **D — Hongos depredadores.** _Zoophagus_ tiene hifas acuáticas con ramitas pegajosas que
       atrapan rotíferos. Es real y funciona como trampa viva.
-- [ ] **E — Hongos simbiontes.** Asociación alga + hongo (estilo liquen). El jugador puede aliarse
-      con un hongo: le da azúcar y recibe protección o minerales.
+- [x] **E — Hongos simbiontes.** Asociación alga + hongo (estilo liquen): el micobionte busca algas
+      verdes, las sujeta con un haustorio y recibe su azúcar; ella recibe fósforo y la protección
+      de metabolitos secundarios (los quitridios no la infectan). Sin alga el hongo casi no crece.
+      (El jugador aún no puede aliarse con uno.)
+- [x] **F — *Allomyces*.** Hifas que se bifurcan en dos, zoosporas uniflageladas y esporangios de
+      resistencia pardos que duermen con hambre y germinan cuando vuelve la comida.
+- [x] **G — *Physarum polycephalum*.** No es un hongo sino un moho mucilaginoso (Amoebozoa): una sola
+      célula gigante. Explora en abanico, deja baba que evita, fusiona sus tubos y adapta su red con
+      el modelo de Tero (el tubo con más flujo se ensancha, el resto se retrae). Entre copos de
+      avena arma redes eficientes (Nakagaki 2000; Tero 2010: redes parecidas a las del tren).
+      Con hambre se endurece en esclerocio. Se simplifica la escala: la placa mide ~2 mm y el
+      organismo real, centímetros, así que los tubos son más finos y no fagocita bacterias.
 
 **Favorita:** ___
 

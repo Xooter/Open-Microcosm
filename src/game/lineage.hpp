@@ -2,6 +2,7 @@
 
 #include <entt/entity/entity.hpp>
 
+#include "bio/fungi.hpp"
 #include "bio/species.hpp"
 
 #include <cstdint>
@@ -31,9 +32,13 @@ struct Census {
     int species[kSpeciesCount] = {}; // individuos vivos por especie (silvestres y del linaje)
     int bacteria = 0;
     int cyanoCells = 0;
-    int mycelia[3] = {};     // por FungusKind
+    int mycelia[kFungusKinds] = {}; // por FungusKind
     int hyphaNodes = 0;
     int zoospores = 0;
+    int restingSporangia = 0; // Allomyces
+    int lichenized = 0;       // algas unidas a un hongo liquenizante
+    int plasmodia = 0, plasmodiumNodes = 0, plasmodiumEdges = 0, sclerotia = 0, oatFlakes = 0; // Physarum
+    float plasmodiumLength = 0.0f; // [µm] de tubos
     int infectedAlgae = 0;   // con quitridios
     int eggs = 0;
     int quorumBacteria = 0;  // C. violaceum en quorum (violetas)

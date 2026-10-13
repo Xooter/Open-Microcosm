@@ -41,7 +41,7 @@ ChemField& dropperField(World& world, int index) {
 
 // Secciones (un bit cada una en ToolState::openSections).
 enum Section {
-    kSimulation, kEnvironment, kMacro, kMicro, kChemistry, kMicrobiology, kTools, kSoftBody, kControlled, kStats, kHelp,
+    kSimulation, kEnvironment, kMacro, kMicro, kChemistry, kMicrobiology, kTools, kFungi, kSoftBody, kControlled, kStats, kHelp,
     kSectionCount
 };
 
@@ -307,6 +307,35 @@ void drawLabPanel(World& world, const Run& run, ToolState& tools) {
         if (button(L, TextFormat("Tincion: %s (J)", stainName(static_cast<Stain>(tools.stain)))))
             tools.stain = (tools.stain + 1) % 3;
         check(L, "La camara sigue al ser controlado (F)", &tools.follow);
+    }
+    if (header(L, tools, kFungi, "Hongos y mohos")) {
+        FungiParams& fp = world.fungi().params;
+        slider(L, "absorcion [1/h]", &fp.uptakePerHour, 0.0f, 4.0f, "%.2f");
+        slider(L, "mantenimiento [1/h]", &fp.maintenancePerHour, 0.0f, 0.2f, "%.3f");
+        slider(L, "hambre -> esporas [h]", &fp.starvationHoursToSporulate, 0.5f, 20.0f, "%.1f");
+        slider(L, "exoenzimas x", &fp.detritusDecayBoost, 1.0f, 100.0f, "%.0f");
+        slider(L, "Allomyces: despierta [uM]", &fp.restingGerminateFood, 1.0f, 50.0f, "%.0f");
+        slider(L, "liquen: azucar [1/h]", &fp.lichenSugarPerHour, 0.0f, 0.5f, "%.2f");
+        slider(L, "liquen: fosforo [1/h]", &fp.lichenPhosphorusPerHour, 0.0f, 0.5f, "%.2f");
+        for (int k = 0; k < kFungusKinds; ++k)
+            readout(L, fungusName(static_cast<FungusKind>(k)), TextFormat("%d micelios", census.mycelia[k]));
+        readout(L, "Hifas / zoosporas", TextFormat("%d / %d", census.hyphaNodes, census.zoospores));
+        readout(L, "Esporangios resistentes", TextFormat("%d (Allomyces)", census.restingSporangia));
+        readout(L, "Algas con liquen", TextFormat("%d", census.lichenized));
+        readout(L, "Algas infectadas", TextFormat("%d (quitridios)", census.infectedAlgae));
+        text(L, "Physarum (moho mucilaginoso, no es un hongo)");
+        PlasmodiumParams& pp = world.plasmodia().params;
+        slider(L, "frente [um/h bio]", &pp.tipSpeedPerHour, 200.0f, 8000.0f, "%.0f");
+        slider(L, "adaptacion de tubos [1/h]", &pp.adaptRate, 0.1f, 4.0f, "%.2f");
+        slider(L, "respuesta al flujo (gamma)", &pp.gamma, 0.5f, 3.0f, "%.2f");
+        slider(L, "cambio fuente/sumidero [h]", &pp.switchHours, 0.02f, 2.0f, "%.2f");
+        slider(L, "evita su baba", &pp.slimeAvoidance, 0.0f, 4.0f, "%.1f");
+        slider(L, "evita la luz", &pp.lightAvoidance, 0.0f, 4.0f, "%.1f");
+        slider(L, "retraccion (D minimo)", &pp.pruneD, 0.0f, 0.2f, "%.3f");
+        slider(L, "hambre -> esclerocio [h]", &pp.starveHoursToSclerotium, 1.0f, 40.0f, "%.0f");
+        readout(L, "Plasmodios", TextFormat("%d (%d nodos, %d tubos)", census.plasmodia, census.plasmodiumNodes, census.plasmodiumEdges));
+        readout(L, "Largo de red", TextFormat("%.0f um", census.plasmodiumLength));
+        readout(L, "Copos / esclerocios", TextFormat("%d / %d", census.oatFlakes, census.sclerotia));
     }
     if (header(L, tools, kSoftBody, "Cuerpos blandos (avanzado)")) {
         SoftBodyTuning& t = world.softTuning();

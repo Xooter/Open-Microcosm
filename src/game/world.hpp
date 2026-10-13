@@ -7,6 +7,7 @@
 #include "bio/division.hpp"
 #include "bio/feeding.hpp"
 #include "bio/fungi.hpp"
+#include "bio/plasmodium.hpp"
 #include "bio/genome.hpp"
 #include "bio/organelles.hpp"
 #include "bio/locomotion.hpp"
@@ -122,6 +123,8 @@ struct WorldConfig {
     // Hongos al empezar: micelios de Saprolegnia y de Zoophagus, y grupos de zoosporas de
     // quitridios (10 cada uno).
     int saprolegnia = 4, zoophagus = 2, chytridClusters = 6;
+    // Más hongos: Allomyces, hongos liquenizantes (junto a algas verdes) y plasmodios de Physarum.
+    int allomyces = 0, lichens = 0, physarum = 0;
     // Cianobacterias del bioma: rango térmico (Anabaena 10–35 °C; Mastigocladus 30–57 °C).
     float cyanoTMin = 10.0f, cyanoTMax = 35.0f;
     float patchiness = 0.0f;      // manchas iniciales de materia orgánica y detritos (0–1)
@@ -152,6 +155,9 @@ struct Observations {
     int eggsLaid = 0, eggsHatched = 0;
     int arrivals = 0;
     int zoospores = 0, zoosporesSettled = 0;
+    int restingFormed = 0, restingGerminated = 0; // Allomyces
+    int lichenLinks = 0;                          // algas unidas a un hongo liquenizante
+    int physarumFusions = 0, sclerotiaFormed = 0, sclerotiaGerminated = 0;
 };
 
 // Una muerte reciente de un individuo (la ficha de inspección dice de qué murió). `successor`:
@@ -269,6 +275,9 @@ class World {
     entt::entity spawnWild(SpeciesId species, Vec2 at, Rng& rng, bool randomStage);
     // Micelio (o, para quitridios, un racimo de zoosporas) con el fósforo sacado del agua.
     void spawnFungus(FungusKind kind, Vec2 at, float heading, std::uint64_t salt);
+    // Plasmodio de Physarum (el fósforo sale del agua) y copo de avena (cebo).
+    void spawnPlasmodium(Vec2 at, float heading);
+    void spawnOatFlake(Vec2 at);
     entt::entity player() const { return player_; }
     void setPlayerInput(const PlayerInput& input) { playerInput_ = input; }
     LocomotionParams& locomotionParams() { return locomotionParams_; }
@@ -341,12 +350,16 @@ class World {
     const Grid2D& light() const { return light_; }
     const AmbientParticles& ambient() const { return ambient_; }
     const Cyanobacteria& cyanobacteria() const { return cyano_; }
+    const PlasmodiumSystem& plasmodia() const { return plasmo_; }
+    PlasmodiumSystem& plasmodia() { return plasmo_; }
+    const Grid2D& slime() const { return slime_; }
     const Fungi& fungi() const { return fungi_; }
     Fungi& fungi() { return fungi_; }
     const Observations& observations() const { return observed_; }
     const std::vector<LysisMark>& lysisMarks() const { return lysisMarks_; }
     // Hongos iniciales (micelios y zoosporas de quitridios).
     void seedFungi();
+    void seedPlasmodia();
     Bacteria& bacteria() { return bacteria_; }
     const Bacteria& bacteria() const { return bacteria_; }
     MediumParams& medium() { return medium_; }
@@ -473,6 +486,8 @@ class World {
     void updateEggs(float bioDt);
     void arrivals(float dt);
     void stepFungi(float dt);
+    void stepLichens(float bioDt);
+    void stepPlasmodium(float dt);
     void updateInfections(float bioDt);
     void releaseChytridSpores(entt::entity host);
     Vec2 wrapped(Vec2 at) const;
@@ -498,6 +513,10 @@ class World {
     Cyanobacteria cyano_;
     std::vector<float> cyanoDemand_;
     Fungi fungi_;
+    PlasmodiumSystem plasmo_;
+    Grid2D slime_; // rastro de baba del plasmodio (Reid et al. 2012): las puntas lo evitan
+    std::vector<entt::entity> photoCells_;
+    std::vector<Vec2> photoPoints_;
     std::vector<Vec2> sporeSteer_;
     std::vector<entt::entity> hostCells_;
     Grid2D hyphaCover_, ph_, inflowPattern_;

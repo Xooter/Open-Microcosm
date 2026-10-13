@@ -17,6 +17,10 @@ enum class BeingKind : std::uint8_t {
     Chytrid,        // zoosporas de quitridio
     Saprolegnia,    // micelio descomponedor
     Zoophagus,      // micelio que atrapa rotíferos
+    Allomyces,      // micelio dicotómico con esporangios de resistencia
+    Lichen,         // hongo liquenizante: se une a algas verdes
+    Physarum,       // plasmodio de moho mucilaginoso (no es un hongo)
+    OatFlake,       // copo de avena: cebo para el plasmodio
     Phage,          // dosis de fagos líticos (un lisado)
     // Sedimento (no vive): partículas minerales sueltas, un grano de arena y barro mezclado.
     Clay,
@@ -90,7 +94,11 @@ inline BeingCategory categoryOf(Being b) {
     }
     case BeingKind::Chytrid:
     case BeingKind::Saprolegnia:
-    case BeingKind::Zoophagus: return BeingCategory::Fungi;
+    case BeingKind::Zoophagus:
+    case BeingKind::Allomyces:
+    case BeingKind::Lichen:
+    case BeingKind::Physarum:
+    case BeingKind::OatFlake: return BeingCategory::Fungi;
     case BeingKind::Bacterium:
     case BeingKind::Violaceum:
     case BeingKind::Bdellovibrio:
@@ -117,7 +125,7 @@ inline const char* categoryName(BeingCategory c) {
     case BeingCategory::Amoebae: return "Amebas";
     case BeingCategory::Algae: return "Algas";
     case BeingCategory::Animals: return "Animales";
-    case BeingCategory::Fungi: return "Hongos";
+    case BeingCategory::Fungi: return "Hongos y mohos";
     case BeingCategory::Bacteria: return "Bacterias y virus";
     case BeingCategory::Sediment: return "Sedimento";
     case BeingCategory::Count: break;
@@ -136,6 +144,10 @@ inline const char* beingName(Being b) {
     case BeingKind::Chytrid: return "Quitridio";
     case BeingKind::Saprolegnia: return "Saprolegnia";
     case BeingKind::Zoophagus: return "Zoophagus";
+    case BeingKind::Allomyces: return "Allomyces";
+    case BeingKind::Lichen: return "Hongo liquenizante";
+    case BeingKind::Physarum: return "Physarum";
+    case BeingKind::OatFlake: return "Copo de avena";
     case BeingKind::Phage: return "Fagos";
     case BeingKind::Clay: return "Arcilla";
     case BeingKind::Quartz: return "Limo de cuarzo";

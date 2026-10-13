@@ -594,12 +594,16 @@ Inspection inspectSpore(const World& w, const Picked& p) {
     ins.radius = 6.0f;
     ins.title = fmt("Zoospora de %s", fungusName(kind));
     ins.subtitle = "Hongo - zoospora nadadora";
-    ins.blurb = otherBlurb(kind == FungusKind::Chytrid ? OtherOrganism::Chytrid : OtherOrganism::Saprolegnia);
-    ins.headline = kind == FungusKind::Chytrid ? "busca un alga hospedadora" : "sube el gradiente de materia organica";
+    const FungusInfo& info = fungusInfo(kind);
+    ins.blurb = otherBlurb(otherOf(kind));
+    ins.headline = info.sense == SporeSense::Host ? "busca un alga hospedadora"
+                   : info.sense == SporeSense::Food ? "sube el gradiente de materia organica"
+                                                    : "espora inmovil: la lleva el agua";
     InspectSection& s = section(ins, "Zoospora");
-    const FungiParams& fp = w.fungi().params;
-    add(s, "Busca", kind == FungusKind::Chytrid ? "un alga: nada hacia la mas cercana (quimiotaxis)" : "materia organica disuelta (aminoacidos)");
-    add(s, "Velocidad", fmt("%.0f um/s", kind == FungusKind::Chytrid ? fp.chytridSporeSpeed : fp.saproSporeSpeed));
+    add(s, "Busca", info.sense == SporeSense::Host   ? "un alga: nada hacia la mas cercana (quimiotaxis)"
+                    : info.sense == SporeSense::Food ? "materia organica disuelta (aminoacidos)"
+                                                     : "un sustrato donde germinar");
+    add(s, "Velocidad", info.sporeSpeed > 0.0f ? fmt("%.0f um/s", info.sporeSpeed) : std::string("0 (la arrastra el agua)"));
     add(s, "Edad", fmt("%.1f h bio", z.ageHours[p.index]));
     add(s, "Fosforo", fmt("%.4f pmol", z.phosphorus[p.index]));
     return ins;
@@ -632,20 +636,136 @@ Inspection inspectHypha(const World& w, const Picked& p) {
     }
     ins.radius = 0.5f * std::max(hi - lo, hi2 - lo2) + 10.0f;
     ins.title = fmt("Micelio de %s", fungusName(m->kind));
-    ins.subtitle = "Hongo";
-    const OtherOrganism which = m->kind == FungusKind::Zoophagus ? OtherOrganism::Zoophagus : OtherOrganism::Saprolegnia;
-    ins.blurb = otherBlurb(which);
+    ins.subtitle = fungusInfo(m->kind).group;
+    ins.blurb = otherBlurb(otherOf(m->kind));
     ins.headline = fmt("%zu nodos, %zu puntas", m->x.size(), tips);
     InspectSection& s = section(ins, "Micelio");
     add(s, "Hifas", fmt("%zu nodos, %zu puntas en crecimiento", m->x.size(), tips));
     if (sporangia)
         add(s, "Zoosporangios", fmt("%zu madurando: liberaran zoosporas", sporangia));
-    if (m->kind == FungusKind::Zoophagus)
+    if (fungusInfo(m->kind).dichotomous)
+        add(s, "Ramificacion", "dicotomica: la punta se parte en dos hifas");
+    if (fungusInfo(m->kind).photobiont) {
+        int algae = 0;
+        for (const auto& [e, li] : w.registry().view<Lichenized>().each())
+            algae += li.mycelium == m->id;
+        add(s, "Fotobionte", algae > 0 ? fmt("%d algas verdes unidas: le dan azucar y reciben fosforo", algae)
+                                       : std::string("ninguna: solo casi no crece, busca un alga con su quimiotropismo"));
+    }
+    if (fungusInfo(m->kind).pegs)
         add(s, "Clavijas", fmt("%zu clavijas adhesivas (atrapan rotiferos)", pegs));
     add(s, "Biomasa", fmt("%.1f pmol (reservas %.1f)", m->biomass(fp), m->reserves));
     add(s, "Fosforo", fmt("%.3f pmol", m->phosphorus));
     if (m->starvingHours > 0.0f)
         add(s, "Hambre", fmt("%.1f h bio sin comer", m->starvingHours));
+    return ins;
+}
+
+Inspection gone(const Picked& p, const char* subtitle) {
+    Inspection ins;
+    ins.valid = ins.dead = true;
+    ins.title = "Ya no esta";
+    ins.subtitle = subtitle;
+    ins.at = p.at;
+    return ins;
+}
+
+Inspection inspectPlasmodium(const World& w, const Picked& p) {
+    const Plasmodium* pl = w.plasmodia().find(p.id);
+    if (!pl || pl->x.empty())
+        return gone(p, "El plasmodio se endurecio en esclerocio o murio");
+    const PlasmodiumParams& pp = w.plasmodia().params;
+    Inspection ins;
+    const std::size_t node = std::min(p.node, pl->x.size() - 1);
+    ins.valid = ins.live = true;
+    ins.at = {pl->x[node], pl->y[node]};
+    float lo = 1e30f, hi = -1e30f, lo2 = 1e30f, hi2 = -1e30f;
+    std::size_t tips = 0, foods = 0;
+    for (std::size_t k = 0; k < pl->x.size(); ++k) {
+        lo = std::min(lo, pl->x[k]);
+        hi = std::max(hi, pl->x[k]);
+        lo2 = std::min(lo2, pl->y[k]);
+        hi2 = std::max(hi2, pl->y[k]);
+        tips += pl->tip[k];
+        foods += pl->food[k] >= 0;
+    }
+    ins.radius = 0.5f * std::max(hi - lo, hi2 - lo2) + 10.0f;
+    ins.title = "Physarum polycephalum";
+    ins.subtitle = "Moho mucilaginoso (Amoebozoa): no es un hongo";
+    ins.blurb = otherBlurb(OtherOrganism::Physarum);
+    ins.headline = fmt("%zu nodos, %zu tubos, %zu ciclos", pl->x.size(), pl->edges.size(), PlasmodiumSystem::cycles(*pl));
+    InspectSection& s = section(ins, "Plasmodio");
+    add(s, "Red", fmt("%zu nodos y %zu tubos; %zu ciclos (anastomosis)", pl->x.size(), pl->edges.size(), PlasmodiumSystem::cycles(*pl)));
+    add(s, "Largo total", fmt("%.0f um de tubos", PlasmodiumSystem::totalLength(*pl)));
+    add(s, "Frente", fmt("%zu puntas explorando; %zu nodos tocando comida", tips, foods));
+    add(s, "Biomasa", fmt("%.1f pmol (reservas %.1f)", pl->biomass(), pl->reserves));
+    add(s, "Fosforo", fmt("%.3f pmol", pl->phosphorus));
+    if (pl->starvingHours > 0.0f)
+        add(s, "Hambre", fmt("%.1f h bio (a las %.0f h se endurece en esclerocio)", pl->starvingHours, pp.starveHoursToSclerotium));
+    // El tubo más cercano al nodo elegido.
+    float bestD = -1.0f, bestFlux = 0.0f;
+    for (const Plasmodium::Edge& e : pl->edges)
+        if ((static_cast<std::size_t>(e.a) == node || static_cast<std::size_t>(e.b) == node) && e.D > bestD) {
+            bestD = e.D;
+            bestFlux = e.flux;
+        }
+    if (bestD >= 0.0f)
+        add(s, "Tubo elegido", fmt("conductividad %.2f (radio ~%.1f um), flujo %.2f del caudal", bestD, 5.0f * std::pow(bestD, 0.25f), bestFlux));
+    add(s, "Como decide", "el tubo con mas flujo se ensancha; el que no lleva nada se retrae (Tero 2010)");
+    return ins;
+}
+
+Inspection inspectFlake(const World& w, const Picked& p) {
+    const OatFlakes& f = w.plasmodia().flakes;
+    if (p.index >= f.size())
+        return gone(p, "El copo se acabo");
+    Inspection ins;
+    ins.valid = true;
+    ins.at = {f.x[p.index], f.y[p.index]};
+    ins.radius = 12.0f;
+    ins.title = "Copo de avena";
+    ins.subtitle = "Cebo de almidon";
+    ins.blurb = "El alimento clasico de los experimentos con Physarum: libera azucares al agua y el plasmodio lo envuelve y lo digiere.";
+    ins.headline = fmt("%.1f pmol de almidon", f.pmol[p.index]);
+    InspectSection& s = section(ins, "Copo");
+    add(s, "Almidon", fmt("%.1f pmol", f.pmol[p.index]));
+    add(s, "Fosforo", fmt("%.3f pmol", f.phosphorus[p.index]));
+    return ins;
+}
+
+Inspection inspectResting(const World& w, const Picked& p) {
+    const RestingSporangia& r = w.fungi().resting;
+    if (p.index >= r.size())
+        return gone(p, "El esporangio germino");
+    Inspection ins;
+    ins.valid = true;
+    ins.at = {r.x[p.index], r.y[p.index]};
+    ins.radius = 10.0f;
+    ins.title = "Esporangio de resistencia";
+    ins.subtitle = "Allomyces - pared gruesa y parda";
+    ins.blurb = otherBlurb(OtherOrganism::Allomyces);
+    ins.headline = fmt("duerme hace %.1f h bio", r.ageHours[p.index]);
+    InspectSection& s = section(ins, "Esporangio");
+    add(s, "Despierta", fmt("con mas de %.0f uM de materia organica", w.fungi().params.restingGerminateFood));
+    add(s, "Reservas", fmt("%.2f pmol", r.pmol[p.index]));
+    return ins;
+}
+
+Inspection inspectSclerotium(const World& w, const Picked& p) {
+    const Sclerotia& s0 = w.plasmodia().sclerotia;
+    if (p.index >= s0.size())
+        return gone(p, "El esclerocio desperto");
+    Inspection ins;
+    ins.valid = true;
+    ins.at = {s0.x[p.index], s0.y[p.index]};
+    ins.radius = 12.0f;
+    ins.title = "Esclerocio de Physarum";
+    ins.subtitle = "Plasmodio endurecido y dormido";
+    ins.blurb = "Con hambre o sequia el plasmodio se contrae en una masa dura y seca que puede vivir anios; con humedad y comida despierta y vuelve a explorar.";
+    ins.headline = fmt("dormido hace %.1f h bio", s0.ageHours[p.index]);
+    InspectSection& s = section(ins, "Esclerocio");
+    add(s, "Despierta", fmt("con mas de %.0f uM de materia organica", w.plasmodia().params.sclerotiumGerminateFood));
+    add(s, "Reservas", fmt("%.2f pmol", s0.pmol[p.index]));
     return ins;
 }
 
@@ -727,10 +847,19 @@ Picked World::pick(Vec2 position, float tolerance) const {
             consider(Picked::Kind::Cyanobacteria, f, k, 0, fil.x[k], fil.y[k], 2.5f);
     }
     for (const Mycelium& m : fungi_.mycelia) {
-        const float radius = m.kind == FungusKind::Zoophagus ? 2.0f : 5.5f;
+        const float radius = 0.5f * fungusInfo(m.kind).hyphaWidth;
         for (std::size_t k = 0; k < m.x.size(); ++k)
             consider(Picked::Kind::Hypha, 0, k, m.id, m.x[k], m.y[k], radius);
     }
+    for (std::size_t i = 0; i < fungi_.resting.size(); ++i)
+        consider(Picked::Kind::Resting, i, 0, 0, fungi_.resting.x[i], fungi_.resting.y[i], 5.0f);
+    for (const Plasmodium& pl : plasmo_.plasmodia)
+        for (std::size_t k = 0; k < pl.x.size(); ++k)
+            consider(Picked::Kind::Plasmodium, 0, k, pl.id, pl.x[k], pl.y[k], 4.0f);
+    for (std::size_t i = 0; i < plasmo_.flakes.size(); ++i)
+        consider(Picked::Kind::OatFlake, i, 0, 0, plasmo_.flakes.x[i], plasmo_.flakes.y[i], 9.0f);
+    for (std::size_t i = 0; i < plasmo_.sclerotia.size(); ++i)
+        consider(Picked::Kind::Sclerotium, i, 0, 0, plasmo_.sclerotia.x[i], plasmo_.sclerotia.y[i], 7.0f);
     for (std::size_t i = 0; i < ambient_.size(); ++i) {
         // La tinta cubre zonas enteras: solo si se apunta directo a una partícula.
         const bool ink = ambient_.kind[i] == ParticleKind::Ink;
@@ -753,6 +882,10 @@ Inspection buildInspection(const World& world, const Picked& picked) {
     case Picked::Kind::Bdellovibrio: return inspectBdello(world, picked);
     case Picked::Kind::Zoospore: return inspectSpore(world, picked);
     case Picked::Kind::Hypha: return inspectHypha(world, picked);
+    case Picked::Kind::Plasmodium: return inspectPlasmodium(world, picked);
+    case Picked::Kind::OatFlake: return inspectFlake(world, picked);
+    case Picked::Kind::Resting: return inspectResting(world, picked);
+    case Picked::Kind::Sclerotium: return inspectSclerotium(world, picked);
     case Picked::Kind::Particle: return inspectParticle(world, picked);
     case Picked::Kind::None: break;
     }

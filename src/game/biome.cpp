@@ -40,6 +40,9 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     puddle.saprolegnia = 4;
     puddle.zoophagus = 2;
     puddle.chytridClusters = 2;
+    puddle.allomyces = 2;  // sobre insectos y hojas muertas
+    puddle.lichens = 1;
+    puddle.physarum = 1;   // el moho de la hojarasca húmeda
     puddle.patchiness = 0.6f;
     // Barro: mucha arcilla y limo, granos de arena y óxidos de hierro del suelo.
     puddle.sediment = {.clay = 500, .quartz = 140, .mica = 15, .ironOxide = 40, .frustules = 10, .rocks = 5};
@@ -63,6 +66,8 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     pond.medium.naupliusArrivalsPerHour = 0.1f;
     pond.bacteria = 30'000;
     pond.oscillatoriaFilaments = 5;
+    pond.physarum = 0;     // no vive en agua libre
+    pond.allomyces = 3;
     pond.patchiness = 0.3f;
     // Fondo fino y más limpio; muchas frústulas de diatomeas muertas.
     pond.sediment = {.clay = 160, .quartz = 50, .mica = 8, .ironOxide = 12, .frustules = 30, .rocks = 2};
@@ -93,6 +98,9 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     moss.oscillatoriaFilaments = 4;
     moss.cyanoTMin = 0.0f;
     moss.zoophagus = 3;      // atrapa a los bdeloideos
+    moss.physarum = 3;       // hojarasca y musgo húmedo
+    moss.lichens = 3;        // los líquenes crecen sobre el musgo
+    moss.allomyces = 1;
     moss.patchiness = 0.4f;
     // Suelo entre las hojitas: partículas minerales y humus ferruginoso.
     moss.sediment = {.clay = 250, .quartz = 90, .mica = 12, .ironOxide = 60, .frustules = 5, .rocks = 3};
@@ -121,6 +129,7 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     gut.cyanoFilaments = 0;
     gut.oscillatoriaFilaments = 0;
     gut.saprolegnia = gut.zoophagus = gut.chytridClusters = 0;
+    gut.allomyces = gut.lichens = gut.physarum = 0;
     gut.patchiness = 0.8f;
     // Algo de suelo que la termita traga junto con la madera; sin granos ni polvo del aire.
     gut.sediment = {.clay = 60, .quartz = 10};
@@ -147,6 +156,7 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     spring.cyanoTMin = 30.0f;
     spring.cyanoTMax = 57.0f;
     spring.saprolegnia = spring.zoophagus = spring.chytridClusters = 0;
+    spring.allomyces = spring.lichens = spring.physarum = 0; // 42 °C es demasiado
     spring.patchiness = 0.2f;
     // Sínter silíceo, glóbulos de azufre y precipitados de hierro.
     spring.sediment = {.clay = 40, .quartz = 60, .ironOxide = 70, .sulfur = 140, .rocks = 3};
@@ -175,6 +185,7 @@ std::array<Biome, kBiomeCount> makeBiomes() {
     ice.cyanoFilaments = 0;
     ice.oscillatoriaFilaments = 0;
     ice.saprolegnia = ice.zoophagus = 0;
+    ice.allomyces = ice.lichens = ice.physarum = 0;
     ice.chytridClusters = 3; // quitridios marinos de diatomeas
     ice.patchiness = 0.3f;
     // Canales de salmuera: poco sedimento, frústulas de diatomeas del hielo.
@@ -229,6 +240,9 @@ WorldConfig makeDrop(BiomeId id, std::uint64_t seed) {
     c.saprolegnia = b.saprolegnia;
     c.zoophagus = b.zoophagus;
     c.chytridClusters = b.chytridClusters;
+    c.allomyces = b.allomyces;
+    c.lichens = b.lichens;
+    c.physarum = b.physarum;
     c.patchiness = std::clamp(b.patchiness * rng.uniform(0.5f, 1.5f), 0.0f, 1.0f);
     c.sediment = b.sediment;
     const float muddy = rng.uniform(0.5f, 1.6f); // algunas gotas son más barrosas que otras
@@ -242,9 +256,32 @@ WorldConfig makeDrop(BiomeId id, std::uint64_t seed) {
     c.saprolegnia = static_cast<int>(scaled(static_cast<float>(c.saprolegnia)));
     c.zoophagus = static_cast<int>(scaled(static_cast<float>(c.zoophagus)));
     c.chytridClusters = static_cast<int>(scaled(static_cast<float>(c.chytridClusters)));
+    c.allomyces = static_cast<int>(scaled(static_cast<float>(c.allomyces)));
+    c.lichens = static_cast<int>(scaled(static_cast<float>(c.lichens)));
+    c.physarum = static_cast<int>(scaled(static_cast<float>(c.physarum)));
     for (int* n : {&c.sediment.clay, &c.sediment.quartz, &c.sediment.mica, &c.sediment.ironOxide, &c.sediment.sulfur,
                    &c.sediment.frustules})
         *n = static_cast<int>(scaled(static_cast<float>(*n) * muddy));
     c.sediment.rocks = static_cast<int>(scaled(static_cast<float>(c.sediment.rocks)));
     return c;
+}
+
+void applyDropContent(WorldConfig& c, DropContent content) {
+    if (content == DropContent::Full)
+        return;
+    c.bacteria = 0;
+    c.cyanoFilaments = 0;
+    c.oscillatoriaFilaments = 0;
+    c.saprolegnia = c.zoophagus = c.chytridClusters = 0;
+    c.physarum = c.allomyces = c.lichens = 0;
+    c.medium.phage = 0.0f;
+    if (content != DropContent::EmptyPetri)
+        return;
+    // Un plato de Petri limpio: nada inorgánico ni muerto flotando en el agua.
+    c.sediment = {};
+    c.medium.dustRate = 0.0f;
+    c.detritus = 0;
+    c.patchiness = 0.0f; // ni manchas de materia orgánica ni los detritos que las acompañan
+    c.medium.detritusSpawnRate = 0.0f;
+    c.medium.naupliusArrivalsPerHour = 0.0f; // no llegan visitantes desde afuera
 }

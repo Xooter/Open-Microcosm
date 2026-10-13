@@ -17,6 +17,9 @@ constexpr std::uint32_t kChytridHosts =
     speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Navicula) | speciesBit(SpeciesId::Pediastrum) |
     speciesBit(SpeciesId::Mougeotia) | speciesBit(SpeciesId::Zygnema) | speciesBit(SpeciesId::Oedogonium);
 
+// Fotobiontes de los líquenes: algas verdes (los líquenes reales usan Trebouxia y afines).
+constexpr std::uint32_t kPhotobionts = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Pediastrum);
+
 // Zoophagus insidians atrapa rotíferos que muerden sus clavijas.
 constexpr std::uint32_t kZoophagusPrey = speciesBit(SpeciesId::Rotifer) | speciesBit(SpeciesId::Philodina);
 
@@ -44,6 +47,19 @@ void World::seedFungi() {
         spawn(FungusKind::Saprolegnia, k);
     for (std::uint64_t k = 0; k < static_cast<std::uint64_t>(config_.zoophagus); ++k)
         spawn(FungusKind::Zoophagus, 100 + k);
+    for (std::uint64_t k = 0; k < static_cast<std::uint64_t>(config_.allomyces); ++k)
+        spawn(FungusKind::Allomyces, 200 + k);
+    // Líquenes: el micobionte nace junto a un alga verde (si hay) para encontrar su fotobionte.
+    for (std::uint64_t k = 0; k < static_cast<std::uint64_t>(config_.lichens); ++k) {
+        Rng rng(config_.seed, rng_stream::kFungi + 400, 300 + k, 0);
+        Vec2 at = randomPoint(rng, 20.0f);
+        std::size_t seen = 0;
+        for (auto [e, body] : registry_.view<RingBody>().each())
+            if (hostOf(registry_, e, kPhotobionts) && rng.uniform() * static_cast<float>(++seen) < 1.0f)
+                at = dish_.clampInside(body.centroid + Vec2{20.0f, 0.0f}, 20.0f);
+        spawnFungus(FungusKind::Mycobiont, at, rng.uniform(0.0f, 2.0f * units::kPi), 300 + k);
+    }
+    seedPlasmodia();
     for (std::uint64_t k = 0; k < static_cast<std::uint64_t>(config_.chytridClusters); ++k) {
         Rng rng(config_.seed, rng_stream::kFungi + 500, k, 0);
         spawnFungus(FungusKind::Chytrid, randomPoint(rng, 10.0f), 0.0f, 9000 + k);
@@ -74,13 +90,22 @@ void World::stepFungi(float dt) {
     // gradiente de materia orgánica disuelta (aminoácidos).
     sporeSteer_.assign(sp.size(), Vec2{});
     hostCells_.clear();
-    for (auto [e, body] : registry_.view<RingBody>().each())
-        if (hostOf(registry_, e, kChytridHosts) && !registry_.all_of<Cyst>(e))
+    photoCells_.clear();
+    photoPoints_.clear();
+    for (auto [e, body] : registry_.view<RingBody>().each()) {
+        // Los líquenes protegen a su alga con metabolitos secundarios: no la infectan.
+        if (hostOf(registry_, e, kChytridHosts) && !registry_.any_of<Cyst, Lichenized>(e))
             hostCells_.push_back(e);
+        if (hostOf(registry_, e, kPhotobionts) && !registry_.any_of<Cyst, Lichenized>(e)) {
+            photoCells_.push_back(e);
+            photoPoints_.push_back(body.centroid);
+        }
+    }
     const Grid2D& food = nutrients_.grid();
     for (std::size_t i = 0; i < sp.size(); ++i) {
         const Vec2 at = {sp.x[i], sp.y[i]};
-        if (sp.kind[i] == FungusKind::Chytrid) {
+        const SporeSense sense = fungusInfo(sp.kind[i]).sense;
+        if (sense == SporeSense::Host) {
             float best = p.sporeSenseRange * p.sporeSenseRange;
             for (entt::entity h : hostCells_) {
                 const RingBody& b = registry_.get<RingBody>(h);
@@ -90,7 +115,7 @@ void World::stepFungi(float dt) {
                     sporeSteer_[i] = d;
                 }
             }
-        } else if (sp.kind[i] == FungusKind::Saprolegnia) {
+        } else if (sense == SporeSense::Food) {
             const float g = food.dx;
             sporeSteer_[i] = {food.sample(at.x + g, at.y) - food.sample(at.x - g, at.y),
                               food.sample(at.x, at.y + g) - food.sample(at.x, at.y - g)};
@@ -135,11 +160,27 @@ void World::stepFungi(float dt) {
         if (phosphorus > 0.0f)
             exchange(phosphate_, wrapped(at), phosphorus);
     };
+    env.photobiont = [&](Vec2 at, float range, Vec2& dir) {
+        float best = range * range;
+        bool found = false;
+        for (const Vec2& c : photoPoints_) {
+            const Vec2 d = {minImage(c.x - at.x, width_), minImage(c.y - at.y, height_)};
+            if (dot(d, d) < best) {
+                best = dot(d, d);
+                dir = d;
+                found = true;
+            }
+        }
+        return found;
+    };
     env.substrate = [&](Vec2 at) {
         const Vec2 w = wrapped(at);
         return shading_.sample(w.x, w.y) > 0.02f || nutrients_.grid().sample(w.x, w.y) > 2.0f;
     };
     fungi_.grow(env, bioDt, config_.seed, step_);
+    observed_.restingFormed = fungi_.stats.restingFormed;
+    observed_.restingGerminated = fungi_.stats.restingGerminated;
+    stepLichens(bioDt);
 
     // Cobertura de hifas (para las exoenzimas que disuelven detritos).
     std::fill(hyphaCover_.v.begin(), hyphaCover_.v.end(), 0.0f);
@@ -230,3 +271,56 @@ void World::releaseChytridSpores(entt::entity host) {
 }
 
 Vec2 World::wrapped(Vec2 at) const { return {wrapCoord(at.x, width_), wrapCoord(at.y, height_)}; }
+
+void World::stepLichens(float bioDt) {
+    PROFILE_SCOPE("World::stepLichens");
+    const FungiParams& p = fungi_.params;
+    const float hours = bioDt / 3600.0f;
+    // Encuentro: una hifa que toca un alga verde la sujeta con un haustorio (el contacto es la
+    // simbiosis; la lógica del tropismo está en Fungi::grow).
+    for (Mycelium& m : fungi_.mycelia) {
+        if (!fungusInfo(m.kind).photobiont)
+            continue;
+        int linked = 0;
+        for (auto [e, li] : registry_.view<Lichenized>().each())
+            linked += li.mycelium == m.id;
+        for (std::size_t k = 0; k < m.x.size() && linked < p.lichenMaxAlgae; ++k) {
+            if (!m.tip[k])
+                continue;
+            const Vec2 at = wrapped({m.x[k], m.y[k]});
+            for (entt::entity e : photoCells_) {
+                if (!registry_.valid(e) || registry_.all_of<Lichenized>(e))
+                    continue;
+                const RingBody& b = registry_.get<RingBody>(e);
+                const Vec2 q = b.centroid + Vec2{minImage(at.x - b.centroid.x, width_), minImage(at.y - b.centroid.y, height_)};
+                if (q.x < b.aabbMin.x - 4.0f || q.x > b.aabbMax.x + 4.0f || q.y < b.aabbMin.y - 4.0f || q.y > b.aabbMax.y + 4.0f)
+                    continue;
+                if (polygon::closestOnBoundary(b.poly.data(), static_cast<int>(b.poly.size()), q).dist2 > 16.0f &&
+                    !polygon::contains(b.poly.data(), static_cast<int>(b.poly.size()), q))
+                    continue;
+                registry_.emplace<Lichenized>(e, Lichenized{m.id, at, 0.0f});
+                ++observed_.lichenLinks;
+                ++linked;
+                m.tip[k] = 0; // el haustorio detiene la punta
+                break;
+            }
+        }
+    }
+    // Intercambio: el alga cede azúcar (polioles); el hongo le devuelve fósforo de su sobrante.
+    for (auto [e, li, meta] : registry_.view<Lichenized, Metabolism>().each()) {
+        Mycelium* m = fungi_.find(li.mycelium);
+        if (!m) {
+            registry_.remove<Lichenized>(e); // el micelio murió: el alga queda libre
+            continue;
+        }
+        const float sugar = meta.reserves * (1.0f - std::exp(-p.lichenSugarPerHour * hours));
+        meta.reserves -= sugar;
+        li.transferred += sugar;
+        fungi_.feed(m->id, sugar, 0.0f);
+        const float need = p.phosphorusRatio * static_cast<float>(m->x.size()) * p.nodePmol;
+        const float surplus = std::max(0.0f, m->phosphorus - 1.5f * need);
+        const float toAlga = surplus * (1.0f - std::exp(-p.lichenPhosphorusPerHour * hours));
+        m->phosphorus -= toAlga;
+        meta.phosphorus += toAlga;
+    }
+}

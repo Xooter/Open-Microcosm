@@ -92,6 +92,7 @@ World::World(const WorldConfig& config)
       phage_(config.gridX, config.gridY, config.cellSize, units::kDiffusionVirus, config.medium.phage),
       light_(config.gridX, config.gridY, config.cellSize, 1.0f),
       shading_(config.gridX, config.gridY, config.cellSize),
+      slime_(config.gridX, config.gridY, config.cellSize),
       hyphaCover_(config.gridX, config.gridY, config.cellSize),
       ph_(config.gridX, config.gridY, config.cellSize, 8.0f),
       inflowPattern_(config.gridX, config.gridY, config.cellSize, 1.0f) {
@@ -112,6 +113,7 @@ World::World(const WorldConfig& config)
     bacteria_.dish = dish_;
     cyano_.dish = dish_;
     fungi_.dish = dish_;
+    plasmo_.dish = dish_;
     for (std::size_t i = 0; i < config.detritus; ++i) {
         Rng rng(config.seed, rng_stream::kSpawn, spawnCounter_++, 0);
         addDetritus(rng, randomPoint(rng));
@@ -250,6 +252,7 @@ void World::step(float dt) {
     growBacteria(dt);
     stepCyanobacteria(dt);
     stepFungi(dt);
+    stepPlasmodium(dt);
     finishBodies();
     updateTentacles(dt);
     updateFeeding(dt);       // eventos de topología (fagocitosis): al final del paso
@@ -435,6 +438,11 @@ std::uint64_t World::stateHash() const {
     hashVector(h, fungi_.spores.y);
     for (const Mycelium& m : fungi_.mycelia)
         hashVector(h, m.x);
+    for (const Plasmodium& pl : plasmo_.plasmodia) {
+        hashVector(h, pl.x);
+        hashVector(h, pl.y);
+    }
+    hashVector(h, plasmo_.flakes.pmol);
     return h;
 }
 
@@ -769,7 +777,7 @@ void World::classifyLod() {
         // Margen: lo que entra a la vista ya está asentado. Los eventos de topología y las
         // interacciones físicas finas (división, fagocitosis, conjugación) siempre en detalle.
         bool near = dx < focusHalf_.x + half.x + kLodNearMargin && dy < focusHalf_.y + half.y + kLodNearMargin;
-        near = near || e == player_ || registry_.any_of<Dividing, PhagocyticCup, Conjugating, Captured, Trapped, Stung>(e);
+        near = near || e == player_ || registry_.any_of<Dividing, PhagocyticCup, Conjugating, Captured, Trapped, Stung, Lichenized>(e);
         const bool mid = dx < focusHalf_.x + half.x + kLodMidMargin && dy < focusHalf_.y + half.y + kLodMidMargin;
         bodyNear_[b] = near ? 2 : (mid ? 1 : 0);
         nearCount_ += near ? 1 : 0;
@@ -1161,6 +1169,10 @@ void World::spawnBeing(Being being, Vec2 at) {
     case BeingKind::Chytrid: spawnFungus(FungusKind::Chytrid, dish_.clampInside(at, 10.0f), angle, 30000 + toolCounter_); break;
     case BeingKind::Saprolegnia: spawnFungus(FungusKind::Saprolegnia, dish_.clampInside(at, 20.0f), angle, 0); break;
     case BeingKind::Zoophagus: spawnFungus(FungusKind::Zoophagus, dish_.clampInside(at, 20.0f), angle, 0); break;
+    case BeingKind::Allomyces: spawnFungus(FungusKind::Allomyces, dish_.clampInside(at, 20.0f), angle, 0); break;
+    case BeingKind::Lichen: spawnFungus(FungusKind::Mycobiont, dish_.clampInside(at, 20.0f), angle, 0); break;
+    case BeingKind::Physarum: spawnPlasmodium(dish_.clampInside(at, 20.0f), angle); break;
+    case BeingKind::OatFlake: spawnOatFlake(dish_.clampInside(at, 20.0f)); break;
     case BeingKind::Phage: {
         // Un lisado: ~10⁸ viriones/mL en las 3×3 celdas alrededor del cursor.
         Grid2D& g = phage_.grid();
@@ -1240,7 +1252,7 @@ bool World::forceReproduction(entt::entity e) {
     if (!registry_.valid(e) || !registry_.all_of<Metabolism, Species>(e))
         return false;
     // Lo mismo que frena la reproducción en updateLifecycle (o ya está en marcha).
-    if (registry_.any_of<Dividing, Conjugating, Cyst, Egg, Segment, ChytridInfection, Trapped, Stung>(e))
+    if (registry_.any_of<Dividing, Conjugating, Cyst, Egg, Segment, ChytridInfection, Trapped, Stung, Lichenized>(e))
         return false;
     const SpeciesInfo& info = speciesInfo(registry_.get<Species>(e).id);
     Metabolism& m = registry_.get<Metabolism>(e);
@@ -1371,6 +1383,12 @@ void World::applyMotion(float dt) {
             loco.forward = loco.turn = 0.0f;
             loco.active = false;
             holdAt(body, trap->point);
+        }
+        // Unida a un hongo liquenizante: el haustorio la mantiene en su lugar.
+        if (const Lichenized* li = registry_.try_get<Lichenized>(e)) {
+            loco.forward = loco.turn = 0.0f;
+            loco.active = false;
+            holdAt(body, li->point);
         }
         // Lacrymaria: mientras estira el cuello, el cuerpo se queda quieto.
         if (const Neck* neck = registry_.try_get<Neck>(e); neck && neck->length > 5.0f)
@@ -1966,7 +1984,7 @@ double World::totalNitrogen() const {
 }
 
 double World::totalPhosphorus() const {
-    double total = phosphate_.sum() / microMolarPerPmol() + cyano_.phosphorus() + fungi_.phosphorus();
+    double total = phosphate_.sum() / microMolarPerPmol() + cyano_.phosphorus() + fungi_.phosphorus() + plasmo_.phosphorus();
     for (auto [e, inf] : registry_.view<ChytridInfection>().each())
         total += inf.phosphorus;
     for (auto [e, m] : registry_.view<Metabolism>().each())
@@ -2146,7 +2164,7 @@ void World::updateLifecycle(float dt) {
         }
         Dividing* dv = registry_.try_get<Dividing>(e);
         const float cost = registry_.all_of<Player>(e) ? mp.playerDivisionCost : mp.npcDivisionCost;
-        if (registry_.any_of<ChytridInfection, Trapped, Stung, Zoospore>(e))
+        if (registry_.any_of<ChytridInfection, Trapped, Stung, Zoospore, Lichenized>(e))
             continue; // el parásito o la trampa le impiden reproducirse (y la zoóspora no se divide)
         if (info.eggHours > 0.0f) { // rotífero: pone huevos en vez de dividirse
             const float birth = meta.targetBirthBiomass > 0.0f ? meta.targetBirthBiomass : meta.birthBiomass;
@@ -2709,6 +2727,16 @@ Census World::census() const {
     for (const Mycelium& m : fungi_.mycelia)
         ++c.mycelia[static_cast<int>(m.kind)];
     c.hyphaNodes = static_cast<int>(fungi_.nodeCount());
+    c.restingSporangia = static_cast<int>(fungi_.resting.size());
+    c.totalBiomass += plasmo_.biomass();
+    c.plasmodia = static_cast<int>(plasmo_.plasmodia.size());
+    c.plasmodiumNodes = static_cast<int>(plasmo_.nodeCount());
+    c.plasmodiumEdges = static_cast<int>(plasmo_.edgeCount());
+    c.sclerotia = static_cast<int>(plasmo_.sclerotia.size());
+    c.oatFlakes = static_cast<int>(plasmo_.flakes.size());
+    for (const Plasmodium& pl : plasmo_.plasmodia)
+        c.plasmodiumLength += PlasmodiumSystem::totalLength(pl);
+    c.lichenized = static_cast<int>(registry_.view<Lichenized>().size());
     c.zoospores = static_cast<int>(fungi_.spores.size());
     for (auto [e, inf] : registry_.view<ChytridInfection>().each()) {
         c.totalBiomass += inf.mass;

@@ -54,14 +54,8 @@ struct Game {
 void startRun(Game& game) {
     // Gota procedural: el bioma elegido con las variaciones de la semilla.
     WorldConfig config = makeDrop(static_cast<BiomeId>(game.setup.biome), game.setup.seed);
-    const bool empty = game.setup.emptyDrop;
-    if (empty) { // sandbox: solo el agua, la química y los detritos del bioma
-        config.bacteria = 0;
-        config.cyanoFilaments = 0;
-        config.oscillatoriaFilaments = 0;
-        config.saprolegnia = config.zoophagus = config.chytridClusters = 0;
-        config.medium.phage = 0.0f;
-    }
+    const bool empty = game.setup.content != DropContent::Full;
+    applyDropContent(config, game.setup.content); // sandbox: solo el agua y la química del bioma
     game.world = std::make_unique<World>(config);
     game.world->bioTimeScale() = game.options.bioTimeScale;
     game.world->lodStride = game.options.lod ? 5 : 1;

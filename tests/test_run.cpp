@@ -186,7 +186,9 @@ TEST_CASE("sandbox: se puede spawnear cada ser del catálogo y la sesión sigue"
     CHECK(world.bacteria().size() > bacteria);
     CHECK(world.bdellovibrios().size() > 0);
     CHECK(world.cyanobacteria().filaments.size() == filaments + 2); // Anabaena y Oscillatoria
-    CHECK(world.fungi().mycelia.size() == mycelia + 2);
+    CHECK(world.fungi().mycelia.size() == mycelia + 4); // Saprolegnia, Zoophagus, Allomyces y liquenizante
+    CHECK(world.plasmodia().plasmodia.size() >= 1);      // Physarum
+    CHECK(world.plasmodia().flakes.size() == 1);         // copo de avena
     CHECK(world.fungi().spores.size() > 0);
     CHECK(world.phage().sum() > 0.0);
     for (int k = 0; k < 60; ++k) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "game/biome.hpp"
 #include "core/lab_panel.hpp"
 #include "render/field_overlay.hpp"
 
@@ -27,7 +28,7 @@ struct SetupState {
     int biome = 0;
     LocomotionType founder = LocomotionType::Cilia;
     unsigned seed = 1;
-    bool emptyDrop = false; // gota sin poblaciones iniciales
+    DropContent content = DropContent::Full; // qué hay en la gota al empezar
 };
 enum class SetupAction { None, Start, Back };
 SetupAction drawSetupScreen(const Progress& progress, SetupState& state);

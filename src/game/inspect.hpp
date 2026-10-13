@@ -28,6 +28,10 @@ struct Picked {
         Bdellovibrio,
         Zoospore,      // zoospora de hongo
         Hypha,         // micelio (id estable, node = nodo)
+        Plasmodium,    // plasmodio de Physarum (id estable, node = nodo)
+        OatFlake,      // copo de avena (index)
+        Resting,       // esporangio de resistencia de Allomyces (index)
+        Sclerotium,    // esclerocio de Physarum (index)
         Particle,      // partícula ambiental: tinta, detrito o mineral
     };
     Kind kind = Kind::None;
@@ -39,7 +43,7 @@ struct Picked {
 
     explicit operator bool() const { return kind != Kind::None; }
     // ¿Se puede seguir en vivo (identidad estable) o solo es una foto?
-    bool live() const { return kind == Kind::Cell || kind == Kind::Rock || kind == Kind::Hypha; }
+    bool live() const { return kind == Kind::Cell || kind == Kind::Rock || kind == Kind::Hypha || kind == Kind::Plasmodium; }
 };
 
 struct InspectLine {

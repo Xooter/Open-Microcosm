@@ -21,6 +21,13 @@ constexpr Color kHypha = {150, 146, 128, 120};        // hifa hialina, casi tran
 constexpr Color kHyphaWall = {96, 92, 76, 170};
 constexpr Color kSporangium = {120, 112, 86, 210};
 constexpr Color kSpore = {90, 86, 70, 220};
+constexpr Color kPlasmodium = {240, 208, 72, 235};     // Physarum: amarillo (carotenoides)
+constexpr Color kPlasmodiumWall = {184, 150, 36, 235};
+constexpr Color kSlime = {232, 222, 160, 26};          // rastro de baba
+constexpr Color kFlake = {224, 212, 176, 230};
+constexpr Color kFlakeEdge = {150, 136, 100, 230};
+constexpr Color kSclerotium = {190, 120, 40, 230};
+constexpr Color kResting = {110, 78, 44, 230};         // esporangio de resistencia: pared gruesa parda
 } // namespace
 
 Renderer::Renderer() {
@@ -191,8 +198,11 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
             // clavijas), zoosporangios en las puntas y zoosporas.
             for (const Mycelium& m : world.fungi().mycelia) {
                 const float fx = wrapCoord(m.x[0], w) - m.x[0], fy = wrapCoord(m.y[0], h) - m.y[0];
-                const bool thin = m.kind == FungusKind::Zoophagus;
-                const float width = thin ? 4.0f : 11.0f;
+                const FungusInfo& info = fungusInfo(m.kind);
+                const float width = info.hyphaWidth;
+                const Color hypha = {info.r, info.g, info.b, 120};
+                const Color wallColor = {static_cast<unsigned char>(info.r * 0.64f), static_cast<unsigned char>(info.g * 0.64f),
+                                         static_cast<unsigned char>(info.b * 0.64f), 170};
                 for (std::size_t k = 0; k < m.x.size(); ++k) {
                     const Vector2 p = {m.x[k] + fx + offX, m.y[k] + fy + offY};
                     if (!visible(m.x[k] + fx, m.y[k] + fy))
@@ -201,16 +211,89 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
                         const auto pk = static_cast<std::size_t>(m.parent[k]);
                         const Vector2 q = {m.x[pk] + fx + offX, m.y[pk] + fy + offY};
                         const float wk = m.peg[k] ? 3.0f : width;
-                        DrawLineEx(q, p, wk + 1.2f, kHyphaWall);
-                        DrawLineEx(q, p, wk - 0.6f, kHypha);
+                        DrawLineEx(q, p, wk + 1.2f, wallColor);
+                        DrawLineEx(q, p, wk - 0.6f, hypha);
                     }
                     if (m.peg[k])
-                        DrawCircleV(p, 2.2f, kHyphaWall); // gota adhesiva
+                        DrawCircleV(p, 2.2f, wallColor); // gota adhesiva
                     if (m.sporangium[k] > 0.0f) {
                         const float r = 0.5f * width + 6.0f * std::min(1.0f, m.sporangium[k]);
                         DrawCircleV(p, r, kSporangium);
                     }
                 }
+            }
+            // Allomyces: esporangios de resistencia (pared gruesa y parda, con poros).
+            const RestingSporangia& rs = world.fungi().resting;
+            for (std::size_t i = 0; i < rs.size(); ++i) {
+                if (!visible(rs.x[i], rs.y[i]))
+                    continue;
+                const Vector2 p = {rs.x[i] + offX, rs.y[i] + offY};
+                DrawCircleV(p, std::max(6.0f, minSize), kResting);
+                DrawCircleV(p, std::max(3.6f, 0.6f * minSize), {176, 140, 96, 230});
+                DrawCircleV({p.x - 1.6f, p.y - 1.4f}, 0.9f, kResting); // poro
+            }
+            // Líquenes: el haustorio que sujeta a cada alga verde.
+            for (auto [e, body, li] : world.registry().view<RingBody, Lichenized>().each()) {
+                if (!visible(li.point.x, li.point.y))
+                    continue;
+                DrawLineEx({li.point.x + offX, li.point.y + offY}, {body.centroid.x + offX, body.centroid.y + offY}, 1.4f, {96, 110, 80, 200});
+                DrawCircleV({li.point.x + offX, li.point.y + offY}, 2.4f, {96, 110, 80, 220});
+            }
+            // Physarum: baba, copos de avena, red de tubos amarilla y esclerocios.
+            const PlasmodiumSystem& ps = world.plasmodia();
+            if (!ps.plasmodia.empty()) {
+                const Grid2D& slime = world.slime();
+                const int sx0 = std::max(0, slime.cellX(std::max(x0, 0.0f))), sx1 = std::min(slime.nx - 1, slime.cellX(std::min(x1, w - 1.0f)));
+                const int sy0 = std::max(0, slime.cellY(std::max(y0, 0.0f))), sy1 = std::min(slime.ny - 1, slime.cellY(std::min(y1, h - 1.0f)));
+                for (int cy = sy0; cy <= sy1; ++cy)
+                    for (int cx = sx0; cx <= sx1; ++cx)
+                        if (slime.at(cx, cy) > 0.25f)
+                            DrawRectangleV({static_cast<float>(cx) * slime.dx + offX, static_cast<float>(cy) * slime.dx + offY},
+                                           {slime.dx, slime.dx}, kSlime);
+            }
+            for (std::size_t i = 0; i < ps.flakes.size(); ++i) {
+                if (!visible(ps.flakes.x[i], ps.flakes.y[i]))
+                    continue;
+                const float s = 4.0f + 0.12f * ps.flakes.pmol[i];
+                const Vector2 p = {ps.flakes.x[i] + offX, ps.flakes.y[i] + offY};
+                DrawEllipse(static_cast<int>(p.x), static_cast<int>(p.y), s * 1.3f, s, kFlake);
+                DrawEllipseLines(static_cast<int>(p.x), static_cast<int>(p.y), s * 1.3f, s, kFlakeEdge);
+            }
+            for (const Plasmodium& pl : ps.plasmodia) {
+                if (pl.x.empty())
+                    continue;
+                const float fx = wrapCoord(pl.x[0], w) - pl.x[0], fy = wrapCoord(pl.y[0], h) - pl.y[0];
+                // Dos pasadas (paredes y después citoplasma, con juntas redondas) para que los
+                // tubos se vean continuos y no como segmentos.
+                for (int pass = 0; pass < 2; ++pass)
+                    for (const Plasmodium::Edge& e : pl.edges) {
+                        const auto a = static_cast<std::size_t>(e.a), b = static_cast<std::size_t>(e.b);
+                        if (!visible(pl.x[a] + fx, pl.y[a] + fy) && !visible(pl.x[b] + fx, pl.y[b] + fy))
+                            continue;
+                        // Hagen–Poiseuille: el radio crece como D^¼.
+                        const float width = std::max(1.5f, 12.0f * std::pow(e.D, 0.25f)) + (pass == 0 ? 1.6f : 0.0f);
+                        const Vector2 p = {pl.x[a] + fx + offX, pl.y[a] + fy + offY}, q = {pl.x[b] + fx + offX, pl.y[b] + fy + offY};
+                        const Color col = pass == 0 ? kPlasmodiumWall : kPlasmodium;
+                        DrawLineEx(p, q, width, col);
+                        DrawCircleV(p, 0.5f * width, col);
+                        DrawCircleV(q, 0.5f * width, col);
+                    }
+                for (std::size_t k = 0; k < pl.x.size(); ++k) {
+                    if (!visible(pl.x[k] + fx, pl.y[k] + fy))
+                        continue;
+                    const Vector2 p = {pl.x[k] + fx + offX, pl.y[k] + fy + offY};
+                    if (pl.tip[k]) // frente de exploración: abanico más ancho
+                        DrawCircleV(p, 6.0f, {240, 214, 90, 110});
+                    else if (pl.food[k] >= 0)
+                        DrawCircleV(p, 8.0f, {236, 204, 64, 170});
+                }
+            }
+            for (std::size_t i = 0; i < ps.sclerotia.size(); ++i) {
+                if (!visible(ps.sclerotia.x[i], ps.sclerotia.y[i]))
+                    continue;
+                const Vector2 p = {ps.sclerotia.x[i] + offX, ps.sclerotia.y[i] + offY};
+                DrawCircleV(p, 7.0f, kSclerotium);
+                DrawCircleLinesV(p, 7.0f, {120, 70, 20, 230});
             }
             const Zoospores& zs = world.fungi().spores;
             for (std::size_t i = 0; i < zs.size(); ++i) {
@@ -219,7 +302,7 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
                 const Vector2 p = {zs.x[i] + offX, zs.y[i] + offY};
                 const float r = zs.kind[i] == FungusKind::Chytrid ? 1.6f : 2.0f;
                 DrawCircleV(p, std::max(r, minSize), kSpore);
-                if (zs.kind[i] != FungusKind::Zoophagus) // flagelo posterior (quitridio) o dos (oomiceto)
+                if (fungusInfo(zs.kind[i]).sporeSpeed > 0.0f) // flagelo posterior (quitridio) o dos (oomiceto)
                     DrawLineEx(p, {p.x - std::cos(zs.heading[i]) * 7.0f, p.y - std::sin(zs.heading[i]) * 7.0f},
                                std::max(0.3f, 0.5f * minSize), kSpore);
             }

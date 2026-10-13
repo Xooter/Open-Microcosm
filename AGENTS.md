@@ -19,7 +19,8 @@ Documentos de referencia:
 No hay partida, puntaje ni victoria: es un laboratorio. El usuario arma una gota, la observa e
 interviene.
 
-- **Gota:** bioma + seed (reproducible), con o sin poblaciones iniciales. Se puede spawnear
+- **Gota:** bioma + seed (reproducible), completa, sin vida o **placa de Petri vacía** (sin vida ni
+  minerales, polvo, granos ni detritos: `DropContent`, `applyDropContent`). Se puede spawnear
   cualquier ser del catálogo (barra inferior) y cambiar el ambiente en vivo desde el panel de
   laboratorio (`core/lab_panel`): secciones plegables de simulación, ambiente, macro y
   micronutrientes, química, microbiología, herramientas, cuerpos blandos, ser controlado y
@@ -212,6 +213,16 @@ Las partes de un mismo organismo no chocan entre sí (`ContactMember::group`).
   alcalinidad fija; rango de pH por especie (`phMin/phMax`); quorum sensing de *C. violaceum*
   (`Bacteria::strain/quorum`, violaceína en `Digestion::toxin`); fagos líticos como campo de
   concentración (`phage_`) con mutantes resistentes; *Bdellovibrio* libres y bdeloplastos.
+- Más hongos: `FungusInfo` (tabla de datos de `bio/fungi`) define cada tipo; *Allomyces* (ramificación
+  dicotómica, esporangios de resistencia en `Fungi::resting`) y el hongo liquenizante (`Mycobiont`,
+  componente `Lichenized` en el alga: ella cede azúcar, él devuelve fósforo y la protege de los
+  quitridios; `World::stepLichens`).
+- *Physarum polycephalum* (`bio/plasmodium`, `game/world_plasmodium.cpp`): moho mucilaginoso, no un
+  hongo. `PlasmodiumSystem` = grafo de nodos y tubos con conductividad D; flujo de Kirchhoff
+  (gradiente conjugado serial: determinista) y adaptación de Tero; puntas que siguen el gradiente de
+  materia orgánica y evitan la baba (`World::slime_`) y la luz; anastomosis; copos de avena
+  (`OatFlakes`) y esclerocios. El fósforo del plasmodio, copos y esclerocios entra en
+  `totalPhosphorus()`.
 - Metazoos (`game/world_metazoa.cpp`): `Compound`/`Segment` (las partes no tienen metabolismo,
   se mueven con el organismo y no chocan entre sí: `ContactMember::group`), `Egg`
   (partenogénesis del rotífero), `Tentacles`/`Stung` (Hydra), llegadas de nauplios.
