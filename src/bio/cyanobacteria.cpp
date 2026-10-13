@@ -13,7 +13,6 @@
 void Cyanobacteria::spawn(int count, int cells, float width, float height, std::uint64_t seed) {
     for (int f = 0; f < count; ++f) {
         Rng rng(seed, rng_stream::kCyano, static_cast<std::uint64_t>(f), 0);
-        CyanoFilament fil;
         const float a = rng.uniform(0.0f, 2.0f * units::kPi);
         float x0 = rng.uniform(0.0f, width), y0 = rng.uniform(0.0f, height);
         if (dish.active()) { // el filamento entero dentro del agua
@@ -21,16 +20,21 @@ void Cyanobacteria::spawn(int count, int cells, float width, float height, std::
             x0 = p.x;
             y0 = p.y;
         }
-        for (int k = 0; k < cells; ++k) {
-            fil.x.push_back(x0 + std::cos(a) * params.spacing * static_cast<float>(k));
-            fil.y.push_back(y0 + std::sin(a) * params.spacing * static_cast<float>(k));
-            fil.mass.push_back(rng.uniform(1.0f, 2.0f));
-            fil.heterocyst.push_back(k % params.heterocystSpacing == params.heterocystSpacing / 2 ? 1 : 0);
-        }
-        fil.direction = rng.uniform() < 0.5f ? -1.0f : 1.0f;
-        fil.reverseTimer = rng.uniform(10.0f, 40.0f);
-        filaments.push_back(std::move(fil));
+        addFilament({x0, y0}, a, cells, rng);
     }
+}
+
+void Cyanobacteria::addFilament(Vec2 start, float angle, int cells, Rng& rng) {
+    CyanoFilament fil;
+    for (int k = 0; k < cells; ++k) {
+        fil.x.push_back(start.x + std::cos(angle) * params.spacing * static_cast<float>(k));
+        fil.y.push_back(start.y + std::sin(angle) * params.spacing * static_cast<float>(k));
+        fil.mass.push_back(rng.uniform(1.0f, 2.0f));
+        fil.heterocyst.push_back(k % params.heterocystSpacing == params.heterocystSpacing / 2 ? 1 : 0);
+    }
+    fil.direction = rng.uniform() < 0.5f ? -1.0f : 1.0f;
+    fil.reverseTimer = rng.uniform(10.0f, 40.0f);
+    filaments.push_back(std::move(fil));
 }
 
 std::size_t Cyanobacteria::cellCount() const {

@@ -3,6 +3,7 @@
 #include "render/field_overlay.hpp"
 
 #include "bio/locomotion.hpp"
+#include "game/sandbox.hpp"
 
 #include <raylib.h>
 
@@ -37,7 +38,7 @@ void drawUi(World& world, ToolState& tools);
 struct Options;
 
 // Pantalla de inicio (dibuja un frame completo).
-enum class TitleAction { None, Play, Encyclopedia, Options, Quit };
+enum class TitleAction { None, Play, Sandbox, Encyclopedia, Options, Quit };
 TitleAction drawTitleScreen(const Progress& progress);
 
 // Preparar la gota: bioma, especie fundadora y semilla.
@@ -45,6 +46,8 @@ struct SetupState {
     int biome = 0;
     LocomotionType founder = LocomotionType::Cilia;
     unsigned seed = 1;
+    bool sandbox = false;   // modo de pruebas (todas las fundadoras, sin progreso)
+    bool emptyDrop = false; // sandbox: gota sin poblaciones iniciales
 };
 enum class SetupAction { None, Start, Back };
 SetupAction drawSetupScreen(const Progress& progress, SetupState& state);
@@ -57,5 +60,15 @@ bool drawOptions(Options& options);
 void drawToasts(const std::vector<std::string>& lines, float alpha);
 // Objetivo de la partida, estado del linaje y genoma (del jugador o de la candidata elegida).
 void drawRunHud(const Run& run, const World& world);
+// Modo sandbox: barra de íconos con todos los seres.
+struct SandboxState {
+    int armed = -1;       // índice del catálogo listo para spawnear (-1: ninguno)
+    bool reshape = false; // modo Forma: el ícono transforma al jugador en esa especie
+};
+// true si el mouse está sobre la barra (los clicks no van al mundo).
+bool sandboxBarHovered();
+// Dibuja la barra y el fantasma del ser elegido bajo el cursor. Los clicks en los íconos
+// arman el spawn o (modo Forma) cambian la especie del jugador; el botón fuerza su reproducción.
+void drawSandboxBar(World& world, SandboxState& state, const Camera2D& camera);
 // Fin de partida: estadísticas y desbloqueos.
 void drawGameOver(const Run& run, const Progress& progress, const std::vector<LocomotionType>& unlocked);

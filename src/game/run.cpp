@@ -36,7 +36,8 @@ void Run::update(World& world, float dt) {
             deathCause_ = ev.cause;
             candidates_ = world.lineageMembers();
             selected_ = 0;
-            state_ = candidates_.empty() ? State::Lost : State::ChoosingHeir;
+            // En sandbox no hay extinción: se sigue sin jugador hasta elegir otra forma.
+            state_ = !candidates_.empty() ? State::ChoosingHeir : config_.sandbox ? State::Playing : State::Lost;
             break;
         }
     }
@@ -52,10 +53,10 @@ void Run::update(World& world, float dt) {
             lineageGenome_ = h->genome;
         bestShare_ = std::max(bestShare_, census_.share());
         bestGeneration_ = std::max(bestGeneration_, census_.maxGeneration);
-        if (!won_ && census_.share() >= config_.targetShare)
+        if (!won_ && !config_.sandbox && census_.share() >= config_.targetShare)
             won_ = justWon_ = true;
         // El jugador pudo morir de otra forma (por ejemplo, fagocitado) sin dejar herederos.
-        if (census_.lineageCells == 0)
+        if (census_.lineageCells == 0 && !config_.sandbox)
             state_ = State::Lost;
     }
 }

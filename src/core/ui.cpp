@@ -8,6 +8,7 @@
 #include "game/world.hpp"
 #include "render/cell_renderer.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <optional>
 
@@ -74,7 +75,8 @@ void drawUi(World& world, ToolState& tools) {
         const Metabolism& meta = reg.get<Metabolism>(p);
         const Dividing* div = reg.try_get<Dividing>(p);
         GuiLabel({kUiPanel.x + 10, y, 300, 16},
-                 TextFormat("Jugador: %s  |  %.0f um/s  |  %.1f h", locomotionName(loco.type),
+                 TextFormat("Jugador: %s  |  %.0f um/s  |  %.1f h",
+                            reg.all_of<Species>(p) ? speciesInfo(reg.get<Species>(p).id).name : locomotionName(loco.type),
                             std::abs(loco.speed), meta.ageHours));
         y += 20;
         // Barras de estado: reservas, crecimiento hacia la división y progreso de la división.
@@ -153,10 +155,11 @@ TitleAction drawTitleScreen(const Progress& progress) {
     const float cx = GetScreenWidth() * 0.5f, cy = GetScreenHeight() * 0.5f;
     centered("BioGame", cy - 220, 56, {60, 64, 52, 255});
     centered("Una gota de agua. Un linaje. Domina la biomasa o extinguite.", cy - 150, 22, {90, 92, 80, 255});
-    const char* labels[] = {"Jugar", "Enciclopedia", "Opciones", "Salir"};
-    const TitleAction actions[] = {TitleAction::Play, TitleAction::Encyclopedia, TitleAction::Options, TitleAction::Quit};
-    for (int i = 0; i < 4; ++i)
-        if (GuiButton({cx - 160, cy - 80 + i * 64.0f, 320, 50}, labels[i]))
+    const char* labels[] = {"Jugar", "Sandbox", "Enciclopedia", "Opciones", "Salir"};
+    const TitleAction actions[] = {TitleAction::Play, TitleAction::Sandbox, TitleAction::Encyclopedia, TitleAction::Options,
+                                   TitleAction::Quit};
+    for (int i = 0; i < 5; ++i)
+        if (GuiButton({cx - 160, cy - 110 + i * 58.0f, 320, 48}, labels[i]))
             action = actions[i];
     if (IsKeyPressed(KEY_ENTER))
         action = TitleAction::Play;
@@ -176,7 +179,7 @@ SetupAction drawSetupScreen(const Progress& progress, SetupState& state) {
     BeginDrawing();
     ClearBackground({236, 231, 214, 255});
     const float cx = GetScreenWidth() * 0.5f;
-    centered("Elegir la gota", 40, 40, {60, 64, 52, 255});
+    centered(state.sandbox ? "Sandbox: elegir la gota" : "Elegir la gota", 40, 40, {60, 64, 52, 255});
     // Biomas.
     for (int b = 0; b < kBiomeCount; ++b) {
         const Biome& bio = biome(static_cast<BiomeId>(b));
@@ -217,7 +220,7 @@ SetupAction drawSetupScreen(const Progress& progress, SetupState& state) {
     for (int i = 0; i < 3; ++i) {
         const LocomotionType t = types[i];
         const Rectangle r = {cx - 220, 420 + i * 62.0f, 440, 52};
-        const bool open = progress.isUnlocked(t);
+        const bool open = state.sandbox || progress.isUnlocked(t);
         if (!open)
             GuiDisable();
         if (GuiButton(r, TextFormat("%d  %s", i + 1, speciesName(t))) && open)
@@ -233,6 +236,8 @@ SetupAction drawSetupScreen(const Progress& progress, SetupState& state) {
     DrawText(TextFormat("Semilla %u", state.seed), static_cast<int>(cx - 220), 620, 20, {80, 82, 70, 255});
     if (GuiButton({cx - 40, 612, 120, 36}, "Otra"))
         state.seed = static_cast<unsigned>(GetRandomValue(1, 2147483646));
+    if (state.sandbox)
+        GuiCheckBox({cx + 100, 622, 20, 20}, "Gota vacia", &state.emptyDrop);
     if (GuiButton({cx - 220, 680, 210, 56}, "Volver") || IsKeyPressed(KEY_ESCAPE))
         action = SetupAction::Back;
     if (GuiButton({cx + 10, 680, 210, 56}, "Empezar") || IsKeyPressed(KEY_ENTER))
@@ -443,4 +448,210 @@ void drawGameOver(const Run& run, const Progress& progress, const std::vector<Lo
     }
     centered(TextFormat("Partidas jugadas: %d", progress.runs), y + 10, 18, LIGHTGRAY);
     centered("Enter: volver al inicio", y + 50, 22, RAYWHITE);
+}
+
+// ---------------------------------------------------------------------------
+// Sandbox
+// ---------------------------------------------------------------------------
+
+namespace {
+
+constexpr float kIcon = 44.0f, kIconGap = 6.0f, kSandboxButtonsH = 34.0f;
+
+int iconsPerRow() {
+    return std::max(1, static_cast<int>((static_cast<float>(GetScreenWidth()) - 20.0f) / (kIcon + kIconGap)));
+}
+
+// Barra inferior: los íconos en filas centradas y, arriba, la fila de botones.
+Rectangle sandboxIconRect(int index) {
+    const int perRow = iconsPerRow();
+    const int rows = (kBeingCount + perRow - 1) / perRow;
+    const int row = index / perRow, col = index % perRow;
+    const int inRow = std::min(perRow, kBeingCount - row * perRow);
+    const float width = static_cast<float>(inRow) * (kIcon + kIconGap) - kIconGap;
+    const float top = static_cast<float>(GetScreenHeight()) - 10.0f - static_cast<float>(rows) * (kIcon + kIconGap);
+    return {0.5f * (static_cast<float>(GetScreenWidth()) - width) + static_cast<float>(col) * (kIcon + kIconGap),
+            top + static_cast<float>(row) * (kIcon + kIconGap), kIcon, kIcon};
+}
+
+Rectangle sandboxBarRect() {
+    const Rectangle first = sandboxIconRect(0);
+    const float top = first.y - kSandboxButtonsH - 6.0f;
+    return {0, top, static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight()) - top};
+}
+
+Color withAlpha(Color c, bool enabled) {
+    c.a = static_cast<unsigned char>(enabled ? c.a : c.a / 3);
+    return c;
+}
+
+// Silueta de la especie (la superelipse de su CellSpec), escalada para entrar en el ícono.
+void drawCellGlyph(const CellSpec& spec, Vector2 c, float scale, bool enabled) {
+    constexpr int kN = 36;
+    Vector2 pts[kN];
+    for (int i = 0; i < kN; ++i) {
+        const float t = 2.0f * units::kPi * static_cast<float>(i) / kN;
+        const Vec2 q = superellipsePoint(spec.radiusX * scale, spec.radiusY * scale, spec.squareness, t, spec.taper);
+        pts[i] = {c.x + q.x, c.y + q.y};
+    }
+    const Color fill = withAlpha({spec.r, spec.g, spec.b, 230}, enabled);
+    for (int i = 0; i < kN; ++i) // en sentido antihorario en pantalla (raylib descarta el otro)
+        DrawTriangle(c, pts[(i + 1) % kN], pts[i], fill);
+    const Color edge = withAlpha({60, 64, 52, 220}, enabled);
+    for (int i = 0; i < kN; ++i)
+        DrawLineEx(pts[i], pts[(i + 1) % kN], 1.2f, edge);
+    const float nucleus = std::max(1.5f, spec.nucleusFraction * std::min(spec.radiusX, spec.radiusY) * scale * 0.6f);
+    DrawCircleV(c, nucleus, withAlpha({110, 105, 90, 200}, enabled));
+}
+
+void drawBeingIcon(Being b, Rectangle r, bool enabled) {
+    const Vector2 c = {r.x + 0.5f * r.width, r.y + 0.5f * r.height};
+    const float half = 0.4f * r.width;
+    switch (b.kind) {
+    case BeingKind::Species: {
+        const SpeciesInfo& info = speciesInfo(b.species);
+        const CellSpec& spec = info.spec;
+        if (info.filament) { // tres células unidas extremo con extremo
+            const float s = half / (3.0f * spec.radiusX);
+            for (int k = -1; k <= 1; ++k)
+                drawCellGlyph(spec, {c.x + 2.0f * spec.radiusX * s * static_cast<float>(k), c.y}, s, enabled);
+        } else {
+            drawCellGlyph(spec, c, half / std::max(spec.radiusX, spec.radiusY), enabled);
+        }
+        break;
+    }
+    case BeingKind::Bacterium:
+    case BeingKind::Violaceum: {
+        const Color col = withAlpha(b.kind == BeingKind::Violaceum ? Color{110, 60, 150, 255} : Color{120, 110, 80, 255}, enabled);
+        const float pos[5][3] = {{-10, -8, 20}, {6, -10, -35}, {-4, 6, 70}, {10, 8, 10}, {0, -1, -60}};
+        for (const auto& p : pos)
+            DrawRectanglePro({c.x + p[0], c.y + p[1], 9, 4}, {4.5f, 2}, p[2], col);
+        break;
+    }
+    case BeingKind::Bdellovibrio: {
+        const Color col = withAlpha({90, 90, 70, 255}, enabled);
+        const float pos[4][2] = {{-9, -6}, {7, -8}, {-3, 8}, {10, 6}};
+        for (const auto& p : pos) {
+            DrawCircleV({c.x + p[0], c.y + p[1]}, 2.0f, col);
+            DrawLineEx({c.x + p[0], c.y + p[1]}, {c.x + p[0] - 5, c.y + p[1] + 2}, 1.0f, col);
+        }
+        break;
+    }
+    case BeingKind::Cyanobacterium:
+        for (int k = 0; k < 7; ++k) {
+            const bool heterocyst = k == 3;
+            DrawCircleV({c.x - 15 + 5.0f * static_cast<float>(k), c.y}, heterocyst ? 3.2f : 2.5f,
+                        withAlpha(heterocyst ? Color{170, 180, 120, 255} : Color{60, 120, 90, 255}, enabled));
+        }
+        break;
+    case BeingKind::Chytrid: {
+        const Color col = withAlpha({130, 120, 95, 255}, enabled);
+        const float pos[3][2] = {{-8, -4}, {6, -8}, {2, 8}};
+        for (const auto& p : pos) {
+            DrawCircleV({c.x + p[0], c.y + p[1]}, 3.0f, col);
+            DrawLineEx({c.x + p[0] - 3, c.y + p[1]}, {c.x + p[0] - 10, c.y + p[1] + 3}, 1.0f, col);
+        }
+        break;
+    }
+    case BeingKind::Saprolegnia:
+    case BeingKind::Zoophagus: {
+        const Color col = withAlpha({120, 115, 95, 255}, enabled);
+        const Vector2 base = {c.x - 14, c.y + 10};
+        const Vector2 mid = {c.x - 2, c.y};
+        DrawLineEx(base, mid, 1.6f, col);
+        DrawLineEx(mid, {c.x + 14, c.y - 12}, 1.6f, col);
+        DrawLineEx(mid, {c.x + 6, c.y + 12}, 1.4f, col);
+        DrawLineEx({c.x + 6, c.y - 5}, {c.x - 4, c.y - 14}, 1.2f, col);
+        if (b.kind == BeingKind::Zoophagus) // ramitas cortas adhesivas (las trampas)
+            for (const Vector2 k : {Vector2{c.x + 14, c.y - 12}, Vector2{c.x + 6, c.y + 12}, Vector2{c.x - 4, c.y - 14}})
+                DrawCircleV(k, 2.2f, col);
+        else
+            DrawEllipse(static_cast<int>(c.x + 14), static_cast<int>(c.y - 12), 2.5f, 4.0f, col); // zoosporangio
+        break;
+    }
+    case BeingKind::Phage: {
+        const Color col = withAlpha({80, 80, 90, 255}, enabled);
+        DrawPolyLinesEx({c.x, c.y - 7}, 6, 7.0f, 0.0f, 1.6f, col); // cápside
+        DrawLineEx({c.x, c.y}, {c.x, c.y + 10}, 2.0f, col);       // cola
+        DrawLineEx({c.x, c.y + 10}, {c.x - 6, c.y + 15}, 1.0f, col);
+        DrawLineEx({c.x, c.y + 10}, {c.x + 6, c.y + 15}, 1.0f, col);
+        break;
+    }
+    case BeingKind::Count: break;
+    }
+}
+
+// Tamaño aproximado del ser [µm] para el fantasma bajo el cursor.
+float beingReach(Being b) {
+    if (b.kind != BeingKind::Species)
+        return 12.0f;
+    const SpeciesInfo& info = speciesInfo(b.species);
+    return std::max(info.spec.radiusX, info.spec.radiusY);
+}
+
+} // namespace
+
+bool sandboxBarHovered() { return CheckCollisionPointRec(GetMousePosition(), sandboxBarRect()); }
+
+void drawSandboxBar(World& world, SandboxState& state, const Camera2D& camera) {
+    // Fantasma del ser armado bajo el cursor (en el mundo).
+    if (state.armed >= 0 && !sandboxBarHovered()) {
+        const Being b = beingAt(state.armed);
+        const Vector2 m = GetScreenToWorld2D(GetMousePosition(), camera);
+        BeginMode2D(camera);
+        DrawRing(m, beingReach(b), beingReach(b) + 2.0f / camera.zoom, 0, 360, 64, {60, 110, 60, 200});
+        EndMode2D();
+        DrawText(beingName(b), GetMouseX() + 14, GetMouseY() + 14, 18, {60, 110, 60, 255});
+    }
+
+    const Rectangle bar = sandboxBarRect();
+    DrawRectangleRec(bar, Fade({236, 231, 214, 255}, 0.85f));
+    // Modos y reproducción.
+    const float by = bar.y + 6.0f;
+    bool spawnOn = !state.reshape, formOn = state.reshape;
+    GuiToggle({10, by, 110, 26}, "Spawnear", &spawnOn);
+    GuiToggle({124, by, 110, 26}, "Forma", &formOn);
+    const bool reshape = state.reshape ? !spawnOn : formOn; // un modo activo no se apaga solo
+    if (reshape != state.reshape) {
+        state.reshape = reshape;
+        state.armed = -1;
+    }
+    if (!world.registry().valid(world.player()))
+        GuiDisable();
+    if (GuiButton({246, by, 150, 26}, "Reproducir (R)"))
+        world.forceReproduction(world.player());
+    GuiEnable();
+    const char* hint = state.reshape ? "Forma: click en una especie para transformar al jugador"
+                       : state.armed >= 0 ? TextFormat("%s: click en la placa para spawnear | Esc cancela", beingName(beingAt(state.armed)))
+                                          : "Click en un ser y despues en la placa";
+    DrawText(TextFormat("SANDBOX | %s", hint), 410, static_cast<int>(by + 5), 18, {80, 82, 70, 255});
+
+    // Íconos.
+    const char* tooltip = nullptr;
+    for (int i = 0; i < kBeingCount; ++i) {
+        const Being b = beingAt(i);
+        const Rectangle r = sandboxIconRect(i);
+        const bool enabled = !state.reshape || b.kind == BeingKind::Species;
+        const bool hover = CheckCollisionPointRec(GetMousePosition(), r);
+        DrawRectangleRec(r, hover && enabled ? Color{250, 247, 236, 255} : Color{244, 240, 226, 255});
+        DrawRectangleLinesEx(r, state.armed == i ? 3.0f : 1.0f, state.armed == i ? Color{60, 110, 60, 255} : Color{170, 165, 145, 255});
+        drawBeingIcon(b, r, enabled);
+        if (hover)
+            tooltip = beingName(b);
+        if (hover && enabled && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            if (state.reshape) {
+                const Vector2 mid = GetScreenToWorld2D({0.5f * GetScreenWidth(), 0.5f * GetScreenHeight()}, camera);
+                world.setPlayerSpecies(b.species, {mid.x, mid.y});
+            } else {
+                state.armed = state.armed == i ? -1 : i;
+            }
+        }
+    }
+    if (tooltip) {
+        const int w = MeasureText(tooltip, 18);
+        const int x = std::clamp(GetMouseX() - w / 2, 4, GetScreenWidth() - w - 12);
+        const int y = static_cast<int>(bar.y) - 28;
+        DrawRectangle(x - 6, y - 4, w + 12, 26, Fade({60, 64, 52, 255}, 0.9f));
+        DrawText(tooltip, x, y, 18, {244, 240, 226, 255});
+    }
 }

@@ -41,6 +41,7 @@ struct Game {
     Options options;
     std::string optionsPath = defaultOptionsPath();
     SetupState setup;
+    SandboxState sandbox;
     float encyclopediaScroll = 0.0f;
     std::vector<LocomotionType> unlockedNow;
     std::vector<std::string> toasts; // descubrimientos recientes
@@ -53,7 +54,14 @@ struct Game {
 
 void startRun(Game& game) {
     // Gota procedural: el bioma elegido con las variaciones de la semilla.
-    const WorldConfig config = makeDrop(static_cast<BiomeId>(game.setup.biome), game.setup.seed);
+    WorldConfig config = makeDrop(static_cast<BiomeId>(game.setup.biome), game.setup.seed);
+    const bool empty = game.setup.sandbox && game.setup.emptyDrop;
+    if (empty) { // sandbox: solo el agua, la química y los detritos del bioma
+        config.bacteria = 0;
+        config.cyanoFilaments = 0;
+        config.saprolegnia = config.zoophagus = config.chytridClusters = 0;
+        config.medium.phage = 0.0f;
+    }
     game.world = std::make_unique<World>(config);
     game.world->bioTimeScale() = game.options.bioTimeScale;
     game.world->lodStride = game.options.lod ? 5 : 1;
@@ -63,11 +71,14 @@ void startRun(Game& game) {
     const LocomotionType founder = game.setup.founder;
     RunConfig rc;
     rc.founder = founder;
-    rc.wildlife = dropAreaScale(config); // misma densidad de especies en cualquier placa
+    rc.wildlife = empty ? 0.0f : dropAreaScale(config); // misma densidad de especies en cualquier placa
+    rc.sandbox = game.setup.sandbox;
     rc.biome = game.setup.biome;
     rc.seed = config.seed;
     Rng rng(config.seed, 0, 0, 0);
-    rc.genome = game.progress.founderGenome(founder, rng); // legado de partidas anteriores
+    // Legado de partidas anteriores (el sandbox arranca con el genoma de la especie).
+    rc.genome = rc.sandbox ? speciesGenome(founder) : game.progress.founderGenome(founder, rng);
+    game.sandbox = SandboxState{};
     game.run.start(*game.world, rc, ++game.runCounter);
     game.screen = Screen::Playing;
     game.recorded = false;
@@ -76,7 +87,7 @@ void startRun(Game& game) {
 
 // Guarda el resultado de la partida una sola vez (al perder o al abandonarla).
 void recordRun(Game& game) {
-    if (game.recorded || !game.world)
+    if (game.recorded || !game.world || game.run.config().sandbox) // el sandbox no cuenta
         return;
     game.recorded = true;
     recordBehaviors(game.progress, *game.world);
@@ -132,7 +143,8 @@ void toggleOverlay(ToolState& tools, Overlay overlay) {
 }
 
 // Herramientas de laboratorio y controles del jugador durante la partida.
-void handlePlayInput(World& world, ToolState& tools, const Camera2D& camera) {
+// `uiCaptured`: el click es de la barra del sandbox (o spawnea), no del jugador.
+void handlePlayInput(World& world, ToolState& tools, const Camera2D& camera, bool uiCaptured) {
     if (IsKeyPressed(KEY_SPACE)) tools.paused = !tools.paused;
     if (IsKeyPressed(KEY_F1)) toggleOverlay(tools, Overlay::Velocity);
     if (IsKeyPressed(KEY_F2)) toggleOverlay(tools, Overlay::Oxygen);
@@ -165,7 +177,7 @@ void handlePlayInput(World& world, ToolState& tools, const Camera2D& camera) {
     else
         world.clearSqueeze();
 
-    const bool overUi = tools.showLab && CheckCollisionPointRec(GetMousePosition(), kUiPanel);
+    const bool overUi = uiCaptured || (tools.showLab && CheckCollisionPointRec(GetMousePosition(), kUiPanel));
     const bool shift = IsKeyDown(KEY_LEFT_SHIFT) || IsKeyDown(KEY_RIGHT_SHIFT);
     const bool ctrl = IsKeyDown(KEY_LEFT_CONTROL) || IsKeyDown(KEY_RIGHT_CONTROL);
     const bool left = IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !overUi;
@@ -197,6 +209,25 @@ void handlePlayInput(World& world, ToolState& tools, const Camera2D& camera) {
     input.pseudopod = left && !shift && !ctrl && !tools.grabbing;
     input.aim = pos;
     world.setPlayerInput(input);
+}
+
+// Sandbox: spawnear el ser armado con click (Esc cancela) y forzar la reproducción (R).
+// Devuelve true si el click es del sandbox.
+bool handleSandboxInput(World& world, SandboxState& sandbox, const ToolState& tools, const Camera2D& camera) {
+    if (IsKeyPressed(KEY_ESCAPE))
+        sandbox.armed = -1;
+    if (IsKeyPressed(KEY_R))
+        world.forceReproduction(world.player());
+    const bool overBar = sandboxBarHovered();
+    const bool overLab = tools.showLab && CheckCollisionPointRec(GetMousePosition(), kUiPanel);
+    if (sandbox.armed < 0 || overBar)
+        return overBar;
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && !overLab) {
+        const Vector2 m = GetScreenToWorld2D(GetMousePosition(), camera);
+        const Vec2 pos = world.dish().active() ? Vec2{m.x, m.y} : Vec2{wrapCoord(m.x, world.width()), wrapCoord(m.y, world.height())};
+        world.spawnBeing(beingAt(sandbox.armed), pos);
+    }
+    return true; // con un ser armado, el click izquierdo no mueve al jugador
 }
 
 // Elegir hija o heredero: Tab / flechas para ciclar, click para señalar, Enter para confirmar.
@@ -268,7 +299,14 @@ int main() {
 
         if (game.screen == Screen::Title) {
             switch (drawTitleScreen(game.progress)) {
-            case TitleAction::Play: game.screen = Screen::Setup; break;
+            case TitleAction::Play:
+                game.setup.sandbox = false;
+                game.screen = Screen::Setup;
+                break;
+            case TitleAction::Sandbox:
+                game.setup.sandbox = true;
+                game.screen = Screen::Setup;
+                break;
             case TitleAction::Encyclopedia: game.screen = Screen::Encyclopedia; break;
             case TitleAction::Options: game.screen = Screen::Options; break;
             case TitleAction::Quit: CloseWindow(); return 0;
@@ -310,8 +348,11 @@ int main() {
         World& world = *game.world;
         updateCamera(camera, tools, world);
         const bool choosing = game.run.simulationPaused();
-        if (game.screen == Screen::Playing && !choosing)
-            handlePlayInput(world, tools, camera);
+        const bool sandbox = game.run.config().sandbox;
+        if (game.screen == Screen::Playing && !choosing) {
+            const bool captured = sandbox && handleSandboxInput(world, game.sandbox, tools, camera);
+            handlePlayInput(world, tools, camera, captured);
+        }
         if (choosing)
             handleChoiceInput(game, camera);
         if (IsKeyPressed(KEY_N) && !choosing) { // abandonar y empezar otra partida
@@ -354,7 +395,7 @@ int main() {
 
         // Enciclopedia: lo que se ve se cataloga (dos veces por segundo).
         game.discoveryTimer -= frameDt;
-        if (game.screen == Screen::Playing && game.discoveryTimer <= 0.0f) {
+        if (game.screen == Screen::Playing && !sandbox && game.discoveryTimer <= 0.0f) {
             game.discoveryTimer = 0.5f;
             const Vector2 a = GetScreenToWorld2D({0, 0}, camera);
             const Vector2 b = GetScreenToWorld2D({static_cast<float>(GetScreenWidth()), static_cast<float>(GetScreenHeight())}, camera);
@@ -381,6 +422,8 @@ int main() {
             drawCandidates(game, camera);
         drawUi(world, tools);
         drawRunHud(game.run, world);
+        if (sandbox && !game.run.simulationPaused())
+            drawSandboxBar(world, game.sandbox, camera);
         drawToasts(game.toasts, std::min(1.0f, game.toastTimer));
         if (game.screen == Screen::Over)
             drawGameOver(game.run, game.progress, game.unlockedNow);

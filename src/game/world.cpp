@@ -1001,26 +1001,165 @@ void World::populateEcosystem(float scale) {
             }
             if (!free)
                 continue;
-            Genome g = speciesGenome(id);
-            mutate(g, info.locomotion, rng, 0.5f);
-            g[Gene::MatingType] = rng.uniform() < 0.5f ? 0.0f : 1.0f;
-            const entt::entity e = spawnOrganism(id, p, g, 0, rng.uniform(0.0f, 2.0f * units::kPi));
-            // Población en distintas etapas del ciclo celular (si no, todas se dividirían juntas).
-            Metabolism& m = registry_.get<Metabolism>(e);
-            const float stage = rng.uniform(1.0f, info.fissions > 1 ? 3.5f : 1.8f);
-            m.biomass *= stage;
-            if (m.photosynthetic) { // el P y el N de la biomasa extra salen del agua
-                m.phosphorus += -exchange(phosphate_, p, -(stage - 1.0f) * m.phosphorus);
-                m.nitrogen += -exchange(nitrogen_, p, -(stage - 1.0f) * m.nitrogen);
-            }
-            if (info.speedScale > 0.0f)
-                registry_.emplace<Autopilot>(e);
-            if (info.sessile)
-                anchorHere(e);
+            spawnWild(id, p, rng, true);
             ++placed;
         }
     }
     seedFungi();
+}
+
+entt::entity World::spawnWild(SpeciesId id, Vec2 p, Rng& rng, bool randomStage) {
+    const SpeciesInfo& info = speciesInfo(id);
+    Genome g = speciesGenome(id);
+    mutate(g, info.locomotion, rng, 0.5f);
+    g[Gene::MatingType] = rng.uniform() < 0.5f ? 0.0f : 1.0f;
+    const entt::entity e = spawnOrganism(id, p, g, 0, rng.uniform(0.0f, 2.0f * units::kPi));
+    if (randomStage) {
+        // Población en distintas etapas del ciclo celular (si no, todas se dividirían juntas).
+        Metabolism& m = registry_.get<Metabolism>(e);
+        const float stage = rng.uniform(1.0f, info.fissions > 1 ? 3.5f : 1.8f);
+        m.biomass *= stage;
+        if (m.photosynthetic) { // el P y el N de la biomasa extra salen del agua
+            m.phosphorus += -exchange(phosphate_, p, -(stage - 1.0f) * m.phosphorus);
+            m.nitrogen += -exchange(nitrogen_, p, -(stage - 1.0f) * m.nitrogen);
+        }
+    }
+    if (info.speedScale > 0.0f)
+        registry_.emplace<Autopilot>(e);
+    if (info.sessile)
+        anchorHere(e);
+    return e;
+}
+
+void World::spawnBeing(Being being, Vec2 at) {
+    PROFILE_SCOPE("World::spawnBeing");
+    Rng rng(config_.seed, rng_stream::kTools, toolCounter_++, step_);
+    const float angle = rng.uniform(0.0f, 2.0f * units::kPi);
+    switch (being.kind) {
+    case BeingKind::Species: {
+        const SpeciesInfo& info = speciesInfo(being.species);
+        if (info.filament) { // el filamento arranca en el cursor y entra entero en la placa
+            const float length = static_cast<float>(info.filamentCells) * (2.0f * info.spec.radiusX + 4.0f);
+            spawnFilament(being.species, dish_.clampInside(at, length + info.spec.radiusY + 4.0f), angle,
+                          info.filamentCells, 0);
+        } else {
+            const float reach = std::max(info.spec.radiusX, info.spec.radiusY) * 1.5f + 10.0f;
+            spawnWild(being.species, dish_.clampInside(at, reach), rng, false);
+        }
+        break;
+    }
+    case BeingKind::Bacterium:
+    case BeingKind::Violaceum: // un racimo: una sola bacteria apenas se ve
+        for (int k = 0; k < 30; ++k) {
+            const float a = rng.uniform(0.0f, 2.0f * units::kPi), r = 12.0f * std::sqrt(rng.uniform());
+            const Vec2 p = dish_.clampInside({at.x + r * std::cos(a), at.y + r * std::sin(a)}, 2.0f);
+            bacteria_.add(p.x, p.y, rng.uniform(0.0f, 2.0f * units::kPi), rng.uniform(1.0f, 2.0f),
+                          being.kind == BeingKind::Violaceum ? 1 : 0);
+        }
+        break;
+    case BeingKind::Bdellovibrio:
+        for (int k = 0; k < 10; ++k) {
+            const float a = rng.uniform(0.0f, 2.0f * units::kPi), r = 10.0f * std::sqrt(rng.uniform());
+            const Vec2 p = dish_.clampInside({at.x + r * std::cos(a), at.y + r * std::sin(a)}, 2.0f);
+            bdello_.push(p.x, p.y, rng.uniform(0.0f, 2.0f * units::kPi));
+        }
+        break;
+    case BeingKind::Cyanobacterium: {
+        const int cells = std::max(8, config_.cyanoCells);
+        const Vec2 start = dish_.clampInside(at, cyano_.params.spacing * static_cast<float>(cells) + 4.0f);
+        cyano_.addFilament(start, angle, cells, rng);
+        break;
+    }
+    case BeingKind::Chytrid: spawnFungus(FungusKind::Chytrid, dish_.clampInside(at, 10.0f), angle, 30000 + toolCounter_); break;
+    case BeingKind::Saprolegnia: spawnFungus(FungusKind::Saprolegnia, dish_.clampInside(at, 20.0f), angle, 0); break;
+    case BeingKind::Zoophagus: spawnFungus(FungusKind::Zoophagus, dish_.clampInside(at, 20.0f), angle, 0); break;
+    case BeingKind::Phage: {
+        // Un lisado: ~10⁸ viriones/mL en las 3×3 celdas alrededor del cursor.
+        Grid2D& g = phage_.grid();
+        const int cx = g.cellX(at.x), cy = g.cellY(at.y);
+        for (int j = -1; j <= 1; ++j)
+            for (int i = -1; i <= 1; ++i) {
+                const int x = wrapIndex(cx + i, g.nx), y = wrapIndex(cy + j, g.ny);
+                if (dishMask_.isWater(static_cast<std::size_t>(y) * g.nx + x))
+                    g.at(x, y) += 1e-4f;
+            }
+        break;
+    }
+    case BeingKind::Count: break;
+    }
+}
+
+entt::entity World::setPlayerSpecies(SpeciesId species, Vec2 fallback) {
+    PROFILE_SCOPE("World::setPlayerSpecies");
+    Vec2 at = fallback;
+    float angle = 0.0f, mating = 0.0f;
+    std::uint32_t generation = 0;
+    if (registry_.valid(player_)) {
+        const RingBody& body = registry_.get<RingBody>(player_);
+        at = body.centroid;
+        const Vec2 h = bodyHeading(body);
+        angle = std::atan2(h.y, h.x);
+        if (const Lineage* lin = registry_.try_get<Lineage>(player_))
+            generation = lin->generation;
+        if (const Heredity* her = registry_.try_get<Heredity>(player_))
+            mating = her->genome[Gene::MatingType];
+        if (grabSlot_ != kNoGrab && bodies_.owner[grabSlot_] == entt::to_integral(player_))
+            endGrab();
+        // Sin lisis ni evento: no es una muerte, es un cambio de forma de prueba. El fósforo y el
+        // nitrógeno del cuerpo viejo vuelven al agua (se conservan).
+        float phosphorus = 0.0f;
+        if (const Metabolism* m = registry_.try_get<Metabolism>(player_))
+            phosphorus += m->phosphorus;
+        if (const Digestion* d = registry_.try_get<Digestion>(player_))
+            for (const FoodVacuole& v : d->vacuoles)
+                phosphorus += v.phosphorus;
+        if (phosphorus > 0.0f)
+            exchange(phosphate_, at, phosphorus);
+        if (const float nitrogen = carriedNitrogen(player_); nitrogen > 0.0f)
+            exchange(nitrogen_, at, nitrogen);
+        destroyOrganism(player_);
+        player_ = entt::null;
+    }
+    const SpeciesInfo& info = speciesInfo(species);
+    Genome g = speciesGenome(species);
+    g[Gene::MatingType] = mating;
+    const float reach = std::max(info.spec.radiusX, info.spec.radiusY) * 1.5f + 10.0f;
+    const entt::entity e = spawnOrganism(species, dish_.clampInside(at, reach), g, run_, angle);
+    registry_.get<Lineage>(e).generation = generation;
+    if (info.sessile)
+        anchorHere(e);
+    registry_.emplace<Player>(e);
+    player_ = e;
+    return e;
+}
+
+bool World::forceReproduction(entt::entity e) {
+    if (!registry_.valid(e) || !registry_.all_of<Metabolism, Species>(e))
+        return false;
+    // Lo mismo que frena la reproducción en updateLifecycle (o ya está en marcha).
+    if (registry_.any_of<Dividing, Conjugating, Cyst, Egg, Segment, ChytridInfection, Trapped, Stung>(e))
+        return false;
+    const SpeciesInfo& info = speciesInfo(registry_.get<Species>(e).id);
+    Metabolism& m = registry_.get<Metabolism>(e);
+    const MetabolismParams& mp = metabolismParams_;
+    const float cost = registry_.all_of<Player>(e) ? mp.playerDivisionCost : mp.npcDivisionCost;
+    const float birth = m.targetBirthBiomass > 0.0f ? m.targetBirthBiomass : m.birthBiomass;
+    // Los mismos umbrales que readyToDivide y que la puesta del rotífero (con un margen).
+    float need = info.eggHours > 0.0f   ? 1.4f * birth
+                 : m.pendingFissions > 0 ? 1.8f * birth
+                                         : static_cast<float>(1 << m.fissions) * birth;
+    need *= 1.02f;
+    if (m.biomass < need) {
+        const float k = need / m.biomass;
+        const Vec2 at = registry_.get<RingBody>(e).centroid;
+        if (m.photosynthetic) { // el P y el N de la biomasa extra salen del agua (se conservan)
+            m.phosphorus += -exchange(phosphate_, at, -(k - 1.0f) * m.phosphorus);
+            m.nitrogen += -exchange(nitrogen_, at, -(k - 1.0f) * m.nitrogen);
+        }
+        m.biomass = need;
+    }
+    m.reserves = std::max(m.reserves, (cost + 0.05f) * m.biomass);
+    return true;
 }
 
 std::vector<const RingBody*> World::preyFor(const RingBody& predator) const {

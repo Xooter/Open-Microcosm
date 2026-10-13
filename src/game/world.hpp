@@ -14,6 +14,7 @@
 #include "bio/phagocytosis.hpp"
 #include "bio/species.hpp"
 #include "game/lineage.hpp"
+#include "game/sandbox.hpp"
 #include "core/rng.hpp"
 #include "core/units.hpp"
 #include "core/vec2.hpp"
@@ -196,7 +197,19 @@ class World {
     std::vector<WorldEvent> takeEvents() { return std::exchange(events_, {}); }
     // Puebla la gota con células pasivas (competidoras por la biomasa, hasta la fase 7).
     void populate(int cells);
-    void setPlayerType(LocomotionType type); // reemplaza al jugador en el mismo lugar
+    // Sandbox: el jugador pasa a ser otra especie en el mismo lugar (mismo linaje y generación).
+    // Sin jugador, aparece en `fallback`.
+    entt::entity setPlayerSpecies(SpeciesId species, Vec2 fallback);
+    // Sandbox: spawnea un ser del catálogo en `at` (silvestre, linaje 0).
+    void spawnBeing(Being being, Vec2 at);
+    // Sandbox: completa biomasa y reservas hasta el umbral de la especie para que se reproduzca
+    // por su vía normal (fisión, palintomía, colonias, gemación o huevo). false si no puede.
+    bool forceReproduction(entt::entity cell);
+    // Organismo silvestre (linaje 0) con variación genética. `randomStage`: en una etapa al
+    // azar del ciclo celular (población inicial).
+    entt::entity spawnWild(SpeciesId species, Vec2 at, Rng& rng, bool randomStage);
+    // Micelio (o, para quitridios, un racimo de zoosporas) con el fósforo sacado del agua.
+    void spawnFungus(FungusKind kind, Vec2 at, float heading, std::uint64_t salt);
     entt::entity player() const { return player_; }
     void setPlayerInput(const PlayerInput& input) { playerInput_ = input; }
     LocomotionParams& locomotionParams() { return locomotionParams_; }

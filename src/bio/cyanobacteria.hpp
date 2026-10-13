@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/rng.hpp"
+#include "core/vec2.hpp"
 #include "sim/dish.hpp"
 
 #include <cstddef>
@@ -65,6 +67,8 @@ class Cyanobacteria {
     Dish dish; // pared de la placa
 
     void spawn(int count, int cells, float width, float height, std::uint64_t seed);
+    // Un filamento recto de `cells` células desde `start` (sin fósforo ni nitrógeno: los toma del agua al crecer).
+    void addFilament(Vec2 start, float angle, int cells, Rng& rng);
     std::size_t cellCount() const;
     float biomass() const; // [pmol]
     float phosphorus() const;

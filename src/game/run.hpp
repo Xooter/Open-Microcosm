@@ -18,6 +18,7 @@ struct RunConfig {
     float targetShare = 0.5f; // ganar: el linaje suma esta fracción de la biomasa viva
     float wildlife = 1.0f;    // escala de las poblaciones silvestres iniciales (ecosistema)
     int competitors = 0;      // células pasivas extra (debug)
+    bool sandbox = false;     // modo de pruebas: sin victoria ni extinción
     Genome genome = speciesGenome(LocomotionType::Cilia); // genoma del fundador
 };
 

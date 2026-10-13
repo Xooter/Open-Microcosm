@@ -5,6 +5,7 @@
 #include <doctest/doctest.h>
 #include <omp.h>
 
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
 
@@ -161,4 +162,83 @@ std::uint64_t runRun(int threads) {
 TEST_CASE("partida con linaje y pilotos automáticos determinista sin importar los hilos") {
     const std::uint64_t a = runRun(1);
     CHECK(a == runRun(4));
+}
+
+TEST_CASE("sandbox: cambiar de forma conserva linaje y fósforo, y no cuenta como muerte") {
+    World world(runWorld());
+    Run run;
+    RunConfig rc = quickRun(0);
+    rc.sandbox = true;
+    run.start(world, rc, 1);
+    const double phosphorus = world.totalPhosphorus();
+    for (SpeciesId s : {SpeciesId::Euglena, SpeciesId::Vorticella, SpeciesId::Rotifer, SpeciesId::Amoeba}) {
+        const entt::entity old = world.player();
+        const entt::entity e = world.setPlayerSpecies(s, {0, 0});
+        CHECK_FALSE(world.registry().valid(old));
+        CHECK(world.player() == e);
+        CHECK(world.registry().get<Species>(e).id == s);
+        CHECK(world.registry().get<Lineage>(e).run == 1);
+        for (int k = 0; k < 30; ++k) {
+            world.step(kDt);
+            run.update(world, kDt);
+        }
+        CHECK(run.state() == Run::State::Playing);
+    }
+    CHECK(world.totalPhosphorus() == doctest::Approx(phosphorus).epsilon(0.01));
+}
+
+TEST_CASE("sandbox: forzar la reproducción usa la vía normal de cada especie") {
+    World world(runWorld());
+    Run run;
+    RunConfig rc = quickRun(0);
+    rc.sandbox = true;
+    run.start(world, rc, 1);
+    REQUIRE(world.forceReproduction(world.player()));
+    stepUntilChoice(world, run, 60 * 90);
+    CHECK(run.state() == Run::State::ChoosingDaughter);
+    run.confirm(world);
+
+    // Rotífero: pone un huevo en vez de dividirse.
+    world.setPlayerSpecies(SpeciesId::Rotifer, {0, 0});
+    const int before = world.census().eggs;
+    REQUIRE(world.forceReproduction(world.player()));
+    for (int k = 0; k < 10; ++k)
+        world.step(kDt);
+    CHECK(world.census().eggs == before + 1);
+}
+
+TEST_CASE("sandbox: se puede spawnear cada ser del catálogo y la partida no se pierde") {
+    World world(runWorld());
+    Run run;
+    RunConfig rc = quickRun(0);
+    rc.sandbox = true;
+    run.start(world, rc, 1);
+    const Vec2 c = {0.5f * world.width(), 0.5f * world.height()};
+    const std::size_t cells = world.cellCount(), bacteria = world.bacteria().size();
+    const std::size_t filaments = world.cyanobacteria().filaments.size(), mycelia = world.fungi().mycelia.size();
+    for (int i = 0; i < kBeingCount; ++i) {
+        const float a = 6.2831853f * static_cast<float>(i) / kBeingCount;
+        world.spawnBeing(beingAt(i), {c.x + 300.0f * std::cos(a), c.y + 300.0f * std::sin(a)});
+    }
+    CHECK(world.cellCount() >= cells + kSpeciesCount);
+    CHECK(world.bacteria().size() > bacteria);
+    CHECK(world.bdellovibrios().size() > 0);
+    CHECK(world.cyanobacteria().filaments.size() == filaments + 1);
+    CHECK(world.fungi().mycelia.size() == mycelia + 2);
+    CHECK(world.fungi().spores.size() > 0);
+    CHECK(world.phage().sum() > 0.0);
+    for (int k = 0; k < 60; ++k) {
+        world.step(kDt);
+        run.update(world, kDt);
+    }
+
+    // Sin jugador ni descendientes, el sandbox sigue.
+    if (world.registry().valid(world.player()))
+        world.lyseAt(world.registry().get<RingBody>(world.player()).centroid);
+    for (int k = 0; k < 90; ++k) {
+        world.step(kDt);
+        run.update(world, kDt);
+    }
+    CHECK(run.state() == Run::State::Playing);
+    CHECK_FALSE(run.won());
 }

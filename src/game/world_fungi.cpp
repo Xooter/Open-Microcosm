@@ -27,8 +27,7 @@ bool hostOf(const entt::registry& reg, entt::entity e, std::uint32_t mask) {
 
 void World::seedFungi() {
     // Al empezar: algunos micelios de Saprolegnia sobre detritos, Zoophagus en el fondo y
-    // zoosporas de quitridios en el agua. El fósforo sale del agua (se conserva).
-    const FungiParams& p = fungi_.params;
+    // zoosporas de quitridios en el agua.
     auto spawn = [&](FungusKind kind, std::uint64_t salt) {
         Rng rng(config_.seed, rng_stream::kFungi + 400, salt, 0);
         Vec2 at = randomPoint(rng, 20.0f);
@@ -36,9 +35,7 @@ void World::seedFungi() {
             const auto i = static_cast<std::size_t>(rng.uniform() * static_cast<float>(ambient_.size())) % ambient_.size();
             at = {ambient_.x[i], ambient_.y[i]};
         }
-        const float reserves = 20.0f * p.nodePmol;
-        const float phosphorus = -exchange(phosphate_, at, -2.0f * p.phosphorusRatio * reserves);
-        fungi_.spawnMycelium(kind, at, rng.uniform(0.0f, 2.0f * units::kPi), reserves, phosphorus);
+        spawnFungus(kind, at, rng.uniform(0.0f, 2.0f * units::kPi), salt);
     };
     for (std::uint64_t k = 0; k < static_cast<std::uint64_t>(config_.saprolegnia); ++k)
         spawn(FungusKind::Saprolegnia, k);
@@ -46,11 +43,22 @@ void World::seedFungi() {
         spawn(FungusKind::Zoophagus, 100 + k);
     for (std::uint64_t k = 0; k < static_cast<std::uint64_t>(config_.chytridClusters); ++k) {
         Rng rng(config_.seed, rng_stream::kFungi + 500, k, 0);
-        const Vec2 at = randomPoint(rng, 10.0f);
+        spawnFungus(FungusKind::Chytrid, randomPoint(rng, 10.0f), 0.0f, 9000 + k);
+    }
+}
+
+void World::spawnFungus(FungusKind kind, Vec2 at, float heading, std::uint64_t salt) {
+    // El fósforo sale del agua (se conserva).
+    const FungiParams& p = fungi_.params;
+    if (kind == FungusKind::Chytrid) {
         const int count = 10;
         const float phosphorus = -exchange(phosphate_, at, -static_cast<float>(count) * p.sporePmol * p.phosphorusRatio);
-        fungi_.spawnSpores(FungusKind::Chytrid, at, count, phosphorus, config_.seed, 9000 + k);
+        fungi_.spawnSpores(FungusKind::Chytrid, at, count, phosphorus, config_.seed, salt);
+        return;
     }
+    const float reserves = 20.0f * p.nodePmol;
+    const float phosphorus = -exchange(phosphate_, at, -2.0f * p.phosphorusRatio * reserves);
+    fungi_.spawnMycelium(kind, at, heading, reserves, phosphorus);
 }
 
 void World::stepFungi(float dt) {
