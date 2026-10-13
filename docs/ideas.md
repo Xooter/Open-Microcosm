@@ -1,69 +1,116 @@
-# BioGame — 50 ideas
+# BioGame — 50 ideas para el sandbox
 
-Marcá con `[x]` las que te gusten.
+Ideas para un sandbox educativo, científico y de código abierto. Marcá con `[x]` las que te gusten.
 
-## Mecánicas del jugador
+## Experimentos y control del laboratorio
 
-- [ ] 1. **Fagocitosis física:** envolver a la presa con la membrana; si no la cerrás, se escapa.
-- [ ] 2. **Bajo Reynolds:** si dejás de nadar, frenás en seco. Moverse cuesta ATP en todo momento.
-- [ ] 3. **Pseudópodos con el mouse:** arrastrar para estirar la célula, como una ameba real.
-- [ ] 4. **Elegir a tu hija:** al dividirte elegís con cuál seguir; la otra se vuelve NPC de tu linaje.
-- [ ] 5. **Enquistarse:** botón de pánico ante una sequía o un depredador, a cambio de quedar inmóvil.
-- [ ] 6. **Tricocistos:** disparar arpones defensivos con un cooldown largo.
-- [ ] 7. **Vacuola contráctil:** en agua dulce la célula se hincha y revienta si no expulsás agua.
-- [ ] 8. **Cuello de _Lacrymaria_:** una célula con un "látigo" extensible para atrapar a distancia.
-- [ ] 9. **Esconderse fuera de foco:** moverse a otra capa del plano focal para evitar depredadores.
-- [ ] 10. **Fototaxis con estigma:** la mancha ocular hace que veas mejor hacia la luz.
+- [ ] 1. **Escenas guardables:** exportar e importar una gota (bioma, seed, parámetros del medio y
+      seres puestos a mano) como archivo de texto, para compartirla y reproducirla.
+- [ ] 2. **Línea de tiempo con replays:** grabar la sesión por seed y eventos, y rebobinar o
+      avanzar a cualquier instante (la simulación ya es determinista).
+- [ ] 3. **Experimentos por lote:** correr N gotas con un parámetro barrido (por ejemplo, Si de 0
+      a 300 µM) sin ventana y exportar los resultados.
+- [ ] 4. **Rampas y programas:** variar la temperatura, la luz o los nutrientes con el tiempo
+      (ciclo día/noche, pulso de fosfato, estación).
+- [ ] 5. **Controles y réplicas:** dos gotas lado a lado con la misma seed, cambiando una sola
+      variable, para comparar.
+- [ ] 6. **Antibióticos, sal, ácidos y toxinas** como reactivos que se agregan con el gotero y
+      tienen dosis-respuesta por especie.
+- [ ] 7. **Dilución y siembra:** pasar una alícuota a una gota nueva (cultivos seriados), como en
+      un laboratorio de microbiología.
+- [ ] 8. **Quimiostato:** flujo continuo de medio nuevo y salida de agua, para estudiar
+      crecimiento en estado estacionario (Monod).
+- [ ] 9. **Pinzas ópticas:** sujetar y arrastrar una célula con el mouse sin dañarla, con la fuerza
+      real en pN.
+- [ ] 10. **Micropipeta:** aspirar una célula o un grupo de bacterias de un punto y soltarlas en otro.
 
-## Biología y ecosistema
+## Medición y análisis
 
-- [ ] 11. **Endosimbiosis:** tragar un alga y "no digerirla" para ganar un cloroplasto.
-- [ ] 12. **Kleptoplastia:** robar cloroplastos temporales comiendo algas.
-- [ ] 13. **Ciclo día/noche:** la fotosíntesis se apaga y los mixótrofos pasan a cazar.
-- [ ] 14. **Oxígeno real:** las algas oxigenan el medio y, sin O₂, solo fermentás (poca energía).
-- [ ] 15. **Quorum sensing:** las bacterias cambian de comportamiento al superar una densidad.
-- [ ] 16. **Bloom tóxico de cianobacterias** como evento que envenena la gota.
-- [ ] 17. **Fagos:** epidemias virales que revientan células; inmunidad estilo CRISPR como mejora.
-- [ ] 18. **Descomponedores:** los cadáveres alimentan hongos y bacterias, que liberan nutrientes.
-- [ ] 19. **Biofilm:** las bacterias forman tapetes que funcionan como terreno y comida.
-- [ ] 20. **Conjugación:** intercambio genético con otra célula para mezclar mejoras.
-- [ ] 21. **Volvox:** colonia esférica con hijas adentro que nacen rompiendo a la madre.
-- [ ] 22. **Hongo depredador _Zoophagus_:** hifas pegajosas que atrapan rotíferos.
-- [ ] 23. **Termitas:** bioma dentro del intestino con protistas simbiontes que digieren madera.
-- [ ] 24. **Salinidad y osmosis:** cambiar de agua dulce a salada hincha o deshidrata la célula.
-- [ ] 25. **Temperatura:** el frío ralentiza el metabolismo y el calor lo acelera, a cambio de daño.
+- [ ] 11. **Gráficos en vivo:** curvas de población por especie, nutrientes, O₂ y pH, con zoom y
+      exportación a CSV.
+- [ ] 12. **Balance de masa visible:** diagrama de flujos de P, N, Si, Fe y C entre agua, células,
+      detritos y sedimento, que cierre al 100 %.
+- [ ] 13. **Regla y escala:** medir distancias y áreas en µm directamente sobre la imagen.
+- [ ] 14. **Seguimiento de trayectorias:** dibujar la estela de una célula y calcular su velocidad
+      media, el desplazamiento cuadrático medio y el tipo de movimiento.
+- [ ] 15. **Cuantificación por región:** contar células y medir concentraciones dentro de un área
+      que se dibuja a mano.
+- [ ] 16. **Curva de crecimiento automática:** tiempo de duplicación, fase de latencia y capacidad
+      de carga ajustadas a los datos de la gota.
+- [ ] 17. **Mapa de limitación:** colorear cada célula según el nutriente que limita su
+      crecimiento en ese momento (P, N, Si, Fe, B₁₂, luz).
+- [ ] 18. **Panel de cuotas celulares:** ver cuántas veces la cuota mínima tiene cada nutriente
+      dentro de una célula elegida.
+- [ ] 19. **Árbol de linaje:** reconstruir la genealogía de una población, con mutaciones por
+      rama y tasa de selección.
+- [ ] 20. **Exportar datos abiertos:** CSV/JSON de series temporales y de la ficha de cada especie,
+      con las unidades y los parámetros usados.
 
-## Visual y atmósfera
+## Microscopía y óptica
 
-- [ ] 26. **Lentes intercambiables:** campo claro, fase, campo oscuro y fluorescencia, cada uno con
-      información distinta.
-- [ ] 27. **Ciclosis visible:** organelos que circulan dentro de cada célula.
-- [ ] 28. **Tinciones:** soltar colorantes que revelan estructuras (el rojo neutro tiñe vacuolas).
-- [ ] 29. **Lisis espectacular:** la membrana revienta y el citoplasma se dispersa en partículas.
-- [ ] 30. **Burbujas de aire y granos de arena** como obstáculos gigantes a esta escala.
-- [ ] 31. **Escala relativa:** un rotífero que entra en pantalla parece un leviatán.
-- [ ] 32. **Polvo browniano** vibrando en todo el fondo.
-- [ ] 33. **Cámara con viñeta circular**, como mirar por el ocular.
-- [ ] 34. **Captura de "foto de microscopio"** con escala en µm, para compartir.
-- [ ] 35. **Audio procedural:** el ritmo de la vacuola contráctil marca el estrés de la célula.
+- [ ] 21. **Lentes intercambiables:** campo claro, contraste de fase, campo oscuro y
+      fluorescencia, cada uno con la información que muestra el real.
+- [ ] 22. **Tinciones reales:** Gram, lugol (almidón), DAPI (núcleos), rojo neutro, azul de
+      metileno y tinta china para cápsulas.
+- [ ] 23. **Fluorescencia de clorofila:** las algas brillan en rojo bajo luz azul, y el brillo
+      baja cuando les falta hierro.
+- [ ] 24. **Objetivos de 10×, 40× y 100× con aceite:** el aumento cambia el campo y la
+      profundidad, y a 100× se ven las bacterias individuales.
+- [ ] 25. **Foto de microscopio con barra de escala**, fecha, aumento y seed, lista para
+      publicar o usar en clase.
+- [ ] 26. **Video con intervalo (time-lapse):** acelerar horas biológicas en un clip de segundos.
+- [ ] 27. **Campo oscuro de Tyndall:** las partículas diminutas (arcilla, bacterias) dispersan la
+      luz y se ven brillantes.
+- [ ] 28. **Polarización:** los cristales (frústulas, cuarzo, almidón) cambian de color al
+      girar el polarizador.
+- [ ] 29. **Cámara cenital con lupa:** un recuadro flotante de mayor aumento sobre lo que está
+      bajo el cursor.
+- [ ] 30. **Modo fantasma de datos:** superponer la concentración de un nutriente solo dentro de
+      las células como un halo.
 
-## Progresión y rejugabilidad
+## Contenido educativo
 
-- [ ] 36. **Enciclopedia:** catalogar especies observándolas un tiempo.
-- [ ] 37. **Genoma heredable** entre partidas (roguelite).
-- [ ] 38. **Árbol evolutivo** visual de tu linaje al terminar la partida.
-- [ ] 39. **Gotas procedurales** por seed, con desafío diario compartido.
-- [ ] 40. **Escenarios históricos:** Gran Oxidación, Tierra bola de nieve y origen de los eucariotas.
-- [ ] 41. **Editor de especies:** diseñar organismos y soltarlos en un ecosistema.
-- [ ] 42. **Modo científico:** manipular el portaobjetos (agregar sal, luz o antibiótico) y observar.
-- [ ] 43. **Logros biológicos:** "comé algo más grande que vos" (_Didinium_), "sobreviví 1 día sin luz".
-- [ ] 44. **Multicelularidad como "segundo acto":** controlar una colonia diferenciada.
-- [ ] 45. **Jefes:** rotíferos, _Hydra_ y larvas de copépodo.
+- [ ] 31. **Lecciones guiadas:** recorridos cortos con un objetivo observable ("¿por qué no se
+      divide la diatomea sin sílice?") y un cuestionario.
+- [ ] 32. **Modo aula:** el docente prepara una gota con seed fija y los alumnos la comparan, sin
+      depender del azar.
+- [ ] 33. **Notas en la ficha:** el usuario escribe observaciones ancladas a un ser, un lugar o
+      un instante, y se exportan junto al experimento.
+- [ ] 34. **Fichas con referencias:** cada ficha cita la fuente científica de sus parámetros
+      (tasas, tamaños, cuotas) y marca qué se simplificó.
+- [ ] 35. **Glosario interactivo:** términos como Reynolds, quimiotaxis o Redfield con una
+      animación mínima dentro del programa.
+- [ ] 36. **Hipótesis y predicción:** antes de correr, el usuario predice el resultado y el
+      programa lo compara con lo que pasó.
+- [ ] 37. **Escenarios históricos:** Gran Oxidación, Tierra bola de nieve, eutrofización de un
+      lago y floración de cianobacterias.
+- [ ] 38. **Casos reales:** reproducir experimentos clásicos (Gause con *Paramecium*, Tilman con
+      diatomeas y sílice, Jennings con CO₂).
+- [ ] 39. **Traducción de la interfaz:** textos en un archivo aparte para sumar idiomas y acentos.
+- [ ] 40. **Modo accesible:** paleta para daltonismo, texto grande y subtítulos de los eventos.
 
-## Técnica
+## Biología y química nuevas
 
-- [ ] 46. **Soft-body de membrana con presión** en lugar de partículas sueltas: más estable.
-- [ ] 47. **Fluido en grilla + partículas** (híbrido) para tener corrientes baratas.
-- [ ] 48. **LOD por distancia:** células lejanas simplificadas o estadísticas.
-- [ ] 49. **Especies data-driven:** archivos de configuración (TOML/JSON) en lugar de código.
-- [ ] 50. **Simulación determinista por seed:** replays, desafíos diarios y debugging reproducible.
+- [ ] 41. **Ciclo del silicio completo:** disolución dependiente del pH y la temperatura, y
+      sedimentación de frústulas que sale del campo de visión.
+- [ ] 42. **Quelación del hierro:** sideróforos de bacterias y algas que compiten por el Fe, con
+      precipitación a óxido a pH alto.
+- [ ] 43. **Más vitaminas y micronutrientes:** tiamina (B₁), biotina (B₇), zinc, cobalto, molibdeno
+      y manganeso, con auxotrofías reales por especie.
+- [ ] 44. **Carbono inorgánico:** CO₂ limitante, mecanismos concentradores de carbono y su efecto
+      en el pH.
+- [ ] 45. **Endosimbiosis y kleptoplastia:** tragar un alga y conservarla, con la restricción de
+      cada caso real, como experimento y no como mejora.
+- [ ] 46. **Biofilms y matriz extracelular:** tapetes bacterianos que cambian el flujo y retienen
+      nutrientes.
+- [ ] 47. **Epidemias y resistencia:** fagos, antibióticos y evolución de la resistencia con
+      costo, observable en el árbol de linaje.
+- [ ] 48. **Suelo y agua de verdad:** cargar una muestra con parámetros medidos (T, pH,
+      conductividad, nutrientes) y ver qué comunidad sostiene.
+
+## Técnica y comunidad
+
+- [ ] 49. **Especies como datos:** archivos TOML por especie, para que la comunidad sume organismos
+      sin tocar C++ (con validación de unidades y de coherencia biológica).
+- [ ] 50. **Núcleo sin ventana y bindings:** exponer `biosim` como librería con una interfaz
+      mínima (C o Python) para usar la simulación en investigación y cuadernos de clase.
