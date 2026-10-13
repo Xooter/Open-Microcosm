@@ -23,6 +23,7 @@ WorldConfig runWorld(std::size_t bacteria = 0) {
 RunConfig quickRun(int competitors = 6) {
     RunConfig rc;
     rc.competitors = competitors;
+    rc.wildlife = 0.0f; // estos tests prueban las reglas de la partida, no la ecología
     return rc;
 }
 

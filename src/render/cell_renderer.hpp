@@ -4,10 +4,17 @@
 
 #include <raylib.h>
 
+#include <cstdint>
 #include <vector>
 
 class World;
 struct RingBody;
+
+// Tinciones de laboratorio (vitales: no matan a las células).
+//  - Rojo Congo: las vacuolas digestivas viran de rojo a azul al acidificarse (pH < 5).
+//  - Azul de metileno: tiñe núcleos y ácidos nucleicos de azul.
+enum class Stain { None, CongoRed, MethyleneBlue };
+const char* stainName(Stain stain);
 
 // Células en campo claro:
 // 1. el relleno de cada célula se dibuja en una textura (triangulado con ear clipping);
@@ -26,6 +33,7 @@ class CellRenderer {
     void composite(const Camera2D& camera);
     // Membranas y organelos (dentro de BeginMode2D).
     void drawDetails(const World& world, const Camera2D& camera, Rectangle view);
+    void setStain(Stain stain) { stain_ = stain; }
 
   private:
     void ensureTarget();
@@ -37,5 +45,6 @@ class CellRenderer {
     Shader shader_{};
     bool shaderOk_ = false;
     int texelLoc_ = -1, rimLoc_ = -1;
+    Stain stain_ = Stain::None;
     std::vector<int> triangles_, scratch_;
 };

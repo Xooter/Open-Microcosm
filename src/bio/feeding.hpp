@@ -15,6 +15,7 @@ struct FoodVacuole {
     float contentPmol = 0.0f;   // alimento [pmol equivalentes de glucosa]
     float initialPmol = 0.0f;
     float phosphorus = 0.0f;    // [pmol P] de presas fotótrofas: se excreta al digerirse
+    float nitrogen = 0.0f;      // [pmol N] ídem (se excreta como amonio)
     // Rinde por pmol digerido. Presas chicas (bacterias, detritos) se comen a ritmo MECÁNICO
     // (tiempo real) y rinden ×bioTimeScale; las células enteras las limita la digestión, que
     // ya corre en tiempo biológico, y rinden ×1.
@@ -33,6 +34,8 @@ struct Digestion {
     float pmolIngested = 0.0f, pmolDigested = 0.0f;
     float mouthBudget = 0.0f; // presas que todavía puede tragar en este paso (boca o contacto)
     float rateScale = 1.0f;   // lisosomas: multiplicador genético de la digestión
+    float handling = 0.0f;    // tiempo de manipulación que queda tras una presa entera [s biológicos]
+    float toxin = 0.0f;       // violaceína ingerida (se detoxifica de a poco)
 };
 
 struct FeedingParams {
@@ -68,15 +71,21 @@ float cellAreaForMass(float pmol);
 // fija el metabolismo (biomasa + contenido de las vacuolas).
 void ingest(Digestion& dig, RingBody& body, BodyParticles& bp, Vec2 where, float area, float pmol,
             std::uint8_t r, std::uint8_t g, std::uint8_t b, bool forceNew, float phosphorus = 0.0f,
-            float nutritionScale = 1.0f);
+            float nutritionScale = 1.0f, float nitrogen = 0.0f);
+
+// Lo que la digestión devuelve al agua [pmol].
+struct Excreted {
+    float phosphorus = 0.0f;
+    float nitrogen = 0.0f;
+};
 
 // Saciedad: digiriendo una presa entera, el depredador no ataca otra (tiempo de manipulación).
-bool satiated(const Digestion& dig);
+bool satiated(const Digestion& dig, float biomass);
 
 // Cierra vacuolas llenas o viejas (tiempo real, `dt`), digiere (tiempo biológico, `bioDt`) y
 // expulsa las vacías por el citoprocto. Devuelve el alimento digerido [pmol].
 // `excreted` suma el fósforo liberado al agua [pmol P].
 float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingParams& params,
-             float dt, float bioDt, float& excreted);
+             float dt, float bioDt, Excreted& excreted);
 
 float vacuoleContentArea(const Digestion& dig);

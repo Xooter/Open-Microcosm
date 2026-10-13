@@ -23,7 +23,8 @@ set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 set(BUILD_GAMES    OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(raylib
     URL https://github.com/raysan5/raylib/archive/refs/tags/5.5.tar.gz
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    SYSTEM)
 
 # raygui: UI inmediata header-only para tunear parámetros en vivo.
 FetchContent_Declare(raygui
@@ -35,7 +36,8 @@ FetchContent_Declare(raygui
 # Las partículas masivas NO van en el ECS: viven en arrays SoA (ver sim/particles.hpp).
 FetchContent_Declare(EnTT
     URL https://github.com/skypjack/entt/archive/refs/tags/v3.14.0.tar.gz
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE)
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    SYSTEM)
 
 FetchContent_MakeAvailable(raylib raygui EnTT)
 
@@ -95,9 +97,16 @@ add_library(biosim STATIC
     src/bio/genome.cpp
     src/bio/organelles.cpp
     src/bio/species.cpp
+    src/bio/cyanobacteria.cpp
+    src/bio/fungi.cpp
     src/game/run.cpp
     src/game/progress.cpp
-    src/game/world.cpp)
+    src/game/world.cpp
+    src/game/world_fungi.cpp
+    src/game/world_chem.cpp
+    src/game/world_metazoa.cpp
+    src/game/biome.cpp
+    src/game/encyclopedia.cpp)
 
 target_include_directories(biosim PUBLIC src)
 target_link_libraries(biosim PUBLIC OpenMP::OpenMP_CXX EnTT::EnTT bio_options)
@@ -115,9 +124,11 @@ add_executable(bio
     src/core/ui.cpp
     src/render/renderer.cpp
     src/render/field_overlay.cpp
-    src/render/cell_renderer.cpp)
+    src/render/cell_renderer.cpp
+    src/render/instanced_particles.cpp)
 
-target_include_directories(bio PRIVATE ${raygui_SOURCE_DIR}/src)
+# SYSTEM: los warnings de headers de terceros no son nuestros.
+target_include_directories(bio SYSTEM PRIVATE ${raygui_SOURCE_DIR}/src)
 target_link_libraries(bio PRIVATE biosim raylib)
 # Ruta absoluta a assets/ para desarrollo (el empaquetado queda para más adelante).
 target_compile_definitions(bio PRIVATE BIO_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
@@ -131,7 +142,7 @@ endif()
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp)
+    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp)
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
     add_test(NAME bio_tests COMMAND bio_tests)
 endif()

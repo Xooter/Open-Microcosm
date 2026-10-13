@@ -30,5 +30,16 @@ struct Census {
     std::uint32_t maxGeneration = 0;
     int species[kSpeciesCount] = {}; // individuos vivos por especie (silvestres y del linaje)
     int bacteria = 0;
+    int cyanoCells = 0;
+    int mycelia[3] = {};     // por FungusKind
+    int hyphaNodes = 0;
+    int zoospores = 0;
+    int infectedAlgae = 0;   // con quitridios
+    int eggs = 0;
+    int quorumBacteria = 0;  // C. violaceum en quorum (violetas)
+    int phageInfected = 0;
+    int bdelloplasts = 0, bdellovibrios = 0;
+    float meanPH = 7.0f, maxPH = 7.0f;
+    float meanNitrogen = 0.0f, meanToxin = 0.0f, meanPhage = 0.0f; // [µM], [viriones/µm³]
     float share() const { return totalBiomass > 0.0f ? lineageBiomass / totalBiomass : 0.0f; }
 };

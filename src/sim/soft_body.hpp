@@ -15,7 +15,10 @@ struct SoftBodyTuning {
     float bendRate = 60.0f;   // flexión local (shape matching por ventanas)
     float areaRate = 3000.0f; // área = volumen de agua (incompresible a corto plazo)
     float shapeScale = 1.0f;  // multiplica la memoria de forma propia de cada cuerpo
-    int iterations = 3; // restricciones + contactos por sub-paso
+    int iterations = 3; // restricciones por sub-paso
+    // Pasadas de contactos por sub-paso (las últimas iteraciones). Con 1, las restricciones
+    // internas acomodan la forma y el contacto tiene la última palabra en cada sub-paso.
+    int contactPasses = 2;
 };
 
 // Cuerpo blando: anillo de membrana + partículas interiores confinadas.
@@ -73,6 +76,8 @@ void removeInterior(RingBody& body, std::size_t index);
 Vec2 toLocal(const RingBody& body, Vec2 worldPos);
 // Escala la forma de reposo a un área nueva (crecimiento, ingestión).
 void setRestArea(RingBody& body, float newSignedArea);
+// Igual, pero estirando solo el eje x local (células de filamento: crecen a lo largo).
+void setRestAreaAxial(RingBody& body, float newSignedArea);
 // Membrana plástica: forma de reposo circular con el perímetro actual.
 void makePlastic(RingBody& body, BodyParticles& bp, float reservoirRate);
 void adaptPlastic(RingBody& body, const BodyParticles& bp, float dt);
@@ -85,7 +90,9 @@ void resizeRing(RingBody& body, const BodyParticles& bp, std::vector<std::uint32
 void resampleRing(RingBody& body, BodyParticles& bp, std::size_t count);
 // Forma de reposo elíptica (semiejes rx, ry) alineada al eje principal actual del anillo.
 // Para las hijas de una división: cada punto toma el radio de la elipse en su dirección.
-void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry);
+// `squareness`: exponente de superelipse (2 = elipse, mayor = rectángulo redondeado).
+void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry, float squareness = 2.0f,
+                 float taper = 0.0f);
 // Membrana plástica: inserta partículas donde la membrana se estiró y quita donde se juntó
 // (la célula real agrega membrana desde reservorios internos). Devuelve true si cambió.
 bool remesh(RingBody& body, BodyParticles& bp, float spacing);

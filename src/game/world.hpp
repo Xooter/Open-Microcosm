@@ -3,8 +3,10 @@
 #include "ai/autopilot.hpp"
 #include "bio/bacteria.hpp"
 #include "bio/cell.hpp"
+#include "bio/cyanobacteria.hpp"
 #include "bio/division.hpp"
 #include "bio/feeding.hpp"
+#include "bio/fungi.hpp"
 #include "bio/genome.hpp"
 #include "bio/organelles.hpp"
 #include "bio/locomotion.hpp"
@@ -28,17 +30,12 @@
 
 #include <cstdint>
 #include <functional>
+#include <map>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
-struct WorldConfig {
-    int gridX = 256, gridY = 128; // potencias de 2 (FFT)
-    float cellSize = 8.0f;        // [µm] → mundo de 2048 × 1024 µm
-    std::size_t bacteria = 50'000;
-    std::size_t detritus = 60;
-    std::uint64_t seed = 1;
-};
 
 struct MediumParams {
     float o2AirExchange = 0.05f;      // intercambio con el aire por la superficie [1/s]
@@ -47,7 +44,76 @@ struct MediumParams {
     float detritusSpawnRate = 0.5f;   // detritos que llegan de afuera (hojas, nieve marina) [1/s]
     float surfaceLight = 1.0f;        // irradiancia relativa de la lámpara
     float inkLifetime = 120.0f;       // [s] la tinta es una herramienta de debug
-    float phosphate = 5.0f;           // fosfato disuelto inicial [µM] (limita a las algas)
+    // Fosfato disuelto inicial [µM]: la gota es un microcosmos enriquecido, con densidades de
+    // cultivo (medio Chu 10: ~57 µM; Bold: 1,7 mM). Limita a las algas cuando florecen.
+    float phosphate = 100.0f;
+    // Nitrógeno inorgánico disuelto [µM]: con N:P = 10 (< 16) el agua termina limitada por N,
+    // lo que favorece a las cianobacterias fijadoras (Smith 1983).
+    float nitrogen = 1000.0f;
+    float alkalinity = 1000.0f;       // bicarbonato [µM]: fija el pH con el CO₂ (pKa 6,35)
+    float phage = 2e-7f;              // fagos libres iniciales [viriones/µm³] (2·10⁵/mL)
+    float phageDecayPerHour = 0.05f;  // inactivación (UV, adsorción a partículas)
+    float toxinDecayPerHour = 0.02f;  // degradación bacteriana de la microcistina
+    float ahlHalfLifeHours = 24.0f;   // a pH 7; a pH alto la lactona se hidroliza más rápido
+    // Llegadas: nauplios que eclosionan de sacos de huevos de copépodos que pasan [1/h biológica].
+    float naupliusArrivalsPerHour = 0.05f;
+    // Ambiente de la gota (fase 11).
+    float temperature = 20.0f;        // [°C]: Q10 ≈ 2 en las tasas biológicas; cambia la viscosidad
+    float salinity = 0.5f;            // [PSU] agua dulce < 1; mar ~35; salmuera del hielo hasta ~100
+    bool anoxic = false;              // sin aire (intestino de termita): el O₂ no se repone
+    // Aporte de materia orgánica disuelta desde afuera de la gota (hojas y barro que se
+    // descomponen, como en una infusión de heno) [µM por hora biológica, en promedio].
+    float organicInflow = 0.0f;
+};
+
+struct WorldConfig {
+    int gridX = 256, gridY = 128; // potencias de 2 (FFT)
+    float cellSize = 8.0f;        // [µm] → mundo de 2048 × 1024 µm
+    std::size_t bacteria = 50'000;
+    std::size_t detritus = 60;
+    int cyanoFilaments = 15;      // filamentos de Anabaena al empezar
+    int cyanoCells = 12;
+    std::uint64_t seed = 1;
+    MediumParams medium;          // química y ambiente iniciales (bioma)
+    // Hongos al empezar: micelios de Saprolegnia y de Zoophagus, y grupos de zoosporas de
+    // quitridios (10 cada uno).
+    int saprolegnia = 4, zoophagus = 2, chytridClusters = 6;
+    // Cianobacterias del bioma: rango térmico (Anabaena 10–35 °C; Mastigocladus 30–57 °C).
+    float cyanoTMin = 10.0f, cyanoTMax = 35.0f;
+    float patchiness = 0.0f;      // manchas iniciales de materia orgánica y detritos (0–1)
+    // Multiplicador de la población inicial de cada especie (0 = ausente en esta gota).
+    float speciesWeight[kSpeciesCount];
+    WorldConfig() {
+        for (float& w : speciesWeight)
+            w = 1.0f;
+        speciesWeight[static_cast<int>(SpeciesId::Trichonympha)] = 0.0f; // solo en termitas
+    }
+};
+
+// Comportamientos e interacciones vistos en la partida (enciclopedia).
+struct Observations {
+    int chytridInfections = 0;
+    int chytridReleases = 0;
+    int zoophagusCaptures = 0;
+    int buds = 0;
+    int colonyReleases = 0;
+    int filamentDivisions = 0;
+    int phageLyses = 0;
+    float nitrogenFixed = 0.0f; // [pmol N]
+    int bdelloBursts = 0;
+    int quorumSwitches = 0;
+    int toxinKills = 0;
+    int hydraCaptures = 0;
+    int eggsLaid = 0, eggsHatched = 0;
+    int arrivals = 0;
+};
+
+// Una célula que acaba de reventar (para el efecto visual de la lisis).
+struct LysisMark {
+    Vec2 at;
+    float radius;
+    float time; // [s] de simulación
+    std::uint8_t r, g, b;
 };
 
 // Componente: conjugación en curso (Paramecium). Dura unas horas biológicas.
@@ -98,9 +164,20 @@ class World {
     entt::entity spawnPlayer(LocomotionType type, Vec2 center, const Genome* genome = nullptr);
     // Organismo de una especie con un genoma dado (del linaje actual, sin control).
     entt::entity spawnOrganism(LocomotionType type, Vec2 center, const Genome& genome);
-    entt::entity spawnOrganism(SpeciesId species, Vec2 center, const Genome& genome, std::uint32_t run);
+    entt::entity spawnOrganism(SpeciesId species, Vec2 center, const Genome& genome, std::uint32_t run,
+                               float angle = 0.0f);
     // Ecosistema silvestre: las especies con sus poblaciones iniciales (× scale).
     void populateEcosystem(float scale = 1.0f);
+    // Filamento de `cells` células unidas extremo con extremo (Spirogyra).
+    std::vector<entt::entity> spawnFilament(SpeciesId species, Vec2 start, float angle, int cells, std::uint32_t run);
+
+    // Uniones de adhesión entre membranas de cuerpos distintos (filamentos, colonias).
+    struct AdhesionLink {
+        std::uint32_t a, b;           // slots de membrana
+        entt::entity ownerA, ownerB;  // células dueñas
+        float rest;                   // [µm]
+    };
+    const std::vector<AdhesionLink>& links() const { return links_; }
     // Conjugación: busca una pareja compatible cerca (ciliado de otro tipo de apareamiento).
     entt::entity conjugationPartner(entt::entity cell) const;
     bool tryConjugate(entt::entity cell);
@@ -120,7 +197,13 @@ class World {
     MetabolismParams& metabolismParams() { return metabolismParams_; }
     // Compresión del tiempo biológico (por defecto units::kBioTimeScale; ajustable para debug).
     float& bioTimeScale() { return bioTimeScale_; }
+    // Tiempo biológico por segundo real, con la temperatura (Q10 = 2 respecto de 20 °C).
+    float bioScale() const { return bioTimeScale_ * temperatureFactor_; }
+    // O₂ en equilibrio con el aire a la temperatura de la gota [µM] (0 si es anóxica).
+    float oxygenSaturation() const { return o2Saturation_; }
     const char* lastDeathCause() const { return lastDeathCause_; }
+    // Muertes por especie y causa desde el comienzo (enciclopedia, balance).
+    const std::map<std::pair<SpeciesId, std::string>, int>& deathTally() const { return deathTally_; }
     // Debug: mata (lisa) a la célula bajo el cursor.
     void lyseAt(Vec2 position);
     FeedingParams& feedingParams() { return feedingParams_; }
@@ -141,10 +224,26 @@ class World {
     const ChemField& nutrients() const { return nutrients_; }
     ChemField& nutrients() { return nutrients_; }
     const ChemField& phosphate() const { return phosphate_; }
+    const ChemField& nitrogen() const { return nitrogen_; }
+    const ChemField& co2() const { return co2_; }
+    const ChemField& toxin() const { return toxin_; }
+    const ChemField& autoinducer() const { return autoinducer_; }
+    const ChemField& phage() const { return phage_; }
+    const Grid2D& ph() const { return ph_; }
+    const Bdellovibrios& bdellovibrios() const { return bdello_; }
+    // Nitrógeno total [pmol N] (se conserva salvo la fijación de N₂, que lo agrega).
+    double totalNitrogen() const;
     // Fósforo total [pmol P]: agua + fotótrofas + vacuolas (se conserva).
     double totalPhosphorus() const;
     const Grid2D& light() const { return light_; }
     const AmbientParticles& ambient() const { return ambient_; }
+    const Cyanobacteria& cyanobacteria() const { return cyano_; }
+    const Fungi& fungi() const { return fungi_; }
+    Fungi& fungi() { return fungi_; }
+    const Observations& observations() const { return observed_; }
+    const std::vector<LysisMark>& lysisMarks() const { return lysisMarks_; }
+    // Hongos iniciales (micelios y zoosporas de quitridios).
+    void seedFungi();
     Bacteria& bacteria() { return bacteria_; }
     const Bacteria& bacteria() const { return bacteria_; }
     MediumParams& medium() { return medium_; }
@@ -154,17 +253,40 @@ class World {
     const BodyParticles& bodies() const { return bodies_; }
     std::size_t cellCount() const { return registry_.view<RingBody>().size(); }
 
+    // LOD (fase 9): las células cerca del foco (lo que muestra la cámara) usan todos los
+    // sub-pasos de XPBD; las lejanas, uno de cada `lodStride` con un paso más largo (las tasas
+    // [1/s] no cambian de significado), así cuestan una fracción. Sin foco, todo es detallado.
+    void setFocus(Vec2 center, Vec2 halfExtent) {
+        focusActive_ = true;
+        focusCenter_ = center;
+        focusHalf_ = halfExtent;
+    }
+    void clearFocus() { focusActive_ = false; }
+    int lodStride = 5;
+    std::size_t nearBodies() const { return nearCount_; }
+    std::size_t touchingBodies() const {
+        std::size_t n = 0;
+        for (std::uint8_t t : bodyTouch_)
+            n += t;
+        return n;
+    }
+
     // Hash del estado completo, para tests de determinismo.
     std::uint64_t stateHash() const;
 
   private:
     void applyStir();
+    void scatterPatches();
     void updateChemistrySources(float dt);
     void stepAmbient(float dt);
     void computeLight();
     void spawnDetritus(float dt);
     void addDetritus(Rng& rng, Vec2 position);
     void collectBodies();
+    void classifyLod();
+    void buildPerceptionGrid();
+    void markTouching(float contactRange, float dt);
+    std::uint32_t groupOf(std::uint32_t bodyId) const;
     void stepBodies(float dt);
     void applyMotion(float dt);
     void updateCup(entt::entity e, RingBody& body, float dt);
@@ -173,22 +295,35 @@ class World {
     bool repelledByTrichocysts(entt::entity predator, entt::entity prey);
     void hunt(entt::entity predator, const RingBody& body);
     void swallow(entt::entity predator, entt::entity prey);
+    void applyAnchor(entt::entity e, RingBody& body, Anchored& anchor, bool disturbed, float dt);
+    void anchorHere(entt::entity e);
+    void trapWithTentacles(entt::entity e, const RingBody& body);
+    void strikeWithNeck(entt::entity e, const RingBody& body, float dt);
+    void linkCells(entt::entity a, entt::entity b, bool rigid = false);
+    void solveLinks(float h);
+    void relinkAfterDivision(entt::entity mother, entt::entity child);
+    void maintainLinks(float bioDt);
+    void releaseColonies(entt::entity mother);
     bool smallPrey(const RingBody& prey) const;
     void forBacteriaInBox(Vec2 lo, Vec2 hi, const std::function<void(std::size_t)>& fn) const;
     std::vector<const RingBody*> preyFor(const RingBody& predator) const;
     void engulf(entt::entity predator, const Closure& closure, entt::entity prey);
     Vec2 imageShift(const RingBody& of, Vec2 near) const;
-    void feedAtMouth(RingBody& body, const Locomotion& loco, Digestion& dig, float dt);
+    void feedAtMouth(entt::entity e, RingBody& body, const Locomotion& loco, Digestion& dig, float dt);
     void feedByContact(RingBody& body, Digestion& dig, float dt);
     void removeBacteria(std::vector<std::size_t>& indices);
     void removeAmbient(std::vector<std::size_t>& indices);
     void updateLifecycle(float dt);
     void applyDivisionForces();
     void duplicateOrganelles(entt::entity cell);
+    bool isSatiated(entt::entity e) const;
+    bool septumTips(const RingBody& body, std::size_t& tipA, std::size_t& tipB) const;
     void divide(entt::entity cell, std::size_t tipA, std::size_t tipB);
     void lyse(entt::entity cell, const char* cause);
+    void recordDeath(entt::entity cell, const std::string& cause);
     void applyTraits(entt::entity cell);
     void pullTogether(RingBody& body, const RingBody& partner);
+    void holdAt(RingBody& body, Vec2 point);
     void finishConjugation(entt::entity a, entt::entity b);
     void tickDefenses(float dt);
     void exchangeO2(Vec2 at, float pmol);
@@ -196,6 +331,27 @@ class World {
     // Devuelve lo que realmente se intercambió.
     float exchange(ChemField& field, Vec2 at, float pmol);
     void growBacteria(float dt);
+    void stepCyanobacteria(float dt);
+    void updateWaterChemistry(float dt);
+    void computePH();
+    void exchangeCO2(Vec2 at, float pmol);
+    float carriedNitrogen(entt::entity e) const;
+    const char* applyEnvironmentStress(entt::entity e, const RingBody& body, const SpeciesInfo& info,
+                                       MetabolicInput& in, float bioDt);
+    void microbialInteractions(float dt);
+    void seedBdellovibrio(std::size_t count);
+    // Metazoos (world_metazoa.cpp).
+    void buildCompoundParts(entt::entity organism, const SpeciesInfo& info, const CellSpec& spec);
+    void growTentacles(entt::entity e, const SpeciesInfo& info);
+    void destroyOrganism(entt::entity e);
+    void updateTentacles(float dt);
+    void layEgg(entt::entity mother);
+    void updateEggs(float bioDt);
+    void arrivals(float dt);
+    void stepFungi(float dt);
+    void updateInfections(float bioDt);
+    void releaseChytridSpores(entt::entity host);
+    Vec2 wrapped(Vec2 at) const;
     float microMolarPerPmol() const;
     void excludeFromCells();
     void rebuildBuckets();
@@ -209,16 +365,37 @@ class World {
 
     Fft2D fft_;
     Fluid fluid_;
-    ChemField oxygen_, nutrients_, phosphate_;
+    ChemField oxygen_, nutrients_, phosphate_, nitrogen_, co2_, toxin_, autoinducer_, phage_;
     Grid2D light_, shading_;
     AmbientParticles ambient_;
     Bacteria bacteria_;
+    Cyanobacteria cyano_;
+    std::vector<float> cyanoDemand_;
+    Fungi fungi_;
+    std::vector<Vec2> sporeSteer_;
+    std::vector<entt::entity> hostCells_;
+    Grid2D hyphaCover_, ph_, inflowPattern_;
+    Bdellovibrios bdello_;
+    SpatialGrid bdelloGrid_;
+    std::vector<float> cyanoDemandN_;
+    std::vector<CyanoRelease> cyanoReleases_;
+    Observations observed_;
+    std::vector<LysisMark> lysisMarks_;
 
     entt::registry registry_;
     BodyParticles bodies_;
     SoftBodyTuning softTuning_;
     ContactSolver contacts_;
     std::vector<RingBody*> bodyList_;
+    std::vector<std::uint8_t> bodyNear_, memberActive_;
+    std::vector<std::uint32_t> memberBody_;
+    std::vector<std::uint8_t> bodyTouch_;
+    std::vector<std::vector<entt::entity>> percGrid_;
+    int percGridX_ = 1, percGridY_ = 1;
+    std::vector<float> bodyReach_;
+    bool focusActive_ = false;
+    Vec2 focusCenter_, focusHalf_;
+    std::size_t nearCount_ = 0;
     std::vector<ContactMember> members_;
     std::vector<Vec2> penetration_;
     // Grilla gruesa de cajas de células para excluir bacterias y detritos del interior.
@@ -232,8 +409,12 @@ class World {
     FeedingParams feedingParams_;
     MetabolismParams metabolismParams_;
     float bioTimeScale_ = units::kBioTimeScale;
+    float temperatureFactor_ = 1.0f, o2Saturation_ = units::kO2Saturation, viscositySpeed_ = 1.0f;
     const char* lastDeathCause_ = "";
-    std::vector<entt::entity> dying_;
+    std::map<std::pair<SpeciesId, std::string>, int> deathTally_;
+    std::vector<std::pair<entt::entity, const char*>> dying_;
+    std::vector<entt::entity> settling_, released_, colonyReleases_, eggsToLay_;
+    std::vector<AdhesionLink> links_;
     struct PendingSplit {
         entt::entity cell;
         std::size_t tipA, tipB;
@@ -267,6 +448,7 @@ class World {
     Vec2 stirPosition_, stirVelocity_;
     float stirRadius_ = 30.0f;
 
+    float arrivalClock_ = 0.0f, slowDiffusion_ = 0.0f;
     std::uint64_t step_ = 0, spawnCounter_ = 0, toolCounter_ = 0, cellCounter_ = 0;
     float spawnAccumulator_ = 0.0f;
     float simTime_ = 0.0f;

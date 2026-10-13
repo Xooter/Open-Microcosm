@@ -1,10 +1,11 @@
 # bio
 
 Simulación de vida acuática microscópica en C++20 (ver `AGENTS.md` y `docs/`).
-Estado actual: **fase 6 — genoma y organelos**: cada célula tiene un genoma (tamaño, motor,
-mitocondrias, cloroplastos, lisosomas, tricocistos, coraza, rigidez, tipo de apareamiento) que
-cambia cómo se juega; muta en cada mitosis (al elegir hija ves qué cambió), se recombina por
-conjugación y parte de él pasa a la siguiente partida. Sobre las fases 1–5.
+Estado actual: **fases 1–12** (la 12, parcial). Una gota con ~25 especies reales (ciliados,
+flagelados, amebas, algas, diatomeas, colonias, filamentos, levaduras, hongos, rotíferos, Hydra,
+nauplios), bacterias, cianobacterias, fagos y química (O₂, CO₂/pH, fósforo, nitrógeno, toxinas,
+señales de quorum), en seis biomas procedurales, con estética de microscopio de campo claro,
+enciclopedia y la partida roguelite con genoma de las fases 1–6.
 
 ## Compilar, ejecutar y testear
 
@@ -18,38 +19,48 @@ Las dependencias se descargan solas con FetchContent la primera vez.
 
 ## Controles
 
-- **Inicio:** 1/2/3 o click para elegir la especie fundadora (Euglena y Amoeba se desbloquean jugando)
+- **Inicio:** Jugar → elegir bioma, especie fundadora y semilla (Euglena y Amoeba se desbloquean
+  jugando) · Enciclopedia · Opciones
 - Cilios: **W/S** avanzar/retroceder, **A/D** girar
 - Flagelo: **W** o click izquierdo para batir; gira hacia el mouse
 - Ameba: **click izquierdo** extiende un pseudópodo hacia el mouse; al tocar una célula más chica, la envuelve sola
 - **Al dividirte o morir:** Tab/flechas o click para elegir la célula, **Enter** para confirmar
 - **V** conjugar con un ciliado compatible cercano (otro tipo de apareamiento)
 - **N** nueva partida · **F** cámara que sigue al jugador · **H** ocultar el panel · rueda: zoom · Espacio: pausa
+- Microscopio: **J** tinción (rojo Congo, azul de metileno)
 - Laboratorio: **Ctrl+click** revolver · **Shift+click** estirar membrana · **T** tinta · **B** detrito ·
-  **C** célula · **K** 50 células · **X** borrar · **L** lisar · **Q** apretar · **F1–F4** overlays
+  **C** célula · **K** 50 células · **X** borrar · **L** lisar · **Q** apretar
+- Overlays de depuración: **F1** velocidad · **F2** O₂ · **F3** nutrientes · **F4** luz · **F5** fosfato ·
+  **F6** nitrógeno · **F7** pH · **F8** microcistina · **F9** autoinductor · **F10** fagos
 
 ## Estructura
 
 ```
 src/
-  main.cpp              loop con timestep fijo, cámara y herramientas
-  core/                 unidades físicas, RNG determinista, profiling, UI de debug
+  main.cpp              loop con timestep fijo, menús, cámara y herramientas
+  core/                 unidades físicas, RNG determinista, profiling, UI (panel, menús, enciclopedia)
   sim/                  FFT, fluido Stokes–Brinkman, campos químicos, partículas, grilla espacial,
                         cuerpos blandos (XPBD sin inercia), contactos, polígonos
-  bio/bacteria.*        run & tumble + quimiotaxis temporal (E. coli)
+  bio/bacteria.*        run & tumble, quimiotaxis, cepas con quorum sensing, fagos, Bdellovibrio
+  bio/cyanobacteria.*   filamentos con heterocistos (fijación de N₂), muerte y microcistina
+  bio/fungi.*           quitridios, Saprolegnia y Zoophagus (zoosporas e hifas)
   bio/cell.*            creación de células (membrana, núcleo, vacuola, gránulos)
+  bio/species.*         las especies como datos (dieta, reproducción, tolerancias, metazoos)
   bio/locomotion.*      cilios, flagelo y pseudópodos; fuerzas del nadador sobre el agua
-  bio/feeding.*         vacuolas digestivas, ingestión y digestión
+  bio/feeding.*         vacuolas digestivas, ingestión, digestión y saciedad
   bio/phagocytosis.*    copa fagocítica (cremallera) y fusión de membranas
-  bio/metabolism.*      respiración, fermentación, fotosíntesis, crecimiento, inanición
+  bio/metabolism.*      respiración, fermentación, fotosíntesis, P y N, estrés, inanición
   bio/division.*        mitosis: surco de división y forma de reposo de las hijas
   bio/genome.*          genes, mutación, recombinación, herencia y rasgos fisiológicos
   bio/organelles.*      organelos visibles según el genoma (mitocondrias, cloroplastos, lisosomas)
-  ai/autopilot.*        comportamiento mínimo de las células del linaje que no controlás
+  ai/autopilot.*        comportamiento por especie (quimiocinesis, trampa de ácido, caza, saltos)
+  game/world*.cpp       el mundo: medio, cuerpos, ciclo de vida, hongos, química, metazoos
+  game/biome.*          biomas y gotas procedurales
+  game/encyclopedia.*   descubrimientos y comportamientos observados
   game/run.*            partida: elección de hija/heredero, censo de biomasa, victoria, extinción
-  game/progress.*       meta-progresión persistente (desbloqueos y récords)
-  game/world.*          coordina el medio y los organismos
-  render/               campo claro (shader de células) + overlays de campos
+  game/progress.*       meta-progresión, enciclopedia y opciones persistentes
+  render/               campo claro, óptica del microscopio, instancing, overlays
 assets/shaders/         GLSL 330
-tests/                  doctest: incompresibilidad, conservación, determinismo, células
+tests/                  doctest: medio, células, jugador, ciclo de vida, partida, genoma,
+                        ecosistema e interacciones
 ```

@@ -200,8 +200,9 @@ ideas en **Notas**. Después uso tus elecciones para ajustar el roadmap.
       circulan dentro de la célula. Da muchísima "vida".
 - [x] **C — Browniano y temblor térmico.** Las partículas chicas vibran al azar, como en un
       microscopio real. Es sutil pero inmediatamente creíble.
-- [x] **D — Plano focal.** La rueda del mouse enfoca y desenfoca capas: hay profundidad falsa con
+- [ ] **D — Plano focal.** La rueda del mouse enfoca y desenfoca capas: hay profundidad falsa con
       células borrosas arriba y abajo. Se puede usar como mecánica (esconderse fuera de foco).
+      *(Descartado: todo ocurre en un mismo plano.)*
 - [x] **E — Muerte y lisis.** La membrana revienta, el contenido se dispersa y se tiñe. Las
       vacuolas digestivas cambian de color al digerir, como el rojo neutro en el laboratorio.
 

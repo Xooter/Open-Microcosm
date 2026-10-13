@@ -33,6 +33,12 @@ const char* overlayName(Overlay overlay) {
     case Overlay::Oxygen: return "O2 disuelto";
     case Overlay::Nutrients: return "nutrientes (log)";
     case Overlay::Light: return "luz";
+    case Overlay::Phosphate: return "fosfato";
+    case Overlay::Nitrogen: return "nitrogeno inorganico";
+    case Overlay::PH: return "pH (6 a 10)";
+    case Overlay::Toxin: return "microcistina";
+    case Overlay::Autoinducer: return "autoinductor (quorum)";
+    case Overlay::Phage: return "fagos (log)";
     }
     return "";
 }
@@ -96,6 +102,31 @@ void FieldOverlay::update(const World& world, Overlay overlay) {
     case Overlay::Light:
         values = world.light().v;
         break;
+    case Overlay::Phosphate:
+    case Overlay::Nitrogen:
+    case Overlay::Toxin:
+    case Overlay::Autoinducer: {
+        const auto& c = overlay == Overlay::Phosphate  ? world.phosphate().grid().v
+                        : overlay == Overlay::Nitrogen ? world.nitrogen().grid().v
+                        : overlay == Overlay::Toxin    ? world.toxin().grid().v
+                                                       : world.autoinducer().grid().v;
+        float top = 1e-6f; // escala relativa al máximo actual
+        for (float v : c)
+            top = std::max(top, v);
+        for (std::size_t k = 0; k < n; ++k)
+            values[k] = std::max(0.0f, c[k]) / top;
+        break;
+    }
+    case Overlay::PH:
+        for (std::size_t k = 0; k < n; ++k)
+            values[k] = (world.ph().v[k] - 6.0f) / 4.0f;
+        break;
+    case Overlay::Phage: {
+        const auto& c = world.phage().grid().v;
+        for (std::size_t k = 0; k < n; ++k) // de 10⁻⁸ a 10⁻² viriones/µm³
+            values[k] = (std::log10(std::max(1e-8f, c[k])) + 8.0f) / 6.0f;
+        break;
+    }
     case Overlay::None:
         break;
     }

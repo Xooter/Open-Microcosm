@@ -53,4 +53,6 @@ inline constexpr std::uint64_t kPopulate = 11;
 inline constexpr std::uint64_t kMutation = 12;
 inline constexpr std::uint64_t kOrganelles = 13;
 inline constexpr std::uint64_t kDefense = 14;
+inline constexpr std::uint64_t kCyano = 15;
+inline constexpr std::uint64_t kFungi = 16;
 } // namespace rng_stream

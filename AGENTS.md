@@ -101,12 +101,18 @@ Hay presets `debug`, `release` y `profile`. El código tiene que compilar **sin 
 
 | Tier | Qué | Representación |
 |---|---|---|
-| Medio | Agua, corrientes y química | Grilla de fluido Stokes–Brinkman (FFT) + campos escalares (O₂, luz, nutrientes, señales) |
-| Ambiental | Nutrientes, detritos y bacterias | Partículas simples con browniano y arrastre (las bacterias son agentes livianos) |
+| Medio | Agua, corrientes y química | Grilla de fluido Stokes–Brinkman (FFT) + campos escalares (O₂, CO₂/pH, luz, materia orgánica, fosfato, nitrógeno, toxinas, autoinductor, fagos) |
+| Ambiental | Detritos, bacterias, cianobacterias, hongos | Partículas simples (bacterias, *Bdellovibrio*, zoosporas), cadenas (cianobacterias) y árboles de nodos fijos (hifas) |
 | Célula | Protistas, algas y levaduras | Soft-body: anillo de membrana + partículas internas, resuelto con XPBD |
-| Compuesto | Colonias, filamentos y multicelulares | Varios soft-bodies unidos por restricciones de adhesión |
+| Compuesto | Colonias, filamentos y metazoos | Soft-bodies unidos por adhesiones (`World::AdhesionLink`; rígidas con diagonales en metazoos) |
 
-El LOD (fase 9) degrada las células lejanas a menos partículas o a simulación estadística.
+LOD (`World::setFocus`, tres niveles): cerca de la vista, detalle completo; más lejos, 1 de cada
+`lodStride` sub-pasos de XPBD con un paso más largo (las tasas [1/s] no cambian de significado);
+fuera de pantalla, estadístico (se trasladan como sólidos, sin XPBD ni contactos). División,
+fagocitosis, conjugación y presas sujetas siempre en detalle. Sin foco (tests), todo detallado.
+Contactos: solo los puntos de membrana a menos de su radio de contacto (+ holgura) de otro
+cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::contactPasses`).
+Las partes de un mismo organismo no chocan entre sí (`ContactMember::group`).
 
 ### Cuerpos blandos (`sim/soft_body`, `sim/contacts`)
 
@@ -159,6 +165,57 @@ El LOD (fase 9) degrada las células lejanas a menos partículas o a simulación
   agranda la célula) y cuestan mantenimiento.
 - Defensas: coraza ≥ 0,5 impide la fagocitosis; los tricocistos pueden rechazar una copa
   (componente `Discharge`, el depredador retrocede).
+
+### Ecosistema (`bio/species`, `ai/autopilot`, `World::perceive`)
+
+- Las especies son datos (`SpeciesInfo`): locomoción, forma, dieta (`preyMask`,
+  `mouthPreyMask`), huida (`fleeMask`), modo de alimentación (`FeedingMode`), reproducción,
+  quistes y rasgos sésiles (`sessile`, `stalkLength`, `contractileStalk`, `tentacleReach`,
+  `neckReach`, `walker`). Nada de código por especie salvo el render.
+- Sésiles (`Anchored`): el tallo sostiene el polo posterior; el espasmonema se contrae ante
+  perturbaciones. Sus hijas nadan como telotrocos (`Telotroch`) y luego se fijan.
+- Suctorios: `Captured` sujeta a la presa y le drena biomasa en tiempo biológico.
+- Todos los filtradores (`FeedingMode::OralGroove`) generan su corriente oral en el agua; las
+  células móviles sienten solo el flujo de fondo.
+- Ciliados: reacción de evitación ante amenazas y choques del polo anterior (mecanorrecepción).
+  *Paramecium* además se acumula donde hay CO₂ (`acidTrap`, Jennings): los enjambres emergen.
+- Depredación: `handlingHours` (tiempo de manipulación entre presas enteras, `Digestion::handling`)
+  y saciedad por volumen ingerido (`satiated`, `World::isSatiated`).
+- Algas: filamentos (`filament`: crecen a lo largo con `setRestAreaAxial` y se dividen por tabique),
+  colonias (`colonyDaughters`), diatomeas (`glider`, `frustule`), `dryMassScale` para cuerpos
+  huecos o vacuolados. Fotótrofas cuentan P y N (`Metabolism::phosphorus/nitrogen`), conservados:
+  `World::totalPhosphorus()`; `totalNitrogen()` solo cambia por la fijación de N₂.
+- Cianobacterias (`bio/cyanobacteria`): heterocistos que fijan N₂ (inhibidos por O₂) y liberan
+  amonio; mueren y liberan microcistina (`toxin_`), dañina para consumidores.
+- Hongos (`bio/fungi`, `game/world_fungi.cpp`): quitridios (`ChytridInfection` sobre algas),
+  *Saprolegnia* (exoenzimas aceleran la descomposición junto a las hifas), *Zoophagus*
+  (`Trapped`); levaduras como especie osmotrófica con gemación (`budding`).
+- Química e interacciones microbianas (`game/world_chem.cpp`): pH del sistema carbonato con
+  alcalinidad fija; rango de pH por especie (`phMin/phMax`); quorum sensing de *C. violaceum*
+  (`Bacteria::strain/quorum`, violaceína en `Digestion::toxin`); fagos líticos como campo de
+  concentración (`phage_`) con mutantes resistentes; *Bdellovibrio* libres y bdeloplastos.
+- Metazoos (`game/world_metazoa.cpp`): `Compound`/`Segment` (las partes no tienen metabolismo,
+  se mueven con el organismo y no chocan entre sí: `ContactMember::group`), `Egg`
+  (partenogénesis del rotífero), `Tentacles`/`Stung` (Hydra), llegadas de nauplios.
+- `World::deathTally()` y `World::observations()` registran causas de muerte y comportamientos
+  vistos (base de la enciclopedia).
+
+### Ambiente, biomas y enciclopedia (`game/biome`, `game/encyclopedia`)
+
+- `MediumParams` (en `WorldConfig::medium`): temperatura (Q10 = 2 en todo lo biológico vía
+  `World::bioScale()`, viscosidad y O₂ de saturación), salinidad, anoxia, alcalinidad, P, N.
+  Las tolerancias son datos de la especie y se pagan como mantenimiento extra (estrés).
+- `makeDrop(bioma, seed)` arma la gota: química, pesos de población por especie
+  (`WorldConfig::speciesWeight`), hongos, cianobacterias (rango térmico) y manchas iniciales.
+- La enciclopedia se llena con lo que la cámara ve y con `deathTally`/`observations`.
+
+### Render (`render/`)
+
+- Campo claro: cobertura de las células → shader con borde óptico y halo. Todo ocurre en un
+  mismo plano (no hay plano focal). El campo se dibuja en una textura y pasa por
+  `microscope_post.fs` (viñeta, aberración cromática, grano).
+- Bacterias con instancing (`InstancedParticles`): un buffer por frame, una llamada por copia
+  del mundo toroidal.
 
 ### Partida y linaje (`game/run`, `game/lineage`, `game/progress`, `ai/autopilot`)
 

@@ -30,6 +30,12 @@ struct MetabolismParams {
     float phosphorusRatio = 0.01f;       // pmol P por pmol de biomasa (Redfield, aprox.)
     float phosphorusHalfSaturation = 0.5f; // [µM]
     float phosphorusUptakePerHour = 0.3f;  // captación máxima relativa a su cuota
+    // Nitrógeno (amonio y nitrato): también lo toman las fotótrofas. N:P ≈ 16 (Redfield).
+    float nitrogenRatio = 0.16f;           // pmol N por pmol de biomasa
+    float nitrogenHalfSaturation = 1.0f;   // [µM]
+    float nitrogenUptakePerHour = 0.3f;
+    // pH: fuera del rango de la especie el mantenimiento se encarece (bombas de protones).
+    float phStressPerUnit = 1.0f;
 };
 
 // Componente.
@@ -39,6 +45,7 @@ struct Metabolism {
     float targetBirthBiomass = 0.0f; // la que pide su genoma: se divide al duplicarla
     float reserves = 0.0f;     // glucógeno/paramilón y otras reservas [pmol]
     float phosphorus = 0.0f;   // [pmol P] (solo se contabiliza en fotótrofas)
+    float nitrogen = 0.0f;     // [pmol N] (ídem)
     int fissions = 1;          // divisiones por ciclo (2 = palintomía en 4 hijas)
     int pendingFissions = 0;   // divisiones que faltan del ciclo actual
     float ageHours = 0.0f;
@@ -61,12 +68,19 @@ struct MetabolicInput {
     float photosynthesisScale = 1.0f;
     float motilityCostScale = 1.0f;
     float phosphate = 0.0f;   // [µM] en la célula
+    float nitrogen = 0.0f;    // nitrógeno inorgánico disuelto [µM]
+    float phStress = 0.0f;    // unidades de pH fuera del rango tolerado
+    float toxin = 0.0f;       // daño por toxinas (microcistina, violaceína): multiplica el gasto
+    // Anaerobias con hidrogenosomas (Trichonympha): ~4 ATP por glucosa en vez de 2.
+    float fermentationScale = 1.0f;
 };
 
 struct MetabolicOutput {
     float o2Consumed = 0.0f; // [pmol]
     float o2Produced = 0.0f; // [pmol]
     float phosphateTaken = 0.0f; // [pmol P]
+    float nitrogenTaken = 0.0f;  // [pmol N]
+    float co2Fermented = 0.0f;   // CO₂ de la fermentación [pmol] (2 por glucosa)
     float exudate = 0.0f;        // materia orgánica liberada al agua [pmol]
 };
 

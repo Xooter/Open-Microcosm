@@ -18,6 +18,7 @@ struct Perception {
     float food = 0.0f;  // log(1 + nutrientes) en la célula
     bool bumped = false; // el polo anterior tocó otra célula (mecanorrecepción)
     float lightLeft = 0.0f, lightRight = 0.0f; // a cada lado del polo anterior
+    float acid = 0.0f;  // log(1 + exceso de CO₂ sobre el equilibrio con el aire)
 };
 
 // Componente: comportamiento de las células que no controla el jugador. Sale de los datos de
@@ -32,6 +33,8 @@ struct Autopilot {
     Vec2 target;
     float memory = 0.0f;   // señal de comida promediada (quimiocinesis temporal)
     float reverse = 0.0f;  // tiempo restante de la reacción de evitación [s]
+    bool walking = true;   // hipotricos: alternan caminatas y paradas
+    float acidMemory = 0.0f;
 };
 
 void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, const SpeciesInfo& species,

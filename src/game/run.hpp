@@ -13,6 +13,7 @@ class World;
 
 struct RunConfig {
     LocomotionType founder = LocomotionType::Cilia;
+    int biome = 0;            // BiomeId de la gota
     std::uint64_t seed = 1;
     float targetShare = 0.5f; // ganar: el linaje suma esta fracción de la biomasa viva
     float wildlife = 1.0f;    // escala de las poblaciones silvestres iniciales (ecosistema)

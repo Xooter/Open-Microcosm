@@ -24,6 +24,11 @@ inline constexpr float kDiffusionO2 = 2000.0f;     // O₂ en agua a 20 °C [µm
 inline constexpr float kDiffusionGlucose = 600.0f; // glucosa en agua [µm²/s]
 inline constexpr float kO2Saturation = 280.0f;     // O₂ en equilibrio con el aire, 20 °C [µM]
 inline constexpr float kDiffusionPhosphate = 800.0f; // fosfato en agua [µm²/s]
+inline constexpr float kDiffusionAmmonium = 1900.0f; // amonio/nitrato en agua [µm²/s]
+inline constexpr float kDiffusionCO2 = 1900.0f;      // CO₂ en agua a 20 °C [µm²/s]
+inline constexpr float kCO2Saturation = 15.0f;       // CO₂ en equilibrio con el aire (~420 ppm) [µM]
+inline constexpr float kDiffusionSmallSolute = 500.0f; // toxinas, autoinductores (AHL) [µm²/s]
+inline constexpr float kDiffusionVirus = 5.0f;       // fago (~60 nm, Stokes–Einstein) [µm²/s]
 
 inline constexpr double kLitersPerCubicMicrometer = 1e-15;
 inline constexpr float kPi = 3.14159265358979323846f;

@@ -1,9 +1,12 @@
 #include "core/ui.hpp"
 
 #include "bio/division.hpp"
+#include "game/biome.hpp"
+#include "game/encyclopedia.hpp"
 #include "game/progress.hpp"
 #include "game/run.hpp"
 #include "game/world.hpp"
+#include "render/cell_renderer.hpp"
 
 #include <cmath>
 #include <optional>
@@ -44,8 +47,12 @@ void drawUi(World& world, ToolState& tools) {
 
     GuiCheckBox({kUiPanel.x + 10, y + 2, 16, 16}, "Pausa [Espacio]", &tools.paused);
     y += 26;
-    GuiLabel({kUiPanel.x + 10, y, 280, 16},
-             TextFormat("t = %.1f s  |  %d FPS", world.simTime(), GetFPS()));
+    GuiLabel({kUiPanel.x + 10, y, 300, 16},
+             TextFormat("t = %.1f s | %d FPS | sim %.1f ms | render %.1f ms", world.simTime(), GetFPS(), tools.stepMs,
+                        tools.renderMs));
+    y += 18;
+    GuiLabel({kUiPanel.x + 10, y, 300, 16},
+             TextFormat("LOD: %zu en detalle | %zu con contactos", world.nearBodies(), world.touchingBodies()));
     y += 18;
     GuiLabel({kUiPanel.x + 10, y, 280, 16},
              TextFormat("%zu celulas | %zu bacterias | %zu part.", world.cellCount(),
@@ -53,6 +60,9 @@ void drawUi(World& world, ToolState& tools) {
     y += 18;
     GuiLabel({kUiPanel.x + 10, y, 280, 16},
              TextFormat("Overlay: %s", overlayName(tools.overlay)));
+    y += 18;
+    GuiLabel({kUiPanel.x + 10, y, 300, 16},
+             TextFormat("Tincion: %s", stainName(static_cast<Stain>(tools.stain))));
     y += 22;
     y += 4;
     const entt::registry& reg = world.registry();
@@ -104,7 +114,9 @@ void drawUi(World& world, ToolState& tools) {
     y += 16;
     GuiLabel({kUiPanel.x + 10, y, 300, 16}, "B detrito | C celula | K 50 celulas | X borrar");
     y += 16;
-    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Q apretar | L lisar | F1-F4 overlays | Rueda");
+    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "Q apretar | L lisar | F1-F10 overlays | Rueda");
+    y += 16;
+    GuiLabel({kUiPanel.x + 10, y, 300, 16}, "J tincion");
 }
 
 namespace {
@@ -133,34 +145,202 @@ void centered(const char* text, float y, int size, Color color) {
 
 } // namespace
 
-std::optional<LocomotionType> drawTitleScreen(const Progress& progress) {
-    std::optional<LocomotionType> chosen;
+TitleAction drawTitleScreen(const Progress& progress) {
+    TitleAction action = TitleAction::None;
     BeginDrawing();
     ClearBackground({236, 231, 214, 255});
     const float cx = GetScreenWidth() * 0.5f, cy = GetScreenHeight() * 0.5f;
     centered("BioGame", cy - 220, 56, {60, 64, 52, 255});
     centered("Una gota de agua. Un linaje. Domina la biomasa o extinguite.", cy - 150, 22, {90, 92, 80, 255});
+    const char* labels[] = {"Jugar", "Enciclopedia", "Opciones", "Salir"};
+    const TitleAction actions[] = {TitleAction::Play, TitleAction::Encyclopedia, TitleAction::Options, TitleAction::Quit};
+    for (int i = 0; i < 4; ++i)
+        if (GuiButton({cx - 160, cy - 80 + i * 64.0f, 320, 50}, labels[i]))
+            action = actions[i];
+    if (IsKeyPressed(KEY_ENTER))
+        action = TitleAction::Play;
+    int species = 0;
+    for (int k = 0; k < kSpeciesCount; ++k)
+        species += (progress.seenSpecies >> k) & 1u;
+    centered(TextFormat("Partidas %d | victorias %d | mejor generacion %u | mejor dominio %.0f%% | enciclopedia %d/%d",
+                        progress.runs, progress.wins, progress.bestGeneration, 100 * progress.bestShare, species,
+                        kSpeciesCount),
+             cy + 190, 18, {90, 92, 80, 255});
+    EndDrawing();
+    return action;
+}
 
+SetupAction drawSetupScreen(const Progress& progress, SetupState& state) {
+    SetupAction action = SetupAction::None;
+    BeginDrawing();
+    ClearBackground({236, 231, 214, 255});
+    const float cx = GetScreenWidth() * 0.5f;
+    centered("Elegir la gota", 40, 40, {60, 64, 52, 255});
+    // Biomas.
+    for (int b = 0; b < kBiomeCount; ++b) {
+        const Biome& bio = biome(static_cast<BiomeId>(b));
+        const Rectangle r = {cx - 560, 110 + b * 62.0f, 300, 52};
+        bool on = state.biome == b;
+        GuiToggle(r, bio.name, &on);
+        if (on)
+            state.biome = b;
+        if (state.biome == b)
+            DrawRectangleLinesEx(r, 3, {60, 110, 60, 255});
+        if ((progress.biomesPlayed >> b) & 1u)
+            DrawText("jugado", static_cast<int>(r.x + 230), static_cast<int>(r.y + 18), 14, GRAY);
+    }
+    const Biome& sel = biome(static_cast<BiomeId>(state.biome));
+    DrawText(sel.name, static_cast<int>(cx - 220), 120, 28, {60, 64, 52, 255});
+    // Descripción en varias líneas.
+    {
+        std::string text = sel.description, line;
+        float y = 160;
+        std::size_t start = 0;
+        while (start < text.size()) {
+            std::size_t end = std::min(text.size(), start + 60);
+            if (end < text.size()) {
+                const std::size_t sp = text.rfind(' ', end);
+                if (sp != std::string::npos && sp > start)
+                    end = sp;
+            }
+            DrawText(text.substr(start, end - start).c_str(), static_cast<int>(cx - 220), static_cast<int>(y), 18, {80, 82, 70, 255});
+            y += 24;
+            start = end + 1;
+        }
+        DrawText(TextFormat("%.0f C | luz %.0f%% | sal %.0f PSU%s", sel.medium.temperature, 100 * sel.medium.surfaceLight,
+                            sel.medium.salinity, sel.medium.anoxic ? " | sin oxigeno" : ""),
+                 static_cast<int>(cx - 220), static_cast<int>(y + 8), 18, {90, 92, 80, 255});
+    }
+    // Especie fundadora.
     const LocomotionType types[] = {LocomotionType::Cilia, LocomotionType::Flagellum, LocomotionType::Pseudopod};
     for (int i = 0; i < 3; ++i) {
         const LocomotionType t = types[i];
-        const Rectangle r = {cx - 220, cy - 90 + i * 70.0f, 440, 56};
+        const Rectangle r = {cx - 220, 420 + i * 62.0f, 440, 52};
         const bool open = progress.isUnlocked(t);
         if (!open)
             GuiDisable();
         if (GuiButton(r, TextFormat("%d  %s", i + 1, speciesName(t))) && open)
-            chosen = t;
+            state.founder = t;
         GuiEnable();
-        if (!open)
-            DrawText(TextFormat("Bloqueada: %s", unlockHint(t)), static_cast<int>(r.x + 450), static_cast<int>(r.y + 20), 16, GRAY);
         if (open && IsKeyPressed(KEY_ONE + i))
-            chosen = t;
+            state.founder = t;
+        if (state.founder == t)
+            DrawRectangleLinesEx(r, 3, {60, 110, 60, 255});
+        if (!open)
+            DrawText(TextFormat("Bloqueada: %s", unlockHint(t)), static_cast<int>(r.x + 450), static_cast<int>(r.y + 18), 16, GRAY);
     }
-    centered(TextFormat("Partidas %d | victorias %d | mejor generacion %u | mejor dominio %.0f%%", progress.runs,
-                        progress.wins, progress.bestGeneration, 100 * progress.bestShare),
-             cy + 150, 18, {90, 92, 80, 255});
+    DrawText(TextFormat("Semilla %u", state.seed), static_cast<int>(cx - 220), 620, 20, {80, 82, 70, 255});
+    if (GuiButton({cx - 40, 612, 120, 36}, "Otra"))
+        state.seed = static_cast<unsigned>(GetRandomValue(1, 2147483646));
+    if (GuiButton({cx - 220, 680, 210, 56}, "Volver") || IsKeyPressed(KEY_ESCAPE))
+        action = SetupAction::Back;
+    if (GuiButton({cx + 10, 680, 210, 56}, "Empezar") || IsKeyPressed(KEY_ENTER))
+        action = SetupAction::Start;
     EndDrawing();
-    return chosen;
+    return action;
+}
+
+bool drawEncyclopedia(const Progress& progress, float& scroll) {
+    bool back = false;
+    scroll = std::max(0.0f, scroll - 40.0f * GetMouseWheelMove());
+    BeginDrawing();
+    ClearBackground({236, 231, 214, 255});
+    float y = 90 - scroll;
+    const int x = 60;
+    auto wrapText = [&](const char* text, int indent, int size, Color color) {
+        const std::string t = text;
+        std::size_t start = 0;
+        while (start < t.size()) {
+            std::size_t end = std::min(t.size(), start + 110);
+            if (end < t.size()) {
+                const std::size_t sp = t.rfind(' ', end);
+                if (sp != std::string::npos && sp > start)
+                    end = sp;
+            }
+            DrawText(t.substr(start, end - start).c_str(), x + indent, static_cast<int>(y), size, color);
+            y += static_cast<float>(size) + 4;
+            start = end + 1;
+        }
+    };
+    const Color title = {60, 64, 52, 255}, body = {90, 92, 80, 255}, hidden = {160, 160, 150, 255};
+    DrawText("Especies", x, static_cast<int>(y), 26, title);
+    y += 34;
+    for (int k = 0; k < kSpeciesCount; ++k) {
+        const auto id = static_cast<SpeciesId>(k);
+        if ((progress.seenSpecies >> k) & 1u) {
+            DrawText(speciesInfo(id).name, x, static_cast<int>(y), 20, title);
+            y += 24;
+            wrapText(speciesBlurb(id), 20, 16, body);
+        } else {
+            DrawText("???  (todavia no la viste)", x, static_cast<int>(y), 20, hidden);
+            y += 24;
+        }
+        y += 6;
+    }
+    y += 10;
+    DrawText("Otros organismos", x, static_cast<int>(y), 26, title);
+    y += 34;
+    for (int k = 0; k < kOtherCount; ++k) {
+        const auto o = static_cast<OtherOrganism>(k);
+        if ((progress.seenOthers >> k) & 1u) {
+            DrawText(otherName(o), x, static_cast<int>(y), 20, title);
+            y += 24;
+            wrapText(otherBlurb(o), 20, 16, body);
+        } else {
+            DrawText("???", x, static_cast<int>(y), 20, hidden);
+            y += 24;
+        }
+        y += 6;
+    }
+    y += 10;
+    DrawText(TextFormat("Comportamientos observados (%zu)", progress.behaviors.size()), x, static_cast<int>(y), 26, title);
+    y += 34;
+    for (const std::string& b : progress.behaviors) {
+        DrawText(b.c_str(), x + 20, static_cast<int>(y), 16, body);
+        y += 20;
+    }
+    DrawRectangle(0, 0, GetScreenWidth(), 70, {236, 231, 214, 255});
+    centered("Enciclopedia", 16, 40, title);
+    if (GuiButton({20, 16, 140, 40}, "Volver") || IsKeyPressed(KEY_ESCAPE))
+        back = true;
+    EndDrawing();
+    return back;
+}
+
+bool drawOptions(Options& o) {
+    bool back = false;
+    BeginDrawing();
+    ClearBackground({236, 231, 214, 255});
+    const float cx = GetScreenWidth() * 0.5f;
+    centered("Opciones", 80, 40, {60, 64, 52, 255});
+    float y = 180;
+    GuiCheckBox({cx - 200, y, 24, 24}, "Pantalla completa", &o.fullscreen);
+    y += 50;
+    GuiCheckBox({cx - 200, y, 24, 24}, "Optica del microscopio (vineta, grano)", &o.postProcess);
+    y += 50;
+    GuiCheckBox({cx - 200, y, 24, 24}, "LOD: simplificar las celulas lejanas", &o.lod);
+    y += 50;
+    GuiCheckBox({cx - 200, y, 24, 24}, "Mostrar el panel de laboratorio", &o.labPanel);
+    y += 60;
+    GuiSlider({cx - 60, y, 260, 24}, "Tiempo biologico", TextFormat("x%.0f", o.bioTimeScale), &o.bioTimeScale, 10.0f, 240.0f);
+    y += 30;
+    DrawText("(1 minuto real = x/60 horas biologicas; 60 es el valor calibrado)", static_cast<int>(cx - 200), static_cast<int>(y), 16, GRAY);
+    if (GuiButton({cx - 100, y + 80, 200, 50}, "Volver") || IsKeyPressed(KEY_ESCAPE))
+        back = true;
+    EndDrawing();
+    return back;
+}
+
+void drawToasts(const std::vector<std::string>& lines, float alpha) {
+    if (lines.empty() || alpha <= 0.0f)
+        return;
+    const int x = GetScreenWidth() - 460;
+    int y = GetScreenHeight() - 40 - 26 * static_cast<int>(lines.size());
+    DrawRectangle(x - 12, y - 10, 452, 26 * static_cast<int>(lines.size()) + 16, Fade({236, 231, 214, 255}, 0.85f * alpha));
+    for (const std::string& l : lines) {
+        DrawText(TextFormat("Enciclopedia: %s", l.c_str()), x, y, 18, Fade({50, 90, 50, 255}, alpha));
+        y += 26;
+    }
 }
 
 namespace {
@@ -209,14 +389,17 @@ void drawGenome(const World& world, entt::entity cell, entt::entity compare, flo
 void drawRunHud(const Run& run, const World& world) {
     const Census& c = run.census();
     const float x = GetScreenWidth() - 330.0f;
-    DrawRectangle(static_cast<int>(x) - 10, 10, 330, 104, Fade({236, 231, 214, 255}, 0.85f));
+    DrawRectangle(static_cast<int>(x) - 10, 10, 330, 116, Fade({236, 231, 214, 255}, 0.85f));
     float share = c.share();
     GuiProgressBar({x + 70, 18, 180, 16}, "dominio", TextFormat("%.1f%% / %.0f%%", 100 * share, 100 * run.config().targetShare),
                    &share, 0.0f, run.config().targetShare);
     DrawText(TextFormat("Linaje: %d celulas | generacion %u", c.lineageCells, c.maxGeneration), static_cast<int>(x), 42, 16, DARKGRAY);
-    DrawText(TextFormat("Param %d  Eugl %d  Ameb %d  Chlam %d  Didin %d", c.species[0], c.species[1], c.species[2],
-                        c.species[3], c.species[4]),
+    DrawText(TextFormat("Par %d Eug %d Ame %d Chl %d Did %d Vor %d", c.species[0], c.species[1], c.species[2],
+                        c.species[3], c.species[4], c.species[5]),
              static_cast<int>(x), 62, 16, DARKGRAY);
+    DrawText(TextFormat("Ste %d Pod %d Eup %d Arc %d Lac %d", c.species[6], c.species[7], c.species[8], c.species[9],
+                        c.species[10]),
+             static_cast<int>(x), 102, 16, DARKGRAY);
     DrawText(TextFormat("Bacterias %d | %.0f s (%.1f h bio) | div. %d", c.bacteria, run.elapsed(),
                         run.elapsed() * units::kBioTimeScale / 3600.0f, run.divisions()),
              static_cast<int>(x), 82, 16, DARKGRAY);
@@ -226,9 +409,9 @@ void drawRunHud(const Run& run, const World& world) {
         const auto& cands = run.candidates();
         const entt::entity sel = cands[run.selected()];
         const entt::entity alt = cands.size() == 2 ? cands[1 - run.selected()] : entt::null;
-        drawGenome(world, sel, alt, x, 124, cands.size() == 2 ? "Genoma de esta hija (vs. la otra)" : "Genoma del descendiente");
+        drawGenome(world, sel, alt, x, 132, cands.size() == 2 ? "Genoma de esta hija (vs. la otra)" : "Genoma del descendiente");
     } else {
-        drawGenome(world, world.player(), entt::null, x, 124, "Genoma");
+        drawGenome(world, world.player(), entt::null, x, 132, "Genoma");
         if (world.conjugationPartner(world.player()) != entt::null)
             centered("Pareja compatible cerca: V para conjugar", GetScreenHeight() - 90.0f, 20, {60, 90, 140, 255});
     }

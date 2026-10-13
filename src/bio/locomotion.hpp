@@ -49,11 +49,20 @@ struct Player {};
 
 Vec2 bodyHeading(const RingBody& body);
 
+// Movimiento rígido en el plano que impuso la propulsión (para arrastrar las partes de un
+// cuerpo compuesto: la corona del rotífero mueve a todo el animal).
+struct RigidMotion {
+    Vec2 linear;
+    float omega = 0.0f;
+    Vec2 center;
+};
+
 // Suma la propulsión a la velocidad externa del paso (bp.vx/vy) de cada partícula del cuerpo.
-void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
+RigidMotion applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
                      const LocomotionParams& params, float simTime, float width, float height);
 
 // Fuerzas que el nadador ejerce sobre el agua. Un microorganismo nada sin fuerza neta
 // (empuje = arrastre), así que en el agua deja un par de fuerzas opuestas.
+// `oralCurrent`: la célula se alimenta filtrando (cilios del surco oral o del peristoma).
 void applySwimmerForces(const RingBody& body, const BodyParticles& bp, const Locomotion& loco,
-                        const LocomotionParams& params, Fluid& fluid);
+                        const LocomotionParams& params, Fluid& fluid, bool oralCurrent);

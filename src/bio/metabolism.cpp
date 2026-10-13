@@ -27,10 +27,13 @@ MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const
 
     // Energía necesaria, expresada como glucosa respirada. Sin O₂ hace falta mucha más glucosa.
     const float energy = p.maintenancePerHour * in.maintenanceScale * m.biomass *
-                         (1.0f + p.motilityCost * in.motilityCostScale * in.activity) * hours;
+                         (1.0f + p.motilityCost * in.motilityCostScale * in.activity) *
+                         (1.0f + p.phStressPerUnit * in.phStress + in.toxin) * hours;
     m.aerobic = std::max(0.0f, in.o2) / (std::max(0.0f, in.o2) + p.o2HalfSaturation);
-    const float glucose = energy * (m.aerobic + (1.0f - m.aerobic) * p.fermentationPenalty);
+    const float penalty = p.fermentationPenalty * in.fermentationScale;
+    const float glucose = energy * (m.aerobic + (1.0f - m.aerobic) * penalty);
     out.o2Consumed = kO2PerGlucose * energy * m.aerobic;
+    out.co2Fermented = 2.0f * energy * (1.0f - m.aerobic) * penalty; // C₆H₁₂O₆ → 2 C₂H₅OH + 2 CO₂
 
     if (m.reserves >= glucose) {
         m.reserves -= glucose;
@@ -52,6 +55,14 @@ MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const
             m.phosphorus += take;
             out.phosphateTaken = take;
         }
+        const float nQuota = p.nitrogenRatio * m.biomass;
+        if (m.nitrogen < 1.5f * nQuota) {
+            const float c = std::max(0.0f, in.nitrogen);
+            const float take = std::min(1.5f * nQuota - m.nitrogen,
+                                        p.nitrogenUptakePerHour * nQuota * c / (c + p.nitrogenHalfSaturation) * hours);
+            m.nitrogen += take;
+            out.nitrogenTaken = take;
+        }
     }
 
     // Crecimiento con lo que sobra por encima del colchón.
@@ -59,8 +70,11 @@ MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const
     if (spare > 0.0f) {
         float invest = std::min(spare, p.growthPerHourMax * in.growthScale * m.biomass * hours / p.growthYield);
         // Sin fósforo no hay biomasa nueva (ácidos nucleicos, fosfolípidos).
-        if (m.photosynthetic)
+        // Ni proteínas sin nitrógeno.
+        if (m.photosynthetic) {
             invest = std::min(invest, std::max(0.0f, m.phosphorus / p.phosphorusRatio - m.biomass) / p.growthYield);
+            invest = std::min(invest, std::max(0.0f, m.nitrogen / p.nitrogenRatio - m.biomass) / p.growthYield);
+        }
         m.reserves -= invest;
         m.biomass += invest * p.growthYield;
     }

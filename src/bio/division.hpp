@@ -16,6 +16,8 @@ struct CellShape {
     float radiusX, radiusY; // semiejes al nacer [µm]
     float shapeRate;        // memoria de forma propia [1/s]
     float nucleusFraction;
+    float squareness = 2.0f; // superelipse (2 = elipse)
+    float taper = 0.0f;
 };
 
 // Componente: división en curso (fisión binaria).

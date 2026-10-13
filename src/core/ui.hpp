@@ -7,6 +7,7 @@
 #include <raylib.h>
 
 #include <optional>
+#include <string>
 #include <vector>
 
 class World;
@@ -22,6 +23,9 @@ struct ToolState {
     bool showLab = true;  // panel de laboratorio (H para ocultar)
     bool paused = false;
     Overlay overlay = Overlay::None;
+    int stain = 0;          // Stain
+    // Profiling continuo (promedios suavizados) [ms].
+    float stepMs = 0.0f, renderMs = 0.0f;
 };
 
 inline constexpr Rectangle kUiPanel = {10, 10, 320, 640};
@@ -30,7 +34,27 @@ inline constexpr Rectangle kUiPanel = {10, 10, 320, 640};
 void drawUi(World& world, ToolState& tools);
 
 // Pantalla de inicio: elegir la especie fundadora (dibuja un frame completo).
-std::optional<LocomotionType> drawTitleScreen(const Progress& progress);
+struct Options;
+
+// Pantalla de inicio (dibuja un frame completo).
+enum class TitleAction { None, Play, Encyclopedia, Options, Quit };
+TitleAction drawTitleScreen(const Progress& progress);
+
+// Preparar la gota: bioma, especie fundadora y semilla.
+struct SetupState {
+    int biome = 0;
+    LocomotionType founder = LocomotionType::Cilia;
+    unsigned seed = 1;
+};
+enum class SetupAction { None, Start, Back };
+SetupAction drawSetupScreen(const Progress& progress, SetupState& state);
+
+// Enciclopedia: especies vistas y comportamientos observados. Devuelve true para volver.
+bool drawEncyclopedia(const Progress& progress, float& scroll);
+// Opciones (se aplican y guardan desde main). Devuelve true para volver.
+bool drawOptions(Options& options);
+// Avisos breves (descubrimientos) en la esquina.
+void drawToasts(const std::vector<std::string>& lines, float alpha);
 // Objetivo de la partida, estado del linaje y genoma (del jugador o de la candidata elegida).
 void drawRunHud(const Run& run, const World& world);
 // Fin de partida: estadísticas y desbloqueos.

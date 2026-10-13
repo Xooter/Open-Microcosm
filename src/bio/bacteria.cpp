@@ -17,16 +17,27 @@ void Bacteria::spawn(std::size_t count, float width, float height, std::uint64_t
     memory.assign(count, 0.0f);
     tumbling.assign(count, 0);
     mass.resize(count);
+    strain.assign(count, 0);
+    resistant.assign(count, 0);
+    quorum.assign(count, 0);
+    phage.assign(count, -1.0f);
+    bdello.assign(count, -1.0f);
     for (std::size_t i = 0; i < count; ++i) {
         Rng rng(seed, rng_stream::kInit, i, 0);
         x[i] = rng.uniform(0.0f, width);
         y[i] = rng.uniform(0.0f, height);
         heading[i] = rng.uniform(0.0f, 2.0f * units::kPi);
         mass[i] = rng.uniform(1.0f, 2.0f); // población en distintas etapas del ciclo
+        strain[i] = rng.uniform() < params.violaceumFraction ? 1 : 0;
     }
 }
 
-void Bacteria::add(float px, float py, float h, float m) {
+void Bacteria::add(float px, float py, float h, float m, std::uint8_t st, std::uint8_t res) {
+    strain.push_back(st);
+    resistant.push_back(res);
+    quorum.push_back(0);
+    phage.push_back(-1.0f);
+    bdello.push_back(-1.0f);
     x.push_back(px);
     y.push_back(py);
     heading.push_back(h);
@@ -43,7 +54,9 @@ void Bacteria::grow(const Grid2D& nutrients, float bioDt, std::vector<float>& de
 #pragma omp parallel for schedule(static)
     for (std::ptrdiff_t i = 0; i < n; ++i) {
         const float c = std::max(0.0f, nutrients.sample(x[i], y[i]));
-        const float growth = params.growthPerHourMax * c / (c + params.halfSaturation) * mass[i] * hours;
+        // Infectadas (fago o Bdellovibrio) no crecen: su maquinaria trabaja para el parásito.
+        const float healthy = phage[i] < 0.0f && bdello[i] < 0.0f ? (resistant[i] ? 1.0f - params.resistanceCost : 1.0f) : 0.0f;
+        const float growth = healthy * params.growthPerHourMax * c / (c + params.halfSaturation) * mass[i] * hours;
         demand[i] = growth / params.yield * kBacteriumPmol;
     }
 }
@@ -64,7 +77,17 @@ void Bacteria::remove(std::size_t i) {
     memory[i] = memory[last];
     tumbling[i] = tumbling[last];
     mass[i] = mass[last];
+    strain[i] = strain[last];
+    resistant[i] = resistant[last];
+    quorum[i] = quorum[last];
+    phage[i] = phage[last];
+    bdello[i] = bdello[last];
     mass.pop_back();
+    strain.pop_back();
+    resistant.pop_back();
+    quorum.pop_back();
+    phage.pop_back();
+    bdello.pop_back();
     x.pop_back();
     y.pop_back();
     heading.pop_back();
@@ -93,6 +116,8 @@ void Bacteria::step(const Fluid& fluid, const Grid2D& nutrients, float dt, std::
     for (std::ptrdiff_t i = 0; i < n; ++i) {
         Rng rng(seed, rng_stream::kBacteria, static_cast<std::uint64_t>(i), stepIndex);
         float vx = 0.0f, vy = 0.0f;
+        // Bdeloplasto: la presa se redondea y deja de nadar. En agregado, nada menos.
+        const float speed = bdello[i] >= 0.0f ? 0.0f : (quorum[i] ? p.speed * p.quorumSpeed : p.speed);
 
         if (tumbling[i]) {
             tumbleTimer[i] -= dt;
@@ -112,8 +137,8 @@ void Bacteria::step(const Fluid& fluid, const Grid2D& nutrients, float dt, std::
                 tumbling[i] = 1;
                 tumbleTimer[i] = p.tumbleDuration;
             } else {
-                vx = p.speed * std::cos(heading[i]);
-                vy = p.speed * std::sin(heading[i]);
+                vx = speed * std::cos(heading[i]);
+                vy = speed * std::sin(heading[i]);
             }
         }
 

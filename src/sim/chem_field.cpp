@@ -22,6 +22,18 @@ void ChemField::advect(const Fluid& fluid, float dt) {
             tmp_.at(i, j) = c_.sample(x - ux * dt, y - uy * dt);
         }
     }
+    // Semi-lagrangiano no conserva la masa exactamente (la interpolación suaviza y el flujo
+    // discreto no es del todo incompresible): se reescala para que el total no cambie.
+    double before = 0.0, after = 0.0;
+    for (std::size_t k = 0; k < c_.v.size(); ++k) {
+        before += c_.v[k];
+        after += tmp_.v[k];
+    }
+    if (after > 0.0) {
+        const auto s = static_cast<float>(before / after);
+        for (float& v : tmp_.v)
+            v *= s;
+    }
     std::swap(c_.v, tmp_.v);
 }
 

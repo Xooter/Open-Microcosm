@@ -55,7 +55,7 @@ const char* locomotionName(LocomotionType type) {
 
 Vec2 bodyHeading(const RingBody& body) { return {std::cos(body.angle), std::sin(body.angle)}; }
 
-void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
+RigidMotion applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
                      const LocomotionParams& p, float simTime, float width, float height) {
     const Vec2 c = body.centroid;
     const Vec2 h = bodyHeading(body);
@@ -86,10 +86,10 @@ void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
     case LocomotionType::Pseudopod: {
         loco.speed = 0.0f;
         if (!loco.active)
-            return;
+            return {};
         const Vec2 to = {minImage(loco.target.x - c.x, width), minImage(loco.target.y - c.y, height)};
         if (length(to) < 1.0f)
-            return;
+            return {};
         const Vec2 u = normalized(to);
         // Frente: la membrana orientada hacia el objetivo protruye; cola: se contrae.
         for (std::size_t i = 0; i < body.ring.size(); ++i) {
@@ -102,7 +102,7 @@ void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
         }
         for (std::size_t k = body.organelleCount; k < body.interior.size(); ++k)
             addVelocity(bp, body.interior[k], u * p.streamingSpeed);
-        return;
+        return {};
     }
     }
 
@@ -115,10 +115,11 @@ void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
         drive(s);
     for (std::uint32_t s : body.interior)
         drive(s);
+    return {linear, omega, c};
 }
 
 void applySwimmerForces(const RingBody& body, const BodyParticles& bp, const Locomotion& loco,
-                        const LocomotionParams& p, Fluid& fluid) {
+                        const LocomotionParams& p, Fluid& fluid, bool oralCurrent) {
     const Vec2 c = body.centroid;
     const Vec2 h = bodyHeading(body);
     const float half = halfLength(body);
@@ -130,7 +131,7 @@ void applySwimmerForces(const RingBody& body, const BodyParticles& bp, const Loc
         pushWater(fluid, c + h * (half + r), h * -1.0f, 0.5f * loco.speed, r);
         pushWater(fluid, c - h * (half + r), h, 0.5f * loco.speed, r);
     }
-    if (loco.type == LocomotionType::Cilia && !body.ring.empty()) {
+    if (oralCurrent && !body.ring.empty()) {
         // Corriente oral: los cilios del surco oral llevan agua (y bacterias) a la boca.
         const std::size_t i = loco.mouthRing % body.ring.size();
         const std::size_t n = body.ring.size();

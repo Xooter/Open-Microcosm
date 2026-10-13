@@ -26,6 +26,26 @@ struct BacteriaParams {
     float yield = 0.5f;            // biomasa por materia orgánica consumida
     float maintenancePerHour = 0.05f;
     std::size_t maxCount = 150'000; // tope de rendimiento (la comida suele limitar antes)
+    // Cepas: la mayoría son bacilos gramnegativos genéricos; una fracción es Chromobacterium
+    // violaceum, que con quorum sensing (autoinductor AHL) produce violaceína, un pigmento
+    // violeta tóxico para los protistas que la comen, y forma agregados (biopelícula).
+    float violaceumFraction = 0.2f;
+    float ahlPerHour = 2e-7f;       // autoinductor que libera cada bacteria [pmol/h]
+    float quorumThreshold = 0.05f;  // [µM] (decenas de nM en la realidad, con hysteresis)
+    float quorumSpeed = 0.3f;       // en agregado nadan menos
+    // Fagos líticos (tipo T4): adsorción ∝ concentración de fagos; período latente ~30 min;
+    // estallido de ~50 viriones. Mutantes resistentes (receptor alterado) crecen algo menos.
+    float phageAdsorption = 1.5e5f; // [µm³/h]
+    float phageLatentHours = 0.5f;
+    int phageBurst = 50;
+    float resistanceMutation = 1e-3f; // por división
+    float resistanceCost = 0.1f;
+    // Bdellovibrio bacteriovorus: entra al periplasma (bdeloplasto), crece ~3 h y sale con 4–6
+    // hijas. Nada a ~100 µm/s (de las bacterias más rápidas).
+    float bdelloSpeed = 100.0f;
+    float bdelloHours = 3.0f;
+    int bdelloProgeny = 5;
+    float bdelloStarveHours = 10.0f;
 };
 
 // Bacterias como partículas simples (tier ambiental, ver AGENTS.md).
@@ -40,6 +60,11 @@ class Bacteria {
     std::vector<float> memory;       // señal promediada en memoryTime
     std::vector<std::uint8_t> tumbling;
     std::vector<float> mass;         // relativa a una recién nacida (1); se divide en 2
+    std::vector<std::uint8_t> strain;    // 0: genérica; 1: C. violaceum (quorum sensing)
+    std::vector<std::uint8_t> resistant; // resistente a los fagos
+    std::vector<std::uint8_t> quorum;    // quorum alcanzado (violaceína, agregado)
+    std::vector<float> phage;        // horas desde la infección por un fago (< 0: sana)
+    std::vector<float> bdello;       // horas desde que entró un Bdellovibrio (< 0: libre)
 
     BacteriaParams params;
 
@@ -49,7 +74,7 @@ class Bacteria {
     void resetMemory(const Grid2D& nutrients);
     // Swap-and-pop: O(1), mueve la última bacteria al índice i.
     void remove(std::size_t i);
-    void add(float px, float py, float heading, float mass);
+    void add(float px, float py, float heading, float mass, std::uint8_t strain = 0, std::uint8_t resistant = 0);
     // Crecimiento en paralelo: devuelve en `demand` la materia orgánica que cada una quiere
     // absorber [pmol] (el mundo la descuenta del agua según lo que haya).
     void grow(const Grid2D& nutrients, float bioDt, std::vector<float>& demand) const;
@@ -58,4 +83,26 @@ class Bacteria {
 
   private:
     float signal(const Grid2D& nutrients, float px, float py) const;
+};
+
+// Bdellovibrio libres (cazando). Los que están adentro de una presa viven en `Bacteria::bdello`.
+struct Bdellovibrios {
+    std::vector<float> x, y, heading, hungerHours;
+    std::size_t size() const { return x.size(); }
+    void push(float px, float py, float h) {
+        x.push_back(px);
+        y.push_back(py);
+        heading.push_back(h);
+        hungerHours.push_back(0.0f);
+    }
+    void swapRemove(std::size_t i) {
+        x[i] = x.back();
+        y[i] = y.back();
+        heading[i] = heading.back();
+        hungerHours[i] = hungerHours.back();
+        x.pop_back();
+        y.pop_back();
+        heading.pop_back();
+        hungerHours.pop_back();
+    }
 };

@@ -64,7 +64,7 @@ TEST_CASE("Didinium traga un paramecio entero y queda saciado") {
     CHECK_FALSE(world.registry().valid(paramecium));
     const Digestion& dig = world.registry().get<Digestion>(didinium);
     CHECK(dig.cellsEaten == 1);
-    CHECK(satiated(dig));
+    CHECK(satiated(dig, world.registry().get<Metabolism>(didinium).biomass));
 }
 
 TEST_CASE("reacción de evitación: el paramecio retrocede ante Didinium") {
@@ -104,7 +104,10 @@ TEST_CASE("Didinium se enquista con hambre y sale cuando vuelve a haber presas")
         world.step(kDt);
     REQUIRE(world.registry().all_of<Cyst>(d));
     world.bioTimeScale() = 60.0f;
-    world.spawnOrganism(SpeciesId::Paramecium, {1000.0f, 750.0f}, speciesGenome(SpeciesId::Paramecium), 0);
+    // Una presa cerca del quiste (Didinium nadó antes de enquistarse).
+    const Vec2 at = world.registry().get<RingBody>(d).centroid;
+    world.spawnOrganism(SpeciesId::Paramecium, {wrapCoord(at.x, world.width()), wrapCoord(at.y + 240.0f, world.height())},
+                        speciesGenome(SpeciesId::Paramecium), 0);
     for (int s = 0; s < 60 * 40 && world.registry().all_of<Cyst>(d); ++s)
         world.step(kDt);
     CHECK_FALSE(world.registry().all_of<Cyst>(d));

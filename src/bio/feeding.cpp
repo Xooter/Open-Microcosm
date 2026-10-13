@@ -40,7 +40,7 @@ float vacuoleContentArea(const Digestion& dig) {
 
 void ingest(Digestion& dig, RingBody& body, BodyParticles& bp, Vec2 where, float area, float pmol,
             std::uint8_t r, std::uint8_t g, std::uint8_t b, bool forceNew, float phosphorus,
-            float nutritionScale) {
+            float nutritionScale, float nitrogen) {
     FoodVacuole* target = nullptr;
     if (!forceNew) {
         for (FoodVacuole& v : dig.vacuoles)
@@ -67,13 +67,14 @@ void ingest(Digestion& dig, RingBody& body, BodyParticles& bp, Vec2 where, float
     target->contentPmol += pmol;
     target->initialPmol += pmol;
     target->phosphorus += phosphorus;
+    target->nitrogen += nitrogen;
     ++target->items;
     bp.radius[target->slot] = vacuoleRadius(target->contentArea);
     dig.pmolIngested += pmol;
 }
 
 float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingParams& params,
-             float dt, float bioDt, float& excreted) {
+             float dt, float bioDt, Excreted& excreted) {
     const float fraction = 1.0f - std::exp(-params.digestionRate * dig.rateScale * bioDt);
     const float wholeFraction = 1.0f - std::exp(-dig.rateScale * bioDt / (params.wholeCellDigestionHours * 3600.0f));
     float digested = 0.0f;
@@ -99,12 +100,16 @@ float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingPar
             // El fósforo de la presa se excreta al agua a medida que se digiere.
             const float pOut = v.phosphorus * f;
             v.phosphorus -= pOut;
-            excreted += pOut;
+            excreted.phosphorus += pOut;
+            const float nOut = v.nitrogen * f;
+            v.nitrogen -= nOut;
+            excreted.nitrogen += nOut;
             v.contentArea *= before > 0.0f ? v.contentPmol / before : 0.0f;
             bp.radius[v.slot] = vacuoleRadius(v.contentArea);
         }
         if (!v.open && v.contentPmol < 0.02f * v.initialPmol) {
-            excreted += v.phosphorus; // lo que quedaba se expulsa con la vacuola
+            excreted.phosphorus += v.phosphorus; // lo que quedaba se expulsa con la vacuola
+            excreted.nitrogen += v.nitrogen;
             if (idx < body.interior.size())
                 soft_body::removeInterior(body, idx);
             bp.release(v.slot);
@@ -116,9 +121,12 @@ float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingPar
     return digested;
 }
 
-bool satiated(const Digestion& dig) {
+bool satiated(const Digestion& dig, float biomass) {
+    // Saciedad por volumen: Didinium se llena con un solo paramecio (casi su tamaño); un
+    // Stentor necesita decenas de algas chicas.
+    float inGut = 0.0f;
     for (const FoodVacuole& v : dig.vacuoles)
-        if (v.wholeCell && v.contentPmol > 0.2f * v.initialPmol)
-            return true;
-    return false;
+        if (v.wholeCell)
+            inGut += v.contentPmol;
+    return inGut > 0.2f * biomass;
 }

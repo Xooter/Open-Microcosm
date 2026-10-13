@@ -298,6 +298,20 @@ void setRestArea(RingBody& body, float newSignedArea) {
     body.restArea = newSignedArea;
 }
 
+void setRestAreaAxial(RingBody& body, float newSignedArea) {
+    if (body.restArea == 0.0f || newSignedArea * body.restArea <= 0.0f)
+        return;
+    const float s = newSignedArea / body.restArea; // el área es lineal en la escala de x
+    for (Vec2& q : body.restRing)
+        q.x *= s;
+    const std::size_t n = body.restRing.size();
+    for (std::size_t i = 0; i < n; ++i)
+        body.restEdge[i] = length(body.restRing[(i + 1) % n] - body.restRing[i]);
+    for (Vec2& q : body.restInterior)
+        q.x *= s;
+    body.restArea = newSignedArea;
+}
+
 namespace {
 void setCircularRest(RingBody& body, float perim) {
     const std::size_t n = body.ring.size();
@@ -392,7 +406,7 @@ void resampleRing(RingBody& body, BodyParticles& bp, std::size_t count) {
     body.ring = std::move(ring);
 }
 
-void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry) {
+void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry, float squareness, float taper) {
     const std::size_t n = body.ring.size();
     Vec2 c;
     for (std::uint32_t s : body.ring)
@@ -414,8 +428,12 @@ void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry) {
         const Vec2 d = rotate(pos(bp, body.ring[i]) - c, co, -si);
         const float phi = std::atan2(d.y, d.x);
         const float cp = std::cos(phi), sp = std::sin(phi);
-        const float r = 1.0f / std::sqrt(cp * cp / (rx * rx) + sp * sp / (ry * ry));
-        body.restRing[i] = {r * cp, r * sp};
+        const float r = std::pow(std::pow(std::abs(cp) / rx, squareness) + std::pow(std::abs(sp) / ry, squareness),
+                                 -1.0f / squareness);
+        const float x = r * cp;
+        // Afinamiento del polo posterior (ver taperFactor en bio/cell.hpp; sim no conoce a bio).
+        const float tf = taper > 0.0f ? (1.0f - taper) + taper * std::clamp(0.5f * (x / rx + 1.0f), 0.0f, 1.0f) : 1.0f;
+        body.restRing[i] = {x, r * sp * tf};
     }
     for (std::size_t i = 0; i < n; ++i)
         body.restEdge[i] = length(body.restRing[(i + 1) % n] - body.restRing[i]);

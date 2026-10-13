@@ -24,17 +24,18 @@ entt::entity createCell(entt::registry& registry, BodyParticles& bodies, const C
     const float c = std::cos(spec.angle), s = std::sin(spec.angle);
     auto place = [&](Vec2 local) { return spec.center + rotate(local, c, s); };
 
-    // Perímetro de la elipse (Ramanujan) para espaciar la membrana uniformemente.
-    const float h = (rx - ry) * (rx - ry) / ((rx + ry) * (rx + ry));
-    const float perimeter =
-        units::kPi * (rx + ry) * (1.0f + 3.0f * h / (10.0f + std::sqrt(4.0f - 3.0f * h)));
+    // Perímetro de la superelipse (polilínea densa) para espaciar la membrana uniformemente.
+    float perimeter = 0.0f;
+    for (int k = 0; k < 256; ++k)
+        perimeter += length(superellipsePoint(rx, ry, spec.squareness, 2.0f * units::kPi * (k + 1) / 256.0f, spec.taper) -
+                            superellipsePoint(rx, ry, spec.squareness, 2.0f * units::kPi * k / 256.0f, spec.taper));
     // Al menos 48 puntos: en células chicas (Euglena, ~14 µm de ancho) la membrana se afina.
     const int n = std::max(48, static_cast<int>(perimeter / kMembraneSpacing));
     const float membraneRadius = 0.6f * perimeter / static_cast<float>(n);
 
     for (int i = 0; i < n; ++i) {
         const float t = 2.0f * units::kPi * static_cast<float>(i) / static_cast<float>(n);
-        const Vec2 local = {rx * std::cos(t), ry * std::sin(t)};
+        const Vec2 local = superellipsePoint(rx, ry, spec.squareness, t, spec.taper);
         const Vec2 p = place(local);
         body.ring.push_back(bodies.allocate(BodyKind::Membrane, p.x, p.y, membraneRadius, 1.0f, id));
         body.restRing.push_back(local);
@@ -72,7 +73,7 @@ entt::entity createCell(entt::registry& registry, BodyParticles& bodies, const C
     registry.emplace<RingBody>(e, std::move(body));
     registry.emplace<CellLook>(e, spec.r, spec.g, spec.b);
     registry.emplace<CellAnatomy>(e, anatomy);
-    registry.emplace<CellShape>(e, CellShape{rx, ry, spec.shapeRate, spec.nucleusFraction});
+    registry.emplace<CellShape>(e, CellShape{rx, ry, spec.shapeRate, spec.nucleusFraction, spec.squareness, spec.taper});
     return e;
 }
 

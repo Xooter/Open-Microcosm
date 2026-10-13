@@ -50,6 +50,20 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
             loco.turn = turnToward(h, sense.prey - body.centroid);
             return;
         }
+        // Trampa de ácido (Jennings, 1906): el paramecio entra libremente a una zona con CO₂,
+        // pero al salir hacia agua menos ácida hace la reacción de evitación y vuelve a entrar.
+        // Su propio CO₂ agranda la zona: así se forman los enjambres.
+        if (species.acidTrap) {
+            const float change = sense.acid - pilot.acidMemory;
+            pilot.acidMemory += change * std::min(1.0f, 2.0f * dt);
+            if (change < -0.01f && sense.acid > 0.02f) {
+                pilot.reverse = 0.4f;
+                pilot.turn = rng.uniform() < 0.5f ? -1.0f : 1.0f;
+                loco.forward = -1.0f;
+                loco.turn = pilot.turn;
+                return;
+            }
+        }
         // Quimiocinesis temporal: compara la comida de ahora con la de hace ~1 s.
         float noise = 0.9f;
         if (species.chemokinesis) {
@@ -60,6 +74,37 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
         pilot.turn = clampTurn(pilot.turn - pilot.turn * dt + noise * std::sqrt(dt) * rng.normal());
         loco.forward = 0.6f;
         loco.turn = pilot.turn;
+        if (species.glider) { // diatomea: se desliza por el rafe a lo largo de su eje, con inversiones
+            pilot.retarget -= dt;
+            if (pilot.retarget <= 0.0f) {
+                pilot.walking = !pilot.walking;
+                pilot.retarget = rng.uniform(5.0f, 20.0f);
+            }
+            loco.forward = pilot.walking ? 1.0f : -1.0f;
+            loco.turn = 0.1f * rng.normal();
+            return;
+        }
+        if (species.hopper) { // nauplio: golpe de los apéndices (salto) y pausa
+            pilot.retarget -= dt;
+            if (pilot.retarget <= 0.0f) {
+                pilot.walking = !pilot.walking;
+                pilot.retarget = pilot.walking ? rng.uniform(0.08f, 0.15f) : rng.uniform(0.5f, 1.5f);
+                if (pilot.walking)
+                    pilot.turn = rng.uniform(-1.0f, 1.0f);
+            }
+            loco.forward = pilot.walking ? 1.0f : 0.0f;
+            loco.turn = pilot.walking ? pilot.turn : 0.0f;
+            return;
+        }
+        if (species.walker) { // Euplotes: camina sobre los cirros con paradas bruscas
+            pilot.retarget -= dt;
+            if (pilot.retarget <= 0.0f) {
+                pilot.walking = !pilot.walking;
+                pilot.retarget = pilot.walking ? rng.uniform(0.5f, 2.0f) : rng.uniform(0.3f, 1.0f);
+                pilot.turn = rng.uniform(-1.0f, 1.0f);
+            }
+            loco.forward = pilot.walking ? 0.8f : 0.0f;
+        }
         return;
     }
     case LocomotionType::Flagellum: {

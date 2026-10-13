@@ -16,7 +16,7 @@ que nada, come, crece y se divide en un medio vivo. Antes de sumar contenido se 
 | Algas | Todas: móviles, diatomeas, coloniales, filamentosas, cianobacterias |
 | Hongos | Quitridios, levaduras, descomponedores, depredadores (sin simbiontes) |
 | Partículas | **Primero B** (fluido en grilla + soft-body), partículas ambientales y bacterias como partículas simples (C), LOD (E) más adelante |
-| Efectos visuales | Todos: metaballs/SDF, ciclosis, browniano, plano focal, lisis y tinción |
+| Efectos visuales | Metaballs/SDF, ciclosis, browniano, lisis y tinción (sin plano focal: todo en un mismo plano) |
 | Reglas de vida | Metabolismo real, mutualismos, fagos y parasitismo, quorum sensing (sin endosimbiosis) |
 | Estilo visual | Campo claro (A) |
 | Reproducción | Jugador: mitosis física + conjugación, la más costosa. Cada especie NPC usa la suya propia |
@@ -142,6 +142,28 @@ que nada, come, crece y se divide en un medio vivo. Antes de sumar contenido se 
 - **Interacciones:** mutualismos (fijación de nitrógeno), fagos y epidemias, quorum sensing y
   blooms tóxicos.
 - **Hecho cuando:** la cadena trófica completa se sostiene y cada interacción se puede observar.
+- **Tandas:**
+  - **8a ✅ (hecha, sin tests):** *Vorticella* (tallo con espasmonema, telotrocos), *Stentor*
+    (filtrador sésil que traga algas chicas), *Podophrya* (suctorio: tentáculos que atrapan y
+    succionan ciliados), *Euplotes* (camina con paradas), *Arcella* (ameba con testa) y
+    *Lacrymaria* (cuello extensible). Corrientes orales de todos los filtradores en el agua.
+  - **8b ✅:** *Navicula* (diatomea que se desliza; frústula que achica a una hija por división y
+    auxospora), *Volvox* (colonias hijas que rompen a la madre) y *Pediastrum* (cenobio que libera
+    una colonia hija), *Spirogyra* (filamento de células unidas por adhesiones; crece a lo largo,
+    se divide con un tabique y se fragmenta) y cianobacterias (*Anabaena*: cadenas de partículas
+    con heterocistos). Fósforo conservado (advección e intercambio conservativos).
+  - **8c ✅:** hongos y pseudohongos como tier ambiental: quitridios (*Rhizophydium*: zoosporas que
+    buscan algas, esporangios que las consumen y liberan zoosporas), *Saprolegnia* (micelio que
+    disuelve detritos con exoenzimas, absorbe y esporula sin comida), *Zoophagus* (clavijas
+    adhesivas que atrapan rotíferos) y la levadura *Candida* (osmotrófica, fermenta sin O₂, gemación).
+  - **8d ✅:** nitrógeno conservado (salvo la fijación) con N:P bajo que favorece a las fijadoras;
+    heterocistos que fijan N₂ (inhibidos por O₂) y liberan amonio; muerte de cianobacterias que
+    libera microcistina (tóxica para consumidores); CO₂ y pH (sistema carbonato: la fotosíntesis
+    sube el pH); quorum sensing de *Chromobacterium violaceum* (violaceína tóxica, agregados);
+    fagos líticos con mutantes resistentes; *Bdellovibrio*; enjambres de *Paramecium* por la
+    trampa de ácido de Jennings. Manipulación de presas por especie (respuesta funcional tipo II)
+    y saciedad por volumen. Registro de muertes por causa y de comportamientos observados.
+  - *Stentor* con forma de trompeta (perfil afinado hacia el pie) ✅.
 
 ## Fase 9 — Jefes multicelulares y LOD
 - Rotíferos, *Hydra* y larvas de copépodo como cuerpos compuestos, con corona ciliada que genera
@@ -149,18 +171,57 @@ que nada, come, crece y se divide en un medio vivo. Antes de sumar contenido se 
 - LOD: las células cercanas son detalladas, las lejanas simplificadas y las fuera de pantalla se
   simulan de forma estadística.
 - **Hecho cuando:** un rotífero entra en escena con 500+ células activas a 60 FPS.
+- **Implementado:**
+  - *Brachionus* (rotífero): corona, tronco con lórica y mástax, y pie, unidos por adhesiones
+    rígidas (con diagonales) y movidos como un sólido; las partes de un mismo organismo no chocan
+    entre sí. Corriente de la corona que trae bacterias, algas chicas y levaduras. Huevos
+    partenogenéticos pegados a la madre que eclosionan (~20 h).
+  - *Hydra*: columna fija por el disco basal, tentáculos cinemáticos con nematocistos que paralizan
+    a la presa, la llevan a la boca y la tragan; brotes.
+  - Nauplio de copépodo: avanza a saltos; llega a la gota desde sacos de huevos de copépodos.
+  - LOD por distancia al foco (la cámara): las lejanas resuelven 1 de cada 5 sub-pasos de XPBD con
+    paso × 5. Un hilo de OpenMP por núcleo físico.
 
-## Fase 10 — Estilo visual
+## Fase 10 — Estilo visual ✅
 - Post-proceso de campo claro: fondo claro, células semitransparentes, halo y refracción sutil.
-- Ciclosis, browniano visible, plano focal (enfocar capas y esconderse fuera de foco), lisis y
+- Ciclosis, browniano visible, lisis y
   tinción de vacuolas digestivas.
+- **Implementado:** todo el campo pasa por la óptica del microscopio (viñeta, aberración
+  cromática lateral, grano del sensor). Ciclosis por especie (`cyclosis`, µm/s), browniano de
+  gránulos y bacterias, efecto de lisis (contorno que se expande y gránulos despedidos) y
+  tinciones vitales (J): rojo Congo (las vacuolas viran a azul al acidificarse) y azul de
+  metileno (núcleos).
+- **Decisión:** sin plano focal. Todo ocurre y se ve en un mismo plano (la película es 2D).
 
-## Fase 11 — Rejugabilidad y contenido
+## Fase 11 — Rejugabilidad y contenido ✅
 - Gotas procedurales por seed: temperatura, luz, pH, salinidad y mezcla de especies.
 - Biomas: charco, estanque, musgo húmedo, intestino de termita, fuente hidrotermal y hielo marino.
 - Enciclopedia: catalogar especies y comportamientos observados.
 - Guardado, menú y opciones.
+- **Implementado:** ambiente de la gota (`MediumParams`): temperatura (Q10 = 2 en todas las tasas
+  biológicas, viscosidad del agua y O₂ de saturación según la temperatura), salinidad, anoxia y
+  alcalinidad (pH). Tolerancias por especie (`tMin/tMax`, `salinityMax`, `anaerobe`, `phMin/phMax`).
+  Seis biomas (`game/biome`) con su química y su elenco; especies nuevas para ellos: *Naegleria*
+  (termotolerante), *Trichonympha* (intestino de termita, anaerobia) y *Philodina* (bdeloideo del
+  musgo); *Mastigocladus* como cianobacteria termófila. `makeDrop`: variación por seed de
+  temperatura, luz, nutrientes, especies presentes y manchas de materia orgánica (ruido de valor).
+  Enciclopedia (`game/encyclopedia`): especies vistas, otros organismos y comportamientos
+  (causas de muerte e interacciones), guardada en el progreso. Menús: inicio, elegir gota
+  (bioma, fundadora, semilla), enciclopedia y opciones (`options.txt`). La partida en sí no se
+  guarda a mitad (es roguelite); el progreso y las opciones sí.
 
-## Fase 12 — Escala y GPU
+## Fase 12 — Escala y GPU ✅ (parcial)
 - Simulación en compute shaders si se superan ~100k partículas.
 - Render instanciado y profiling continuo con Tracy.
+- **Implementado:** bacterias con render instanciado (un buffer de 16 B por bacteria y una
+  llamada por copia del mundo). Profiling continuo: Tracy (preset `profile`), modo liviano
+  `BIO_PROFILE_LITE` para scripts y tiempos de simulación/render en el panel.
+- **Medido y decidido:** las partículas simples no son el cuello de botella (50k bacterias:
+  ~0,5 ms por paso en CPU), así que no se pasaron a compute shaders (requeriría OpenGL 4.3 y
+  leer de vuelta para la jugabilidad). El costo está en los contactos de los cuerpos blandos;
+  se atacó con LOD de tres niveles, descarte de puntos sin vecinos (distancia real una vez por
+  sub-paso), 2 pasadas de contacto por sub-paso, percepción con grilla espacial, difusión
+  agrupada de los campos lentos y un hilo por núcleo físico.
+- **Pendiente:** con ~540 células por gota (el doble de la población normal) el paso cuesta
+  ~29 ms (≈ 35 FPS); con la población normal (~280) ~16 ms. Llegar a 60 FPS con 500+ requiere
+  mover XPBD y contactos a GPU.
