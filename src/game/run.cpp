@@ -8,7 +8,8 @@ void Run::start(World& world, const RunConfig& config, std::uint32_t runId) {
     world.setRun(runId);
     world.populateEcosystem(config.wildlife);
     world.populate(config.competitors);
-    world.spawnPlayer(config.founder, {0.5f * world.width(), 0.5f * world.height()}, &config.genome);
+    if (config.spawnFounder)
+        world.spawnPlayer(config.founder, {0.5f * world.width(), 0.5f * world.height()}, &config.genome);
     census_ = world.census();
 }
 

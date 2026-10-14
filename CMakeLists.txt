@@ -28,12 +28,6 @@ FetchContent_Declare(raylib
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     SYSTEM)
 
-# raygui: UI inmediata header-only para tunear parámetros en vivo.
-FetchContent_Declare(raygui
-    URL https://github.com/raysan5/raygui/archive/refs/tags/4.0.tar.gz
-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    SOURCE_SUBDIR _no_cmake)
-
 # EnTT: ECS para entidades de alto nivel (organismos, colonias, items...).
 # Las partículas masivas NO van en el ECS: viven en arrays SoA (ver sim/particles.hpp).
 FetchContent_Declare(EnTT
@@ -41,7 +35,14 @@ FetchContent_Declare(EnTT
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     SYSTEM)
 
-FetchContent_MakeAvailable(raylib raygui EnTT)
+# Dear ImGui (rama docking): UI del laboratorio (paneles acoplables). El backend de raylib es
+# propio (src/ui/imgui_raylib.cpp): no se usa rlImGui.
+FetchContent_Declare(imgui
+    URL https://github.com/ocornut/imgui/archive/refs/tags/v1.91.9b-docking.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    SOURCE_SUBDIR _no_cmake)
+
+FetchContent_MakeAvailable(raylib EnTT imgui)
 
 if(BIO_PROFILING)
     set(TRACY_ENABLE ON CACHE BOOL "" FORCE)
@@ -112,6 +113,7 @@ add_library(biosim STATIC
     src/game/world_chem.cpp
     src/game/world_metazoa.cpp
     src/game/biome.cpp
+    src/game/plate_spec.cpp
     src/game/encyclopedia.cpp)
 
 target_include_directories(biosim PUBLIC src)
@@ -127,8 +129,26 @@ endif()
 # ---------------------------------------------------------------------------
 add_executable(bio
     src/main.cpp
-    src/core/ui.cpp
-    src/core/lab_panel.cpp
+    src/app/app.cpp
+    src/app/tools.cpp
+    src/app/tool_icons.cpp
+    src/ui/imgui_raylib.cpp
+    src/ui/i18n.cpp
+    src/ui/theme.cpp
+    src/ui/widgets.cpp
+    src/ui/commands.cpp
+    src/ui/panel.cpp
+    src/ui/being_icons.cpp
+    src/ui/panels/panels.cpp
+    src/ui/panels/plate_panel.cpp
+    src/ui/panels/catalog_panel.cpp
+    src/ui/panels/inspector_panel.cpp
+    src/ui/panels/tools_panel.cpp
+    src/ui/panels/sim_panel.cpp
+    src/ui/panels/processes_panel.cpp
+    src/ui/panels/stats_panel.cpp
+    src/ui/panels/encyclopedia_panel.cpp
+    src/ui/panels/help_panel.cpp
     src/render/renderer.cpp
     src/render/minerals.cpp
     src/render/field_overlay.cpp
@@ -136,9 +156,16 @@ add_executable(bio
     src/render/instanced_particles.cpp
     src/gpu/gpu_substep_solver.cpp)
 
+# Dear ImGui como biblioteca aparte: sus fuentes no pasan por nuestros warnings.
+add_library(imgui_lib STATIC
+    ${imgui_SOURCE_DIR}/imgui.cpp
+    ${imgui_SOURCE_DIR}/imgui_draw.cpp
+    ${imgui_SOURCE_DIR}/imgui_tables.cpp
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
+target_include_directories(imgui_lib SYSTEM PUBLIC ${imgui_SOURCE_DIR})
+
 # SYSTEM: los warnings de headers de terceros no son nuestros.
-target_include_directories(bio SYSTEM PRIVATE ${raygui_SOURCE_DIR}/src)
-target_link_libraries(bio PRIVATE biosim raylib)
+target_link_libraries(bio PRIVATE biosim raylib imgui_lib)
 # Ruta absoluta a assets/ para desarrollo (el empaquetado queda para más adelante).
 target_compile_definitions(bio PRIVATE BIO_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 
@@ -151,7 +178,7 @@ endif()
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_nematode.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp)
+    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_nematode.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp)
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
     add_test(NAME bio_tests COMMAND bio_tests)
 endif()

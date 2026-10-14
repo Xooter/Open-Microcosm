@@ -12,7 +12,7 @@
 
 class World;
 
-// Inspección (modo Explorar): click sobre cualquier cosa de la gota y se abre su ficha. Lo que
+// Inspección (herramienta Seleccionar): click sobre cualquier cosa de la gota y se abre su ficha. Lo que
 // tiene identidad estable (células, granos, micelios) se sigue en vivo; las partículas
 // (bacterias, minerales, cadenas de cianobacterias) se reordenan en memoria, así que su ficha es
 // una foto del momento del click.

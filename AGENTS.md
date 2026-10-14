@@ -19,18 +19,25 @@ Documentos de referencia:
 No hay partida, puntaje ni victoria: es un laboratorio. El usuario arma una gota, la observa e
 interviene.
 
-- **Gota:** bioma + seed (reproducible), completa, sin vida o **placa de Petri vacía** (sin vida ni
-  minerales, polvo, granos ni detritos: `DropContent`, `applyDropContent`). Se puede spawnear
-  cualquier ser del catálogo (barra inferior) y cambiar el ambiente en vivo desde el panel de
-  laboratorio (`core/lab_panel`): secciones plegables de simulación, ambiente, macro y
-  micronutrientes, química, microbiología, herramientas, cuerpos blandos, ser controlado y
-  estadísticas (con los totales conservados de P, N, Si y Fe).
-- **Controlar un ser** (`P` sobre una célula): cada especie conserva su **locomoción física**:
+- **Placa:** el programa arranca directo en el laboratorio (no hay pantalla de inicio) con una
+  **placa de Petri vacía**. Se preconfigura en el panel *Placa* (`PlateSpec`: bioma + seed,
+  contenido completo, sin vida o vacía —`DropContent`, `applyDropContent`—, ambiente, nutrientes,
+  sedimento, poblaciones y geometría) y se crea con *Crear placa* (Ctrl+N). Ambiente y
+  nutrientes se aplican **en vivo** a la placa en marcha; lo demás, al crearla. Las placas se
+  guardan en `<datos>/biogame/plates/*.plate`.
+- **Paneles acoplables** (Dear ImGui, ver "Interfaz"): Placa, Catálogo (cualquier ser, con
+  íconos), Ficha, Herramientas, Simulación, Procesos (tasas de química, microbiología y hongos),
+  Estadísticas (censo, totales conservados de P, N, Si y Fe, y el ser controlado), Enciclopedia y
+  Ayuda.
+- **Herramientas** (barra izquierda o teclas 1-0): Seleccionar, Controlar, Tinta, Detrito, Borrar,
+  Lisar, Apretar, Revolver, Estirar, Gotero y Spawnear (al armar un ser del catálogo).
+- **Controlar un ser** (herramienta Controlar, o `P` sobre una célula): cada especie conserva su
+  **locomoción física**:
   flagelo (impulso), cilios (deslizamiento), pseudópodo (clic y arrastre) y ondulación. Se respeta
   el **bajo número de Reynolds**: no hay inercia. Al dividirse se sigue con la madre; si el ser
   muere, se puede controlar otro.
-- **Modo Explorar** (`Tab`): click sobre cualquier cosa y se abre su ficha (qué es, qué hace y por
-  qué). La enciclopedia se llena con lo que la cámara ve.
+- **Seleccionar** (herramienta por defecto, sin modos): un click sobre cualquier cosa elige el ser
+  y abre su ficha (qué es, qué hace y por qué). La enciclopedia se llena con lo que la cámara ve.
 - **Comer es físico:** se envuelve a la presa con la membrana hasta cerrar una vacuola.
 - **Metabolismo real:** respiración con O₂, fermentación sin O₂ y fotosíntesis con luz, limitado
   por P, N y, según la especie, **sílice** (diatomeas), **hierro** (fotótrofas) y **vitamina B₁₂**
@@ -66,7 +73,7 @@ Usá **solo** estas. Para agregar otra, primero hay que proponerla y esperar apr
 | Lib | Versión | Uso |
 |---|---|---|
 | raylib | 5.5 | Ventana, input, render 2D, shaders GLSL 330 y audio |
-| raygui | 4.0 | UI de debug y menús simples |
+| Dear ImGui | 1.91.9b (rama docking) | UI del laboratorio: paneles acoplables, menús, herramientas. Backend de raylib propio (`ui/imgui_raylib`), sin rlImGui |
 | EnTT | 3.14 | ECS para organismos y entidades de alto nivel |
 | OpenMP | sistema | Paralelismo de los loops de simulación |
 | Tracy | 0.11 | Profiling (preset `profile`) |
@@ -248,6 +255,31 @@ Las partes de un mismo organismo no chocan entre sí (`ContactMember::group`).
 - Bacterias con instancing (`InstancedParticles`): un buffer por frame, una llamada por copia
   del mundo toroidal.
 
+### Interfaz (`app/`, `ui/`)
+
+- **Un solo espacio de trabajo:** `App` (`app/app.cpp`) abre la ventana, crea la placa y corre el
+  bucle: UI → entrada sobre la placa → paso de simulación → dibujo del mundo → dibujo de la UI
+  encima. No hay máquina de pantallas ni modos excluyentes.
+- **Dockspace con centro transparente:** el centro libre (`App::viewport`) es donde se ve la placa;
+  la cámara, el zoom mínimo y el LOD usan ese rectángulo. Los clicks son del mundo solo si
+  `!ImGui::GetIO().WantCaptureMouse` (y las teclas, si no `WantTextInput`).
+- **Para sumar una función de UI:** un panel es una clase que hereda de `ui::Panel`
+  (`ui/panels/*.cpp`) y una línea en `ui/panels/panels.cpp`; una acción de menú o atajo es un
+  `ui::Command` en `App::registerCommands`; una herramienta es un valor de `Tool` (`app/tools.*`)
+  y su caso en `App::toolInput`. Los menús y los atajos salen de la misma tabla de comandos.
+- **Widgets del laboratorio** (`ui/widgets`): `slider`, `sliderLog`, `checkbox`, `combo`, `readout`,
+  `bar`, `section`. Rótulo a la izquierda, ayuda al pasar el mouse y valor tipeable (Ctrl+click).
+  Todo texto visible pasa por `ui::tr(clave)` (la clave es el texto en español); el ID de cada
+  ventana es estable (`título###clave`) para que la disposición guardada no dependa del idioma.
+- **Estilo:** todos los colores y espaciados salen de `ui/theme`. La fuente trae Latin-1 (acentos,
+  ñ, µ, °): se puede escribir con acentos en la UI nueva.
+- La disposición de paneles se guarda en `<datos>/biogame/layout.ini` (*Ver > Restablecer
+  disposición* la rehace). Los íconos del catálogo se dibujan una vez con raylib en un atlas
+  (`ui/being_icons`).
+- `PlateSpec` (`game/plate_spec`, sin raylib) es la fuente de verdad de lo que se preconfigura;
+  `parsePlate`/`serializePlate` son texto clave=valor versionado (`plate_version`) y lo que falta
+  queda como en el bioma.
+
 ### Sesión y control (`game/run`, `game/progress`, `ai/autopilot`)
 
 - `World` no sabe de reglas de sesión: emite `WorldEvent` (el ser controlado se dividió, conjugó o
@@ -309,8 +341,11 @@ Las partes de un mismo organismo no chocan entre sí (`ContactMember::group`).
 
 ```
 src/
-  main.cpp          loop principal
-  core/             profiling, UI y panel de laboratorio, utilidades
+  main.cpp          crea la `App` y la corre
+  app/              `App` (bucle, cámara, entrada sobre la placa), herramientas y selección
+  ui/               marco de UI: backend ImGui, tema, widgets, comandos, paneles, `tr()`, íconos
+  ui/panels/        un archivo por panel
+  core/             profiling, unidades, rng, vec2
   sim/              fft, fluid, chem_field, grid2d, particles, body_particles, soft_body (XPBD),
                     contacts, polygon, spatial_grid
   bio/              cell, membrane, metabolism, lifecycle, genome, organelles, species
@@ -318,13 +353,15 @@ src/
   game/             sesión de sandbox, linaje, enciclopedia, biomas
   render/           renderer, shaders de membrana, post-proceso de microscopio
 assets/
+  fonts/            fuente de la UI (Roboto, Apache 2.0)
+  lang/             idiomas de la UI (`<código>.txt`, líneas clave<TAB>traducción)
   shaders/          GLSL 330
   species/          datos de especies
 docs/               gameplay.md, roadmap.md
 tests/              doctest
 ```
 
-`biosim` (todo menos `main`, `render/` y `core/ui`) es una librería sin raylib: la usan el juego
+`biosim` (todo menos `main`, `app/`, `ui/` y `render/`) es una librería sin raylib: la usan el juego
 y los tests.
 
 `sim/` no conoce a `bio/`, y `bio/` no conoce a `render/`. El render solo lee estado de

@@ -70,7 +70,7 @@ Options loadOptions(const std::string& path) {
         else if (key == "post_process") value >> o.postProcess;
         else if (key == "lod") value >> o.lod;
         else if (key == "gpu_physics") value >> o.gpuPhysics;
-        else if (key == "lab_panel") value >> o.labPanel;
+        else if (key == "language") value >> o.language;
         else if (key == "bio_time_scale") value >> o.bioTimeScale;
     }
     o.bioTimeScale = std::clamp(o.bioTimeScale, 1.0f, 600.0f);
@@ -88,7 +88,7 @@ bool saveOptions(const Options& o, const std::string& path) {
         << "post_process=" << o.postProcess << '\n'
         << "lod=" << o.lod << '\n'
         << "gpu_physics=" << o.gpuPhysics << '\n'
-        << "lab_panel=" << o.labPanel << '\n'
+        << "language=" << o.language << '\n'
         << "bio_time_scale=" << o.bioTimeScale << '\n';
     return static_cast<bool>(out);
 }

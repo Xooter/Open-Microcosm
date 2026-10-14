@@ -11,6 +11,7 @@ class World;
 // Parámetros de una sesión de sandbox.
 struct RunConfig {
     LocomotionType founder = LocomotionType::Cilia; // ser que se controla al empezar
+    bool spawnFounder = true; // false: la placa empieza sin ser controlado (se elige con la herramienta Controlar)
     int biome = 0;            // BiomeId de la gota
     std::uint64_t seed = 1;
     float wildlife = 1.0f;    // escala de las poblaciones silvestres iniciales (ecosistema)

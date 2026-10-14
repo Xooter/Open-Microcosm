@@ -29,9 +29,24 @@ que nada, come, crece y se divide en un medio vivo. Antes de sumar contenido se 
 El programa deja de ser un juego: es un **sandbox educativo, científico y de código abierto**.
 Se retiran la partida roguelite (victoria, extinción, desbloqueos, legado genético y elección de
 hija o heredero) y se conserva el control de un ser con su locomoción real (`P` para controlar
-cualquier célula). El panel de laboratorio pasó a secciones plegables (`core/lab_panel`) y se
+cualquier célula). El panel de laboratorio pasó a secciones plegables y se
 sumaron **sílice** (diatomeas), **hierro** (fotótrofas) y **vitamina B₁₂** (auxótrofas) como
 nutrientes disueltos con limitación real. Las decisiones de jugabilidad de abajo son historia.
+
+## Rework de la UI: laboratorio sin pantalla de inicio (2026-10) ✅
+- **Dear ImGui (rama docking)** con backend de raylib propio reemplaza a raygui. Se retiran el
+  título, la pantalla de preparar la gota, las opciones y la enciclopedia como pantallas; el
+  programa arranca en el laboratorio con una placa vacía.
+- **Marco:** `app/` (bucle y entrada), `ui/` (tema, widgets, comandos, paneles acoplables, `tr()`)
+  y un archivo por panel. Sumar una función es un panel, un comando o una herramienta.
+- **Editor de placa** (`PlateSpec`, panel *Placa*): bioma, seed, contenido, ambiente, nutrientes,
+  sedimento, poblaciones y geometría; ambiente y nutrientes en vivo, el resto al crear; placas
+  guardables.
+- **Un solo modo:** se quita el modo Explorar: la herramienta Seleccionar (click) abre la ficha.
+  Barra de herramientas: Seleccionar, Controlar, Tinta, Detrito, Borrar, Lisar, Apretar,
+  Revolver, Estirar, Gotero y Spawnear. El ser controlado es opcional.
+- **Pendiente:** vista previa gráfica de la placa antes de crearla, íconos vectoriales en la barra
+  de herramientas, paleta de comandos e idiomas además del español (`assets/lang`).
 
 ## Decisiones tomadas
 
