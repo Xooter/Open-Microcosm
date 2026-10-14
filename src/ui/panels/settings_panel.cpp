@@ -44,6 +44,13 @@ class SettingsPanel : public Panel {
                 custom = true;
             }
             custom |= checkbox("Óptica del microscopio", &o.postProcess, "Viñeta, aberración cromática y grano.");
+            float cellPct = 100.0f / o.cellDetail;
+            if (slider("Detalle de células", &cellPct, 25.0f, 100.0f, "%.0f %%",
+                       "100 %: apéndices y organelos aparecen apenas la célula mide unos píxeles. Menos: hacen falta "
+                       "células más grandes en pantalla (la placa entera se dibuja más rápido).")) {
+                o.cellDetail = 100.0f / cellPct;
+                custom = true;
+            }
             custom |= sliderInt("Detalle bacteriano", &o.maxDetailed, 0, 1024,
                                 "Tope por cuadro de bacterias dibujadas con envoltura, nucleoide y flagelos (las más cercanas al centro).");
             custom |= checkbox("Antialiasing (MSAA)", &o.msaa,

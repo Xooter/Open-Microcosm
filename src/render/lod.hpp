@@ -115,8 +115,10 @@ struct RenderLodSettings {
     // dibujan solo las partículas internas de esa rebanada; en proyección se tapan todas.
     float sectionThickness = 0.1f; // [µm]
     DetailLevel cellLevel(float sizeMicrons, float zoom) const {
-        return enabled ? detailLevelFor(sizeMicrons * zoom, cells) : DetailLevel::Detail;
+        return enabled ? detailLevelFor(sizeMicrons * zoom / cellDetailScale, cells) : DetailLevel::Detail;
     }
+    // Calidad (Preferencias): > 1 pide más píxeles para mostrar apéndices y organelos (solo imagen).
+    float cellDetailScale = 1.0f;
     // Células (sin agregado): silueta con membrana por debajo de normalPx; organelos y gránulos
     // desde detailPx. El tamaño es el lado mayor de su caja.
     LodBands cells = {0.0f, 0.0f, 6.0f, 20.0f, 2000.0f};

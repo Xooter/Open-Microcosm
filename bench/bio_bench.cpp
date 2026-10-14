@@ -7,7 +7,7 @@
 // o --zoom Z) y mide el dibujo en la GPU real (esperando con glFinish).
 //
 //   bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] [--warmup N] [--threads N]
-//             [--no-focus] [--gpu] [--render] [--zoom Z]
+//             [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S]
 #include "core/profiling.hpp"
 #include "game/biome.hpp"
 #include "game/run.hpp"
@@ -44,6 +44,7 @@ struct Args {
     bool gpu = false;
     bool render = false;
     float zoom = 0.0f; // 0: la placa entera
+    float cellDetail = 1.0f;
 };
 
 // glFinish no está en rlgl; el GLAD de raylib lo carga (como en gpu_substep_solver.cpp).
@@ -64,6 +65,8 @@ bool parse(int argc, char** argv, Args& a) {
             a.render = true;
         else if (k == "--zoom" && hasValue)
             a.zoom = static_cast<float>(std::atof(argv[++i]));
+        else if (k == "--cell-detail" && hasValue)
+            a.cellDetail = static_cast<float>(std::atof(argv[++i]));
         else if (k == "--biome" && hasValue)
             a.biome = std::atoi(argv[++i]);
         else if (k == "--seed" && hasValue)
@@ -78,7 +81,7 @@ bool parse(int argc, char** argv, Args& a) {
             a.threads = std::atoi(argv[++i]);
         else {
             std::fprintf(stderr, "uso: bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] "
-                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z]\n");
+                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S]\n");
             return false;
         }
     }
@@ -167,6 +170,7 @@ int main(int argc, char** argv) {
     Camera2D camera{};
     if (a.render) {
         renderer = std::make_unique<Renderer>();
+        renderer->setCellDetailScale(a.cellDetail);
         target = LoadRenderTexture(1600, 900);
         camera.target = {world.width() * 0.5f, world.height() * 0.5f};
         camera.offset = {800.0f, 450.0f};

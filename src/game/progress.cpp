@@ -118,6 +118,7 @@ Options loadOptions(const std::string& path) {
         else if (key == "msaa") value >> o.msaa;
         else if (key == "render_scale") value >> o.renderScale;
         else if (key == "max_detailed") value >> o.maxDetailed;
+        else if (key == "cell_detail") value >> o.cellDetail;
         else if (key == "background_saver") value >> o.backgroundSaver;
         else if (key == "threads") value >> o.threads;
         else if (key == "lod_stride") value >> o.lodStride;
@@ -127,6 +128,7 @@ Options loadOptions(const std::string& path) {
     o.fpsLimit = std::clamp(o.fpsLimit, 0, 1000);
     o.renderScale = std::clamp(o.renderScale, 0.5f, 1.0f);
     o.maxDetailed = std::clamp(o.maxDetailed, 0, 4096);
+    o.cellDetail = std::clamp(o.cellDetail, 1.0f, 4.0f);
     o.threads = std::clamp(o.threads, 0, 256);
     o.lodStride = std::clamp(o.lodStride, 1, 10);
     o.maxStepsPerFrame = std::clamp(o.maxStepsPerFrame, 1, 16);
@@ -140,18 +142,21 @@ void applyGraphicsPreset(Options& o, GraphicsPreset preset) {
         o.renderScale = 0.67f;
         o.postProcess = false;
         o.maxDetailed = 64;
+        o.cellDetail = 2.5f;
         o.msaa = false;
         break;
     case GraphicsPreset::Medium:
         o.renderScale = 0.85f;
         o.postProcess = true;
         o.maxDetailed = 128;
+        o.cellDetail = 1.5f;
         o.msaa = false;
         break;
     case GraphicsPreset::High:
         o.renderScale = 1.0f;
         o.postProcess = true;
         o.maxDetailed = 256;
+        o.cellDetail = 1.0f;
         o.msaa = true;
         break;
     case GraphicsPreset::Custom:
@@ -178,6 +183,7 @@ bool saveOptions(const Options& o, const std::string& path) {
         << "msaa=" << o.msaa << '\n'
         << "render_scale=" << o.renderScale << '\n'
         << "max_detailed=" << o.maxDetailed << '\n'
+        << "cell_detail=" << o.cellDetail << '\n'
         << "background_saver=" << o.backgroundSaver << '\n'
         << "threads=" << o.threads << '\n'
         << "lod_stride=" << o.lodStride << '\n'

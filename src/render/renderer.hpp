@@ -38,6 +38,11 @@ class Renderer {
     // Fase 19: el campo se dibuja a una fracción de la resolución de la ventana y se reescala
     // (menos píxeles para los shaders). La vista previa (`drawWorldTo`) va siempre a 1.
     void setRenderScale(float scale) { renderScale_ = std::clamp(scale, 0.5f, 1.0f); }
+    // Umbrales de detalle de las células ×scale (1: los de siempre).
+    void setCellDetailScale(float scale) {
+        lod_.cellDetailScale = std::clamp(scale, 1.0f, 4.0f);
+        cells_.setLod(lod_);
+    }
     // Tope de individuos con estructuras por cuadro (zoom semántico).
     void setMaxDetailed(int n) {
         lod_.maxDetailed = std::max(0, n);

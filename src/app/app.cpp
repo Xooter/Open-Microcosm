@@ -147,6 +147,7 @@ void App::applyOptions() {
         renderer->setPostProcess(options.postProcess);
         renderer->setRenderScale(options.renderScale);
         renderer->setMaxDetailed(options.maxDetailed);
+        renderer->setCellDetailScale(options.cellDetail);
     }
     if (IsWindowReady() && options.vsync != IsWindowState(FLAG_VSYNC_HINT)) {
         if (options.vsync)

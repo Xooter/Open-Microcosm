@@ -44,6 +44,7 @@ struct Options {
     bool msaa = true;           // antialiasing de la interfaz (se aplica al reiniciar)
     float renderScale = 1.0f;   // resolución del campo relativa a la ventana [0,5; 1]
     int maxDetailed = 256;      // tope de bacterias dibujadas con sus estructuras por cuadro
+    float cellDetail = 1.0f;    // píxeles pedidos para apéndices y organelos ×cellDetail (1-4)
     bool backgroundSaver = true; // menos cuadros sin foco o minimizada
     // --- Rendimiento ---
     int threads = 0;            // hilos de la simulación (0: automático)

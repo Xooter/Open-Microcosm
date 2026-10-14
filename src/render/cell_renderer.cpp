@@ -197,9 +197,27 @@ const Vec2* CellRenderer::outline(const RingBody& body, float zoom, int& count) 
     count = static_cast<int>(body.poly.size());
     constexpr float kSegmentPx = 60.0f; // a partir de acá el polígono se ve facetado
     constexpr int kMaxSubdivisions = 16;
-    float longest = 0.0f;
-    for (int i = 0; i < count; ++i)
-        longest = std::max(longest, length(body.poly[static_cast<std::size_t>((i + 1) % count)] - body.poly[static_cast<std::size_t>(i)]));
+    constexpr float kMinSegmentPx = 3.0f; // más corto, la cuerda se aparta < 0,3 px del contorno
+    float longest = 0.0f, perimeter = 0.0f;
+    for (int i = 0; i < count; ++i) {
+        const float len = length(body.poly[static_cast<std::size_t>((i + 1) % count)] - body.poly[static_cast<std::size_t>(i)]);
+        longest = std::max(longest, len);
+        perimeter += len;
+    }
+    // Lejos (la placa entera), los puntos del anillo quedan a menos de un píxel entre sí: se toma 1
+    // de cada `step`. La cuerda se aparta del contorno mucho menos de un píxel, y cobertura y
+    // membrana usan el mismo contorno, así que siguen coincidiendo.
+    const float meanPx = count > 0 ? perimeter * zoom / static_cast<float>(count) : 0.0f;
+    if (count > 16 && meanPx > 0.0f && meanPx < kMinSegmentPx) {
+        const int step = std::min(count / 8, static_cast<int>(kMinSegmentPx / meanPx));
+        if (step >= 2) {
+            smooth_.clear();
+            for (int i = 0; i < count; i += step)
+                smooth_.push_back(body.poly[static_cast<std::size_t>(i)]);
+            count = static_cast<int>(smooth_.size());
+            return smooth_.data();
+        }
+    }
     const int sub = std::min(kMaxSubdivisions, static_cast<int>(std::ceil(longest * zoom / kSegmentPx)));
     if (sub <= 1 || count < 4)
         return body.poly.data();
