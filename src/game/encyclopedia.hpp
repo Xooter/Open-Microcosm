@@ -18,6 +18,7 @@ struct Progress;
 enum class OtherOrganism : std::uint8_t {
     Bacteria,
     Violaceum,
+    Bacillus,
     Cyanobacteria,
     Chytrid,
     Saprolegnia,

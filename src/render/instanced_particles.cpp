@@ -56,7 +56,8 @@ void InstancedParticles::upload(const Bacteria& bac) {
     for (int i = 0; i < count_; ++i) {
         const auto k = static_cast<std::size_t>(i);
         // Tipo: 0 normal, 1 violeta (quorum), 2 con fago, 3 bdeloplasto.
-        const float kind = bac.bdello[k] >= 0.0f ? 3.0f : (bac.quorum[k] ? 1.0f : (bac.phage[k] >= 0.0f ? 2.0f : 0.0f));
+        const float kind = bac.bdello[k] >= 0.0f ? 3.0f
+                           : (bac.quorum[k] ? 1.0f : (bac.phage[k] >= 0.0f ? 2.0f : (bac.strain[k] == 2 ? 4.0f : 0.0f)));
         data_[4 * k] = bac.x[k];
         data_[4 * k + 1] = bac.y[k];
         data_[4 * k + 2] = bac.heading[k];
@@ -88,11 +89,13 @@ void InstancedParticles::draw(float offsetX, float offsetY, float length, float 
     rlSetUniformMatrix(mvpLoc_, mvp);
     const float half[2] = {0.5f * length, 0.5f * thickness};
     rlSetUniform(halfSizeLoc_, half, RL_SHADER_UNIFORM_VEC2, 1);
-    const float palette[16] = {70 / 255.f, 80 / 255.f, 70 / 255.f, 150 / 255.f,   // bacilo
-                               96 / 255.f, 52 / 255.f, 140 / 255.f, 200 / 255.f,  // violaceína
-                               90 / 255.f, 96 / 255.f, 84 / 255.f, 110 / 255.f,   // con fago
-                               84 / 255.f, 90 / 255.f, 76 / 255.f, 170 / 255.f};  // bdeloplasto
-    rlSetUniform(paletteLoc_, palette, RL_SHADER_UNIFORM_VEC4, 4);
+    static const float kDefault[32] = {
+        70 / 255.f, 80 / 255.f, 70 / 255.f, 150 / 255.f,   // bacilo
+        96 / 255.f, 52 / 255.f, 140 / 255.f, 200 / 255.f,  // violaceína
+        90 / 255.f, 96 / 255.f, 84 / 255.f, 110 / 255.f,   // con fago
+        84 / 255.f, 90 / 255.f, 76 / 255.f, 170 / 255.f,   // bdeloplasto
+        70 / 255.f, 80 / 255.f, 70 / 255.f, 150 / 255.f};  // Bacillus (el resto, sin uso)
+    rlSetUniform(paletteLoc_, palette_.size() == 32 ? palette_.data() : kDefault, RL_SHADER_UNIFORM_VEC4, 8);
     rlDisableBackfaceCulling(); // la proyección 2D (y hacia abajo) invierte el giro del cuadrado
     rlEnableVertexArray(vao_);
     rlDrawVertexArrayInstanced(0, 6, count_);

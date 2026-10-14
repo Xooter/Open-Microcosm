@@ -280,6 +280,28 @@ Las partes de un mismo organismo no chocan entre sí (`ContactMember::group`).
   `parsePlate`/`serializePlate` son texto clave=valor versionado (`plate_version`) y lo que falta
   queda como en el bioma.
 
+### Tinciones (`game/stain`, `render/cell_renderer`, `ui/panels/stain_panel`)
+
+- **Datos, no código por colorante:** `StainSpec` = lista de reglas {blanco, respuesta, colores,
+  intensidad}. Los blancos son compuestos o estructuras reales (`StainTarget`: núcleo, nucleoide,
+  almidón, glucógeno, paramilón, compartimentos ácidos con su pH, pared grampositiva y
+  gramnegativa, clorofila…). Las respuestas: `Fixed`, `PhIndicator` (vira con el pH) y
+  `GramRetention` (pierde el colorante con el tiempo de decolorante: la pared fina en ~3 s, la
+  gruesa en ~60 s; sobre-decolorar vuelve rosa a la grampositiva). De fábrica: Gram, Lugol,
+  DAPI (fluorescencia, fondo oscuro), rojo neutro, azul de metileno y rojo Congo.
+- **Bioquímica real en la simulación:** `speciesChemistry(id)` da la reserva (`Storage`: almidón,
+  glucógeno, paramilón, crisolaminarina) y la pared (`CellWall`) de cada especie; solo el almidón
+  verdadero (clorofitas) vira a azul-negro con Lugol y *Euglena* (paramilón) no reacciona.
+  `Bacteria::strain` 2 es *Bacillus subtilis* (grampositiva); las demás son gramnegativas.
+- **Solo visual:** el render pregunta `evaluateStain` por cada blanco que dibuja; no toca `World`
+  ni `Rng`. `vital` marca las que en la realidad fijan o matan (Gram, Lugol, DAPI).
+- **Preview:** `ui::StainPreview` dibuja un espécimen de prueba fijo (un `World` chico) con el
+  MISMO `Renderer` que la placa (`Renderer::drawWorldTo` en una textura), sin teñir y teñido,
+  en vistas de células, detalle y bacterias. Sumar un blanco: un valor de `StainTarget`, su
+  evaluación en el render y, si hace falta, un dato en `SpeciesChemistry`.
+- Las tinciones del usuario se guardan en `<datos>/biogame/stains/*.stain` (texto clave=valor
+  versionado, `stain_version`).
+
 ### Sesión y control (`game/run`, `game/progress`, `ai/autopilot`)
 
 - `World` no sabe de reglas de sesión: emite `WorldEvent` (el ser controlado se dividió, conjugó o

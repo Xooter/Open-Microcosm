@@ -55,11 +55,11 @@ void Renderer::drawDish(const World& world, const Camera2D& camera) {
     const Dish& dish = world.dish();
     if (!dish.active())
         return;
-    const auto sw = static_cast<float>(GetScreenWidth()), sh = static_cast<float>(GetScreenHeight());
-    if (!glassOk_) { // sin shader: solo el contorno
+    const auto sw = static_cast<float>(width()), sh = static_cast<float>(height());
+    if (!glassOk_ || (stain_ && stain_->mode == StainMode::Fluorescence)) { // sin shader: solo el contorno
         BeginMode2D(camera);
         DrawRing({dish.center.x, dish.center.y}, dish.radius, dish.radius + 3.0f / camera.zoom, 0, 360, 256,
-                 {60, 62, 56, 220});
+                 stain_ && stain_->mode == StainMode::Fluorescence ? Color{70, 76, 96, 200} : Color{60, 62, 56, 220});
         EndMode2D();
         return;
     }
@@ -87,7 +87,7 @@ Renderer::~Renderer() {
 }
 
 void Renderer::ensureScene() {
-    const int w = GetScreenWidth(), h = GetScreenHeight();
+    const int w = width(), h = height();
     if (scene_.id != 0 && scene_.texture.width == w && scene_.texture.height == h)
         return;
     if (scene_.id != 0)
@@ -96,20 +96,69 @@ void Renderer::ensureScene() {
     SetTextureFilter(scene_.texture, TEXTURE_FILTER_BILINEAR);
 }
 
+void Renderer::drawWorldTo(const World& world, const Camera2D& camera, Overlay overlay, RenderTexture2D& out) {
+    out_ = &out;
+    drawWorld(world, camera, overlay);
+    out_ = nullptr;
+}
+
+namespace {
+
+// Color de cada tipo de bacteria en la instanciación: 0 bacilo gramnegativo, 1 con violaceína,
+// 2 con fago, 3 bdeloplasto, 4 Bacillus (grampositivo).
+void bacteriaPalette(const StainSpec* st, float out[32]) {
+    const Rgba natural[8] = {rgb8(70, 80, 70, 1.0f), rgb8(96, 52, 140, 1.0f), rgb8(90, 96, 84, 1.0f), rgb8(84, 90, 76, 1.0f),
+                             rgb8(70, 80, 70, 1.0f), rgb8(0, 0, 0, 1.0f), rgb8(0, 0, 0, 1.0f), rgb8(0, 0, 0, 1.0f)};
+    const float alpha[8] = {150, 200, 110, 170, 150, 0, 0, 0};
+    for (int k = 0; k < 8; ++k) {
+        Rgba c = natural[k];
+        float a = alpha[k] / 255.0f;
+        if (st && st->mode == StainMode::Fluorescence) {
+            // Solo brilla el nucleoide (ADN bacteriano).
+            const StainResult dye = evaluateStain(*st, StainTarget::Nucleoid);
+            c = dye.color;
+            a = 0.9f * dye.alpha;
+        } else if (st) {
+            const StainTarget gram = k == 4 ? StainTarget::GramPositive : StainTarget::GramNegative;
+            const StainResult g = evaluateStain(*st, gram), all = evaluateStain(*st, StainTarget::Bacteria);
+            const StainResult dye = g.alpha >= all.alpha ? g : all;
+            if (dye.alpha > 0.0f) {
+                c = stainOver(c, dye);
+                a = std::max(a, 0.92f * dye.alpha);
+            }
+        }
+        out[4 * k] = c.r;
+        out[4 * k + 1] = c.g;
+        out[4 * k + 2] = c.b;
+        out[4 * k + 3] = a;
+    }
+}
+
+} // namespace
+
 void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay overlay) {
     PROFILE_SCOPE("Renderer::drawWorld");
     ensureScene();
+    cells_.setTargetSize(out_ ? width() : 0, out_ ? height() : 0);
+    const bool fluor = stain_ && stain_->mode == StainMode::Fluorescence;
+    float palette[32];
+    bacteriaPalette(stain_, palette);
+    particles_.setPalette(palette);
     // Rectángulo visible en coordenadas del mundo [µm].
     const Vector2 a = GetScreenToWorld2D({0, 0}, camera);
-    const Vector2 b = GetScreenToWorld2D({static_cast<float>(GetScreenWidth()),
-                                          static_cast<float>(GetScreenHeight())}, camera);
+    const Vector2 b = GetScreenToWorld2D({static_cast<float>(width()), static_cast<float>(height())}, camera);
     const Rectangle view = {a.x, a.y, b.x - a.x, b.y - a.y};
 
     cells_.renderCoverage(world, camera, view);
     overlay_.update(world, overlay);
     // Todo el campo se dibuja en una textura y después pasa por la óptica del microscopio.
     BeginTextureMode(scene_);
-    ClearBackground(kBackground);
+    {
+        const Rgba nat = rgb8(kBackground.r, kBackground.g, kBackground.b);
+        const Rgba bg = stain_ ? stainBackground(*stain_, nat) : nat;
+        ClearBackground({static_cast<unsigned char>(bg.r * 255.0f + 0.5f), static_cast<unsigned char>(bg.g * 255.0f + 0.5f),
+                         static_cast<unsigned char>(bg.b * 255.0f + 0.5f), 255});
+    }
     BeginMode2D(camera);
 
     // Sin placa, el mundo es un toro: se dibujan las copias que caen dentro de la vista. Con
@@ -131,11 +180,13 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
             const Rectangle copy = {offX, offY, w, h};
             if (!CheckCollisionRecs(copy, view))
                 continue;
-            overlay_.draw(world, offX, offY);
+            if (!fluor)
+                overlay_.draw(world, offX, offY);
             const float x0 = view.x - offX - 5.0f, x1 = view.x + view.width - offX + 5.0f;
             const float y0 = view.y - offY - 5.0f, y1 = view.y + view.height - offY + 5.0f;
             auto visible = [&](float x, float y) { return x > x0 && x < x1 && y > y0 && y < y1; };
 
+            if (!fluor) { // en fluorescencia solo se ve el ADN teñido
             for (std::size_t i = 0; i < amb.size(); ++i) {
                 if (!visible(amb.x[i], amb.y[i]))
                     continue;
@@ -306,6 +357,7 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
                     DrawLineEx(p, {p.x - std::cos(zs.heading[i]) * 7.0f, p.y - std::sin(zs.heading[i]) * 7.0f},
                                std::max(0.3f, 0.5f * minSize), kSpore);
             }
+            } // !fluor
             // Bacterias como bastoncitos orientados (E. coli: ~2 × 1 µm). Las de C. violaceum en
             // quorum se tiñen de violeta (violaceína); el bdeloplasto es una esfera hinchada.
             if (useInstancing) {
@@ -323,7 +375,7 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
             }
             // Bdellovibrio: vibrios diminutos (~1 × 0,3 µm) que cruzan rapidísimo.
             const Bdellovibrios& bd = world.bdellovibrios();
-            for (std::size_t i = 0; i < bd.size(); ++i) {
+            for (std::size_t i = 0; i < bd.size() && !fluor; ++i) {
                 if (!visible(bd.x[i], bd.y[i]))
                     continue;
                 DrawRectanglePro({bd.x[i] + offX, bd.y[i] + offY, std::max(1.0f, minSize), std::max(0.4f, 0.5f * minSize)},
@@ -337,6 +389,7 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
 
     BeginMode2D(camera);
     cells_.drawDetails(world, camera, view);
+    if (!fluor)
     // Lisis: la membrana revienta, el contenido se dispersa y el fantasma se desvanece.
     for (const LysisMark& m : world.lysisMarks()) {
         const float age = world.simTime() - m.time;
@@ -363,6 +416,8 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
 
     const auto sw = static_cast<float>(scene_.texture.width), sh = static_cast<float>(scene_.texture.height);
     const Rectangle src = {0, 0, sw, -sh}; // las render textures están invertidas en Y
+    if (out_)
+        BeginTextureMode(*out_);
     if (postOk_ && postEnabled_) {
         const float res[2] = {sw, sh};
         const float t = static_cast<float>(GetTime());
@@ -374,4 +429,6 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
     } else {
         DrawTextureRec(scene_.texture, src, {0, 0}, WHITE);
     }
+    if (out_)
+        EndTextureMode();
 }

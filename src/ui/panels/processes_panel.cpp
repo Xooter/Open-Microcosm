@@ -91,7 +91,7 @@ class ProcessesPanel : public Panel {
             FungiParams& fp = world.fungi().params;
             slider("Absorción [1/h]", &fp.uptakePerHour, 0.0f, 4.0f, "%.2f");
             slider("Mantenimiento [1/h]", &fp.maintenancePerHour, 0.0f, 0.2f, "%.3f");
-            slider("Hambre → esporas [h]", &fp.starvationHoursToSporulate, 0.5f, 20.0f, "%.1f");
+            slider("Hambre a esporas [h]", &fp.starvationHoursToSporulate, 0.5f, 20.0f, "%.1f");
             slider("Exoenzimas (x)", &fp.detritusDecayBoost, 1.0f, 100.0f, "%.0f");
             slider("Allomyces: despierta [µM]", &fp.restingGerminateFood, 1.0f, 50.0f, "%.0f");
             slider("Liquen: azúcar [1/h]", &fp.lichenSugarPerHour, 0.0f, 0.5f, "%.2f");
@@ -106,7 +106,7 @@ class ProcessesPanel : public Panel {
             slider("Evita su baba", &pp.slimeAvoidance, 0.0f, 4.0f, "%.1f");
             slider("Evita la luz", &pp.lightAvoidance, 0.0f, 4.0f, "%.1f");
             slider("Retracción (D mínimo)", &pp.pruneD, 0.0f, 0.2f, "%.3f");
-            slider("Hambre → esclerocio [h]", &pp.starveHoursToSclerotium, 1.0f, 40.0f, "%.0f");
+            slider("Hambre a esclerocio [h]", &pp.starveHoursToSclerotium, 1.0f, 40.0f, "%.0f");
         }
     }
 };

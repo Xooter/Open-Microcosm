@@ -1,6 +1,7 @@
 #pragma once
 
 #include "core/vec2.hpp"
+#include "game/stain.hpp"
 
 #include <raylib.h>
 
@@ -9,12 +10,6 @@
 
 class World;
 struct RingBody;
-
-// Tinciones de laboratorio (vitales: no matan a las células).
-//  - Rojo Congo: las vacuolas digestivas viran de rojo a azul al acidificarse (pH < 5).
-//  - Azul de metileno: tiñe núcleos y ácidos nucleicos de azul.
-enum class Stain { None, CongoRed, MethyleneBlue };
-const char* stainName(Stain stain);
 
 // Células en campo claro:
 // 1. el relleno de cada célula se dibuja en una textura (triangulado con ear clipping);
@@ -33,10 +28,14 @@ class CellRenderer {
     void composite(const Camera2D& camera);
     // Membranas y organelos (dentro de BeginMode2D).
     void drawDetails(const World& world, const Camera2D& camera, Rectangle view);
-    void setStain(Stain stain) { stain_ = stain; }
+    // Tinción activa (nullptr: sin tinción). Solo cambia colores; la simulación no se entera.
+    void setStain(const StainSpec* stain) { stain_ = stain; }
+    // Tamaño de la textura de destino (0: el de la pantalla); lo usa la vista previa.
+    void setTargetSize(int w, int h) { targetW_ = w; targetH_ = h; }
 
   private:
     void ensureTarget();
+    void drawFluorescence(const World& world, const Camera2D& camera, Rectangle view);
     void fillCell(const RingBody& body, Color tint);
     template <typename Fn>
     void forEachImage(const World& world, const RingBody& body, Rectangle view, Fn&& fn);
@@ -45,6 +44,8 @@ class CellRenderer {
     Shader shader_{};
     bool shaderOk_ = false;
     int texelLoc_ = -1, rimLoc_ = -1;
-    Stain stain_ = Stain::None;
+    const StainSpec* stain_ = nullptr;
+    int targetW_ = 0, targetH_ = 0;
+    int fluorLoc_ = -1;
     std::vector<int> triangles_, scratch_;
 };

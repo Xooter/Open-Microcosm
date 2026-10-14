@@ -3,15 +3,18 @@
 #include "app/tools.hpp"
 #include "game/plate_spec.hpp"
 #include "game/progress.hpp"
+#include "game/stain.hpp"
 #include "game/run.hpp"
 #include "game/world.hpp"
 #include "gpu/gpu_substep_solver.hpp"
 #include "render/renderer.hpp"
 #include "ui/commands.hpp"
 #include "ui/panel.hpp"
+#include "ui/stain_preview.hpp"
 
 #include <raylib.h>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>
@@ -55,6 +58,15 @@ struct App {
     CatalogState catalog;
     Camera2D camera{};
     Rectangle viewport{0, 0, 1600, 900}; // el centro libre del dockspace: donde se ve la placa
+
+    // --- Tinciones (solo visuales) ---
+    std::vector<StainSpec> stains;   // de fábrica y del usuario; la 0 es "sin tinción"
+    int stainIndex = 0;              // la activa en la placa
+    std::string stainsDir = defaultStainsDir();
+    ui::StainPreview stainPreview;
+    const StainSpec* activeStain() const { return stainIndex > 0 && stainIndex < static_cast<int>(stains.size()) ? &stains[static_cast<std::size_t>(stainIndex)] : nullptr; }
+    void setStainIndex(int i) { stainIndex = std::clamp(i, 0, static_cast<int>(stains.size()) - 1); }
+    void reloadStains();             // de fábrica + carpeta del usuario
 
     // --- Interfaz ---
     ui::Commands commands;

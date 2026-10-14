@@ -47,7 +47,6 @@ struct ToolState {
     float simSpeed = 1.0f;        // velocidad de la simulación (múltiplo del tiempo real)
     int stepRequests = 0;         // pasos sueltos pedidos con la simulación en pausa
     Overlay overlay = Overlay::None;
-    int stain = 0;                // Stain
     // Gotero: suelta un soluto en el punto del cursor. `dropAmount` es relativo a una
     // concentración típica del soluto.
     int dropper = 0;

@@ -21,6 +21,8 @@ class InstancedParticles {
     void upload(const Bacteria& bacteria);
     // Dibuja todas las instancias con el desplazamiento dado (dentro de BeginMode2D).
     void draw(float offsetX, float offsetY, float length, float thickness);
+    // Color (RGBA 0-1) de cada tipo de bacteria: 8 tipos.
+    void setPalette(const float rgba[32]) { palette_.assign(rgba, rgba + 32); }
 
   private:
     void init();
@@ -31,4 +33,5 @@ class InstancedParticles {
     int capacity_ = 0, count_ = 0;
     int mvpLoc_ = -1, halfSizeLoc_ = -1, paletteLoc_ = -1;
     std::vector<float> data_;
+    std::vector<float> palette_;
 };

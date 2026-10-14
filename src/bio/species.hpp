@@ -42,6 +42,27 @@ enum class SpeciesId : std::uint8_t {
 };
 inline constexpr int kSpeciesCount = static_cast<int>(SpeciesId::Count);
 
+// Química de las reservas y de la pared: lo que las tinciones ven (el color no sale del nombre de
+// la especie sino de qué polisacárido guarda y de qué está hecha su pared).
+enum class Storage : std::uint8_t {
+    None,
+    Starch,          // almidón verdadero en el cloroplasto (clorofitas): el yodo lo vuelve azul-negro
+    Glycogen,        // glucógeno (animales, ciliados, amebas, levaduras): el yodo da marrón rojizo
+    Paramylon,       // β-1,3-glucano de los euglénidos: NO reacciona con el yodo
+    Chrysolaminarin, // β-glucano de las diatomeas (en una vacuola): NO reacciona con el yodo
+};
+enum class CellWall : std::uint8_t {
+    None,        // película o membrana desnuda
+    Cellulose,   // algas verdes
+    Silica,      // frústula de diatomea
+    YeastGlucan, // levaduras: pared gruesa de glucano y manano; se tiñe como grampositiva
+};
+struct SpeciesChemistry {
+    Storage storage = Storage::None;
+    CellWall wall = CellWall::None;
+};
+const SpeciesChemistry& speciesChemistry(SpeciesId id);
+
 inline constexpr std::uint32_t speciesBit(SpeciesId s) { return 1u << static_cast<unsigned>(s); }
 
 enum class FeedingMode : std::uint8_t {

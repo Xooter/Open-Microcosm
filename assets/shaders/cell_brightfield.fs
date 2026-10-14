@@ -10,11 +10,17 @@ in vec4 fragColor;
 uniform sampler2D texture0;
 uniform vec2 texelSize; // 1 / tamaño de la textura
 uniform float rimPx;    // ancho del borde óptico en píxeles
+uniform float fluor;    // 1: fluorescencia (la célula es invisible salvo lo que emite)
 
 out vec4 finalColor;
 
 void main() {
     vec4 c = texture(texture0, fragTexCoord);
+    if (fluor > 0.5) {
+        // Autofluorescencia: solo se ve el tinte si no es negro; sin halo ni borde óptico.
+        finalColor = c.a > 0.5 ? vec4(c.rgb, 0.8 * step(0.02, c.r + c.g + c.b)) : vec4(0.0);
+        return;
+    }
     const int N = 12;
     float around = 0.0;
     for (int i = 0; i < N; ++i) {

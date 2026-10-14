@@ -45,8 +45,14 @@ class ToolsPanel : public Panel {
             int o = static_cast<int>(t.overlay);
             if (combo("Capa de campo", &o, overlays.data(), overlayCount, "Pinta un campo de la placa sobre el mundo (F1-F10)."))
                 t.overlay = static_cast<Overlay>(o);
-            static const char* const kStains[] = {"Sin tinción", "Rojo Congo", "Azul de metileno"};
-            combo("Tinción", &t.stain, kStains, 3, "Cambia cómo se ven las células (J).");
+            std::vector<const char*> stainNames;
+            for (const StainSpec& st : app.stains)
+                stainNames.push_back(st.name.c_str());
+            int si = app.stainIndex;
+            if (combo("Tinción", &si, stainNames.data(), static_cast<int>(stainNames.size()), "Colorante activo sobre la placa (J). Solo cambia cómo se ve."))
+                app.setStainIndex(si);
+            if (ImGui::SmallButton(tr("Editor de tinciones...")))
+                app.panels.show("tinciones");
             checkbox("La cámara sigue al ser controlado", &t.follow);
         }
     }

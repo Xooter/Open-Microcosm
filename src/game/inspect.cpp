@@ -346,6 +346,23 @@ Inspection inspectCell(const World& w, entt::entity e) {
             add(s, "Apareamiento", her->genome[Gene::MatingType] > 0.5f ? "tipo II" : "tipo I");
     }
 
+    // --- Tinciones: lo que cada colorante ve en esta especie (bioquimica real).
+    {
+        InspectSection& s = section(ins, "Tinciones");
+        const SpeciesChemistry chem = speciesChemistry(sid);
+        switch (chem.storage) {
+        case Storage::Starch: add(s, "Lugol", "almidon verdadero en el cloroplasto: azul-negro"); break;
+        case Storage::Glycogen: add(s, "Lugol", "glucogeno: marron rojizo"); break;
+        case Storage::Paramylon: add(s, "Lugol", "paramilon: no reacciona con el yodo"); break;
+        case Storage::Chrysolaminarin: add(s, "Lugol", "crisolaminarina (en una vacuola): no reacciona con el yodo"); break;
+        case Storage::None: break;
+        }
+        add(s, "Gram", chem.wall == CellWall::YeastGlucan ? "pared gruesa de levadura: se tine como grampositiva (violeta)"
+                                                          : "celula eucariota: toma solo la contratincion (rosa palido)");
+        add(s, "DAPI / azul de metileno", "el ADN del nucleo");
+        add(s, "Rojo neutro", "vacuolas digestivas y lisosomas (acidos)");
+    }
+
     // --- Medio local.
     {
         InspectSection& s = section(ins, "Medio local");
@@ -531,10 +548,10 @@ Inspection inspectBacterium(const World& w, const Picked& p) {
     ins.valid = true;
     ins.at = {b.x[i], b.y[i]};
     ins.radius = 6.0f;
-    const bool vio = b.strain[i] == 1;
-    ins.title = vio ? "Chromobacterium violaceum" : "Bacteria (bacilo)";
+    const bool vio = b.strain[i] == 1, bacillus = b.strain[i] == 2;
+    ins.title = vio ? "Chromobacterium violaceum" : (bacillus ? "Bacillus subtilis" : "Bacteria (bacilo)");
     ins.subtitle = "Bacteria";
-    ins.blurb = otherBlurb(vio ? OtherOrganism::Violaceum : OtherOrganism::Bacteria);
+    ins.blurb = otherBlurb(vio ? OtherOrganism::Violaceum : (bacillus ? OtherOrganism::Bacillus : OtherOrganism::Bacteria));
     std::string state;
     if (b.bdello[i] >= 0.0f)
         state = fmt("bdeloplasto: un Bdellovibrio crece adentro (%.1f h bio)", b.bdello[i]);
@@ -548,6 +565,8 @@ Inspection inspectBacterium(const World& w, const Picked& p) {
     add(s, "Masa", fmt("%.2f (se divide al llegar a 2)", b.mass[i]));
     add(s, "Alimento local", fmt("%.1f uM de materia organica", w.nutrients().grid().sample(b.x[i], b.y[i])));
     add(s, "Quimiotaxis", "compara la concentracion de ahora con la de hace ~1 s");
+    add(s, "Tincion de Gram", bacillus ? "grampositiva: pared gruesa de peptidoglicano, retiene el cristal violeta"
+                                       : "gramnegativa: pared fina y membrana externa, pierde el cristal violeta y toma la safranina (rosa)");
     if (b.resistant[i])
         add(s, "Defensa", "resistente a los fagos");
     if (vio)

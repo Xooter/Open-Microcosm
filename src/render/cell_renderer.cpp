@@ -54,16 +54,69 @@ constexpr float kRimMicrometers = 5.0f;
 constexpr float kPi = 3.14159265f;
 
 Vector2 toRay(Vec2 v) { return {v.x, v.y}; }
-} // namespace
 
-const char* stainName(Stain stain) {
-    switch (stain) {
-    case Stain::None: return "sin tincion";
-    case Stain::CongoRed: return "rojo Congo (pH de las vacuolas)";
-    case Stain::MethyleneBlue: return "azul de metileno (nucleos)";
-    }
-    return "";
+Color dyeColor(Rgba c, float alpha) {
+    auto b = [](float v) { return static_cast<unsigned char>(std::clamp(v, 0.0f, 1.0f) * 255.0f + 0.5f); };
+    return {b(c.r), b(c.g), b(c.b), b(alpha)};
 }
+
+// El colorante encima del color natural: mezcla los canales y deja al menos la opacidad del colorante.
+Color overColor(Color base, const StainResult& dye, float opacity = 0.9f) {
+    const float t = std::clamp(dye.alpha, 0.0f, 1.0f);
+    auto mixc = [&](unsigned char a, float b) { return static_cast<unsigned char>(a + (std::clamp(b, 0.0f, 1.0f) * 255.0f - a) * t); };
+    Color o = {mixc(base.r, dye.color.r), mixc(base.g, dye.color.g), mixc(base.b, dye.color.b), base.a};
+    o.a = std::max<unsigned char>(base.a, static_cast<unsigned char>(255.0f * opacity * t));
+    return o;
+}
+
+// Cuánto almidón o glucógeno tiene la célula (0 a 1): sus reservas respecto de la biomasa.
+float storageAmount(const Metabolism* m) {
+    if (!m)
+        return 0.5f;
+    return std::clamp(m->reserves / std::max(1e-6f, 0.5f * m->biomass), 0.0f, 1.0f);
+}
+
+// Qué polisacárido guarda la célula y dónde se ve (en el cloroplasto el almidón; en gránulos el resto).
+StainTarget storageTarget(Storage s) {
+    switch (s) {
+    case Storage::Starch: return StainTarget::Starch;
+    case Storage::Glycogen: return StainTarget::Glycogen;
+    case Storage::Paramylon: return StainTarget::Paramylon;
+    default: return StainTarget::Count;
+    }
+}
+
+// Color con que entra la célula entera en la textura de cobertura.
+Color cellTint(const StainSpec* st, const entt::registry& reg, entt::entity e, const CellLook& look) {
+    Color base = {look.r, look.g, look.b, 255};
+    const Species* sp = reg.try_get<Species>(e);
+    if (!st)
+        return base;
+    if (st->mode == StainMode::Fluorescence) {
+        // Sin colorante la célula es invisible; la clorofila emite roja por sí sola.
+        if (sp && speciesInfo(sp->id).chloroplasts) {
+            const StainResult chl = evaluateStain(*st, StainTarget::Chlorophyll);
+            if (chl.alpha > 0.0f) {
+                // Las colonias huecas (Volvox) tienen la clorofila solo en una capa de células.
+                const float k = (speciesInfo(sp->id).dryMassScale < 0.2f ? 0.35f : 1.0f) * std::min(1.0f, chl.alpha * 2.5f);
+                return dyeColor({chl.color.r * k, chl.color.g * k, chl.color.b * k, 1.0f}, 1.0f);
+            }
+        }
+        return {0, 0, 0, 255};
+    }
+    // Las levaduras tienen pared gruesa y se tiñen como grampositivas; el resto, con el colorante general.
+    const SpeciesChemistry chem = sp ? speciesChemistry(sp->id) : SpeciesChemistry{};
+    StainResult dye = evaluateStain(*st, StainTarget::Cytoplasm);
+    if (chem.wall == CellWall::YeastGlucan) {
+        const StainResult g = evaluateStain(*st, StainTarget::GramPositive);
+        if (g.alpha > dye.alpha)
+            dye = g;
+    }
+    const float chlorophyll = 0.0f;
+    (void)chlorophyll;
+    return overColor(base, dye, 1.0f);
+}
+} // namespace
 
 CellRenderer::CellRenderer() {
     shader_ = LoadShader(nullptr, BIO_ASSET_DIR "/shaders/cell_brightfield.fs");
@@ -71,6 +124,7 @@ CellRenderer::CellRenderer() {
     if (shaderOk_) {
         texelLoc_ = GetShaderLocation(shader_, "texelSize");
         rimLoc_ = GetShaderLocation(shader_, "rimPx");
+        fluorLoc_ = GetShaderLocation(shader_, "fluor");
     } else {
         TraceLog(LOG_WARNING, "bio: shader de células no disponible, uso relleno plano");
     }
@@ -84,7 +138,7 @@ CellRenderer::~CellRenderer() {
 }
 
 void CellRenderer::ensureTarget() {
-    const int w = GetScreenWidth(), h = GetScreenHeight();
+    const int w = targetW_ > 0 ? targetW_ : GetScreenWidth(), h = targetH_ > 0 ? targetH_ : GetScreenHeight();
     if (target_.id != 0 && target_.texture.width == w && target_.texture.height == h)
         return;
     if (target_.id != 0)
@@ -138,7 +192,7 @@ void CellRenderer::renderCoverage(const World& world, const Camera2D& camera, Re
     BeginMode2D(camera);
     rlDisableBackfaceCulling(); // los polígonos pueden venir en cualquier orientación
     for (const auto [e, body, look] : world.registry().view<RingBody, CellLook>().each()) {
-        const Color tint = {look.r, look.g, look.b, 255};
+        const Color tint = cellTint(stain_, world.registry(), e, look);
         forEachImage(world, body, view, [&] { fillCell(body, tint); });
     }
     // raylib dibuja en lotes: hay que vaciar el lote ANTES de reactivar el culling, o los
@@ -159,6 +213,8 @@ void CellRenderer::composite(const Camera2D& camera) {
         const float rim = std::clamp(kRimMicrometers * camera.zoom, 1.5f, 14.0f);
         SetShaderValue(shader_, texelLoc_, texel, SHADER_UNIFORM_VEC2);
         SetShaderValue(shader_, rimLoc_, &rim, SHADER_UNIFORM_FLOAT);
+        const float fluor = stain_ && stain_->mode == StainMode::Fluorescence ? 1.0f : 0.0f;
+        SetShaderValue(shader_, fluorLoc_, &fluor, SHADER_UNIFORM_FLOAT);
         BeginShaderMode(shader_);
         DrawTextureRec(target_.texture, src, {0, 0}, WHITE);
         EndShaderMode();
@@ -692,6 +748,10 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
     const float membraneWidth = std::max(1.0f, 1.2f * px);
     const float time = world.simTime();
     const entt::registry& reg = world.registry();
+    if (stain_ && stain_->mode == StainMode::Fluorescence) {
+        drawFluorescence(world, camera, view);
+        return;
+    }
 
     for (const auto [e, body, anatomy] : reg.view<RingBody, CellAnatomy>().each()) {
         const Locomotion* loco = reg.try_get<Locomotion>(e);
@@ -870,6 +930,20 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             for (std::size_t k = body.organelleCount; k < body.interior.size() && !colony; ++k) {
                 const std::uint32_t s = body.interior[k];
                 const float r = std::max(bp.radius[s], 0.75f * px);
+                // Reservas teñidas: el almidón envuelve al pirenoide del cloroplasto; el glucógeno y
+                // el paramilón están en gránulos del citoplasma.
+                if (stain_) {
+                    const SpeciesChemistry chem = speciesChemistry(sid);
+                    const StainTarget st = storageTarget(chem.storage);
+                    const auto tag = static_cast<OrganelleTag>(bp.tag[s]);
+                    const bool holder = chem.storage == Storage::Starch ? tag == OrganelleTag::Chloroplast : tag == OrganelleTag::Granule;
+                    if (st != StainTarget::Count && holder && stainHasTarget(*stain_, st)) {
+                        const float amount = storageAmount(reg.try_get<Metabolism>(e));
+                        const StainResult dye = evaluateStain(*stain_, st, amount);
+                        if (dye.alpha > 0.02f)
+                            DrawCircleV({bp.x[s], bp.y[s]}, std::max(r * (1.4f + 1.2f * amount), 2.2f * px), dyeColor(dye.color, 0.4f + 0.6f * dye.alpha));
+                    }
+                }
                 switch (static_cast<OrganelleTag>(bp.tag[s])) {
                 case OrganelleTag::Mitochondrion: // bastoncitos
                     DrawRectanglePro({bp.x[s], bp.y[s], 2.6f * r, 1.2f * r}, {1.3f * r, 0.6f * r},
@@ -881,9 +955,13 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                         break; // su cloroplasto se dibuja entero (cinta, placa, estrellas o red)
                     DrawCircleV({bp.x[s], bp.y[s]}, r, sid == SpeciesId::Navicula ? kGoldenPlastid : kChloroplast);
                     break;
-                case OrganelleTag::Lysosome:
-                    DrawCircleV({bp.x[s], bp.y[s]}, r, kLysosome);
+                case OrganelleTag::Lysosome: {
+                    Color fill = kLysosome; // pH ~4,7: los lisosomas son ácidos
+                    if (stain_ && stainHasTarget(*stain_, StainTarget::Acidic))
+                        fill = overColor(fill, evaluateStain(*stain_, StainTarget::Acidic, 1.0f, 4.7f), 0.9f);
+                    DrawCircleV({bp.x[s], bp.y[s]}, r, fill);
                     break;
+                }
                 case OrganelleTag::Granule:
                     DrawRectangleV({bp.x[s] - r, bp.y[s] - r}, {2 * r, 2 * r}, kGranule);
                     break;
@@ -928,14 +1006,12 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     const float fresh = v.initialPmol > 0.0f ? v.contentPmol / v.initialPmol : 0.0f;
                     const auto alpha = static_cast<unsigned char>(60.0f + 120.0f * fresh);
                     Color fill = {v.r, v.g, v.b, alpha};
-                    if (stain_ == Stain::CongoRed) {
-                        // Fases de la vacuola de Paramecium: se acidifica (pH ~3, azul) en los
-                        // primeros minutos, después los lisosomas la neutralizan (rojo).
+                    if (stain_ && stainHasTarget(*stain_, StainTarget::Acidic)) {
+                        // Fases de la vacuola de Paramecium: se acidifica (pH ~3) en los primeros
+                        // minutos, después los lisosomas la neutralizan.
                         const float done = 1.0f - fresh;
                         const float ph = v.open ? 7.0f : (done < 0.1f ? 7.0f - 40.0f * done : (done < 0.4f ? 3.0f : 3.0f + 7.0f * (done - 0.4f)));
-                        const float blue = std::clamp((5.0f - ph) / 2.0f, 0.0f, 1.0f);
-                        fill = {static_cast<unsigned char>(200 - 160 * blue), static_cast<unsigned char>(40 + 20 * blue),
-                                static_cast<unsigned char>(60 + 110 * blue), 210};
+                        fill = overColor(fill, evaluateStain(*stain_, StainTarget::Acidic, 1.0f, ph), 0.85f);
                     }
                     DrawCircleV(c, r, fill);
                     DrawRing(c, std::max(0.0f, r - std::max(0.6f, px)), r, 0.0f, 360.0f, 32, kVacuoleRim);
@@ -945,9 +1021,17 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             auto nucleus = [&](std::uint32_t slot) {
                 const Vector2 c = {bp.x[slot], bp.y[slot]};
                 const float r = bp.radius[slot];
-                const bool blue = stain_ == Stain::MethyleneBlue; // el ADN toma el colorante
-                DrawCircleV(c, r, blue ? Color{40, 70, 170, 200} : kNucleus);
-                DrawRing(c, r - std::max(0.8f, px), r, 0.0f, 360.0f, 40, blue ? Color{25, 45, 130, 230} : kNucleusRim);
+                Color fillN = kNucleus, rimN = kNucleusRim; // el ADN toma el colorante
+                if (stain_) {
+                    const StainResult dye = evaluateStain(*stain_, StainTarget::Nucleus);
+                    fillN = overColor(kNucleus, dye, 0.8f);
+                    rimN = overColor(kNucleusRim, dye, 0.9f);
+                    rimN.r = static_cast<unsigned char>(rimN.r * 0.7f);
+                    rimN.g = static_cast<unsigned char>(rimN.g * 0.7f);
+                    rimN.b = static_cast<unsigned char>(rimN.b * 0.7f);
+                }
+                DrawCircleV(c, r, fillN);
+                DrawRing(c, r - std::max(0.8f, px), r, 0.0f, 360.0f, 40, rimN);
                 DrawCircleV({c.x + 0.2f * r, c.y - 0.15f * r}, 0.3f * r, kNucleolus);
             };
             auto contractile = [&](std::uint32_t slot) {
@@ -971,4 +1055,38 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             }
         });
     }
+}
+
+// Fluorescencia: sobre el fondo oscuro solo brillan los blancos teñidos (el ADN del núcleo, con un halo).
+void CellRenderer::drawFluorescence(const World& world, const Camera2D&, Rectangle view) {
+    const BodyParticles& bp = world.bodies();
+    const entt::registry& reg = world.registry();
+    const StainResult dye = evaluateStain(*stain_, StainTarget::Nucleus);
+    if (dye.alpha <= 0.0f)
+        return;
+    BeginBlendMode(BLEND_ADDITIVE);
+    for (const auto [e, body, anatomy] : reg.view<RingBody, CellAnatomy>().each()) {
+        const Species* species = reg.try_get<Species>(e);
+        const SpeciesId sid = species ? species->id : SpeciesId::Paramecium;
+        if (reg.all_of<Segment>(e) || reg.all_of<Egg>(e) || speciesInfo(sid).multicellular || sid == SpeciesId::Volvox ||
+            sid == SpeciesId::Pediastrum)
+            continue;
+        const Dividing* dividing = reg.try_get<Dividing>(e);
+        forEachImage(world, body, view, [&] {
+            auto nucleus = [&](std::uint32_t slot) {
+                if (slot == ~0u)
+                    return;
+                const Vector2 c = {bp.x[slot], bp.y[slot]};
+                const float r = bp.radius[slot];
+                DrawCircleV(c, r * 2.1f, dyeColor(dye.color, 0.10f * dye.alpha));
+                DrawCircleV(c, r * 1.5f, dyeColor(dye.color, 0.22f * dye.alpha));
+                DrawCircleV(c, r, dyeColor(dye.color, 0.95f * dye.alpha));
+            };
+            nucleus(anatomy.nucleus);
+            if (dividing)
+                nucleus(dividing->nucleus2);
+        });
+    }
+    rlDrawRenderBatchActive();
+    EndBlendMode();
 }

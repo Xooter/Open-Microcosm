@@ -32,6 +32,9 @@ struct BacteriaParams {
     // violaceum, que con quorum sensing (autoinductor AHL) produce violaceína, un pigmento
     // violeta tóxico para los protistas que la comen, y forma agregados (biopelícula).
     float violaceumFraction = 0.2f;
+    // Bacillus subtilis (cepa 2): bacilo grampositivo (pared gruesa de peptidoglicano), común en
+    // suelo y agua dulce. Vive igual que las genéricas; se distingue con la tinción de Gram.
+    float bacillusFraction = 0.12f;
     float ahlPerHour = 2e-7f;       // autoinductor que libera cada bacteria [pmol/h]
     float quorumThreshold = 0.05f;  // [µM] (decenas de nM en la realidad, con hysteresis)
     float quorumSpeed = 0.3f;       // en agregado nadan menos
@@ -62,7 +65,7 @@ class Bacteria {
     std::vector<float> memory;       // señal promediada en memoryTime
     std::vector<std::uint8_t> tumbling;
     std::vector<float> mass;         // relativa a una recién nacida (1); se divide en 2
-    std::vector<std::uint8_t> strain;    // 0: genérica; 1: C. violaceum (quorum sensing)
+    std::vector<std::uint8_t> strain;    // 0: bacilo gramnegativo genérico; 1: C. violaceum (gramnegativa, quorum sensing); 2: B. subtilis (grampositiva)
     std::vector<std::uint8_t> resistant; // resistente a los fagos
     std::vector<std::uint8_t> quorum;    // quorum alcanzado (violaceína, agregado)
     std::vector<float> phage;        // horas desde la infección por un fago (< 0: sana)

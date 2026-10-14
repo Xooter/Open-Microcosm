@@ -19,6 +19,7 @@ const char* otherName(OtherOrganism o) {
     switch (o) {
     case OtherOrganism::Bacteria: return "Bacterias (bacilos)";
     case OtherOrganism::Violaceum: return "Chromobacterium violaceum";
+    case OtherOrganism::Bacillus: return "Bacillus subtilis";
     case OtherOrganism::Cyanobacteria: return "Cianobacterias filamentosas";
     case OtherOrganism::Chytrid: return "Rhizophydium (quitridio)";
     case OtherOrganism::Saprolegnia: return "Saprolegnia";
@@ -38,6 +39,8 @@ const char* otherBlurb(OtherOrganism o) {
         return "Nadan con 'corridas y giros' y siguen la comida comparando la concentracion de ahora con la de hace un segundo.";
     case OtherOrganism::Violaceum:
         return "Cuando son muchas, el autoinductor que liberan pasa un umbral (quorum) y fabrican violaceina, un pigmento violeta toxico para quien las come.";
+    case OtherOrganism::Bacillus:
+        return "Bacilo grampositivo de suelo y agua dulce: su pared de peptidoglicano es tan gruesa que retiene el cristal violeta de la tincion de Gram (las gramnegativas lo pierden con el decolorante y se ven rosadas).";
     case OtherOrganism::Cyanobacteria:
         return "Cadenas de celulas fotosinteticas; cada ~10 una se vuelve heterocisto y fija el nitrogeno del aire. Al morir liberan microcistina.";
     case OtherOrganism::Chytrid:
@@ -118,16 +121,18 @@ std::vector<std::string> discoverVisible(Progress& progress, const World& world,
         }
     };
     const Bacteria& bac = world.bacteria();
-    bool bacteria = false, violet = false, bdello = false;
+    bool bacteria = false, violet = false, bdello = false, bacillus = false;
     for (std::size_t i = 0; i < bac.size(); i += 7) { // muestreo: alcanza para notar que están
         if (!inView({bac.x[i], bac.y[i]}))
             continue;
         bacteria = true;
         violet |= bac.quorum[i] != 0;
+        bacillus |= bac.strain[i] == 2;
         bdello |= bac.bdello[i] >= 0.0f;
     }
     see(OtherOrganism::Bacteria, bacteria);
     see(OtherOrganism::Violaceum, violet);
+    see(OtherOrganism::Bacillus, bacillus);
     see(OtherOrganism::Bdellovibrio, bdello);
     bool cyano = false;
     for (const CyanoFilament& f : world.cyanobacteria().filaments)

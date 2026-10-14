@@ -19,16 +19,21 @@ class Renderer {
     ~Renderer();
 
     void drawWorld(const World& world, const Camera2D& camera, Overlay overlay);
-    // Tinción: ver Stain.
-    void setStain(Stain stain) {
+    // Igual, pero dibuja en `out` (con su tamaño) en vez de en la pantalla: la vista previa de las
+    // tinciones usa el mismo render que la placa. Fuera de BeginDrawing/EndDrawing.
+    void drawWorldTo(const World& world, const Camera2D& camera, Overlay overlay, RenderTexture2D& out);
+    // Tinción activa (nullptr: ninguna). El render solo cambia colores; no toca la simulación.
+    void setStain(const StainSpec* stain) {
         stain_ = stain;
         cells_.setStain(stain);
     }
-    Stain stain() const { return stain_; }
+    const StainSpec* stain() const { return stain_; }
     void setPostProcess(bool on) { postEnabled_ = on; }
 
   private:
     void ensureScene();
+    int width() const { return out_ ? out_->texture.width : GetScreenWidth(); }
+    int height() const { return out_ ? out_->texture.height : GetScreenHeight(); }
     void drawDish(const World& world, const Camera2D& camera);
 
     FieldOverlay overlay_;
@@ -43,7 +48,8 @@ class Renderer {
     struct {
         int resolution = -1, offset = -1, target = -1, zoom = -1, dish = -1;
     } glassLoc_;
-    Stain stain_ = Stain::None;
+    const StainSpec* stain_ = nullptr;
+    RenderTexture2D* out_ = nullptr; // destino alternativo (vista previa)
     std::vector<Vector2> rockPts_; // contorno de un grano (se reusa entre frames)
     bool postEnabled_ = true;
 };

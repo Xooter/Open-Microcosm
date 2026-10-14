@@ -222,6 +222,43 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
 
 const SpeciesInfo& speciesInfo(SpeciesId id) { return kSpecies[static_cast<int>(id)]; }
 
+namespace {
+
+// En el orden de SpeciesId. Reservas y paredes reales de cada grupo.
+constexpr SpeciesChemistry kChemistry[kSpeciesCount] = {
+    {Storage::Glycogen, CellWall::None},          // Paramecium
+    {Storage::Paramylon, CellWall::None},         // Euglena
+    {Storage::Glycogen, CellWall::None},          // Amoeba
+    {Storage::Starch, CellWall::Cellulose},       // Chlamydomonas (almidón en el pirenoide)
+    {Storage::Glycogen, CellWall::None},          // Didinium
+    {Storage::Glycogen, CellWall::None},          // Vorticella
+    {Storage::Glycogen, CellWall::None},          // Stentor
+    {Storage::Glycogen, CellWall::None},          // Podophrya
+    {Storage::Glycogen, CellWall::None},          // Euplotes
+    {Storage::Glycogen, CellWall::None},          // Arcella
+    {Storage::Glycogen, CellWall::None},          // Lacrymaria
+    {Storage::Starch, CellWall::Cellulose},       // Spirogyra
+    {Storage::Chrysolaminarin, CellWall::Silica}, // Navicula
+    {Storage::Starch, CellWall::Cellulose},       // Volvox
+    {Storage::Starch, CellWall::Cellulose},       // Pediastrum
+    {Storage::Glycogen, CellWall::YeastGlucan},   // Candida
+    {Storage::Glycogen, CellWall::None},          // Rotifer
+    {Storage::Glycogen, CellWall::None},          // Hydra
+    {Storage::Glycogen, CellWall::None},          // Nauplius
+    {Storage::Glycogen, CellWall::None},          // Naegleria
+    {Storage::Glycogen, CellWall::None},          // Trichonympha
+    {Storage::Glycogen, CellWall::None},          // Philodina
+    {Storage::Starch, CellWall::Cellulose},       // Mougeotia
+    {Storage::Starch, CellWall::Cellulose},       // Zygnema
+    {Storage::Starch, CellWall::Cellulose},       // Oedogonium
+    {Storage::Glycogen, CellWall::None},          // Chaetonotus
+    {Storage::Glycogen, CellWall::None},          // Rhabditis
+};
+
+} // namespace
+
+const SpeciesChemistry& speciesChemistry(SpeciesId id) { return kChemistry[static_cast<int>(id)]; }
+
 SpeciesId playerSpecies(LocomotionType type) {
     switch (type) {
     case LocomotionType::Cilia: return SpeciesId::Paramecium;

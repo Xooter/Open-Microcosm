@@ -87,6 +87,7 @@ App::App() {
     progress = loadProgress(progressPath);
     plate.seed = std::random_device{}() & 0x7fffffffu;
     plate.rebuild();
+    reloadStains();
     layoutPath_ = (std::filesystem::path(optionsPath).parent_path() / "layout.ini").string();
     layoutReset_ = !std::filesystem::exists(layoutPath_);
 }
@@ -101,6 +102,22 @@ void App::setTool(Tool t) {
         selection.hover = {};
         selection.hoverText.clear();
     }
+}
+
+void App::reloadStains() {
+    const std::string activeId = activeStain() ? activeStain()->id : "none";
+    stains = builtinStains();
+    for (StainSpec& s : loadUserStains(stainsDir)) {
+        bool clash = false;
+        for (const StainSpec& b : stains)
+            clash |= b.id == s.id;
+        if (!clash)
+            stains.push_back(std::move(s));
+    }
+    stainIndex = 0;
+    for (std::size_t i = 0; i < stains.size(); ++i)
+        if (stains[i].id == activeId)
+            stainIndex = static_cast<int>(i);
 }
 
 void App::setFullscreen(bool on) {
@@ -253,7 +270,9 @@ void App::registerCommands() {
             [this, ov] { tools.overlay = tools.overlay == ov ? Overlay::None : ov; }, {},
             [this, ov] { return tools.overlay == ov; });
     }
-    add("view.stain", "Cambiar tinción", "Capas", ImGuiKey_J, false, [this] { tools.stain = (tools.stain + 1) % 3; });
+    add("view.stain", "Siguiente tinción", "Capas", ImGuiKey_J, false,
+        [this] { setStainIndex((stainIndex + 1) % static_cast<int>(stains.size())); });
+    add("view.stain_editor", "Editor de tinciones", "Capas", ImGuiKey_None, false, [this] { panels.show("tinciones"); });
 
     add("view.fullscreen", "Pantalla completa", "Ver", ImGuiKey_F11, false,
         [this] {
@@ -787,7 +806,7 @@ int App::run() {
             followCell(camera, *world, world->player(), viewport, frameDt);
         discover(frameDt);
 
-        renderer->setStain(static_cast<Stain>(tools.stain));
+        renderer->setStain(activeStain());
         BeginDrawing();
         ClearBackground({22, 24, 24, 255});
         const double r0 = GetTime();

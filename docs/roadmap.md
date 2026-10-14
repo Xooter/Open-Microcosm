@@ -48,6 +48,16 @@ nutrientes disueltos con limitación real. Las decisiones de jugabilidad de abaj
 - **Pendiente:** vista previa gráfica de la placa antes de crearla, íconos vectoriales en la barra
   de herramientas, paleta de comandos e idiomas además del español (`assets/lang`).
 
+## Tinciones profesionales (2026-10) ✅
+- **Motor de tinciones por reglas** (`game/stain`): Gram (con tiempo de decolorante), Lugol
+  (almidón), DAPI (fluorescencia), rojo neutro, azul de metileno y rojo Congo; editables y
+  guardables (`.stain`).
+- **Bioquímica por especie** (`speciesChemistry`) y una cepa grampositiva real, *Bacillus subtilis*.
+- **Editor con vista previa** sobre un espécimen de prueba, sin teñir y teñido, con el mismo render
+  de la placa. Solo visual.
+- **Pendiente:** hifas, cianobacterias y copos de avena sin respuesta a Lugol/Gram; vista dividida
+  sobre la placa real; tinciones con dependencia temporal (tiempo de exposición real).
+
 ## Decisiones tomadas
 
 1. **Roguelite + linaje:** se usan ambos. **Dentro de la partida** jugás un linaje (al dividirte

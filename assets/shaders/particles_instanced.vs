@@ -8,7 +8,7 @@ layout(location = 6) in vec4 instanceData;
 
 uniform mat4 mvp;
 uniform vec2 halfSize;     // semiejes del bastoncito [µm]
-uniform vec4 palette[4];   // color por tipo
+uniform vec4 palette[8];   // color por tipo
 
 out vec4 fragColor;
 

@@ -1320,12 +1320,13 @@ void World::spawnBeing(Being being, Vec2 at) {
         break;
     }
     case BeingKind::Bacterium:
+    case BeingKind::Bacillus:
     case BeingKind::Violaceum: // un racimo: una sola bacteria apenas se ve
         for (int k = 0; k < 30; ++k) {
             const float a = rng.uniform(0.0f, 2.0f * units::kPi), r = 12.0f * std::sqrt(rng.uniform());
             const Vec2 p = dish_.clampInside({at.x + r * std::cos(a), at.y + r * std::sin(a)}, 2.0f);
             bacteria_.add(p.x, p.y, rng.uniform(0.0f, 2.0f * units::kPi), rng.uniform(1.0f, 2.0f),
-                          being.kind == BeingKind::Violaceum ? 1 : 0);
+                          being.kind == BeingKind::Violaceum ? 1 : (being.kind == BeingKind::Bacillus ? 2 : 0));
         }
         break;
     case BeingKind::Bdellovibrio:

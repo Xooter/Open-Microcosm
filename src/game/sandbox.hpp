@@ -11,6 +11,7 @@ enum class BeingKind : std::uint8_t {
     Species,        // célula u organismo de una especie (cuerpo blando)
     Bacterium,      // bacterias genéricas (racimo)
     Violaceum,      // Chromobacterium violaceum (quorum sensing)
+    Bacillus,       // Bacillus subtilis (bacilo grampositivo)
     Bdellovibrio,   // depredadoras de bacterias
     Cyanobacterium, // filamento de Anabaena
     Oscillatoria,   // tricoma de Oscillatoria
@@ -101,6 +102,7 @@ inline BeingCategory categoryOf(Being b) {
     case BeingKind::OatFlake: return BeingCategory::Fungi;
     case BeingKind::Bacterium:
     case BeingKind::Violaceum:
+    case BeingKind::Bacillus:
     case BeingKind::Bdellovibrio:
     case BeingKind::Cyanobacterium:
     case BeingKind::Oscillatoria:
@@ -138,6 +140,7 @@ inline const char* beingName(Being b) {
     case BeingKind::Species: return speciesInfo(b.species).name;
     case BeingKind::Bacterium: return "Bacterias";
     case BeingKind::Violaceum: return "C. violaceum";
+    case BeingKind::Bacillus: return "B. subtilis";
     case BeingKind::Bdellovibrio: return "Bdellovibrio";
     case BeingKind::Cyanobacterium: return "Anabaena";
     case BeingKind::Oscillatoria: return "Oscillatoria";

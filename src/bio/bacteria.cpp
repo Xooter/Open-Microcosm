@@ -34,6 +34,10 @@ void Bacteria::spawn(std::size_t count, float width, float height, std::uint64_t
         heading[i] = rng.uniform(0.0f, 2.0f * units::kPi);
         mass[i] = rng.uniform(1.0f, 2.0f); // población en distintas etapas del ciclo
         strain[i] = rng.uniform() < params.violaceumFraction ? 1 : 0;
+        if (strain[i] == 0) { // otro flujo de azar: no cambia el resto de la gota de una seed
+            Rng gram(seed, rng_stream::kInit + 900, i, 0);
+            strain[i] = gram.uniform() < params.bacillusFraction ? 2 : 0;
+        }
     }
 }
 

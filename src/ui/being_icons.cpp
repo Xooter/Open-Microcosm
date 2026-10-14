@@ -70,6 +70,13 @@ void drawBeingIcon(Being b, Rectangle r, bool enabled) {
         }
         break;
     }
+    case BeingKind::Bacillus: { // bacilos grandes en cadena corta
+        const Color col = withAlpha({92, 84, 108, 255}, enabled);
+        for (int k = 0; k < 3; ++k)
+            DrawRectanglePro({c.x - 12.0f + 12.0f * static_cast<float>(k), c.y + 3.0f * static_cast<float>(k % 2) - 3.0f, 12.0f, 5.5f},
+                             {6.0f, 2.75f}, 8.0f * static_cast<float>(k) - 8.0f, col);
+        break;
+    }
     case BeingKind::Oscillatoria: // tricoma continuo con paredes transversales
         for (int k = 0; k < 8; ++k) {
             const float x = c.x - 16 + 4.0f * static_cast<float>(k), y = c.y + 6.0f * std::sin(0.5f * static_cast<float>(k));
