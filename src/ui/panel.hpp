@@ -35,6 +35,9 @@ class PanelHost {
     void drawMenu();
     // Acopla los paneles según su `dock()` en el dockspace `dockId` (restablecer disposición).
     void resetLayout(unsigned dockId, float width, float height);
+    // La ventana cambió de tamaño: los paneles acoplados escalan en proporción (sin esto, ImGui
+    // les deja el ancho en píxeles y todo el cambio va al centro).
+    void scaleLayout(unsigned dockId, float sx, float sy);
     Panel* find(const std::string& key);
     void show(const std::string& key);
 

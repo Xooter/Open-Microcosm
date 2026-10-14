@@ -49,6 +49,28 @@ void PanelHost::show(const std::string& key) {
     }
 }
 
+namespace {
+// El nodo central (la placa) toma lo que sobre; los demás conservan su fracción.
+void scaleNode(ImGuiDockNode* node, float sx, float sy) {
+    if (!node)
+        return;
+    if (!node->IsCentralNode()) {
+        node->SizeRef.x *= sx;
+        node->SizeRef.y *= sy;
+    }
+    scaleNode(node->ChildNodes[0], sx, sy);
+    scaleNode(node->ChildNodes[1], sx, sy);
+}
+} // namespace
+
+void PanelHost::scaleLayout(unsigned dockId, float sx, float sy) {
+    ImGuiDockNode* root = ImGui::DockBuilderGetNode(dockId);
+    if (!root)
+        return;
+    scaleNode(root->ChildNodes[0], sx, sy);
+    scaleNode(root->ChildNodes[1], sx, sy);
+}
+
 void PanelHost::resetLayout(unsigned dockId, float width, float height) {
     const ImGuiID root = dockId;
     ImGui::DockBuilderRemoveNode(root);

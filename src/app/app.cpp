@@ -495,7 +495,15 @@ void App::buildUi(float) {
     drawToolbar();
     drawStatusBar();
 
+    // Ventana redimensionada: los paneles escalan en proporción antes de que ImGui acomode el
+    // dockspace al tamaño nuevo.
+    if (dockId_ != 0 && lastWorkW_ > 0.0f && lastWorkH_ > 0.0f &&
+        (vp->WorkSize.x != lastWorkW_ || vp->WorkSize.y != lastWorkH_))
+        panels.scaleLayout(dockId_, vp->WorkSize.x / lastWorkW_, vp->WorkSize.y / lastWorkH_);
+    lastWorkW_ = vp->WorkSize.x;
+    lastWorkH_ = vp->WorkSize.y;
     const ImGuiID dock = ImGui::DockSpaceOverViewport(0, vp, ImGuiDockNodeFlags_PassthruCentralNode);
+    dockId_ = dock;
     if (layoutReset_ || !dockBuilt_) {
         if (layoutReset_) {
             panels.resetLayout(dock, vp->WorkSize.x, vp->WorkSize.y);

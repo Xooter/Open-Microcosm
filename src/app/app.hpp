@@ -126,4 +126,6 @@ struct App {
     float scalePathTimer_ = 0.0f;
     void drawScaleIndicator(ImDrawList* dl);
     bool dockBuilt_ = false;
+    unsigned dockId_ = 0;        // dockspace principal (el del cuadro anterior)
+    float lastWorkW_ = 0.0f, lastWorkH_ = 0.0f; // para escalar los paneles cuando cambia la ventana
 };
