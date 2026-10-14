@@ -16,7 +16,9 @@
 
 #include <omp.h>
 
+#include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
@@ -155,6 +157,19 @@ int main(int argc, char** argv) {
                 world.nearBodies(), world.bacteria().size());
     std::printf("paso %.2f ms (%.1f pasos/s)  checksum %016llx\n", ms / a.steps, 1000.0 * a.steps / ms,
                 static_cast<unsigned long long>(checksum(world)));
+    // Uniones de filamentos y colonias: cuánto se estiran respecto de su largo de reposo (sirve
+    // para comparar resolvedores: CPU, GPU).
+    const BodyParticles& bp = world.bodies();
+    double stretch = 0.0, worst = 0.0;
+    for (const World::AdhesionLink& l : world.links()) {
+        const double d = std::hypot(bp.x[l.b] - bp.x[l.a], bp.y[l.b] - bp.y[l.a]);
+        const double e = std::abs(d - l.rest) / std::max(1e-3, static_cast<double>(l.rest));
+        stretch += e;
+        worst = std::max(worst, e);
+    }
+    if (!world.links().empty())
+        std::printf("uniones %zu  estiramiento medio %.3f  máximo %.3f\n", world.links().size(),
+                    stretch / static_cast<double>(world.links().size()), worst);
     if (a.gpu) {
         if (std::getenv("BIO_GPU_TIMING")) {
             SetTraceLogLevel(LOG_INFO);
