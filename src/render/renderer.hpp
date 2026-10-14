@@ -29,6 +29,8 @@ class Renderer {
     }
     const StainSpec* stain() const { return stain_; }
     void setPostProcess(bool on) { postEnabled_ = on; }
+    // Mapa de limitación (fase 13): cada célula se colorea por lo que limita su crecimiento.
+    void setLimitationMap(bool on) { cells_.setLimitationMap(on); }
 
   private:
     void ensureScene();

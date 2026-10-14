@@ -7,6 +7,8 @@
 #include "core/units.hpp"
 #include "game/biome.hpp"
 #include "game/encyclopedia.hpp"
+#include "game/export.hpp"
+#include "game/region.hpp"
 #include "ui/being_icons.hpp"
 #include "ui/i18n.hpp"
 #include "ui/imgui_raylib.hpp"
@@ -61,12 +63,26 @@ void drawRing(Vec2 c, float r, float zoom, Color color, float thickness) {
     DrawRing({c.x, c.y}, r, r + thickness / zoom, 0, 360, 72, color);
 }
 
-// Concentración media del agua [µM].
-float meanOf(const World& world, const ChemField& field) {
-    const Grid2D& g = field.grid();
-    const float area = world.dish().active() ? units::kPi * world.dish().radius * world.dish().radius
-                                             : g.width() * g.height();
-    return static_cast<float>(field.sum() / std::max(1.0f, area / (g.dx * g.dx)));
+// Agrega un punto al lazo si se alejó lo suficiente del anterior (el trazo no crece sin límite).
+void addLassoPoint(std::vector<Vec2>& path, Vec2 p, float minStep) {
+    if (path.empty() || dot(p - path.back(), p - path.back()) >= minStep * minStep)
+        path.push_back(p);
+}
+
+// Largo "redondo" (1, 2 o 5 × 10ⁿ µm) cercano a `target` para la barra de escala.
+float niceLength(float target) {
+    const float p = std::pow(10.0f, std::floor(std::log10(std::max(target, 1e-3f))));
+    for (float m : {1.0f, 2.0f, 5.0f, 10.0f})
+        if (m * p >= target)
+            return m * p;
+    return 10.0f * p;
+}
+
+// Texto con fondo sobre la placa (en píxeles de pantalla).
+void worldLabel(ImDrawList* dl, ImVec2 at, const char* text) {
+    const ImVec2 size = ImGui::CalcTextSize(text);
+    dl->AddRectFilled({at.x - 3, at.y - 2}, {at.x + size.x + 3, at.y + size.y + 2}, IM_COL32(20, 24, 24, 200), 3.0f);
+    dl->AddText(at, IM_COL32(240, 244, 240, 255), text);
 }
 
 ChemField& soluteField(World& world, int index) {
@@ -185,15 +201,26 @@ void App::pushMediumLive() {
 void App::pushNutrientLive(int soluteIndex, float target) {
     if (!world)
         return;
-    ChemField& f = soluteField(*world, soluteIndex);
-    const float mean = meanOf(*world, f);
-    if (mean > 1e-12f) {
-        const float k = target / mean;
-        for (float& v : f.grid().v)
-            v *= k;
-    } else {
-        std::fill(f.grid().v.begin(), f.grid().v.end(), target);
-    }
+    world->setMeanConcentration(soluteField(*world, soluteIndex), target); // entra al balance como externo
+}
+
+void App::exportData() {
+    if (!world)
+        return;
+    session.sample(*world); // incluye el estado de este instante
+    const std::string base = (std::filesystem::path(exportsDir) / timestampedName(plateName)).string();
+    const bool ok = writeTextFile(base + ".csv", seriesCsv(session.series())) &&
+                    writeTextFile(base + ".json", runJson(*world, session, plate)) &&
+                    writeTextFile((std::filesystem::path(exportsDir) / "especies.json").string(), speciesJson());
+    lastExport = ok ? base : std::string();
+    notify(ok ? std::string(ui::tr("Datos exportados: ")) + base + ".csv/.json" : ui::tr("No se pudo exportar"));
+}
+
+void App::notify(const std::string& text) {
+    toasts.push_back(text);
+    if (toasts.size() > 5)
+        toasts.erase(toasts.begin(), toasts.end() - 5);
+    toastTimer = 6.0f;
 }
 
 // ---------------------------------------------------------------------------
@@ -220,6 +247,7 @@ void App::registerCommands() {
 
     add("file.create", "Crear placa", "Archivo", ImGuiKey_N, true, [this] { createPlate(); });
     add("file.plate", "Editor de placa", "Archivo", ImGuiKey_None, false, [this] { panels.show("placa"); });
+    add("file.export", "Exportar datos (CSV y JSON)", "Archivo", ImGuiKey_E, true, [this] { exportData(); });
     add("file.quit", "Salir", "Archivo", ImGuiKey_Q, true, [this] { quit = true; });
 
     add("sim.pause", "Pausa", "Simulación", ImGuiKey_Space, false, [this] { tools.paused = !tools.paused; }, {},
@@ -270,6 +298,10 @@ void App::registerCommands() {
             [this, ov] { tools.overlay = tools.overlay == ov ? Overlay::None : ov; }, {},
             [this, ov] { return tools.overlay == ov; });
     }
+    add("view.limitation", "Mapa de limitación", "Capas", ImGuiKey_L, false,
+        [this] { tools.limitationMap = !tools.limitationMap; }, {}, [this] { return tools.limitationMap; });
+    add("view.scalebar", "Barra de escala", "Capas", ImGuiKey_None, false, [this] { tools.scaleBar = !tools.scaleBar; },
+        {}, [this] { return tools.scaleBar; });
     add("view.stain", "Siguiente tinción", "Capas", ImGuiKey_J, false,
         [this] { setStainIndex((stainIndex + 1) % static_cast<int>(stains.size())); });
     add("view.stain_editor", "Editor de tinciones", "Capas", ImGuiKey_None, false, [this] { panels.show("tinciones"); });
@@ -316,7 +348,7 @@ void App::drawToolbar() {
             const Tool t = static_cast<Tool>(i);
             if (t == Tool::Spawn && catalog.armed < 0)
                 continue; // aparece cuando se arma un ser del catálogo
-            if (i == 2 || i == 10)
+            if (i == static_cast<int>(Tool::Ink) || i == static_cast<int>(Tool::Measure) || i == static_cast<int>(Tool::Spawn))
                 ImGui::Separator();
             const ToolInfo& info = toolInfo(t);
             std::string help = std::string(ui::tr(info.name)) + ": " + ui::tr(info.help);
@@ -395,7 +427,7 @@ void App::drawToasts() {
     ImGui::PushStyleVar(ImGuiStyleVar_Alpha, alpha);
     if (ImGui::Begin("##toasts", nullptr, kFlags))
         for (const std::string& t : toasts)
-            ImGui::Text("%s: %s", ui::tr("Enciclopedia"), t.c_str());
+            ImGui::TextUnformatted(t.c_str());
     ImGui::End();
     ImGui::PopStyleVar();
 }
@@ -604,6 +636,37 @@ void App::toolInput(float dt, const Vec2& pos) {
         if (pressed && catalog.armed >= 0)
             world->spawnBeing(beingAt(catalog.armed), pos);
         break;
+    case Tool::Measure:
+        if (pressed) {
+            tools.measurePath.assign(1, pos);
+            tools.measuring = true;
+        } else if (tools.measuring && down) {
+            if (tools.measureMode == ToolState::MeasureMode::Distance) {
+                tools.measurePath.resize(1);
+                tools.measurePath.push_back(pos);
+            } else {
+                addLassoPoint(tools.measurePath, pos, 3.0f / camera.zoom);
+            }
+        } else if (tools.measuring) {
+            tools.measuring = false;
+            panels.show("medicion");
+        }
+        break;
+    case Tool::Region:
+        if (pressed) {
+            tools.lassoPath.assign(1, pos);
+            tools.drawingRegion = true;
+        } else if (tools.drawingRegion && down) {
+            addLassoPoint(tools.lassoPath, pos, 3.0f / camera.zoom);
+        } else if (tools.drawingRegion) {
+            tools.drawingRegion = false;
+            if (tools.lassoPath.size() >= 3 && polygonArea(tools.lassoPath) > 1.0f) {
+                session.setRegion(*world, tools.lassoPath);
+                panels.show("medicion");
+            }
+            tools.lassoPath.clear();
+        }
+        break;
     default: break;
     }
 }
@@ -705,10 +768,8 @@ void App::discover(float dt) {
         for (std::string& f : recordBehaviors(progress, *world))
             fresh.push_back(std::move(f));
         if (!fresh.empty()) {
-            toasts.insert(toasts.end(), fresh.begin(), fresh.end());
-            if (toasts.size() > 5)
-                toasts.erase(toasts.begin(), toasts.end() - 5);
-            toastTimer = 5.0f;
+            for (const std::string& f : fresh)
+                notify(std::string(ui::tr("Enciclopedia")) + ": " + f);
             saveProgress(progress, progressPath);
         }
     }
@@ -759,7 +820,73 @@ void App::drawWorldOverlays() {
         if (reach > 0.0f)
             DrawRing({p.x, p.y}, reach, reach + 2.0f / camera.zoom, 0, 360, 64, {60, 110, 60, 200});
     }
+    drawMeasurements();
+}
+
+// Regla, región y barra de escala (fase 13). Las líneas van en coordenadas del mundo; los
+// rótulos, en la lista de fondo de ImGui (con la fuente de la UI, que tiene µ y ²).
+void App::drawMeasurements() {
+    const float px = 1.0f / camera.zoom;
+    auto polyline = [&](const std::vector<Vec2>& pts, bool closed, Color c, float width) {
+        for (std::size_t i = 1; i < pts.size(); ++i)
+            DrawLineEx({pts[i - 1].x, pts[i - 1].y}, {pts[i].x, pts[i].y}, width * px, c);
+        if (closed && pts.size() > 2)
+            DrawLineEx({pts.back().x, pts.back().y}, {pts[0].x, pts[0].y}, width * px, c);
+    };
+    const Color regionColor = {40, 110, 190, 230}, rulerColor = {200, 70, 30, 240};
+    const std::vector<Vec2>& region = session.region();
+    polyline(region, true, regionColor, 2.0f);
+    polyline(tools.lassoPath, false, regionColor, 1.5f);
+    const bool ruler = tools.tool == Tool::Measure && tools.measurePath.size() >= 2;
+    const bool area = tools.measureMode == ToolState::MeasureMode::Area;
+    if (ruler) {
+        polyline(tools.measurePath, area && !tools.measuring, rulerColor, 2.0f);
+        if (!area) // marcas en los extremos, perpendiculares a la regla
+            for (const Vec2& end : {tools.measurePath.front(), tools.measurePath.back()}) {
+                const Vec2 d = tools.measurePath.back() - tools.measurePath.front();
+                const float len = std::sqrt(dot(d, d));
+                const Vec2 n = len > 0.0f ? Vec2{-d.y / len, d.x / len} * (6.0f * px) : Vec2{0.0f, 6.0f * px};
+                DrawLineEx({end.x - n.x, end.y - n.y}, {end.x + n.x, end.y + n.y}, 2.0f * px, rulerColor);
+            }
+    }
     EndMode2D();
+
+    ImDrawList* dl = ImGui::GetBackgroundDrawList();
+    auto screen = [&](Vec2 w) {
+        const Vector2 s = GetWorldToScreen2D({w.x, w.y}, camera);
+        return ImVec2{s.x, s.y};
+    };
+    char text[96];
+    if (ruler) {
+        const ImVec2 at = screen(tools.measurePath.back());
+        if (area)
+            std::snprintf(text, sizeof text, "%.0f µm² | %s %.0f µm", polygonArea(tools.measurePath), ui::tr("perímetro"),
+                          polylineLength(tools.measurePath) +
+                              (tools.measuring ? 0.0f : polylineLength({tools.measurePath.back(), tools.measurePath.front()})));
+        else
+            std::snprintf(text, sizeof text, "%.1f µm", polylineLength(tools.measurePath));
+        worldLabel(dl, {at.x + 12.0f, at.y - 8.0f}, text);
+    }
+    if (region.size() > 2 && session.regionStats().valid) {
+        Vec2 top = region[0];
+        for (const Vec2& q : region)
+            top = q.y < top.y ? q : top;
+        const RegionStats& r = session.regionStats();
+        std::snprintf(text, sizeof text, "%s: %d %s, %d %s", ui::tr("Región"), r.cells, ui::tr("células"), r.bacteria,
+                      ui::tr("bacterias"));
+        const ImVec2 at = screen(top);
+        worldLabel(dl, {at.x - 0.5f * ImGui::CalcTextSize(text).x, at.y - 24.0f}, text);
+    }
+    if (tools.scaleBar) {
+        // Barra de ~120 px con un largo redondo en µm, abajo a la izquierda del campo.
+        const float um = niceLength(120.0f / camera.zoom);
+        const float w = um * camera.zoom;
+        const ImVec2 a{viewport.x + 24.0f, viewport.y + viewport.height - 30.0f};
+        dl->AddRectFilled({a.x - 8, a.y - 22}, {a.x + w + 8, a.y + 10}, IM_COL32(20, 24, 24, 150), 3.0f);
+        dl->AddRectFilled({a.x, a.y}, {a.x + w, a.y + 4}, IM_COL32(245, 245, 240, 255));
+        std::snprintf(text, sizeof text, um >= 1000.0f ? "%.0f mm" : "%.0f µm", um >= 1000.0f ? um / 1000.0f : um);
+        dl->AddText({a.x + 0.5f * (w - ImGui::CalcTextSize(text).x), a.y - 19.0f}, IM_COL32(245, 245, 240, 255), text);
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -807,6 +934,7 @@ int App::run() {
         discover(frameDt);
 
         renderer->setStain(activeStain());
+        renderer->setLimitationMap(tools.limitationMap);
         BeginDrawing();
         ClearBackground({22, 24, 24, 255});
         const double r0 = GetTime();

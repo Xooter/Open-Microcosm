@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/tools.hpp"
+#include "game/export.hpp"
 #include "game/plate_spec.hpp"
 #include "game/progress.hpp"
 #include "game/stain.hpp"
@@ -41,6 +42,10 @@ struct App {
     bool livePlate = true;
     void pushMediumLive();                          // temperatura, salinidad, luz, anoxia, alcalinidad
     void pushNutrientLive(int soluteIndex, float target); // lleva la concentración media de un soluto a `target`
+    // Exporta la serie (CSV), la corrida (JSON) y las fichas de especies a `exportsDir`.
+    void exportData();
+    std::string exportsDir = defaultExportsDir();
+    std::string lastExport; // ruta base de la última exportación ("" si falló)
     // Nombre con el que se guarda la placa.
     std::string plateName = "mi_placa";
     std::string platesDir = defaultPlatesDir();
@@ -80,6 +85,7 @@ struct App {
     // Avisos breves (descubrimientos de la enciclopedia).
     std::vector<std::string> toasts;
     float toastTimer = 0.0f;
+    void notify(const std::string& text);
 
     std::unique_ptr<Renderer> renderer;
     GpuSubstepSolver gpu;
@@ -99,6 +105,7 @@ struct App {
     void stepSimulation(float dt);
     void discover(float dt);
     void drawWorldOverlays();
+    void drawMeasurements();
     Vec2 worldPos(const Vector2& m) const;
 
     float accumulator_ = 0.0f;

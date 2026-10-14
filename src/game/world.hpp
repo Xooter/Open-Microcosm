@@ -16,6 +16,7 @@
 #include "bio/species.hpp"
 #include "game/inspect.hpp"
 #include "game/lineage.hpp"
+#include "game/mass_budget.hpp"
 #include "game/sandbox.hpp"
 #include "core/rng.hpp"
 #include "core/units.hpp"
@@ -286,6 +287,7 @@ class World {
     const MetabolismParams& metabolismParams() const { return metabolismParams_; }
     // Compresión del tiempo biológico (por defecto units::kBioTimeScale; ajustable para debug).
     float& bioTimeScale() { return bioTimeScale_; }
+    float bioTimeScale() const { return bioTimeScale_; }
     // Tiempo biológico por segundo real, con la temperatura (Q10 = 2 respecto de 20 °C).
     float bioScale() const { return bioTimeScale_ * temperatureFactor_; }
     // O₂ en equilibrio con el aire a la temperatura de la gota [µM] (0 si es anóxica).
@@ -331,7 +333,17 @@ class World {
     double totalSilicon() const;
     double totalIron() const;
     // Agrega a un campo disuelto una dosis [µM sobre toda la placa] (herramienta del laboratorio).
+    // Lo agregado cuenta como entrada externa del balance de masa.
     void dose(ChemField& field, Vec2 at, float radius, float micromolar);
+    // Lleva la concentración media de un soluto a `target` [µM] (ajuste en vivo del panel Placa),
+    // conservando su distribución. La diferencia cuenta como entrada externa.
+    void setMeanConcentration(ChemField& field, float target);
+    // Media de un campo en el agua de la placa [µM].
+    float meanConcentration(const ChemField& field) const;
+    // Balance de masa (fase 13): existencias por compartimento y flujos acumulados. Recorre todo
+    // el mundo: llamarlo a lo sumo una vez por segundo.
+    MassBudget massBudget() const;
+    const FluxLedger& ledger() const { return ledger_; }
     ChemField& silicateField() { return silicate_; }
     ChemField& ironField() { return iron_; }
     ChemField& vitaminField() { return vitamin_; }
@@ -466,7 +478,13 @@ class World {
     void exchangeO2(Vec2 at, float pmol);
     // Suma (o quita, hasta lo disponible) `pmol` en las 3×3 celdas alrededor de `at`.
     // Devuelve lo que realmente se intercambió.
-    float exchange(ChemField& field, Vec2 at, float pmol);
+    // `flow` rotula el proceso en el balance de masa.
+    float exchange(ChemField& field, Vec2 at, float pmol, Flow flow = Flow::Other);
+    float exchangeRaw(ChemField& field, Vec2 at, float pmol); // sin registro
+    // Elemento que lleva un campo y pmol del elemento por pmol del campo (la materia orgánica
+    // es glucosa: 6 C). false si el campo no entra en el balance.
+    bool fieldElement(const ChemField& field, Element& element, float& perPmol) const;
+    void record(const ChemField& field, Flow flow, double pmol);
     void growBacteria(float dt);
     void stepCyanobacteria(float dt);
     void updateWaterChemistry(float dt);
@@ -532,6 +550,7 @@ class World {
     std::vector<float> cyanoDemandN_;
     std::vector<CyanoRelease> cyanoReleases_;
     Observations observed_;
+    FluxLedger ledger_;
     std::vector<LysisMark> lysisMarks_;
 
     entt::registry registry_;

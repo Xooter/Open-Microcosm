@@ -71,12 +71,12 @@ void World::spawnFungus(FungusKind kind, Vec2 at, float heading, std::uint64_t s
     const FungiParams& p = fungi_.params;
     if (kind == FungusKind::Chytrid) {
         const int count = 10;
-        const float phosphorus = -exchange(phosphate_, at, -static_cast<float>(count) * p.sporePmol * p.phosphorusRatio);
+        const float phosphorus = -exchange(phosphate_, at, -static_cast<float>(count) * p.sporePmol * p.phosphorusRatio, Flow::Spawn);
         fungi_.spawnSpores(FungusKind::Chytrid, at, count, phosphorus, config_.seed, salt);
         return;
     }
     const float reserves = 20.0f * p.nodePmol;
-    const float phosphorus = -exchange(phosphate_, at, -2.0f * p.phosphorusRatio * reserves);
+    const float phosphorus = -exchange(phosphate_, at, -2.0f * p.phosphorusRatio * reserves, Flow::Spawn);
     fungi_.spawnMycelium(kind, at, heading, reserves, phosphorus);
 }
 
@@ -152,13 +152,13 @@ void World::stepFungi(float dt) {
     // Micelios: absorción, crecimiento, esporas y germinación.
     FungiEnv env;
     env.food = [&](Vec2 at) { return nutrients_.grid().sample(at.x, at.y); };
-    env.takeFood = [&](Vec2 at, float pmol) { return -exchange(nutrients_, wrapped(at), -pmol); };
-    env.takePhosphate = [&](Vec2 at, float pmol) { return -exchange(phosphate_, wrapped(at), -pmol); };
+    env.takeFood = [&](Vec2 at, float pmol) { return -exchange(nutrients_, wrapped(at), -pmol, Flow::Uptake); };
+    env.takePhosphate = [&](Vec2 at, float pmol) { return -exchange(phosphate_, wrapped(at), -pmol, Flow::Uptake); };
     env.release = [&](Vec2 at, float pmol, float phosphorus) {
         if (pmol > 0.0f)
-            exchange(nutrients_, wrapped(at), pmol);
+            exchange(nutrients_, wrapped(at), pmol, Flow::Death);
         if (phosphorus > 0.0f)
-            exchange(phosphate_, wrapped(at), phosphorus);
+            exchange(phosphate_, wrapped(at), phosphorus, Flow::Death);
     };
     env.photobiont = [&](Vec2 at, float range, Vec2& dir) {
         float best = range * range;
@@ -265,7 +265,7 @@ void World::releaseChytridSpores(entt::entity host) {
     } else if (registry_.all_of<Metabolism>(host)) {
         registry_.get<Metabolism>(host).phosphorus += inf->phosphorus; // nada maduró: vuelve al alga
     } else {
-        exchange(phosphate_, body.centroid, inf->phosphorus);
+        exchange(phosphate_, body.centroid, inf->phosphorus, Flow::Death);
     }
     registry_.remove<ChytridInfection>(host);
 }

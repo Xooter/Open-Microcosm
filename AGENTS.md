@@ -28,9 +28,10 @@ interviene.
 - **Paneles acoplables** (Dear ImGui, ver "Interfaz"): Placa, Catálogo (cualquier ser, con
   íconos), Ficha, Herramientas, Simulación, Procesos (tasas de química, microbiología y hongos),
   Estadísticas (censo, totales conservados de P, N, Si y Fe, y el ser controlado), Enciclopedia y
-  Ayuda.
-- **Herramientas** (barra izquierda o teclas 1-0): Seleccionar, Controlar, Tinta, Detrito, Borrar,
-  Lisar, Apretar, Revolver, Estirar, Gotero y Spawnear (al armar un ser del catálogo).
+  Gráficos, Medición y Ayuda.
+- **Herramientas** (barra izquierda o teclas 1-0, M y G): Seleccionar, Controlar, Tinta, Detrito,
+  Borrar, Lisar, Apretar, Revolver, Estirar, Gotero, Medir, Región y Spawnear (al armar un ser del
+  catálogo).
 - **Controlar un ser** (herramienta Controlar, o `P` sobre una célula): cada especie conserva su
   **locomoción física**:
   flagelo (impulso), cilios (deslizamiento), pseudópodo (clic y arrastre) y ondulación. Se respeta
@@ -74,6 +75,7 @@ Usá **solo** estas. Para agregar otra, primero hay que proponerla y esperar apr
 |---|---|---|
 | raylib | 5.5 | Ventana, input, render 2D, shaders GLSL 330 y audio |
 | Dear ImGui | 1.91.9b (rama docking) | UI del laboratorio: paneles acoplables, menús, herramientas. Backend de raylib propio (`ui/imgui_raylib`), sin rlImGui |
+| ImPlot | 1.0 | Gráficos en vivo del panel Gráficos (se compila dentro de `imgui_lib`) |
 | EnTT | 3.14 | ECS para organismos y entidades de alto nivel |
 | OpenMP | sistema | Paralelismo de los loops de simulación |
 | Tracy | 0.11 | Profiling (preset `profile`) |
@@ -279,6 +281,30 @@ Las partes de un mismo organismo no chocan entre sí (`ContactMember::group`).
 - `PlateSpec` (`game/plate_spec`, sin raylib) es la fuente de verdad de lo que se preconfigura;
   `parsePlate`/`serializePlate` son texto clave=valor versionado (`plate_version`) y lo que falta
   queda como en el bioma.
+
+### Medición (`game/mass_budget`, `game/timeseries`, `game/growth_fit`, `game/region`, `game/export`)
+
+- **Balance de masa:** `World::massBudget()` da las existencias de P, N, Si, Fe y C por
+  compartimento (`Pool`); `totalPhosphorus()` y los demás totales son su suma (una sola
+  contabilidad). Los flujos los acumula `World::ledger_` (`FluxLedger`): **todo intercambio con el
+  agua pasa por `World::exchange(campo, punto, pmol, Flow)`** con el proceso que corresponde
+  (`Uptake`, `Excretion`, `Death`, `Spawn`…); `exchangeRaw` no registra. Lo que entra desde afuera
+  (gotero `dose`, `setMeanConcentration`, fijación de N₂, CO₂ del aire) va a `external`. El cierre
+  es `budgetResidual` = cambio del total − entradas externas. El C tiene frontera abierta (el aire
+  y la materia orgánica que llega no se contabilizan como cerrados): no se le exige cierre.
+- **Serie temporal:** la muestrea `Run` (no `World`) cada `sampleInterval` [s de simulación] junto
+  con el censo: tiempo, poblaciones, medias químicas (`Census::mean*`), balance y región. Columnas
+  con nombre y unidad, guardadas por columna; con tope de filas se decima (1 de cada 2). NaN marca
+  lo que falta (región sin dibujar): con `-ffast-math` usar `finiteNumber`, nunca `std::isfinite`.
+- **Curva de crecimiento:** `fitGrowth` (µmax por ventana deslizante sobre ln N, latencia de Pirt,
+  K logística por sección áurea). Determinista y sin raylib.
+- **Región:** `quantifyRegion` cuenta individuos por centroide y promedia las celdas de agua con el
+  centro adentro. La región vive en `Run` (`setRegion`) y entra en la serie.
+- **Exportar** (Ctrl+E): `seriesCsv`, `runJson` (parámetros: la placa con el ambiente vigente,
+  metabolismo, escala de tiempo; serie; balance) y `speciesJson`, en `<datos>/biogame/exports`.
+  Números con `std::to_chars` (punto decimal sin importar la locale).
+- **Mapa de limitación:** `Metabolism::limiting` (Liebig: el factor que dejó más baja la inversión
+  en biomasa) solo lo lee el render (`CellRenderer::setLimitationMap`, tecla L).
 
 ### Tinciones (`game/stain`, `render/cell_renderer`, `ui/panels/stain_panel`)
 

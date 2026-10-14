@@ -42,7 +42,13 @@ FetchContent_Declare(imgui
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     SOURCE_SUBDIR _no_cmake)
 
-FetchContent_MakeAvailable(raylib EnTT imgui)
+# ImPlot: gráficos en vivo del laboratorio (fase 13). Compila contra la ImGui de arriba.
+FetchContent_Declare(implot
+    URL https://github.com/epezent/implot/archive/refs/tags/v1.0.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    SOURCE_SUBDIR _no_cmake)
+
+FetchContent_MakeAvailable(raylib EnTT imgui implot)
 
 if(BIO_PROFILING)
     set(TRACY_ENABLE ON CACHE BOOL "" FORCE)
@@ -115,7 +121,12 @@ add_library(biosim STATIC
     src/game/biome.cpp
     src/game/plate_spec.cpp
     src/game/stain.cpp
-    src/game/encyclopedia.cpp)
+    src/game/encyclopedia.cpp
+    src/game/mass_budget.cpp
+    src/game/timeseries.cpp
+    src/game/growth_fit.cpp
+    src/game/region.cpp
+    src/game/export.cpp)
 
 target_include_directories(biosim PUBLIC src)
 target_link_libraries(biosim PUBLIC OpenMP::OpenMP_CXX EnTT::EnTT bio_options)
@@ -150,6 +161,8 @@ add_executable(bio
     src/ui/panels/sim_panel.cpp
     src/ui/panels/processes_panel.cpp
     src/ui/panels/stats_panel.cpp
+    src/ui/panels/graphs_panel.cpp
+    src/ui/panels/measure_panel.cpp
     src/ui/panels/encyclopedia_panel.cpp
     src/ui/panels/help_panel.cpp
     src/render/renderer.cpp
@@ -164,8 +177,10 @@ add_library(imgui_lib STATIC
     ${imgui_SOURCE_DIR}/imgui.cpp
     ${imgui_SOURCE_DIR}/imgui_draw.cpp
     ${imgui_SOURCE_DIR}/imgui_tables.cpp
-    ${imgui_SOURCE_DIR}/imgui_widgets.cpp)
-target_include_directories(imgui_lib SYSTEM PUBLIC ${imgui_SOURCE_DIR})
+    ${imgui_SOURCE_DIR}/imgui_widgets.cpp
+    ${implot_SOURCE_DIR}/implot.cpp
+    ${implot_SOURCE_DIR}/implot_items.cpp)
+target_include_directories(imgui_lib SYSTEM PUBLIC ${imgui_SOURCE_DIR} ${implot_SOURCE_DIR})
 
 # SYSTEM: los warnings de headers de terceros no son nuestros.
 target_link_libraries(bio PRIVATE biosim raylib imgui_lib)
@@ -181,7 +196,7 @@ endif()
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_nematode.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp)
+    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_nematode.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp)
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
     add_test(NAME bio_tests COMMAND bio_tests)
 endif()

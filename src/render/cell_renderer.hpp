@@ -10,6 +10,10 @@
 
 class World;
 struct RingBody;
+enum class Limitation : std::uint8_t;
+
+// Color del mapa de limitación (lo usa también la leyenda del panel Medición).
+Color limitationColor(Limitation l);
 
 // Células en campo claro:
 // 1. el relleno de cada célula se dibuja en una textura (triangulado con ear clipping);
@@ -30,6 +34,8 @@ class CellRenderer {
     void drawDetails(const World& world, const Camera2D& camera, Rectangle view);
     // Tinción activa (nullptr: sin tinción). Solo cambia colores; la simulación no se entera.
     void setStain(const StainSpec* stain) { stain_ = stain; }
+    // Colorea cada célula por su `Metabolism::limiting` (lee la simulación, no la cambia).
+    void setLimitationMap(bool on) { limitationMap_ = on; }
     // Tamaño de la textura de destino (0: el de la pantalla); lo usa la vista previa.
     void setTargetSize(int w, int h) { targetW_ = w; targetH_ = h; }
 
@@ -45,6 +51,7 @@ class CellRenderer {
     bool shaderOk_ = false;
     int texelLoc_ = -1, rimLoc_ = -1;
     const StainSpec* stain_ = nullptr;
+    bool limitationMap_ = false;
     int targetW_ = 0, targetH_ = 0;
     int fluorLoc_ = -1;
     std::vector<int> triangles_, scratch_;

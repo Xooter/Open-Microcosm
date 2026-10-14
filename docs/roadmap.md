@@ -45,7 +45,7 @@ Lo que ya existe y se mantiene; el detalle de diseño está en `AGENTS.md`.
 
 ---
 
-## Fase 13 — Medición: ver los números
+## Fase 13 — Medición: ver los números ✅
 
 Es la base de todo lo científico: sin datos no hay experimento. Va primero.
 
@@ -62,6 +62,10 @@ Es la base de todo lo científico: sin datos no hay experimento. Va primero.
   B₁₂, luz); lee `Metabolism`, solo render.
 - **Hecho cuando:** una gota corrida 1 h biológica exporta CSV con unidades y el balance de P
   cierra dentro de la tolerancia del test de conservación.
+- **Hecho:** panel Gráficos (ImPlot) con poblaciones, química, balance, región y curva de
+  crecimiento; exportación CSV/JSON (Ctrl+E); herramientas Medir (distancia, área y barra de
+  escala) y Región; balance de masa por compartimento y por proceso en Estadísticas; mapa de
+  limitación (L). Test de "hecho" en `tests/test_budget.cpp`.
 
 ## Fase 14 — Reactivos y escenas
 

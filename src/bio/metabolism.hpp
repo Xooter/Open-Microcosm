@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 // Metabolismo simplificado pero real. Todo en pmol equivalentes de glucosa de materia seca y en
 // tiempo BIOLÓGICO (units::kBioTimeScale).
 //
@@ -52,6 +54,22 @@ struct MetabolismParams {
     float phStressPerUnit = 1.0f;
 };
 
+// Qué frena el crecimiento de la célula en el último paso (ley del mínimo de Liebig): el
+// factor cuya cuota da menos biomasa nueva. Solo lo lee el mapa de limitación (render) y el
+// análisis; no cambia la simulación.
+enum class Limitation : std::uint8_t {
+    None,       // crece a su tasa máxima
+    Energy,     // sin reservas para invertir: falta comida (heterótrofas) o luz (fotótrofas)
+    Phosphorus,
+    Nitrogen,
+    Silicon,
+    Iron,
+    Vitamin,    // B₁₂ (auxótrofas)
+    Starving,   // se consume a sí misma (autofagia)
+    Count
+};
+const char* limitationName(Limitation l);
+
 // Componente.
 struct Metabolism {
     float biomass = 0.0f;      // [pmol]
@@ -70,6 +88,7 @@ struct Metabolism {
     bool photosynthetic = false;
     // Estado del último paso (para el HUD).
     bool starving = false;
+    Limitation limiting = Limitation::None;
     float aerobic = 1.0f;
     float o2 = 0.0f, light = 0.0f;
 };

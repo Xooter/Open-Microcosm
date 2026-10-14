@@ -14,6 +14,8 @@ void registerPanels(PanelHost& host) {
     host.add(makeSimulationPanel());
     host.add(makeProcessesPanel());
     host.add(makeStatsPanel());
+    host.add(makeGraphsPanel());
+    host.add(makeMeasurePanel());
     host.add(makeHelpPanel());
 }
 

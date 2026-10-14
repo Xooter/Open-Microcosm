@@ -6,6 +6,7 @@
 #include <imgui.h>
 
 #include <string>
+#include <vector>
 
 class World;
 
@@ -22,6 +23,8 @@ enum class Tool : int {
     Stir,     // revolver el agua (arrastrar)
     Grab,     // estirar la membrana (arrastrar)
     Dropper,  // gotero de solutos (mantener)
+    Measure,  // regla: distancia (arrastrar) o área (lazo) en µm
+    Region,   // dibujar la región que se cuantifica (lazo)
     Spawn,    // poner el ser armado en el catálogo
     Count
 };
@@ -52,9 +55,15 @@ struct ToolState {
     int dropper = 0;
     float dropRadius = 40.0f;     // [µm]
     float dropAmount = 1.0f;
-    // Totales conservados (se recalculan una vez por segundo) [pmol].
-    float statsTimer = 0.0f;
-    double totalP = 0.0, totalN = 0.0, totalSi = 0.0, totalFe = 0.0;
+    // Medición (fase 13). Los trazos están en µm del mundo.
+    enum class MeasureMode : int { Distance, Area };
+    MeasureMode measureMode = MeasureMode::Distance;
+    bool scaleBar = true;            // barra de escala sobre la imagen
+    bool limitationMap = false;      // colorear cada célula por lo que limita su crecimiento
+    std::vector<Vec2> measurePath;   // regla: 2 puntos (distancia) o el lazo (área)
+    bool measuring = false;          // arrastrando la regla
+    std::vector<Vec2> lassoPath;     // región en curso (mientras se dibuja)
+    bool drawingRegion = false;
     // Profiling continuo (promedios suavizados) [ms].
     float stepMs = 0.0f, renderMs = 0.0f;
 };

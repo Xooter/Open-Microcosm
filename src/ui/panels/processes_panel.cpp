@@ -15,23 +15,14 @@ namespace ui {
 
 namespace {
 
-// Concentración media del agua [µM].
-float meanOf(const World& world, const ChemField& field) {
-    const Grid2D& g = field.grid();
-    const float area = world.dish().active() ? units::kPi * world.dish().radius * world.dish().radius
-                                             : g.width() * g.height();
-    return static_cast<float>(field.sum() / std::max(1.0f, area / (g.dx * g.dx)));
-}
-
 // Fila de un soluto: concentración media y botones para duplicarla, partirla o vaciarla.
 void soluteRow(World& world, const char* name, ChemField& field, float shown, const char* unit) {
     ImGui::PushID(name);
     ImGui::AlignTextToFramePadding();
-    ImGui::Text("%s: %.3g %s", tr(name), meanOf(world, field) * shown, unit);
-    auto scale = [&](float k) {
-        for (float& v : field.grid().v)
-            v *= k;
-    };
+    const float mean = world.meanConcentration(field);
+    ImGui::Text("%s: %.3g %s", tr(name), mean * shown, unit);
+    // Pasa por World: lo agregado o quitado entra al balance de masa como entrada externa.
+    auto scale = [&](float k) { world.setMeanConcentration(field, k * mean); };
     const float w = 44.0f;
     ImGui::SameLine(ImGui::GetWindowWidth() - 3.0f * (w + 6.0f) - 12.0f);
     if (ImGui::Button("x2", {w, 0}))

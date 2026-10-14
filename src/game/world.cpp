@@ -358,8 +358,10 @@ void World::stepAmbient(float dt) {
                 const float dissolved = ambient_.mass[i] * frustuleDissolved;
                 ambient_.mass[i] -= dissolved;
                 silicate_.grid().at(cx, cy) += dissolved * microMolarPerPmol;
+                ledger_.add(Element::Si, Flow::Dissolution, dissolved);
                 if (ambient_.mass[i] < 1e-9f) {
                     silicate_.grid().at(cx, cy) += ambient_.mass[i] * microMolarPerPmol;
+                    ledger_.add(Element::Si, Flow::Dissolution, ambient_.mass[i]);
                     ambient_.swapRemove(i);
                     continue;
                 }
@@ -371,6 +373,7 @@ void World::stepAmbient(float dt) {
             const float released = ambient_.mass[i] * (hyphaCover_.at(cx, cy) > 0.0f ? decayedNearHyphae : decayed);
             ambient_.mass[i] -= released;
             food.at(cx, cy) += released * microMolarPerPmol;
+            ledger_.add(Element::C, Flow::Excretion, 6.0 * released); // descomposición: 6 C por glucosa
             if (ambient_.mass[i] < kMinDetritusMass) {
                 ambient_.swapRemove(i);
                 continue;
@@ -1196,8 +1199,8 @@ entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& 
     registry_.emplace<Heredity>(e, Heredity{genome, traits});
     applyTraits(e);
     if (Metabolism& m = registry_.get<Metabolism>(e); m.photosynthetic) {
-        m.phosphorus = -exchange(phosphate_, center, -metabolismParams_.phosphorusRatio * m.biomass);
-        m.nitrogen = -exchange(nitrogen_, center, -metabolismParams_.nitrogenRatio * m.biomass);
+        m.phosphorus = -exchange(phosphate_, center, -metabolismParams_.phosphorusRatio * m.biomass, Flow::Spawn);
+        m.nitrogen = -exchange(nitrogen_, center, -metabolismParams_.nitrogenRatio * m.biomass, Flow::Spawn);
     }
     seedMicronutrients(registry_.get<Metabolism>(e), info, center);
     Rng rng(config_.seed, rng_stream::kOrganelles, body.id, step_);
@@ -1290,8 +1293,8 @@ entt::entity World::spawnWild(SpeciesId id, Vec2 p, Rng& rng, bool randomStage) 
         const float stage = rng.uniform(1.0f, info.fissions > 1 ? 3.5f : 1.8f);
         m.biomass *= stage;
         if (m.photosynthetic) { // el P y el N de la biomasa extra salen del agua
-            m.phosphorus += -exchange(phosphate_, p, -(stage - 1.0f) * m.phosphorus);
-            m.nitrogen += -exchange(nitrogen_, p, -(stage - 1.0f) * m.nitrogen);
+            m.phosphorus += -exchange(phosphate_, p, -(stage - 1.0f) * m.phosphorus, Flow::Spawn);
+            m.nitrogen += -exchange(nitrogen_, p, -(stage - 1.0f) * m.nitrogen, Flow::Spawn);
         }
         growMicronutrients(m, p, stage);
     }
@@ -1405,11 +1408,11 @@ entt::entity World::setPlayerSpecies(SpeciesId species, Vec2 fallback) {
             for (const FoodVacuole& v : d->vacuoles)
                 phosphorus += v.phosphorus;
         if (phosphorus > 0.0f)
-            exchange(phosphate_, at, phosphorus);
+            exchange(phosphate_, at, phosphorus, Flow::Death);
         if (const float nitrogen = carriedNitrogen(player_); nitrogen > 0.0f)
-            exchange(nitrogen_, at, nitrogen);
+            exchange(nitrogen_, at, nitrogen, Flow::Death);
         if (const float si = releaseMicronutrients(player_, at); si > 0.0f)
-            exchange(silicate_, at, si);
+            exchange(silicate_, at, si, Flow::Death);
         destroyOrganism(player_);
         player_ = entt::null;
     }
@@ -1446,8 +1449,8 @@ bool World::forceReproduction(entt::entity e) {
         const float k = need / m.biomass;
         const Vec2 at = registry_.get<RingBody>(e).centroid;
         if (m.photosynthetic) { // el P y el N de la biomasa extra salen del agua (se conservan)
-            m.phosphorus += -exchange(phosphate_, at, -(k - 1.0f) * m.phosphorus);
-            m.nitrogen += -exchange(nitrogen_, at, -(k - 1.0f) * m.nitrogen);
+            m.phosphorus += -exchange(phosphate_, at, -(k - 1.0f) * m.phosphorus, Flow::Spawn);
+            m.nitrogen += -exchange(nitrogen_, at, -(k - 1.0f) * m.nitrogen, Flow::Spawn);
         }
         growMicronutrients(m, at, k);
         m.biomass = need;
@@ -1833,7 +1836,7 @@ void World::engulf(entt::entity predator, const Closure& closure, entt::entity p
     recordDeath(preyEntity, std::string("fagocitada por ") + speciesInfo(speciesOfEntity(registry_, predator)).name);
     // El predador pudo tener a la presa sujeta en otra copa: se quita al destruirla.
     if (const float si = releaseMicronutrients(preyEntity, preyBody.centroid); si > 0.0f)
-        exchange(silicate_, preyBody.centroid, si);
+        exchange(silicate_, preyBody.centroid, si, Flow::Death);
     destroyOrganism(preyEntity);
     // Destruir compacta el almacenamiento de EnTT: se vuelven a obtener las referencias.
     RingBody& body = registry_.get<RingBody>(predator);
@@ -2037,9 +2040,9 @@ void World::seedMicronutrients(Metabolism& m, const SpeciesInfo& info, Vec2 at) 
     m.needsSilicon = info.frustule;
     m.needsVitamin = info.vitaminB12;
     if (m.needsSilicon)
-        m.silicon = -exchange(silicate_, at, -p.siliconRatio * m.biomass);
+        m.silicon = -exchange(silicate_, at, -p.siliconRatio * m.biomass, Flow::Spawn);
     if (m.photosynthetic)
-        m.iron = -exchange(iron_, at, -p.ironRatio * m.biomass);
+        m.iron = -exchange(iron_, at, -p.ironRatio * m.biomass, Flow::Spawn);
     if (m.needsVitamin)
         m.vitamin = -exchange(vitamin_, at, -p.vitaminRatio * m.biomass);
 }
@@ -2047,9 +2050,9 @@ void World::seedMicronutrients(Metabolism& m, const SpeciesInfo& info, Vec2 at) 
 // La biomasa extra de una célula nueva (etapa del ciclo al azar) sale del agua.
 void World::growMicronutrients(Metabolism& m, Vec2 at, float factor) {
     if (m.needsSilicon)
-        m.silicon += -exchange(silicate_, at, -(factor - 1.0f) * m.silicon);
+        m.silicon += -exchange(silicate_, at, -(factor - 1.0f) * m.silicon, Flow::Spawn);
     if (m.photosynthetic)
-        m.iron += -exchange(iron_, at, -(factor - 1.0f) * m.iron);
+        m.iron += -exchange(iron_, at, -(factor - 1.0f) * m.iron, Flow::Spawn);
     if (m.needsVitamin)
         m.vitamin += -exchange(vitamin_, at, -(factor - 1.0f) * m.vitamin);
 }
@@ -2062,7 +2065,7 @@ float World::releaseMicronutrients(entt::entity e, Vec2 at) {
     if (!m)
         return 0.0f;
     if (m->iron > 0.0f)
-        exchange(iron_, at, m->iron);
+        exchange(iron_, at, m->iron, Flow::Death);
     if (m->vitamin > 0.0f)
         exchange(vitamin_, at, m->vitamin);
     return m->silicon;
@@ -2070,6 +2073,7 @@ float World::releaseMicronutrients(entt::entity e, Vec2 at) {
 
 void World::dose(ChemField& field, Vec2 at, float radius, float micromolar) {
     Grid2D& g = field.grid();
+    double added = 0.0; // [µM·celda]
     const int r = static_cast<int>(radius / g.dx) + 1;
     const int cx = g.cellX(at.x), cy = g.cellY(at.y);
     for (int dy = -r; dy <= r; ++dy)
@@ -2078,31 +2082,136 @@ void World::dose(ChemField& field, Vec2 at, float radius, float micromolar) {
                 continue;
             const std::size_t k = static_cast<std::size_t>(((cy + dy) % g.ny + g.ny) % g.ny) * static_cast<std::size_t>(g.nx) +
                                   static_cast<std::size_t>(((cx + dx) % g.nx + g.nx) % g.nx);
-            if (dishMask_.isWater(k))
+            if (dishMask_.isWater(k)) {
+                const float before = g.v[k];
                 g.v[k] = std::max(0.0f, g.v[k] + micromolar);
+                added += g.v[k] - before;
+            }
         }
+    Element e;
+    float perPmol;
+    if (fieldElement(field, e, perPmol)) {
+        const double pmol = added / microMolarPerPmol() * perPmol;
+        ledger_.add(e, Flow::Dose, pmol);
+        ledger_.addExternal(e, pmol);
+    }
 }
 
-double World::totalSilicon() const {
-    double total = silicate_.sum() / microMolarPerPmol();
-    for (auto [e, m] : registry_.view<Metabolism>().each())
-        total += m.silicon;
-    for (std::size_t i = 0; i < ambient_.size(); ++i)
-        if (ambient_.kind[i] == ParticleKind::Mineral && ambient_.mineral[i] == MineralKind::Frustule)
-            total += ambient_.mass[i];
-    return total;
+double World::totalSilicon() const { return massBudget().total(Element::Si); }
+double World::totalIron() const { return massBudget().total(Element::Fe); }
+
+MassBudget World::massBudget() const {
+    PROFILE_SCOPE("World::massBudget");
+    MassBudget b;
+    b.ledger = ledger_;
+    b.time = simTime_;
+    const double k = microMolarPerPmol();
+    auto add = [&](Element e, Pool p, double pmol) { b.stock[static_cast<int>(e)][static_cast<int>(p)] += pmol; };
+    constexpr double kC = 6.0; // la masa es glucosa equivalente: 6 C por pmol
+    add(Element::P, Pool::Water, phosphate_.sum() / k);
+    add(Element::N, Pool::Water, nitrogen_.sum() / k);
+    add(Element::Si, Pool::Water, silicate_.sum() / k);
+    add(Element::Fe, Pool::Water, iron_.sum() / k);
+    add(Element::C, Pool::Water, kC * nutrients_.sum() / k);
+    add(Element::C, Pool::Gas, co2_.sum() / k);
+    for (auto [e, m] : registry_.view<Metabolism>().each()) {
+        add(Element::P, Pool::Cells, m.phosphorus);
+        add(Element::N, Pool::Cells, m.nitrogen);
+        add(Element::Si, Pool::Cells, m.silicon);
+        add(Element::Fe, Pool::Cells, m.iron);
+        add(Element::C, Pool::Cells, kC * (m.biomass + m.reserves));
+    }
+    for (auto [e, egg] : registry_.view<Egg>().each())
+        add(Element::C, Pool::Cells, kC * egg.biomass);
+    for (auto [e, d] : registry_.view<Digestion>().each())
+        for (const FoodVacuole& v : d.vacuoles) {
+            add(Element::P, Pool::Vacuoles, v.phosphorus);
+            add(Element::N, Pool::Vacuoles, v.nitrogen);
+            add(Element::C, Pool::Vacuoles, kC * v.contentPmol);
+        }
+    for (auto [e, inf] : registry_.view<ChytridInfection>().each()) {
+        add(Element::P, Pool::Fungi, inf.phosphorus);
+        add(Element::C, Pool::Fungi, kC * inf.mass);
+    }
+    add(Element::P, Pool::Fungi, fungi_.phosphorus());
+    add(Element::C, Pool::Fungi, kC * fungi_.biomass());
+    add(Element::P, Pool::Cyanobacteria, cyano_.phosphorus());
+    add(Element::N, Pool::Cyanobacteria, cyano_.nitrogen());
+    add(Element::C, Pool::Cyanobacteria, kC * cyano_.biomass());
+    add(Element::P, Pool::Plasmodium, plasmo_.phosphorus());
+    add(Element::C, Pool::Plasmodium, kC * plasmo_.biomass());
+    double bacteria = 0.0;
+    for (std::size_t i = 0; i < bacteria_.size(); ++i)
+        bacteria += bacteria_.mass[i];
+    add(Element::C, Pool::Bacteria, kC * kBacteriumPmol * bacteria);
+    for (std::size_t i = 0; i < ambient_.size(); ++i) {
+        if (ambient_.kind[i] == ParticleKind::Detritus)
+            add(Element::C, Pool::Detritus, kC * ambient_.mass[i]);
+        else if (ambient_.kind[i] == ParticleKind::Mineral && ambient_.mineral[i] == MineralKind::Frustule)
+            add(Element::Si, Pool::Sediment, ambient_.mass[i]);
+    }
+    return b;
 }
 
-double World::totalIron() const {
-    double total = iron_.sum() / microMolarPerPmol();
-    for (auto [e, m] : registry_.view<Metabolism>().each())
-        total += m.iron;
-    return total;
+float World::meanConcentration(const ChemField& field) const {
+    return static_cast<float>(field.sum() / static_cast<double>(std::max<std::size_t>(1, dishMask_.waterCells)));
+}
+
+void World::setMeanConcentration(ChemField& field, float target) {
+    const double before = field.sum();
+    const float mean = meanConcentration(field);
+    if (mean > 1e-12f) {
+        const float k = target / mean;
+        for (float& v : field.grid().v)
+            v *= k;
+    } else {
+        std::fill(field.grid().v.begin(), field.grid().v.end(), target);
+    }
+    Element e;
+    float perPmol;
+    if (fieldElement(field, e, perPmol)) {
+        const double pmol = (field.sum() - before) / microMolarPerPmol() * perPmol;
+        ledger_.add(e, Flow::Dose, pmol);
+        ledger_.addExternal(e, pmol);
+    }
 }
 
 void World::exchangeO2(Vec2 at, float pmol) { exchange(oxygen_, at, pmol); }
 
-float World::exchange(ChemField& field, Vec2 at, float pmol) {
+bool World::fieldElement(const ChemField& field, Element& element, float& perPmol) const {
+    perPmol = 1.0f;
+    if (&field == &phosphate_)
+        element = Element::P;
+    else if (&field == &nitrogen_)
+        element = Element::N;
+    else if (&field == &silicate_)
+        element = Element::Si;
+    else if (&field == &iron_)
+        element = Element::Fe;
+    else if (&field == &co2_)
+        element = Element::C;
+    else if (&field == &nutrients_) {
+        element = Element::C;
+        perPmol = 6.0f; // materia orgánica en equivalentes de glucosa: C₆
+    } else
+        return false;
+    return true;
+}
+
+void World::record(const ChemField& field, Flow flow, double pmol) {
+    Element e;
+    float perPmol;
+    if (fieldElement(field, e, perPmol))
+        ledger_.add(e, flow, pmol * perPmol);
+}
+
+float World::exchange(ChemField& field, Vec2 at, float pmol, Flow flow) {
+    const float moved = exchangeRaw(field, at, pmol);
+    record(field, flow, moved);
+    return moved;
+}
+
+float World::exchangeRaw(ChemField& field, Vec2 at, float pmol) {
     // Se reparte en las 3×3 celdas alrededor de la célula; lo que se quita no puede superar lo
     // que hay (así la masa se conserva).
     Grid2D& g = field.grid();
@@ -2178,27 +2287,8 @@ float World::carriedNitrogen(entt::entity e) const {
     return n;
 }
 
-double World::totalNitrogen() const {
-    double total = nitrogen_.sum() / microMolarPerPmol() + cyano_.nitrogen();
-    for (auto [e, m] : registry_.view<Metabolism>().each())
-        total += m.nitrogen;
-    for (auto [e, d] : registry_.view<Digestion>().each())
-        for (const FoodVacuole& v : d.vacuoles)
-            total += v.nitrogen;
-    return total;
-}
-
-double World::totalPhosphorus() const {
-    double total = phosphate_.sum() / microMolarPerPmol() + cyano_.phosphorus() + fungi_.phosphorus() + plasmo_.phosphorus();
-    for (auto [e, inf] : registry_.view<ChytridInfection>().each())
-        total += inf.phosphorus;
-    for (auto [e, m] : registry_.view<Metabolism>().each())
-        total += m.phosphorus;
-    for (auto [e, d] : registry_.view<Digestion>().each())
-        for (const FoodVacuole& v : d.vacuoles)
-            total += v.phosphorus;
-    return total;
-}
+double World::totalNitrogen() const { return massBudget().total(Element::N); }
+double World::totalPhosphorus() const { return massBudget().total(Element::P); }
 
 void World::updateLifecycle(float dt) {
     PROFILE_SCOPE("World::updateLifecycle");
@@ -2230,9 +2320,9 @@ void World::updateLifecycle(float dt) {
                 in.digested -= exchange(nutrients_, body.centroid, -want);
         }
         if (excreted.phosphorus > 0.0f)
-            exchange(phosphate_, body.centroid, excreted.phosphorus);
+            exchange(phosphate_, body.centroid, excreted.phosphorus, Flow::Excretion);
         if (excreted.nitrogen > 0.0f) // amonio excretado al digerir
-            exchange(nitrogen_, body.centroid, excreted.nitrogen);
+            exchange(nitrogen_, body.centroid, excreted.nitrogen, Flow::Excretion);
         in.phosphate = phosphate_.grid().sample(body.centroid.x, body.centroid.y);
         in.nitrogen = nitrogen_.grid().sample(body.centroid.x, body.centroid.y);
         in.silicate = silicate_.grid().sample(body.centroid.x, body.centroid.y);
@@ -2265,17 +2355,17 @@ void World::updateLifecycle(float dt) {
         const MetabolicOutput out = updateMetabolism(meta, mp, in);
         if (out.phosphateTaken > 0.0f) {
             // El fosfato sale del agua cercana; si no alcanza, la célula toma lo que hay.
-            const float taken = -exchange(phosphate_, body.centroid, -out.phosphateTaken);
+            const float taken = -exchange(phosphate_, body.centroid, -out.phosphateTaken, Flow::Uptake);
             meta.phosphorus = phosphorusBefore + taken;
         }
         if (out.nitrogenTaken > 0.0f) {
-            const float taken = -exchange(nitrogen_, body.centroid, -out.nitrogenTaken);
+            const float taken = -exchange(nitrogen_, body.centroid, -out.nitrogenTaken, Flow::Uptake);
             meta.nitrogen = nitrogenBefore + taken;
         }
         if (out.siliconTaken > 0.0f)
-            meta.silicon = siliconBefore - exchange(silicate_, body.centroid, -out.siliconTaken);
+            meta.silicon = siliconBefore - exchange(silicate_, body.centroid, -out.siliconTaken, Flow::Uptake);
         if (out.ironTaken > 0.0f)
-            meta.iron = ironBefore - exchange(iron_, body.centroid, -out.ironTaken);
+            meta.iron = ironBefore - exchange(iron_, body.centroid, -out.ironTaken, Flow::Uptake);
         if (out.vitaminTaken > 0.0f)
             meta.vitamin = vitaminBefore - exchange(vitamin_, body.centroid, -out.vitaminTaken);
         // CO₂: lo que respira (y fermenta) sale; lo que fija entra. También a la tasa real.
@@ -2831,9 +2921,9 @@ void World::lyse(entt::entity cell, const char* cause) {
         for (const FoodVacuole& v : d->vacuoles)
             phosphorus += v.phosphorus;
     if (phosphorus > 0.0f)
-        exchange(phosphate_, body.centroid, phosphorus);
+        exchange(phosphate_, body.centroid, phosphorus, Flow::Death);
     if (const float nitrogen = carriedNitrogen(cell); nitrogen > 0.0f)
-        exchange(nitrogen_, body.centroid, nitrogen);
+        exchange(nitrogen_, body.centroid, nitrogen, Flow::Death);
     const float silicon = releaseMicronutrients(cell, body.centroid); // el Si queda en la frústula
     // Las cianobacterias tóxicas no están en cuerpos blandos; acá no hay toxina que liberar.
 
@@ -2964,6 +3054,13 @@ Census World::census() const {
     const auto cells = static_cast<double>(dishMask_.waterCells);
     c.meanPH = static_cast<float>(ph / cells);
     c.meanNitrogen = static_cast<float>(nitrogen_.sum() / cells);
+    c.meanOxygen = static_cast<float>(oxygen_.sum() / cells);
+    c.meanPhosphate = static_cast<float>(phosphate_.sum() / cells);
+    c.meanSilicate = static_cast<float>(silicate_.sum() / cells);
+    c.meanIron = static_cast<float>(iron_.sum() / cells);
+    c.meanVitamin = static_cast<float>(vitamin_.sum() / cells);
+    c.meanOrganic = static_cast<float>(nutrients_.sum() / cells);
+    c.meanCO2 = static_cast<float>(co2_.sum() / cells);
     c.meanToxin = static_cast<float>(toxin_.sum() / cells);
     c.meanPhage = static_cast<float>(phage_.sum() / cells);
     c.bacteria = static_cast<int>(bacteria_.size());
@@ -3288,7 +3385,7 @@ void World::swallow(entt::entity predator, entt::entity preyEntity) {
         endGrab();
     recordDeath(preyEntity, std::string("tragada por ") + speciesInfo(speciesOfEntity(registry_, predator)).name);
     if (const float si = releaseMicronutrients(preyEntity, prey.centroid); si > 0.0f)
-        exchange(silicate_, prey.centroid, si);
+        exchange(silicate_, prey.centroid, si, Flow::Death);
     destroyOrganism(preyEntity);
     // Destruir la presa compacta el almacenamiento de EnTT: las referencias al depredador
     // tomadas antes pueden quedar colgadas. Se vuelven a obtener.
@@ -3661,9 +3758,9 @@ void World::releaseZoospore(entt::entity mother) {
     // spawnOrganism sacó del agua el P y el N de una célula nueva: vuelven, y la zoóspora se
     // lleva todo lo de la madre (se conservan).
     if (zm.phosphorus > 0.0f)
-        exchange(phosphate_, at, zm.phosphorus);
+        exchange(phosphate_, at, zm.phosphorus, Flow::Spawn);
     if (zm.nitrogen > 0.0f)
-        exchange(nitrogen_, at, zm.nitrogen);
+        exchange(nitrogen_, at, zm.nitrogen, Flow::Spawn);
     zm.biomass = m.biomass;
     zm.reserves = m.reserves;
     zm.phosphorus = m.phosphorus;

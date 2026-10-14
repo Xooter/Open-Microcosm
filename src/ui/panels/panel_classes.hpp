@@ -15,6 +15,8 @@ std::unique_ptr<Panel> makeStainPanel();
 std::unique_ptr<Panel> makeSimulationPanel();
 std::unique_ptr<Panel> makeProcessesPanel();
 std::unique_ptr<Panel> makeStatsPanel();
+std::unique_ptr<Panel> makeGraphsPanel();
+std::unique_ptr<Panel> makeMeasurePanel();
 std::unique_ptr<Panel> makeHelpPanel();
 
 } // namespace ui

@@ -82,27 +82,53 @@ MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const
     uptake(m.vitamin, m.needsVitamin, p.vitaminRatio, p.vitaminHalfSaturation, p.vitaminUptakePerHour, in.vitamin,
            out.vitaminTaken);
 
-    // Crecimiento con lo que sobra por encima del colchón.
+    // Crecimiento con lo que sobra por encima del colchón. Cada factor acota la inversión; el que
+    // la deja más baja es el limitante (Liebig).
     const float spare = m.reserves - p.reserveBuffer * m.biomass;
+    m.limiting = m.starving ? Limitation::Starving : Limitation::Energy;
     if (spare > 0.0f) {
-        float invest = std::min(spare, p.growthPerHourMax * in.growthScale * m.biomass * hours / p.growthYield);
+        const float maxRate = p.growthPerHourMax * in.growthScale * m.biomass * hours / p.growthYield;
+        float invest = maxRate;
+        m.limiting = Limitation::None;
+        auto bound = [&](float cap, Limitation why) {
+            if (cap < invest) {
+                invest = cap;
+                m.limiting = why;
+            }
+        };
+        bound(spare, Limitation::Energy);
         // Sin fósforo no hay biomasa nueva (ácidos nucleicos, fosfolípidos).
         // Ni proteínas sin nitrógeno.
         if (m.photosynthetic) {
-            invest = std::min(invest, std::max(0.0f, m.phosphorus / p.phosphorusRatio - m.biomass) / p.growthYield);
-            invest = std::min(invest, std::max(0.0f, m.nitrogen / p.nitrogenRatio - m.biomass) / p.growthYield);
+            bound(std::max(0.0f, m.phosphorus / p.phosphorusRatio - m.biomass) / p.growthYield, Limitation::Phosphorus);
+            bound(std::max(0.0f, m.nitrogen / p.nitrogenRatio - m.biomass) / p.growthYield, Limitation::Nitrogen);
         }
         // Sin sílice la diatomea no arma la valva nueva; sin hierro no hay fotosistemas; sin B₁₂
         // la auxótrofa no sintetiza metionina ni nucleótidos.
-        auto limit = [&](bool needed, float store, float ratio) {
+        auto limit = [&](bool needed, float store, float ratio, Limitation why) {
             if (needed)
-                invest = std::min(invest, std::max(0.0f, store / ratio - m.biomass) / p.growthYield);
+                bound(std::max(0.0f, store / ratio - m.biomass) / p.growthYield, why);
         };
-        limit(m.needsSilicon, m.silicon, p.siliconRatio);
-        limit(m.photosynthetic, m.iron, p.ironRatio);
-        limit(m.needsVitamin, m.vitamin, p.vitaminRatio);
+        limit(m.needsSilicon, m.silicon, p.siliconRatio, Limitation::Silicon);
+        limit(m.photosynthetic, m.iron, p.ironRatio, Limitation::Iron);
+        limit(m.needsVitamin, m.vitamin, p.vitaminRatio, Limitation::Vitamin);
         m.reserves -= invest;
         m.biomass += invest * p.growthYield;
     }
     return out;
+}
+
+const char* limitationName(Limitation l) {
+    switch (l) {
+    case Limitation::None: return "Ninguno (tasa máxima)";
+    case Limitation::Energy: return "Energía (comida o luz)";
+    case Limitation::Phosphorus: return "Fósforo";
+    case Limitation::Nitrogen: return "Nitrógeno";
+    case Limitation::Silicon: return "Sílice";
+    case Limitation::Iron: return "Hierro";
+    case Limitation::Vitamin: return "Vitamina B12";
+    case Limitation::Starving: return "Ayuno (autofagia)";
+    case Limitation::Count: break;
+    }
+    return "";
 }

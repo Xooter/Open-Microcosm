@@ -23,6 +23,8 @@ class HelpPanel : public Panel {
         note("Catálogo: elegí un ser y click en la placa para ponerlo. Esc cancela.");
         note("Controlar (2): click en una célula; W/S/A/D o click sostenido para moverla; R reproducir; V conjugar.");
         note("Espacio: pausa. . : un paso. - / = : velocidad. F1-F10: capas de campo. J: tinción. F: seguir con la cámara.");
+        note("Medir (M): arrastrar mide µm; en modo área, un lazo da área y perímetro. Región (G): un lazo cuenta "
+             "células y mide la química adentro. L: mapa de limitación. Ctrl+E: exportar datos (CSV y JSON).");
         note("Ctrl+N: crear la placa del editor. Los paneles se arrastran y acoplan; Ver > Restablecer disposición.");
         note("Ctrl+click o doble click en un deslizador: tipear el valor.");
     }

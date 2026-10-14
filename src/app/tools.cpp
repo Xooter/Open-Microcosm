@@ -22,6 +22,8 @@ constexpr ToolRow kTools[] = {
     {Tool::Stir, {"Rev", "Revolver", "Mantené y arrastrá: revuelve el agua.", ImGuiKey_8}},
     {Tool::Grab, {"Est", "Estirar", "Mantené y arrastrá: estira la membrana de una célula.", ImGuiKey_9}},
     {Tool::Dropper, {"Got", "Gotero", "Mantené: gotea el soluto elegido en el panel Herramientas.", ImGuiKey_0}},
+    {Tool::Measure, {"Med", "Medir", "Arrastrá: mide la distancia en µm. En modo área, dibujá un lazo: área y perímetro.", ImGuiKey_M}},
+    {Tool::Region, {"Reg", "Región", "Dibujá un lazo: cuenta las células y mide la química adentro (panel Medición).", ImGuiKey_G}},
     {Tool::Spawn, {"Spw", "Spawnear", "Click: pone el ser elegido en el catálogo. Esc cancela.", ImGuiKey_None}},
 };
 

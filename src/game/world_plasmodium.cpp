@@ -19,7 +19,7 @@ void World::spawnPlasmodium(Vec2 at, float heading) {
     // Un inóculo: reservas para unas decenas de tramos de tubo. El fósforo sale del agua.
     const PlasmodiumParams& p = plasmo_.params;
     const float reserves = 40.0f * p.nodePmol;
-    const float phosphorus = -exchange(phosphate_, at, -3.0f * p.phosphorusRatio * reserves);
+    const float phosphorus = -exchange(phosphate_, at, -3.0f * p.phosphorusRatio * reserves, Flow::Spawn);
     plasmo_.spawn(at, heading, reserves, phosphorus);
 }
 
@@ -28,7 +28,7 @@ void World::spawnOatFlake(Vec2 at) {
     if (plasmo_.flakes.size() >= plasmo_.params.maxFlakes)
         return;
     const float pmol = 150.0f;
-    const float phosphorus = -exchange(phosphate_, at, -plasmo_.params.phosphorusRatio * pmol);
+    const float phosphorus = -exchange(phosphate_, at, -plasmo_.params.phosphorusRatio * pmol, Flow::Spawn);
     plasmo_.addFlake(at, pmol, phosphorus);
 }
 
@@ -49,13 +49,13 @@ void World::stepPlasmodium(float dt) {
         const Vec2 w = wrapped(at);
         return nutrients_.grid().sample(w.x, w.y);
     };
-    env.takeFood = [&](Vec2 at, float pmol) { return -exchange(nutrients_, wrapped(at), -pmol); };
-    env.takePhosphate = [&](Vec2 at, float pmol) { return -exchange(phosphate_, wrapped(at), -pmol); };
+    env.takeFood = [&](Vec2 at, float pmol) { return -exchange(nutrients_, wrapped(at), -pmol, Flow::Uptake); };
+    env.takePhosphate = [&](Vec2 at, float pmol) { return -exchange(phosphate_, wrapped(at), -pmol, Flow::Uptake); };
     env.release = [&](Vec2 at, float pmol, float phosphorus) {
         if (pmol > 0.0f)
-            exchange(nutrients_, wrapped(at), pmol);
+            exchange(nutrients_, wrapped(at), pmol, Flow::Death);
         if (phosphorus > 0.0f)
-            exchange(phosphate_, wrapped(at), phosphorus);
+            exchange(phosphate_, wrapped(at), phosphorus, Flow::Death);
     };
     env.markSlime = [&](Vec2 at) {
         const Vec2 w = wrapped(at);

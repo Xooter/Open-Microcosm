@@ -6,6 +6,7 @@
 #include "ui/panels/panel_classes.hpp"
 #include "ui/widgets.hpp"
 #include "ui/i18n.hpp"
+#include "ui/theme.hpp"
 
 #include <imgui.h>
 
@@ -64,6 +65,101 @@ void drawControlled(App& app) {
     note("R reproducir | V conjugar | F seguir con la cámara");
 }
 
+// Balance de masa (fase 13): existencias por compartimento, cierre y flujos desde que se creó
+// la placa. Lo calcula la sesión una vez por muestra (no cada cuadro).
+void drawBudget(App& app) {
+    const Run& run = app.session;
+    const MassBudget& now = run.budget();
+    const MassBudget& start = run.startBudget();
+    constexpr int kTable = ImGuiTableFlags_Borders | ImGuiTableFlags_RowBg | ImGuiTableFlags_SizingStretchProp;
+    if (ImGui::BeginTable("##stocks", 1 + kElementCount, kTable)) {
+        ImGui::TableSetupColumn(tr("Compartimento"), ImGuiTableColumnFlags_WidthStretch, 1.8f);
+        for (int e = 0; e < kElementCount; ++e)
+            ImGui::TableSetupColumn(elementName(static_cast<Element>(e)));
+        ImGui::TableHeadersRow();
+        auto number = [](double v) {
+            if (v == 0.0)
+                ImGui::TextDisabled("-");
+            else
+                ImGui::Text(std::abs(v) >= 1e4 ? "%.3g" : std::abs(v) >= 100.0 ? "%.0f" : "%.3g", v);
+        };
+        for (int p = 0; p < kPoolCount; ++p) {
+            bool any = false;
+            for (int e = 0; e < kElementCount; ++e)
+                any = any || now.stock[e][p] != 0.0;
+            if (!any)
+                continue;
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(tr(poolName(static_cast<Pool>(p))));
+            for (int e = 0; e < kElementCount; ++e) {
+                ImGui::TableNextColumn();
+                number(now.stock[e][p]);
+            }
+        }
+        auto row = [&](const char* label, auto&& value) {
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(tr(label));
+            for (int e = 0; e < kElementCount; ++e) {
+                ImGui::TableNextColumn();
+                value(static_cast<Element>(e));
+            }
+        };
+        row("Total", [&](Element e) { number(now.total(e)); });
+        row("Cambio", [&](Element e) { number(now.total(e) - start.total(e)); });
+        row("Externo", [&](Element e) {
+            const int i = static_cast<int>(e);
+            number(now.ledger.external[i] - start.ledger.external[i]);
+        });
+        row("Cierre", [&](Element e) {
+            if (!conservedElement(e)) {
+                ImGui::TextDisabled("%s", tr("abierto"));
+                tooltip("El CO2 se intercambia con el aire en tiempo real y la materia orgánica entra desde afuera: "
+                        "el carbono no se conserva en la gota.");
+                return;
+            }
+            const double total = std::max(1e-12, std::abs(now.total(e)));
+            const double pct = 100.0 * (1.0 - std::abs(run.residual(e)) / total);
+            const Palette& pal = palette();
+            const float* c = pct >= 99.0 ? pal.good : pal.warn;
+            ImGui::TextColored({c[0], c[1], c[2], c[3]}, pct >= 99.95 ? "100%%" : "%.1f%%", pct);
+            tooltip("Cambio: desde que se creó la placa. Externo: gotero, ajustes y fijación de N2. "
+                    "Cierra al 100% si el cambio es igual a lo externo.");
+        });
+        ImGui::EndTable();
+    }
+
+    static int element = 0;
+    static const char* const kElements[] = {"P", "N", "Si", "Fe", "C"};
+    combo("Flujos de", &element, kElements, kElementCount, "Procesos que movieron el elemento desde que se creó la placa.");
+    if (ImGui::BeginTable("##flows", 3, kTable)) {
+        ImGui::TableSetupColumn(tr("Proceso"), ImGuiTableColumnFlags_WidthStretch, 2.0f);
+        ImGui::TableSetupColumn(tr("al agua"));
+        ImGui::TableSetupColumn(tr("del agua"));
+        ImGui::TableHeadersRow();
+        for (int f = 0; f < kFlowCount; ++f) {
+            const double in = now.ledger.toWater[element][f] - start.ledger.toWater[element][f];
+            const double out = now.ledger.fromWater[element][f] - start.ledger.fromWater[element][f];
+            if (in == 0.0 && out == 0.0)
+                continue;
+            ImGui::TableNextRow();
+            ImGui::TableNextColumn();
+            ImGui::TextUnformatted(tr(flowName(static_cast<Flow>(f))));
+            ImGui::TableNextColumn();
+            ImGui::Text("%.3g", in);
+            ImGui::TableNextColumn();
+            ImGui::Text("%.3g", out);
+        }
+        ImGui::EndTable();
+    }
+    if (element == static_cast<int>(Element::N)) {
+        const Observations& o = app.world->observations();
+        if (o.nitrogenFixed > 0.0f)
+            readout("N2 fijado", "%.1f pmol", o.nitrogenFixed);
+    }
+}
+
 class StatsPanel : public Panel {
   public:
     const char* key() const override { return "estadisticas"; }
@@ -72,7 +168,6 @@ class StatsPanel : public Panel {
 
     void draw(App& app) override {
         World& world = *app.world;
-        ToolState& tools = app.tools;
         const Census& census = app.session.census();
         if (section("Ser controlado", true))
             drawControlled(app);
@@ -94,21 +189,8 @@ class StatsPanel : public Panel {
             readout("Largo de red", "%.0f µm", census.plasmodiumLength);
             readout("Copos / esclerocios", "%d / %d", census.oatFlakes, census.sclerotia);
         }
-        if (section("Totales conservados [pmol]", true)) {
-            tools.statsTimer -= GetFrameTime();
-            if (tools.statsTimer <= 0.0f) {
-                tools.statsTimer = 1.0f;
-                tools.totalP = world.totalPhosphorus();
-                tools.totalN = world.totalNitrogen();
-                tools.totalSi = world.totalSilicon();
-                tools.totalFe = world.totalIron();
-            }
-            readout("Fósforo / Nitrógeno", "%.1f / %.1f", tools.totalP, tools.totalN);
-            readout("Silicio / Hierro", "%.1f / %.4f", tools.totalSi, tools.totalFe);
-            const Observations& o = world.observations();
-            if (o.nitrogenFixed > 0.0f)
-                readout("N2 fijado", "%.1f pmol", o.nitrogenFixed);
-        }
+        if (section("Balance de masa [pmol]", true))
+            drawBudget(app);
     }
 };
 

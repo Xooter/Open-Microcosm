@@ -75,6 +75,22 @@ void drawToolIcon(ImDrawList* dl, Tool tool, ImVec2 c, float size, ImU32 col) {
         dl->AddLine(P(-0.15f, 0.15f), P(-0.45f, 0.45f), col, w);
         dl->AddCircleFilled(P(-0.55f, 0.8f), s * 0.17f, col);
         break;
+    case Tool::Measure: // regla con marcas
+        dl->AddRect(P(-1.0f, -0.4f), P(1.0f, 0.4f), col, 0.0f, 0, w);
+        for (int i = 0; i < 5; ++i) {
+            const float x = -0.7f + 0.35f * static_cast<float>(i);
+            dl->AddLine(P(x, -0.4f), P(x, i % 2 ? -0.1f : 0.1f), col, w * 0.8f);
+        }
+        break;
+    case Tool::Region: { // lazo punteado con células adentro
+        for (int i = 0; i < 12; i += 2) {
+            const float a0 = 6.2831853f * static_cast<float>(i) / 12.0f, a1 = 6.2831853f * static_cast<float>(i + 1) / 12.0f;
+            dl->AddLine(P(0.9f * std::cos(a0), 0.75f * std::sin(a0)), P(0.9f * std::cos(a1), 0.75f * std::sin(a1)), col, w);
+        }
+        dl->AddCircleFilled(P(-0.25f, -0.1f), s * 0.18f, col);
+        dl->AddCircleFilled(P(0.3f, 0.2f), s * 0.14f, col);
+        break;
+    }
     case Tool::Spawn: // más
         dl->AddCircle(c, s * 0.9f, col, 20, w);
         dl->AddLine(P(-0.5f, 0.0f), P(0.5f, 0.0f), col, w * 1.3f);

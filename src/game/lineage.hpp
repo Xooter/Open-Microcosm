@@ -46,5 +46,8 @@ struct Census {
     int bdelloplasts = 0, bdellovibrios = 0;
     float meanPH = 7.0f, maxPH = 7.0f;
     float meanNitrogen = 0.0f, meanToxin = 0.0f, meanPhage = 0.0f; // [µM], [viriones/µm³]
+    // Medias en el agua de la placa [µM] (series de la fase 13).
+    float meanOxygen = 0.0f, meanPhosphate = 0.0f, meanSilicate = 0.0f, meanIron = 0.0f, meanVitamin = 0.0f;
+    float meanOrganic = 0.0f, meanCO2 = 0.0f;
     float share() const { return totalBiomass > 0.0f ? lineageBiomass / totalBiomass : 0.0f; }
 };

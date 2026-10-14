@@ -1,6 +1,7 @@
 #include "ui/imgui_raylib.hpp"
 
 #include <imgui.h>
+#include <implot.h>
 
 #include <raylib.h>
 #include <rlgl.h>
@@ -95,6 +96,7 @@ void renderDrawData(const ImDrawData* data) {
 
 void initBackend(const char* iniPath, float fontSize) {
     ImGui::CreateContext();
+    ImPlot::CreateContext();
     ImGuiIO& io = ImGui::GetIO();
     io.ConfigFlags |= ImGuiConfigFlags_DockingEnable | ImGuiConfigFlags_NavEnableKeyboard;
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
@@ -115,6 +117,7 @@ void shutdownBackend() {
     if (!gReady)
         return;
     UnloadTexture(gFontTexture);
+    ImPlot::DestroyContext();
     ImGui::DestroyContext();
     gReady = false;
 }

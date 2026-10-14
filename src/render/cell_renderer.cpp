@@ -116,7 +116,32 @@ Color cellTint(const StainSpec* st, const entt::registry& reg, entt::entity e, c
     (void)chlorophyll;
     return overColor(base, dye, 1.0f);
 }
+// Mapa de limitación: el color dice qué frena el crecimiento (Liebig); lo que no tiene
+// metabolismo propio (partes de un cuerpo, huevos, granos) queda con su color, atenuado.
+Color limitationTint(const entt::registry& reg, entt::entity e, const CellLook& look) {
+    const Metabolism* m = reg.try_get<Metabolism>(e);
+    if (!m)
+        return {static_cast<unsigned char>(look.r / 2 + 100), static_cast<unsigned char>(look.g / 2 + 100),
+                static_cast<unsigned char>(look.b / 2 + 100), 255};
+    const Color c = limitationColor(m->limiting);
+    return {c.r, c.g, c.b, 255};
+}
 } // namespace
+
+Color limitationColor(Limitation l) {
+    switch (l) {
+    case Limitation::None: return {70, 170, 80, 255};      // verde: crece a su tasa máxima
+    case Limitation::Energy: return {230, 190, 40, 255};   // amarillo: comida o luz
+    case Limitation::Phosphorus: return {200, 50, 160, 255};
+    case Limitation::Nitrogen: return {40, 110, 220, 255};
+    case Limitation::Silicon: return {40, 190, 200, 255};
+    case Limitation::Iron: return {190, 90, 40, 255};
+    case Limitation::Vitamin: return {140, 70, 220, 255};
+    case Limitation::Starving: return {200, 40, 40, 255};  // rojo: autofagia
+    case Limitation::Count: break;
+    }
+    return {128, 128, 128, 255};
+}
 
 CellRenderer::CellRenderer() {
     shader_ = LoadShader(nullptr, BIO_ASSET_DIR "/shaders/cell_brightfield.fs");
@@ -192,7 +217,7 @@ void CellRenderer::renderCoverage(const World& world, const Camera2D& camera, Re
     BeginMode2D(camera);
     rlDisableBackfaceCulling(); // los polígonos pueden venir en cualquier orientación
     for (const auto [e, body, look] : world.registry().view<RingBody, CellLook>().each()) {
-        const Color tint = cellTint(stain_, world.registry(), e, look);
+        const Color tint = limitationMap_ ? limitationTint(world.registry(), e, look) : cellTint(stain_, world.registry(), e, look);
         forEachImage(world, body, view, [&] { fillCell(body, tint); });
     }
     // raylib dibuja en lotes: hay que vaciar el lote ANTES de reactivar el culling, o los

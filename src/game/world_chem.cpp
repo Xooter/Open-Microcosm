@@ -26,23 +26,25 @@ void World::stepCyanobacteria(float dt) {
         const std::size_t mid = fil.x.size() / 2;
         const Vec2 at = wrapped({fil.x[mid], fil.y[mid]});
         if (cyanoDemand_[f] > 0.0f)
-            cyanoDemand_[f] = -exchange(phosphate_, at, -cyanoDemand_[f]);
+            cyanoDemand_[f] = -exchange(phosphate_, at, -cyanoDemand_[f], Flow::Uptake);
         if (cyanoDemandN_[f] > 0.0f)
-            cyanoDemandN_[f] = -exchange(nitrogen_, at, -cyanoDemandN_[f]);
+            cyanoDemandN_[f] = -exchange(nitrogen_, at, -cyanoDemandN_[f], Flow::Uptake);
     }
     cyanoReleases_.clear();
     const double fixedBefore = cyano_.fixedTotal;
     cyano_.credit(cyanoDemand_, cyanoDemandN_, oxygen_.grid(), bioDt, config_.seed, step_, cyanoReleases_);
-    if (cyano_.fixedTotal > fixedBefore)
+    if (cyano_.fixedTotal > fixedBefore) {
         observed_.nitrogenFixed += static_cast<float>(cyano_.fixedTotal - fixedBefore);
+        ledger_.addExternal(Element::N, cyano_.fixedTotal - fixedBefore); // N₂ del aire
+    }
     for (const CyanoRelease& r : cyanoReleases_) {
         const Vec2 at = wrapped({r.x, r.y});
         if (r.organic > 0.0f)
-            exchange(nutrients_, at, r.organic);
+            exchange(nutrients_, at, r.organic, Flow::Death);
         if (r.phosphorus > 0.0f)
-            exchange(phosphate_, at, r.phosphorus);
+            exchange(phosphate_, at, r.phosphorus, Flow::Death);
         if (r.nitrogen > 0.0f)
-            exchange(nitrogen_, at, r.nitrogen);
+            exchange(nitrogen_, at, r.nitrogen, Flow::Death);
         if (r.toxin > 0.0f)
             exchange(toxin_, at, r.toxin);
     }
@@ -73,16 +75,23 @@ void World::updateWaterChemistry(float dt) {
     auto& tox = toxin_.grid().v;
     auto& ahl = autoinducer_.grid().v;
     auto& phg = phage_.grid().v;
+    double fromAir = 0.0; // [µM·celda] de CO₂ que entra (o sale) por la superficie
     for (std::size_t k = 0; k < co2.size(); ++k) {
         if (!dishMask_.isWater(k))
             continue; // vidrio de la placa (celdas fantasma)
+        const float before = co2[k];
         co2[k] = units::kCO2Saturation + (co2[k] - units::kCO2Saturation) * co2Keep;
+        fromAir += co2[k] - before;
         tox[k] *= toxinKeep;
         phg[k] *= phageKeep;
         // Lactonólisis: la vida media del AHL cae 10 veces por unidad de pH sobre 7.
         const float rate = ahlBase * std::pow(10.0f, std::clamp(ph_.v[k] - 7.0f, -1.0f, 3.0f));
         ahl[k] *= std::exp(-rate * hours);
     }
+    // Balance de C: frontera abierta con el aire.
+    const double pmol = fromAir / microMolarPerPmol();
+    ledger_.add(Element::C, Flow::Air, pmol);
+    ledger_.addExternal(Element::C, pmol);
 }
 
 void World::computePH() {
