@@ -142,6 +142,15 @@ hilos): el cuello de botella era `World::limitApproach`, serial y en CPU aun con
   de los hilos no cambia el resultado) y las uniones leen el extremo ajeno de una instantánea
   (antes, carrera entre grupos de trabajo). Mismo checksum entre corridas y con cualquier número de
   hilos. Con GPU: 261 células 16 → 12,5 ms/paso; 718 células 33 → 29,6 ms.
+- ✅ **Render medido en la GPU real** (`bio_bench --render`, callgrind): con la placa entera y 718
+  células el dibujo costaba más que la simulación (32,5 ms) y es CPU: el modo inmediato de raylib
+  (~170 instrucciones por vértice). Círculos con los segmentos justos (≤ 0,25 px de error,
+  cuadrado de igual área por debajo de 1 px), contornos diezmados por debajo de 3 px, abanico
+  exacto para células estrelladas y la opción *Detalle de células*: 32,5 → 19 ms (placa entera),
+  10,4 → 8,5 ms (zoom 2).
+- **Pendiente (render):** gránulos y trazos de membrana instanciados (un buffer y una llamada, como
+  las bacterias) — cuidando el orden de dibujo (gránulos bajo el núcleo); `triangulate` todavía
+  pesa ~10 % para las células no estrelladas.
 - **Pendiente:** con 718 células lo que queda es `limitApproach` (~8 ms, serial por naturaleza:
   ~30 % de los pares empujan y forman cadenas de cientos de niveles), la espera de la GPU
   (`collect` ~6 ms; `pairs` es el kernel más caro), química + FFT (~6 ms), `applyMotion`,
