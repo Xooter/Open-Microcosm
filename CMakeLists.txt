@@ -109,6 +109,7 @@ add_library(biosim STATIC
     src/bio/cyanobacteria.cpp
     src/bio/fungi.cpp
     src/bio/plasmodium.cpp
+    src/bio/body_plan.cpp
     src/game/run.cpp
     src/game/progress.cpp
     src/game/world.cpp
@@ -125,6 +126,8 @@ add_library(biosim STATIC
     src/game/timeseries.cpp
     src/game/growth_fit.cpp
     src/game/region.cpp
+    src/game/scale_path.cpp
+    src/game/population_density.cpp
     src/game/export.cpp)
 
 target_include_directories(biosim PUBLIC src)
@@ -169,6 +172,8 @@ add_executable(bio
     src/render/field_overlay.cpp
     src/render/cell_renderer.cpp
     src/render/instanced_particles.cpp
+    src/render/population_layer.cpp
+    src/render/structure_renderer.cpp
     src/gpu/gpu_substep_solver.cpp)
 
 # Dear ImGui como biblioteca aparte: sus fuentes no pasan por nuestros warnings.
@@ -195,7 +200,7 @@ endif()
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp)
+    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp tests/test_render_lod.cpp tests/test_body_plan.cpp)
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
     add_test(NAME bio_tests COMMAND bio_tests)
 endif()

@@ -70,6 +70,11 @@ class Bacteria {
     std::vector<std::uint8_t> quorum;    // quorum alcanzado (violaceína, agregado)
     std::vector<float> phage;        // horas desde la infección por un fago (< 0: sana)
     std::vector<float> bdello;       // horas desde que entró un Bdellovibrio (< 0: libre)
+    // Identidad estable (el índice cambia con swap-and-pop). Solo la leen la inspección y el
+    // render (seguir a una bacteria, ubicar sus estructuras); no interviene en la dinámica ni en el
+    // azar. Cada hija recibe una nueva.
+    std::vector<std::uint32_t> id;
+    std::uint32_t nextId = 1;
 
     BacteriaParams params;
     Dish dish; // pared de la placa (inactiva: mundo toroidal)
@@ -94,8 +99,11 @@ class Bacteria {
 // Bdellovibrio libres (cazando). Los que están adentro de una presa viven en `Bacteria::bdello`.
 struct Bdellovibrios {
     std::vector<float> x, y, heading, hungerHours;
+    std::vector<std::uint32_t> id; // identidad estable (ver `Bacteria::id`)
+    std::uint32_t nextId = 1;
     std::size_t size() const { return x.size(); }
     void push(float px, float py, float h) {
+        id.push_back(nextId++);
         x.push_back(px);
         y.push_back(py);
         heading.push_back(h);
@@ -106,6 +114,8 @@ struct Bdellovibrios {
         y[i] = y.back();
         heading[i] = heading.back();
         hungerHours[i] = hungerHours.back();
+        id[i] = id.back();
+        id.pop_back();
         x.pop_back();
         y.pop_back();
         heading.pop_back();

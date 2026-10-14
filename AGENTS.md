@@ -251,8 +251,18 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   post-proceso. Con placa hay una sola copia del mundo (sin toro no se repite al alejar). Todo ocurre en un
   mismo plano (no hay plano focal). El campo se dibuja en una textura y pasa por
   `microscope_post.fs` (viñeta, aberración cromática, grano).
-- Bacterias con instancing (`InstancedParticles`): un buffer por frame, una llamada por copia
-  del mundo toroidal.
+- **Zoom semántico** (`render/lod.hpp`, `RenderLodSettings`: toda la configuración en un lugar):
+  cada ser elige su nivel (`DetailLevel`: densidad, simplificado, normal, detalle, subcelular) por
+  su tamaño real proyectado en píxeles, no por el zoom. Bacterias y *Bdellovibrio*: una pasada
+  lineal recorta por la vista y reparte entre la densidad (`DensityGrid` en `game/`, celdas
+  potencia de 2 ancladas al mundo → `PopulationLayer`, turbidez Beer–Lambert) e instancias
+  (`InstancedParticles`, solo las visibles), con fundido cruzado. De cerca, los más cercanos al
+  centro (tope `maxDetailed`) y el elegido se dibujan con estructuras (`render/structure_renderer`).
+- **Plan corporal** (`bio/body_plan`): qué estructuras tiene cada ser y su tamaño real
+  (`Simulated` o `Declared`). Cada estructura aparece sola cuando su tamaño proyectado alcanza unos
+  píxeles; lo que no resuelve el microscopio óptico solo se ve en la **vista de modelo**
+  (`ViewMode`). Lo declarado se ubica con un hash del id estable (`Bacteria::id`), nunca con azar.
+  `game/scale_path` da la escala biológica y la miga de pan (Placa > organismo > célula > estructura).
 
 ### Interfaz (`app/`, `ui/`)
 

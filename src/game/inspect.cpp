@@ -1,6 +1,7 @@
 // Inspección: elegir lo que hay bajo el cursor y armar la ficha de cada cosa.
 #include "game/inspect.hpp"
 
+#include "bio/body_plan.hpp"
 #include "core/profiling.hpp"
 #include "core/units.hpp"
 #include "game/encyclopedia.hpp"
@@ -32,6 +33,37 @@ InspectSection& section(Inspection& ins, const char* title) {
 }
 
 void add(InspectSection& s, std::string label, std::string value) { s.lines.push_back({std::move(label), std::move(value)}); }
+
+// El índice de una partícula con id estable: primero prueba el de la foto del click.
+bool resolveIndex(const std::vector<std::uint32_t>& ids, Picked& p) {
+    if (p.index < ids.size() && ids[p.index] == p.id)
+        return true;
+    const auto it = std::find(ids.begin(), ids.end(), p.id);
+    if (it == ids.end())
+        return false;
+    p.index = static_cast<std::size_t>(it - ids.begin());
+    return true;
+}
+
+// Estructuras del plan corporal, con su tamaño real y si se ven en campo claro o solo en el modelo.
+void addStructures(Inspection& ins, const BodyPlan& plan, const char* title = "Estructuras") {
+    InspectSection& s = section(ins, title);
+    for (const StructureSpec& st : plan.structures) {
+        std::string size;
+        if (st.width > 0.0f) {
+            const float d = st.kind == StructureKind::ViralGenome ? st.length : std::max(st.length, st.width);
+            size = d >= 1.0f ? fmt("%.3g um", static_cast<double>(d)) : fmt("%.0f nm", static_cast<double>(d * 1000.0f));
+        }
+        // Lo simulado tiene estado propio; lo declarado existe en el organismo real pero el modelo
+        // lo ubica sin simularlo.
+        const std::string seen = std::string(st.source == StructureSource::Simulated ? "simulada; " : "declarada; ") +
+                                 (visibleInBrightfield(st) ? "se ve al microscopio" : "solo en la vista de modelo");
+        std::string value = size.empty() ? seen : size + ", " + seen;
+        if (st.count > 1)
+            value = fmt("%d, ", st.count) + value;
+        add(s, st.name, value);
+    }
+}
 
 std::string speciesNames(std::uint32_t mask) {
     std::string out;
@@ -329,6 +361,7 @@ Inspection inspectCell(const World& w, entt::entity e) {
         if (hot || acid || salty)
             add(s, "", "el estres se paga como mantenimiento extra");
     }
+    addStructures(ins, speciesPlan(sid));
     return ins;
 }
 
@@ -486,10 +519,11 @@ Inspection inspectCyano(const World& w, const Picked& p) {
     return ins;
 }
 
-Inspection inspectBacterium(const World& w, const Picked& p) {
+Inspection inspectBacterium(const World& w, const Picked& picked) {
     Inspection ins;
     const Bacteria& b = w.bacteria();
-    if (p.index >= b.size()) {
+    Picked p = picked;
+    if (!resolveIndex(b.id, p)) {
         ins.valid = ins.dead = true;
         ins.title = "Ya no esta";
         ins.subtitle = "La bacteria se dividio o murio";
@@ -523,13 +557,17 @@ Inspection inspectBacterium(const World& w, const Picked& p) {
         add(s, "Defensa", "resistente a los fagos");
     if (vio)
         add(s, "Quorum", b.quorum[i] ? "alcanzado: produce violaceina (violeta, toxica)" : "no alcanzado: faltan vecinas");
+    addStructures(ins, bacteriumPlan(b.strain[i]));
+    if (b.phage[i] >= 0.0f)
+        addStructures(ins, virusPlan(kSimulatedPhage), "Fago que la infecta");
     return ins;
 }
 
-Inspection inspectBdello(const World& w, const Picked& p) {
+Inspection inspectBdello(const World& w, const Picked& picked) {
     Inspection ins;
     const Bdellovibrios& d = w.bdellovibrios();
-    if (p.index >= d.size()) {
+    Picked p = picked;
+    if (!resolveIndex(d.id, p)) {
         ins.valid = ins.dead = true;
         ins.title = "Ya no esta";
         ins.subtitle = "El Bdellovibrio entro a una presa o murio de hambre";
@@ -546,6 +584,7 @@ Inspection inspectBdello(const World& w, const Picked& p) {
     InspectSection& s = section(ins, "Bdellovibrio");
     add(s, "Velocidad", fmt("%.0f um/s en linea recta, con cambios bruscos", w.bacteria().params.bdelloSpeed));
     add(s, "Hambre", fmt("%.1f h bio sin comer", d.hungerHours[p.index]));
+    addStructures(ins, bdellovibrioPlan());
     return ins;
 }
 
@@ -743,7 +782,7 @@ Inspection inspectSclerotium(const World& w, const Picked& p) {
 // Elegir
 // ---------------------------------------------------------------------------
 
-Picked World::pick(Vec2 position, float tolerance) const {
+Picked World::pick(Vec2 position, float tolerance, std::uint32_t skip) const {
     PROFILE_SCOPE("World::pick");
     Picked out;
 
@@ -800,10 +839,10 @@ Picked World::pick(Vec2 position, float tolerance) const {
         out.id = id;
         out.at = {x, y};
     };
-    for (std::size_t i = 0; i < bacteria_.size(); ++i)
-        consider(Picked::Kind::Bacterium, i, 0, 0, bacteria_.x[i], bacteria_.y[i], 1.0f);
-    for (std::size_t i = 0; i < bdello_.size(); ++i)
-        consider(Picked::Kind::Bdellovibrio, i, 0, 0, bdello_.x[i], bdello_.y[i], 0.8f);
+    for (std::size_t i = 0; i < bacteria_.size() && !(skip & pickBit(Picked::Kind::Bacterium)); ++i)
+        consider(Picked::Kind::Bacterium, i, 0, bacteria_.id[i], bacteria_.x[i], bacteria_.y[i], 1.0f);
+    for (std::size_t i = 0; i < bdello_.size() && !(skip & pickBit(Picked::Kind::Bdellovibrio)); ++i)
+        consider(Picked::Kind::Bdellovibrio, i, 0, bdello_.id[i], bdello_.x[i], bdello_.y[i], 0.8f);
     for (std::size_t i = 0; i < fungi_.spores.size(); ++i)
         consider(Picked::Kind::Zoospore, i, 0, 0, fungi_.spores.x[i], fungi_.spores.y[i], 2.5f);
     for (std::size_t f = 0; f < cyano_.filaments.size(); ++f) {
@@ -855,4 +894,28 @@ Inspection buildInspection(const World& world, const Picked& picked) {
     case Picked::Kind::None: break;
     }
     return {};
+}
+
+bool locatePicked(const World& world, Picked& picked, Vec2& at) {
+    const entt::registry& reg = world.registry();
+    switch (picked.kind) {
+    case Picked::Kind::Cell:
+    case Picked::Kind::Rock:
+        if (!reg.valid(picked.entity) || !reg.all_of<RingBody>(picked.entity))
+            return false;
+        at = reg.get<RingBody>(picked.entity).centroid;
+        return true;
+    case Picked::Kind::Bacterium:
+        if (!resolveIndex(world.bacteria().id, picked))
+            return false;
+        at = {world.bacteria().x[picked.index], world.bacteria().y[picked.index]};
+        return true;
+    case Picked::Kind::Bdellovibrio:
+        if (!resolveIndex(world.bdellovibrios().id, picked))
+            return false;
+        at = {world.bdellovibrios().x[picked.index], world.bdellovibrios().y[picked.index]};
+        return true;
+    default:
+        return false;
+    }
 }

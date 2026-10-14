@@ -11,13 +11,18 @@ uniform vec2 halfSize;     // semiejes del bastoncito [µm]
 uniform vec4 palette[8];   // color por tipo
 
 out vec4 fragColor;
+out vec2 localPos;         // posición dentro del bastoncito [µm], ejes propios
+out vec2 shapeHalf;        // semiejes de esta instancia [µm]
 
 void main() {
     float c = cos(instanceData.z), s = sin(instanceData.z);
-    vec2 local = vertexPosition.xy * halfSize;
+    vec2 hs = halfSize;
     // El bdeloplasto (tipo 3) es redondo e hinchado.
-    if (instanceData.w > 2.5) local = vertexPosition.xy * vec2(halfSize.x * 0.6);
+    if (instanceData.w > 2.5 && instanceData.w < 3.5) hs = vec2(halfSize.x * 0.6);
+    vec2 local = vertexPosition.xy * hs;
     vec2 world = instanceData.xy + vec2(c * local.x - s * local.y, s * local.x + c * local.y);
     gl_Position = mvp * vec4(world, 0.0, 1.0);
     fragColor = palette[int(instanceData.w + 0.5)];
+    localPos = local;
+    shapeHalf = hs;
 }

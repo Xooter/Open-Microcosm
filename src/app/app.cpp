@@ -30,6 +30,13 @@
 
 namespace {
 
+// Zoom máximo [px/µm]: ~0,3 nm por píxel. Alcanza para resolver la cola de un fago T4 (20 nm) y
+// las capas de la envoltura bacteriana (~7 nm) en la vista de modelo.
+constexpr float kMaxZoom = 3000.0f;
+
+// Tolerancia para elegir con el mouse [µm]: ~6 px, con un mínimo de 2 µm para lo diminuto que se
+// ve de lejos; ese mínimo no pasa de ~30 px (a escala de nm, 2 µm serían miles de píxeles).
+float pickTolerance(float zoom) { return std::max(6.0f / zoom, std::min(2.0f, 30.0f / zoom)); }
 constexpr int kScreenW = 1600;
 constexpr int kScreenH = 900;
 
@@ -52,11 +59,12 @@ float beingReach(Being b) {
 }
 
 // Anillo alrededor de lo inspeccionado (el centro de lo vivo se lee cada cuadro: la ficha se rearma menos seguido).
+// Dónde está ahora lo elegido (las bacterias, por su id estable: la ficha se rearma cada 0,1 s
+// y en ese tiempo una bacteria nada varios µm).
 Vec2 ringCenter(const World& world, const Picked& p, const Inspection& ins) {
-    if ((p.kind == Picked::Kind::Cell || p.kind == Picked::Kind::Rock) && world.registry().valid(p.entity) &&
-        world.registry().all_of<RingBody>(p.entity))
-        return world.registry().get<RingBody>(p.entity).centroid;
-    return ins.at;
+    Picked q = p;
+    Vec2 at;
+    return locatePicked(world, q, at) ? at : ins.at;
 }
 
 void drawRing(Vec2 c, float r, float zoom, Color color, float thickness) {
@@ -69,14 +77,6 @@ void addLassoPoint(std::vector<Vec2>& path, Vec2 p, float minStep) {
         path.push_back(p);
 }
 
-// Largo "redondo" (1, 2 o 5 × 10ⁿ µm) cercano a `target` para la barra de escala.
-float niceLength(float target) {
-    const float p = std::pow(10.0f, std::floor(std::log10(std::max(target, 1e-3f))));
-    for (float m : {1.0f, 2.0f, 5.0f, 10.0f})
-        if (m * p >= target)
-            return m * p;
-    return 10.0f * p;
-}
 
 // Texto con fondo sobre la placa (en píxeles de pantalla).
 void worldLabel(ImDrawList* dl, ImVec2 at, const char* text) {
@@ -300,6 +300,10 @@ void App::registerCommands() {
     }
     add("view.limitation", "Mapa de limitación", "Capas", ImGuiKey_L, false,
         [this] { tools.limitationMap = !tools.limitationMap; }, {}, [this] { return tools.limitationMap; });
+    add("view.semantic", "Zoom semántico (densidad de lejos)", "Capas", ImGuiKey_None, false,
+        [this] { tools.semanticZoom = !tools.semanticZoom; }, {}, [this] { return tools.semanticZoom; });
+    add("view.model", "Vista de modelo (estructuras no resolubles)", "Capas", ImGuiKey_None, false,
+        [this] { tools.modelView = !tools.modelView; }, {}, [this] { return tools.modelView; });
     add("view.scalebar", "Barra de escala", "Capas", ImGuiKey_None, false, [this] { tools.scaleBar = !tools.scaleBar; },
         {}, [this] { return tools.scaleBar; });
     add("view.stain", "Siguiente tinción", "Capas", ImGuiKey_J, false,
@@ -502,7 +506,7 @@ void App::updateCamera(bool mouseFree) {
             camera.offset = GetMousePosition();
             camera.target = mouseWorld;
         }
-        camera.zoom = Clamp(camera.zoom * (1.0f + 0.1f * wheel), minZoom, 60.0f);
+        camera.zoom = Clamp(camera.zoom * (1.0f + 0.1f * wheel), minZoom, kMaxZoom);
     }
     camera.zoom = std::max(camera.zoom, minZoom);
     if (dish.active()) {
@@ -517,14 +521,29 @@ void App::updateCamera(bool mouseFree) {
 }
 
 // Cámara de microscopio: sigue a una célula con suavidad.
-static void followCell(Camera2D& cam, const World& world, entt::entity cell, const Rectangle& vp, float dt) {
-    if (!world.registry().valid(cell))
+static void followPicked(Camera2D& cam, const World& world, Picked& picked, const Rectangle& vp, float dt) {
+    Vec2 c;
+    if (!locatePicked(world, picked, c))
         return;
-    const Vec2 c = world.registry().get<RingBody>(cell).centroid;
     cam.offset = {vp.x + 0.5f * vp.width, vp.y + 0.5f * vp.height};
-    const float k = 1.0f - std::exp(-6.0f * dt);
+    // Las células se siguen con suavidad; una bacteria (~25 µm/s) se saldría de una vista de pocos
+    // µm con cualquier retraso, así que la cámara va pegada a ella.
+    const bool tiny = picked.kind == Picked::Kind::Bacterium || picked.kind == Picked::Kind::Bdellovibrio;
+    const float k = tiny ? 1.0f : 1.0f - std::exp(-6.0f * dt);
     cam.target.x = wrapCoord(cam.target.x + minImage(c.x - cam.target.x, world.width()) * k, world.width());
     cam.target.y = wrapCoord(cam.target.y + minImage(c.y - cam.target.y, world.height()) * k, world.height());
+}
+
+// Lo que la vista muestra solo como densidad no se elige: el click no tiene que dar con un
+// individuo que no se ve.
+std::uint32_t App::pickSkip() const {
+    std::uint32_t skip = 0;
+    const RenderLodSettings& lod = renderer->lod();
+    if (lod.blend(Population::Bacteria, camera.zoom).individual < 0.5f)
+        skip |= pickBit(Picked::Kind::Bacterium);
+    if (lod.blend(Population::Bdellovibrio, camera.zoom).individual < 0.5f)
+        skip |= pickBit(Picked::Kind::Bdellovibrio);
+    return skip;
 }
 
 // Elegir lo que está bajo el cursor: resalta (tooltip) y el click abre su ficha. Las fichas
@@ -533,7 +552,7 @@ static void followCell(Camera2D& cam, const World& world, entt::entity cell, con
 void App::selectionInput(float dt, const Vector2&, const Vec2& pos) {
     SelectionState& st = selection;
     const bool mouseFree = !ImGui::GetIO().WantCaptureMouse;
-    const float tolerance = std::max(2.0f, 6.0f / camera.zoom); // ~6 px en pantalla
+    const float tolerance = pickTolerance(camera.zoom);
 
     st.hoverTimer -= dt;
     if (!mouseFree || tools.tool != Tool::Select) {
@@ -541,7 +560,7 @@ void App::selectionInput(float dt, const Vector2&, const Vec2& pos) {
         st.hoverText.clear();
     } else if (st.hoverTimer <= 0.0f) {
         st.hoverTimer = 0.05f;
-        st.hover = world->pick(pos, tolerance);
+        st.hover = world->pick(pos, tolerance, pickSkip());
         st.hoverText.clear();
         if (st.hover) {
             const Inspection h = buildInspection(*world, st.hover);
@@ -555,7 +574,7 @@ void App::selectionInput(float dt, const Vector2&, const Vec2& pos) {
     // Un click que no toca nada no cambia nada: con una tolerancia de pocos píxeles es fácil
     // errarle a algo chico, y no hay que perder la ficha que se estaba leyendo (Esc la cierra).
     if (mouseFree && tools.tool == Tool::Select && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-        if (const Picked hit = world->pick(pos, tolerance)) {
+        if (const Picked hit = world->pick(pos, tolerance, pickSkip())) {
             st.picked = hit;
             st.inspection = buildInspection(*world, hit);
             st.refresh = 0.1f;
@@ -677,7 +696,7 @@ void App::controlInput(bool mouseFree, const Vec2& pos) {
     const bool kbFree = !ImGui::GetIO().WantTextInput;
     const bool leftPressed = mouseFree && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     if ((tools.tool == Tool::Control && leftPressed) || (kbFree && IsKeyPressed(KEY_P))) {
-        const Picked hit = world->pick(pos, std::max(2.0f, 6.0f / camera.zoom));
+        const Picked hit = world->pick(pos, pickTolerance(camera.zoom));
         if (hit.kind == Picked::Kind::Cell && world->registry().all_of<Locomotion>(hit.entity) &&
             hit.entity != world->player()) {
             world->setPlayer(hit.entity);
@@ -787,7 +806,12 @@ void App::drawWorldOverlays() {
         // dónde estaba al hacer click y se desvanece, porque el ser ya se movió.
         const float fade = st.picked.live() ? 1.0f : std::clamp(1.0f - (st.pickedAge - 0.6f) / 1.2f, 0.0f, 1.0f);
         if (fade > 0.0f)
-            drawRing(ringCenter(*world, st.picked, st.inspection), st.inspection.radius, camera.zoom,
+            // Una bacteria se marca de cerca (a escala de nm, un anillo de 6 µm queda fuera de la vista).
+            drawRing(ringCenter(*world, st.picked, st.inspection),
+                     st.picked.kind == Picked::Kind::Bacterium || st.picked.kind == Picked::Kind::Bdellovibrio
+                         ? std::max(1.6f, 14.0f / camera.zoom)
+                         : st.inspection.radius,
+                     camera.zoom,
                      Fade({200, 120, 20, 230}, fade), 3.5f);
     }
     const bool hoverIsPicked = st.hover.kind == st.picked.kind && st.hover.entity == st.picked.entity &&
@@ -877,6 +901,7 @@ void App::drawMeasurements() {
         const ImVec2 at = screen(top);
         worldLabel(dl, {at.x - 0.5f * ImGui::CalcTextSize(text).x, at.y - 24.0f}, text);
     }
+    drawScaleIndicator(dl);
     if (tools.scaleBar) {
         // Barra de ~120 px con un largo redondo en µm, abajo a la izquierda del campo.
         const float um = niceLength(120.0f / camera.zoom);
@@ -884,9 +909,37 @@ void App::drawMeasurements() {
         const ImVec2 a{viewport.x + 24.0f, viewport.y + viewport.height - 30.0f};
         dl->AddRectFilled({a.x - 8, a.y - 22}, {a.x + w + 8, a.y + 10}, IM_COL32(20, 24, 24, 150), 3.0f);
         dl->AddRectFilled({a.x, a.y}, {a.x + w, a.y + 4}, IM_COL32(245, 245, 240, 255));
-        std::snprintf(text, sizeof text, um >= 1000.0f ? "%.0f mm" : "%.0f µm", um >= 1000.0f ? um / 1000.0f : um);
+        std::snprintf(text, sizeof text, "%s", formatLength(um).c_str());
         dl->AddText({a.x + 0.5f * (w - ImGui::CalcTextSize(text).x), a.y - 19.0f}, IM_COL32(245, 245, 240, 255), text);
     }
+}
+
+// Escala biológica y miga de pan arriba a la izquierda del campo: qué nivel se está mirando
+// (Placa > organismo > célula > estructura) y si es una imagen de microscopio o el modelo.
+void App::drawScaleIndicator(ImDrawList* dl) {
+    const float viewMicrons = std::min(viewport.width, viewport.height) / camera.zoom;
+    scalePathTimer_ -= GetFrameTime();
+    if (scalePathTimer_ <= 0.0f) {
+        scalePathTimer_ = 0.1f;
+        const Vector2 mid = GetScreenToWorld2D({viewport.x + 0.5f * viewport.width, viewport.y + 0.5f * viewport.height}, camera);
+        const Picked focus = selection.inspection.valid && !selection.inspection.dead ? selection.picked : Picked{};
+        scalePath_ = scalePath(*world, {mid.x, mid.y}, viewMicrons, focus);
+    }
+    std::string path;
+    for (std::size_t i = 0; i < scalePath_.crumbs.size(); ++i) {
+        if (i > 0)
+            path += "  >  ";
+        path += ui::tr(scalePath_.crumbs[i].c_str());
+    }
+    std::string sub = ui::tr(bioScaleName(scalePath_.scale));
+    if (tools.modelView)
+        sub += std::string("  |  ") + ui::tr("Vista de modelo: esquema didáctico, no imagen de microscopio");
+    else if (1.0f / camera.zoom < 0.1f * renderer->lod().opticalResolution)
+        // Más allá del límite de Abbe, agrandar no muestra nada nuevo (aumento vacío).
+        sub += std::string("  |  ") + ui::tr("Por debajo del límite óptico (~0,24 µm): aumento vacío. Capas > Vista de modelo");
+    const ImVec2 at = {viewport.x + 14.0f, viewport.y + 12.0f};
+    worldLabel(dl, at, path.c_str());
+    worldLabel(dl, {at.x, at.y + ImGui::GetTextLineHeight() + 8.0f}, sub.c_str());
 }
 
 // ---------------------------------------------------------------------------
@@ -927,14 +980,21 @@ int App::run() {
         stepSimulation(frameDt);
 
         // La cámara sigue al ser controlado o al elegido.
-        if (tools.followSelected && selection.followable() && world->registry().valid(selection.picked.entity))
-            followCell(camera, *world, selection.picked.entity, viewport, frameDt);
-        else if (tools.follow)
-            followCell(camera, *world, world->player(), viewport, frameDt);
+        if (tools.followSelected && selection.followable()) {
+            followPicked(camera, *world, selection.picked, viewport, frameDt);
+        } else if (tools.follow) {
+            Picked player;
+            player.kind = Picked::Kind::Cell;
+            player.entity = world->player();
+            followPicked(camera, *world, player, viewport, frameDt);
+        }
         discover(frameDt);
 
         renderer->setStain(activeStain());
         renderer->setLimitationMap(tools.limitationMap);
+        renderer->setLodEnabled(tools.semanticZoom);
+        renderer->setViewMode(tools.modelView ? ViewMode::Model : ViewMode::Microscope);
+        renderer->setInspection(selection.inspection.valid && !selection.inspection.dead ? selection.picked : Picked{});
         BeginDrawing();
         ClearBackground({22, 24, 24, 255});
         const double r0 = GetTime();

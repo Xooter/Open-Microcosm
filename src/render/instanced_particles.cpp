@@ -1,6 +1,5 @@
 #include "render/instanced_particles.hpp"
 
-#include "bio/bacteria.hpp"
 #include "core/profiling.hpp"
 
 #include <raymath.h>
@@ -25,6 +24,9 @@ void InstancedParticles::init() {
     mvpLoc_ = GetShaderLocation(shader_, "mvp");
     halfSizeLoc_ = GetShaderLocation(shader_, "halfSize");
     paletteLoc_ = GetShaderLocation(shader_, "palette");
+    fadeLoc_ = GetShaderLocation(shader_, "fade");
+    levelLoc_ = GetShaderLocation(shader_, "level");
+    pixelLoc_ = GetShaderLocation(shader_, "pixel");
     // Dos triángulos de un cuadrado unitario centrado.
     const float quad[18] = {-1, -1, 0, 1, -1, 0, 1, 1, 0, -1, -1, 0, 1, 1, 0, -1, 1, 0};
     vao_ = rlLoadVertexArray();
@@ -47,22 +49,10 @@ bool InstancedParticles::ready() {
     return ok_;
 }
 
-void InstancedParticles::upload(const Bacteria& bac) {
+void InstancedParticles::upload() {
     if (!ready())
         return;
     PROFILE_SCOPE("InstancedParticles::upload");
-    count_ = static_cast<int>(bac.size());
-    data_.resize(static_cast<std::size_t>(count_) * 4);
-    for (int i = 0; i < count_; ++i) {
-        const auto k = static_cast<std::size_t>(i);
-        // Tipo: 0 normal, 1 violeta (quorum), 2 con fago, 3 bdeloplasto.
-        const float kind = bac.bdello[k] >= 0.0f ? 3.0f
-                           : (bac.quorum[k] ? 1.0f : (bac.phage[k] >= 0.0f ? 2.0f : (bac.strain[k] == 2 ? 4.0f : 0.0f)));
-        data_[4 * k] = bac.x[k];
-        data_[4 * k + 1] = bac.y[k];
-        data_[4 * k + 2] = bac.heading[k];
-        data_[4 * k + 3] = kind;
-    }
     if (count_ > capacity_) { // crece el buffer (raro: tope de bacterias)
         while (capacity_ < count_)
             capacity_ *= 2;
@@ -78,17 +68,19 @@ void InstancedParticles::upload(const Bacteria& bac) {
         rlUpdateVertexBuffer(instanceVbo_, data_.data(), count_ * 4 * static_cast<int>(sizeof(float)), 0);
 }
 
-void InstancedParticles::draw(float offsetX, float offsetY, float length, float thickness) {
-    if (!ok_ || count_ == 0)
+void InstancedParticles::draw(float length, float thickness, float fade, DetailLevel level, float pixel) {
+    if (!ok_ || count_ == 0 || fade <= 0.0f)
         return;
     rlDrawRenderBatchActive(); // lo dibujado antes en el lote va primero
-    rlPushMatrix();
-    rlTranslatef(offsetX, offsetY, 0.0f);
     const Matrix mvp = MatrixMultiply(rlGetMatrixModelview(), rlGetMatrixProjection());
     rlEnableShader(shader_.id);
     rlSetUniformMatrix(mvpLoc_, mvp);
     const float half[2] = {0.5f * length, 0.5f * thickness};
     rlSetUniform(halfSizeLoc_, half, RL_SHADER_UNIFORM_VEC2, 1);
+    rlSetUniform(fadeLoc_, &fade, RL_SHADER_UNIFORM_FLOAT, 1);
+    const int lvl = static_cast<int>(level);
+    rlSetUniform(levelLoc_, &lvl, RL_SHADER_UNIFORM_INT, 1);
+    rlSetUniform(pixelLoc_, &pixel, RL_SHADER_UNIFORM_FLOAT, 1);
     static const float kDefault[32] = {
         70 / 255.f, 80 / 255.f, 70 / 255.f, 150 / 255.f,   // bacilo
         96 / 255.f, 52 / 255.f, 140 / 255.f, 200 / 255.f,  // violaceína
@@ -102,5 +94,4 @@ void InstancedParticles::draw(float offsetX, float offsetY, float length, float 
     rlDisableVertexArray();
     rlEnableBackfaceCulling();
     rlDisableShader();
-    rlPopMatrix();
 }

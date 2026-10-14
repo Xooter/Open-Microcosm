@@ -2,7 +2,9 @@
 
 #include "core/vec2.hpp"
 #include "game/stain.hpp"
+#include "render/lod.hpp"
 
+#include <entt/entity/entity.hpp>
 #include <raylib.h>
 
 #include <cstdint>
@@ -38,11 +40,18 @@ class CellRenderer {
     void setLimitationMap(bool on) { limitationMap_ = on; }
     // Tamaño de la textura de destino (0: el de la pantalla); lo usa la vista previa.
     void setTargetSize(int w, int h) { targetW_ = w; targetH_ = h; }
+    // Nivel de detalle por tamaño en pantalla (silueta, morfología, organelos).
+    void setLod(const RenderLodSettings& lod) { lod_ = lod; }
+    // La célula elegida sube un nivel de detalle.
+    void setInspection(entt::entity cell) { inspection_ = cell; }
 
   private:
     void ensureTarget();
     void drawFluorescence(const World& world, const Camera2D& camera, Rectangle view);
-    void fillCell(const RingBody& body, Color tint);
+    void fillCell(const RingBody& body, Color tint, float zoom);
+    // Contorno de la célula: el anillo simulado o, cuando sus tramos de 3 µm ocupan muchos píxeles,
+    // una curva suave (Catmull-Rom) que pasa por los mismos puntos de membrana.
+    const Vec2* outline(const RingBody& body, float zoom, int& count);
     template <typename Fn>
     void forEachImage(const World& world, const RingBody& body, Rectangle view, Fn&& fn);
 
@@ -54,5 +63,8 @@ class CellRenderer {
     bool limitationMap_ = false;
     int targetW_ = 0, targetH_ = 0;
     int fluorLoc_ = -1;
+    RenderLodSettings lod_;
+    entt::entity inspection_ = entt::null;
+    std::vector<Vec2> smooth_;
     std::vector<int> triangles_, scratch_;
 };

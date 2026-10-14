@@ -6,6 +6,7 @@
 #include "game/progress.hpp"
 #include "game/stain.hpp"
 #include "game/run.hpp"
+#include "game/scale_path.hpp"
 #include "game/world.hpp"
 #include "gpu/gpu_substep_solver.hpp"
 #include "render/renderer.hpp"
@@ -14,6 +15,8 @@
 #include "ui/stain_preview.hpp"
 
 #include <raylib.h>
+
+struct ImDrawList;
 
 #include <algorithm>
 #include <memory>
@@ -99,6 +102,7 @@ struct App {
     void drawToasts();
     void worldInput(float dt);
     void selectionInput(float dt, const Vector2& mouseWorld, const Vec2& pos);
+    std::uint32_t pickSkip() const;
     void toolInput(float dt, const Vec2& pos);
     void controlInput(bool mouseFree, const Vec2& pos);
     void updateCamera(bool mouseFree);
@@ -114,5 +118,9 @@ struct App {
     std::string layoutPath_;
     bool layoutReset_ = false;
     bool panning_ = false;
+    // Miga de pan de la escala (se rearma ~10 veces por segundo: busca qué hay en el centro).
+    ScalePath scalePath_;
+    float scalePathTimer_ = 0.0f;
+    void drawScaleIndicator(ImDrawList* dl);
     bool dockBuilt_ = false;
 };

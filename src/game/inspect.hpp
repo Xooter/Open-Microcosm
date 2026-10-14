@@ -36,15 +36,21 @@ struct Picked {
     };
     Kind kind = Kind::None;
     entt::entity entity = entt::null; // Cell, Rock
-    std::uint32_t id = 0;             // Hypha: id del micelio
+    std::uint32_t id = 0;             // Hypha: id del micelio; Bacterium y Bdellovibrio: su id estable
     std::size_t index = 0;            // posición en el arreglo de partículas (foto del click)
     std::size_t node = 0;
     Vec2 at;                          // dónde estaba al elegirla [µm]
 
     explicit operator bool() const { return kind != Kind::None; }
     // ¿Se puede seguir en vivo (identidad estable) o solo es una foto?
-    bool live() const { return kind == Kind::Cell || kind == Kind::Rock || kind == Kind::Hypha || kind == Kind::Plasmodium; }
+    bool live() const {
+        return kind == Kind::Cell || kind == Kind::Rock || kind == Kind::Hypha || kind == Kind::Plasmodium ||
+               kind == Kind::Bacterium || kind == Kind::Bdellovibrio;
+    }
 };
+
+// Bit de un tipo para `World::pick(..., skip)`.
+constexpr std::uint32_t pickBit(Picked::Kind kind) { return 1u << static_cast<unsigned>(kind); }
 
 struct InspectLine {
     std::string label, value; // label vacío: el valor ocupa todo el ancho
@@ -75,3 +81,7 @@ struct Inspection {
 
 // La ficha de lo elegido (en el estado actual del mundo).
 Inspection buildInspection(const World& world, const Picked& picked);
+
+// Dónde está ahora lo elegido. Las bacterias se buscan por su id estable (el índice cambia con
+// swap-and-pop) y `picked.index` queda actualizado. false si ya no existe o no tiene posición viva.
+bool locatePicked(const World& world, Picked& picked, Vec2& at);

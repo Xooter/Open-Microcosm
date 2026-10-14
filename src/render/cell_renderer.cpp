@@ -9,6 +9,7 @@
 #include "bio/species.hpp"
 #include "core/profiling.hpp"
 #include "game/world.hpp"
+#include "render/structure_renderer.hpp"
 
 #include <cmath>
 #include "sim/polygon.hpp"
@@ -190,9 +191,34 @@ void CellRenderer::forEachImage(const World& world, const RingBody& body, Rectan
     }
 }
 
-void CellRenderer::fillCell(const RingBody& body, Color tint) {
-    const Vec2* p = body.poly.data();
-    const int n = static_cast<int>(body.poly.size());
+const Vec2* CellRenderer::outline(const RingBody& body, float zoom, int& count) {
+    count = static_cast<int>(body.poly.size());
+    constexpr float kSegmentPx = 60.0f; // a partir de acá el polígono se ve facetado
+    constexpr int kMaxSubdivisions = 16;
+    float longest = 0.0f;
+    for (int i = 0; i < count; ++i)
+        longest = std::max(longest, length(body.poly[static_cast<std::size_t>((i + 1) % count)] - body.poly[static_cast<std::size_t>(i)]));
+    const int sub = std::min(kMaxSubdivisions, static_cast<int>(std::ceil(longest * zoom / kSegmentPx)));
+    if (sub <= 1 || count < 4)
+        return body.poly.data();
+    smooth_.clear();
+    const auto at = [&](int i) { return body.poly[static_cast<std::size_t>((i % count + count) % count)]; };
+    for (int i = 0; i < count; ++i) {
+        const Vec2 p0 = at(i - 1), p1 = at(i), p2 = at(i + 1), p3 = at(i + 2);
+        for (int k = 0; k < sub; ++k) {
+            const float t = static_cast<float>(k) / static_cast<float>(sub), t2 = t * t, t3 = t2 * t;
+            smooth_.push_back((p1 * 2.0f + (p2 - p0) * t + (p0 * 2.0f - p1 * 5.0f + p2 * 4.0f - p3) * t2 +
+                               (p1 * 3.0f - p0 - p2 * 3.0f + p3) * t3) *
+                              0.5f);
+        }
+    }
+    count = static_cast<int>(smooth_.size());
+    return smooth_.data();
+}
+
+void CellRenderer::fillCell(const RingBody& body, Color tint, float zoom) {
+    int n = 0;
+    const Vec2* p = outline(body, zoom, n);
     if (polygon::triangulate(p, n, triangles_, scratch_)) {
         for (std::size_t t = 0; t < triangles_.size(); t += 3)
             DrawTriangle(toRay(p[triangles_[t]]), toRay(p[triangles_[t + 1]]),
@@ -213,7 +239,7 @@ void CellRenderer::renderCoverage(const World& world, const Camera2D& camera, Re
     rlDisableBackfaceCulling(); // los polígonos pueden venir en cualquier orientación
     for (const auto [e, body, look] : world.registry().view<RingBody, CellLook>().each()) {
         const Color tint = limitationMap_ ? limitationTint(world.registry(), e, look) : cellTint(stain_, world.registry(), e, look);
-        forEachImage(world, body, view, [&] { fillCell(body, tint); });
+        forEachImage(world, body, view, [&] { fillCell(body, tint, camera.zoom); });
     }
     // raylib dibuja en lotes: hay que vaciar el lote ANTES de reactivar el culling, o los
     // triángulos se descartan al dibujarse más tarde.
@@ -531,7 +557,17 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
     PROFILE_SCOPE("CellRenderer::details");
     const BodyParticles& bp = world.bodies();
     const float px = 1.0f / camera.zoom; // un píxel en µm
-    const float membraneWidth = std::max(1.0f, 1.2f * px);
+    // 1 µm (trazo de siempre) hasta 60 px; más cerca no engorda: la membrana real mide ~8 nm y en la
+    // vista de modelo, de muy cerca, se dibuja con su espesor real (más 1 px para que se vea).
+    const float membraneWidth = std::max(1.2f * px, lod_.view == ViewMode::Model && camera.zoom > 60.0f
+                                                        ? 0.008f
+                                                        : std::min(1.0f, 60.0f * px));
+    StructureContext ctx;
+    ctx.lod = &lod_;
+    ctx.zoom = camera.zoom;
+    ctx.time = world.simTime();
+    ctx.view = view;
+    ctx.particleBudget = lod_.maxParticlesPerFrame;
     const float time = world.simTime();
     const entt::registry& reg = world.registry();
     if (stain_ && stain_->mode == StainMode::Fluorescence) {
@@ -546,6 +582,12 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
         const Heredity* her = reg.try_get<Heredity>(e);
         const Species* species = reg.try_get<Species>(e);
         const bool cyst = reg.all_of<Cyst>(e);
+        // Zoom semántico: una célula de pocos píxeles es una silueta con su membrana; sus
+        // apéndices y núcleo aparecen con la morfología, y los organelos chicos solo de cerca.
+        DetailLevel level =
+            lod_.cellLevel(std::max(body.aabbMax.x - body.aabbMin.x, body.aabbMax.y - body.aabbMin.y), camera.zoom);
+        if (e == inspection_ && lod_.enabled && lod_.inspectionBoost && level < DetailLevel::Subcellular)
+            level = static_cast<DetailLevel>(static_cast<int>(level) + 1);
         forEachImage(world, body, view, [&] {
             const std::size_t n = body.poly.size();
             // Tallo: del punto de fijación al polo posterior; enrollado si el espasmonema se contrajo.
@@ -578,8 +620,14 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                                                      minImage(prey.centroid.y - body.centroid.y, world.height())};
                 DrawLineEx(toRay(body.centroid), toRay(pc), std::max(1.5f, 2.0f * px), kMouth);
             }
-            for (std::size_t i = 0; i < n; ++i)
-                DrawLineEx(toRay(body.poly[i]), toRay(body.poly[(i + 1) % n]), membraneWidth, kMembrane);
+            {
+                int m = 0;
+                const Vec2* ring = outline(body, camera.zoom, m);
+                for (int i = 0; i < m; ++i)
+                    DrawLineEx(toRay(ring[i]), toRay(ring[(i + 1) % m]), membraneWidth, kMembrane);
+            }
+            if (level < DetailLevel::Normal)
+                return;
 
             const SpeciesId sid = species ? species->id : SpeciesId::Paramecium;
             if (loco && sid == SpeciesId::Trichonympha) {
@@ -677,7 +725,8 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             // sola célula.
             const bool colony = sid == SpeciesId::Volvox || sid == SpeciesId::Pediastrum;
             // Gránulos y organelos del citoplasma, por tipo.
-            for (std::size_t k = body.organelleCount; k < body.interior.size() && !colony; ++k) {
+            const bool organelles = level >= DetailLevel::Detail;
+            for (std::size_t k = body.organelleCount; k < body.interior.size() && !colony && organelles; ++k) {
                 const std::uint32_t s = body.interior[k];
                 const float r = std::max(bp.radius[s], 0.75f * px);
                 // Reservas teñidas: el almidón envuelve al pirenoide del cloroplasto; el glucógeno y
@@ -721,7 +770,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             if (her) {
                 // Tricocistos: husos bajo la película, más densos con el gen.
                 const float tri = her->genome[Gene::Trichocysts];
-                if (tri > 0.05f) {
+                if (tri > 0.05f && organelles) {
                     const std::size_t step = std::max<std::size_t>(1, static_cast<std::size_t>(std::lround(2.0f / tri)));
                     for (std::size_t i = 0; i < n; i += step) {
                         const Vec2 b = ringPos(bp, body, i);
@@ -790,6 +839,9 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 DrawCircleV(c, r, kVacuole);
                 DrawRing(c, r - std::max(0.6f, px), r, 0.0f, 360.0f, 32, kVacuoleRim);
             };
+            if (!colony && level >= DetailLevel::Detail && anatomy.nucleus != ~0u)
+                drawEndomembranes(speciesPlan(sid), {bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus],
+                                  bodyHeading(body), static_cast<std::uint32_t>(entt::to_integral(e)), ctx);
             if (!colony) {
                 nucleus(anatomy.nucleus);
                 contractile(anatomy.contractileVacuole);

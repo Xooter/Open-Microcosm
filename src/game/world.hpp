@@ -256,8 +256,9 @@ class World {
     // por su vía normal (fisión, palintomía, colonias, gemación o huevo). false si no puede.
     bool forceReproduction(entt::entity cell);
     // Inspección: qué hay en `position` (a `tolerance` µm de su borde). Lo más grande y lo más
-    // cercano tienen prioridad: células, granos y después partículas.
-    Picked pick(Vec2 position, float tolerance) const;
+    // cercano tienen prioridad: células, granos y después partículas. `skip` (bits de `pickBit`)
+    // excluye tipos: lo que la vista muestra solo como densidad no se puede elegir con el mouse.
+    Picked pick(Vec2 position, float tolerance, std::uint32_t skip = 0) const;
     // Minerales: una partícula suelta, un grano de arena (false si se superpone con algo) o
     // `count` partículas de sedimento mezclado alrededor de `at`.
     void spawnMineral(MineralKind kind, Vec2 at, Rng& rng);

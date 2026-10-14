@@ -22,6 +22,9 @@ void Bacteria::spawn(std::size_t count, float width, float height, std::uint64_t
     quorum.assign(count, 0);
     phage.assign(count, -1.0f);
     bdello.assign(count, -1.0f);
+    id.resize(count);
+    for (std::size_t i = 0; i < count; ++i)
+        id[i] = nextId++;
     for (std::size_t i = 0; i < count; ++i) {
         Rng rng(seed, rng_stream::kInit, i, 0);
         x[i] = rng.uniform(0.0f, width);
@@ -47,6 +50,7 @@ void Bacteria::add(float px, float py, float h, float m, std::uint8_t st, std::u
     quorum.push_back(0);
     phage.push_back(-1.0f);
     bdello.push_back(-1.0f);
+    id.push_back(nextId++);
     x.push_back(px);
     y.push_back(py);
     heading.push_back(h);
@@ -91,6 +95,8 @@ void Bacteria::remove(std::size_t i) {
     quorum[i] = quorum[last];
     phage[i] = phage[last];
     bdello[i] = bdello[last];
+    id[i] = id[last];
+    id.pop_back();
     mass.pop_back();
     strain.pop_back();
     resistant.pop_back();

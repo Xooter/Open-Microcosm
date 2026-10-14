@@ -3,6 +3,7 @@
 #include "core/profiling.hpp"
 #include "game/world.hpp"
 #include "render/minerals.hpp"
+#include "render/structure_renderer.hpp"
 
 #include <rlgl.h>
 
@@ -13,10 +14,6 @@ namespace {
 constexpr Color kBackground = {236, 231, 214, 255}; // luz de lámpara halógena filtrada
 constexpr Color kInk = {25, 30, 45, 170};
 constexpr Color kDetritus = {120, 92, 55, 190};
-constexpr Color kBacteria = {70, 80, 70, 150};
-constexpr Color kViolacein = {96, 52, 140, 200};
-constexpr Color kPhageInfected = {90, 96, 84, 110};   // infectada: algo más pálida antes de estallar
-constexpr Color kBdelloplast = {84, 90, 76, 170};
 constexpr Color kHypha = {150, 146, 128, 120};        // hifa hialina, casi transparente
 constexpr Color kHyphaWall = {96, 92, 76, 170};
 constexpr Color kSporangium = {120, 112, 86, 210};
@@ -27,10 +24,13 @@ constexpr Color kSlime = {232, 222, 160, 26};          // rastro de baba
 constexpr Color kFlake = {224, 212, 176, 230};
 constexpr Color kFlakeEdge = {150, 136, 100, 230};
 constexpr Color kSclerotium = {190, 120, 40, 230};
+// Fagos libres en la vista de modelo: un tono propio (no es turbidez: con luz no se verían).
+constexpr Color kPhageDensity = {88, 72, 150, 255};
 constexpr Color kResting = {110, 78, 44, 230};         // esporangio de resistencia: pared gruesa parda
 } // namespace
 
 Renderer::Renderer() {
+    cells_.setLod(lod_);
     post_ = LoadShader(nullptr, BIO_ASSET_DIR "/shaders/microscope_post.fs");
     postOk_ = post_.id != 0 && post_.id != rlGetShaderIdDefault();
     if (postOk_) {
@@ -136,6 +136,221 @@ void bacteriaPalette(const StainSpec* st, float out[32]) {
 
 } // namespace
 
+// Una sola pasada lineal por cada población: lo que está fuera de la vista se descarta; lo que
+// queda va a las instancias (si los individuos se ven) y a la grilla de densidad (si la densidad
+// se ve). Recorrer los arreglos SoA contiguos cuesta menos que armar un índice espacial por
+// frame (la grilla de bacterias del mundo se arma a mitad del paso y no vale al dibujar).
+void Renderer::gatherPopulations(const World& world, Rectangle view, float zoom, bool fluor, const float* palette) {
+    PROFILE_SCOPE("Renderer::gatherPopulations");
+    const float px = 1.0f / zoom;
+    const Bacteria& bac = world.bacteria();
+    const Bdellovibrios& bd = world.bdellovibrios();
+    PopulationPass& bp = populations_[static_cast<int>(Population::Bacteria)];
+    PopulationPass& dp = populations_[static_cast<int>(Population::Bdellovibrio)];
+    bp.blend = lod_.blend(Population::Bacteria, zoom);
+    bp.length = bac.params.length;
+    bp.thickness = 2.0f * bac.params.radius;
+    dp.blend = lod_.blend(Population::Bdellovibrio, zoom);
+    if (fluor) // en fluorescencia solo se ve el ADN teñido de las bacterias (como antes)
+        dp.blend = {dp.blend.level, 0.0f, 0.0f};
+    dp.length = 1.0f; // vibrio diminuto (~1 × 0,4 µm)
+    dp.thickness = 0.4f;
+    bp.instances.setPalette(palette);
+    dp.instances.setPalette(palette);
+
+    // Individuos: margen de 5 µm (como antes). Densidad: dos celdas más allá de la vista, así el
+    // suavizado del borde visible tiene vecinos reales.
+    constexpr float kIndividualMargin = 5.0f;
+    // El elegido (por su id estable) sube a dibujarse con estructuras aunque sea chico en pantalla.
+    const bool boost = lod_.enabled && lod_.inspectionBoost;
+    const std::uint32_t selBacterium = boost && inspection_.kind == Picked::Kind::Bacterium ? inspection_.id : 0u;
+    const std::uint32_t selBdello = boost && inspection_.kind == Picked::Kind::Bdellovibrio ? inspection_.id : 0u;
+    const float cx = view.x + 0.5f * view.width, cy = view.y + 0.5f * view.height;
+    auto gather = [&](PopulationPass& pass, std::size_t n, const std::vector<float>& xs, const std::vector<float>& ys,
+                      const std::vector<float>& heading, const std::vector<std::uint32_t>& ids, std::uint32_t selected,
+                      auto&& kindOf, auto&& weightOf) {
+        pass.instances.clear();
+        pass.detailed.clear();
+        const bool individuals = pass.blend.individual > 0.0f, aggregate = pass.blend.aggregate > 0.0f;
+        // Con estructuras solo desde el nivel Detail (los cercanos al centro, con tope).
+        const bool detail = lod_.enabled && individuals && pass.blend.level >= DetailLevel::Detail;
+        const float minBin = lod_.binPixels * px;
+        float dm = 0.0f;
+        if (aggregate) {
+            dm = 2.0f * minBin + kIndividualMargin;
+            pass.density.reset(view.x - dm, view.y - dm, view.x + view.width + dm, view.y + view.height + dm, minBin,
+                               lod_.maxBins, 8);
+            dm = 2.0f * pass.density.binSize();
+        }
+        if (!individuals && !aggregate)
+            return;
+        const float m = std::max(kIndividualMargin, dm);
+        const float x0 = view.x - m, x1 = view.x + view.width + m, y0 = view.y - m, y1 = view.y + view.height + m;
+        const float ix0 = view.x - kIndividualMargin, ix1 = view.x + view.width + kIndividualMargin;
+        const float iy0 = view.y - kIndividualMargin, iy1 = view.y + view.height + kIndividualMargin;
+        for (const Vector2 off : copies_) {
+            for (std::size_t i = 0; i < n; ++i) {
+                const float x = xs[i] + off.x, y = ys[i] + off.y;
+                if (x < x0 || x > x1 || y < y0 || y > y1)
+                    continue;
+                const int kind = kindOf(i);
+                const bool chosen = selected != 0u && ids[i] == selected;
+                const bool near = x > ix0 && x < ix1 && y > iy0 && y < iy1;
+                if (near && (detail || chosen))
+                    pass.detailed.push_back({static_cast<std::uint32_t>(i), x, y,
+                                             chosen ? -1.0f : (x - cx) * (x - cx) + (y - cy) * (y - cy)});
+                else if (individuals && near)
+                    pass.instances.push(x, y, heading[i], static_cast<float>(kind));
+                if (aggregate && !chosen)
+                    pass.density.add(x, y, kind, weightOf(i));
+            }
+        }
+        // Tope de individuos con estructuras: los más cercanos al centro; el resto, instanciados.
+        const auto cap = static_cast<std::size_t>(std::max(1, lod_.maxDetailed));
+        if (pass.detailed.size() > cap) {
+            std::nth_element(pass.detailed.begin(), pass.detailed.begin() + static_cast<std::ptrdiff_t>(cap), pass.detailed.end(),
+                             [](const auto& a, const auto& b) { return a.dist2 < b.dist2; });
+            for (std::size_t k = cap; k < pass.detailed.size(); ++k) {
+                const auto& d = pass.detailed[k];
+                pass.instances.push(d.x, d.y, heading[d.index], static_cast<float>(kindOf(d.index)));
+            }
+            pass.detailed.resize(cap);
+        }
+        if (aggregate && lod_.smoothingPasses > 0)
+            pass.density.smooth(lod_.smoothingPasses);
+        if (pass.instances.count() > 0)
+            pass.instances.upload();
+    };
+    // Tipo: 0 bacilo gramnegativo, 1 violeta (quorum), 2 con fago, 3 bdeloplasto, 4 Bacillus.
+    gather(bp, bac.size(), bac.x, bac.y, bac.heading, bac.id, selBacterium,
+           [&](std::size_t i) {
+               return bac.bdello[i] >= 0.0f ? 3 : (bac.quorum[i] ? 1 : (bac.phage[i] >= 0.0f ? 2 : (bac.strain[i] == 2 ? 4 : 0)));
+           },
+           [&](std::size_t i) { return lod_.weightByBiomass ? bac.mass[i] : 1.0f; });
+    gather(dp, bd.size(), bd.x, bd.y, bd.heading, bd.id, selBdello, [](std::size_t) { return 0; },
+           [](std::size_t) { return 1.0f; });
+}
+
+void Renderer::drawPopulations(float zoom, const float* palette) {
+    PROFILE_SCOPE("Renderer::drawPopulations");
+    const float px = 1.0f / zoom;
+    // Primero todas las densidades (debajo) y después los individuos.
+    for (PopulationPass& pass : populations_) {
+        if (pass.blend.aggregate <= 0.0f)
+            continue;
+        // El contraste exagerado de lejos vuelve al físico (1) a medida que aparecen los individuos.
+        const float gain = 1.0f + (lod_.densityGain - 1.0f) * pass.blend.aggregate;
+        pass.layer.update(pass.density, palette, pass.length * pass.thickness, gain, pass.blend.aggregate);
+        pass.layer.draw();
+    }
+    for (PopulationPass& pass : populations_) {
+        if (pass.blend.individual <= 0.0f || pass.instances.count() == 0)
+            continue;
+        float len, thick, fade = pass.blend.individual;
+        if (lod_.enabled) {
+            // A menos de un píxel se dibuja de un píxel pero más transparente: cada individuo
+            // oscurece lo que cubriría su área real (empalma con la densidad).
+            len = std::max(pass.length, px);
+            thick = std::max(pass.thickness, px);
+            fade *= (pass.length * pass.thickness) / (len * thick);
+        } else { // como antes: tamaño real con un mínimo visible
+            len = std::max(pass.length, 1.5f * px);
+            thick = std::max(pass.thickness, 0.9f * px);
+        }
+        const DetailLevel level = pass.blend.level == DetailLevel::Aggregate ? DetailLevel::Simplified : pass.blend.level;
+        if (pass.instances.ready()) {
+            pass.instances.draw(len, thick, fade, level, px);
+            continue;
+        }
+        // Sin instancing (GPU sin soporte): un rectángulo por individuo visible.
+        const std::vector<float>& d = pass.instances.data();
+        for (std::size_t k = 0; k + 3 < d.size(); k += 4) {
+            const auto kind = static_cast<std::size_t>(d[k + 3]);
+            const float* c = palette + 4 * kind;
+            const Color col = {static_cast<unsigned char>(c[0] * 255.0f), static_cast<unsigned char>(c[1] * 255.0f),
+                               static_cast<unsigned char>(c[2] * 255.0f), static_cast<unsigned char>(c[3] * fade * 255.0f)};
+            const float l = kind == 3 ? 0.6f * len : len, t = kind == 3 ? 0.6f * len : thick;
+            DrawRectanglePro({d[k], d[k + 1], l, t}, {0.5f * l, 0.5f * t}, d[k + 2] * RAD2DEG, col);
+        }
+    }
+}
+
+void Renderer::drawDetailed(const World& world, Rectangle view, float zoom, const float* palette) {
+    PROFILE_SCOPE("Renderer::drawDetailed");
+    PopulationPass& bp = populations_[static_cast<int>(Population::Bacteria)];
+    PopulationPass& dp = populations_[static_cast<int>(Population::Bdellovibrio)];
+    if (bp.detailed.empty() && dp.detailed.empty())
+        return;
+    StructureContext ctx;
+    ctx.lod = &lod_;
+    ctx.zoom = zoom;
+    ctx.time = world.simTime();
+    ctx.view = view;
+    ctx.particleBudget = lod_.maxParticlesPerFrame;
+    const Bacteria& bac = world.bacteria();
+    auto color = [&](int kind, float fade) {
+        const float* c = palette + 4 * kind;
+        return Color{static_cast<unsigned char>(c[0] * 255.0f), static_cast<unsigned char>(c[1] * 255.0f),
+                     static_cast<unsigned char>(c[2] * 255.0f), static_cast<unsigned char>(c[3] * fade * 255.0f)};
+    };
+    rlDrawRenderBatchActive();
+    rlDisableBackfaceCulling(); // los marcos rotados invierten el giro de algunos triángulos
+    for (const auto& d : bp.detailed) {
+        const std::size_t i = d.index;
+        BacteriumState st;
+        st.at = {d.x, d.y};
+        st.heading = bac.heading[i];
+        st.length = bp.length;
+        st.width = bp.thickness;
+        st.id = bac.id[i];
+        st.tumbling = bac.tumbling[i] != 0;
+        st.phageFraction = bac.phage[i] >= 0.0f ? bac.phage[i] / bac.params.phageLatentHours : -1.0f;
+        st.phageBurst = bac.params.phageBurst;
+        st.bdelloFraction = bac.bdello[i] >= 0.0f ? bac.bdello[i] / bac.params.bdelloHours : -1.0f;
+        st.bdelloProgeny = bac.params.bdelloProgeny;
+        const int kind = bac.bdello[i] >= 0.0f ? 3 : (bac.quorum[i] ? 1 : (bac.phage[i] >= 0.0f ? 2 : (bac.strain[i] == 2 ? 4 : 0)));
+        st.body = color(kind, d.dist2 < 0.0f ? 1.0f : bp.blend.individual);
+        drawBacteriumStructures(st, bacteriumPlan(bac.strain[i]), ctx);
+    }
+    const Bdellovibrios& bd = world.bdellovibrios();
+    for (const auto& d : dp.detailed) {
+        BacteriumState st;
+        st.at = {d.x, d.y};
+        st.heading = bd.heading[d.index];
+        st.length = dp.length;
+        st.width = dp.thickness;
+        st.id = bd.id[d.index];
+        st.body = color(0, d.dist2 < 0.0f ? 1.0f : dp.blend.individual);
+        drawBdellovibrioStructures(st, bdellovibrioPlan(), ctx);
+    }
+    rlDrawRenderBatchActive();
+    rlEnableBackfaceCulling();
+}
+
+void Renderer::drawPhageField(const World& world, Rectangle view, float zoom) {
+    if (lod_.view != ViewMode::Model)
+        return;
+    PROFILE_SCOPE("Renderer::drawPhageField");
+    // Viriones por µm² de vista: la concentración [1/µm³] por el espesor de la película. La grilla
+    // del campo es gruesa; celdas más finas que media celda del campo no agregan información.
+    const Grid2D& field = world.phage().grid();
+    const float gap = world.fluid().gapHeight;
+    const float minBin = std::max(lod_.binPixels / zoom, 0.5f * field.dx);
+    phageGrid_.reset(view.x, view.y, view.x + view.width, view.y + view.height, minBin, lod_.maxBins, 1);
+    const float bin = phageGrid_.binSize();
+    for (int y = 0; y < phageGrid_.ny(); ++y)
+        for (int x = 0; x < phageGrid_.nx(); ++x) {
+            const float px = phageGrid_.originX() + (static_cast<float>(x) + 0.5f) * bin;
+            const float py = phageGrid_.originY() + (static_cast<float>(y) + 0.5f) * bin;
+            const float wx = wrapCoord(px, world.width()), wy = wrapCoord(py, world.height());
+            phageGrid_.add(px, py, 0, std::max(0.0f, field.sample(wx, wy)) * gap * bin * bin);
+        }
+    // De 10⁻³ a 10 viriones/µm² de vista: con la película de 200 µm, ~5·10⁶ a ~5·10¹⁰ viriones/mL
+    // (un lisado del catálogo, ~10⁸/mL, queda a un tercio de la escala).
+    phageLayer_.updateLog(phageGrid_, kPhageDensity, 1e-3f, 1e1f, 0.2f);
+    phageLayer_.draw();
+}
+
 void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay overlay) {
     PROFILE_SCOPE("Renderer::drawWorld");
     ensureScene();
@@ -143,7 +358,6 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
     const bool fluor = stain_ && stain_->mode == StainMode::Fluorescence;
     float palette[32];
     bacteriaPalette(stain_, palette);
-    particles_.setPalette(palette);
     // Rectángulo visible en coordenadas del mundo [µm].
     const Vector2 a = GetScreenToWorld2D({0, 0}, camera);
     const Vector2 b = GetScreenToWorld2D({static_cast<float>(width()), static_cast<float>(height())}, camera);
@@ -167,19 +381,15 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
     const int reach = world.dish().active() ? 0 : 1;
     const float minSize = 1.5f / camera.zoom; // tamaño real en µm, con un mínimo visible
     const AmbientParticles& amb = world.ambient();
-    const Bacteria& bac = world.bacteria();
-    const float len = std::max(bac.params.length, minSize);
-    const float thick = std::max(bac.params.radius * 2.0f, minSize * 0.6f);
-    // Bacterias: con instancing, un solo buffer por frame y una llamada por copia del mundo.
-    const bool useInstancing = particles_.ready();
-    if (useInstancing)
-        particles_.upload(bac);
-    for (int oy = -reach; oy <= reach; ++oy) {
-        for (int ox = -reach; ox <= reach; ++ox) {
-            const float offX = ox * w, offY = oy * h;
-            const Rectangle copy = {offX, offY, w, h};
-            if (!CheckCollisionRecs(copy, view))
-                continue;
+    copies_.clear();
+    for (int oy = -reach; oy <= reach; ++oy)
+        for (int ox = -reach; ox <= reach; ++ox)
+            if (CheckCollisionRecs({ox * w, oy * h, w, h}, view))
+                copies_.push_back({ox * w, oy * h});
+    gatherPopulations(world, view, camera.zoom, fluor, palette);
+    {
+        for (const Vector2 copyOffset : copies_) {
+            const float offX = copyOffset.x, offY = copyOffset.y;
             if (!fluor)
                 overlay_.draw(world, offX, offY);
             const float x0 = view.x - offX - 5.0f, x1 = view.x + view.width - offX + 5.0f;
@@ -355,31 +565,13 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
                                std::max(0.3f, 0.5f * minSize), kSpore);
             }
             } // !fluor
-            // Bacterias como bastoncitos orientados (E. coli: ~2 × 1 µm). Las de C. violaceum en
-            // quorum se tiñen de violeta (violaceína); el bdeloplasto es una esfera hinchada.
-            if (useInstancing) {
-                particles_.draw(offX, offY, len, thick);
-            } else for (std::size_t i = 0; i < bac.size(); ++i) {
-                if (!visible(bac.x[i], bac.y[i]))
-                    continue;
-                if (bac.bdello[i] >= 0.0f) {
-                    DrawCircleV({bac.x[i] + offX, bac.y[i] + offY}, std::max(1.1f, minSize), kBdelloplast);
-                    continue;
-                }
-                const Color c = bac.quorum[i] ? kViolacein : (bac.phage[i] >= 0.0f ? kPhageInfected : kBacteria);
-                DrawRectanglePro({bac.x[i] + offX, bac.y[i] + offY, len, thick},
-                                 {len * 0.5f, thick * 0.5f}, bac.heading[i] * RAD2DEG, c);
-            }
-            // Bdellovibrio: vibrios diminutos (~1 × 0,3 µm) que cruzan rapidísimo.
-            const Bdellovibrios& bd = world.bdellovibrios();
-            for (std::size_t i = 0; i < bd.size() && !fluor; ++i) {
-                if (!visible(bd.x[i], bd.y[i]))
-                    continue;
-                DrawRectanglePro({bd.x[i] + offX, bd.y[i] + offY, std::max(1.0f, minSize), std::max(0.4f, 0.5f * minSize)},
-                                 {0.5f, 0.2f}, bd.heading[i] * RAD2DEG, kBacteria);
-            }
         }
     }
+    // Fagos libres (vista de modelo), bacterias y Bdellovibrio: densidad, individuos y, de cerca,
+    // sus estructuras.
+    drawPhageField(world, view, camera.zoom);
+    drawPopulations(camera.zoom, palette);
+    drawDetailed(world, view, camera.zoom, palette);
     EndMode2D();
 
     cells_.composite(camera);
@@ -415,7 +607,8 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
     const Rectangle src = {0, 0, sw, -sh}; // las render textures están invertidas en Y
     if (out_)
         BeginTextureMode(*out_);
-    if (postOk_ && postEnabled_) {
+    // La vista de modelo es un esquema, no una imagen de microscopio: sin la óptica simulada.
+    if (postOk_ && postEnabled_ && lod_.view == ViewMode::Microscope) {
         const float res[2] = {sw, sh};
         const float t = static_cast<float>(GetTime());
         SetShaderValue(post_, resolutionLoc_, res, SHADER_UNIFORM_VEC2);

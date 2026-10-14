@@ -60,6 +60,8 @@ struct ToolState {
     MeasureMode measureMode = MeasureMode::Distance;
     bool scaleBar = true;            // barra de escala sobre la imagen
     bool limitationMap = false;      // colorear cada célula por lo que limita su crecimiento
+    bool semanticZoom = true;        // de lejos, las poblaciones numerosas se ven como densidad
+    bool modelView = false;          // vista de modelo: estructuras por debajo del límite óptico
     std::vector<Vec2> measurePath;   // regla: 2 puntos (distancia) o el lazo (área)
     bool measuring = false;          // arrastrando la regla
     std::vector<Vec2> lassoPath;     // región en curso (mientras se dibuja)
@@ -79,7 +81,8 @@ struct SelectionState {
     float hoverTimer = 0.0f;
     bool followable() const {
         return inspection.valid && !inspection.dead &&
-               (picked.kind == Picked::Kind::Cell || picked.kind == Picked::Kind::Rock);
+               (picked.kind == Picked::Kind::Cell || picked.kind == Picked::Kind::Rock ||
+                picked.kind == Picked::Kind::Bacterium || picked.kind == Picked::Kind::Bdellovibrio);
     }
 };
 
