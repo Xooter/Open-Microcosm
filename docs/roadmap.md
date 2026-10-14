@@ -1,278 +1,138 @@
 # BioGame — Roadmap
 
-Basado en las elecciones de `docs/gameplay.md`. Cada fase tiene un **entregable visible** y un
-criterio de "hecho". Las fases 1–4 forman el **vertical slice**: una célula jugable y gelatinosa
-que nada, come, crece y se divide en un medio vivo. Antes de sumar contenido se hace un playtest.
+BioGame es un **sandbox educativo, científico y de código abierto** (ver `AGENTS.md`). Este
+roadmap sale de las elecciones de `docs/gameplay.md` (qué vida y qué mecanismos simula) y de las
+ideas marcadas con `[x]` en `docs/ideas.md` (qué herramientas de laboratorio tiene). Las ideas sin
+marcar quedan en el *Backlog*.
 
-## Resumen de decisiones
+Cada fase tiene un **entregable visible** y un criterio de "hecho". Todo respeta el realismo
+estricto: solo organismos y mecanismos reales, con la biología comprimida por `kBioTimeScale`.
 
-| Tema | Elegido |
-|---|---|
-| Gameplay general | Roguelite (C) + linaje continuo (E), combinados |
-| Jugabilidad | Locomoción física por tipo de célula, bajo Reynolds (B) + fagocitosis física (D) |
-| Objetivo | Dominar el ecosistema por % de biomasa (C) + enciclopedia (E) |
-| Carnívoros | Todos: cazadores, envolvedores, emboscadores sésiles, jefes multicelulares, parásitos |
-| Herbívoros | Todos: filtradores, pastoreadores, raspadores, mixótrofos, enjambres |
-| Algas | Todas: móviles, diatomeas, coloniales, filamentosas, cianobacterias |
-| Hongos | Quitridios, levaduras, descomponedores, depredadores (sin simbiontes) |
-| Partículas | **Primero B** (fluido en grilla + soft-body), partículas ambientales y bacterias como partículas simples (C), LOD (E) más adelante |
-| Efectos visuales | Metaballs/SDF, ciclosis, browniano, lisis y tinción (sin plano focal: todo en un mismo plano) |
-| Reglas de vida | Metabolismo real, mutualismos, fagos y parasitismo, quorum sensing (sin endosimbiosis) |
-| Estilo visual | Campo claro (A) |
-| Reproducción | Jugador: mitosis física + conjugación, la más costosa. Cada especie NPC usa la suya propia |
-| Organelos | Físicos con espacio limitado (B), locomoción/armas/defensas (C), genoma con mutaciones (D) |
-| Rejugabilidad | Gotas procedurales (A), herencia roguelite (B), biomas (C) |
-| Realismo | **Estricto** (A): solo especies y mecanismos reales, tiempo comprimido en proporción |
+## Base hecha ✅
 
-## Giro a sandbox (2026-10)
+Lo que ya existe y se mantiene; el detalle de diseño está en `AGENTS.md`.
 
-El programa deja de ser un juego: es un **sandbox educativo, científico y de código abierto**.
-Se retiran la partida roguelite (victoria, extinción, desbloqueos, legado genético y elección de
-hija o heredero) y se conserva el control de un ser con su locomoción real (`P` para controlar
-cualquier célula). El panel de laboratorio pasó a secciones plegables y se
-sumaron **sílice** (diatomeas), **hierro** (fotótrofas) y **vitamina B₁₂** (auxótrofas) como
-nutrientes disueltos con limitación real. Las decisiones de jugabilidad de abajo son historia.
+- **Medio:** placa de Petri circular; agua Stokes–Brinkman con FFT (sin inercia); química por
+  difusión + advección (O₂, CO₂/pH, P, N, Si, Fe, B₁₂, toxinas, autoinductor, fagos); luz con
+  Beer–Lambert; temperatura, salinidad, anoxia y alcalinidad (`MediumParams`).
+- **Células:** soft-bodies XPBD sin inercia, membrana plástica de ameba, contactos, LOD de tres
+  niveles, cuerpos compuestos (colonias, filamentos, metazoos) y partículas ambientales
+  (bacterias con run & tumble, detritos, tinta).
+- **Ciclo de vida:** metabolismo real (respiración, fermentación, fotosíntesis, Liebig con P, N,
+  Si, Fe y B₁₂), mitosis física, conjugación, quistes, lisis; genoma con organelos físicos.
+- **Ecosistema:** cazadores, envolvedores, sésiles y suctorios, filtradores, raspadores,
+  mixótrofos, algas (móviles, diatomeas, coloniales, filamentosas), cianobacterias con fijación
+  de N₂ y microcistina, quitridios, levaduras, *Saprolegnia*, *Zoophagus*, *Allomyces*, hongo
+  liquenizante, *Physarum*, fagos, *Bdellovibrio*, quorum sensing, rotíferos, *Hydra*, nauplios,
+  nematodo y gastrotrico. Registro de muertes y comportamientos.
+- **Laboratorio:** ImGui con paneles acoplables, editor de placa (`PlateSpec`, placas guardables,
+  placa vacía), catálogo, ficha, enciclopedia, herramientas (Seleccionar, Controlar, Tinta,
+  Detrito, Borrar, Lisar, Apretar, Revolver, Estirar, Gotero, Spawnear), control de un ser con
+  su locomoción real, `tr()` con idiomas en `assets/lang`.
+- **Óptica:** campo claro con post-proceso de microscopio; motor de tinciones por reglas (Gram,
+  Lugol, DAPI, rojo neutro, azul de metileno, rojo Congo) con vista previa.
+- **Técnica:** tests doctest (invariantes, determinismo con 1 y 4 hilos), Tracy, render
+  instanciado de bacterias.
 
-## Rework de la UI: laboratorio sin pantalla de inicio (2026-10) ✅
-- **Dear ImGui (rama docking)** con backend de raylib propio reemplaza a raygui. Se retiran el
-  título, la pantalla de preparar la gota, las opciones y la enciclopedia como pantallas; el
-  programa arranca en el laboratorio con una placa vacía.
-- **Marco:** `app/` (bucle y entrada), `ui/` (tema, widgets, comandos, paneles acoplables, `tr()`)
-  y un archivo por panel. Sumar una función es un panel, un comando o una herramienta.
-- **Editor de placa** (`PlateSpec`, panel *Placa*): bioma, seed, contenido, ambiente, nutrientes,
-  sedimento, poblaciones y geometría; ambiente y nutrientes en vivo, el resto al crear; placas
-  guardables.
-- **Un solo modo:** se quita el modo Explorar: la herramienta Seleccionar (click) abre la ficha.
-  Barra de herramientas: Seleccionar, Controlar, Tinta, Detrito, Borrar, Lisar, Apretar,
-  Revolver, Estirar, Gotero y Spawnear. El ser controlado es opcional.
-- **Pendiente:** vista previa gráfica de la placa antes de crearla, íconos vectoriales en la barra
-  de herramientas, paleta de comandos e idiomas además del español (`assets/lang`).
-
-## Tinciones profesionales (2026-10) ✅
-- **Motor de tinciones por reglas** (`game/stain`): Gram (con tiempo de decolorante), Lugol
-  (almidón), DAPI (fluorescencia), rojo neutro, azul de metileno y rojo Congo; editables y
-  guardables (`.stain`).
-- **Bioquímica por especie** (`speciesChemistry`) y una cepa grampositiva real, *Bacillus subtilis*.
-- **Editor con vista previa** sobre un espécimen de prueba, sin teñir y teñido, con el mismo render
-  de la placa. Solo visual.
-- **Pendiente:** hifas, cianobacterias y copos de avena sin respuesta a Lugol/Gram; vista dividida
-  sobre la placa real; tinciones con dependencia temporal (tiempo de exposición real).
-
-## Decisiones tomadas
-
-1. **Roguelite + linaje:** se usan ambos. **Dentro de la partida** jugás un linaje (al dividirte
-   elegís hija y al morir saltás a un descendiente), la partida **termina cuando se extingue el
-   linaje**, y **entre partidas** se hereda parte del genoma.
-2. **Química:** campos internos mínimos (O₂, luz, nutrientes disueltos, señales) que alimentan el
-   metabolismo, el quorum sensing y los blooms. **No** hay modo de visualización para el jugador,
-   solo un overlay de debug.
-3. **Estilo visual:** únicamente **campo claro** (brightfield).
-4. **Escala real:** las bacterias son **partículas simples** (agentes livianos), los protistas son
-   soft-bodies y los multicelulares son cuerpos compuestos.
+**Pendientes heredados:**
+- Rendimiento: con ~540 células el paso cuesta ~29 ms (≈ 35 FPS); 60 FPS con 500+ requiere XPBD y
+  contactos en GPU (`src/gpu`).
+- Vista previa gráfica de la placa antes de crearla; íconos vectoriales en la barra de
+  herramientas; paleta de comandos.
+- Tinciones: hifas, cianobacterias y copos de avena sin respuesta a Lugol/Gram; vista dividida
+  sobre la placa real; exposición con tiempo real.
+- La posición de los organelos (flagelo anterior o posterior) no está modelada.
 
 ---
 
-## Fase 0 — Base técnica ✅ (hecha)
-- CMake + presets, raylib, raygui, EnTT, OpenMP, Tracy y doctest.
-- Partículas SoA, grilla espacial, timestep fijo y demo de Particle Life.
+## Fase 13 — Medición: ver los números
 
-## Fase 1 — El medio ✅ (hecha)
-- Mundo toroidal con vista cenital (decidido).
-- Agua Stokes–Brinkman resuelta con FFT: sin inercia, corrientes locales según el espesor de la
-  película.
-- Partículas ambientales (detritos, tinta) y **bacterias como partículas simples**, con browniano
-  de Stokes–Einstein.
-- Bacterias con run & tumble y quimiotaxis temporal de *E. coli*: se acumulan ~11× alrededor de
-  una fuente aislada.
-- Campos internos: O₂ (intercambio con el aire), nutrientes (de detritos que se descomponen) y
-  luz (uniforme, atenuada por sombra).
-- Overlay de debug (F1–F4) y tests doctest: incompresibilidad, conservación de masa y
-  determinismo con distinta cantidad de hilos.
-- Medido: ~0,9 ms por paso de simulación con 50k bacterias.
+Es la base de todo lo científico: sin datos no hay experimento. Va primero.
 
-## Fase 2 — Célula soft-body ✅ (hecha)
-- Membrana como anillo de partículas con XPBD **sin inercia** (tasas de relajación [1/s]):
-  aristas, flexión por shape matching local, área conservada y memoria de forma por célula
-  (película rígida vs. córtex blando).
-- Interior: núcleo con nucléolo y vacuola contráctil anclados al citoesqueleto, y gránulos con
-  browniano.
-- Colisiones punto–arista entre células y auto-colisión, más una pasada anti-penetración. Las
-  bacterias y los detritos no entran en las células.
-- Render en campo claro: relleno triangulado (ear clipping) + shader con borde óptico y halo.
-- Herramientas: crear (C), escena de 50 (K), borrar (X), estirar (Shift + arrastrar), apretar (Q).
-- Medido con 50 células comprimidas 10 s: área ≤ 3,6%, aristas ≤ 1,9×, **0 intrusiones**, y
-  recuperación de forma tras soltar. ~3,5 ms por paso con 50 células + 50k bacterias.
+- **Gráficos en vivo** (idea 11): población por especie, nutrientes, O₂ y pH, con zoom. Panel
+  nuevo; la serie temporal se muestrea en `Run`, no en `World`.
+- **Exportar datos abiertos** (20): CSV/JSON de series y de la ficha de cada especie, con
+  unidades y parámetros usados.
+- **Regla y escala** (13): medir distancias y áreas en µm sobre la imagen (herramienta nueva).
+- **Cuantificación por región** (15): contar células y medir concentraciones en un área dibujada.
+- **Curva de crecimiento automática** (16): tiempo de duplicación, latencia y capacidad de carga.
+- **Balance de masa visible** (12): flujos de P, N, Si, Fe y C entre agua, células, detritos y
+  sedimento, que cierren al 100 % (extiende los totales conservados de Estadísticas).
+- **Mapa de limitación** (17): colorear cada célula por el nutriente que la limita (P, N, Si, Fe,
+  B₁₂, luz); lee `Metabolism`, solo render.
+- **Hecho cuando:** una gota corrida 1 h biológica exporta CSV con unidades y el balance de P
+  cierra dentro de la tolerancia del test de conservación.
 
-## Fase 3 — Jugador: locomoción y fagocitosis ✅ (hecha)
-- Tres locomociones reales sin inercia: cilios (*Paramecium*, 600 µm/s), flagelo (*Euglena*,
-  80 µm/s, bamboleo helicoidal) y pseudópodo (*Amoeba*, ~6 µm/s).
-- El nadador empuja el agua (fuerza neta cero) y siente solo el flujo de fondo.
-- Alimentación: citostoma con corriente oral y caudal máximo (ciliado), polo anterior
-  (flagelado), contacto (ameba). Vacuolas digestivas que se cierran, digieren y expulsan.
-- **Fagocitosis física de células** por la ameba: copa por cremallera, inserción de membrana en
-  los labios y fusión de membranas al cerrarse (~9 s para una presa de 40 µm).
-- Cámara de microscopio que sigue al jugador en el mundo toroidal. Render de cilios con onda
-  metacrónica, flagelo con desenfoque de movimiento, estigma, citostoma y vacuolas.
-- Medido: ~4,6 ms por paso con 30 células + ameba + 50k bacterias.
+## Fase 14 — Reactivos y escenas
 
-## Fase 4 — Metabolismo y ciclo de vida ✅ (hecha) — 🎯 vertical slice
-- Escala de tiempo: física en tiempo real, biología comprimida ×60 (decisión tomada).
-- Metabolismo: respiración/fermentación según el O₂ local, fotosíntesis (*Euglena*) con la luz,
-  mantenimiento + costo de nadar, crecimiento con rendimiento y tasa máxima, autofagia.
-- Mitosis física para las tres especies: duplicación de núcleo y vacuola, reorganización del
-  córtex de madre a dos hijas, surco y partición de la membrana (~25–60 s reales).
-- Muerte por inanición y lisis (nutrientes disueltos + detritos).
-- HUD: reservas, biomasa, progreso de división, O₂, luz y edad; R para reaparecer.
-- Pendiente: la fermentación todavía no acidifica el medio (falta un campo de pH; entra cuando
-  el pH tenga efectos sobre otras especies).
-- Medido: ~5 ms por paso con 30 células + ameba + 50k bacterias.
-- **Siguiente:** playtest del vertical slice antes de seguir con la fase 5.
+- **Reactivos con dosis-respuesta** (6): antibióticos, sal, ácidos y toxinas con el gotero;
+  tolerancias por especie como datos (`SpeciesInfo`), no código por especie.
+- **Escenas guardables** (1): exportar e importar una gota con seres puestos a mano (extiende
+  `PlateSpec`/`.plate` con la lista de seres; texto clave=valor versionado).
+- **Línea de tiempo con replays** (2): grabar seed y eventos del usuario; rebobinar re-simulando
+  desde el último punto de control (aprovecha el determinismo).
+- **Modo aula** (32): gota con seed fija y parámetros bloqueados que el docente comparte.
+- **Hecho cuando:** una escena guardada se reproduce idéntica con 1 y 4 hilos y un replay llega
+  al mismo estado final.
 
-## Fase 5 — Linaje y estructura roguelite ✅ (hecha)
-- Pantalla de inicio con especie fundadora; Euglena se desbloquea en la generación 3 y Amoeba en
-  la 5 (o al ganar). Récords y desbloqueos persistentes en disco.
-- Al dividirse, el jugador elige hija (simulación en pausa); la otra queda con piloto automático
-  (deambula y come). Al morir elige un descendiente; sin descendientes, el linaje se extingue.
-- Objetivo: el linaje alcanza el 50% de la biomasa viva de la gota (se puede seguir jugando).
-- Movimiento, fagocitosis y alimentación generalizados a cualquier célula móvil.
-- Medido: ~3,2 ms por paso en una partida real (24 competidoras + 50k bacterias).
-- **Hallazgos de balance (para la fase 7):**
-  - Las bacterias no se reproducen: el linaje agota la comida de la gota y crece cada vez más
-    lento (un paramecio pasa de 12% a 19% de dominio en 10 min sin llegar a dividirse).
-  - El dominio por biomasa favorece a los organismos grandes: con competidoras pasivas de
-    ~200 pmol, un linaje de Euglena (~9 pmol por célula) necesitaría cientos de células.
-  - Las competidoras son pasivas (no comen ni mueren) hasta que exista el ecosistema real.
-- Pendiente para la fase 6: la herencia de genoma entre partidas.
+## Fase 15 — Química ampliada
 
-## Fase 6 — Genoma y organelos físicos ✅ (hecha)
-- Genoma con 9 genes de efecto real: tamaño, motor (velocidad ∝ √motor, costo ∝ motor),
-  mitocondrias (crecimiento), cloroplastos (fotosíntesis), lisosomas (digestión), tricocistos
-  (defensa), coraza (inmune a la fagocitosis, más lenta y cara), rigidez y tipo de apareamiento.
-- Restricciones de especie (sin endosimbiosis no aparecen organelos ajenos).
-- Mutaciones independientes en cada hija; la elección de hija muestra los genes que cambiaron.
-- Conjugación de ciliados (tipos de apareamiento distintos, genotipo recombinado compartido).
-- Organelos visibles y con volumen; tricocistos bajo la película; lórica/testa; disparos.
-- Herencia entre partidas: legado genético por especie en el archivo de progreso.
-- Verificado: dos genomas distintos se juegan distinto (motor 0,5 vs 2: 424 vs 848 µm/s;
-  Euglena grande más lenta; más cloroplastos crecen 1,4× vs 1,0×; más lisosomas digieren 3×;
-  la lórica impide ser fagocitado).
-- Pendiente: la posición de los organelos (p. ej., flagelo anterior o posterior) no se modeló;
-  la conjugación solo tiene parejas dentro del propio linaje hasta que haya ciliados NPC (fase 7).
+- **Ciclo del silicio completo** (41): disolución según pH y temperatura; sedimentación de
+  frústulas fuera del campo de visión.
+- **Quelación del hierro** (42): sideróforos que compiten por Fe; precipitación a óxido a pH alto.
+- **Más micronutrientes** (43): B₁, B₇, Zn, Co, Mo y Mn con auxotrofías reales por especie.
+- **Carbono inorgánico** (44): CO₂ limitante, mecanismos concentradores de carbono y efecto en pH.
+- **Biofilms y matriz extracelular** (46): tapetes que cambian el flujo y retienen nutrientes.
+- **Suelo y agua de verdad** (48): cargar una muestra con T, pH, conductividad y nutrientes
+  medidos (`PlateSpec`) y ver qué comunidad sostiene.
+- **Hecho cuando:** cada nutriente nuevo tiene un test de conservación y una especie que se
+  limita por él (Liebig) de forma observable.
 
-## Fase 7 — Ecosistema NPC (núcleo)
-- IA por quimiotaxis (*run & tumble*), caza, huida y fototaxis. Comportamiento data-driven por
-  especie.
-- Reproducción propia de cada especie: fisión, gemación, colonial o quistes, según la biología
-  real.
-- Especies base: *Chlamydomonas*, bacterias, *Paramecium*, *Euglena*, *Didinium* y *Amoeba*.
-- **Hecho cuando:** 30 min sin jugador producen ciclos depredador–presa estables.
+## Fase 16 — Lentes y fluorescencia
 
-## Fase 8 — Ecosistema completo e interacciones
-- **Algas:** diatomeas, *Volvox* / *Pediastrum*, *Spirogyra* (terreno vivo) y cianobacterias.
-- **Herbívoros:** *Vorticella* / *Stentor* (filtradores sésiles), *Euplotes* y amebas testadas, y
-  enjambres con tricocistos.
-- **Carnívoros:** *Lacrymaria*, suctorios (trampas) y *Bdellovibrio*.
-- **Hongos:** quitridios, levaduras (fermentación), *Saprolegnia* (descomposición) y *Zoophagus*.
-- **Interacciones:** mutualismos (fijación de nitrógeno), fagos y epidemias, quorum sensing y
-  blooms tóxicos.
-- **Hecho cuando:** la cadena trófica completa se sostiene y cada interacción se puede observar.
-- **Tandas:**
-  - **8a ✅ (hecha, sin tests):** *Vorticella* (tallo con espasmonema, telotrocos), *Stentor*
-    (filtrador sésil que traga algas chicas), *Podophrya* (suctorio: tentáculos que atrapan y
-    succionan ciliados), *Euplotes* (camina con paradas), *Arcella* (ameba con testa) y
-    *Lacrymaria* (cuello extensible). Corrientes orales de todos los filtradores en el agua.
-  - **8b ✅:** *Navicula* (diatomea que se desliza; frústula que achica a una hija por división y
-    auxospora), *Volvox* (colonias hijas que rompen a la madre) y *Pediastrum* (cenobio que libera
-    una colonia hija), *Spirogyra* (filamento de células unidas por adhesiones; crece a lo largo,
-    se divide con un tabique y se fragmenta) y cianobacterias (*Anabaena*: cadenas de partículas
-    con heterocistos). Fósforo conservado (advección e intercambio conservativos).
-  - **8c ✅:** hongos y pseudohongos como tier ambiental: quitridios (*Rhizophydium*: zoosporas que
-    buscan algas, esporangios que las consumen y liberan zoosporas), *Saprolegnia* (micelio que
-    disuelve detritos con exoenzimas, absorbe y esporula sin comida), *Zoophagus* (clavijas
-    adhesivas que atrapan rotíferos) y la levadura *Candida* (osmotrófica, fermenta sin O₂, gemación).
-  - **8d ✅:** nitrógeno conservado (salvo la fijación) con N:P bajo que favorece a las fijadoras;
-    heterocistos que fijan N₂ (inhibidos por O₂) y liberan amonio; muerte de cianobacterias que
-    libera microcistina (tóxica para consumidores); CO₂ y pH (sistema carbonato: la fotosíntesis
-    sube el pH); quorum sensing de *Chromobacterium violaceum* (violaceína tóxica, agregados);
-    fagos líticos con mutantes resistentes; *Bdellovibrio*; enjambres de *Paramecium* por la
-    trampa de ácido de Jennings. Manipulación de presas por especie (respuesta funcional tipo II)
-    y saciedad por volumen. Registro de muertes por causa y de comportamientos observados.
-  - *Stentor* con forma de trompeta (perfil afinado hacia el pie) ✅.
+- **Lentes intercambiables** (21): campo claro, contraste de fase, campo oscuro y fluorescencia,
+  cada uno con la información que muestra el real (shaders en `render/`).
+- **Fluorescencia de clorofila** (23): las algas brillan en rojo bajo luz azul y el brillo baja
+  con la falta de hierro.
+- **Tinciones restantes** (22): tinta china para cápsulas, sumada al motor de reglas de `stain`.
+- **Modo accesible** (40): paleta para daltonismo, texto grande y subtítulos de eventos.
+- **Hecho cuando:** la misma placa se ve en las cuatro lentes y cada una muestra algo que las
+  otras no.
 
-## Fase 9 — Jefes multicelulares y LOD
-- Rotíferos, *Hydra* y larvas de copépodo como cuerpos compuestos, con corona ciliada que genera
-  succión en el fluido.
-- LOD: las células cercanas son detalladas, las lejanas simplificadas y las fuera de pantalla se
-  simulan de forma estadística.
-- **Hecho cuando:** un rotífero entra en escena con 500+ células activas a 60 FPS.
-- **Implementado:**
-  - *Brachionus* (rotífero): corona, tronco con lórica y mástax, y pie, unidos por adhesiones
-    rígidas (con diagonales) y movidos como un sólido; las partes de un mismo organismo no chocan
-    entre sí. Corriente de la corona que trae bacterias, algas chicas y levaduras. Huevos
-    partenogenéticos pegados a la madre que eclosionan (~20 h).
-  - *Hydra*: columna fija por el disco basal, tentáculos cinemáticos con nematocistos que paralizan
-    a la presa, la llevan a la boca y la tragan; brotes.
-  - Nauplio de copépodo: avanza a saltos; llega a la gota desde sacos de huevos de copépodos.
-  - LOD por distancia al foco (la cámara): las lejanas resuelven 1 de cada 5 sub-pasos de XPBD con
-    paso × 5. Un hilo de OpenMP por núcleo físico.
+## Fase 17 — Enseñanza
 
-## Fase 10 — Estilo visual ✅
-- Post-proceso de campo claro: fondo claro, células semitransparentes, halo y refracción sutil.
-- Ciclosis, browniano visible, lisis y
-  tinción de vacuolas digestivas.
-- **Implementado:** todo el campo pasa por la óptica del microscopio (viñeta, aberración
-  cromática lateral, grano del sensor). Ciclosis por especie (`cyclosis`, µm/s), browniano de
-  gránulos y bacterias, efecto de lisis (contorno que se expande y gránulos despedidos) y
-  tinciones vitales (J): rojo Congo (las vacuolas viran a azul al acidificarse) y azul de
-  metileno (núcleos).
-- **Decisión:** sin plano focal. Todo ocurre y se ve en un mismo plano (la película es 2D).
+- **Lecciones guiadas** (31): recorridos cortos con un objetivo observable y cuestionario (datos
+  en `assets/`, sin código por lección).
+- **Casos reales** (38): Gause (*Paramecium*), Tilman (diatomeas y sílice) y Jennings (CO₂),
+  como escenas de la fase 14 con su gráfico de la fase 13.
+- **Hecho cuando:** un alumno reproduce el resultado de Gause siguiendo la lección, sin tocar
+  nada fuera del panel.
 
-## Fase 11 — Rejugabilidad y contenido ✅
-- Gotas procedurales por seed: temperatura, luz, pH, salinidad y mezcla de especies.
-- Biomas: charco, estanque, musgo húmedo, intestino de termita, fuente hidrotermal y hielo marino.
-- Enciclopedia: catalogar especies y comportamientos observados.
-- Guardado, menú y opciones.
-- **Implementado:** ambiente de la gota (`MediumParams`): temperatura (Q10 = 2 en todas las tasas
-  biológicas, viscosidad del agua y O₂ de saturación según la temperatura), salinidad, anoxia y
-  alcalinidad (pH). Tolerancias por especie (`tMin/tMax`, `salinityMax`, `anaerobe`, `phMin/phMax`).
-  Seis biomas (`game/biome`) con su química y su elenco; especies nuevas para ellos: *Naegleria*
-  (termotolerante), *Trichonympha* (intestino de termita, anaerobia) y *Philodina* (bdeloideo del
-  musgo); *Mastigocladus* como cianobacteria termófila. `makeDrop`: variación por seed de
-  temperatura, luz, nutrientes, especies presentes y manchas de materia orgánica (ruido de valor).
-  Enciclopedia (`game/encyclopedia`): especies vistas, otros organismos y comportamientos
-  (causas de muerte e interacciones), guardada en el progreso. Menús: inicio, elegir gota
-  (bioma, fundadora, semilla), enciclopedia y opciones (`options.txt`). La partida en sí no se
-  guarda a mitad (es roguelite); el progreso y las opciones sí.
+## Fase 18 — Núcleo sin ventana y bindings
 
-## Fase 12 — Escala y GPU ✅ (parcial)
-- Simulación en compute shaders si se superan ~100k partículas.
-- Render instanciado y profiling continuo con Tracy.
-- **Implementado:** bacterias con render instanciado (un buffer de 16 B por bacteria y una
-  llamada por copia del mundo). Profiling continuo: Tracy (preset `profile`), modo liviano
-  `BIO_PROFILE_LITE` para scripts y tiempos de simulación/render en el panel.
-- **Medido y decidido:** las partículas simples no son el cuello de botella (50k bacterias:
-  ~0,5 ms por paso en CPU), así que no se pasaron a compute shaders (requeriría OpenGL 4.3 y
-  leer de vuelta para la jugabilidad). El costo está en los contactos de los cuerpos blandos;
-  se atacó con LOD de tres niveles, descarte de puntos sin vecinos (distancia real una vez por
-  sub-paso), 2 pasadas de contacto por sub-paso, percepción con grilla espacial, difusión
-  agrupada de los campos lentos y un hilo por núcleo físico.
-- **Pendiente:** con ~540 células por gota (el doble de la población normal) el paso cuesta
-  ~29 ms (≈ 35 FPS); con la población normal (~280) ~16 ms. Llegar a 60 FPS con 500+ requiere
-  mover XPBD y contactos a GPU.
+- **`biosim` como librería** (50) con una interfaz mínima (C o Python) para correr gotas sin
+  ventana y leer series, usando la exportación de la fase 13.
+- Habilita los experimentos por lote del backlog (idea 3). Requiere proponer y aprobar la
+  librería de bindings antes de agregarla (ver *Librerías* en `AGENTS.md`).
+- **Hecho cuando:** un cuaderno barre un parámetro en N gotas y grafica el resultado.
 
-## Hongos y mohos ampliados ✅
-- **Datos, no código por hongo:** `FungusInfo` (`bio/fungi`) concentra velocidad de espora, ancho de
-  hifa, absorción, clavijas, ramificación dicotómica, esporangios de resistencia, germinación y
-  fotobionte. Panel de laboratorio con sección "Hongos y mohos"; la enciclopedia y las fichas se
-  arman con esa tabla.
-- ***Allomyces*:** hifas dicotómicas, zoosporas uniflageladas y esporangios de resistencia (lista
-  `Fungi::resting`) que duermen con hambre y germinan con comida.
-- **Hongo liquenizante:** micobionte que busca algas verdes (*Chlamydomonas*, *Pediastrum*) por
-  quimiotropismo, las sujeta (`Lichenized`) y recibe su azúcar; devuelve fósforo y las protege de los
-  quitridios. Es ascomiceto: sin zoosporas.
-- ***Physarum polycephalum*** (`bio/plasmodium`): moho mucilaginoso, no un hongo. Red de tubos con
-  el modelo de Tero (flujo de Kirchhoff por gradiente conjugado serial, tubos que se ensanchan o se
-  retraen), exploración en abanico, anastomosis, rastro de baba que evitan las puntas, fotofobia,
-  copos de avena como cebo y esclerocio con hambre. Escala simplificada (placa de ~2 mm).
-- **Placa de Petri vacía** (`DropContent::EmptyPetri`): sin poblaciones, sedimento, polvo, granos de
-  arena ni detritos; queda el agua con la química del bioma.
+## Fase 19 — Escala
+
+- XPBD y contactos en GPU para llegar a 60 FPS con 500+ células (pendiente de la fase de GPU
+  anterior); medir con Tracy antes de tocar.
+
+---
+
+## Backlog (ideas sin marcar de `docs/ideas.md`)
+
+- **Experimentos:** lotes (3), rampas y programas (4), réplicas lado a lado (5), dilución y
+  siembra (7), quimiostato (8), pinzas ópticas (9), micropipeta (10).
+- **Análisis:** trayectorias y MSD (14), cuotas celulares (18), árbol de linaje (19).
+- **Óptica:** objetivos 10×/40×/100× (24), foto con barra de escala (25), time-lapse (26), campo
+  oscuro de Tyndall (27), polarización (28), lupa (29), halo de nutrientes (30).
+- **Educación:** notas en la ficha (33), referencias por ficha (34), glosario (35), hipótesis y
+  predicción (36), escenarios históricos (37).
+- **Biología:** endosimbiosis y kleptoplastia como experimento (45), epidemias y resistencia (47).
+- **Comunidad:** especies como datos TOML (49; requiere aprobar toml++).
+- **De gameplay, descartado o sin elegir:** contraste de fase, fluorescencia como modo único,
+  plano focal (descartado: todo en un plano), modo arcade, biología especulativa.
