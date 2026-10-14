@@ -128,6 +128,15 @@ struct App {
 
     void applyFrameCap();  // tope de FPS (y el del ahorro en segundo plano)
     int appliedFps_ = -1;
+    // Autoguardado (MVP: estabilidad): la escena de la sesión (placa + intervenciones) cada pocos
+    // minutos; si el programa se cerró mal, se ofrece recuperarla re-simulando hasta ese paso.
+    void autosave(bool clean);
+    void drawRecoveryPrompt();
+    std::string autosavePath_;
+    float autosaveTimer_ = 0.0f;
+    bool recoveryPrompt_ = false;      // hay una sesión anterior sin cerrar bien
+    std::uint64_t recoveryStep_ = 0;   // paso guardado
+    std::uint64_t recoverTarget_ = 0;  // > 0: re-simulando hasta este paso (sin dibujar ni registrar)
     float accumulator_ = 0.0f;
     float discoveryTimer_ = 0.0f;
     std::uint32_t runCounter_ = 0;

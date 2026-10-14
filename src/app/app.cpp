@@ -27,6 +27,7 @@
 #include <cmath>
 #include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <random>
 
 namespace {
@@ -499,6 +500,63 @@ void App::drawStatusBar() {
     ImGui::End();
 }
 
+void App::autosave(bool clean) {
+    if (!world || autosavePath_.empty() || recoverTarget_ > 0)
+        return;
+    std::string text = serializeScene(runPlate, session.interventions().entries());
+    text += "autosave_step=" + std::to_string(world->stepIndex()) + "\n";
+    text += clean ? "autosave_clean=1\n" : "autosave_clean=0\n";
+    writeTextFile(autosavePath_, text);
+}
+
+void App::drawRecoveryPrompt() {
+    if (recoverTarget_ > 0) {
+        // Barra de progreso de la recuperación.
+        const ImGuiViewport* vp = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos({vp->Pos.x + 0.5f * vp->Size.x, vp->Pos.y + 0.5f * vp->Size.y}, ImGuiCond_Always,
+                                {0.5f, 0.5f});
+        ImGui::SetNextWindowSize({420.0f, 0.0f});
+        if (ImGui::Begin("##recuperando", nullptr,
+                         ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoSavedSettings)) {
+            ImGui::TextUnformatted(ui::tr("Recuperando la sesión anterior (re-simulando)..."));
+            const float done = static_cast<float>(world->stepIndex()) / static_cast<float>(recoverTarget_);
+            ImGui::ProgressBar(done);
+            if (ImGui::Button(ui::tr("Detener aquí"))) {
+                recoverTarget_ = 0;
+                tools.paused = true;
+            }
+        }
+        ImGui::End();
+        return;
+    }
+    if (!recoveryPrompt_)
+        return;
+    ImGui::OpenPopup("###recuperar");
+    if (ImGui::BeginPopupModal((std::string(ui::tr("Sesión anterior")) + "###recuperar").c_str(), nullptr,
+                               ImGuiWindowFlags_AlwaysAutoResize)) {
+        ImGui::TextUnformatted(ui::tr("El programa se cerró sin terminar la sesión anterior."));
+        ImGui::Text("%s %.1f min", ui::tr("Se puede recuperar re-simulándola hasta donde quedó:"),
+                    static_cast<double>(recoveryStep_) * kFixedDt / 60.0);
+        ImGui::TextDisabled("%s", ui::tr("Puede tardar más o menos lo mismo que duró."));
+        if (ImGui::Button(ui::tr("Recuperar"))) {
+            std::vector<Intervention> events;
+            if (loadScene(autosavePath_, plate, events)) {
+                plateScript = std::move(events);
+                createPlate();
+                recoverTarget_ = std::max<std::uint64_t>(recoveryStep_, 1);
+            }
+            recoveryPrompt_ = false;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(ui::tr("Descartar"))) {
+            recoveryPrompt_ = false;
+            ImGui::CloseCurrentPopup();
+        }
+        ImGui::EndPopup();
+    }
+}
+
 void App::drawToasts() {
     if (toasts.empty() || toastTimer <= 0.0f)
         return;
@@ -564,7 +622,10 @@ void App::buildUi(float) {
         }
     }
 
+    ImGui::BeginDisabled(recoverTarget_ > 0); // recuperando: nada de cambios a mitad del replay
     panels.drawAll(*this);
+    ImGui::EndDisabled();
+    drawRecoveryPrompt();
 
     // Tooltip de lo que hay bajo el cursor (herramienta Seleccionar).
     if (tools.tool == Tool::Select && !selection.hoverText.empty() && !ImGui::GetIO().WantCaptureMouse)
@@ -890,6 +951,23 @@ void App::worldInput(float dt) {
 // ---------------------------------------------------------------------------
 
 void App::stepSimulation(float frameDt) {
+    if (recoverTarget_ > 0) {
+        // Recuperación: re-simula lo grabado (incluido el foco) tan rápido como se pueda, con
+        // ~30 ms por cuadro para que la ventana siga respondiendo.
+        const double t0 = GetTime();
+        while (world->stepIndex() < recoverTarget_ && GetTime() - t0 < 0.03 && !world->fixed()) {
+            session.interventions().beforeStep(*world, kFixedDt);
+            world->step(kFixedDt);
+            session.update(*world, kFixedDt);
+        }
+        if (world->stepIndex() >= recoverTarget_ || world->fixed()) {
+            recoverTarget_ = 0;
+            tools.paused = true;
+            notify(ui::tr("Sesión recuperada (en pausa)."));
+        }
+        accumulator_ = 0.0f;
+        return;
+    }
     const Vector2 a = GetScreenToWorld2D({viewport.x, viewport.y}, camera);
     const Vector2 b = GetScreenToWorld2D({viewport.x + viewport.width, viewport.y + viewport.height}, camera);
     // LOD: lo que se ve (más un margen) se simula en detalle.
@@ -1133,6 +1211,19 @@ int App::run() {
     camera.zoom = 1.0f;
     camera.offset = {kScreenW * 0.5f, kScreenH * 0.5f};
     applyOptions();
+    // ¿Quedó una sesión sin cerrar bien? (se ofrece recuperarla)
+    autosavePath_ = (std::filesystem::path(optionsPath).parent_path() / "autoguardado.plate").string();
+    if (std::ifstream in(autosavePath_); in) {
+        std::string line;
+        bool clean = true;
+        while (std::getline(in, line)) {
+            if (line.rfind("autosave_step=", 0) == 0)
+                recoveryStep_ = std::strtoull(line.c_str() + 14, nullptr, 10);
+            else if (line == "autosave_clean=0")
+                clean = false;
+        }
+        recoveryPrompt_ = !clean && recoveryStep_ > 0;
+    }
     createPlate(); // arranca con la placa preconfigurada (vacía por defecto)
 
     while (!WindowShouldClose() && !quit) {
@@ -1144,11 +1235,17 @@ int App::run() {
         ui::beginFrame(frameDt);
         buildUi(frameDt);
         commands.handleShortcuts();
-        worldInput(frameDt);
+        if (recoverTarget_ == 0) // recuperando: nada de intervenciones nuevas
+            worldInput(frameDt);
         const double s0 = GetTime();
         tools.uiMs += (static_cast<float>(1000.0 * (s0 - u0)) - tools.uiMs) * 0.1f;
         stepSimulation(frameDt);
         tools.simFrameMs += (static_cast<float>(1000.0 * (GetTime() - s0)) - tools.simFrameMs) * 0.1f;
+        autosaveTimer_ += frameDt;
+        if (autosaveTimer_ >= 120.0f) { // cada 2 min reales
+            autosaveTimer_ = 0.0f;
+            autosave(false);
+        }
 
         // La cámara sigue al ser controlado o al elegido.
         if (tools.followSelected && selection.followable()) {
@@ -1177,6 +1274,7 @@ int App::run() {
         PROFILE_FRAME();
     }
 
+    autosave(true); // cierre limpio: no se ofrece recuperar
     saveProgress(progress, progressPath);
     saveOptions();
     world.reset();
