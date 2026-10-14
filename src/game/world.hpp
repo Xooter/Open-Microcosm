@@ -413,6 +413,11 @@ class World {
     void classifyLod();
     void buildPerceptionGrid();
     void markTouching(float contactRange, float dt);
+    // Contacto a nivel de velocidades (antes de los sub-pasos, igual para CPU y GPU): quita de
+    // cada par de células la velocidad de acercamiento que las haría penetrar y la reparte
+    // según su movilidad (Stokes: v = F/ζ, con ζ ∝ N/invMass). Un nadador que empuja a otra
+    // célula avanza con ella, más despacio; no le clava una cuña ni la atraviesa.
+    void limitApproach(float dt, float contactRange);
     std::uint32_t groupOf(std::uint32_t bodyId) const;
     void beginBodies(float dt);
     void cpuSubsteps(float dt, int stride, float maxRadius);
@@ -534,6 +539,10 @@ class World {
     SoftBodyTuning softTuning_;
     ContactSolver contacts_;
     std::vector<RingBody*> bodyList_;
+    std::vector<float> bodyMobility_;         // 1/ζ de cada cuerpo (limitApproach)
+    std::vector<std::uint32_t> bodyGroup_;
+    std::vector<std::uint8_t> bodySkip_;
+    std::vector<CupObstacle> cupObstacles_; // células junto a la presa de la copa (se reusa el buffer)
     std::vector<std::uint8_t> bodyNear_, memberActive_;
     std::vector<std::uint32_t> memberBody_;
     std::vector<std::uint8_t> bodyTouch_;
@@ -596,6 +605,10 @@ class World {
     static constexpr std::uint32_t kNoGrab = ~0u;
     std::uint32_t grabSlot_ = kNoGrab;
     Vec2 grabTarget_;
+    // Meta efectiva del agarre: el cursor, pero a lo sumo `kGrabReach` del punto agarrado. Un
+    // resorte con fuerza máxima (no un teletransporte): si otra membrana frena a la célula, el
+    // punto no puede forzar el paso a través de ella.
+    Vec2 grabGoal() const;
 
     bool stirActive_ = false;
     Vec2 stirPosition_, stirVelocity_;

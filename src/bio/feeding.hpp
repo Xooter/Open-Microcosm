@@ -52,7 +52,9 @@ struct FeedingParams {
     float mouthMaxRate = 30.0f;          // caudal máximo del citostoma del ciliado [bacterias/s]
     // Euglena es fotótrofa/osmótrofa; los euglénidos fagótrofos (Peranema) comen despacio.
     float flagellateMaxRate = 2.0f;
+    float vacuoleGrowRate = 1.0f;        // el fagosoma se infla hasta su tamaño [1/s]
     float vacuoleOpenTime = 6.0f;        // tiempo hasta que la vacuola se cierra [s]
+    float lipReach = 1.5f;               // la membrana de la copa dentro de esta distancia del contacto se guía [µm]
     float zipperSpeed = 8.0f;            // la membrana trepa sobre la presa [µm/s]
     float adhesionSpeed = 10.0f;         // adhesión mutua membrana–presa (tope) [µm/s]
     float maxPreyAreaRatio = 0.6f;       // una ameba envuelve presas de hasta 60% de su área

@@ -13,50 +13,74 @@ namespace {
 
 Vec2 pos(const BodyParticles& bp, std::uint32_t s) { return {bp.x[s], bp.y[s]}; }
 
-Vec2 normalized(Vec2 v) {
-    const float len = length(v);
-    return len > 1e-6f ? v * (1.0f / len) : Vec2{1.0f, 0.0f};
-}
-
 float contactDistance(const RingBody& predator, const RingBody& prey, const BodyParticles& bp) {
     return bp.radius[predator.ring[0]] + bp.radius[prey.ring[0]];
 }
 
 // Geometría de la copa vista desde la presa (en la imagen más cercana al depredador).
+// Los labios avanzan por LONGITUD DE ARCO sobre el contorno real de la presa, desde el punto
+// de contacto: un ángulo alrededor de un radio medio solo sirve para presas redondas (en una
+// alargada, un contacto en la punta mandaba los objetivos 30 µm hacia el costado). El "ángulo"
+// que se expone es el arco normalizado a [-π, π] (π = media vuelta al contorno), así las
+// tasas y topes de la copa no cambian.
 struct CupFrame {
     const RingBody& prey;
-    Vec2 shift, preyC, nearPole;
-    float contact, meanRadius;
+    Vec2 shift;
+    float contact;
     int pn;
+    std::vector<float> cum; // longitud acumulada del contorno hasta cada vértice
+    float perimeter = 0.0f, anchorArc = 0.0f;
+    float arcPerRad = 1.0f; // [µm/rad]
 
+    float arcOf(const polygon::Closest& cl) const {
+        const Vec2 a = prey.poly[static_cast<std::size_t>(cl.edge)];
+        const Vec2 b = prey.poly[static_cast<std::size_t>((cl.edge + 1) % pn)];
+        return cum[static_cast<std::size_t>(cl.edge)] + cl.t * length(b - a);
+    }
     float angleOf(Vec2 p) const {
-        const Vec2 rel = p - preyC;
-        return std::atan2(cross(nearPole, rel), dot(nearPole, rel));
+        const polygon::Closest cl = polygon::closestOnBoundary(prey.poly.data(), pn, p - shift);
+        float rel = arcOf(cl) - anchorArc;
+        const float half = 0.5f * perimeter;
+        if (rel > half)
+            rel -= perimeter;
+        else if (rel < -half)
+            rel += perimeter;
+        return rel / arcPerRad;
     }
     // Lugar en la copa para un ángulo: sobre la superficie real de la presa + contacto.
     Vec2 shellPoint(float phi) const {
-        const Vec2 dir = rotate(nearPole, std::cos(phi), std::sin(phi));
-        const polygon::Closest cl =
-            polygon::closestOnBoundary(prey.poly.data(), pn, preyC - shift + dir * meanRadius);
-        const Vec2 out = polygon::inwardNormal(cl.edgeDir, prey.restArea) * -1.0f;
-        return cl.point + shift + out * contact;
+        float arc = std::fmod(anchorArc + phi * arcPerRad, perimeter);
+        if (arc < 0.0f)
+            arc += perimeter;
+        const auto it = std::upper_bound(cum.begin(), cum.begin() + pn, arc);
+        const int e = std::clamp(static_cast<int>(it - cum.begin()) - 1, 0, pn - 1);
+        const Vec2 a = prey.poly[static_cast<std::size_t>(e)];
+        const Vec2 ab = prey.poly[static_cast<std::size_t>((e + 1) % pn)] - a;
+        const float len = length(ab);
+        if (len < 1e-6f)
+            return a + shift;
+        const float t = std::clamp((arc - cum[static_cast<std::size_t>(e)]) / len, 0.0f, 1.0f);
+        const Vec2 out = polygon::inwardNormal(ab * (1.0f / len), prey.restArea) * -1.0f;
+        return a + ab * t + shift + out * contact;
     }
-    bool attached(Vec2 p) const {
-        return polygon::closestOnBoundary(prey.poly.data(), pn, p - shift).dist2 <
-               (contact + 1.5f) * (contact + 1.5f);
+    bool attached(Vec2 p) const { return within(p, contact + 1.5f); }
+    bool within(Vec2 p, float reach) const {
+        return polygon::closestOnBoundary(prey.poly.data(), pn, p - shift).dist2 < reach * reach;
     }
 };
 
 CupFrame makeFrame(const RingBody& predator, const BodyParticles& bp, const RingBody& prey,
                    Vec2 shift, std::uint32_t anchorSlot) {
-    const Vec2 preyC = prey.centroid + shift;
-    return {prey,
-            shift,
-            preyC,
-            normalized(pos(bp, anchorSlot) - preyC),
-            contactDistance(predator, prey, bp),
-            std::sqrt(std::abs(prey.restArea) / units::kPi),
-            static_cast<int>(prey.poly.size())};
+    CupFrame f{prey, shift, contactDistance(predator, prey, bp), static_cast<int>(prey.poly.size()), {}};
+    f.cum.assign(static_cast<std::size_t>(f.pn) + 1, 0.0f);
+    for (int i = 0; i < f.pn; ++i)
+        f.cum[static_cast<std::size_t>(i) + 1] =
+            f.cum[static_cast<std::size_t>(i)] +
+            length(prey.poly[static_cast<std::size_t>((i + 1) % f.pn)] - prey.poly[static_cast<std::size_t>(i)]);
+    f.perimeter = std::max(1e-3f, f.cum[static_cast<std::size_t>(f.pn)]);
+    f.arcPerRad = 0.5f * f.perimeter / units::kPi;
+    f.anchorArc = f.arcOf(polygon::closestOnBoundary(prey.poly.data(), f.pn, pos(bp, anchorSlot) - shift));
+    return f;
 }
 
 std::size_t ringStep(std::size_t i, int step, std::size_t n) {
@@ -64,13 +88,15 @@ std::size_t ringStep(std::size_t i, int step, std::size_t n) {
 }
 
 // Puntos adheridos a la presa desde el ancla hacia un lado (en orden de anillo).
+// El forro incluye la membrana cercana todavía no adherida (`lipReach`): en el tramo que rodea
+// una punta de la presa, la membrana sin guiar se amontonaba y se plegaba sobre sí misma.
 std::vector<std::size_t> liningOf(const RingBody& predator, const BodyParticles& bp,
-                                  const CupFrame& f, std::size_t anchor, int dirStep) {
+                                  const CupFrame& f, std::size_t anchor, int dirStep, float lipReach) {
     std::vector<std::size_t> lining;
     const std::size_t n = predator.ring.size();
     for (std::size_t k = 1; k < n / 2; ++k) {
         const std::size_t idx = ringStep(anchor, dirStep * static_cast<int>(k), n);
-        if (!f.attached(pos(bp, predator.ring[idx])))
+        if (!f.within(pos(bp, predator.ring[idx]), f.contact + lipReach))
             break;
         lining.push_back(idx);
     }
@@ -88,6 +114,18 @@ float senseOf(const RingBody& predator, const BodyParticles& bp, const CupFrame&
         cup.sense = ahead >= behind ? 1.0f : -1.0f;
     }
     return dirStep > 0 ? cup.sense : -cup.sense;
+}
+
+// ¿Hay otra célula en `p` (o pegada a él)? Ahí la membrana no puede ir.
+bool blockedAt(const std::vector<CupObstacle>& obstacles, Vec2 p, float margin) {
+    for (const CupObstacle& o : obstacles) {
+        const int n = static_cast<int>(o.body->poly.size());
+        const Vec2 q = p - o.shift;
+        if (polygon::contains(o.body->poly.data(), n, q) ||
+            polygon::closestOnBoundary(o.body->poly.data(), n, q).dist2 < margin * margin)
+            return true;
+    }
+    return false;
 }
 
 } // namespace
@@ -120,12 +158,13 @@ std::uint32_t findContact(const RingBody& predator, const BodyParticles& bp, con
 }
 
 void growLips(RingBody& predator, BodyParticles& bp, const RingBody& prey, Vec2 preyShift,
-              PhagocyticCup& cup, const FeedingParams& params, float dt) {
+              PhagocyticCup& cup, const FeedingParams& params, float dt,
+              const std::vector<CupObstacle>& obstacles) {
     const auto it = std::find(predator.ring.begin(), predator.ring.end(), cup.anchorSlot);
     if (it == predator.ring.end())
         return;
     const CupFrame f = makeFrame(predator, bp, prey, preyShift, cup.anchorSlot);
-    const float shellRadius = f.meanRadius + f.contact;
+    const float shellRadius = f.arcPerRad; // [µm/rad] sobre el contorno de la presa
     const float spacing = bp.radius[predator.ring[0]] / 0.6f; // espaciado de membrana
 
     std::vector<std::uint32_t> ring = predator.ring;
@@ -136,15 +175,25 @@ void growLips(RingBody& predator, BodyParticles& bp, const RingBody& prey, Vec2 
             std::find(ring.begin(), ring.end(), cup.anchorSlot) - ring.begin());
         RingBody view = predator; // anillo actualizado para medir este lado
         view.ring = ring;
-        const std::vector<std::size_t> lining = liningOf(view, bp, f, anchor, dirStep);
+        const std::vector<std::size_t> lining = liningOf(view, bp, f, anchor, dirStep, params.lipReach);
         const float sense = senseOf(view, bp, f, anchor, dirStep, cup);
         float& front = cup.front[sideIndex];
-        front = std::min(units::kPi, front + params.zipperSpeed * dt / shellRadius);
+        const std::size_t last = lining.empty() ? anchor : lining.back();
+        const float lastAngle = std::abs(f.angleOf(pos(bp, ring[last])));
+        // El frente nunca queda detrás del forro ya adherido (presa alargada: el contacto
+        // inicial puede cubrir un tramo largo), si no `applyCup` amontona los puntos.
+        const float held = std::max(front, lastAngle);
+        front = std::min(units::kPi, held + params.zipperSpeed * dt / shellRadius);
+        // Si hay otra célula pegada a la presa más adelante, el labio se detiene: no hay lugar
+        // para la membrana entre las dos (si se empuja, queda aplastada y se cruza).
+        const float ahead = lastAngle + 2.0f * spacing / shellRadius;
+        if (!obstacles.empty() && front > lastAngle && blockedAt(obstacles, f.shellPoint(sense * std::min(front, ahead)), f.contact)) {
+            front = held;
+            continue;
+        }
 
         // Si el frente se alejó más de un espaciado del último punto del forro, se agrega
         // membrana nueva en el labio, sobre la superficie de la presa.
-        const std::size_t last = lining.empty() ? anchor : lining.back();
-        const float lastAngle = std::abs(f.angleOf(pos(bp, ring[last])));
         // Una vesícula por vez: la membrana anterior tiene que haberse adherido.
         std::uint32_t& pending = cup.pending[sideIndex];
         if (pending != ~0u && std::find(ring.begin(), ring.end(), pending) != ring.end() &&
@@ -167,7 +216,8 @@ void growLips(RingBody& predator, BodyParticles& bp, const RingBody& prey, Vec2 
 }
 
 void applyCup(const RingBody& predator, BodyParticles& bp, const RingBody& prey, Vec2 preyShift,
-              PhagocyticCup& cup, const FeedingParams& params, float dt) {
+              PhagocyticCup& cup, const FeedingParams& params, float dt,
+              const std::vector<CupObstacle>& obstacles) {
     const auto it = std::find(predator.ring.begin(), predator.ring.end(), cup.anchorSlot);
     if (it == predator.ring.end())
         return; // el remallado quitó el ancla: World elige otra
@@ -190,12 +240,17 @@ void applyCup(const RingBody& predator, BodyParticles& bp, const RingBody& prey,
     float coverage = 0.0f;
     for (int sideIndex = 0; sideIndex < 2; ++sideIndex) {
         const int dirStep = sideIndex == 0 ? 1 : -1;
-        const std::vector<std::size_t> lining = liningOf(predator, bp, f, anchor, dirStep);
+        const std::vector<std::size_t> lining = liningOf(predator, bp, f, anchor, dirStep, params.lipReach);
         const float sense = senseOf(predator, bp, f, anchor, dirStep, cup);
-        const float front = cup.front[sideIndex];
+        float front = cup.front[sideIndex];
+        if (!lining.empty())
+            front = std::max(front, std::abs(f.angleOf(pos(bp, predator.ring[lining.back()]))));
         for (std::size_t k = 0; k < lining.size(); ++k) {
             const float phi = sense * front * static_cast<float>(k + 1) / static_cast<float>(lining.size() + 1);
-            steer(predator.ring[lining[k]], f.shellPoint(phi), 2.0f * params.zipperSpeed);
+            const Vec2 goal = f.shellPoint(phi);
+            if (!obstacles.empty() && blockedAt(obstacles, goal, f.contact))
+                continue;
+            steer(predator.ring[lining[k]], goal, 2.0f * params.zipperSpeed);
         }
         if (!lining.empty())
             coverage = std::max(coverage, std::abs(f.angleOf(pos(bp, predator.ring[lining.back()]))));
@@ -272,6 +327,8 @@ bool findClosure(const RingBody& predator, const BodyParticles& bp, Vec2 preyCen
                 if (outerArea * predator.restArea <= 0.0f || std::abs(outerArea) < 0.5f * bodyArea ||
                     std::abs(pocketArea) >= std::abs(outerArea))
                     continue;
+                if (polygon::selfIntersects(outer.data(), static_cast<int>(outer.size())))
+                    continue; // labios solapados: se espera a que la copa termine de acomodarse
                 out.pocket = pocket;
                 out.preyCenter = preyCenter;
                 out.outerRing.clear();

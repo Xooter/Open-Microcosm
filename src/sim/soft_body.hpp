@@ -91,6 +91,11 @@ void adaptPlastic(RingBody& body, const BodyParticles& bp, float dt);
 // Reemplaza el anillo (fusión/fisión de membrana). La geometría actual pasa a ser la de reposo.
 void replaceRing(RingBody& body, const BodyParticles& bp, std::vector<std::uint32_t> ring);
 // Igual, pero conserva el área objetivo (inserción de membrana sin cambiar el volumen).
+// Red de seguridad: si la membrana se cruzó consigo misma (nada la desenreda sola, no hay
+// colisión entre partes de un mismo anillo), la desenreda con movimientos 2-opt (sin mover
+// puntos). Devuelve si hizo algo.
+bool untangle(RingBody& body, BodyParticles& bp);
+
 void resizeRing(RingBody& body, const BodyParticles& bp, std::vector<std::uint32_t> ring);
 // Re-muestrea el anillo con `count` puntos equiespaciados sobre el contorno actual (reusa los
 // slots existentes, asigna o libera la diferencia). Después hay que rehacer la forma de reposo.

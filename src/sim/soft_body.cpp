@@ -508,6 +508,38 @@ void resizeRing(RingBody& body, const BodyParticles& bp, std::vector<std::uint32
     rebuildRest(body, bp, true);
 }
 
+bool untangle(RingBody& body, BodyParticles& bp) {
+    gatherPoly(body, bp);
+    const int n = static_cast<int>(body.poly.size());
+    if (!polygon::selfIntersects(body.poly.data(), n))
+        return false;
+    // 2-opt: invertir el tramo entre dos aristas que se cruzan quita ese cruce sin mover ningún
+    // punto (solo cambia con quién se conecta cada uno), así no hay saltos.
+    auto crosses = [](Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+        return cross(b - a, c - a) * cross(b - a, d - a) < 0.0f && cross(d - c, a - c) * cross(d - c, b - c) < 0.0f;
+    };
+    std::vector<std::uint32_t> ring = body.ring;
+    for (int pass = 0; pass < 64; ++pass) {
+        bool found = false;
+        for (int i = 0; i < n && !found; ++i) {
+            for (int j = i + 2; j < n && !found; ++j) {
+                if (i == 0 && j == n - 1)
+                    continue;
+                const Vec2 a = pos(bp, ring[static_cast<std::size_t>(i)]), b = pos(bp, ring[static_cast<std::size_t>(i + 1)]);
+                const Vec2 c = pos(bp, ring[static_cast<std::size_t>(j)]), d = pos(bp, ring[static_cast<std::size_t>((j + 1) % n)]);
+                if (crosses(a, b, c, d)) {
+                    std::reverse(ring.begin() + i + 1, ring.begin() + j + 1);
+                    found = true;
+                }
+            }
+        }
+        if (!found)
+            break;
+    }
+    resizeRing(body, bp, std::move(ring));
+    return true;
+}
+
 float membraneExcess(const RingBody& body, const BodyParticles& bp) {
     const float circle = 2.0f * std::sqrt(3.14159265f * std::abs(body.restArea));
     return circle > 0.0f ? perimeter(body, bp) / circle : 1.0f;

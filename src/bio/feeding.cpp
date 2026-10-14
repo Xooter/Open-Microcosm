@@ -105,8 +105,13 @@ float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingPar
             v.nitrogen -= nOut;
             excreted.nitrogen += nOut;
             v.contentArea *= before > 0.0f ? v.contentPmol / before : 0.0f;
-            bp.radius[v.slot] = vacuoleRadius(v.contentArea);
         }
+        // El fagosoma se infla de a poco hasta su tamaño: si aparece de golpe, la membrana que
+        // lo rodea tiene que ceder de una vez y se desgarra. Al digerirse se achica enseguida.
+        const float target = vacuoleRadius(v.contentArea);
+        float& radius = bp.radius[v.slot];
+        radius = target > radius ? radius + (target - radius) * (1.0f - std::exp(-params.vacuoleGrowRate * dt))
+                                 : target;
         if (!v.open && v.contentPmol < 0.02f * v.initialPmol) {
             excreted.phosphorus += v.phosphorus; // lo que quedaba se expulsa con la vacuola
             excreted.nitrogen += v.nitrogen;

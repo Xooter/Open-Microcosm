@@ -513,6 +513,16 @@ void World::setSqueeze(Vec2 center, float speed) {
     squeezeSpeed_ = speed;
 }
 
+Vec2 World::grabGoal() const {
+    // En µm: un poco más que el radio de contacto de la membrana, para que cada sub-paso no
+    // salte de un lado al otro de otra membrana.
+    constexpr float kGrabReach = 6.0f;
+    const Vec2 at = {bodies_.x[grabSlot_], bodies_.y[grabSlot_]};
+    const Vec2 to = {minImage(grabTarget_.x - at.x, width_), minImage(grabTarget_.y - at.y, height_)};
+    const float len = length(to);
+    return len > kGrabReach ? at + to * (kGrabReach / len) : at + to;
+}
+
 bool World::beginGrab(Vec2 position) {
     constexpr float kGrabRadius = 20.0f; // [µm]
     float best = kGrabRadius * kGrabRadius;
@@ -565,12 +575,44 @@ void World::beginBodies(float dt) {
             continue; // el grano está apoyado en el vidrio: ni el agua ni la compresión lo mueven
         // Los nadadores (y las partes de su cuerpo) sienten solo el flujo de fondo.
         const bool swimmer = registry_.any_of<Locomotion, Segment>(static_cast<entt::entity>(body.id));
-        auto external = [&](std::uint32_t s) {
+        std::function<void(std::uint32_t)> external = [&](std::uint32_t s) {
             const Vec2 p = {bodies_.x[s], bodies_.y[s]};
             const Vec2 v = (swimmer ? fluid_.backgroundAt(p) : fluid_.velocityAt(p)) + push;
             bodies_.vx[s] = v.x;
             bodies_.vy[s] = v.y;
         };
+        // Membrana plástica (ameba): el córtex de actina es ~1000 veces más rígido que los
+        // esfuerzos viscosos de una corriente de agua, así que el flujo traslada y rota a la
+        // célula entera; no estira cada punto por separado (como una línea de tinta, se
+        // plegaría y cruzaría). Se ajusta el flujo a un movimiento rígido.
+        const bool rigidFlow = body.membraneReservoirRate > 0.0f;
+        Vec2 flowMean, flowCenter;
+        float flowOmega = 0.0f;
+        if (rigidFlow) {
+            Vec2 sumV, sumP;
+            for (std::uint32_t s : body.ring) {
+                const Vec2 p = {bodies_.x[s], bodies_.y[s]};
+                sumP = sumP + p;
+                sumV = sumV + (swimmer ? fluid_.backgroundAt(p) : fluid_.velocityAt(p));
+            }
+            const float inv = 1.0f / static_cast<float>(body.ring.size());
+            flowMean = sumV * inv;
+            flowCenter = sumP * inv;
+            float torque = 0.0f, inertia = 0.0f;
+            for (std::uint32_t s : body.ring) {
+                const Vec2 p = {bodies_.x[s], bodies_.y[s]};
+                const Vec2 r = p - flowCenter;
+                torque += cross(r, (swimmer ? fluid_.backgroundAt(p) : fluid_.velocityAt(p)) - flowMean);
+                inertia += dot(r, r);
+            }
+            flowOmega = inertia > 1e-6f ? torque / inertia : 0.0f;
+            external = [&](std::uint32_t s) {
+                const Vec2 r = Vec2{bodies_.x[s], bodies_.y[s]} - flowCenter;
+                const Vec2 v = flowMean + Vec2{-r.y, r.x} * flowOmega + push;
+                bodies_.vx[s] = v.x;
+                bodies_.vy[s] = v.y;
+            };
+        }
         for (std::uint32_t s : body.ring)
             external(s);
         // Ciclosis: los gránulos giran alrededor del centro de la célula.
@@ -623,6 +665,7 @@ void World::beginBodies(float dt) {
     const int substeps = std::max(1, softTuning_.substeps);
     classifyLod();
     markTouching(2.0f * maxRadius + 1.0f, dt);
+    limitApproach(dt, 2.0f * maxRadius + 1.0f);
     const int stride = substeps % std::max(1, lodStride) == 0 ? std::max(1, lodStride) : 1;
     memberActive_.resize(members_.size());
     // Fase 14: el bucle de sub-pasos puede correr entero en la GPU.
@@ -640,7 +683,8 @@ void World::beginBodies(float dt) {
         in.links = &linkConstraints_;
         in.tuning = &softTuning_;
         in.grabSlot = grabSlot_;
-        in.grabTarget = grabTarget_;
+        if (grabSlot_ != kNoGrab)
+            in.grabTarget = grabGoal();
         in.dt = dt;
         in.width = width_;
         in.height = height_;
@@ -683,8 +727,9 @@ void World::cpuSubsteps(float dt, int stride, float maxRadius) {
 
         if (grabSlot_ != kNoGrab) {
             const std::uint32_t s = grabSlot_;
-            bodies_.x[s] += minImage(grabTarget_.x - bodies_.x[s], width_) * grabFraction;
-            bodies_.y[s] += minImage(grabTarget_.y - bodies_.y[s], height_) * grabFraction;
+            const Vec2 goal = grabGoal();
+            bodies_.x[s] += (goal.x - bodies_.x[s]) * grabFraction;
+            bodies_.y[s] += (goal.y - bodies_.y[s]) * grabFraction;
         }
 
         // XPBD: restricciones internas y contactos se intercalan en cada iteración, para que
@@ -827,6 +872,138 @@ void World::markTouching(float contactRange, float dt) {
                         other.aabbMax.y + shift.y < body.aabbMin.y - margin || other.aabbMin.y + shift.y > body.aabbMax.y + margin)
                         continue;
                     bodyTouch_[b] = bodyTouch_[o] = 1;
+                }
+    }
+}
+
+void World::limitApproach(float dt, float contactRange) {
+    PROFILE_SCOPE("World::limitApproach");
+    const std::size_t nb = bodyList_.size();
+    // Movilidad de cada cuerpo (0 = no se mueve: granos, sésiles) y grupo (partes de un mismo
+    // organismo no se empujan entre sí).
+    bodyMobility_.assign(nb, 0.0f);
+    bodyGroup_.assign(nb, 0);
+    bodySkip_.assign(nb, 0);
+    for (std::size_t b = 0; b < nb; ++b) {
+        const RingBody& body = *bodyList_[b];
+        const auto e = static_cast<entt::entity>(body.id);
+        bodyGroup_[b] = body.id;
+        if (const Segment* seg = registry_.try_get<Segment>(e))
+            bodyGroup_[b] = static_cast<std::uint32_t>(entt::to_integral(seg->organism));
+        // Presas sujetas, copas, divisiones y conjugaciones se tocan a propósito.
+        bodySkip_[b] = bodyNear_[b] != 2 || registry_.any_of<PhagocyticCup, Captured, Trapped, Stung, Dividing, Conjugating,
+                                                             Lichenized, Egg>(e);
+        if (registry_.any_of<Rock, Anchored>(e))
+            continue;
+        float inv = 0.0f;
+        for (std::uint32_t s : body.ring)
+            inv += bodies_.invMass[s];
+        bodyMobility_[b] = inv / static_cast<float>(body.ring.size() * body.ring.size());
+    }
+    for (std::size_t b = 0; b < nb; ++b) {
+        if (bodySkip_[b] || !bodyTouch_[b])
+            continue;
+        const RingBody& A = *bodyList_[b];
+        const float reachA = bodyReach_[b];
+        const int x0 = static_cast<int>(std::floor((A.aabbMin.x - contactRange - reachA) / bucketSize_));
+        const int x1 = static_cast<int>(std::floor((A.aabbMax.x + contactRange + reachA) / bucketSize_));
+        const int y0 = static_cast<int>(std::floor((A.aabbMin.y - contactRange - reachA) / bucketSize_));
+        const int y1 = static_cast<int>(std::floor((A.aabbMax.y + contactRange + reachA) / bucketSize_));
+        for (int by = y0; by <= std::min(y1, y0 + bucketsY_ - 1); ++by)
+            for (int bx = x0; bx <= std::min(x1, x0 + bucketsX_ - 1); ++bx)
+                for (std::uint32_t o : buckets_[static_cast<std::size_t>(wrapIndex(by, bucketsY_)) * bucketsX_ + wrapIndex(bx, bucketsX_)]) {
+                    if (o <= b || bodySkip_[o] || bodyGroup_[o] == bodyGroup_[b])
+                        continue;
+                    const float muA = bodyMobility_[b], muB = bodyMobility_[o];
+                    if (muA + muB <= 0.0f)
+                        continue;
+                    const RingBody& B = *bodyList_[o];
+                    const Vec2 shift = imageShift(B, A.centroid);
+                    const float m = contactRange + reachA + bodyReach_[o];
+                    if (B.aabbMax.x + shift.x < A.aabbMin.x - m || B.aabbMin.x + shift.x > A.aabbMax.x + m ||
+                        B.aabbMax.y + shift.y < A.aabbMin.y - m || B.aabbMin.y + shift.y > A.aabbMax.y + m)
+                        continue;
+                    // Peor acercamiento de los puntos de P contra el contorno de Q (Q desplazado
+                    // `qShift`): cuánta velocidad hay que quitar y la normal (de Q hacia P).
+                    struct Worst {
+                        float need = 0.0f;
+                        Vec2 n;
+                    };
+                    auto scan = [&](const RingBody& P, const RingBody& Q, Vec2 qShift) {
+                        Worst w;
+                        const int qn = static_cast<int>(Q.poly.size());
+                        for (std::uint32_t s : P.ring) {
+                            const Vec2 p = {bodies_.x[s], bodies_.y[s]};
+                            const polygon::Closest cl = polygon::closestOnBoundary(Q.poly.data(), qn, p - qShift);
+                            const float d = std::sqrt(cl.dist2);
+                            if (d < 1e-4f || d > contactRange + 3.0f * 600.0f * dt)
+                                continue;
+                            const Vec2 out = polygon::inwardNormal(cl.edgeDir, Q.restArea) * -1.0f;
+                            const Vec2 toP = (p - qShift) - cl.point;
+                            if (dot(toP, out) <= 0.0f)
+                                continue; // ya está adentro: lo resuelve la pasada de penetraciones
+                            const Vec2 n = toP * (1.0f / d);
+                            const std::uint32_t qa = Q.ring[static_cast<std::size_t>(cl.edge)];
+                            const std::uint32_t qb = Q.ring[static_cast<std::size_t>((cl.edge + 1) % qn)];
+                            const Vec2 vq = Vec2{bodies_.vx[qa], bodies_.vy[qa]} * (1.0f - cl.t) + Vec2{bodies_.vx[qb], bodies_.vy[qb]} * cl.t;
+                            const float approach = -dot(Vec2{bodies_.vx[s], bodies_.vy[s]} - vq, n);
+                            const float gap = d - (bodies_.radius[s] + bodies_.radius[qa]);
+                            if (approach <= 0.0f || gap > approach * dt)
+                                continue;
+                            const float need = approach - std::max(gap, 0.0f) / dt;
+                            if (need > w.need)
+                                w = {need, n};
+                        }
+                        return w;
+                    };
+                    const Worst ab = scan(A, B, shift);  // puntos de A contra B (n: de B hacia A)
+                    const Worst ba = scan(B, A, shift * -1.0f); // puntos de B contra A (n: de A hacia B)
+                    // Se mueve la que corresponde: A se aleja de B por `ab.n`; B se aleja de A por `ba.n`.
+                    // El vidrio de la placa tampoco cede: si una de las dos está contra la pared en
+                    // la dirección del empuje, la otra absorbe todo el acercamiento.
+                    auto againstGlass = [&](const RingBody& body, Vec2 dir) {
+                        if (!dish_.active() || dot(dir, dir) < 1e-6f)
+                            return false;
+                        const Vec2 step = dir * (4.0f / length(dir));
+                        for (std::uint32_t s : body.ring) {
+                            const Vec2 q = Vec2{bodies_.x[s], bodies_.y[s]} + step;
+                            const Vec2 c = dish_.clampInside(q, bodies_.radius[s]);
+                            if (c.x != q.x || c.y != q.y)
+                                return true;
+                        }
+                        return false;
+                    };
+                    const Vec2 awayA = ab.need > 0.0f ? ab.n : ba.n * -1.0f; // hacia dónde se aleja A
+                    float shareA = muA / (muA + muB);
+                    if (againstGlass(A, awayA))
+                        shareA = 0.0f;
+                    else if (againstGlass(B, awayA * -1.0f))
+                        shareA = 1.0f;
+                    const float shareB = 1.0f - shareA;
+                    Vec2 dA, dB;
+                    if (ab.need > 0.0f) {
+                        dA = dA + ab.n * (shareA * ab.need);
+                        dB = dB - ab.n * (shareB * ab.need);
+                    }
+                    if (ba.need > 0.0f) {
+                        dB = dB + ba.n * (shareB * ba.need);
+                        dA = dA - ba.n * (shareA * ba.need);
+                    }
+                    if (dot(dA, dA) == 0.0f && dot(dB, dB) == 0.0f)
+                        continue;
+                    // Traslación rígida: todo el cuerpo (membrana y orgánulos).
+                    auto drive = [&](const RingBody& body, Vec2 dv) {
+                        for (std::uint32_t s : body.ring) {
+                            bodies_.vx[s] += dv.x;
+                            bodies_.vy[s] += dv.y;
+                        }
+                        for (std::uint32_t s : body.interior) {
+                            bodies_.vx[s] += dv.x;
+                            bodies_.vy[s] += dv.y;
+                        }
+                    };
+                    drive(A, dA);
+                    drive(B, dB);
                 }
     }
 }
@@ -1448,13 +1625,31 @@ void World::updateCup(entt::entity e, RingBody& body, float dt) {
             }
             cup->anchorSlot = again;
         }
+        // Red de seguridad: si la membrana se cruzó, se desenreda y se abandona la copa.
+        if (soft_body::untangle(body, bodies_)) {
+            releasePrey(prey, bodies_, *cup);
+            registry_.remove<PhagocyticCup>(e);
+            return;
+        }
         if (body.ring.size() > 1500) { // tope de seguridad: se abandona la copa
             releasePrey(prey, bodies_, *cup);
             registry_.remove<PhagocyticCup>(e);
             return;
         }
-        growLips(body, bodies_, prey, shift, *cup, feedingParams_, dt);
-        applyCup(body, bodies_, prey, shift, *cup, feedingParams_, dt);
+        // Otras células pegadas a la presa: los labios no entran entre ellas.
+        cupObstacles_.clear();
+        const Vec2 lo = prey.aabbMin + shift - Vec2{12.0f, 12.0f}, hi = prey.aabbMax + shift + Vec2{12.0f, 12.0f};
+        for (const RingBody* other : bodyList_) {
+            if (other == &body || other == &prey)
+                continue;
+            const Vec2 os = imageShift(*other, prey.centroid + shift);
+            if (other->aabbMax.x + os.x < lo.x || other->aabbMin.x + os.x > hi.x || other->aabbMax.y + os.y < lo.y ||
+                other->aabbMin.y + os.y > hi.y)
+                continue;
+            cupObstacles_.push_back({other, os});
+        }
+        growLips(body, bodies_, prey, shift, *cup, feedingParams_, dt, cupObstacles_);
+        applyCup(body, bodies_, prey, shift, *cup, feedingParams_, dt, cupObstacles_);
         return;
     }
     if (isSatiated(e))
@@ -1653,6 +1848,15 @@ void World::engulf(entt::entity predator, const Closure& closure, entt::entity p
 
     ingest(dig, body, bodies_, closure.preyCenter, preyArea + extraArea, preyMass + extraPmol,
            look.r, look.g, look.b, true, preyPhosphorus, 1.0f, preyNitrogen);
+    // El fagosoma nace del tamaño que cabe dentro del anillo nuevo (y se infla en `digest`): el
+    // cuello de la copa cortó parte del lugar de la presa.
+    if (!dig.vacuoles.empty()) {
+        const std::uint32_t slot = dig.vacuoles.back().slot;
+        const polygon::Closest cl = polygon::closestOnBoundary(body.poly.data(), static_cast<int>(body.poly.size()),
+                                                               {bodies_.x[slot], bodies_.y[slot]});
+        bodies_.radius[slot] = std::clamp(0.8f * std::sqrt(cl.dist2), 1.5f, bodies_.radius[slot]);
+    }
+    soft_body::untangle(body, bodies_); // por si el cierre dejó las puntas de los labios cruzadas
     ++dig.cellsEaten;
     dig.handling = speciesInfo(speciesOfEntity(registry_, predator)).handlingHours * 3600.0f;
     dig.bacteriaEaten += bacteriaInside;

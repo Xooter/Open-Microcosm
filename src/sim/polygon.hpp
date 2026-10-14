@@ -27,6 +27,18 @@ inline bool contains(const Vec2* p, int n, Vec2 q) {
     return inside;
 }
 
+// ¿El polígono se cruza consigo mismo? (O(n²): solo para chequeos esporádicos).
+inline bool selfIntersects(const Vec2* p, int n) {
+    auto crosses = [](Vec2 a, Vec2 b, Vec2 c, Vec2 d) {
+        return cross(b - a, c - a) * cross(b - a, d - a) < 0.0f && cross(d - c, a - c) * cross(d - c, b - c) < 0.0f;
+    };
+    for (int i = 0; i < n; ++i)
+        for (int j = i + 2; j < n; ++j)
+            if (!(i == 0 && j == n - 1) && crosses(p[i], p[(i + 1) % n], p[j], p[(j + 1) % n]))
+                return true;
+    return false;
+}
+
 struct Closest {
     Vec2 point;
     Vec2 edgeDir; // dirección normalizada de la arista

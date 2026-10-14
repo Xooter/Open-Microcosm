@@ -25,6 +25,12 @@ struct PhagocyticCup {
     float preyInvMass = 1.0f;     // masa inversa original de la membrana de la presa
 };
 
+// Otra célula cerca de la presa: los labios no pueden meterse entre dos células pegadas.
+struct CupObstacle {
+    const RingBody* body;
+    Vec2 shift; // lleva el cuerpo a la imagen más cercana a la presa
+};
+
 // La unión ligando–receptor sujeta a la presa al forro de la copa: mientras dura, la presa
 // casi no cede en los contactos (si no, la copa la exprime hacia afuera como una semilla).
 void holdPrey(const RingBody& prey, BodyParticles& bp, PhagocyticCup& cup);
@@ -37,12 +43,14 @@ std::uint32_t findContact(const RingBody& predator, const BodyParticles& bp, con
 // Avanza el frente de cada labio y agrega membrana en el labio cuando el frente se aleja del
 // forro (como las vesículas que se fusionan ahí). Modifica el anillo del depredador.
 void growLips(RingBody& predator, BodyParticles& bp, const RingBody& prey, Vec2 preyShift,
-              PhagocyticCup& cup, const FeedingParams& params, float dt);
+              PhagocyticCup& cup, const FeedingParams& params, float dt,
+              const std::vector<CupObstacle>& obstacles);
 
 // Suma las velocidades de cremallera (forro del depredador) y adhesión (presa).
 // `preyShift` lleva la presa a la imagen más cercana del mundo toroidal.
 void applyCup(const RingBody& predator, BodyParticles& bp, const RingBody& prey, Vec2 preyShift,
-              PhagocyticCup& cup, const FeedingParams& params, float dt);
+              PhagocyticCup& cup, const FeedingParams& params, float dt,
+              const std::vector<CupObstacle>& obstacles);
 
 struct Closure {
     std::vector<std::uint32_t> outerRing; // anillo exterior que queda (incluye las puntas)
