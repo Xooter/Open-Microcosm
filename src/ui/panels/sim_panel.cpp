@@ -1,5 +1,5 @@
-// Simulación: tiempo, velocidad, rendimiento y motor. Los parámetros del ambiente están en
-// Placa; los de los procesos, en Procesos.
+// Simulación: tiempo, velocidad y estado del motor. Las opciones de rendimiento están en
+// Preferencias; los parámetros del ambiente, en Placa; los de los procesos, en Procesos.
 #include "app/app.hpp"
 #include "sim/substep_solver.hpp"
 #include "ui/panels/panel_classes.hpp"
@@ -36,26 +36,11 @@ class SimulationPanel : public Panel {
             readout("Tiempo simulado", "%.1f s (%.2f h bio)", world.simTime(), world.simTime() * world.bioScale() / 3600.0f);
         }
         if (section("Rendimiento y motor", true)) {
-            bool lod = app.options.lod;
-            if (checkbox("LOD: simplificar lo lejano", &lod, "Lo que está fuera de la vista se simula con menos detalle.")) {
-                app.options.lod = lod;
-                app.applyOptions();
-            }
-            bool gpu = app.options.gpuPhysics;
-            ImGui::BeginDisabled(!app.gpuOk);
-            if (checkbox("Física de células en la GPU", &gpu, "Compute shaders (OpenGL 4.3).")) {
-                app.options.gpuPhysics = gpu;
-                app.applyOptions();
-            }
-            ImGui::EndDisabled();
-            bool post = app.options.postProcess;
-            if (checkbox("Óptica del microscopio", &post, "Viñeta, aberración cromática y grano.")) {
-                app.options.postProcess = post;
-                app.applyOptions();
-            }
             readout("Rendimiento", "%d FPS | sim %.1f ms | render %.1f ms", GetFPS(), t.stepMs, t.renderMs);
             readout("Motor XPBD", "%s | %zu en detalle", world.substepSolver() ? world.substepSolver()->name() : "CPU",
                     world.nearBodies());
+            if (ImGui::SmallButton(tr("Opciones de rendimiento e imagen...")))
+                app.panels.show("preferencias");
         }
         if (section("Agua y cuerpos blandos (avanzado)")) {
             slider("Espesor de película [µm]", &world.fluid().gapHeight, 20.0f, 500.0f, "%.0f",

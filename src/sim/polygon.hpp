@@ -47,19 +47,33 @@ struct Closest {
     float t = 0;  // posición a lo largo de la arista [0, 1]
 };
 
+// Candidata de la arista i: actualiza `best` si es estrictamente más cercana (gana la de menor
+// índice en un empate).
+inline void closestOnEdge(const Vec2* p, int n, int i, Vec2 q, Closest& best) {
+    const Vec2 a = p[i], ab = p[(i + 1) % n] - a;
+    const float len2 = dot(ab, ab);
+    const float t = len2 > 0.0f ? std::clamp(dot(q - a, ab) / len2, 0.0f, 1.0f) : 0.0f;
+    const Vec2 c = a + ab * t;
+    const float d2 = dot(q - c, q - c);
+    if (d2 < best.dist2) {
+        const float len = std::sqrt(len2);
+        best = {c, len > 0.0f ? ab * (1.0f / len) : Vec2{1.0f, 0.0f}, d2, i, t};
+    }
+}
+
 inline Closest closestOnBoundary(const Vec2* p, int n, Vec2 q) {
     Closest best;
-    for (int i = 0; i < n; ++i) {
-        const Vec2 a = p[i], ab = p[(i + 1) % n] - a;
-        const float len2 = dot(ab, ab);
-        const float t = len2 > 0.0f ? std::clamp(dot(q - a, ab) / len2, 0.0f, 1.0f) : 0.0f;
-        const Vec2 c = a + ab * t;
-        const float d2 = dot(q - c, q - c);
-        if (d2 < best.dist2) {
-            const float len = std::sqrt(len2);
-            best = {c, len > 0.0f ? ab * (1.0f / len) : Vec2{1.0f, 0.0f}, d2, i, t};
-        }
-    }
+    for (int i = 0; i < n; ++i)
+        closestOnEdge(p, n, i, q, best);
+    return best;
+}
+
+// Igual, pero solo entre las aristas `edges` (en orden creciente). Da el mismo resultado que
+// closestOnBoundary si la lista contiene todas las aristas a distancia mínima de q.
+inline Closest closestOnEdges(const Vec2* p, int n, const int* edges, int count, Vec2 q) {
+    Closest best;
+    for (int k = 0; k < count; ++k)
+        closestOnEdge(p, n, edges[k], q, best);
     return best;
 }
 

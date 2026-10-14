@@ -13,6 +13,7 @@ std::unique_ptr<Panel> makeInspectorPanel();
 std::unique_ptr<Panel> makeToolsPanel();
 std::unique_ptr<Panel> makeStainPanel();
 std::unique_ptr<Panel> makeSimulationPanel();
+std::unique_ptr<Panel> makeSettingsPanel();
 std::unique_ptr<Panel> makeProcessesPanel();
 std::unique_ptr<Panel> makeStatsPanel();
 std::unique_ptr<Panel> makeGraphsPanel();

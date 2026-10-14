@@ -143,11 +143,39 @@ void App::setFullscreen(bool on) {
 }
 
 void App::applyOptions() {
-    if (renderer)
+    if (renderer) {
         renderer->setPostProcess(options.postProcess);
+        renderer->setRenderScale(options.renderScale);
+        renderer->setMaxDetailed(options.maxDetailed);
+    }
+    if (IsWindowReady() && options.vsync != IsWindowState(FLAG_VSYNC_HINT)) {
+        if (options.vsync)
+            SetWindowState(FLAG_VSYNC_HINT);
+        else
+            ClearWindowState(FLAG_VSYNC_HINT);
+    }
+    // El resultado no depende de la cantidad de hilos (Rng por índice y paso).
+    omp_set_num_threads(options.threads > 0 ? options.threads : autoThreads);
     if (world) {
-        world->lodStride = options.lod ? 5 : 1;
+        world->lodStride = options.lod ? options.lodStride : 1;
         world->setSubstepSolver(options.gpuPhysics && gpuOk ? &gpu : nullptr);
+    }
+    appliedFps_ = -1; // se recalcula en el próximo cuadro
+}
+
+void App::applyFrameCap() {
+    int fps = options.fpsLimit;
+    // Sin foco o minimizada no hace falta dibujar rápido. Con 20 FPS y hasta 4 pasos por cuadro,
+    // la simulación sigue en tiempo real (80 pasos/s ≥ 60).
+    if (options.backgroundSaver) {
+        if (IsWindowMinimized())
+            fps = 20;
+        else if (!IsWindowFocused())
+            fps = fps > 0 ? std::min(fps, 30) : 30;
+    }
+    if (fps != appliedFps_) {
+        SetTargetFPS(fps);
+        appliedFps_ = fps;
     }
 }
 
@@ -337,6 +365,13 @@ void App::registerCommands() {
             saveOptions();
         },
         [this] { return gpuOk; }, [this] { return options.gpuPhysics && gpuOk; });
+    add("view.vsync", "Sincronía vertical (VSync)", "Ver", ImGuiKey_None, false,
+        [this] {
+            options.vsync = !options.vsync;
+            applyOptions();
+            saveOptions();
+        },
+        {}, [this] { return options.vsync; });
     add("view.layout", "Restablecer disposición", "Ver", ImGuiKey_None, false, [this] { requestLayoutReset(); });
 }
 
@@ -778,7 +813,7 @@ void App::stepSimulation(float frameDt) {
     }
     tools.stepRequests = 0;
     accumulator_ += frameDt * units::kTimeScale * tools.simSpeed;
-    const int maxSteps = tools.simSpeed > 1.0f ? 8 : 4;
+    const int maxSteps = tools.simSpeed > 1.0f ? 2 * options.maxStepsPerFrame : options.maxStepsPerFrame;
     int steps = 0;
     while (accumulator_ >= kFixedDt && steps < maxSteps) {
         advance();
@@ -962,9 +997,14 @@ void App::drawScaleIndicator(ImDrawList* dl) {
 int App::run() {
     // Un hilo por núcleo físico: con SMT, los hilos hermanos compiten por la misma FPU y las
     // barreras de OpenMP esperan al más lento (medido: 8 hilos ~1,6× más rápido que 16).
-    if (!std::getenv("OMP_NUM_THREADS"))
-        omp_set_num_threads(std::max(1, omp_get_num_procs() / 2));
-    SetConfigFlags(FLAG_WINDOW_RESIZABLE | FLAG_MSAA_4X_HINT | FLAG_VSYNC_HINT);
+    autoThreads = std::getenv("OMP_NUM_THREADS") ? omp_get_max_threads() : std::max(1, omp_get_num_procs() / 2);
+    // El MSAA solo se puede pedir al crear la ventana (por eso se aplica al reiniciar).
+    unsigned flags = FLAG_WINDOW_RESIZABLE;
+    if (options.vsync)
+        flags |= FLAG_VSYNC_HINT;
+    if (options.msaa)
+        flags |= FLAG_MSAA_4X_HINT;
+    SetConfigFlags(flags);
     InitWindow(kScreenW, kScreenH, "bio");
     SetExitKey(KEY_NULL); // Esc no cierra el programa
     if (options.fullscreen)
@@ -985,12 +1025,19 @@ int App::run() {
     createPlate(); // arranca con la placa preconfigurada (vacía por defecto)
 
     while (!WindowShouldClose() && !quit) {
+        applyFrameCap();
         const float frameDt = GetFrameTime();
+        tools.frameHistory[tools.frameHead] = 1000.0f * frameDt;
+        tools.frameHead = (tools.frameHead + 1) % ToolState::kFrameHistory;
+        const double u0 = GetTime();
         ui::beginFrame(frameDt);
         buildUi(frameDt);
         commands.handleShortcuts();
         worldInput(frameDt);
+        const double s0 = GetTime();
+        tools.uiMs += (static_cast<float>(1000.0 * (s0 - u0)) - tools.uiMs) * 0.1f;
         stepSimulation(frameDt);
+        tools.simFrameMs += (static_cast<float>(1000.0 * (GetTime() - s0)) - tools.simFrameMs) * 0.1f;
 
         // La cámara sigue al ser controlado o al elegido.
         if (tools.followSelected && selection.followable()) {

@@ -26,9 +26,9 @@ interviene.
   nutrientes se aplican **en vivo** a la placa en marcha; lo demás, al crearla. Las placas se
   guardan en `<datos>/biogame/plates/*.plate`.
 - **Paneles acoplables** (Dear ImGui, ver "Interfaz"): Placa, Catálogo (cualquier ser, con
-  íconos), Ficha, Herramientas, Simulación, Procesos (tasas de química, microbiología y hongos),
-  Estadísticas (censo, totales conservados de P, N, Si y Fe, y el ser controlado), Enciclopedia y
-  Gráficos, Medición y Ayuda.
+  íconos), Ficha, Herramientas, Simulación, Preferencias (imagen, fluidez y rendimiento),
+  Procesos (tasas de química, microbiología y hongos), Estadísticas (censo, totales conservados
+  de P, N, Si y Fe, y el ser controlado), Enciclopedia y Gráficos, Medición y Ayuda.
 - **Herramientas** (barra izquierda o teclas 1-0, M y G): Seleccionar, Controlar, Tinta, Detrito,
   Borrar, Lisar, Apretar, Revolver, Estirar, Gotero, Medir, Región y Spawnear (al armar un ser del
   catálogo).
@@ -95,8 +95,17 @@ paquetes del sistema, salvo OpenMP.
 cmake --preset release && cmake --build --preset release && ./build/release/bio
 ```
 
-Hay presets `debug`, `release` y `profile`. El código tiene que compilar **sin warnings** con
-`-Wall -Wextra -Wpedantic`, y `ctest --test-dir build/release` tiene que pasar.
+Hay presets `debug`, `release`, `profile` (Tracy) y `lite` (tiempos por scope sin Tracy). El código
+tiene que compilar **sin warnings** con `-Wall -Wextra -Wpedantic`, y `ctest --test-dir build/release`
+tiene que pasar.
+
+**Medir:** `bio_bench` corre una gota fija sin ventana y da ms/paso, el censo y un checksum del
+estado (`--wildlife 3` ≈ 700 células, `--gpu` usa el resolvedor de GPU como la app; con el preset
+`lite` desglosa por `PROFILE_SCOPE`). Una optimización que no debe cambiar resultados se verifica
+comparando checksums de la versión vieja y la nueva compiladas con `-DBIO_STRICT_FP=ON`: con
+`-ffast-math` cualquier cambio de código puede reasociar operaciones y alterar los últimos bits, y
+la dinámica lo amplifica. Preferí veracidad a velocidad: una optimización que cambia el resultado
+físico no se acepta.
 
 ## Arquitectura
 
@@ -282,6 +291,11 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   ventana es estable (`título###clave`) para que la disposición guardada no dependa del idioma.
 - **Estilo:** todos los colores y espaciados salen de `ui/theme`. La fuente trae Latin-1 (acentos,
   ñ, µ, °): se puede escribir con acentos en la UI nueva.
+- **Opciones** (`Options` en `game/progress`, `<datos>/biogame/options.txt`): las aplica
+  `App::applyOptions` (post-proceso, escala de render, detalle, VSync, hilos, LOD, GPU) y el tope
+  de FPS `App::applyFrameCap`; el MSAA solo al crear la ventana. Los presets de calidad
+  (`applyGraphicsPreset`) tocan solo la imagen, nunca la simulación. La escala de render vive en
+  `Renderer`: la escena se dibuja más chica con la cámara escalada y se reescala al final.
 - La disposición de paneles se guarda en `<datos>/biogame/layout.ini` (*Ver > Restablecer
   disposición* la rehace). Los íconos del catálogo se dibujan una vez con raylib en un atlas
   (`ui/being_icons`).

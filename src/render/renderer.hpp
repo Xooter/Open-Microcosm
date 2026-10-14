@@ -10,6 +10,8 @@
 
 #include <raylib.h>
 
+#include <algorithm>
+#include <cmath>
 #include <vector>
 
 class World;
@@ -33,6 +35,14 @@ class Renderer {
     }
     const StainSpec* stain() const { return stain_; }
     void setPostProcess(bool on) { postEnabled_ = on; }
+    // Fase 19: el campo se dibuja a una fracción de la resolución de la ventana y se reescala
+    // (menos píxeles para los shaders). La vista previa (`drawWorldTo`) va siempre a 1.
+    void setRenderScale(float scale) { renderScale_ = std::clamp(scale, 0.5f, 1.0f); }
+    // Tope de individuos con estructuras por cuadro (zoom semántico).
+    void setMaxDetailed(int n) {
+        lod_.maxDetailed = std::max(0, n);
+        cells_.setLod(lod_);
+    }
     // Mapa de limitación (fase 13): cada célula se colorea por lo que limita su crecimiento.
     void setLimitationMap(bool on) { cells_.setLimitationMap(on); }
     // Zoom semántico: umbrales de nivel de detalle y de la densidad agregada.
@@ -54,8 +64,12 @@ class Renderer {
 
   private:
     void ensureScene();
-    int width() const { return out_ ? out_->texture.width : GetScreenWidth(); }
-    int height() const { return out_ ? out_->texture.height : GetScreenHeight(); }
+    // Tamaño del destino final y de la escena (escalada) en píxeles.
+    int outWidth() const { return out_ ? out_->texture.width : GetScreenWidth(); }
+    int outHeight() const { return out_ ? out_->texture.height : GetScreenHeight(); }
+    float sceneScale() const { return out_ ? 1.0f : renderScale_; }
+    int width() const { return std::max(1, static_cast<int>(std::lround(outWidth() * sceneScale()))); }
+    int height() const { return std::max(1, static_cast<int>(std::lround(outHeight() * sceneScale()))); }
     void drawDish(const World& world, const Camera2D& camera);
     // Recorta por la vista y reparte cada población entre individuos y densidad (una pasada).
     void gatherPopulations(const World& world, Rectangle view, float zoom, bool fluor, const float* palette);
@@ -99,6 +113,7 @@ class Renderer {
         int resolution = -1, offset = -1, target = -1, zoom = -1, dish = -1;
     } glassLoc_;
     const StainSpec* stain_ = nullptr;
+    float renderScale_ = 1.0f;
     RenderTexture2D* out_ = nullptr; // destino alternativo (vista previa)
     std::vector<Vector2> rockPts_; // contorno de un grano (se reusa entre frames)
     bool postEnabled_ = true;

@@ -109,9 +109,54 @@ Options loadOptions(const std::string& path) {
         else if (key == "gpu_physics") value >> o.gpuPhysics;
         else if (key == "language") value >> o.language;
         else if (key == "bio_time_scale") value >> o.bioTimeScale;
+        else if (key == "graphics_preset") {
+            int p = 0;
+            value >> p;
+            o.preset = static_cast<GraphicsPreset>(std::clamp(p, 0, 3));
+        } else if (key == "vsync") value >> o.vsync;
+        else if (key == "fps_limit") value >> o.fpsLimit;
+        else if (key == "msaa") value >> o.msaa;
+        else if (key == "render_scale") value >> o.renderScale;
+        else if (key == "max_detailed") value >> o.maxDetailed;
+        else if (key == "background_saver") value >> o.backgroundSaver;
+        else if (key == "threads") value >> o.threads;
+        else if (key == "lod_stride") value >> o.lodStride;
+        else if (key == "max_steps_per_frame") value >> o.maxStepsPerFrame;
     }
     o.bioTimeScale = std::clamp(o.bioTimeScale, 1.0f, 600.0f);
+    o.fpsLimit = std::clamp(o.fpsLimit, 0, 1000);
+    o.renderScale = std::clamp(o.renderScale, 0.5f, 1.0f);
+    o.maxDetailed = std::clamp(o.maxDetailed, 0, 4096);
+    o.threads = std::clamp(o.threads, 0, 256);
+    o.lodStride = std::clamp(o.lodStride, 1, 10);
+    o.maxStepsPerFrame = std::clamp(o.maxStepsPerFrame, 1, 16);
     return o;
+}
+
+void applyGraphicsPreset(Options& o, GraphicsPreset preset) {
+    o.preset = preset;
+    switch (preset) {
+    case GraphicsPreset::Low:
+        o.renderScale = 0.67f;
+        o.postProcess = false;
+        o.maxDetailed = 64;
+        o.msaa = false;
+        break;
+    case GraphicsPreset::Medium:
+        o.renderScale = 0.85f;
+        o.postProcess = true;
+        o.maxDetailed = 128;
+        o.msaa = false;
+        break;
+    case GraphicsPreset::High:
+        o.renderScale = 1.0f;
+        o.postProcess = true;
+        o.maxDetailed = 256;
+        o.msaa = true;
+        break;
+    case GraphicsPreset::Custom:
+        break;
+    }
 }
 
 bool saveOptions(const Options& o, const std::string& path) {
@@ -126,6 +171,16 @@ bool saveOptions(const Options& o, const std::string& path) {
         << "lod=" << o.lod << '\n'
         << "gpu_physics=" << o.gpuPhysics << '\n'
         << "language=" << o.language << '\n'
-        << "bio_time_scale=" << o.bioTimeScale << '\n';
+        << "bio_time_scale=" << o.bioTimeScale << '\n'
+        << "graphics_preset=" << static_cast<int>(o.preset) << '\n'
+        << "vsync=" << o.vsync << '\n'
+        << "fps_limit=" << o.fpsLimit << '\n'
+        << "msaa=" << o.msaa << '\n'
+        << "render_scale=" << o.renderScale << '\n'
+        << "max_detailed=" << o.maxDetailed << '\n'
+        << "background_saver=" << o.backgroundSaver << '\n'
+        << "threads=" << o.threads << '\n'
+        << "lod_stride=" << o.lodStride << '\n'
+        << "max_steps_per_frame=" << o.maxStepsPerFrame << '\n';
     return static_cast<bool>(out);
 }

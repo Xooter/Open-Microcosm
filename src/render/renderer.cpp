@@ -356,10 +356,14 @@ void Renderer::drawPhageField(const World& world, Rectangle view, float zoom) {
     phageLayer_.draw();
 }
 
-void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay overlay) {
+void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overlay overlay) {
     PROFILE_SCOPE("Renderer::drawWorld");
+    // Con escala de render < 1 la escena es más chica: la misma vista con menos píxeles.
+    Camera2D camera = screenCamera;
+    camera.zoom *= sceneScale();
+    camera.offset = {camera.offset.x * sceneScale(), camera.offset.y * sceneScale()};
     ensureScene();
-    cells_.setTargetSize(out_ ? width() : 0, out_ ? height() : 0);
+    cells_.setTargetSize(width(), height());
     const bool fluor = stain_ && stain_->mode == StainMode::Fluorescence;
     float palette[32];
     bacteriaPalette(stain_, palette);
@@ -610,6 +614,7 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
 
     const auto sw = static_cast<float>(scene_.texture.width), sh = static_cast<float>(scene_.texture.height);
     const Rectangle src = {0, 0, sw, -sh}; // las render textures están invertidas en Y
+    const Rectangle dst = {0, 0, static_cast<float>(outWidth()), static_cast<float>(outHeight())};
     if (out_)
         BeginTextureMode(*out_);
     // La vista de modelo es un esquema, no una imagen de microscopio: sin la óptica simulada.
@@ -619,10 +624,10 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
         SetShaderValue(post_, resolutionLoc_, res, SHADER_UNIFORM_VEC2);
         SetShaderValue(post_, timeLoc_, &t, SHADER_UNIFORM_FLOAT);
         BeginShaderMode(post_);
-        DrawTextureRec(scene_.texture, src, {0, 0}, WHITE);
+        DrawTexturePro(scene_.texture, src, dst, {0, 0}, 0.0f, WHITE);
         EndShaderMode();
     } else {
-        DrawTextureRec(scene_.texture, src, {0, 0}, WHITE);
+        DrawTexturePro(scene_.texture, src, dst, {0, 0}, 0.0f, WHITE);
     }
     if (out_)
         EndTextureMode();

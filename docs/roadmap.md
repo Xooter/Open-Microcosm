@@ -35,8 +35,7 @@ Lo que ya existe y se mantiene; el detalle de diseño está en `AGENTS.md`.
   instanciado de bacterias.
 
 **Pendientes heredados:**
-- Rendimiento: con ~540 células el paso cuesta ~29 ms (≈ 35 FPS); 60 FPS con 500+ requiere XPBD y
-  contactos en GPU (`src/gpu`).
+- Rendimiento: ver la fase 19 (medición, lo hecho y lo que queda).
 - Vista previa gráfica de la placa antes de crearla; íconos vectoriales en la barra de
   herramientas; paleta de comandos.
 - Tinciones: hifas, cianobacterias y copos de avena sin respuesta a Lugol/Gram; vista dividida
@@ -122,8 +121,28 @@ Es la base de todo lo científico: sin datos no hay experimento. Va primero.
 
 ## Fase 19 — Escala
 
-- XPBD y contactos en GPU para llegar a 60 FPS con 500+ células (pendiente de la fase de GPU
-  anterior); medir con Tracy antes de tocar.
+XPBD y contactos ya corren en la GPU (fase 14). Medido con `bio_bench` (Estanque, seed 7, 8
+hilos): el cuello de botella era `World::limitApproach`, serial y en CPU aun con GPU.
+
+- ✅ **Medición reproducible:** `bio_bench` (ms/paso, desglose por scope con el preset `lite`,
+  checksum del estado, `--gpu` como la app) y `BIO_STRICT_FP` para comparar checksums bit a bit.
+- ✅ **`limitApproach` exacto y 8,5× más rápido** (718 células: 79 → 9 ms; mismo checksum en IEEE
+  estricto): cotas de distancia útil por par, aristas candidatas por tramos de puntos y cota
+  superior por vértices. Paso completo en CPU: 111 → 37 ms (718 células), 35 → 19 ms (261).
+- ✅ **Preferencias:** calidad (Baja/Media/Alta, solo imagen), escala de render, VSync, tope de
+  FPS, ahorro en segundo plano, MSAA, detalle bacteriano, hilos, LOD, pasos por cuadro y
+  medición por cuadro con gráfico.
+- ✅ **Vulkan descartado:** raylib 5.5 no tiene backend Vulkan, migrar exige reescribir render,
+  backend de ImGui y compute shaders con librerías nuevas, y el cuadro está limitado por la CPU,
+  no por el driver. OpenGL 4.6 en Mesa es una ruta de primera. (Prueba sin código:
+  `MESA_LOADER_DRIVER_OVERRIDE=zink`.)
+- **Pendiente:** con GPU, 261 células = 16 ms/paso y 718 = 33 ms. Lo que queda: la espera de la
+  GPU (`collect`, kernels ~8 ms con 718; `pairs` es el más caro), `limitApproach` (serial por
+  naturaleza: ~30 % de los pares empujan y forman cadenas de cientos de niveles; paralelizar por
+  grupos o niveles no gana), química+FFT (~6 ms), `resolvePenetrations`, `applyMotion`,
+  `perceive`. El camino de GPU no es determinista entre corridas (el checksum cambia): revisar
+  las reducciones con atómicos.
+- **Hecho cuando:** 60 FPS con 540+ células y la GPU activa en hardware de escritorio medio.
 
 ---
 

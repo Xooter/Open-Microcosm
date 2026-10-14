@@ -13,11 +13,17 @@
       "name": "profile",
       "inherits": "base",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "BIO_PROFILING": "ON" }
+    },
+    {
+      "name": "lite",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "BIO_PROFILE_LITE": "ON", "BIO_BUILD_TESTS": "OFF" }
     }
   ],
   "buildPresets": [
     { "name": "debug",   "configurePreset": "debug" },
     { "name": "release", "configurePreset": "release" },
-    { "name": "profile", "configurePreset": "profile" }
+    { "name": "profile", "configurePreset": "profile" },
+    { "name": "lite",    "configurePreset": "lite" }
   ]
 }

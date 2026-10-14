@@ -82,7 +82,8 @@ struct App {
     bool quit = false;
     void setTool(Tool t);
     void setFullscreen(bool on);
-    void applyOptions(); // post-proceso, LOD, GPU
+    void applyOptions(); // post-proceso, escala, VSync, hilos, LOD, GPU
+    int autoThreads = 1;  // hilos de "automático" (OMP_NUM_THREADS o un hilo por núcleo físico)
     void saveOptions() const;
     void requestLayoutReset() { layoutReset_ = true; }
     // Avisos breves (descubrimientos de la enciclopedia).
@@ -112,6 +113,8 @@ struct App {
     void drawMeasurements();
     Vec2 worldPos(const Vector2& m) const;
 
+    void applyFrameCap();  // tope de FPS (y el del ahorro en segundo plano)
+    int appliedFps_ = -1;
     float accumulator_ = 0.0f;
     float discoveryTimer_ = 0.0f;
     std::uint32_t runCounter_ = 0;

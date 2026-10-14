@@ -7,6 +7,7 @@
 
 #include <cmath>
 #include <algorithm>
+#include <limits>
 
 namespace {
 SpeciesId speciesOfEntity(const entt::registry& reg, entt::entity e);
@@ -888,6 +889,43 @@ void World::limitApproach(float dt, float contactRange) {
             inv += bodies_.invMass[s];
         bodyMobility_[b] = inv / static_cast<float>(body.ring.size() * body.ring.size());
     }
+    // Cotas para descartar puntos sin buscar su arista más cercana (no cambia el resultado): un
+    // punto de P solo frena si gap ≤ acercamiento·dt, con gap = d − (rP + rQ) y acercamiento ≤
+    // |vP| + |vQ|. Así d ≤ rP + rQ + (|vP| + |vQ|)·dt, y d nunca es menor que la distancia a la caja
+    // del contorno de Q.
+    bodyPolyMin_.resize(nb);
+    bodyPolyMax_.resize(nb);
+    bodyRadiusMax_.resize(nb);
+    bodySpeedMax_.resize(nb);
+    bodyRingMin_.resize(nb);
+    bodyRingMax_.resize(nb);
+    constexpr float kHuge = std::numeric_limits<float>::max();
+    for (std::size_t b = 0; b < nb; ++b) {
+        const RingBody& body = *bodyList_[b];
+        Vec2 lo = {kHuge, kHuge}, hi = {-kHuge, -kHuge};
+        for (const Vec2& q : body.poly) {
+            lo = {std::min(lo.x, q.x), std::min(lo.y, q.y)};
+            hi = {std::max(hi.x, q.x), std::max(hi.y, q.y)};
+        }
+        Vec2 rlo = {kHuge, kHuge}, rhi = {-kHuge, -kHuge};
+        float radius = 0.0f, speed2 = 0.0f;
+        for (std::uint32_t s : body.ring) {
+            rlo = {std::min(rlo.x, bodies_.x[s]), std::min(rlo.y, bodies_.y[s])};
+            rhi = {std::max(rhi.x, bodies_.x[s]), std::max(rhi.y, bodies_.y[s])};
+            radius = std::max(radius, bodies_.radius[s]);
+            speed2 = std::max(speed2, bodies_.vx[s] * bodies_.vx[s] + bodies_.vy[s] * bodies_.vy[s]);
+        }
+        bodyPolyMin_[b] = lo;
+        bodyPolyMax_[b] = hi;
+        bodyRingMin_[b] = rlo; // las posiciones no cambian acá (solo las velocidades)
+        bodyRingMax_[b] = rhi;
+        bodyRadiusMax_[b] = radius;
+        bodySpeedMax_[b] = std::sqrt(speed2);
+    }
+    const float scanRange = contactRange + 3.0f * 600.0f * dt;
+    // 1) Pares candidatos, en el orden de siempre (un par puede repetirse si el otro cuerpo
+    //    ocupa varias celdas: se conserva).
+    approachPairs_.clear();
     for (std::size_t b = 0; b < nb; ++b) {
         if (bodySkip_[b] || !bodyTouch_[b])
             continue;
@@ -902,8 +940,7 @@ void World::limitApproach(float dt, float contactRange) {
                 for (std::uint32_t o : buckets_[static_cast<std::size_t>(wrapIndex(by, bucketsY_)) * bucketsX_ + wrapIndex(bx, bucketsX_)]) {
                     if (o <= b || bodySkip_[o])
                         continue;
-                    const float muA = bodyMobility_[b], muB = bodyMobility_[o];
-                    if (muA + muB <= 0.0f)
+                    if (bodyMobility_[b] + bodyMobility_[o] <= 0.0f)
                         continue;
                     const RingBody& B = *bodyList_[o];
                     const Vec2 shift = imageShift(B, A.centroid);
@@ -911,89 +948,190 @@ void World::limitApproach(float dt, float contactRange) {
                     if (B.aabbMax.x + shift.x < A.aabbMin.x - m || B.aabbMin.x + shift.x > A.aabbMax.x + m ||
                         B.aabbMax.y + shift.y < A.aabbMin.y - m || B.aabbMin.y + shift.y > A.aabbMax.y + m)
                         continue;
-                    // Peor acercamiento de los puntos de P contra el contorno de Q (Q desplazado
-                    // `qShift`): cuánta velocidad hay que quitar y la normal (de Q hacia P).
-                    struct Worst {
-                        float need = 0.0f;
-                        Vec2 n;
-                    };
-                    auto scan = [&](const RingBody& P, const RingBody& Q, Vec2 qShift) {
-                        Worst w;
-                        const int qn = static_cast<int>(Q.poly.size());
-                        for (std::uint32_t s : P.ring) {
-                            const Vec2 p = {bodies_.x[s], bodies_.y[s]};
-                            const polygon::Closest cl = polygon::closestOnBoundary(Q.poly.data(), qn, p - qShift);
-                            const float d = std::sqrt(cl.dist2);
-                            if (d < 1e-4f || d > contactRange + 3.0f * 600.0f * dt)
-                                continue;
-                            const Vec2 out = polygon::inwardNormal(cl.edgeDir, Q.restArea) * -1.0f;
-                            const Vec2 toP = (p - qShift) - cl.point;
-                            if (dot(toP, out) <= 0.0f)
-                                continue; // ya está adentro: lo resuelve la pasada de penetraciones
-                            const Vec2 n = toP * (1.0f / d);
-                            const std::uint32_t qa = Q.ring[static_cast<std::size_t>(cl.edge)];
-                            const std::uint32_t qb = Q.ring[static_cast<std::size_t>((cl.edge + 1) % qn)];
-                            const Vec2 vq = Vec2{bodies_.vx[qa], bodies_.vy[qa]} * (1.0f - cl.t) + Vec2{bodies_.vx[qb], bodies_.vy[qb]} * cl.t;
-                            const float approach = -dot(Vec2{bodies_.vx[s], bodies_.vy[s]} - vq, n);
-                            const float gap = d - (bodies_.radius[s] + bodies_.radius[qa]);
-                            if (approach <= 0.0f || gap > approach * dt)
-                                continue;
-                            const float need = approach - std::max(gap, 0.0f) / dt;
-                            if (need > w.need)
-                                w = {need, n};
-                        }
-                        return w;
-                    };
-                    const Worst ab = scan(A, B, shift);  // puntos de A contra B (n: de B hacia A)
-                    const Worst ba = scan(B, A, shift * -1.0f); // puntos de B contra A (n: de A hacia B)
-                    // Se mueve la que corresponde: A se aleja de B por `ab.n`; B se aleja de A por `ba.n`.
-                    // El vidrio de la placa tampoco cede: si una de las dos está contra la pared en
-                    // la dirección del empuje, la otra absorbe todo el acercamiento.
-                    auto againstGlass = [&](const RingBody& body, Vec2 dir) {
-                        if (!dish_.active() || dot(dir, dir) < 1e-6f)
-                            return false;
-                        const Vec2 step = dir * (4.0f / length(dir));
-                        for (std::uint32_t s : body.ring) {
-                            const Vec2 q = Vec2{bodies_.x[s], bodies_.y[s]} + step;
-                            const Vec2 c = dish_.clampInside(q, bodies_.radius[s]);
-                            if (c.x != q.x || c.y != q.y)
-                                return true;
-                        }
-                        return false;
-                    };
-                    const Vec2 awayA = ab.need > 0.0f ? ab.n : ba.n * -1.0f; // hacia dónde se aleja A
-                    float shareA = muA / (muA + muB);
-                    if (againstGlass(A, awayA))
-                        shareA = 0.0f;
-                    else if (againstGlass(B, awayA * -1.0f))
-                        shareA = 1.0f;
-                    const float shareB = 1.0f - shareA;
-                    Vec2 dA, dB;
-                    if (ab.need > 0.0f) {
-                        dA = dA + ab.n * (shareA * ab.need);
-                        dB = dB - ab.n * (shareB * ab.need);
-                    }
-                    if (ba.need > 0.0f) {
-                        dB = dB + ba.n * (shareB * ba.need);
-                        dA = dA - ba.n * (shareA * ba.need);
-                    }
-                    if (dot(dA, dA) == 0.0f && dot(dB, dB) == 0.0f)
-                        continue;
-                    // Traslación rígida: todo el cuerpo (membrana y orgánulos).
-                    auto drive = [&](const RingBody& body, Vec2 dv) {
-                        for (std::uint32_t s : body.ring) {
-                            bodies_.vx[s] += dv.x;
-                            bodies_.vy[s] += dv.y;
-                        }
-                        for (std::uint32_t s : body.interior) {
-                            bodies_.vx[s] += dv.x;
-                            bodies_.vy[s] += dv.y;
-                        }
-                    };
-                    drive(A, dA);
-                    drive(B, dB);
+                    approachPairs_.push_back({static_cast<std::uint32_t>(b), o, shift});
                 }
     }
+
+    // 2) En serie y en orden: cada par lee las velocidades que dejaron los anteriores. (Medido:
+    //    ~30 % de los pares empujan y forman cadenas de cientos de niveles; paralelizar por
+    //    niveles o por grupos conexos no gana nada y el resultado tiene que ser este.)
+    for (const ApproachPair& pr : approachPairs_)
+        resolveApproach(pr, dt, scanRange, approachScratch_);
+}
+
+// Un par de limitApproach: quita la velocidad de acercamiento de A y B y la reparte.
+void World::resolveApproach(const ApproachPair& pr, float dt, float scanRange, ApproachScratch& sc) {
+    const std::size_t b = pr.a, o = pr.b;
+    const RingBody& A = *bodyList_[b];
+    const RingBody& B = *bodyList_[o];
+    const float muA = bodyMobility_[b], muB = bodyMobility_[o];
+    const ApproachWorst ab = approachScan(b, o, pr.shift, dt, scanRange, sc);         // A contra B (n: de B hacia A)
+    const ApproachWorst ba = approachScan(o, b, pr.shift * -1.0f, dt, scanRange, sc); // B contra A (n: de A hacia B)
+    // Se mueve la que corresponde: A se aleja de B por `ab.n`; B se aleja de A por `ba.n`.
+    // El vidrio de la placa tampoco cede: si una de las dos está contra la pared en
+    // la dirección del empuje, la otra absorbe todo el acercamiento.
+    auto againstGlass = [&](const RingBody& body, Vec2 dir) {
+        if (!dish_.active() || dot(dir, dir) < 1e-6f)
+            return false;
+        const Vec2 step = dir * (4.0f / length(dir));
+        for (std::uint32_t s : body.ring) {
+            const Vec2 q = Vec2{bodies_.x[s], bodies_.y[s]} + step;
+            const Vec2 c = dish_.clampInside(q, bodies_.radius[s]);
+            if (c.x != q.x || c.y != q.y)
+                return true;
+        }
+        return false;
+    };
+    const Vec2 awayA = ab.need > 0.0f ? ab.n : ba.n * -1.0f; // hacia dónde se aleja A
+    float shareA = muA / (muA + muB);
+    if (againstGlass(A, awayA))
+        shareA = 0.0f;
+    else if (againstGlass(B, awayA * -1.0f))
+        shareA = 1.0f;
+    const float shareB = 1.0f - shareA;
+    Vec2 dA, dB;
+    if (ab.need > 0.0f) {
+        dA = dA + ab.n * (shareA * ab.need);
+        dB = dB - ab.n * (shareB * ab.need);
+    }
+    if (ba.need > 0.0f) {
+        dB = dB + ba.n * (shareB * ba.need);
+        dA = dA - ba.n * (shareA * ba.need);
+    }
+    if (dot(dA, dA) == 0.0f && dot(dB, dB) == 0.0f)
+        return;
+    // Traslación rígida: todo el cuerpo (membrana y orgánulos).
+    auto drive = [&](const RingBody& body, Vec2 dv) {
+        for (std::uint32_t s : body.ring) {
+            bodies_.vx[s] += dv.x;
+            bodies_.vy[s] += dv.y;
+        }
+        for (std::uint32_t s : body.interior) {
+            bodies_.vx[s] += dv.x;
+            bodies_.vy[s] += dv.y;
+        }
+    };
+    drive(A, dA);
+    drive(B, dB);
+    // La cota de rapidez sigue valiendo para los pares que faltan: |v + dv| ≤ |v| + |dv|.
+    bodySpeedMax_[b] += length(dA);
+    bodySpeedMax_[o] += length(dB);
+}
+
+// Peor acercamiento de los puntos de P contra el contorno de Q (Q desplazado `qShift`): cuánta
+// velocidad hay que quitar y la normal (de Q hacia P).
+World::ApproachWorst World::approachScan(std::size_t pi, std::size_t qi, Vec2 qShift, float dt, float scanRange,
+                                         ApproachScratch& sc) const {
+    constexpr float kHuge = std::numeric_limits<float>::max();
+    const RingBody& P = *bodyList_[pi];
+    const RingBody& Q = *bodyList_[qi];
+    ApproachWorst w;
+    const int qn = static_cast<int>(Q.poly.size());
+    // Cota de la distancia útil, con holgura para el redondeo.
+    const float bound = std::min(scanRange, bodyRadiusMax_[pi] + bodyRadiusMax_[qi] +
+                                                (bodySpeedMax_[pi] + bodySpeedMax_[qi]) * dt);
+    const float reach = bound * 1.001f + 0.05f;
+    const float reach2 = reach * reach;
+    // Solo las aristas de Q al alcance de algún punto de P: contienen la más cercana de todo
+    // punto que pueda frenar (y sus empates).
+    const Vec2 rlo = bodyRingMin_[pi] - qShift, rhi = bodyRingMax_[pi] - qShift;
+    const Vec2 qlo = bodyPolyMin_[qi], qhi = bodyPolyMax_[qi];
+    if (qlo.x > rhi.x + reach || qhi.x < rlo.x - reach || qlo.y > rhi.y + reach || qhi.y < rlo.y - reach)
+        return w; // ninguna arista de Q está al alcance de P
+    sc.nearEdges.clear();
+    sc.nearLo.clear();
+    sc.nearHi.clear();
+    for (int i = 0; i < qn; ++i) {
+        const Vec2 a = Q.poly[static_cast<std::size_t>(i)];
+        const Vec2 c = Q.poly[static_cast<std::size_t>((i + 1) % qn)];
+        const Vec2 elo = {std::min(a.x, c.x), std::min(a.y, c.y)};
+        const Vec2 ehi = {std::max(a.x, c.x), std::max(a.y, c.y)};
+        if (elo.x > rhi.x + reach || ehi.x < rlo.x - reach || elo.y > rhi.y + reach || ehi.y < rlo.y - reach)
+            continue;
+        sc.nearEdges.push_back(i);
+        sc.nearLo.push_back(elo);
+        sc.nearHi.push_back(ehi);
+    }
+    if (sc.nearEdges.empty())
+        return w;
+    // Lo mismo por tramos de puntos consecutivos de P (cajas más chicas). Los puntos se recorren
+    // en el orden de siempre: el resultado no cambia.
+    constexpr std::size_t kChunk = 8;
+    const std::size_t pn = P.ring.size();
+    for (std::size_t c0 = 0; c0 < pn; c0 += kChunk) {
+        const std::size_t c1 = std::min(pn, c0 + kChunk);
+        Vec2 clo = {kHuge, kHuge}, chi = {-kHuge, -kHuge};
+        for (std::size_t k = c0; k < c1; ++k) {
+            const std::uint32_t s = P.ring[k];
+            clo = {std::min(clo.x, bodies_.x[s]), std::min(clo.y, bodies_.y[s])};
+            chi = {std::max(chi.x, bodies_.x[s]), std::max(chi.y, bodies_.y[s])};
+        }
+        clo = clo - qShift;
+        chi = chi - qShift;
+        sc.chunkEdges.clear();
+        sc.chunkLo.clear();
+        sc.chunkHi.clear();
+        Vec2 lo = {kHuge, kHuge}, hi = {-kHuge, -kHuge}; // caja de esas aristas
+        for (std::size_t k = 0; k < sc.nearEdges.size(); ++k) {
+            const Vec2 elo = sc.nearLo[k], ehi = sc.nearHi[k];
+            if (elo.x > chi.x + reach || ehi.x < clo.x - reach || elo.y > chi.y + reach || ehi.y < clo.y - reach)
+                continue;
+            sc.chunkEdges.push_back(sc.nearEdges[k]);
+            sc.chunkLo.push_back(elo);
+            sc.chunkHi.push_back(ehi);
+            lo = {std::min(lo.x, elo.x), std::min(lo.y, elo.y)};
+            hi = {std::max(hi.x, ehi.x), std::max(hi.y, ehi.y)};
+        }
+        const int ne = static_cast<int>(sc.chunkEdges.size());
+        if (ne == 0)
+            continue;
+        for (std::size_t k = c0; k < c1; ++k) {
+            const std::uint32_t s = P.ring[k];
+            const Vec2 p = Vec2{bodies_.x[s], bodies_.y[s]} - qShift;
+            const float bx = std::max({lo.x - p.x, p.x - hi.x, 0.0f});
+            const float by = std::max({lo.y - p.y, p.y - hi.y, 0.0f});
+            if (bx * bx + by * by > reach2)
+                continue;
+            // Cota superior de la distancia mínima: el vértice más cercano. Solo se evalúan las
+            // aristas cuya caja está más cerca que eso (con holgura muy por encima del redondeo),
+            // en orden creciente: la arista elegida, aun en un empate, es la misma.
+            float upper = kHuge;
+            for (int k = 0; k < ne; ++k) {
+                const Vec2 a = Q.poly[static_cast<std::size_t>(sc.chunkEdges[static_cast<std::size_t>(k)])];
+                upper = std::min(upper, dot(p - a, p - a));
+            }
+            const int last = sc.chunkEdges[static_cast<std::size_t>(ne - 1)];
+            const Vec2 z = Q.poly[static_cast<std::size_t>((last + 1) % qn)];
+            upper = std::min(upper, dot(p - z, p - z)) * 1.0001f + 1e-6f;
+            polygon::Closest cl;
+            for (int k = 0; k < ne; ++k) {
+                const Vec2 elo = sc.chunkLo[static_cast<std::size_t>(k)], ehi = sc.chunkHi[static_cast<std::size_t>(k)];
+                const float ex = std::max({elo.x - p.x, p.x - ehi.x, 0.0f});
+                const float ey = std::max({elo.y - p.y, p.y - ehi.y, 0.0f});
+                if (ex * ex + ey * ey <= upper)
+                    polygon::closestOnEdge(Q.poly.data(), qn, sc.chunkEdges[static_cast<std::size_t>(k)], p, cl);
+            }
+            const float d = std::sqrt(cl.dist2);
+            if (d < 1e-4f || d > scanRange)
+                continue;
+            const Vec2 out = polygon::inwardNormal(cl.edgeDir, Q.restArea) * -1.0f;
+            const Vec2 toP = p - cl.point;
+            if (dot(toP, out) <= 0.0f)
+                continue; // ya está adentro: lo resuelve la pasada de penetraciones
+            const Vec2 n = toP * (1.0f / d);
+            const std::uint32_t qa = Q.ring[static_cast<std::size_t>(cl.edge)];
+            const std::uint32_t qb = Q.ring[static_cast<std::size_t>((cl.edge + 1) % qn)];
+            const Vec2 vq = Vec2{bodies_.vx[qa], bodies_.vy[qa]} * (1.0f - cl.t) + Vec2{bodies_.vx[qb], bodies_.vy[qb]} * cl.t;
+            const float approach = -dot(Vec2{bodies_.vx[s], bodies_.vy[s]} - vq, n);
+            const float gap = d - (bodies_.radius[s] + bodies_.radius[qa]);
+            if (approach <= 0.0f || gap > approach * dt)
+                continue;
+            const float need = approach - std::max(gap, 0.0f) / dt;
+            if (need > w.need)
+                w = {need, n};
+        }
+    }
+    return w;
 }
 
 void World::rebuildBuckets() {

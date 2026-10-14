@@ -8,6 +8,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(BIO_NATIVE    "Compilar con -march=native (SIMD de la CPU local)" ON)
 option(BIO_PROFILING "Habilitar el profiler Tracy" OFF)
+option(BIO_PROFILE_LITE "Tiempos por PROFILE_SCOPE sin Tracy (bio_bench los imprime)" OFF)
+option(BIO_STRICT_FP "IEEE estricto (sin -ffast-math ni FMA): checksums de bio_bench comparables" OFF)
 option(BIO_BUILD_TESTS "Compilar los tests (doctest)" ON)
 
 # ---------------------------------------------------------------------------
@@ -72,8 +74,12 @@ find_package(OpenMP REQUIRED)
 # ---------------------------------------------------------------------------
 add_library(bio_options INTERFACE)
 if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    target_compile_options(bio_options INTERFACE -Wall -Wextra -Wpedantic
-        $<$<CONFIG:Release,RelWithDebInfo>:-O3 -ffast-math>)
+    target_compile_options(bio_options INTERFACE -Wall -Wextra -Wpedantic)
+    if(BIO_STRICT_FP)
+        target_compile_options(bio_options INTERFACE $<$<CONFIG:Release,RelWithDebInfo>:-O3 -ffp-contract=off>)
+    else()
+        target_compile_options(bio_options INTERFACE $<$<CONFIG:Release,RelWithDebInfo>:-O3 -ffast-math>)
+    endif()
     if(BIO_NATIVE)
         target_compile_options(bio_options INTERFACE -march=native)
     endif()
@@ -136,7 +142,10 @@ target_link_libraries(biosim PUBLIC OpenMP::OpenMP_CXX EnTT::EnTT bio_options)
 if(BIO_PROFILING)
     target_link_libraries(biosim PUBLIC Tracy::TracyClient)
     target_compile_definitions(biosim PUBLIC BIO_PROFILING)
+elseif(BIO_PROFILE_LITE)
+    target_compile_definitions(biosim PUBLIC BIO_PROFILE_LITE)
 endif()
+
 
 # ---------------------------------------------------------------------------
 # Ejecutable
@@ -161,6 +170,7 @@ add_executable(bio
     src/ui/panels/inspector_panel.cpp
     src/ui/panels/tools_panel.cpp
     src/ui/panels/sim_panel.cpp
+    src/ui/panels/settings_panel.cpp
     src/ui/panels/processes_panel.cpp
     src/ui/panels/stats_panel.cpp
     src/ui/panels/graphs_panel.cpp
@@ -185,6 +195,11 @@ add_library(imgui_lib STATIC
     ${implot_SOURCE_DIR}/implot.cpp
     ${implot_SOURCE_DIR}/implot_items.cpp)
 target_include_directories(imgui_lib SYSTEM PUBLIC ${imgui_SOURCE_DIR} ${implot_SOURCE_DIR})
+
+# Fase 19: medición del paso de simulación (ms/paso, desglose, checksum; --gpu como la app).
+add_executable(bio_bench bench/bio_bench.cpp src/gpu/gpu_substep_solver.cpp)
+target_link_libraries(bio_bench PRIVATE biosim raylib)
+target_compile_definitions(bio_bench PRIVATE BIO_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 
 # SYSTEM: los warnings de headers de terceros no son nuestros.
 target_link_libraries(bio PRIVATE biosim raylib imgui_lib)

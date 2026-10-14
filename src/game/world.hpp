@@ -429,6 +429,23 @@ class World {
     // según su movilidad (Stokes: v = F/ζ, con ζ ∝ N/invMass). Un nadador que empuja a otra
     // célula avanza con ella, más despacio; no le clava una cuña ni la atraviesa.
     void limitApproach(float dt, float contactRange);
+    // Peor acercamiento de los puntos de un cuerpo contra el contorno de otro.
+    struct ApproachWorst {
+        float need = 0.0f; // velocidad a quitar [µm/s]
+        Vec2 n;            // normal (del otro hacia este)
+    };
+    struct ApproachScratch {
+        std::vector<int> nearEdges, chunkEdges;
+        std::vector<Vec2> nearLo, nearHi;   // cajas de las aristas de nearEdges
+        std::vector<Vec2> chunkLo, chunkHi; // y de las de chunkEdges
+    };
+    struct ApproachPair {
+        std::uint32_t a, b;
+        Vec2 shift;
+    };
+    void resolveApproach(const ApproachPair& pr, float dt, float scanRange, ApproachScratch& sc);
+    ApproachWorst approachScan(std::size_t pi, std::size_t qi, Vec2 qShift, float dt, float scanRange,
+                               ApproachScratch& sc) const;
     void beginBodies(float dt);
     void cpuSubsteps(float dt, int stride, float maxRadius);
     void finishBodies();
@@ -550,6 +567,12 @@ class World {
     std::vector<RingBody*> bodyList_;
     std::vector<float> bodyMobility_;         // 1/ζ de cada cuerpo (limitApproach)
     std::vector<std::uint8_t> bodySkip_;
+    // Poda exacta de limitApproach: caja del contorno, radio y rapidez máximos de la membrana.
+    std::vector<Vec2> bodyPolyMin_, bodyPolyMax_;
+    std::vector<float> bodyRadiusMax_, bodySpeedMax_;
+    std::vector<Vec2> bodyRingMin_, bodyRingMax_;
+    ApproachScratch approachScratch_;
+    std::vector<ApproachPair> approachPairs_;
     std::vector<CupObstacle> cupObstacles_; // células junto a la presa de la copa (se reusa el buffer)
     std::vector<std::uint8_t> bodyNear_, memberActive_;
     std::vector<std::uint32_t> memberBody_;

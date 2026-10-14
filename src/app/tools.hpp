@@ -66,8 +66,13 @@ struct ToolState {
     bool measuring = false;          // arrastrando la regla
     std::vector<Vec2> lassoPath;     // región en curso (mientras se dibuja)
     bool drawingRegion = false;
-    // Profiling continuo (promedios suavizados) [ms].
-    float stepMs = 0.0f, renderMs = 0.0f;
+    // Profiling continuo (promedios suavizados) [ms]: un paso, el dibujo del mundo, la interfaz
+    // y la simulación de todo el cuadro (todos sus pasos).
+    float stepMs = 0.0f, renderMs = 0.0f, uiMs = 0.0f, simFrameMs = 0.0f;
+    // Duración de los últimos cuadros [ms] (anillo; `frameHead` es el próximo a escribir).
+    static constexpr int kFrameHistory = 240;
+    float frameHistory[kFrameHistory] = {};
+    int frameHead = 0;
 };
 
 // Lo elegido con la herramienta Seleccionar.
