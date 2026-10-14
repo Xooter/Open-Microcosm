@@ -84,7 +84,7 @@ TEST_CASE("bacterias, detritos y cianobacterias quedan dentro del agua") {
     CHECK(out == 0);
 }
 
-TEST_CASE("el vidrio no se lleva fósforo: se conserva y no se acumula afuera") {
+TEST_CASE("el vidrio no se lleva fósforo: se conserva y no se acumula afuera" * doctest::test_suite("largos")) {
     WorldConfig config = dishWorld(2000);
     World world(config);
     for (int k = 0; k < 6; ++k)

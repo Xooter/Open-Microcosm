@@ -54,7 +54,14 @@ FetchContent_Declare(implot
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     SOURCE_SUBDIR _no_cmake)
 
-FetchContent_MakeAvailable(raylib EnTT imgui implot)
+# toml++: datos de las especies con sus fuentes (assets/species/*.toml). Solo encabezados.
+FetchContent_Declare(tomlplusplus
+    URL https://github.com/marzer/tomlplusplus/archive/refs/tags/v3.4.0.tar.gz
+    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+    SYSTEM
+    EXCLUDE_FROM_ALL)
+
+FetchContent_MakeAvailable(raylib EnTT imgui implot tomlplusplus)
 
 if(BIO_PROFILING)
     set(TRACY_ENABLE ON CACHE BOOL "" FORCE)
@@ -124,6 +131,7 @@ add_library(biosim STATIC
     src/bio/genome.cpp
     src/bio/organelles.cpp
     src/bio/species.cpp
+    src/bio/physiology.cpp
     src/bio/cyanobacteria.cpp
     src/bio/fungi.cpp
     src/bio/plasmodium.cpp
@@ -174,7 +182,7 @@ add_custom_target(bio_build_info
     BYPRODUCTS ${CMAKE_BINARY_DIR}/generated/build_info.hpp
     COMMENT "Procedencia de la build")
 add_dependencies(biosim bio_build_info)
-target_link_libraries(biosim PUBLIC OpenMP::OpenMP_CXX EnTT::EnTT bio_options)
+target_link_libraries(biosim PUBLIC OpenMP::OpenMP_CXX EnTT::EnTT bio_options PRIVATE tomlplusplus::tomlplusplus)
 
 if(BIO_PROFILING)
     target_link_libraries(biosim PUBLIC Tracy::TracyClient)
@@ -293,7 +301,15 @@ include(CPack)
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp tests/test_render_lod.cpp tests/test_body_plan.cpp tests/test_parameters.cpp tests/test_scene.cpp)
+    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp tests/test_render_lod.cpp tests/test_body_plan.cpp tests/test_parameters.cpp tests/test_scene.cpp tests/test_physiology.cpp)
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
-    add_test(NAME bio_tests COMMAND bio_tests)
+    # Rápidos (~1 min): la verificación de cada cambio. Largos (~30 min): ecosistemas,
+    # conservación en corridas largas, determinismo con muchos pasos. Validación: contra
+    # resultados publicados. `ctest` corre todo; `ctest -L rapidos`, solo los rápidos.
+    add_test(NAME bio_tests_rapidos COMMAND bio_tests --test-suite-exclude=largos,validacion)
+    set_tests_properties(bio_tests_rapidos PROPERTIES LABELS rapidos)
+    add_test(NAME bio_tests_largos COMMAND bio_tests --test-suite=largos)
+    set_tests_properties(bio_tests_largos PROPERTIES LABELS largos)
+    add_test(NAME bio_tests_validacion COMMAND bio_tests --test-suite=validacion)
+    set_tests_properties(bio_tests_validacion PROPERTIES LABELS validacion)
 endif()

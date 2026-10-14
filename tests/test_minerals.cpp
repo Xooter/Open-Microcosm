@@ -154,7 +154,7 @@ TEST_CASE("las gotas naturales traen sedimento según el bioma") {
     CHECK(gut.rockCount() == 0);
 }
 
-TEST_CASE("sedimento y granos deterministas sin importar la cantidad de hilos") {
+TEST_CASE("sedimento y granos deterministas sin importar la cantidad de hilos" * doctest::test_suite("largos")) {
     const std::uint64_t a = runSediment(1);
     CHECK(a == runSediment(4));
 }

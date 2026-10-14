@@ -87,7 +87,7 @@ TEST_CASE("el flagelado gira y nada hacia donde apunta") {
     CHECK(std::abs(body.centroid.x - 1024.0f) < 40.0f);
 }
 
-TEST_CASE("el ciliado come bacterias por la boca respetando el caudal del citostoma") {
+TEST_CASE("el ciliado come bacterias por la boca respetando el caudal del citostoma" * doctest::test_suite("largos")) {
     World world(quietWorld(50'000));
     const entt::entity e = world.spawnPlayer(LocomotionType::Cilia, {1024.0f, 512.0f});
     PlayerInput input;
@@ -104,7 +104,7 @@ TEST_CASE("el ciliado come bacterias por la boca respetando el caudal del citost
     CHECK_FALSE(dig.vacuoles.empty());
 }
 
-TEST_CASE("la ameba envuelve una célula y la encierra en un fagosoma") {
+TEST_CASE("la ameba envuelve una célula y la encierra en un fagosoma" * doctest::test_suite("largos")) {
     World world(quietWorld());
     const entt::entity e = world.spawnPlayer(LocomotionType::Pseudopod, {900.0f, 512.0f});
     CellSpec prey;
@@ -155,7 +155,7 @@ std::uint64_t runPlayer(int threads) {
 }
 } // namespace
 
-TEST_CASE("jugador y fagocitosis deterministas sin importar la cantidad de hilos") {
+TEST_CASE("jugador y fagocitosis deterministas sin importar la cantidad de hilos" * doctest::test_suite("largos")) {
     const std::uint64_t a = runPlayer(1);
     CHECK(a == runPlayer(1));
     CHECK(a == runPlayer(4));
@@ -183,7 +183,7 @@ RingHealth ringHealth(const RingBody& body, const BodyParticles& bp) {
 }
 } // namespace
 
-TEST_CASE("la membrana de la ameba no se cruza al comer presas de distinta forma") {
+TEST_CASE("la membrana de la ameba no se cruza al comer presas de distinta forma" * doctest::test_suite("largos")) {
     // `slack`: cruces tolerados durante la copa (una punta de 2 µm de radio se deforma sola).
     struct Case { const char* name; float rx, ry; int count; int slack; int species = -1; bool mustEat = true; };
     const Case cases[] = {{"elipse", 22, 18, 1, 0}, {"grande", 40, 30, 1, 0}, {"chica", 8, 6, 1, 0},

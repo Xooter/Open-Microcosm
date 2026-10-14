@@ -42,7 +42,7 @@ float growth(const WorldConfig& config, int n) {
 
 } // namespace
 
-TEST_CASE("sin sílice la diatomea no crece; con sílice sí") {
+TEST_CASE("sin sílice la diatomea no crece; con sílice sí" * doctest::test_suite("largos")) {
     WorldConfig rich = quietWorld(), poor = quietWorld();
     poor.medium.silicate = 0.0f;
     const float withSi = growth(rich, 60 * 8);

@@ -175,7 +175,7 @@ TEST_CASE("Physarum: sin comida se endurece en esclerocio y revive cuando vuelve
     CHECK(sys.stats.sclerotiaGerminated == 1);
 }
 
-TEST_CASE("Physarum en el mundo: crece sobre copos de avena y conserva el fósforo") {
+TEST_CASE("Physarum en el mundo: crece sobre copos de avena y conserva el fósforo" * doctest::test_suite("largos")) {
     World world(quiet());
     world.bioTimeScale() = 600.0f;
     world.spawnBeing({BeingKind::OatFlake, SpeciesId::Paramecium}, {900.0f, 1024.0f});
@@ -223,7 +223,7 @@ TEST_CASE("Allomyces: se bifurca en dos y con hambre forma esporangios de resist
     CHECK(fungi.spores.size() > 0);
 }
 
-TEST_CASE("liquen: la hifa se une a un alga verde, recibe su azúcar y la protege") {
+TEST_CASE("liquen: la hifa se une a un alga verde, recibe su azúcar y la protege" * doctest::test_suite("largos")) {
     World world(quiet());
     world.bioTimeScale() = 600.0f;
     const entt::entity alga = world.spawnOrganism(SpeciesId::Chlamydomonas, {1000.0f, 1000.0f}, speciesGenome(SpeciesId::Chlamydomonas), 0);
@@ -243,7 +243,7 @@ TEST_CASE("liquen: la hifa se une a un alga verde, recibe su azúcar y la proteg
     CHECK_FALSE(world.registry().all_of<ChytridInfection>(alga));
 }
 
-TEST_CASE("placa de Petri vacía: sin vida, sin minerales, sin granos ni polvo") {
+TEST_CASE("placa de Petri vacía: sin vida, sin minerales, sin granos ni polvo" * doctest::test_suite("largos")) {
     WorldConfig full = makeDrop(BiomeId::Puddle, 4);
     REQUIRE(full.sediment.clay > 0);
     WorldConfig c = full;
@@ -300,7 +300,7 @@ std::uint64_t runMolds(int threads) {
 }
 } // namespace
 
-TEST_CASE("Physarum, Allomyces y liquen: deterministas sin importar la cantidad de hilos") {
+TEST_CASE("Physarum, Allomyces y liquen: deterministas sin importar la cantidad de hilos" * doctest::test_suite("largos")) {
     const std::uint64_t a = runMolds(1);
     CHECK(a == runMolds(4));
 }

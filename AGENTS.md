@@ -82,9 +82,9 @@ Usá **solo** estas. Para agregar otra, primero hay que proponerla y esperar apr
 | Tracy | 0.11 | Profiling (preset `profile`) |
 
 | doctest | 2.4.11 | Tests de invariantes físicos (`tests/`, target `bio_tests`) |
+| toml++ | 3.4.0 | Datos de las especies con sus fuentes (`assets/species/*.toml`) |
 
-Candidatas aprobables cuando su fase lo requiera: **toml++** (datos de especies, fase 7) y
-**FastNoiseLite** (generación procedural, fase 11).
+Candidata aprobable cuando su fase lo requiera: **FastNoiseLite** (generación procedural).
 
 Todas las dependencias se traen con `FetchContent` y versión fija en `CMakeLists.txt`. No se usan
 paquetes del sistema, salvo OpenMP.
@@ -97,7 +97,7 @@ cmake --preset release && cmake --build --preset release && ./build/release/bio
 
 Hay presets `debug`, `release`, `profile` (Tracy) y `lite` (tiempos por scope sin Tracy). El código
 tiene que compilar **sin warnings** con `-Wall -Wextra -Wpedantic`, y `ctest --test-dir build/release`
-tiene que pasar.
+tiene que pasar (`ctest -L rapidos`: ~1 min; `largos`: ~30 min; `validacion`: contra resultados publicados).
 
 **Presets de distribución:** `dist` (Linux, sin `-march=native`, base x86-64-v2) y `windows`
 (cruzado con MinGW, `cmake/mingw-w64.cmake`); `cpack` en su carpeta arma el paquete. Los assets

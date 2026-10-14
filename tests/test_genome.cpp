@@ -81,7 +81,7 @@ TEST_CASE("genomas distintos se juegan distinto: motor y tamaño") {
     CHECK(big < 0.8f * small);
 }
 
-TEST_CASE("genomas distintos se juegan distinto: cloroplastos y lisosomas") {
+TEST_CASE("genomas distintos se juegan distinto: cloroplastos y lisosomas" * doctest::test_suite("largos")) {
     auto lightGrowth = [](float chloroplasts) {
         World world(geneWorld());
         world.bioTimeScale() = 600.0f;
@@ -135,7 +135,7 @@ TEST_CASE("los organelos se ven y ocupan lugar según el genoma") {
     CHECK(std::abs(reg.get<RingBody>(a).restArea) > std::abs(reg.get<RingBody>(b).restArea));
 }
 
-TEST_CASE("defensas: la coraza impide la fagocitosis y los tricocistos rechazan el ataque") {
+TEST_CASE("defensas: la coraza impide la fagocitosis y los tricocistos rechazan el ataque" * doctest::test_suite("largos")) {
     auto attack = [](LocomotionType preyType, const Genome& preyGenome, float preyX) {
         World world(geneWorld());
         world.spawnPlayer(LocomotionType::Pseudopod, {900.0f, 512.0f});

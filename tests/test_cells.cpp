@@ -77,7 +77,7 @@ BodyStats measure(const World& world) {
 
 } // namespace
 
-TEST_CASE("50 células apretadas no explotan ni se atraviesan, y se recuperan") {
+TEST_CASE("50 células apretadas no explotan ni se atraviesan, y se recuperan" * doctest::test_suite("largos")) {
     World world(cellWorld());
     world.spawnTestScene(50);
     REQUIRE(world.cellCount() == 50);

@@ -29,7 +29,7 @@ entt::entity wild(World& world, SpeciesId id, Vec2 at, float angle = 0.0f) {
 
 } // namespace
 
-TEST_CASE("Spirogyra: una célula del filamento se divide con un tabique y las uniones se conservan") {
+TEST_CASE("Spirogyra: una célula del filamento se divide con un tabique y las uniones se conservan" * doctest::test_suite("largos")) {
     World world(quietWorld());
     const auto chain = world.spawnFilament(SpeciesId::Spirogyra, {700.0f, 330.0f}, 0.15f, 7, 0);
     REQUIRE(world.links().size() == 12);
@@ -44,7 +44,7 @@ TEST_CASE("Spirogyra: una célula del filamento se divide con un tabique y las u
     CHECK(world.observations().filamentDivisions == 1);
 }
 
-TEST_CASE("el nitrógeno se conserva sin fijadoras") {
+TEST_CASE("el nitrógeno se conserva sin fijadoras" * doctest::test_suite("largos")) {
     World world(quietWorld(3000));
     for (int k = 0; k < 10; ++k)
         wild(world, SpeciesId::Chlamydomonas, {300.0f + 120.0f * k, 400.0f});
@@ -55,7 +55,7 @@ TEST_CASE("el nitrógeno se conserva sin fijadoras") {
     CHECK(world.totalNitrogen() == doctest::Approx(before).epsilon(0.01));
 }
 
-TEST_CASE("los heterocistos fijan N₂: el nitrógeno total aumenta") {
+TEST_CASE("los heterocistos fijan N₂: el nitrógeno total aumenta" * doctest::test_suite("largos")) {
     WorldConfig config = quietWorld();
     config.cyanoFilaments = 20;
     World world(config);
@@ -84,21 +84,21 @@ TEST_CASE("quitridios: la zoospora infecta un alga, la consume y libera zoospora
     CHECK(world.totalPhosphorus() == doctest::Approx(phosphorus).epsilon(0.01));
 }
 
-TEST_CASE("fagos líticos: las bacterias sensibles se infectan y estallan") {
+TEST_CASE("fagos líticos: las bacterias sensibles se infectan y estallan" * doctest::test_suite("largos")) {
     World world(quietWorld(20000));
     world.bioTimeScale() = 600.0f; // 20 s = 3 h biológicas
     steps(world, 60 * 20);
     CHECK(world.observations().phageLyses > 0);
 }
 
-TEST_CASE("Bdellovibrio entra a una bacteria, crece adentro y sale con sus hijas") {
+TEST_CASE("Bdellovibrio entra a una bacteria, crece adentro y sale con sus hijas" * doctest::test_suite("largos")) {
     World world(quietWorld(30000));
     world.bioTimeScale() = 600.0f; // 30 s = 5 h biológicas (crece ~3 h adentro)
     steps(world, 60 * 30);
     CHECK(world.observations().bdelloBursts > 0);
 }
 
-TEST_CASE("LOD: con el foco lejos, las células siguen sanas y la simulación es determinista") {
+TEST_CASE("LOD: con el foco lejos, las células siguen sanas y la simulación es determinista" * doctest::test_suite("largos")) {
     auto run = [] {
         World world(quietWorld(5000));
         world.populateEcosystem(0.5f);

@@ -49,7 +49,7 @@ float tipWander(World& world, std::size_t filament, int n) {
 
 } // namespace
 
-TEST_CASE("Mougeotia, Zygnema y Oedogonium crecen en filamento y se dividen con un tabique") {
+TEST_CASE("Mougeotia, Zygnema y Oedogonium crecen en filamento y se dividen con un tabique" * doctest::test_suite("largos")) {
     for (SpeciesId id : {SpeciesId::Mougeotia, SpeciesId::Zygnema, SpeciesId::Oedogonium}) {
         CAPTURE(speciesInfo(id).name);
         World world(quietWorld());
@@ -68,7 +68,7 @@ TEST_CASE("Mougeotia, Zygnema y Oedogonium crecen en filamento y se dividen con 
     }
 }
 
-TEST_CASE("Oscillatoria: sin heterocistos ni fijación de N₂, y la punta oscila al deslizarse") {
+TEST_CASE("Oscillatoria: sin heterocistos ni fijación de N₂, y la punta oscila al deslizarse" * doctest::test_suite("largos")) {
     WorldConfig config = quietWorld();
     config.oscillatoriaFilaments = 12;
     World world(config);

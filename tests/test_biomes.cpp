@@ -31,7 +31,7 @@ WorldConfig bare(float temperature) {
 
 } // namespace
 
-TEST_CASE("temperatura: las bacterias crecen más rápido con calor (Q10 ≈ 2)") {
+TEST_CASE("temperatura: las bacterias crecen más rápido con calor (Q10 ≈ 2)" * doctest::test_suite("largos")) {
     auto grow = [](float t) {
         World world(bare(t));
         world.nutrients().grid().v.assign(world.nutrients().grid().v.size(), 20.0f);
@@ -44,7 +44,7 @@ TEST_CASE("temperatura: las bacterias crecen más rápido con calor (Q10 ≈ 2)"
     CHECK(warm > cold);
 }
 
-TEST_CASE("intestino de termita: sin oxígeno; la anaerobia Trichonympha sobrevive") {
+TEST_CASE("intestino de termita: sin oxígeno; la anaerobia Trichonympha sobrevive" * doctest::test_suite("largos")) {
     WorldConfig c = makeDrop(BiomeId::TermiteGut, 3);
     c.speciesWeight[static_cast<int>(SpeciesId::Trichonympha)] = 1.0f;
     World world(c);

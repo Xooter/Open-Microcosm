@@ -1,0 +1,50 @@
+# Fisiología por especie (MVP: validación científica). Cada valor como se publicó: valor, unidad,
+# temperatura de la medición [°C] y fuente. El programa lo lleva a 20 °C con Q10 = 2.
+#
+# Unidades: "1/h" o "1/dia" (tasa), "h" o "dia" (tiempo de duplicación).
+# estimacion = true: no es una medición directa en condiciones comparables (temperatura sin
+# verificar, otra cepa u otro medio); la ficha lo dice. REVISAR antes de publicar resultados.
+# Las especies que no figuran usan el valor general del metabolismo (metabolismo.crecimiento_maximo).
+
+version = 1
+
+[Paramecium.crecimiento_maximo]
+# Ajuste logístico (r) al monocultivo de P. caudatum de la fig. 22 (datos digitalizados en el paquete
+# de R gauseR, Clark et al.): r = 0,946 ± 0,109 /día, K = 203 (volumen relativo). La figura mide
+# volumen, no individuos.
+valor = 0.946
+unidad = "1/dia"
+temperatura = 26.0
+fuente = "Gause, G. F. (1934). The Struggle for Existence. Williams & Wilkins, fig. 22 (P. caudatum en monocultivo). Temperatura del cultivo sin verificar (se asume 26 °C)."
+estimacion = true
+
+[Amoeba.crecimiento_maximo]
+# Generación más corta a 20 °C, bien alimentada con Tetrahymena (rango 44-84 h según el alimento).
+valor = 44.0
+unidad = "h"
+temperatura = 20.0
+fuente = "Rogerson, A. (1980). Can. J. Zool.: tiempo de generación de Amoeba proteus alimentada con Tetrahymena pyriformis, 44 h a 20 °C (tesis de Rogerson 1978, Univ. of Stirling: 44-84 h a 20 °C)."
+
+[Didinium.crecimiento_maximo]
+# Aumento de los depredadores con presa abundante en la fig. 32 (días 4 a 6: de 4,8 a 31): ln(31/4,8)/2.
+valor = 0.93
+unidad = "1/dia"
+temperatura = 26.0
+fuente = "Gause, G. F. (1934). The Struggle for Existence, fig. 32 (Didinium nasutum con P. caudatum; datos en gauseR). Temperatura sin verificar."
+estimacion = true
+
+[Chlamydomonas.crecimiento_maximo]
+# Duplicación de la clorofila de la cepa silvestre a ~70 µmol fotones m⁻² s⁻¹ (no conteo de células).
+valor = 20.0
+unidad = "h"
+temperatura = 25.0
+fuente = "PNAS (1997), tabla de crecimiento y fotosíntesis de cepas de C. reinhardtii: duplicación de la clorofila ~20 h a ~70 µmol fotones m⁻² s⁻¹. Temperatura sin verificar."
+estimacion = true
+
+[Euglena.crecimiento_maximo]
+# Medio con digerido de fermentación metánica al 10 % (no es un medio estándar).
+valor = 0.047
+unidad = "1/h"
+temperatura = 30.0
+fuente = "Cultivo de E. gracilis en digerido de fermentación metánica (10 %), 150 µmol m⁻² s⁻¹: µmax 0,047/h a 30 °C."
+estimacion = true

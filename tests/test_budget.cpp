@@ -109,7 +109,7 @@ TEST_CASE("balance: el desglose suma los totales de siempre y las dosis son entr
     CHECK(run.budget().ledger.toWater[static_cast<int>(Element::P)][static_cast<int>(Flow::Dose)] > 0.0);
 }
 
-TEST_CASE("la serie de la sesión es determinista con 1 y 4 hilos") {
+TEST_CASE("la serie de la sesión es determinista con 1 y 4 hilos" * doctest::test_suite("largos")) {
     auto once = [](int threads) {
         omp_set_num_threads(threads);
         World world(pondDrop());
@@ -121,7 +121,7 @@ TEST_CASE("la serie de la sesión es determinista con 1 y 4 hilos") {
     CHECK(once(1) == once(4));
 }
 
-TEST_CASE("mapa de limitación: la célula sabe qué nutriente la frena") {
+TEST_CASE("mapa de limitación: la célula sabe qué nutriente la frena" * doctest::test_suite("largos")) {
     auto limited = [](float silicate, float iron) {
         WorldConfig c;
         c.bacteria = 0;

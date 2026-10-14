@@ -25,7 +25,7 @@ void steps(World& world, int n) {
 
 } // namespace
 
-TEST_CASE("las bacterias crecen y se dividen con materia orgánica, y mueren sin ella") {
+TEST_CASE("las bacterias crecen y se dividen con materia orgánica, y mueren sin ella" * doctest::test_suite("largos")) {
     World fed(ecoWorld(2000));
     for (float& v : fed.nutrients().grid().v)
         v = 20.0f;
@@ -42,7 +42,7 @@ TEST_CASE("las bacterias crecen y se dividen con materia orgánica, y mueren sin
     CHECK(hungry.bacteria().size() < 2000);
 }
 
-TEST_CASE("el fósforo se conserva en el ecosistema completo") {
+TEST_CASE("el fósforo se conserva en el ecosistema completo" * doctest::test_suite("largos")) {
     World world(ecoWorld(20'000));
     world.populateEcosystem();
     const double before = world.totalPhosphorus();
@@ -80,7 +80,7 @@ TEST_CASE("reacción de evitación: el paramecio retrocede ante Didinium") {
     CHECK(reversed);
 }
 
-TEST_CASE("Chlamydomonas se divide en 4 hijas (palintomía)") {
+TEST_CASE("Chlamydomonas se divide en 4 hijas (palintomía)" * doctest::test_suite("largos")) {
     World world(ecoWorld());
     const entt::entity c = world.spawnOrganism(SpeciesId::Chlamydomonas, {1000.0f, 1024.0f}, speciesGenome(SpeciesId::Chlamydomonas), 0);
     Metabolism& m = world.registry().get<Metabolism>(c);
@@ -95,7 +95,7 @@ TEST_CASE("Chlamydomonas se divide en 4 hijas (palintomía)") {
     CHECK(most == 4);
 }
 
-TEST_CASE("Didinium se enquista con hambre y sale cuando vuelve a haber presas") {
+TEST_CASE("Didinium se enquista con hambre y sale cuando vuelve a haber presas" * doctest::test_suite("largos")) {
     World world(ecoWorld());
     world.bioTimeScale() = 3600.0f;
     const entt::entity d = world.spawnOrganism(SpeciesId::Didinium, {1000.0f, 512.0f}, speciesGenome(SpeciesId::Didinium), 0);
@@ -123,7 +123,7 @@ std::uint64_t runEcosystem(int threads) {
 }
 } // namespace
 
-TEST_CASE("ecosistema determinista sin importar la cantidad de hilos") {
+TEST_CASE("ecosistema determinista sin importar la cantidad de hilos" * doctest::test_suite("largos")) {
     const std::uint64_t a = runEcosystem(1);
     CHECK(a == runEcosystem(4));
 }

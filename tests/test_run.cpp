@@ -44,7 +44,7 @@ void stepSeconds(World& world, Run& run, float seconds) {
 
 } // namespace
 
-TEST_CASE("al dividirse el ser sigue controlado con la madre; la hija queda en piloto automático") {
+TEST_CASE("al dividirse el ser sigue controlado con la madre; la hija queda en piloto automático" * doctest::test_suite("largos")) {
     World world(runWorld());
     Run run;
     run.start(world, quickRun(), 1);
@@ -79,7 +79,7 @@ TEST_CASE("al morir el ser controlado la sesión sigue y se puede controlar otro
     CHECK_FALSE(world.registry().all_of<Autopilot>(other));
 }
 
-TEST_CASE("las hijas en piloto automático nadan y comen solas") {
+TEST_CASE("las hijas en piloto automático nadan y comen solas" * doctest::test_suite("largos")) {
     World world(runWorld(50'000));
     Run run;
     run.start(world, quickRun(0), 1);
@@ -126,7 +126,7 @@ std::uint64_t runRun(int threads) {
 }
 } // namespace
 
-TEST_CASE("sesión con pilotos automáticos determinista sin importar los hilos") {
+TEST_CASE("sesión con pilotos automáticos determinista sin importar los hilos" * doctest::test_suite("largos")) {
     const std::uint64_t a = runRun(1);
     CHECK(a == runRun(4));
 }
@@ -152,7 +152,7 @@ TEST_CASE("sandbox: cambiar de forma conserva linaje y fósforo, y no cuenta com
     CHECK(world.totalPhosphorus() == doctest::Approx(phosphorus).epsilon(0.01));
 }
 
-TEST_CASE("sandbox: forzar la reproducción usa la vía normal de cada especie") {
+TEST_CASE("sandbox: forzar la reproducción usa la vía normal de cada especie" * doctest::test_suite("largos")) {
     World world(runWorld());
     Run run;
     RunConfig rc = quickRun(0);

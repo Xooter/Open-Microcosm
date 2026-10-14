@@ -47,7 +47,7 @@ bool simplePolygon(const RingBody& b, const BodyParticles& bp) {
 
 } // namespace
 
-TEST_CASE("mitosis física: cada tipo de célula se divide en dos hijas válidas") {
+TEST_CASE("mitosis física: cada tipo de célula se divide en dos hijas válidas" * doctest::test_suite("largos")) {
     for (LocomotionType type : {LocomotionType::Cilia, LocomotionType::Flagellum, LocomotionType::Pseudopod}) {
         CAPTURE(locomotionName(type));
         World world(emptyWorld());
@@ -76,7 +76,7 @@ TEST_CASE("mitosis física: cada tipo de célula se divide en dos hijas válidas
     }
 }
 
-TEST_CASE("sin comida la célula se consume, muere y se lisa en detritos y nutrientes") {
+TEST_CASE("sin comida la célula se consume, muere y se lisa en detritos y nutrientes" * doctest::test_suite("largos")) {
     World world(emptyWorld());
     world.bioTimeScale() = 3600.0f; // 1 s real = 1 h biológica
     world.spawnPlayer(LocomotionType::Cilia, {1024.0f, 512.0f});
@@ -90,7 +90,7 @@ TEST_CASE("sin comida la célula se consume, muere y se lisa en detritos y nutri
     CHECK(world.nutrients().grid().sum() > nutrientsBefore);
 }
 
-TEST_CASE("la Euglena crece con luz y no en la oscuridad") {
+TEST_CASE("la Euglena crece con luz y no en la oscuridad" * doctest::test_suite("largos")) {
     auto grow = [](float light) {
         World world(emptyWorld());
         world.medium().surfaceLight = light;
@@ -108,7 +108,7 @@ TEST_CASE("la Euglena crece con luz y no en la oscuridad") {
     CHECK(dark < 1.0f);
 }
 
-TEST_CASE("sin O2 la célula fermenta y gasta sus reservas mucho más rápido") {
+TEST_CASE("sin O2 la célula fermenta y gasta sus reservas mucho más rápido" * doctest::test_suite("largos")) {
     auto spent = [](bool anoxic) {
         World world(emptyWorld());
         world.bioTimeScale() = 600.0f;
@@ -131,7 +131,7 @@ TEST_CASE("sin O2 la célula fermenta y gasta sus reservas mucho más rápido") 
     CHECK(anaerobic > 10.0f * aerobic);
 }
 
-TEST_CASE("comer hace crecer: el ciliado que se alimenta gana biomasa frente al que ayuna") {
+TEST_CASE("comer hace crecer: el ciliado que se alimenta gana biomasa frente al que ayuna" * doctest::test_suite("largos")) {
     auto run = [](std::size_t bacteria) {
         World world(emptyWorld(bacteria));
         const entt::entity e = world.spawnPlayer(LocomotionType::Cilia, {1024.0f, 512.0f});
@@ -165,7 +165,7 @@ std::uint64_t runLife(int threads) {
 }
 } // namespace
 
-TEST_CASE("metabolismo y división deterministas sin importar la cantidad de hilos") {
+TEST_CASE("metabolismo y división deterministas sin importar la cantidad de hilos" * doctest::test_suite("largos")) {
     const std::uint64_t a = runLife(1);
     CHECK(a == runLife(4));
 }

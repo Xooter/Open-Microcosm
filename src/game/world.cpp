@@ -1,5 +1,7 @@
 #include "game/world.hpp"
 
+#include "bio/physiology.hpp"
+
 #include "core/profiling.hpp"
 #include "core/rng.hpp"
 #include "core/units.hpp"
@@ -2411,11 +2413,18 @@ void World::updateLifecycle(float dt) {
                               : std::min(1.0f, std::abs(loco->speed) / maxSpeedOf(locomotionParams_, loco->type));
         }
         in.bioDt = bioDt;
-        const SpeciesInfo& info = speciesInfo(speciesOfEntity(registry_, e));
+        const SpeciesId sid = speciesOfEntity(registry_, e);
+        const SpeciesInfo& info = speciesInfo(sid);
         Cyst* cyst = registry_.try_get<Cyst>(e);
         const Heredity* her = registry_.try_get<Heredity>(e);
+        // µmax de la especie (assets/species/fisiologia.toml, con su fuente) relativo al valor
+        // general del metabolismo; sin dato, el general.
+        const SourcedValue& mu = speciesPhysiology(sid).growthMax;
+        const float speciesGrowth =
+            mu.present && metabolismParams_.growthPerHourMax > 0.0f ? mu.value / metabolismParams_.growthPerHourMax : 1.0f;
+        in.growthScale = speciesGrowth;
         if (her) {
-            in.growthScale = her->traits.growthMax;
+            in.growthScale = her->traits.growthMax * speciesGrowth;
             in.maintenanceScale = her->traits.maintenance;
             in.photosynthesisScale = her->traits.photosynthesis * info.photosynthesisScale;
             in.motilityCostScale = her->traits.motilityCost;
