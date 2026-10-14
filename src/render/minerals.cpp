@@ -1,4 +1,5 @@
 #include "render/minerals.hpp"
+#include "render/shapes.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -41,9 +42,10 @@ Vector2 toward(Vector2 p, Vector2 c, float k) { return {c.x + (p.x - c.x) * k, c
 
 void drawMineral(MineralKind kind, Vector2 c, float radius, float angle, float minSize) {
     const float r = std::max(radius, 0.5f * minSize);
+    const float px = minSize / 1.5f; // un píxel en µm (minSize = 1,5 px)
     switch (kind) {
     case MineralKind::Clay:
-        DrawCircleV(c, r, {108, 98, 80, 170});
+        drawCircleFast(c, r, {108, 98, 80, 170}, px);
         break;
     case MineralKind::Quartz: {
         Vector2 p[7], in[7];
@@ -74,9 +76,9 @@ void drawMineral(MineralKind kind, Vector2 c, float radius, float angle, float m
     }
     case MineralKind::Sulfur:
         // Glóbulo muy refringente: borde oscuro y centro brillante amarillento.
-        DrawCircleV(c, r, {232, 220, 128, 210});
-        DrawRing(c, 0.8f * r, r, 0, 360, 24, {96, 88, 40, 220});
-        DrawCircleV({c.x - 0.25f * r, c.y - 0.25f * r}, 0.35f * r, {255, 252, 222, 230});
+        drawCircleFast(c, r, {232, 220, 128, 210}, px);
+        drawRingFast(c, 0.8f * r, r, 24, {96, 88, 40, 220}, px);
+        drawCircleFast({c.x - 0.25f * r, c.y - 0.25f * r}, 0.35f * r, {255, 252, 222, 230}, px);
         break;
     case MineralKind::Frustule: {
         // Valva naviculoide vacía: contorno de sílice, rafe en el eje y estrías transversales.

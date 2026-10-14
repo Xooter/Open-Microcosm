@@ -1,4 +1,5 @@
 #include "render/renderer.hpp"
+#include "render/shapes.hpp"
 
 #include "core/profiling.hpp"
 #include "game/world.hpp"
@@ -389,6 +390,7 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
     const float w = world.width(), h = world.height();
     const int reach = world.dish().active() ? 0 : 1;
     const float minSize = 1.5f / camera.zoom; // tamaño real en µm, con un mínimo visible
+    const float px = 1.0f / camera.zoom;      // un píxel en µm (segmentos de los círculos)
     const AmbientParticles& amb = world.ambient();
     copies_.clear();
     for (int oy = -reach; oy <= reach; ++oy)
@@ -415,7 +417,7 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                 else if (amb.kind[i] == ParticleKind::Mineral)
                     drawMineral(amb.mineral[i], {amb.x[i] + offX, amb.y[i] + offY}, amb.radius[i], amb.angle[i], minSize);
                 else // detritos: grumos redondeados
-                    DrawCircleV({amb.x[i] + offX, amb.y[i] + offY}, d * 0.5f, kDetritus);
+                    drawCircleFast({amb.x[i] + offX, amb.y[i] + offY}, d * 0.5f, kDetritus, px);
             }
             // Granos de arena (debajo de las células, que se dibujan después).
             for (const auto [e, body, rock] : world.registry().view<RingBody, Rock>().each()) {
@@ -450,17 +452,17 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                         DrawLineEx({m.x - n.x, m.y - n.y}, {m.x + n.x, m.y + n.y}, std::max(0.4f, 0.5f * minSize), {36, 70, 68, 200});
                     }
                     const Vector2 tip = {fil.x.back() + fx + offX, fil.y.back() + fy + offY};
-                    DrawCircleV(tip, std::max(2.75f, 0.5f * minSize), {58, 104, 100, 215}); // extremo redondeado
-                    DrawCircleV({fil.x[0] + fx + offX, fil.y[0] + fy + offY}, std::max(2.75f, 0.5f * minSize), {58, 104, 100, 215});
+                    drawCircleFast(tip, std::max(2.75f, 0.5f * minSize), {58, 104, 100, 215}, px); // extremo redondeado
+                    drawCircleFast({fil.x[0] + fx + offX, fil.y[0] + fy + offY}, std::max(2.75f, 0.5f * minSize), {58, 104, 100, 215}, px);
                     continue;
                 }
                 for (std::size_t k = 0; k < fil.x.size(); ++k) {
                     const Vector2 p = {fil.x[k] + fx + offX, fil.y[k] + fy + offY};
                     if (fil.heterocyst[k]) {
-                        DrawCircleV(p, 3.0f, {214, 222, 180, 230});
-                        DrawRing(p, 2.4f, 3.0f, 0, 360, 16, {120, 140, 100, 230});
+                        drawCircleFast(p, 3.0f, {214, 222, 180, 230}, px);
+                        drawRingFast(p, 2.4f, 3.0f, 16, {120, 140, 100, 230}, px);
                     } else {
-                        DrawCircleV(p, std::max(2.2f, minSize), {64, 128, 112, 210});
+                        drawCircleFast(p, std::max(2.2f, minSize), {64, 128, 112, 210}, px);
                     }
                 }
             }
@@ -485,7 +487,7 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                     }
                     if (m.sporangium[k] > 0.0f) {
                         const float r = 0.5f * width + 6.0f * std::min(1.0f, m.sporangium[k]);
-                        DrawCircleV(p, r, kSporangium);
+                        drawCircleFast(p, r, kSporangium, px);
                     }
                 }
             }
@@ -495,16 +497,16 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                 if (!visible(rs.x[i], rs.y[i]))
                     continue;
                 const Vector2 p = {rs.x[i] + offX, rs.y[i] + offY};
-                DrawCircleV(p, std::max(6.0f, minSize), kResting);
-                DrawCircleV(p, std::max(3.6f, 0.6f * minSize), {176, 140, 96, 230});
-                DrawCircleV({p.x - 1.6f, p.y - 1.4f}, 0.9f, kResting); // poro
+                drawCircleFast(p, std::max(6.0f, minSize), kResting, px);
+                drawCircleFast(p, std::max(3.6f, 0.6f * minSize), {176, 140, 96, 230}, px);
+                drawCircleFast({p.x - 1.6f, p.y - 1.4f}, 0.9f, kResting, px); // poro
             }
             // Líquenes: el haustorio que sujeta a cada alga verde.
             for (auto [e, body, li] : world.registry().view<RingBody, Lichenized>().each()) {
                 if (!visible(li.point.x, li.point.y))
                     continue;
                 DrawLineEx({li.point.x + offX, li.point.y + offY}, {body.centroid.x + offX, body.centroid.y + offY}, 1.4f, {96, 110, 80, 200});
-                DrawCircleV({li.point.x + offX, li.point.y + offY}, 2.4f, {96, 110, 80, 220});
+                drawCircleFast({li.point.x + offX, li.point.y + offY}, 2.4f, {96, 110, 80, 220}, px);
             }
             // Physarum: baba, copos de avena, red de tubos amarilla y esclerocios.
             const PlasmodiumSystem& ps = world.plasmodia();
@@ -542,24 +544,24 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                         const Vector2 p = {pl.x[a] + fx + offX, pl.y[a] + fy + offY}, q = {pl.x[b] + fx + offX, pl.y[b] + fy + offY};
                         const Color col = pass == 0 ? kPlasmodiumWall : kPlasmodium;
                         DrawLineEx(p, q, width, col);
-                        DrawCircleV(p, 0.5f * width, col);
-                        DrawCircleV(q, 0.5f * width, col);
+                        drawCircleFast(p, 0.5f * width, col, px);
+                        drawCircleFast(q, 0.5f * width, col, px);
                     }
                 for (std::size_t k = 0; k < pl.x.size(); ++k) {
                     if (!visible(pl.x[k] + fx, pl.y[k] + fy))
                         continue;
                     const Vector2 p = {pl.x[k] + fx + offX, pl.y[k] + fy + offY};
                     if (pl.tip[k]) // frente de exploración: abanico más ancho
-                        DrawCircleV(p, 6.0f, {240, 214, 90, 110});
+                        drawCircleFast(p, 6.0f, {240, 214, 90, 110}, px);
                     else if (pl.food[k] >= 0)
-                        DrawCircleV(p, 8.0f, {236, 204, 64, 170});
+                        drawCircleFast(p, 8.0f, {236, 204, 64, 170}, px);
                 }
             }
             for (std::size_t i = 0; i < ps.sclerotia.size(); ++i) {
                 if (!visible(ps.sclerotia.x[i], ps.sclerotia.y[i]))
                     continue;
                 const Vector2 p = {ps.sclerotia.x[i] + offX, ps.sclerotia.y[i] + offY};
-                DrawCircleV(p, 7.0f, kSclerotium);
+                drawCircleFast(p, 7.0f, kSclerotium, px);
                 DrawCircleLinesV(p, 7.0f, {120, 70, 20, 230});
             }
             const Zoospores& zs = world.fungi().spores;
@@ -568,7 +570,7 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                     continue;
                 const Vector2 p = {zs.x[i] + offX, zs.y[i] + offY};
                 const float r = zs.kind[i] == FungusKind::Chytrid ? 1.6f : 2.0f;
-                DrawCircleV(p, std::max(r, minSize), kSpore);
+                drawCircleFast(p, std::max(r, minSize), kSpore, px);
                 if (fungusInfo(zs.kind[i]).sporeSpeed > 0.0f) // flagelo posterior (quitridio) o dos (oomiceto)
                     DrawLineEx(p, {p.x - std::cos(zs.heading[i]) * 7.0f, p.y - std::sin(zs.heading[i]) * 7.0f},
                                std::max(0.3f, 0.5f * minSize), kSpore);
@@ -599,12 +601,12 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                     c.y < view.y - m.radius * 3 || c.y > view.y + view.height + m.radius * 3)
                     continue;
                 const float r = m.radius * (1.0f + 0.5f * age);
-                DrawCircleV(c, r, {m.r, m.g, m.b, static_cast<unsigned char>(50 * fade)});
-                DrawRing(c, r - 1.5f, r, 0, 360, 48, {90, 90, 70, static_cast<unsigned char>(120 * fade)});
+                drawCircleFast(c, r, {m.r, m.g, m.b, static_cast<unsigned char>(50 * fade)}, px);
+                drawRingFast(c, r - 1.5f, r, 48, {90, 90, 70, static_cast<unsigned char>(120 * fade)}, px);
                 for (int k = 0; k < 24; ++k) { // gránulos que salen despedidos
                     const float a = 6.2831853f * static_cast<float>(k) / 24.0f + 0.37f * static_cast<float>(k % 5);
                     const float d = m.radius * (0.3f + 0.9f * age * (0.5f + 0.5f * std::sin(3.1f * k)));
-                    DrawCircleV({c.x + std::cos(a) * d, c.y + std::sin(a) * d}, 0.8f, {60, 62, 48, static_cast<unsigned char>(170 * fade)});
+                    drawCircleFast({c.x + std::cos(a) * d, c.y + std::sin(a) * d}, 0.8f, {60, 62, 48, static_cast<unsigned char>(170 * fade)}, px);
                 }
             }
     }
