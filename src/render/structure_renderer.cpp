@@ -1,6 +1,7 @@
 #include "render/structure_renderer.hpp"
 
 #include "core/profiling.hpp"
+#include "sim/polygon.hpp"
 
 #include <rlgl.h>
 
@@ -36,7 +37,6 @@ constexpr float kFlagellumVisualHz = 6.0f;
 constexpr float kPhageEclipse = 0.45f;
 // T4 degrada el ADN del huésped en los primeros minutos de la infección.
 constexpr float kHostDnaDegraded = 0.2f;
-constexpr float kPeriplasm = 0.012f; // espacio periplásmico entre la membrana externa y la pared [µm]
 
 float hash01(std::uint32_t a, std::uint32_t b) {
     std::uint32_t h = a * 0x9E3779B1u ^ (b + 0x7F4A7C15u) * 0x85EBCA77u;
@@ -196,7 +196,7 @@ void drawBacteriumStructures(const BacteriumState& b, const BodyPlan& plan, Stru
                 capsuleOutline(halfL, r, depth, st.width, st.kind == StructureKind::Peptidoglycan ? kWallLine : kMembraneLine);
                 anyLayer = true;
             }
-            depth += st.width + (st.kind == StructureKind::OuterMembrane ? kPeriplasm : 0.0f);
+            depth += st.width + (st.kind == StructureKind::OuterMembrane ? kPeriplasmWidth : 0.0f);
         }
         if (!anyLayer && ctx.line(depth))
             capsuleOutline(halfL, r, 0.0f, depth, kMembraneLine);
@@ -329,6 +329,61 @@ void drawPhage(const BodyPlan& plan, bool contracted, StructureContext& ctx) {
             DrawRectangleRoundedLinesEx({mid.x - 0.1f * hl * static_cast<float>(k), mid.y - 0.09f * hw * static_cast<float>(k),
                                              0.2f * hl * static_cast<float>(k), 0.18f * hw * static_cast<float>(k)},
                                             1.0f, 16, genome->width, kDna);
+}
+
+void drawCytoplasmicRibosomes(const StructureSpec& spec, const Vec2* ring, int count, Vec2 centroid, Vec2 heading,
+                              Vec2 nucleus, float nucleusRadius, std::uint32_t seed, StructureContext& ctx) {
+    if (!ctx.allowed(spec) || !ctx.particle(spec.width) || spec.perCubicMicron <= 0.0f || ctx.particleBudget <= 0)
+        return;
+    PROFILE_SCOPE("drawCytoplasmicRibosomes");
+    const Vec2 side = {-heading.y, heading.x};
+    auto toLocal = [&](Vec2 w) { const Vec2 d = w - centroid; return Vec2{dot(d, heading), dot(d, side)}; };
+    auto toWorld = [&](Vec2 l) { return centroid + heading * l.x + side * l.y; };
+    // Lo que se recorre: la caja de la vista en el marco de la célula, recortada por la caja de la célula.
+    Vec2 lo = {1e30f, 1e30f}, hi = {-1e30f, -1e30f};
+    for (const Vec2 corner : {Vec2{ctx.view.x, ctx.view.y}, Vec2{ctx.view.x + ctx.view.width, ctx.view.y},
+                              Vec2{ctx.view.x, ctx.view.y + ctx.view.height},
+                              Vec2{ctx.view.x + ctx.view.width, ctx.view.y + ctx.view.height}}) {
+        const Vec2 l = toLocal(corner);
+        lo = {std::min(lo.x, l.x), std::min(lo.y, l.y)};
+        hi = {std::max(hi.x, l.x), std::max(hi.y, l.y)};
+    }
+    Vec2 clo = {1e30f, 1e30f}, chi = {-1e30f, -1e30f};
+    for (int i = 0; i < count; ++i) {
+        const Vec2 l = toLocal(ring[i]);
+        clo = {std::min(clo.x, l.x), std::min(clo.y, l.y)};
+        chi = {std::max(chi.x, l.x), std::max(chi.y, l.y)};
+    }
+    lo = {std::max(lo.x, clo.x), std::max(lo.y, clo.y)};
+    hi = {std::min(hi.x, chi.x), std::min(hi.y, chi.y)};
+    if (lo.x >= hi.x || lo.y >= hi.y)
+        return;
+    // Baldosas de 1 µm ancladas a la célula: cada una tiene siempre los mismos ribosomas.
+    constexpr float kTile = 1.0f;
+    const int perTile = static_cast<int>(spec.perCubicMicron * ctx.lod->sectionThickness * kTile * kTile);
+    const int tx0 = static_cast<int>(std::floor(lo.x / kTile)), tx1 = static_cast<int>(std::floor(hi.x / kTile));
+    const int ty0 = static_cast<int>(std::floor(lo.y / kTile)), ty1 = static_cast<int>(std::floor(hi.y / kTile));
+    const float nr2 = nucleusRadius * nucleusRadius;
+    for (int ty = ty0; ty <= ty1 && ctx.particleBudget > 0; ++ty)
+        for (int tx = tx0; tx <= tx1 && ctx.particleBudget > 0; ++tx) {
+            const auto tile = static_cast<std::uint32_t>((tx + 4096) * 8192 + (ty + 4096));
+            // Baldosa entera adentro de la célula (sus 4 esquinas): no hace falta probar cada punto.
+            bool whole = true;
+            for (const Vec2 c : {Vec2{0, 0}, Vec2{kTile, 0}, Vec2{0, kTile}, Vec2{kTile, kTile}})
+                whole = whole && polygon::contains(ring, count, toWorld(Vec2{tx * kTile, ty * kTile} + c));
+            for (int k = 0; k < perTile && ctx.particleBudget > 0; ++k) {
+                const Vec2 l = {(static_cast<float>(tx) + hash01(seed ^ tile, 2u * static_cast<std::uint32_t>(k))) * kTile,
+                                (static_cast<float>(ty) + hash01(seed ^ tile, 2u * static_cast<std::uint32_t>(k) + 1u)) * kTile};
+                const Vec2 w = toWorld(l);
+                if (w.x < ctx.view.x || w.x > ctx.view.x + ctx.view.width || w.y < ctx.view.y || w.y > ctx.view.y + ctx.view.height)
+                    continue;
+                const Vec2 dn = w - nucleus;
+                if (dot(dn, dn) < nr2 || (!whole && !polygon::contains(ring, count, w)))
+                    continue;
+                DrawPoly(ray(w), 6, 0.5f * spec.width, 0.0f, kRibosome);
+                --ctx.particleBudget;
+            }
+        }
 }
 
 void drawEndomembranes(const BodyPlan& plan, Vec2 nucleus, float nucleusRadius, Vec2 heading, std::uint32_t seed,

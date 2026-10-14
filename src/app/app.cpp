@@ -405,6 +405,10 @@ void App::drawStatusBar() {
             ImGui::TextDisabled("|");
             ImGui::SameLine();
             ImGui::Text("%zu %s", world->cellCount(), ui::tr("células"));
+            if (world->fixed()) {
+                ImGui::SameLine();
+                ImGui::TextColored({0.92f, 0.60f, 0.25f, 1.0f}, "| %s", ui::tr("Muestra fijada (Ctrl+N: placa nueva)"));
+            }
         }
         if (plateDirty) {
             ImGui::SameLine();
@@ -565,6 +569,10 @@ void App::selectionInput(float dt, const Vector2&, const Vec2& pos) {
         if (st.hover) {
             const Inspection h = buildInspection(*world, st.hover);
             st.hoverText = h.title;
+            // De cerca, además, la estructura que se está apuntando.
+            const float viewMicrons = std::min(viewport.width, viewport.height) / camera.zoom;
+            if (const std::string part = structureAt(*world, st.hover, pos, viewMicrons, tools.modelView); !part.empty())
+                st.hoverText += std::string(" > ") + ui::tr(part.c_str());
             if (!h.headline.empty())
                 st.hoverText += " - " + h.headline;
         }
@@ -749,6 +757,11 @@ void App::stepSimulation(float frameDt) {
     const Vector2 b = GetScreenToWorld2D({viewport.x + viewport.width, viewport.y + viewport.height}, camera);
     // LOD: lo que se ve (más un margen) se simula en detalle.
     world->setFocus({camera.target.x, camera.target.y}, {0.5f * std::abs(b.x - a.x), 0.5f * std::abs(b.y - a.y)});
+    if (world->fixed()) { // muestra fijada: no hay pasos (ni filas nuevas en la serie)
+        accumulator_ = 0.0f;
+        tools.stepRequests = 0;
+        return;
+    }
     auto advance = [&] {
         const double t0 = GetTime();
         world->step(kFixedDt);

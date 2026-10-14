@@ -141,7 +141,19 @@ class StainPanel : public Panel {
             if (!spec.note.empty())
                 note(spec.note.c_str());
             const ImVec4 col = spec.vital ? ImVec4(0.45f, 0.80f, 0.50f, 1.0f) : ImVec4(0.92f, 0.60f, 0.25f, 1.0f);
-            ImGui::TextColored(col, "%s", tr(spec.vital ? "Vital: no mata a la célula." : "No vital: en la realidad fija o mata. Aquí es solo visual."));
+            ImGui::TextColored(col, "%s", tr(spec.vital ? "Vital: no mata a la célula." : "No vital: en la realidad fija o mata a las células."));
+            if (!spec.vital && app.world) {
+                // Sin fijar, la tinción solo cambia los colores; fijar mata de verdad a todo lo vivo.
+                if (app.world->fixed()) {
+                    note("Muestra fijada: todo murió y quedó como estaba. Crear placa (Ctrl+N) para empezar otra.");
+                } else {
+                    if (ImGui::Button(tr("Fijar la muestra")))
+                        app.world->fix();
+                    if (ImGui::IsItemHovered())
+                        ImGui::SetTooltip("%s", tr("Como en el preparado real: el calor, el yodo o el alcohol matan y fijan a todos los seres de la placa. No se puede deshacer."));
+                    note("Sin fijar, la tinción solo cambia los colores y la placa sigue viva.");
+                }
+            }
             if (section("Parámetros", true))
                 drawParams(app, spec);
             if (section("Reglas de color"))

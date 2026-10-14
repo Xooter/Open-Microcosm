@@ -76,10 +76,13 @@ constexpr StructureSpec kT4[] = {
 
 // --- Eucariotas ----------------------------------------------------------------------------
 
-// Partes comunes. RE y Golgi existen en todos estos eucariotas pero no se simulan.
+// Partes comunes. RE, Golgi y ribosomas libres existen en todos estos eucariotas pero no se simulan.
+// Ribosomas 80S (~25 nm): del orden de 10³–10⁴ por µm³ de citoplasma en células eucariotas en
+// crecimiento (se usa 3·10³; varía con la especie y el estado).
 #define BIO_EUK_ENDOMEMBRANES                                                                        \
     {K::EndoplasmicReticulum, S::Declared, A::Perinuclear, 3.0f, 0.05f, 1, false, "reticulo endoplasmico rugoso"}, \
-        {K::Golgi, S::Declared, A::Perinuclear, 1.0f, 0.3f, 1, false, "aparato de Golgi (un dictiosoma)"}
+        {K::Golgi, S::Declared, A::Perinuclear, 1.0f, 0.3f, 1, false, "aparato de Golgi (un dictiosoma)"},          \
+        {K::Ribosomes, S::Declared, A::Interior, 0.025f, 0.025f, 0, false, "ribosomas 80S", 3000.0f}
 
 constexpr StructureSpec kCiliate[] = {
     {K::PlasmaMembrane, S::Simulated, A::Envelope, 0.0f, 0.0f, 0, true, "pelicula"},
@@ -159,11 +162,13 @@ constexpr StructureSpec kYeast[] = {
     BIO_EUK_ENDOMEMBRANES,
 };
 
-// Trichonympha (parabasálido): sin mitocondrias (tiene hidrogenosomas, que el modelo todavía no
-// representa); miles de flagelos.
+// Trichonympha (parabasálido): sin mitocondrias; su orgánulo energético es el hidrogenosoma
+// (~0,5–1 µm, sin cristas, fermenta piruvato a H₂ y acetato; Müller 1993). Las partículas que la
+// simulación etiqueta como orgánulo energético (`OrganelleTag::Mitochondrion`) se muestran así.
 constexpr StructureSpec kParabasalid[] = {
     {K::PlasmaMembrane, S::Simulated, A::Envelope, 0.0f, 0.0f, 0, true, "membrana plasmatica"},
     {K::Nucleus, S::Simulated, A::Interior, 0.0f, 0.0f, 1, true, "nucleo"},
+    {K::Hydrogenosome, S::Simulated, A::Interior, 0.8f, 0.8f, 0, false, "hidrogenosomas"},
     {K::FoodVacuole, S::Simulated, A::Interior, 0.0f, 0.0f, 0, true, "vacuolas con madera"},
     BIO_EUK_ENDOMEMBRANES,
 };
@@ -205,6 +210,7 @@ const char* structureName(StructureKind kind) {
     case K::Nucleus: return "nucleo";
     case K::Nucleolus: return "nucleolo";
     case K::Mitochondrion: return "mitocondria";
+    case K::Hydrogenosome: return "hidrogenosoma";
     case K::Chloroplast: return "cloroplasto";
     case K::Pyrenoid: return "pirenoide";
     case K::Eyespot: return "estigma";

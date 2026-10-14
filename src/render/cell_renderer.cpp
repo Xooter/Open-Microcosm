@@ -30,6 +30,7 @@ constexpr Color kVacuoleRim = {110, 120, 118, 170};
 constexpr Color kGranule = {60, 62, 48, 170};
 constexpr Color kCilia = {70, 76, 62, 90};
 constexpr Color kFlagellum = {60, 66, 52, 70};
+constexpr Color kHydrogenosome = {104, 98, 86, 210};
 constexpr Color kEyespot = {205, 80, 40, 220};  // estigma de Euglena (carotenoides)
 constexpr Color kMouth = {60, 58, 48, 200};
 constexpr Color kMitochondrion = {120, 96, 70, 190};
@@ -726,6 +727,19 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             const bool colony = sid == SpeciesId::Volvox || sid == SpeciesId::Pediastrum;
             // Gránulos y organelos del citoplasma, por tipo.
             const bool organelles = level >= DetailLevel::Detail;
+            const BodyPlan& plan = speciesPlan(sid);
+            // Ribosomas libres (vista de modelo, de muy cerca): debajo de los organelos.
+            if (organelles && !colony && lod_.view == ViewMode::Model && anatomy.nucleus != ~0u)
+                if (const StructureSpec* rib = plan.find(StructureKind::Ribosomes); rib && ctx.particle(rib->width)) {
+                    int m = 0;
+                    const Vec2* ring = outline(body, camera.zoom, m);
+                    drawCytoplasmicRibosomes(*rib, ring, m, body.centroid, bodyHeading(body),
+                                             {bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus],
+                                             static_cast<std::uint32_t>(entt::to_integral(e)), ctx);
+                }
+            // En los anaerobios sin mitocondrias (parabasálidos), el orgánulo energético simulado es
+            // un hidrogenosoma: esférico, denso y sin cristas.
+            const bool hydrogenosomes = plan.has(StructureKind::Hydrogenosome) && !plan.has(StructureKind::Mitochondrion);
             for (std::size_t k = body.organelleCount; k < body.interior.size() && !colony && organelles; ++k) {
                 const std::uint32_t s = body.interior[k];
                 const float r = std::max(bp.radius[s], 0.75f * px);
@@ -745,6 +759,11 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 }
                 switch (static_cast<OrganelleTag>(bp.tag[s])) {
                 case OrganelleTag::Mitochondrion: // bastoncitos
+                    if (hydrogenosomes) {
+                        DrawCircleV({bp.x[s], bp.y[s]}, r, kHydrogenosome);
+                        DrawRing({bp.x[s], bp.y[s]}, std::max(0.0f, r - std::max(0.15f * r, px)), r, 0.0f, 360.0f, 24, kVacuoleRim);
+                        break;
+                    }
                     DrawRectanglePro({bp.x[s], bp.y[s], 2.6f * r, 1.2f * r}, {1.3f * r, 0.6f * r},
                                      static_cast<float>(s % 180), kMitochondrion);
                     break;

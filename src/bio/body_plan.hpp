@@ -32,6 +32,7 @@ enum class StructureKind : std::uint8_t {
     Nucleus,
     Nucleolus,
     Mitochondrion,
+    Hydrogenosome, // orgánulo energético de los anaerobios (parabasálidos): produce H₂, sin cristas
     Chloroplast,
     Pyrenoid,
     Eyespot,
@@ -72,6 +73,9 @@ struct StructureSpec {
     int count;      // por célula (0: no aplica o lo da la simulación)
     bool brightfield; // se distingue en campo claro sin teñir (además de superar la resolución)
     const char* name; // en español, ASCII (la ficha)
+    // Para lo que se reparte por el citoplasma de células de tamaño variable (ribosomas
+    // eucariotas): cuántos hay por µm³ en vez de por célula.
+    float perCubicMicron = 0.0f;
 };
 
 enum class Morphology : std::uint8_t {
@@ -100,6 +104,8 @@ struct BodyPlan {
 // Límite de resolución del microscopio óptico (Abbe, d = 0,61 λ / AN con luz verde y objetivo
 // de inmersión de AN 1,4): lo más chico que se separa en campo claro.
 inline constexpr float kOpticalResolution = 0.24f; // [µm]
+// Periplasma de las gramnegativas: entre la membrana externa y el peptidoglicano (~12 nm).
+inline constexpr float kPeriplasmWidth = 0.012f; // [µm]
 
 // ¿Se ve con el microscopio de la placa (campo claro, sin teñir)? Ancho 0: lo da la simulación
 // (núcleo, vacuolas), siempre por encima del límite.

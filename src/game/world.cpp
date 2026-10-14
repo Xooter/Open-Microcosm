@@ -197,6 +197,10 @@ void World::scatterPatches() {
 
 void World::step(float dt) {
     PROFILE_SCOPE("World::step");
+    // Muestra fijada: las células están muertas y entrecruzadas, sin vida que avance. Se simplifica:
+    // tampoco hay corrientes ni movimiento browniano (en un preparado fijado y cubierto casi no hay).
+    if (fixed_)
+        return;
     // Orden de AGENTS.md: fluido → química → partículas → organismos.
     fluid_.clearForces();
     applyStir();

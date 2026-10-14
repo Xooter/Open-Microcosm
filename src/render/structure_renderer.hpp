@@ -54,6 +54,11 @@ void drawBdellovibrioStructures(const BacteriumState& b, const BodyPlan& plan, S
 // Fago con la base en el origen del marco actual y la cabeza hacia +x. `contracted`: la vaina de la
 // cola se contrajo (inyectó el ADN y la cabeza quedó vacía).
 void drawPhage(const BodyPlan& plan, bool contracted, StructureContext& ctx);
+// Ribosomas libres del citoplasma eucariota (declarados): los de una rebanada del espesor de un
+// corte fino, ubicados en el marco de la célula (se mueven y giran con ella) y solo en la parte de
+// la célula que cae en la vista, fuera del núcleo.
+void drawCytoplasmicRibosomes(const StructureSpec& spec, const Vec2* ring, int count, Vec2 centroid, Vec2 heading,
+                              Vec2 nucleus, float nucleusRadius, std::uint32_t seed, StructureContext& ctx);
 // Retículo endoplasmático y Golgi junto al núcleo de una célula eucariota (estructuras declaradas:
 // un representante de cada una, anclado al núcleo simulado).
 void drawEndomembranes(const BodyPlan& plan, Vec2 nucleus, float nucleusRadius, Vec2 heading, std::uint32_t seed,

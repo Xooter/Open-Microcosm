@@ -327,7 +327,8 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   verdadero (clorofitas) vira a azul-negro con Lugol y *Euglena* (paramilón) no reacciona.
   `Bacteria::strain` 2 es *Bacillus subtilis* (grampositiva); las demás son gramnegativas.
 - **Solo visual:** el render pregunta `evaluateStain` por cada blanco que dibuja; no toca `World`
-  ni `Rng`. `vital` marca las que en la realidad fijan o matan (Gram, Lugol, DAPI).
+  ni `Rng`. `vital` = false marca las que en la realidad fijan o matan (Gram, Lugol, DAPI): para
+  ésas el panel ofrece *Fijar la muestra* (`World::fix`), que mata todo sin lisis y detiene `step`.
 - **Preview:** `ui::StainPreview` dibuja un espécimen de prueba fijo (un `World` chico) con el
   MISMO `Renderer` que la placa (`Renderer::drawWorldTo` en una textura), sin teñir y teñido,
   en vistas de células, detalle y bacterias. Sumar un blanco: un valor de `StainTarget`, su

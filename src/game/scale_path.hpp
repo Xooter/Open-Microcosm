@@ -28,6 +28,11 @@ struct ScalePath {
 
 ScalePath scalePath(const World& world, Vec2 center, float viewMicrons, const Picked& focus);
 
+// La estructura de `hit` (lo que está bajo el cursor) que hay en `at`, cuando la vista ya muestra el
+// interior de las células (para el tooltip): "Nucleo", "Membrana externa", "Citoplasma"… Vacío de
+// lejos o fuera del ser. Con `model` falso solo nombra lo que el microscopio de campo claro resuelve.
+std::string structureAt(const World& world, const Picked& hit, Vec2 at, float viewMicrons, bool model);
+
 // Largo "redondo" (1, 2 o 5 × 10ⁿ µm) cercano a `target`, y su texto con la unidad que le
 // corresponde (mm, µm o nm). Lo usa la barra de escala.
 float niceLength(float target);

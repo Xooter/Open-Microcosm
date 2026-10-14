@@ -61,6 +61,8 @@ void addStructures(Inspection& ins, const BodyPlan& plan, const char* title = "E
         std::string value = size.empty() ? seen : size + ", " + seen;
         if (st.count > 1)
             value = fmt("%d, ", st.count) + value;
+        else if (st.perCubicMicron > 0.0f)
+            value = fmt("~%.0f por um3, ", static_cast<double>(st.perCubicMicron)) + value;
         add(s, st.name, value);
     }
 }

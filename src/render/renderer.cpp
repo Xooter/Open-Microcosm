@@ -24,6 +24,9 @@ constexpr Color kSlime = {232, 222, 160, 26};          // rastro de baba
 constexpr Color kFlake = {224, 212, 176, 230};
 constexpr Color kFlakeEdge = {150, 136, 100, 230};
 constexpr Color kSclerotium = {190, 120, 40, 230};
+// Avance del ciclo celular de una bacteria (masa 1 recién nacida → 2 al dividirse), en [0, 1): el
+// render la alarga a ancho constante, como E. coli (~2/3 a ~4/3 del largo medio).
+float cycleFraction(float mass) { return std::clamp(mass - 1.0f, 0.0f, 0.999f); }
 // Fagos libres en la vista de modelo: un tono propio (no es turbidez: con luz no se verían).
 constexpr Color kPhageDensity = {88, 72, 150, 255};
 constexpr Color kResting = {110, 78, 44, 230};         // esporangio de resistencia: pared gruesa parda
@@ -168,7 +171,7 @@ void Renderer::gatherPopulations(const World& world, Rectangle view, float zoom,
     const float cx = view.x + 0.5f * view.width, cy = view.y + 0.5f * view.height;
     auto gather = [&](PopulationPass& pass, std::size_t n, const std::vector<float>& xs, const std::vector<float>& ys,
                       const std::vector<float>& heading, const std::vector<std::uint32_t>& ids, std::uint32_t selected,
-                      auto&& kindOf, auto&& weightOf) {
+                      auto&& kindOf, auto&& weightOf, auto&& cycleOf) {
         pass.instances.clear();
         pass.detailed.clear();
         const bool individuals = pass.blend.individual > 0.0f, aggregate = pass.blend.aggregate > 0.0f;
@@ -200,7 +203,7 @@ void Renderer::gatherPopulations(const World& world, Rectangle view, float zoom,
                     pass.detailed.push_back({static_cast<std::uint32_t>(i), x, y,
                                              chosen ? -1.0f : (x - cx) * (x - cx) + (y - cy) * (y - cy)});
                 else if (individuals && near)
-                    pass.instances.push(x, y, heading[i], static_cast<float>(kind));
+                    pass.instances.push(x, y, heading[i], static_cast<float>(kind) + cycleOf(i));
                 if (aggregate && !chosen)
                     pass.density.add(x, y, kind, weightOf(i));
             }
@@ -212,7 +215,7 @@ void Renderer::gatherPopulations(const World& world, Rectangle view, float zoom,
                              [](const auto& a, const auto& b) { return a.dist2 < b.dist2; });
             for (std::size_t k = cap; k < pass.detailed.size(); ++k) {
                 const auto& d = pass.detailed[k];
-                pass.instances.push(d.x, d.y, heading[d.index], static_cast<float>(kindOf(d.index)));
+                pass.instances.push(d.x, d.y, heading[d.index], static_cast<float>(kindOf(d.index)) + cycleOf(d.index));
             }
             pass.detailed.resize(cap);
         }
@@ -226,9 +229,10 @@ void Renderer::gatherPopulations(const World& world, Rectangle view, float zoom,
            [&](std::size_t i) {
                return bac.bdello[i] >= 0.0f ? 3 : (bac.quorum[i] ? 1 : (bac.phage[i] >= 0.0f ? 2 : (bac.strain[i] == 2 ? 4 : 0)));
            },
-           [&](std::size_t i) { return lod_.weightByBiomass ? bac.mass[i] : 1.0f; });
+           [&](std::size_t i) { return lod_.weightByBiomass ? bac.mass[i] : 1.0f; },
+           [&](std::size_t i) { return cycleFraction(bac.mass[i]); });
     gather(dp, bd.size(), bd.x, bd.y, bd.heading, bd.id, selBdello, [](std::size_t) { return 0; },
-           [](std::size_t) { return 1.0f; });
+           [](std::size_t) { return 1.0f; }, [](std::size_t) { return 0.5f; }); // largo medio
 }
 
 void Renderer::drawPopulations(float zoom, const float* palette) {
@@ -266,10 +270,11 @@ void Renderer::drawPopulations(float zoom, const float* palette) {
         const std::vector<float>& d = pass.instances.data();
         for (std::size_t k = 0; k + 3 < d.size(); k += 4) {
             const auto kind = static_cast<std::size_t>(d[k + 3]);
+            const float grow = (1.0f + (d[k + 3] - static_cast<float>(kind))) / 1.5f;
             const float* c = palette + 4 * kind;
             const Color col = {static_cast<unsigned char>(c[0] * 255.0f), static_cast<unsigned char>(c[1] * 255.0f),
                                static_cast<unsigned char>(c[2] * 255.0f), static_cast<unsigned char>(c[3] * fade * 255.0f)};
-            const float l = kind == 3 ? 0.6f * len : len, t = kind == 3 ? 0.6f * len : thick;
+            const float l = kind == 3 ? 0.6f * len : grow * len, t = kind == 3 ? 0.6f * len : thick;
             DrawRectanglePro({d[k], d[k + 1], l, t}, {0.5f * l, 0.5f * t}, d[k + 2] * RAD2DEG, col);
         }
     }
@@ -300,7 +305,7 @@ void Renderer::drawDetailed(const World& world, Rectangle view, float zoom, cons
         BacteriumState st;
         st.at = {d.x, d.y};
         st.heading = bac.heading[i];
-        st.length = bp.length;
+        st.length = bp.length * (1.0f + cycleFraction(bac.mass[i])) / 1.5f;
         st.width = bp.thickness;
         st.id = bac.id[i];
         st.tumbling = bac.tumbling[i] != 0;

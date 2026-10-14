@@ -255,6 +255,12 @@ class World {
     // Sandbox: completa biomasa y reservas hasta el umbral de la especie para que se reproduzca
     // por su vía normal (fisión, palintomía, colonias, gemación o huevo). false si no puede.
     bool forceReproduction(entt::entity cell);
+    // Fijar la muestra (lo que hacen en la realidad Gram, Lugol o la fijación previa a DAPI: calor,
+    // yodo o alcohol desnaturalizan las proteínas). Todo muere sin lisarse y queda como estaba: no
+    // nada, no metaboliza, no se divide ni se descompone. Es irreversible; una placa nueva vuelve a
+    // empezar. Desde entonces `step` no avanza.
+    void fix() { fixed_ = true; }
+    bool fixed() const { return fixed_; }
     // Inspección: qué hay en `position` (a `tolerance` µm de su borde). Lo más grande y lo más
     // cercano tienen prioridad: células, granos y después partículas. `skip` (bits de `pickBit`)
     // excluye tipos: lo que la vista muestra solo como densidad no se puede elegir con el mouse.
@@ -620,4 +626,5 @@ class World {
     std::uint64_t step_ = 0, spawnCounter_ = 0, toolCounter_ = 0, cellCounter_ = 0;
     float spawnAccumulator_ = 0.0f;
     float simTime_ = 0.0f;
+    bool fixed_ = false;
 };
