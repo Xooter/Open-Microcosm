@@ -136,9 +136,12 @@ void App::reloadStains() {
             stainIndex = static_cast<int>(i);
 }
 
+// Pantalla completa sin bordes: la ventana toma el tamaño del monitor y la interfaz se acomoda.
+// (ToggleFullscreen de raylib es exclusiva a la resolución de la ventana —1600 × 900— y mientras
+// dura no actualiza el tamaño de pantalla: la UI quedaba chica.)
 void App::setFullscreen(bool on) {
-    if (IsWindowFullscreen() != on)
-        ToggleFullscreen();
+    if (IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE) != on)
+        ToggleBorderlessWindowed();
     options.fullscreen = on;
 }
 
@@ -511,8 +514,18 @@ void App::buildUi(float) {
         }
         dockBuilt_ = true;
     }
-    if (const ImGuiDockNode* node = ImGui::DockBuilderGetCentralNode(dock))
+    if (const ImGuiDockNode* node = ImGui::DockBuilderGetCentralNode(dock)) {
+        const Rectangle old = viewport;
         viewport = {node->Pos.x, node->Pos.y, std::max(64.0f, node->Size.x), std::max(64.0f, node->Size.y)};
+        // El área de la placa cambió (ventana, pantalla completa, paneles): se sigue viendo lo
+        // mismo, con el mismo punto del mundo en el centro y el zoom en proporción.
+        if (old.width != viewport.width || old.height != viewport.height) {
+            const Vector2 center = GetScreenToWorld2D({old.x + 0.5f * old.width, old.y + 0.5f * old.height}, camera);
+            camera.zoom *= std::min(viewport.width, viewport.height) / std::min(old.width, old.height);
+            camera.offset = {viewport.x + 0.5f * viewport.width, viewport.y + 0.5f * viewport.height};
+            camera.target = center;
+        }
+    }
 
     panels.drawAll(*this);
 
@@ -1017,7 +1030,7 @@ int App::run() {
     InitWindow(kScreenW, kScreenH, "bio");
     SetExitKey(KEY_NULL); // Esc no cierra el programa
     if (options.fullscreen)
-        ToggleFullscreen();
+        ToggleBorderlessWindowed();
 
     ui::loadLanguage(options.language);
     ui::initBackend(layoutPath_.c_str(), 15.0f);
