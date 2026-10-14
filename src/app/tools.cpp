@@ -27,27 +27,8 @@ constexpr ToolRow kTools[] = {
     {Tool::Spawn, {"Spw", "Spawnear", "Click: pone el ser elegido en el catálogo. Esc cancela.", ImGuiKey_None}},
 };
 
-// Solutos que se pueden gotear: nombre y concentración típica [µM].
-struct Dropper {
-    const char* name;
-    float typical;
-};
-constexpr Dropper kDroppers[] = {
-    {"Fosfato", 50.0f},       {"Nitrógeno inorgánico", 500.0f}, {"Sílice (Si)", 200.0f},
-    {"Hierro (Fe)", 1.0f},    {"Vitamina B12", 0.002f},         {"Materia orgánica", 20.0f},
-};
-constexpr int kDropperCount = static_cast<int>(sizeof(kDroppers) / sizeof(kDroppers[0]));
 
-ChemField& dropperField(World& world, int index) {
-    switch (index) {
-    case 0: return world.phosphateField();
-    case 1: return world.nitrogenField();
-    case 2: return world.silicateField();
-    case 3: return world.ironField();
-    case 4: return world.vitaminField();
-    default: return world.nutrients();
-    }
-}
+
 
 } // namespace
 
@@ -58,10 +39,3 @@ const ToolInfo& toolInfo(Tool t) {
     return kTools[0].info;
 }
 
-const char* dropperName(int index) { return kDroppers[std::clamp(index, 0, kDropperCount - 1)].name; }
-int dropperCount() { return kDropperCount; }
-
-void applyDropper(World& world, const ToolState& tools, float x, float y, float dt) {
-    const Dropper& d = kDroppers[std::clamp(tools.dropper, 0, kDropperCount - 1)];
-    world.dose(dropperField(world, tools.dropper), {x, y}, tools.dropRadius, d.typical * tools.dropAmount * dt);
-}

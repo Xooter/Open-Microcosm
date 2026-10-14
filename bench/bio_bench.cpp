@@ -7,10 +7,14 @@
 // o --zoom Z) y mide el dibujo en la GPU real (esperando con glFinish).
 //
 //   bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] [--warmup N] [--threads N]
-//             [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S]
+//             [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate]
+//
+// Con --scene reproduce una escena guardada (placa + intervenciones con su paso, incluido el foco):
+// bioma, seed, fauna y foco salen de la escena.
 #include "core/profiling.hpp"
 #include "game/biome.hpp"
 #include "game/run.hpp"
+#include "game/scene.hpp"
 #include "gpu/gpu_substep_solver.hpp"
 #include "render/renderer.hpp"
 
@@ -45,6 +49,7 @@ struct Args {
     bool render = false;
     float zoom = 0.0f; // 0: la placa entera
     float cellDetail = 1.0f;
+    std::string scene; // escena (.plate con intervenciones) a reproducir
 };
 
 // glFinish no está en rlgl; el GLAD de raylib lo carga (como en gpu_substep_solver.cpp).
@@ -65,6 +70,8 @@ bool parse(int argc, char** argv, Args& a) {
             a.render = true;
         else if (k == "--zoom" && hasValue)
             a.zoom = static_cast<float>(std::atof(argv[++i]));
+        else if (k == "--scene" && hasValue)
+            a.scene = argv[++i];
         else if (k == "--cell-detail" && hasValue)
             a.cellDetail = static_cast<float>(std::atof(argv[++i]));
         else if (k == "--biome" && hasValue)
@@ -81,7 +88,7 @@ bool parse(int argc, char** argv, Args& a) {
             a.threads = std::atoi(argv[++i]);
         else {
             std::fprintf(stderr, "uso: bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] "
-                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S]\n");
+                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate]\n");
             return false;
         }
     }
@@ -142,21 +149,41 @@ int main(int argc, char** argv) {
         }
     }
 
-    World world(makeDrop(static_cast<BiomeId>(a.biome), a.seed));
+    PlateSpec plate;
+    std::vector<Intervention> events;
+    if (!a.scene.empty() && !loadScene(a.scene, plate, events)) {
+        std::fprintf(stderr, "no se pudo leer la escena %s\n", a.scene.c_str());
+        return 1;
+    }
+    World world(a.scene.empty() ? makeDrop(static_cast<BiomeId>(a.biome), a.seed) : plate.config);
     if (a.gpu)
         world.setSubstepSolver(&gpu);
     RunConfig rc;
-    rc.spawnFounder = false;
-    rc.wildlife = a.wildlife;
-    rc.biome = a.biome;
-    rc.seed = a.seed;
+    if (a.scene.empty()) {
+        rc.spawnFounder = false;
+        rc.wildlife = a.wildlife;
+        rc.biome = a.biome;
+        rc.seed = a.seed;
+    } else {
+        rc = plateRunConfig(plate);
+        a.biome = plate.biome;
+        a.seed = plate.seed;
+        a.wildlife = rc.wildlife;
+        for (const Intervention& iv : events)
+            if (iv.kind == InterventionKind::Engine && (iv.index == 1) != a.gpu)
+                std::fprintf(stderr, "aviso: la escena se grabó con el motor %s; esta corrida usa %s (no será idéntica)\n",
+                             iv.index == 1 ? "GPU" : "CPU", a.gpu ? "GPU" : "CPU");
+    }
     Run run;
     run.start(world, rc, 1);
+    run.interventions().schedule(events);
     // Foco como el de la app con una ventana de 1600 × 900 px a zoom 2 (el LOD clasifica el resto).
-    if (a.focus)
+    // Una escena trae su propio foco.
+    if (a.focus && a.scene.empty())
         world.setFocus({world.width() * 0.5f, world.height() * 0.5f}, {400.0f, 225.0f});
 
     for (int i = 0; i < a.warmup; ++i) {
+        run.interventions().beforeStep(world, kDt);
         world.step(kDt);
         run.update(world, kDt);
     }
@@ -180,6 +207,7 @@ int main(int argc, char** argv) {
     double ms = 0.0, renderMs = 0.0;
     for (int i = 0; i < a.steps; ++i) {
         const auto t0 = Clock::now();
+        run.interventions().beforeStep(world, kDt);
         world.step(kDt);
         run.update(world, kDt);
         ms += std::chrono::duration<double, std::milli>(Clock::now() - t0).count();

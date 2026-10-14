@@ -106,7 +106,11 @@ class CatalogPanel : public Panel {
             if (st.reshape && b.kind == BeingKind::Species) {
                 const Vector2 mid = GetScreenToWorld2D({app.viewport.x + 0.5f * app.viewport.width,
                                                         app.viewport.y + 0.5f * app.viewport.height}, app.camera);
-                app.world->setPlayerSpecies(b.species, {mid.x, mid.y});
+                Intervention iv; // queda en el registro de la sesión
+                iv.kind = InterventionKind::PlayerSpecies;
+                iv.index = static_cast<int>(b.species);
+                iv.pos = {mid.x, mid.y};
+                app.intervene(iv);
             } else if (st.armed == i) {
                 app.setTool(Tool::Select);
             } else {

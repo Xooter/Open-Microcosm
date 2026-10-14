@@ -2,6 +2,7 @@
 
 #include "bio/genome.hpp"
 #include "bio/locomotion.hpp"
+#include "game/intervention.hpp"
 #include "game/lineage.hpp"
 #include "game/mass_budget.hpp"
 #include "game/region.hpp"
@@ -55,7 +56,12 @@ class Run {
     // Causa de la última muerte del ser controlado ("" si no murió).
     const char* deathCause() const { return deathCause_; }
 
+    // Intervenciones del usuario de esta sesión (se aplican entre pasos y se anotan con su paso).
+    InterventionLog& interventions() { return interventions_; }
+    const InterventionLog& interventions() const { return interventions_; }
+
   private:
+    InterventionLog interventions_;
     void buildColumns();
 
     RunConfig config_;

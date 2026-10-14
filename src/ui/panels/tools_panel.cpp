@@ -1,5 +1,6 @@
 // Herramientas: parámetros de cada una (radios, gotero) y capas de visualización.
 #include "app/app.hpp"
+#include "game/intervention.hpp"
 #include "ui/panels/panel_classes.hpp"
 #include "ui/widgets.hpp"
 #include "ui/i18n.hpp"
@@ -30,9 +31,9 @@ class ToolsPanel : public Panel {
         if (section("Gotero", true)) {
             int d = t.dropper;
             std::vector<const char*> names;
-            for (int i = 0; i < dropperCount(); ++i)
-                names.push_back(dropperName(i));
-            if (combo("Soluto", &d, names.data(), dropperCount()))
+            for (int i = 0; i < soluteCount(); ++i)
+                names.push_back(soluteName(i));
+            if (combo("Soluto", &d, names.data(), soluteCount()))
                 t.dropper = d;
             slider("Radio [µm]", &t.dropRadius, 10.0f, 200.0f, "%.0f");
             sliderLog("Cantidad", &t.dropAmount, 0.1f, 20.0f, "x%.1f", "Relativa a la concentración típica del soluto.");

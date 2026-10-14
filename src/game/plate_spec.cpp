@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <limits>
 #include <sstream>
 
 namespace {
@@ -86,6 +87,9 @@ float PlateSpec::wildlife() const { return content == DropContent::Full ? dropAr
 
 std::string serializePlate(const PlateSpec& s) {
     std::ostringstream out;
+    // Precisión de ida y vuelta: con las 6 cifras por defecto, los valores que el bioma varía por
+    // seed se redondeaban y la placa leída ya no era la misma (ni su corrida).
+    out.precision(std::numeric_limits<float>::max_digits10);
     out << "plate_version=1\n"
         << "biome=" << s.biome << '\n'
         << "seed=" << s.seed << '\n'

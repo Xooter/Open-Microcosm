@@ -47,6 +47,13 @@ struct App {
     void pushMediumLive();                          // temperatura, salinidad, luz, anoxia, alcalinidad
     // Cambia un parámetro del registro (game/parameters) en la placa en marcha.
     void setParameter(const ParamInfo& p, float value);
+    // Toda acción que cambia el mundo pasa por acá: se aplica entre pasos y queda en el registro
+    // de la sesión con su paso (reproducible). `interveneState` solo anota si el estado cambió.
+    bool intervene(const Intervention& iv) { return world && session.interventions().record(*world, iv); }
+    void interveneState(const Intervention& iv) {
+        if (world)
+            session.interventions().recordState(*world, iv);
+    }
     void pushNutrientLive(int soluteIndex, float target); // lleva la concentración media de un soluto a `target`
     // Exporta la serie (CSV), la corrida (JSON) y las fichas de especies a `exportsDir`.
     void exportData();
@@ -63,6 +70,8 @@ struct App {
     Progress progress;
     std::string progressPath = defaultProgressPath();
     PlateSpec plate;
+    PlateSpec runPlate;                    // la placa con la que se creó el mundo en pantalla
+    std::vector<Intervention> plateScript; // intervenciones de la escena cargada (se repiten al crear)
     std::unique_ptr<World> world;
     Run session;
     ToolState tools;

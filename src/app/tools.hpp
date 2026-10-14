@@ -99,6 +99,3 @@ struct CatalogState {
 };
 
 // Gotero de solutos.
-const char* dropperName(int index);
-int dropperCount();
-void applyDropper(World& world, const ToolState& tools, float x, float y, float dt);

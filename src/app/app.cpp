@@ -9,6 +9,7 @@
 #include "game/encyclopedia.hpp"
 #include "game/export.hpp"
 #include "game/region.hpp"
+#include "game/scene.hpp"
 #include "ui/being_icons.hpp"
 #include "ui/i18n.hpp"
 #include "ui/imgui_raylib.hpp"
@@ -85,17 +86,6 @@ void worldLabel(ImDrawList* dl, ImVec2 at, const char* text) {
     dl->AddText(at, IM_COL32(240, 244, 240, 255), text);
 }
 
-ChemField& soluteField(World& world, int index) {
-    switch (index) {
-    case 0: return world.phosphateField();
-    case 1: return world.nitrogenField();
-    case 2: return world.silicateField();
-    case 3: return world.ironField();
-    case 4: return world.vitaminField();
-    default: return world.nutrients();
-    }
-}
-
 } // namespace
 
 App::App() {
@@ -161,8 +151,18 @@ void App::applyOptions() {
     // El resultado no depende de la cantidad de hilos (Rng por índice y paso).
     omp_set_num_threads(options.threads > 0 ? options.threads : autoThreads);
     if (world) {
-        world->lodStride = options.lod ? options.lodStride : 1;
-        world->setSubstepSolver(options.gpuPhysics && gpuOk ? &gpu : nullptr);
+        // LOD y motor cambian la trayectoria: pasan por el registro de la sesión.
+        const int stride = options.lod ? options.lodStride : 1;
+        if (world->lodStride != stride)
+            setParameter(*findParameter("lod.cada"), static_cast<float>(stride));
+        SubstepSolver* solver = options.gpuPhysics && gpuOk ? &gpu : nullptr;
+        if (world->substepSolver() != solver) {
+            world->setSubstepSolver(solver);
+            Intervention engine;
+            engine.kind = InterventionKind::Engine;
+            engine.index = solver ? 1 : 0;
+            intervene(engine);
+        }
     }
     appliedFps_ = -1; // se recalcula en el próximo cuadro
 }
@@ -194,14 +194,8 @@ void App::createPlate() {
     worldSeed = config.seed;
     worldBiome = plate.biome;
     world = std::make_unique<World>(config);
-    world->bioTimeScale() = options.bioTimeScale;
-    applyOptions();
     progress.biomesPlayed |= 1u << static_cast<unsigned>(plate.biome);
-    RunConfig rc;
-    rc.spawnFounder = false; // en el laboratorio, el ser a controlar se elige con la herramienta Controlar
-    rc.wildlife = plate.wildlife();
-    rc.biome = plate.biome;
-    rc.seed = config.seed;
+    const RunConfig rc = plateRunConfig(plate);
     catalog.armed = -1;
     selection = SelectionState{}; // las entidades del mundo anterior ya no existen
     tools.grabbing = false;
@@ -210,6 +204,19 @@ void App::createPlate() {
     if (tools.tool == Tool::Spawn)
         tools.tool = Tool::Select;
     session.start(*world, rc, ++runCounter_);
+    runPlate = plate;
+    // Paso 0: lo que no está en la placa pero cambia la trayectoria (escala de tiempo, LOD y
+    // motor) queda en el registro, y después el guion de la escena cargada, si hay.
+    setParameter(*findParameter("tiempo.escala_biologica"), options.bioTimeScale);
+    setParameter(*findParameter("lod.cada"), static_cast<float>(options.lod ? options.lodStride : 1));
+    applyOptions(); // anota el motor si pasa a la GPU
+    if (!world->substepSolver()) {
+        Intervention engine;
+        engine.kind = InterventionKind::Engine;
+        engine.index = 0;
+        intervene(engine);
+    }
+    session.interventions().schedule(plateScript);
     camera.target = {0.5f * world->width(), 0.5f * world->height()};
     if (world->dish().active())
         camera.zoom = std::min(viewport.width, viewport.height) / (2.3f * world->dish().radius);
@@ -229,7 +236,11 @@ RunProvenance App::provenance() const {
 void App::setParameter(const ParamInfo& p, float value) {
     if (!world)
         return;
-    setParameterValue(*world, p, value);
+    Intervention iv;
+    iv.kind = InterventionKind::Parameter;
+    iv.key = p.key;
+    iv.v[0] = value;
+    intervene(iv);
     if (&p == findParameter("tiempo.escala_biologica"))
         options.bioTimeScale = value; // la preferencia de la próxima placa
 }
@@ -237,21 +248,26 @@ void App::setParameter(const ParamInfo& p, float value) {
 void App::pushMediumLive() {
     if (!world)
         return;
-    MediumParams& m = world->medium();
     const MediumParams& s = plate.config.medium;
-    m.temperature = s.temperature;
-    m.salinity = s.salinity;
-    m.anoxic = s.anoxic;
-    m.surfaceLight = s.surfaceLight;
-    m.alkalinity = s.alkalinity;
-    m.o2AirExchange = s.o2AirExchange;
-    world->refreshMedium();
+    Intervention iv;
+    iv.kind = InterventionKind::Medium;
+    iv.v[0] = s.temperature;
+    iv.v[1] = s.salinity;
+    iv.v[2] = s.surfaceLight;
+    iv.v[3] = s.o2AirExchange;
+    iv.v[4] = s.alkalinity;
+    iv.v[5] = s.anoxic ? 1.0f : 0.0f;
+    intervene(iv);
 }
 
 void App::pushNutrientLive(int soluteIndex, float target) {
     if (!world)
         return;
-    world->setMeanConcentration(soluteField(*world, soluteIndex), target); // entra al balance como externo
+    Intervention iv; // entra al balance como entrada externa
+    iv.kind = InterventionKind::Concentration;
+    iv.index = soluteIndex;
+    iv.v[0] = target;
+    intervene(iv);
 }
 
 void App::exportData() {
@@ -259,11 +275,14 @@ void App::exportData() {
         return;
     session.sample(*world); // incluye el estado de este instante
     const std::string base = (std::filesystem::path(exportsDir) / timestampedName(plateName)).string();
+    // La escena (.plate con el registro de intervenciones) acompaña a los datos: con ella la
+    // corrida se puede repetir.
     const bool ok = writeTextFile(base + ".csv", seriesCsv(session.series())) &&
-                    writeTextFile(base + ".json", runJson(*world, session, plate, provenance())) &&
+                    writeTextFile(base + ".json", runJson(*world, session, runPlate, provenance())) &&
+                    saveScene(base + ".plate", runPlate, session.interventions().entries()) &&
                     writeTextFile((std::filesystem::path(exportsDir) / "especies.json").string(), speciesJson());
     lastExport = ok ? base : std::string();
-    notify(ok ? std::string(ui::tr("Datos exportados: ")) + base + ".csv/.json" : ui::tr("No se pudo exportar"));
+    notify(ok ? std::string(ui::tr("Datos exportados: ")) + base + ".csv/.json/.plate" : ui::tr("No se pudo exportar"));
 }
 
 void App::notify(const std::string& text) {
@@ -688,55 +707,86 @@ void App::toolInput(float dt, const Vec2& pos) {
     const bool held = (mouseFree || tools.grabbing) && IsMouseButtonDown(MOUSE_BUTTON_LEFT);
     const bool down = mouseFree && IsMouseButtonDown(MOUSE_BUTTON_LEFT);
 
-    // Herramientas de mantener: se sueltan solas cuando cambia la herramienta o se suelta el botón.
-    if (!(tools.tool == Tool::Squeeze && down))
-        world->clearSqueeze();
-    const bool stirring = tools.tool == Tool::Stir && down && dt > 0.0f;
-    if (stirring) {
-        const Vector2 d = Vector2Scale(GetMouseDelta(), 1.0f / (camera.zoom * dt * units::kTimeScale));
-        world->setStir(pos, {d.x, d.y}, tools.stirRadius);
-    } else {
-        world->clearStir();
+    // Toda acción pasa por el registro de intervenciones (reproducible). Las de mantener son
+    // estados: se anotan solo cuando cambian y se sueltan solas al soltar el botón o cambiar de
+    // herramienta.
+    auto at = [&](InterventionKind kind) {
+        Intervention iv;
+        iv.kind = kind;
+        iv.pos = pos;
+        return iv;
+    };
+    {
+        Intervention sq = at(InterventionKind::Squeeze);
+        sq.active = tools.tool == Tool::Squeeze && down;
+        sq.v[0] = sq.active ? tools.squeezeSpeed : 0.0f;
+        if (!sq.active)
+            sq.pos = {};
+        interveneState(sq);
+    }
+    {
+        Intervention st = at(InterventionKind::Stir);
+        st.active = tools.tool == Tool::Stir && down && dt > 0.0f;
+        if (st.active) {
+            const Vector2 d = Vector2Scale(GetMouseDelta(), 1.0f / (camera.zoom * dt * units::kTimeScale));
+            st.v[0] = d.x;
+            st.v[1] = d.y;
+            st.v[2] = tools.stirRadius;
+        } else {
+            st.pos = {};
+        }
+        interveneState(st);
+    }
+    {
+        Intervention ink = at(InterventionKind::Ink);
+        ink.active = tools.tool == Tool::Ink && down;
+        ink.v[0] = ink.active ? tools.inkRadius : 0.0f;
+        if (!ink.active)
+            ink.pos = {};
+        interveneState(ink);
+        Intervention drop = at(InterventionKind::Dropper);
+        drop.active = tools.tool == Tool::Dropper && down;
+        drop.index = tools.dropper;
+        drop.v[0] = drop.active ? tools.dropRadius : 0.0f;
+        drop.v[1] = drop.active ? tools.dropAmount : 0.0f;
+        if (!drop.active)
+            drop.pos = {};
+        interveneState(drop);
     }
     if (tools.grabbing && (!held || tools.tool != Tool::Grab)) {
-        world->endGrab();
+        intervene(at(InterventionKind::GrabEnd));
         tools.grabbing = false;
     }
 
     switch (tools.tool) {
     case Tool::Ink:
-        if (down)
-            world->dropInk(pos, tools.inkRadius, 40);
-        break;
+    case Tool::Squeeze:
+    case Tool::Dropper:
+        break; // estados, arriba
     case Tool::Detritus:
         if (pressed)
-            world->dropDetritus(pos);
+            intervene(at(InterventionKind::Detritus));
         break;
     case Tool::Erase:
         if (pressed)
-            world->removeCellAt(pos);
+            intervene(at(InterventionKind::Erase));
         break;
     case Tool::Lyse:
         if (pressed)
-            world->lyseAt(pos);
-        break;
-    case Tool::Squeeze:
-        if (down)
-            world->setSqueeze(pos, tools.squeezeSpeed);
+            intervene(at(InterventionKind::Lyse));
         break;
     case Tool::Grab:
         if (pressed)
-            tools.grabbing = world->beginGrab(pos);
+            tools.grabbing = intervene(at(InterventionKind::GrabBegin));
         else if (tools.grabbing && held)
-            world->moveGrab(pos);
-        break;
-    case Tool::Dropper:
-        if (down)
-            applyDropper(*world, tools, pos.x, pos.y, dt);
+            interveneState(at(InterventionKind::GrabMove));
         break;
     case Tool::Spawn:
-        if (pressed && catalog.armed >= 0)
-            world->spawnBeing(beingAt(catalog.armed), pos);
+        if (pressed && catalog.armed >= 0) {
+            Intervention iv = at(InterventionKind::Spawn);
+            iv.index = catalog.armed;
+            intervene(iv);
+        }
         break;
     case Tool::Measure:
         if (pressed) {
@@ -779,17 +829,29 @@ void App::controlInput(bool mouseFree, const Vec2& pos) {
     const bool kbFree = !ImGui::GetIO().WantTextInput;
     const bool leftPressed = mouseFree && IsMouseButtonPressed(MOUSE_BUTTON_LEFT);
     if ((tools.tool == Tool::Control && leftPressed) || (kbFree && IsKeyPressed(KEY_P))) {
-        const Picked hit = world->pick(pos, pickTolerance(camera.zoom));
-        if (hit.kind == Picked::Kind::Cell && world->registry().all_of<Locomotion>(hit.entity) &&
-            hit.entity != world->player()) {
-            world->setPlayer(hit.entity);
+        Intervention pick;
+        pick.kind = InterventionKind::PlayerPick;
+        pick.pos = pos;
+        pick.v[0] = pickTolerance(camera.zoom);
+        if (intervene(pick)) {
             tools.follow = true;
             panels.show("estadisticas");
         }
     }
     PlayerInput input;
+    // La entrada del ser controlado también queda en el registro (solo cuando cambia).
+    auto send = [&] {
+        Intervention iv;
+        iv.kind = InterventionKind::PlayerInput;
+        iv.v[0] = input.forward;
+        iv.v[1] = input.turn;
+        iv.v[2] = input.propel ? 1.0f : 0.0f;
+        iv.v[3] = input.pseudopod ? 1.0f : 0.0f;
+        iv.pos = input.aim;
+        interveneState(iv);
+    };
     if (!world->registry().valid(world->player())) {
-        world->setPlayerInput(input);
+        send();
         return;
     }
     const bool lmb = mouseFree && IsMouseButtonDown(MOUSE_BUTTON_LEFT) && tools.tool == Tool::Control && !leftPressed;
@@ -799,7 +861,7 @@ void App::controlInput(bool mouseFree, const Vec2& pos) {
     input.propel = (kbFree && IsKeyDown(KEY_W)) || mouseDrive;
     input.pseudopod = mouseDrive;
     input.aim = pos;
-    world->setPlayerInput(input);
+    send();
 }
 
 void App::worldInput(float dt) {
@@ -831,7 +893,15 @@ void App::stepSimulation(float frameDt) {
     const Vector2 a = GetScreenToWorld2D({viewport.x, viewport.y}, camera);
     const Vector2 b = GetScreenToWorld2D({viewport.x + viewport.width, viewport.y + viewport.height}, camera);
     // LOD: lo que se ve (más un margen) se simula en detalle.
-    world->setFocus({camera.target.x, camera.target.y}, {0.5f * std::abs(b.x - a.x), 0.5f * std::abs(b.y - a.y)});
+    {
+        Intervention focus; // con LOD, la vista decide qué se resuelve en detalle: queda registrada
+        focus.kind = InterventionKind::Focus;
+        focus.active = true;
+        focus.pos = {camera.target.x, camera.target.y};
+        focus.v[0] = 0.5f * std::abs(b.x - a.x);
+        focus.v[1] = 0.5f * std::abs(b.y - a.y);
+        interveneState(focus);
+    }
     if (world->fixed()) { // muestra fijada: no hay pasos (ni filas nuevas en la serie)
         accumulator_ = 0.0f;
         tools.stepRequests = 0;
@@ -839,6 +909,7 @@ void App::stepSimulation(float frameDt) {
     }
     auto advance = [&] {
         const double t0 = GetTime();
+        session.interventions().beforeStep(*world, kFixedDt); // escena/replay y pinceles
         world->step(kFixedDt);
         tools.stepMs += (static_cast<float>(1000.0 * (GetTime() - t0)) - tools.stepMs) * 0.1f;
         session.update(*world, kFixedDt);

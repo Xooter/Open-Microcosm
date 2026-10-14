@@ -147,8 +147,11 @@ class StainPanel : public Panel {
                 if (app.world->fixed()) {
                     note("Muestra fijada: todo murió y quedó como estaba. Crear placa (Ctrl+N) para empezar otra.");
                 } else {
-                    if (ImGui::Button(tr("Fijar la muestra")))
-                        app.world->fix();
+                    if (ImGui::Button(tr("Fijar la muestra"))) {
+                        Intervention iv;
+                        iv.kind = InterventionKind::Fix;
+                        app.intervene(iv);
+                    }
                     if (ImGui::IsItemHovered())
                         ImGui::SetTooltip("%s", tr("Como en el preparado real: el calor, el yodo o el alcohol matan y fijan a todos los seres de la placa. No se puede deshacer."));
                     note("Sin fijar, la tinción solo cambia los colores y la placa sigue viva.");

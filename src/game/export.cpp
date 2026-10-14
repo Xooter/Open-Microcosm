@@ -307,6 +307,11 @@ std::string runJson(const World& world, const Run& run, const PlateSpec& plate, 
         j.string("gpu", provenance.gpu);
     j.boolean("lod", provenance.lod);
     j.string("maquina", machineDescription());
+    // Intervenciones del usuario (van en la escena .plate que acompaña la exportación).
+    j.number("intervenciones", static_cast<double>(run.interventions().entries().size()));
+    char hash[20];
+    std::snprintf(hash, sizeof hash, "%016llx", static_cast<unsigned long long>(run.interventions().hash()));
+    j.string("huella_intervenciones", hash);
     j.string("reproducibilidad", "bit a bit con el mismo binario, maquina, motor y opciones; entre maquinas, "
                                  "estadistica (replicas)");
     j.endObject();

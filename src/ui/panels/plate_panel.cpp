@@ -2,6 +2,7 @@
 // sedimento y poblaciones). Lo que se puede cambiar con la placa en marcha (ambiente y
 // nutrientes) se aplica en vivo; el resto se aplica al crear la placa.
 #include "app/app.hpp"
+#include "game/scene.hpp"
 #include "ui/panels/panel_classes.hpp"
 #include "ui/widgets.hpp"
 #include "ui/i18n.hpp"
@@ -221,6 +222,15 @@ class PlatePanel : public Panel {
         if (ImGui::Button(tr("Guardar")))
             savePlate(p, app.platesDir + "/" + app.plateName + ".plate");
         ImGui::EndDisabled();
+        // Escena: la placa en pantalla con todo lo hecho (seres puestos, gotas, cambios de
+        // parámetros), cada cosa en su paso. Al cargarla y crear la placa, se repite.
+        ImGui::BeginDisabled(!ok || !app.world);
+        if (ImGui::Button(tr("Guardar escena (con lo hecho)"), {-1.0f, 0.0f}))
+            saveScene(app.platesDir + "/" + app.plateName + ".plate", app.runPlate, app.session.interventions().entries());
+        ImGui::EndDisabled();
+        if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+            ImGui::SetTooltip("%s", tr("Guarda la placa en pantalla y cada intervención con su paso: al cargarla y crear "
+                                       "la placa, la corrida se repite."));
         const std::vector<std::string> saved = listPlates(app.platesDir);
         if (saved.empty()) {
             note("Todavía no hay placas guardadas.");
@@ -230,7 +240,7 @@ class PlatePanel : public Panel {
         for (const std::string& name : saved) {
             ImGui::PushID(name.c_str());
             if (ImGui::Selectable(name.c_str())) {
-                if (loadPlate(app.platesDir + "/" + name + ".plate", p)) {
+                if (loadScene(app.platesDir + "/" + name + ".plate", p, app.plateScript)) {
                     app.plateName = name;
                     app.plateDirty = true;
                 }
@@ -238,6 +248,13 @@ class PlatePanel : public Panel {
             ImGui::PopID();
         }
         note("Click en una placa para cargarla; después, Crear placa.");
+        if (!app.plateScript.empty()) {
+            const std::string msg = std::to_string(app.plateScript.size()) + " " +
+                                    tr("intervenciones de la escena: se repiten al crear la placa.");
+            note(msg.c_str());
+            if (ImGui::SmallButton(tr("Descartar las intervenciones")))
+                app.plateScript.clear();
+        }
     }
 };
 
