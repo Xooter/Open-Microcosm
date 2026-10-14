@@ -40,7 +40,6 @@ struct Census {
     int plasmodia = 0, plasmodiumNodes = 0, plasmodiumEdges = 0, sclerotia = 0, oatFlakes = 0; // Physarum
     float plasmodiumLength = 0.0f; // [µm] de tubos
     int infectedAlgae = 0;   // con quitridios
-    int eggs = 0;
     int quorumBacteria = 0;  // C. violaceum en quorum (violetas)
     int phageInfected = 0;
     int bdelloplasts = 0, bdellovibrios = 0;

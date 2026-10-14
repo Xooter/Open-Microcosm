@@ -18,7 +18,7 @@ struct Biome {
     int cyanoFilaments;
     int oscillatoriaFilaments;
     float cyanoTMin, cyanoTMax;
-    int saprolegnia, zoophagus, chytridClusters;
+    int saprolegnia, chytridClusters;
     int allomyces, lichens, physarum;
     float patchiness;
     Sediment sediment; // minerales y granos de arena (por gota de referencia)

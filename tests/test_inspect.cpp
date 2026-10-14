@@ -17,7 +17,7 @@ WorldConfig emptyWorld() {
     config.bacteria = 0;
     config.detritus = 0;
     config.cyanoFilaments = 0;
-    config.saprolegnia = config.zoophagus = config.chytridClusters = 0;
+    config.saprolegnia = config.chytridClusters = 0;
     config.seed = 321;
     return config;
 }
@@ -103,14 +103,6 @@ TEST_CASE("elegir: células (con tolerancia en el borde), granos, partículas y 
     CHECK(world.pick(c + Vec2{0.0f, 25.0f + 3.0f}, 6.0f).entity == p);
     CHECK_FALSE(world.pick(c + Vec2{0.0f, 25.0f + 30.0f}, 6.0f));
     CHECK_FALSE(world.pick(c + Vec2{700.0f, 0.0f}, 6.0f));
-
-    // Una parte de un cuerpo compuesto es el organismo entero.
-    const entt::entity rot = spawn(world, SpeciesId::Rotifer, c + Vec2{-400.0f, 0.0f});
-    const Compound& comp = world.registry().get<Compound>(rot);
-    REQUIRE_FALSE(comp.parts.empty());
-    const Picked onPart = world.pick(world.registry().get<RingBody>(comp.parts[0]).centroid, 2.0f);
-    CHECK(onPart.kind == Picked::Kind::Cell);
-    CHECK(onPart.entity == rot);
 
     Rng rng(1, 2, 3, 4);
     REQUIRE(world.spawnRock(c + Vec2{400.0f, 0.0f}, 60.0f, MineralKind::Quartz, rng));
@@ -295,7 +287,7 @@ TEST_CASE("fichas: la ficha de un ser muerto dice de qué murió") {
     CHECK(buildInspection(world, cell(entt::null)).dead);
 }
 
-TEST_CASE("fichas: la zoóspora y la cría reemplazan a la célula y al huevo, y la ficha los sigue") {
+TEST_CASE("fichas: la zoóspora reemplaza a la célula y la ficha la sigue") {
     World world(emptyWorld());
     const Vec2 c = world.dish().center;
     std::vector<entt::entity> cells;
@@ -319,29 +311,6 @@ TEST_CASE("fichas: la zoóspora y la cría reemplazan a la célula y al huevo, y
     const Inspection next = buildInspection(world, cell(ins.successor));
     CHECK(mentions(next, "zoospora"));
 
-    World eggs(emptyWorld());
-    eggs.bioTimeScale() = 600.0f;
-    const entt::entity r = spawn(eggs, SpeciesId::Rhabditis, eggs.dish().center);
-    eggs.registry().emplace<Autopilot>(r);
-    REQUIRE(eggs.forceReproduction(r));
-    entt::entity egg = entt::null;
-    for (int s = 0; s < 60 * 20 && egg == entt::null; ++s) {
-        eggs.step(kDt);
-        for (auto e : eggs.registry().view<Egg>())
-            egg = e;
-    }
-    const bool foundEgg = egg != entt::null;
-    REQUIRE(foundEgg);
-    const Inspection eggCard = buildInspection(eggs, cell(egg));
-    CHECK(eggCard.title.find("Huevo") != std::string::npos);
-    CHECK(eggCard.headline.find("eclosiona") != std::string::npos);
-    for (int s = 0; s < 60 * 100 && eggs.registry().valid(egg); ++s)
-        eggs.step(kDt);
-    REQUIRE_FALSE(eggs.registry().valid(egg));
-    const DeathRecord* hatch = eggs.deathOf(egg);
-    REQUIRE(hatch != nullptr);
-    CHECK(eggs.registry().valid(hatch->successor));
-    CHECK(eggs.registry().all_of<Undulation>(hatch->successor));
 }
 
 TEST_CASE("fichas: minerales, granos y cianobacterias explican lo que se ve") {

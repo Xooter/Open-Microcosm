@@ -42,7 +42,7 @@ void destroyCell(entt::registry& registry, BodyParticles& bodies, entt::entity c
 CellSpec randomCellSpec(Rng& rng, Vec2 center);
 
 // Punto de la superelipse de semiejes (rx, ry) y exponente p en el parámetro t.
-// `taper` > 0 afina el polo posterior (x < 0): trompeta de Stentor, cuerpo de Hydra.
+// `taper` > 0 afina el polo posterior (x < 0): trompeta de Stentor.
 inline float taperFactor(float x, float rx, float taper) {
     return taper > 0.0f ? (1.0f - taper) + taper * std::clamp(0.5f * (x / rx + 1.0f), 0.0f, 1.0f) : 1.0f;
 }

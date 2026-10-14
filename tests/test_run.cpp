@@ -137,7 +137,7 @@ TEST_CASE("sandbox: cambiar de forma conserva linaje y fósforo, y no cuenta com
     RunConfig rc = quickRun(0);
     run.start(world, rc, 1);
     const double phosphorus = world.totalPhosphorus();
-    for (SpeciesId s : {SpeciesId::Euglena, SpeciesId::Vorticella, SpeciesId::Rotifer, SpeciesId::Amoeba}) {
+    for (SpeciesId s : {SpeciesId::Euglena, SpeciesId::Vorticella, SpeciesId::Stentor, SpeciesId::Amoeba}) {
         const entt::entity old = world.player();
         const entt::entity e = world.setPlayerSpecies(s, {0, 0});
         CHECK_FALSE(world.registry().valid(old));
@@ -161,13 +161,13 @@ TEST_CASE("sandbox: forzar la reproducción usa la vía normal de cada especie")
     stepSeconds(world, run, 90.0f);
     CHECK(run.divisions() == 1);
 
-    // Rotífero: pone un huevo en vez de dividirse.
-    world.setPlayerSpecies(SpeciesId::Rotifer, {0, 0});
-    const int before = world.census().eggs;
+    // Levadura: brota una yema en vez de dividirse.
+    world.setPlayerSpecies(SpeciesId::Candida, {0, 0});
+    const int before = world.observations().buds;
     REQUIRE(world.forceReproduction(world.player()));
     for (int k = 0; k < 10; ++k)
         world.step(kDt);
-    CHECK(world.census().eggs == before + 1);
+    CHECK(world.observations().buds == before + 1);
 }
 
 TEST_CASE("sandbox: se puede spawnear cada ser del catálogo y la sesión sigue") {
@@ -186,7 +186,7 @@ TEST_CASE("sandbox: se puede spawnear cada ser del catálogo y la sesión sigue"
     CHECK(world.bacteria().size() > bacteria);
     CHECK(world.bdellovibrios().size() > 0);
     CHECK(world.cyanobacteria().filaments.size() == filaments + 2); // Anabaena y Oscillatoria
-    CHECK(world.fungi().mycelia.size() == mycelia + 4); // Saprolegnia, Zoophagus, Allomyces y liquenizante
+    CHECK(world.fungi().mycelia.size() == mycelia + 3); // Saprolegnia, Allomyces y liquenizante
     CHECK(world.plasmodia().plasmodia.size() >= 1);      // Physarum
     CHECK(world.plasmodia().flakes.size() == 1);         // copo de avena
     CHECK(world.fungi().spores.size() > 0);
@@ -214,8 +214,6 @@ TEST_CASE("sandbox: cada ser del catálogo cae en la categoría que le correspon
         {C::Amoebae, {SpeciesId::Amoeba, SpeciesId::Arcella, SpeciesId::Naegleria}},
         {C::Algae, {SpeciesId::Chlamydomonas, SpeciesId::Spirogyra, SpeciesId::Navicula, SpeciesId::Volvox,
                     SpeciesId::Pediastrum, SpeciesId::Mougeotia, SpeciesId::Zygnema, SpeciesId::Oedogonium}},
-        {C::Animals, {SpeciesId::Rotifer, SpeciesId::Philodina, SpeciesId::Hydra, SpeciesId::Nauplius,
-                      SpeciesId::Chaetonotus, SpeciesId::Rhabditis}},
         {C::Fungi, {SpeciesId::Candida}},
     };
     int listed = 0;
@@ -229,7 +227,6 @@ TEST_CASE("sandbox: cada ser del catálogo cae en la categoría que le correspon
 
     CHECK(categoryOf({BeingKind::Chytrid, SpeciesId::Paramecium}) == C::Fungi);
     CHECK(categoryOf({BeingKind::Saprolegnia, SpeciesId::Paramecium}) == C::Fungi);
-    CHECK(categoryOf({BeingKind::Zoophagus, SpeciesId::Paramecium}) == C::Fungi);
     for (BeingKind k : {BeingKind::Bacterium, BeingKind::Violaceum, BeingKind::Bdellovibrio, BeingKind::Cyanobacterium,
                         BeingKind::Oscillatoria, BeingKind::Phage})
         CHECK(categoryOf({k, SpeciesId::Paramecium}) == C::Bacteria);

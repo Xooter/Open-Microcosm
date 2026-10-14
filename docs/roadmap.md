@@ -16,15 +16,15 @@ Lo que ya existe y se mantiene; el detalle de diseño está en `AGENTS.md`.
   difusión + advección (O₂, CO₂/pH, P, N, Si, Fe, B₁₂, toxinas, autoinductor, fagos); luz con
   Beer–Lambert; temperatura, salinidad, anoxia y alcalinidad (`MediumParams`).
 - **Células:** soft-bodies XPBD sin inercia, membrana plástica de ameba, contactos, LOD de tres
-  niveles, cuerpos compuestos (colonias, filamentos, metazoos) y partículas ambientales
+  niveles, cuerpos compuestos (colonias y filamentos) y partículas ambientales
   (bacterias con run & tumble, detritos, tinta).
 - **Ciclo de vida:** metabolismo real (respiración, fermentación, fotosíntesis, Liebig con P, N,
   Si, Fe y B₁₂), mitosis física, conjugación, quistes, lisis; genoma con organelos físicos.
 - **Ecosistema:** cazadores, envolvedores, sésiles y suctorios, filtradores, raspadores,
   mixótrofos, algas (móviles, diatomeas, coloniales, filamentosas), cianobacterias con fijación
-  de N₂ y microcistina, quitridios, levaduras, *Saprolegnia*, *Zoophagus*, *Allomyces*, hongo
-  liquenizante, *Physarum*, fagos, *Bdellovibrio*, quorum sensing, rotíferos, *Hydra*, nauplios,
-  nematodo y gastrotrico. Registro de muertes y comportamientos.
+  de N₂ y microcistina, quitridios, levaduras, *Saprolegnia*, *Allomyces*, hongo liquenizante,
+  *Physarum*, fagos, *Bdellovibrio* y quorum sensing. Sin animales (se quitaron los metazoos y
+  *Zoophagus*, que solo cazaba rotíferos). Registro de muertes y comportamientos.
 - **Laboratorio:** ImGui con paneles acoplables, editor de placa (`PlateSpec`, placas guardables,
   placa vacía), catálogo, ficha, enciclopedia, herramientas (Seleccionar, Controlar, Tinta,
   Detrito, Borrar, Lisar, Apretar, Revolver, Estirar, Gotero, Spawnear), control de un ser con

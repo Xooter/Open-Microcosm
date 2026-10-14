@@ -22,7 +22,6 @@ enum class OtherOrganism : std::uint8_t {
     Cyanobacteria,
     Chytrid,
     Saprolegnia,
-    Zoophagus,
     Phage,
     Bdellovibrio,
     Allomyces,

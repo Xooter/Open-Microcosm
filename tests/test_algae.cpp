@@ -1,4 +1,4 @@
-// Algas filamentosas (Mougeotia, Zygnema, Oedogonium), Oscillatoria y el gastrotrico.
+// Algas filamentosas (Mougeotia, Zygnema, Oedogonium), y Oscillatoria.
 #include "game/world.hpp"
 
 #include <doctest/doctest.h>
@@ -15,7 +15,7 @@ WorldConfig quietWorld(std::size_t bacteria = 0) {
     config.bacteria = bacteria;
     config.detritus = 0;
     config.cyanoFilaments = 0;
-    config.saprolegnia = config.zoophagus = config.chytridClusters = 0;
+    config.saprolegnia = config.chytridClusters = 0;
     config.seed = 91;
     return config;
 }
@@ -100,18 +100,6 @@ TEST_CASE("Oscillatoria: sin heterocistos ni fijación de N₂, y la punta oscil
     MESSAGE("desvío de la punta: Oscillatoria " << swayOsc << " µm, Anabaena " << swayAna << " µm");
     CHECK(swayOsc > 3.0f * swayAna);
     CHECK(swayOsc > 2.0f);
-}
-
-TEST_CASE("el gastrotrico pone un huevo partenogenético que eclosiona") {
-    World world(quietWorld(20000));
-    world.bioTimeScale() = 600.0f;
-    const entt::entity g = world.spawnOrganism(SpeciesId::Chaetonotus, world.dish().center, speciesGenome(SpeciesId::Chaetonotus), 0);
-    world.registry().emplace<Autopilot>(g);
-    REQUIRE(world.registry().all_of<Compound>(g));
-    REQUIRE(world.forceReproduction(g));
-    steps(world, 60 * 160); // ~27 h biológicas: el huevo tarda ~24 h
-    CHECK(world.observations().eggsLaid > 0);
-    CHECK(world.observations().eggsHatched > 0);
 }
 
 TEST_CASE("Oedogonium libera zoósporas que nadan, se fijan y vuelven a ser filamento") {

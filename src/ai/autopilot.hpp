@@ -35,9 +35,7 @@ enum class Intent : std::uint8_t {
     Phototaxis,  // gira hacia el lado más iluminado
     Glide,       // diatomea: se desliza por el rafe, con inversiones
     Walk,        // hipotrico: camina sobre los cirros
-    Pause,       // parada de un caminante o saltador
-    Hop,         // nauplio: golpe de los apéndices
-    OmegaTurn,   // nematodo: giro brusco tras retroceder
+    Pause,       // parada de un caminante
 };
 
 // Componente: comportamiento de las células que no controla el jugador. Sale de los datos de

@@ -19,8 +19,6 @@ class Fluid;
 //  - Saprolegnia (oomiceto, "moho de agua"): micelio cenocítico sobre detritos; secreta enzimas
 //    que disuelven la materia orgánica cercana y absorbe lo disuelto. Cuando se le acaba la
 //    comida forma zoosporangios en las puntas, que liberan zoosporas biflageladas.
-//  - Zoophagus insidians: hifas finas con clavijas cortas y adhesivas; el rotífero que muerde
-//    una queda pegado, la hifa lo invade y lo digiere.
 //  - Allomyces (Blastocladiomycota): hifas con ramificación dicotómica (la punta se parte en dos)
 //    y zoosporas uniflageladas. Con hambre prolonga su ciclo con esporangios de resistencia
 //    (paredes gruesas, pardos) que sobreviven secos y germinan cuando vuelve la comida.
@@ -28,7 +26,7 @@ class Fluid;
 //    sus hifas buscan algas verdes (fotobionte), se pegan con haustorios y reciben su azúcar. A
 //    cambio le pasan fósforo y la protegen con metabolitos secundarios (antimicrobianos). Es
 //    ascomiceto: no tiene zoosporas, solo esporas inmóviles que arrastra el agua.
-enum class FungusKind : std::uint8_t { Chytrid, Saprolegnia, Zoophagus, Allomyces, Mycobiont, Count };
+enum class FungusKind : std::uint8_t { Chytrid, Saprolegnia, Allomyces, Mycobiont, Count };
 inline constexpr int kFungusKinds = static_cast<int>(FungusKind::Count);
 
 // A qué responde la quimiotaxis de la zoospora.
@@ -42,7 +40,6 @@ struct FungusInfo {
     SporeSense sense;
     float hyphaWidth;        // [µm] para el render y la selección
     float uptakeScale;       // absorción relativa (osmotrofia)
-    bool pegs;               // clavijas adhesivas (Zoophagus)
     bool dichotomous;        // la punta se parte en dos hifas (Allomyces)
     bool resting;            // esporangios de resistencia con hambre prolongada
     bool germinates;         // sus esporas forman micelio sobre un sustrato
@@ -80,7 +77,6 @@ struct FungiParams {
     float sporangiumHours = 1.0f;     // zoosporangio: de la punta hinchada a la liberación
     int sporesPerSporangium = 30;
     float detritusDecayBoost = 30.0f; // exoenzimas: los detritos junto a las hifas se disuelven más rápido
-    int pegSpacing = 3;               // Zoophagus: una clavija cada 3 nodos
     // Allomyces: esporangio de resistencia.
     float restingStarveFactor = 3.0f; // veces el hambre que dispara la esporulación
     float restingGerminateFood = 8.0f;// [µM] comida que lo despierta
@@ -104,7 +100,6 @@ struct Mycelium {
     std::vector<float> x, y, heading;
     std::vector<std::int32_t> parent;
     std::vector<std::uint8_t> tip;        // punta en crecimiento
-    std::vector<std::uint8_t> peg;        // Zoophagus: clavija adhesiva
     std::vector<float> sporangium;        // > 0: zoosporangio madurando [h biológicas]
     float reserves = 0.0f;                // [pmol] absorbido y aún no invertido
     float phosphorus = 0.0f;              // [pmol P]
@@ -166,7 +161,7 @@ class Fungi {
     // Absorción, crecimiento apical, ramificación, esporulación, autólisis y germinación
     // (tiempo biológico).
     void grow(const FungiEnv& env, float bioDt, std::uint64_t seed, std::uint64_t step);
-    // El hongo come una presa (Zoophagus): se suma a sus reservas.
+    // El hongo recibe alimento de afuera (el azúcar del fotobionte): se suma a sus reservas.
     void feed(std::uint32_t id, float pmol, float phosphorus);
 
   private:
@@ -188,9 +183,4 @@ struct Lichenized {
     float transferred = 0.0f; // [pmol] de azúcar cedidos al hongo
 };
 
-// Componente: célula pegada a una clavija adhesiva de Zoophagus.
-struct Trapped {
-    std::uint32_t mycelium;
-    Vec2 point; // la clavija [µm]
-};
 

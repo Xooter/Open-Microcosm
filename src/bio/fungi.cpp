@@ -9,20 +9,18 @@
 #include <cmath>
 
 const FungusInfo& fungusInfo(FungusKind kind) {
-    // name, grupo, vel. espora, sentido, ancho hifa, absorción, clavijas, dicotómica, resistencia,
-    // germina, fotobionte, extensión, color.
+    // name, grupo, vel. espora, sentido, ancho hifa, absorción, dicotómica, resistencia, germina,
+    // fotobionte, extensión, color.
     static const FungusInfo kTable[kFungusKinds] = {
-        {"Rhizophydium", "Quitridio (Chytridiomycota)", 15.0f, SporeSense::Host, 4.0f, 1.0f, false, false, false, false, false,
+        {"Rhizophydium", "Quitridio (Chytridiomycota)", 15.0f, SporeSense::Host, 4.0f, 1.0f, false, false, false, false,
          0.0f, 130, 120, 95},
-        {"Saprolegnia", "Oomiceto (moho de agua)", 80.0f, SporeSense::Food, 11.0f, 1.0f, false, false, false, true, false, 200.0f,
+        {"Saprolegnia", "Oomiceto (moho de agua)", 80.0f, SporeSense::Food, 11.0f, 1.0f, false, false, true, false, 200.0f,
          150, 146, 128},
-        {"Zoophagus", "Hongo depredador", 0.0f, SporeSense::None, 4.0f, 0.3f, true, false, false, true, false, 200.0f, 150, 146,
-         128},
         // Allomyces: hifas de ~9 µm que se bifurcan en dos; zoosporas de ~40 µm/s.
-        {"Allomyces", "Blastocladiomycota", 40.0f, SporeSense::Food, 9.0f, 1.0f, false, true, true, true, false, 150.0f, 176, 150,
+        {"Allomyces", "Blastocladiomycota", 40.0f, SporeSense::Food, 9.0f, 1.0f, true, true, true, false, 150.0f, 176, 150,
          96},
         // Liquen: crecimiento muy lento (los líquenes crecen mm por año) y casi sin absorción propia.
-        {"Hongo liquenizante", "Ascomiceto (micobionte)", 0.0f, SporeSense::None, 5.0f, 0.12f, false, false, false, true, true,
+        {"Hongo liquenizante", "Ascomiceto (micobionte)", 0.0f, SporeSense::None, 5.0f, 0.12f, false, false, true, true,
          25.0f, 120, 132, 104},
     };
     return kTable[static_cast<int>(kind)];
@@ -78,7 +76,6 @@ std::uint32_t Fungi::spawnMycelium(FungusKind kind, Vec2 at, float heading, floa
     m.heading.push_back(heading);
     m.parent.push_back(-1);
     m.tip.push_back(1);
-    m.peg.push_back(0);
     m.sporangium.push_back(0.0f);
     m.reserves = reserves;
     m.phosphorus = phosphorus;
@@ -202,7 +199,6 @@ bool removeLeaf(Mycelium& m, Vec2& where) {
         m.heading[leaf] = m.heading[last];
         m.parent[leaf] = m.parent[last];
         m.tip[leaf] = m.tip[last];
-        m.peg[leaf] = m.peg[last];
         m.sporangium[leaf] = m.sporangium[last];
         for (std::int32_t& p : m.parent)
             if (p == static_cast<std::int32_t>(last))
@@ -213,18 +209,16 @@ bool removeLeaf(Mycelium& m, Vec2& where) {
     m.heading.pop_back();
     m.parent.pop_back();
     m.tip.pop_back();
-    m.peg.pop_back();
     m.sporangium.pop_back();
     return true;
 }
 
-void addNode(Mycelium& m, std::size_t from, float heading, float spacing, bool peg) {
+void addNode(Mycelium& m, std::size_t from, float heading, float spacing) {
     m.x.push_back(m.x[from] + std::cos(heading) * spacing);
     m.y.push_back(m.y[from] + std::sin(heading) * spacing);
     m.heading.push_back(heading);
     m.parent.push_back(static_cast<std::int32_t>(from));
-    m.tip.push_back(peg ? 0 : 1);
-    m.peg.push_back(peg ? 1 : 0);
+    m.tip.push_back(1);
     m.sporangium.push_back(0.0f);
 }
 
@@ -243,7 +237,7 @@ void Fungi::grow(const FungiEnv& env, float bioDt, std::uint64_t seed, std::uint
         const std::size_t n = m.x.size();
         const float biomass = static_cast<float>(n) * p.nodePmol;
 
-        // Absorción por toda la hifa (osmotrofia). Zoophagus vive sobre todo de sus presas.
+        // Absorción por toda la hifa (osmotrofia).
         const FungusInfo& info = fungusInfo(m.kind);
         const float uptakeScale = info.uptakeScale;
         float absorbed = 0.0f;
@@ -294,24 +288,16 @@ void Fungi::grow(const FungiEnv& env, float bioDt, std::uint64_t seed, std::uint
                     break; // sin fósforo no hay hifa nueva
                 m.reserves -= nodeCost;
                 m.tip[k] = 0;
-                // Zoophagus: clavijas laterales cortas y adhesivas cada pocos nodos.
-                const bool wantPeg = info.pegs && (m.x.size() % static_cast<std::size_t>(p.pegSpacing)) == 0;
                 // Ramificación dicotómica (Allomyces): la punta se parte en dos hifas simétricas.
                 const bool fork = info.dichotomous && rng.uniform() < 0.35f;
                 const float side = rng.uniform() < 0.5f ? -1.0f : 1.0f;
-                addNode(m, k, fork ? h + 0.35f * side : h, p.hyphaSpacing, false);
+                addNode(m, k, fork ? h + 0.35f * side : h, p.hyphaSpacing);
                 ++totalNodes;
-                if (wantPeg && m.reserves >= nodeCost) {
-                    if (!inWater(h + side * 1.4f, 0.6f * p.hyphaSpacing))
-                        continue;
-                    addNode(m, k, h + side * 1.4f, 0.6f * p.hyphaSpacing, true);
-                    m.reserves -= 0.3f * nodeCost;
-                    ++totalNodes;
-                } else if ((fork || rng.uniform() < p.branchProbability) && m.reserves >= nodeCost) {
+                if ((fork || rng.uniform() < p.branchProbability) && m.reserves >= nodeCost) {
                     const float branch = fork ? h - 0.35f * side : h + side * rng.uniform(0.5f, 1.0f);
                     if (!inWater(branch, p.hyphaSpacing))
                         continue;
-                    addNode(m, k, branch, p.hyphaSpacing, false);
+                    addNode(m, k, branch, p.hyphaSpacing);
                     m.reserves -= nodeCost;
                     ++totalNodes;
                 }

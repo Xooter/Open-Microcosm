@@ -9,7 +9,7 @@
 #include <cstdint>
 #include <vector>
 
-// Unión de adhesión entre membranas de cuerpos distintos (filamentos, colonias, metazoos).
+// Unión de adhesión entre membranas de cuerpos distintos (filamentos y colonias).
 struct LinkConstraint {
     std::uint32_t a, b; // slots de membrana
     float rest;         // [µm]

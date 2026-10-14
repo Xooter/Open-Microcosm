@@ -14,7 +14,7 @@ WorldConfig quietWorld() {
     config.bacteria = 0;
     config.detritus = 0;
     config.cyanoFilaments = 0;
-    config.saprolegnia = config.zoophagus = config.chytridClusters = 0;
+    config.saprolegnia = config.chytridClusters = 0;
     config.medium.detritusSpawnRate = 0.0f;
     config.seed = 77;
     return config;

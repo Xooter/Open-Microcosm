@@ -21,7 +21,7 @@ void StainPreview::build() {
     c.bacteria = 0;
     c.detritus = 0;
     c.cyanoFilaments = c.oscillatoriaFilaments = 0;
-    c.saprolegnia = c.zoophagus = c.chytridClusters = 0;
+    c.saprolegnia = c.chytridClusters = 0;
     c.seed = 20241013;
     c.medium.detritusSpawnRate = 0.0f;
     c.medium.dustRate = 0.0f;

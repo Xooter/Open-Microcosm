@@ -211,9 +211,6 @@ void writeSpecies(Json& j, SpeciesId id) {
     j.quantity("temperatura_max", s.tMax, "°C");
     j.quantity("salinidad_max", s.salinityMax, "PSU");
     j.boolean("anaerobia", s.anaerobe);
-    j.boolean("multicelular", s.multicellular);
-    j.number("mantenimiento_relativo", s.maintenanceScale);
-    j.quantity("incubacion_del_huevo", s.eggHours, "h");
     j.quantity("ciclosis", s.cyclosis, "µm/s");
     j.string("reserva", storageName(chem.storage));
     j.string("pared", wallName(chem.wall));

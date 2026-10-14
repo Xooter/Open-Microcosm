@@ -44,12 +44,7 @@ constexpr Color kColonyCell = {80, 150, 60, 210};
 constexpr Color kChytrid = {150, 140, 110, 230};      // esporangio de quitridio (pared refringente)
 constexpr Color kRhizoid = {120, 110, 90, 140};
 constexpr Color kYeastWall = {150, 140, 110, 220};
-constexpr Color kLorica = {120, 112, 84, 230};        // lórica del rotífero (cutícula)
-constexpr Color kMastax = {90, 80, 60, 220};
-constexpr Color kTentacle = {170, 140, 108, 200};
-constexpr Color kNematocyst = {110, 90, 70, 220};
-constexpr Color kNaupliarEye = {190, 50, 40, 230};
-constexpr Color kAppendage = {120, 110, 84, 210};
+constexpr Color kLorica = {120, 112, 84, 230};        // pared engrosada (capuchones de Oedogonium)
 constexpr float kRimMicrometers = 5.0f;
 constexpr float kPi = 3.14159265f;
 
@@ -440,105 +435,6 @@ void drawReticulatePlastid(const RingBody& body, int caps, float px) {
     }
 }
 
-// Gastrotrico (Chaetonotus): escamas con espinas que apuntan hacia atrás sobre el tronco.
-void drawGastrotrichTrunk(const BodyParticles& bp, const RingBody& body, float px) {
-    const Frame f = frameOf(body);
-    const std::size_t n = body.ring.size();
-    for (std::size_t i = 0; i < n; i += 3) {
-        const Vec2 b = ringPos(bp, body, i);
-        const Vec2 o = outwardAt(bp, body, i);
-        Vec2 d = o * 0.5f - f.h;
-        d = d * (1.0f / std::max(1e-3f, length(d)));
-        DrawLineEx(toRay(b), toRay(b + d * 7.0f), std::max(0.5f, 0.8f * px), kLorica);
-    }
-    // Faringe muscular: el tubo que succiona, en el tercio anterior.
-    DrawLineEx(toRay(f.c + f.h * (0.95f * f.half)), toRay(f.c + f.h * (0.2f * f.half)), std::max(2.0f, 0.35f * f.width), Fade(kMastax, 0.6f));
-}
-
-// Gastrotrico: cabeza con penachos de cilios a los costados.
-void drawGastrotrichHead(const BodyParticles& bp, const RingBody& body, Vec2 forward, float time, float px) {
-    const std::size_t n = body.ring.size();
-    for (std::size_t i = 0; i < n; ++i) {
-        const Vec2 b = ringPos(bp, body, i);
-        const float ahead = dot(b - body.centroid, forward);
-        if (ahead < -0.2f * length(b - body.centroid))
-            continue;
-        const Vec2 o = outwardAt(bp, body, i);
-        const float sw = 0.5f * std::sin(0.5f * static_cast<float>(i) - 6.2831853f * 4.0f * time);
-        DrawLineEx(toRay(b), toRay(b + rotate(o, std::cos(sw), std::sin(sw)) * 5.0f), std::max(0.4f, 0.8f * px), kCilia);
-    }
-}
-
-void drawOrientedEllipse(Vec2 c, Vec2 h, float a, float b, Color color);
-
-// Nematodo: se dibuja sobre la línea media REAL de la membrana (los puntos opuestos del anillo),
-// no sobre el eje objetivo de la onda: la membrana va un poco atrás cuando nada rápido y la
-// faringe y el intestino tienen que quedar adentro del contorno. Cutícula anillada, faringe con
-// el bulbo medio y el terminal (con la válvula que tritura bacterias) e intestino granuloso.
-void drawNematode(const BodyParticles& bp, const RingBody& body, float px) {
-    const std::size_t n = body.ring.size();
-    const std::size_t half = n / 2;
-    if (half < 4)
-        return;
-    // Índice 0 del anillo = la cabeza (+x del cuerpo); n/2 = la cola; i y n−i son opuestos.
-    static std::vector<Vec2> mid;       // línea media de la cabeza a la cola
-    static std::vector<float> cum, wid; // largo acumulado y semiancho local
-    mid.resize(half + 1);
-    cum.resize(half + 1);
-    wid.resize(half + 1);
-    for (std::size_t i = 0; i <= half; ++i) {
-        const Vec2 a = ringPos(bp, body, i), b = ringPos(bp, body, (n - i) % n);
-        mid[i] = (a + b) * 0.5f;
-        wid[i] = 0.5f * length(a - b);
-        cum[i] = i == 0 ? 0.0f : cum[i - 1] + length(mid[i] - mid[i - 1]);
-    }
-    const float total = std::max(1e-3f, cum[half]);
-    // Punto de la línea media a la fracción `f` del largo (0 = cabeza), con su tangente y semiancho.
-    auto at = [&](float f, Vec2* tangent, float* width) {
-        const float target = std::clamp(f, 0.0f, 1.0f) * total;
-        std::size_t j = 1;
-        while (j < half && cum[j] < target)
-            ++j;
-        const float seg = std::max(1e-4f, cum[j] - cum[j - 1]);
-        const float t = std::clamp((target - cum[j - 1]) / seg, 0.0f, 1.0f);
-        if (tangent) {
-            const Vec2 d = mid[j] - mid[j - 1];
-            *tangent = d * (1.0f / std::max(1e-3f, length(d)));
-        }
-        if (width)
-            *width = wid[j - 1] + (wid[j] - wid[j - 1]) * t;
-        return mid[j - 1] + (mid[j] - mid[j - 1]) * t;
-    };
-    Vec2 t;
-    float w = 0.0f;
-    for (float f = 0.04f; f < 0.97f; f += 0.018f) { // anillos de la cutícula
-        const Vec2 p = at(f, &t, &w);
-        const Vec2 side = {-t.y, t.x};
-        DrawLineEx(toRay(p - side * (0.92f * w)), toRay(p + side * (0.92f * w)), std::max(0.3f, 0.5f * px), Fade(kLorica, 0.3f));
-    }
-    // Faringe: tubo muscular desde la boca hasta el bulbo terminal.
-    float w0 = 0.0f;
-    Vec2 prev = at(0.0f, nullptr, &w0);
-    for (float f = 0.02f; f <= 0.24f; f += 0.02f) {
-        const Vec2 p = at(f, nullptr, &w);
-        DrawLineEx(toRay(prev), toRay(p), std::max(1.2f, 0.5f * w), Fade(kMastax, 0.55f));
-        prev = p;
-    }
-    const Vec2 bulb1 = at(0.12f, &t, &w);
-    drawOrientedEllipse(bulb1, t, 0.045f * total, 0.55f * w, Fade(kMastax, 0.45f)); // bulbo medio
-    const Vec2 bulb2 = at(0.23f, &t, &w);
-    drawOrientedEllipse(bulb2, t, 0.035f * total, 0.7f * w, Fade(kMastax, 0.55f));  // bulbo terminal
-    DrawCircleV(toRay(bulb2), std::max(1.0f, 0.3f * w), kMastax);                   // válvula trituradora
-    // Intestino: células con gránulos de reserva, a los dos lados de la luz.
-    for (float f = 0.28f; f < 0.86f; f += 0.025f) {
-        const Vec2 p = at(f, &t, &w);
-        const Vec2 side = {-t.y, t.x};
-        const float o = (static_cast<int>(f * 400.0f) % 2 ? 0.45f : -0.45f) * w;
-        DrawCircleV(toRay(p + side * o), std::max(0.8f, 0.25f * w), Fade(kGranule, 0.6f));
-    }
-    DrawCircleV(toRay(at(0.0f, nullptr, nullptr)), std::max(0.8f, 0.2f * w0), kMouth); // estoma
-}
-
 // Diatomea pennada: frústula de sílice con rafe central y estrías.
 void drawFrustule(const RingBody& body, float px) {
     const Frame f = frameOf(body);
@@ -618,141 +514,6 @@ void drawChytrids(const RingBody& body, const ChytridInfection& inf, float px) {
     }
 }
 
-// Elipse orientada según el cuerpo (DrawEllipse de raylib solo dibuja alineada a los ejes).
-void drawOrientedEllipse(Vec2 c, Vec2 h, float a, float b, Color color) {
-    constexpr int kSegments = 32;
-    const Vec2 side = {-h.y, h.x};
-    Vec2 prev = c + h * a;
-    for (int k = 1; k <= kSegments; ++k) {
-        const float t = 6.2831853f * static_cast<float>(k) / kSegments;
-        const Vec2 p = c + h * (a * std::cos(t)) + side * (b * std::sin(t));
-        // Los dos sentidos de giro: rlgl descarta triángulos según su orientación.
-        DrawTriangle(toRay(c), toRay(prev), toRay(p), color);
-        DrawTriangle(toRay(c), toRay(p), toRay(prev), color);
-        prev = p;
-    }
-}
-
-// Rotífero, tronco: lórica gruesa con espinas anteriores, mástax que mastica y estómago.
-void drawRotiferTrunk(const BodyParticles& bp, const RingBody& body, float time, float px) {
-    const Frame f = frameOf(body);
-    const std::size_t n = body.ring.size();
-    for (std::size_t i = 0; i < n; ++i)
-        DrawLineEx(toRay(ringPos(bp, body, i)), toRay(ringPos(bp, body, i + 1)), std::max(1.8f, 2.2f * px), kLorica);
-    for (int k = -3; k <= 3; ++k) { // espinas del borde anterior de la lórica
-        if (k == 0)
-            continue;
-        const Vec2 b = f.c + f.h * (0.92f * f.half) + f.side * (0.16f * f.width * static_cast<float>(k));
-        const Vec2 tip = b + f.h * (std::abs(k) == 3 ? 18.0f : 10.0f) + f.side * (2.0f * static_cast<float>(k));
-        DrawLineEx(toRay(b), toRay(tip), std::max(1.2f, 1.5f * px), kLorica);
-    }
-    // Mástax: dos mandíbulas (trophi) que se abren y cierran ~2 veces por segundo.
-    const Vec2 m = f.c + f.h * (0.45f * f.half);
-    const float open = 0.35f + 0.3f * std::sin(6.2831853f * 2.0f * time);
-    for (float s : {-1.0f, 1.0f}) {
-        const Vec2 j = m + f.side * (s * 4.0f);
-        const Vec2 d = rotate(f.h, std::cos(s * open), std::sin(s * open));
-        DrawLineEx(toRay(j - d * 6.0f), toRay(j + d * 7.0f), std::max(2.0f, 2.5f * px), kMastax);
-    }
-    DrawCircleV(toRay(f.c - f.h * (0.15f * f.half)), 0.35f * f.width, Fade(kMastax, 0.25f)); // estómago
-}
-
-// Bdeloideo (Philodina): sin lórica, cuerpo en anillos telescópicos, dos ojos rojos y mástax.
-void drawBdelloidTrunk(const RingBody& body, float time, float px) {
-    const Frame f = frameOf(body);
-    for (int k = -3; k <= 3; ++k) { // pliegues de la cutícula
-        const Vec2 c = f.c + f.h * (0.25f * f.half * static_cast<float>(k));
-        const float w = f.width * std::sqrt(std::max(0.0f, 1.0f - 0.0625f * static_cast<float>(k * k)));
-        DrawLineEx(toRay(c - f.side * w), toRay(c + f.side * w), std::max(0.6f, px), Fade(kLorica, 0.5f));
-    }
-    for (float s : {-1.0f, 1.0f})
-        DrawCircleV(toRay(f.c + f.h * (0.85f * f.half) + f.side * (0.25f * f.width * s)), std::max(2.0f, 2.5f * px), kNaupliarEye);
-    const Vec2 m = f.c + f.h * (0.45f * f.half);
-    const float open = 0.35f + 0.3f * std::sin(6.2831853f * 2.0f * time);
-    for (float s : {-1.0f, 1.0f}) {
-        const Vec2 d = rotate(f.h, std::cos(s * open), std::sin(s * open));
-        DrawLineEx(toRay(m + f.side * (s * 3.0f) - d * 5.0f), toRay(m + f.side * (s * 3.0f) + d * 6.0f), std::max(2.0f, 2.5f * px), kMastax);
-    }
-}
-
-// Rotífero, corona: dos ruedas de cilios que parecen girar (ondas metacrónicas).
-void drawCorona(const BodyParticles& bp, const RingBody& body, Vec2 forward, float time, float px) {
-    const std::size_t n = body.ring.size();
-    for (std::size_t i = 0; i < n; ++i) {
-        const Vec2 b = ringPos(bp, body, i);
-        if (dot(b - body.centroid, forward) < 0.0f)
-            continue;
-        const Vec2 o = outwardAt(bp, body, i);
-        const float phase = 0.6f * static_cast<float>(i) - 6.2831853f * 3.0f * time;
-        const float sw = 0.7f * std::sin(phase);
-        DrawLineEx(toRay(b), toRay(b + rotate(o, std::cos(sw), std::sin(sw)) * 9.0f), std::max(0.5f, px), kCilia);
-    }
-}
-
-// Rotífero, pie: dos dedos con glándulas adhesivas.
-void drawFoot(const RingBody& body, Vec2 backward, float px) {
-    const Frame f = frameOf(body);
-    const Vec2 h = dot(f.h, backward) >= 0.0f ? f.h : f.h * -1.0f;
-    const Vec2 tip = f.c + h * f.half;
-    for (float s : {-1.0f, 1.0f})
-        DrawLineEx(toRay(tip), toRay(tip + rotate(h, std::cos(0.35f * s), std::sin(0.35f * s)) * 12.0f),
-                   std::max(1.5f, 2.0f * px), kLorica);
-}
-
-// Huevo de rotífero: cáscara y el embrión que se va formando.
-void drawEgg(const RingBody& body, const Egg& egg, float px) {
-    const Frame f = frameOf(body);
-    const float hatch = std::clamp(1.0f - egg.hoursLeft / std::max(1.0f, speciesInfo(egg.species).eggHours), 0.0f, 1.0f);
-    drawOrientedEllipse(f.c, f.h, 0.6f * f.half, 0.6f * f.width, Fade(kMastax, 0.15f + 0.3f * hatch));
-    if (hatch > 0.6f) // ya se ve el mástax del embrión
-        DrawCircleV(toRay(f.c + f.h * (0.2f * f.half)), std::max(1.5f, 2.0f * px), kMastax);
-}
-
-// Hydra: tentáculos con baterías de nematocistos; hipostoma (boca) en el polo anterior.
-void drawHydra(const RingBody& body, const Tentacles& ten, float px) {
-    const Frame f = frameOf(body);
-    for (const Tentacle& arm : ten.arms) {
-        for (std::size_t j = 0; j + 1 < arm.nodes.size(); ++j) {
-            const float t = static_cast<float>(j) / static_cast<float>(arm.nodes.size());
-            DrawLineEx(toRay(arm.nodes[j]), toRay(arm.nodes[j + 1]), std::max(1.0f, 7.0f * (1.0f - 0.7f * t)), kTentacle);
-            if (j % 2 == 1)
-                DrawCircleV(toRay(arm.nodes[j]), std::max(1.0f, 2.2f * (1.0f - 0.5f * t)), kNematocyst);
-        }
-    }
-    // Gastrodermis: la pared interna del tubo digestivo.
-    drawOrientedEllipse(f.c, f.h, 0.8f * f.half, 0.45f * f.width, Fade(kMastax, 0.12f));
-    DrawCircleV(toRay(f.c + f.h * (0.95f * f.half)), std::max(3.0f, 5.0f * px), kMouth);
-}
-
-// Nauplio: tres pares de apéndices articulados con setas y el ojo naupliar rojo.
-void drawNauplius(const RingBody& body, const Locomotion* loco, float time, float px) {
-    const Frame f = frameOf(body);
-    const bool stroke = loco && loco->forward > 0.5f;
-    for (int k = 0; k < 3; ++k) {
-        const float along = 0.5f - 0.3f * static_cast<float>(k);
-        const float len = (k == 0 ? 0.9f : 1.2f) * f.width;
-        for (float s : {-1.0f, 1.0f}) {
-            // Sale del borde del cuerpo; en el golpe barre hacia atrás, en la pausa queda abierto.
-            const Vec2 base = f.c + f.h * (along * f.half) + f.side * (s * 0.92f * f.width);
-            const float a0 = stroke ? s * (2.2f + 0.15f * std::sin(40.0f * time)) : s * (1.1f + 0.1f * static_cast<float>(k));
-            Vec2 p = base;
-            float a = a0;
-            constexpr int kJoints = 4;
-            for (int q = 0; q < kJoints; ++q) {
-                const Vec2 d = rotate(f.h, std::cos(a), std::sin(a));
-                const Vec2 next = p + d * (len / kJoints);
-                DrawLineEx(toRay(p), toRay(next), std::max(1.2f, (3.5f - 0.7f * static_cast<float>(q)) * std::max(1.0f, px)), kAppendage);
-                // Setas: plumosas, al final de cada artejo.
-                DrawLineEx(toRay(next), toRay(next + rotate(d, std::cos(s * 0.9f), std::sin(s * 0.9f)) * 9.0f),
-                           std::max(0.4f, 0.6f * px), kAppendage);
-                p = next;
-                a += s * 0.25f; // se curva hacia atrás
-            }
-        }
-    }
-    DrawCircleV(toRay(f.c + f.h * (0.75f * f.half)), std::max(3.0f, 0.1f * f.width), kNaupliarEye);
-}
-
 // Levadura en gemación: la yema crece en un polo hasta separarse.
 void drawBud(const RingBody& body, float growth, float px) {
     const Frame f = frameOf(body);
@@ -820,46 +581,10 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             for (std::size_t i = 0; i < n; ++i)
                 DrawLineEx(toRay(body.poly[i]), toRay(body.poly[(i + 1) % n]), membraneWidth, kMembrane);
 
-            const Segment* segment = reg.try_get<Segment>(e);
-            const Egg* egg = reg.try_get<Egg>(e);
-            SpeciesId sid = species ? species->id : SpeciesId::Paramecium;
-            if (segment && reg.valid(segment->organism) && reg.all_of<Species>(segment->organism))
-                sid = reg.get<Species>(segment->organism).id;
-            const bool metazoan = segment || egg || speciesInfo(sid).multicellular;
-            if (egg) {
-                drawEgg(body, *egg, px);
-            } else if (segment) {
-                // Corona (la primera parte) o pie, según de qué lado del tronco esté.
-                const Compound* comp = reg.valid(segment->organism) ? reg.try_get<Compound>(segment->organism) : nullptr;
-                const Vec2 trunk = reg.valid(segment->organism) && reg.all_of<RingBody>(segment->organism)
-                                       ? reg.get<RingBody>(segment->organism).centroid
-                                       : body.centroid;
-                Vec2 away = body.centroid - trunk;
-                away = away * (1.0f / std::max(1e-3f, length(away)));
-                if (comp && !comp->parts.empty() && comp->parts[0] == e) {
-                    if (sid == SpeciesId::Chaetonotus)
-                        drawGastrotrichHead(bp, body, away, time, px);
-                    else
-                        drawCorona(bp, body, away, time, px);
-                } else {
-                    drawFoot(body, away, px); // pie con dedos del rotífero o furca del gastrotrico
-                }
-            } else if (sid == SpeciesId::Rotifer) {
-                drawRotiferTrunk(bp, body, time, px);
-            } else if (sid == SpeciesId::Philodina) {
-                drawBdelloidTrunk(body, time, px);
-            } else if (sid == SpeciesId::Chaetonotus) {
-                drawGastrotrichTrunk(bp, body, px);
-            } else if (reg.all_of<Undulation>(e)) {
-                drawNematode(bp, body, px);
-            } else if (loco && sid == SpeciesId::Trichonympha) {
+            const SpeciesId sid = species ? species->id : SpeciesId::Paramecium;
+            if (loco && sid == SpeciesId::Trichonympha) {
                 drawCilia(bp, body, time, px, CiliaPattern::Rostrum, 2.4f); // miles de flagelos
                 drawCilia(bp, body, time, px, CiliaPattern::Rostrum, 1.5f);
-            } else if (sid == SpeciesId::Hydra) {
-                if (const Tentacles* ten = reg.try_get<Tentacles>(e))
-                    drawHydra(body, *ten, px);
-            } else if (sid == SpeciesId::Nauplius) {
-                drawNauplius(body, loco, time, px);
             } else if (cyst) { // quiste: pared gruesa y sin apéndices
                 for (std::size_t i = 0; i < n; ++i)
                     DrawLineEx(toRay(body.poly[i]), toRay(body.poly[(i + 1) % n]), std::max(2.5f, 3.0f * px), kCystWall);
@@ -944,13 +669,13 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 const Vec2 in = outwardAt(bp, body, loco->mouthRing) * -1.0f;
                 DrawCircleV(toRay(m + in * 2.5f), 2.5f, kMouth);
             }
-            if (!cyst && !metazoan && loco && loco->type == LocomotionType::Flagellum && sid != SpeciesId::Chlamydomonas &&
+            if (!cyst && loco && loco->type == LocomotionType::Flagellum && sid != SpeciesId::Chlamydomonas &&
                 sid != SpeciesId::Volvox && sid != SpeciesId::Trichonympha && sid != SpeciesId::Oedogonium)
                 drawFlagellum(bp, body, *loco, time, px);
 
             // Colonias (Volvox, Pediastrum): el interior es matriz gelatinosa, sin anatomía de una
             // sola célula.
-            const bool colony = sid == SpeciesId::Volvox || sid == SpeciesId::Pediastrum || metazoan;
+            const bool colony = sid == SpeciesId::Volvox || sid == SpeciesId::Pediastrum;
             // Gránulos y organelos del citoplasma, por tipo.
             for (std::size_t k = body.organelleCount; k < body.interior.size() && !colony; ++k) {
                 const std::uint32_t s = body.interior[k];
@@ -1093,8 +818,7 @@ void CellRenderer::drawFluorescence(const World& world, const Camera2D&, Rectang
     for (const auto [e, body, anatomy] : reg.view<RingBody, CellAnatomy>().each()) {
         const Species* species = reg.try_get<Species>(e);
         const SpeciesId sid = species ? species->id : SpeciesId::Paramecium;
-        if (reg.all_of<Segment>(e) || reg.all_of<Egg>(e) || speciesInfo(sid).multicellular || sid == SpeciesId::Volvox ||
-            sid == SpeciesId::Pediastrum)
+        if (sid == SpeciesId::Volvox || sid == SpeciesId::Pediastrum)
             continue;
         const Dividing* dividing = reg.try_get<Dividing>(e);
         forEachImage(world, body, view, [&] {

@@ -39,7 +39,7 @@ RegionStats quantifyRegion(const World& world, const std::vector<Vec2>& polygon)
     // Células: los mismos individuos que cuenta el censo.
     const entt::registry& reg = world.registry();
     for (auto [e, body] : reg.view<RingBody>().each()) {
-        if (reg.any_of<Rock, Segment, Egg>(e) || !inside(body.centroid))
+        if (reg.all_of<Rock>(e) || !inside(body.centroid))
             continue;
         ++s.cells;
         if (const Species* sp = reg.try_get<Species>(e))

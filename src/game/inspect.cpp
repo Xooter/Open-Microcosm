@@ -63,14 +63,11 @@ const char* locomotionText(LocomotionType t) {
     case LocomotionType::Cilia: return "cilios";
     case LocomotionType::Flagellum: return "flagelo";
     case LocomotionType::Pseudopod: return "pseudopodos";
-    case LocomotionType::Undulation: return "ondulacion del cuerpo";
     }
     return "";
 }
 
 const char* kindName(const SpeciesInfo& info) {
-    if (info.multicellular)
-        return "Animal pluricelular";
     if (info.filament)
         return "Alga filamentosa";
     if (info.budding && info.feeding == FeedingMode::Osmotroph)
@@ -85,7 +82,6 @@ const char* kindName(const SpeciesInfo& info) {
     case LocomotionType::Cilia: return "Ciliado";
     case LocomotionType::Flagellum: return "Flagelado";
     case LocomotionType::Pseudopod: return "Ameba";
-    case LocomotionType::Undulation: return "Nematodo";
     }
     return "";
 }
@@ -99,7 +95,6 @@ const char* intentText(Intent i, LocomotionType type, const SpeciesInfo& info) {
                                      : "nada con giros al azar";
         case LocomotionType::Flagellum: return "nada hacia objetivos que cambian al azar";
         case LocomotionType::Pseudopod: return "extiende pseudopodos en direcciones al azar";
-        case LocomotionType::Undulation: return "ondula el cuerpo y cambia de rumbo de a poco";
         }
         return "deambula";
     case Intent::Chase: return "persigue a una presa que detecta";
@@ -111,8 +106,6 @@ const char* intentText(Intent i, LocomotionType type, const SpeciesInfo& info) {
     case Intent::Glide: return "se desliza por el rafe, con inversiones de sentido";
     case Intent::Walk: return "camina sobre los cirros";
     case Intent::Pause: return "parada brusca";
-    case Intent::Hop: return "salto: golpe de los apendices";
-    case Intent::OmegaTurn: return "giro brusco (omega) despues de retroceder";
     }
     return "";
 }
@@ -120,8 +113,6 @@ const char* intentText(Intent i, LocomotionType type, const SpeciesInfo& info) {
 SpeciesId speciesOf(const entt::registry& reg, entt::entity e) {
     if (const Species* sp = reg.try_get<Species>(e))
         return sp->id;
-    if (const Egg* egg = reg.try_get<Egg>(e))
-        return egg->species;
     if (const Locomotion* l = reg.try_get<Locomotion>(e))
         return playerSpecies(l->type);
     return SpeciesId::Paramecium;
@@ -156,30 +147,10 @@ Inspection inspectGone(const World& w, entt::entity e) {
     return ins;
 }
 
-Inspection inspectEgg(const World& w, entt::entity e, const Egg& egg) {
-    Inspection ins;
-    ins.valid = ins.live = true;
-    ins.entity = e;
-    const RingBody& body = w.registry().get<RingBody>(e);
-    ins.at = body.centroid;
-    ins.radius = 0.5f * length(body.aabbMax - body.aabbMin) + 4.0f;
-    const SpeciesInfo& info = speciesInfo(egg.species);
-    ins.title = fmt("Huevo de %s", info.name);
-    ins.subtitle = "Huevo partenogenetico";
-    ins.blurb = "Sin macho: la hembra pone un huevo diploide que lleva pegado a la caparazon hasta que eclosiona.";
-    ins.headline = fmt("eclosiona en %.1f h bio", egg.hoursLeft);
-    InspectSection& s = section(ins, "Estado");
-    add(s, "", fmt("eclosiona en %.1f h biologicas (el embrion se va formando)", egg.hoursLeft));
-    add(s, "Generacion", fmt("%u", egg.generation));
-    return ins;
-}
-
 Inspection inspectCell(const World& w, entt::entity e) {
     const entt::registry& reg = w.registry();
     if (!reg.valid(e) || !reg.all_of<RingBody>(e))
         return inspectGone(w, e);
-    if (const Egg* egg = reg.try_get<Egg>(e))
-        return inspectEgg(w, e, *egg);
 
     Inspection ins;
     ins.valid = ins.live = true;
@@ -192,7 +163,6 @@ Inspection inspectCell(const World& w, entt::entity e) {
     const Digestion* dig = reg.try_get<Digestion>(e);
     const Heredity* her = reg.try_get<Heredity>(e);
     const Lineage* lin = reg.try_get<Lineage>(e);
-    const Undulation* und = reg.try_get<Undulation>(e);
 
     ins.at = body.centroid;
     ins.radius = 0.5f * std::max(body.aabbMax.x - body.aabbMin.x, body.aabbMax.y - body.aabbMin.y) + 4.0f;
@@ -220,10 +190,6 @@ Inspection inspectCell(const World& w, entt::entity e) {
         now("envolviendo una presa: la membrana avanza por los labios de la copa");
     if (reg.all_of<Captured>(e))
         now("sujeta por los tentaculos de un suctorio, que le drena biomasa");
-    if (reg.all_of<Stung>(e))
-        now("paralizada por los nematocistos de Hydra");
-    if (reg.all_of<Trapped>(e))
-        now("pegada a una clavija de Zoophagus: sera digerida");
     if (const ChytridInfection* inf = reg.try_get<ChytridInfection>(e))
         now(fmt("infectada por quitridios: %zu esporangios sobre la pared (%.1f h bio)", inf->siteAngle.size(), inf->ageHours));
     if (const Telotroch* tel = reg.try_get<Telotroch>(e))
@@ -256,8 +222,6 @@ Inspection inspectCell(const World& w, entt::entity e) {
                                                            : "inmovil, sostenida por el tallo";
         else if (const Autopilot* pilot = reg.try_get<Autopilot>(e); pilot && loco)
             move = intentText(pilot->intent, loco->type, info);
-        else if (reg.all_of<Segment>(e))
-            move = "parte de un cuerpo compuesto";
         else
             move = "sin movimiento propio";
         add(s, "Movimiento", move);
@@ -278,8 +242,7 @@ Inspection inspectCell(const World& w, entt::entity e) {
             add(s, "Defensa", "coraza gruesa: no se la puede fagocitar");
         else if (info.frustule)
             add(s, "Defensa", "frustula de silice: cuesta romperla");
-        const char* repro = info.eggHours > 0.0f         ? "pone huevos sin macho (partenogenesis)"
-                            : info.budding              ? "gemacion: una yema crece y se separa"
+        const char* repro = info.budding                ? "gemacion: una yema crece y se separa"
                             : info.colonyDaughters > 0  ? "libera colonias hijas"
                             : info.filament             ? "division con tabique y fragmentacion del filamento"
                             : info.fissions > 1         ? "palintomia: se divide en 4 hijas"
@@ -302,9 +265,7 @@ Inspection inspectCell(const World& w, entt::entity e) {
         if (meta->photosynthetic)
             add(s, "Luz local", fmt("%.0f%% (fotosintetiza)", 100.0f * meta->light));
         const float birth = meta->targetBirthBiomass > 0.0f ? meta->targetBirthBiomass : meta->birthBiomass;
-        const float need = info.eggHours > 0.0f ? 1.4f * birth
-                           : meta->pendingFissions > 0 ? 1.8f * birth
-                                                       : static_cast<float>(1 << meta->fissions) * birth;
+        const float need = meta->pendingFissions > 0 ? 1.8f * birth : static_cast<float>(1 << meta->fissions) * birth;
         add(s, "Crecimiento", fmt("%.0f%% de la biomasa para reproducirse", 100.0f * std::min(1.0f, meta->biomass / std::max(1e-6f, need))));
         const float cost = isPlayer ? w.metabolismParams().playerDivisionCost : w.metabolismParams().npcDivisionCost;
         add(s, "Reservas", fmt("%.0f%% de la biomasa (reproducirse pide %.0f%%)",
@@ -331,17 +292,9 @@ Inspection inspectCell(const World& w, entt::entity e) {
             half = std::max(half, std::abs(q.x));
             width = std::max(width, std::abs(q.y));
         }
-        if (und)
-            half = 0.5f * und->length;
         add(s, "Tamano", fmt("%.0f x %.0f um (area %.0f um2)", 2.0f * half, 2.0f * width, std::abs(body.restArea)));
         if (loco)
             add(s, "Velocidad", fmt("%.0f um/s%s", std::abs(loco->speed), loco->speed < -1.0f ? " (hacia atras)" : ""));
-        if (und)
-            add(s, "Onda", fmt("%s: arrastre normal/tangencial = %.1f (agua libre %.1f)",
-                               und->crowding > 0.5f ? "repta entre particulas" : "nada en agua libre", und->dragRatio,
-                               w.locomotionParams().dragRatioWater));
-        if (const Compound* comp = reg.try_get<Compound>(e))
-            add(s, "Partes", fmt("%zu partes unidas por adhesiones (corona, tronco y pie)", comp->parts.size() + 1));
         if (her && sid == SpeciesId::Paramecium)
             add(s, "Apareamiento", her->genome[Gene::MatingType] > 0.5f ? "tipo II" : "tipo I");
     }
@@ -441,7 +394,6 @@ Inspection inspectRock(const World& w, entt::entity e) {
     add(s, "Tamano", fmt("%.0f x %.0f um", body.aabbMax.x - body.aabbMin.x, body.aabbMax.y - body.aabbMin.y));
     add(s, "Fijo", "apoyado en el vidrio: ni el agua ni las celulas lo mueven");
     add(s, "Agua", "no fluye adentro del grano: la corriente lo rodea");
-    add(s, "Entre granos", "da apoyo lateral: los nematodos reptan mucho mejor entre ellos");
     add(s, "Quimica", "simplificacion: los gases y nutrientes disueltos lo atraviesan");
     return ins;
 }
@@ -643,7 +595,7 @@ Inspection inspectHypha(const World& w, const Picked& p) {
     ins.valid = ins.live = true;
     ins.at = {m->x[node], m->y[node]};
     float lo = 1e30f, hi = -1e30f, lo2 = 1e30f, hi2 = -1e30f;
-    std::size_t tips = 0, sporangia = 0, pegs = 0;
+    std::size_t tips = 0, sporangia = 0;
     for (std::size_t k = 0; k < m->x.size(); ++k) {
         lo = std::min(lo, m->x[k]);
         hi = std::max(hi, m->x[k]);
@@ -651,7 +603,6 @@ Inspection inspectHypha(const World& w, const Picked& p) {
         hi2 = std::max(hi2, m->y[k]);
         tips += m->tip[k];
         sporangia += m->sporangium[k] > 0.0f ? 1 : 0;
-        pegs += m->peg[k];
     }
     ins.radius = 0.5f * std::max(hi - lo, hi2 - lo2) + 10.0f;
     ins.title = fmt("Micelio de %s", fungusName(m->kind));
@@ -671,8 +622,6 @@ Inspection inspectHypha(const World& w, const Picked& p) {
         add(s, "Fotobionte", algae > 0 ? fmt("%d algas verdes unidas: le dan azucar y reciben fosforo", algae)
                                        : std::string("ninguna: solo casi no crece, busca un alga con su quimiotropismo"));
     }
-    if (fungusInfo(m->kind).pegs)
-        add(s, "Clavijas", fmt("%zu clavijas adhesivas (atrapan rotiferos)", pegs));
     add(s, "Biomasa", fmt("%.1f pmol (reservas %.1f)", m->biomass(fp), m->reserves));
     add(s, "Fosforo", fmt("%.3f pmol", m->phosphorus));
     if (m->starvingHours > 0.0f)
@@ -816,12 +765,9 @@ Picked World::pick(Vec2 position, float tolerance) const {
         if (score >= bestScore)
             continue;
         bestScore = score;
-        entt::entity who = e; // las partes de un cuerpo compuesto son el organismo
-        if (const Segment* seg = registry_.try_get<Segment>(e); seg && registry_.valid(seg->organism))
-            who = seg->organism;
         out = {};
         out.kind = Picked::Kind::Cell;
-        out.entity = who;
+        out.entity = e;
         out.at = body.centroid;
     }
     if (out.kind != Picked::Kind::None)

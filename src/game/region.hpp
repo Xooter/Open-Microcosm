@@ -13,7 +13,7 @@ class World;
 struct RegionStats {
     bool valid = false;
     float area = 0.0f;       // [µm²]
-    int cells = 0;           // individuos (sin partes de cuerpos compuestos ni granos)
+    int cells = 0;           // individuos (sin granos de arena)
     int species[kSpeciesCount] = {};
     int bacteria = 0;
     float biomass = 0.0f;    // [pmol] de las células

@@ -1,4 +1,4 @@
-// Fases 8 y 9: algas compuestas, hongos, interacciones microbianas, metazoos y LOD.
+// Fases 8 y 9: algas compuestas, hongos, interacciones microbianas y LOD.
 #include "game/world.hpp"
 
 #include <doctest/doctest.h>
@@ -96,32 +96,6 @@ TEST_CASE("Bdellovibrio entra a una bacteria, crece adentro y sale con sus hijas
     world.bioTimeScale() = 600.0f; // 30 s = 5 h biológicas (crece ~3 h adentro)
     steps(world, 60 * 30);
     CHECK(world.observations().bdelloBursts > 0);
-}
-
-TEST_CASE("el rotífero pone un huevo partenogenético que eclosiona") {
-    World world(quietWorld(20000));
-    world.bioTimeScale() = 600.0f;
-    const entt::entity r = wild(world, SpeciesId::Rotifer, {1000.0f, 500.0f});
-    world.registry().emplace<Autopilot>(r);
-    REQUIRE(world.registry().all_of<Compound>(r));
-    Metabolism& m = world.registry().get<Metabolism>(r);
-    m.biomass = 1.5f * m.birthBiomass;
-    m.reserves = 0.6f * m.biomass;
-    steps(world, 60 * 150); // 25 h biológicas: el huevo tarda ~20 h
-    CHECK(world.observations().eggsLaid > 0);
-    CHECK(world.observations().eggsHatched > 0);
-}
-
-TEST_CASE("Hydra paraliza a un paramecio con los tentáculos y lo traga") {
-    World world(quietWorld());
-    const entt::entity h = wild(world, SpeciesId::Hydra, {1000.0f, 600.0f}, -1.5708f);
-    world.registry().emplace<Anchored>(h, Anchored{{1000.0f, 820.0f}, 5.0f});
-    Genome g = speciesGenome(SpeciesId::Paramecium);
-    const entt::entity p = world.spawnOrganism(SpeciesId::Paramecium, {1000.0f, 150.0f}, g, 0, 1.5708f);
-    for (int s = 0; s < 60 * 120 && world.registry().valid(p); ++s)
-        world.step(kDt);
-    CHECK(world.observations().hydraCaptures > 0);
-    CHECK_FALSE(world.registry().valid(p));
 }
 
 TEST_CASE("LOD: con el foco lejos, las células siguen sanas y la simulación es determinista") {

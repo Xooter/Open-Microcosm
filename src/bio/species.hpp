@@ -27,17 +27,11 @@ enum class SpeciesId : std::uint8_t {
     Volvox,
     Pediastrum,
     Candida,
-    Rotifer,
-    Hydra,
-    Nauplius,
     Naegleria,
     Trichonympha,
-    Philodina,
     Mougeotia,
     Zygnema,
     Oedogonium,
-    Chaetonotus,
-    Rhabditis,
     Count
 };
 inline constexpr int kSpeciesCount = static_cast<int>(SpeciesId::Count);
@@ -125,15 +119,6 @@ struct SpeciesInfo {
     float tMin = 5.0f, tMax = 32.0f;
     float salinityMax = 5.0f;
     bool anaerobe = false;
-    // Metazoos (fase 9): cuerpos de muchas células.
-    bool multicellular = false;
-    bool compound = false;          // rotífero: corona + tronco + pie unidos por adhesiones
-    float maintenanceScale = 1.0f;  // metabolismo por masa (Kleiber: los grandes gastan menos)
-    float mouthReach = 0.0f;        // alcance de la boca/corona [µm] (0: el de los ciliados)
-    float eggHours = 0.0f;          // rotífero: incubación del huevo partenogenético
-    int tentacles = 0;              // Hydra: tentáculos con nematocistos
-    float tentacleLength = 0.0f;    // [µm]
-    bool hopper = false;            // nauplio: saltos bruscos y pausas
     bool mouthAtRear = false;       // Trichonympha fagocita la madera por el polo posterior
     // Ciclosis: corriente citoplasmática que hace girar gránulos y vacuolas [µm/s]
     // (Paramecium ~2–5; en las células vegetales, como Spirogyra, a lo largo de la pared).
@@ -182,49 +167,4 @@ struct Neck {
     float length = 0.0f;   // [µm]
     Vec2 direction{1.0f, 0.0f};
     entt::entity target = entt::null;
-};
-
-// ---------------------------------------------------------------------------
-// Metazoos (fase 9)
-// ---------------------------------------------------------------------------
-
-// Componente: parte de un cuerpo compuesto (corona o pie del rotífero). No tiene metabolismo
-// propio: el organismo es la entidad `organism`.
-struct Segment {
-    entt::entity organism;
-};
-
-// Componente: partes de un cuerpo compuesto (se destruyen con el organismo).
-struct Compound {
-    std::vector<entt::entity> parts;
-};
-
-// Componente: huevo partenogenético (rotífero), pegado a la madre hasta eclosionar.
-struct Egg {
-    Genome genome;
-    SpeciesId species;
-    float hoursLeft;
-    float biomass;      // [pmol]
-    std::uint32_t run;  // linaje de la madre
-    std::uint32_t generation;
-};
-
-// Hydra: cada tentáculo es una cadena cinemática que ondula; los nematocistos paralizan a la
-// presa que lo toca y el tentáculo se contrae hasta llevarla a la boca.
-struct Tentacle {
-    float baseAngle = 0.0f;   // respecto del eje del cuerpo
-    float extension = 1.0f;   // fracción del largo máximo
-    float phase = 0.0f;
-    entt::entity prey = entt::null;
-    int preyNode = 0;
-    std::vector<Vec2> nodes;  // de la base a la punta [µm]
-};
-struct Tentacles {
-    std::vector<Tentacle> arms;
-};
-
-// Componente: presa paralizada por los nematocistos de una Hydra.
-struct Stung {
-    entt::entity by;
-    Vec2 point; // donde la sujeta el tentáculo
 };

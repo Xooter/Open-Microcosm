@@ -34,7 +34,7 @@ interviene.
   catálogo).
 - **Controlar un ser** (herramienta Controlar, o `P` sobre una célula): cada especie conserva su
   **locomoción física**:
-  flagelo (impulso), cilios (deslizamiento), pseudópodo (clic y arrastre) y ondulación. Se respeta
+  flagelo (impulso), cilios (deslizamiento) y pseudópodo (clic y arrastre). Se respeta
   el **bajo número de Reynolds**: no hay inercia. Al dividirse se sigue con la madre; si el ser
   muere, se puede controlar otro.
 - **Seleccionar** (herramienta por defecto, sin modos): un click sobre cualquier cosa elige el ser
@@ -45,8 +45,9 @@ interviene.
   (auxótrofas: *Euglena*, diatomeas), que aportan las bacterias.
 - **Genoma:** los organelos y rasgos son genes que mutan en la mitosis y se mezclan en la
   conjugación. Los organelos ocupan espacio físico dentro de la célula.
-- **Ecosistema:** carnívoros (cazadores, envolvedores, emboscadores, parásitos y jefes
-  multicelulares), herbívoros (algívoros y bacterívoros), algas, hongos, bacterias y fagos.
+- **Ecosistema:** protistas carnívoros (cazadores, envolvedores, emboscadores y parásitos),
+  herbívoros (algívoros y bacterívoros), algas, hongos, bacterias y fagos. No hay animales
+  (metazoos): la gota es solo de microorganismos.
 - **Rejugabilidad:** gotas procedurales por seed y biomas distintos (charco, estanque, musgo,
   intestino de termita, fuente hidrotermal, hielo).
 - **Estilo visual:** microscopio de **campo claro** (fondo claro, células semitransparentes).
@@ -132,7 +133,7 @@ Hay presets `debug`, `release` y `profile`. El código tiene que compilar **sin 
 | Medio | Agua, corrientes y química | Grilla de fluido Stokes–Brinkman (FFT) + campos escalares (O₂, CO₂/pH, luz, materia orgánica, fosfato, nitrógeno, toxinas, autoinductor, fagos) |
 | Ambiental | Detritos, bacterias, cianobacterias, hongos | Partículas simples (bacterias, *Bdellovibrio*, zoosporas), cadenas (cianobacterias) y árboles de nodos fijos (hifas) |
 | Célula | Protistas, algas y levaduras | Soft-body: anillo de membrana + partículas internas, resuelto con XPBD |
-| Compuesto | Colonias, filamentos y metazoos | Soft-bodies unidos por adhesiones (`World::AdhesionLink`; rígidas con diagonales en metazoos) |
+| Compuesto | Colonias y filamentos | Soft-bodies unidos por adhesiones (`World::AdhesionLink`) |
 
 LOD (`World::setFocus`, tres niveles): cerca de la vista, detalle completo; más lejos, 1 de cada
 `lodStride` sub-pasos de XPBD con un paso más largo (las tasas [1/s] no cambian de significado);
@@ -140,7 +141,6 @@ fuera de pantalla, estadístico (se trasladan como sólidos, sin XPBD ni contact
 fagocitosis, conjugación y presas sujetas siempre en detalle. Sin foco (tests), todo detallado.
 Contactos: solo los puntos de membrana a menos de su radio de contacto (+ holgura) de otro
 cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::contactPasses`).
-Las partes de un mismo organismo no chocan entre sí (`ContactMember::group`).
 
 ### Cuerpos blandos (`sim/soft_body`, `sim/contacts`)
 
@@ -216,8 +216,8 @@ Las partes de un mismo organismo no chocan entre sí (`ContactMember::group`).
 - Cianobacterias (`bio/cyanobacteria`): heterocistos que fijan N₂ (inhibidos por O₂) y liberan
   amonio; mueren y liberan microcistina (`toxin_`), dañina para consumidores.
 - Hongos (`bio/fungi`, `game/world_fungi.cpp`): quitridios (`ChytridInfection` sobre algas),
-  *Saprolegnia* (exoenzimas aceleran la descomposición junto a las hifas), *Zoophagus*
-  (`Trapped`); levaduras como especie osmotrófica con gemación (`budding`).
+  *Saprolegnia* (exoenzimas aceleran la descomposición junto a las hifas); levaduras como especie
+  osmotrófica con gemación (`budding`).
 - Química e interacciones microbianas (`game/world_chem.cpp`): pH del sistema carbonato con
   alcalinidad fija; rango de pH por especie (`phMin/phMax`); quorum sensing de *C. violaceum*
   (`Bacteria::strain/quorum`, violaceína en `Digestion::toxin`); fagos líticos como campo de
@@ -232,9 +232,6 @@ Las partes de un mismo organismo no chocan entre sí (`ContactMember::group`).
   materia orgánica y evitan la baba (`World::slime_`) y la luz; anastomosis; copos de avena
   (`OatFlakes`) y esclerocios. El fósforo del plasmodio, copos y esclerocios entra en
   `totalPhosphorus()`.
-- Metazoos (`game/world_metazoa.cpp`): `Compound`/`Segment` (las partes no tienen metabolismo,
-  se mueven con el organismo y no chocan entre sí: `ContactMember::group`), `Egg`
-  (partenogénesis del rotífero), `Tentacles`/`Stung` (Hydra), llegadas de nauplios.
 - `World::deathTally()` y `World::observations()` registran causas de muerte y comportamientos
   vistos (base de la enciclopedia).
 

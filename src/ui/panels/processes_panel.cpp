@@ -76,7 +76,6 @@ class ProcessesPanel : public Panel {
             slider("Fagos: inactivación [1/h]", &m.phageDecayPerHour, 0.0f, 1.0f, "%.2f");
             slider("Toxinas: degradación [1/h]", &m.toxinDecayPerHour, 0.0f, 0.5f, "%.2f");
             slider("AHL: vida media [h]", &m.ahlHalfLifeHours, 1.0f, 100.0f, "%.0f");
-            slider("Nauplios [1/h]", &m.naupliusArrivalsPerHour, 0.0f, 1.0f, "%.2f");
         }
         if (section("Hongos y mohos")) {
             FungiParams& fp = world.fungi().params;

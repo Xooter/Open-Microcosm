@@ -9,7 +9,7 @@
 #include <cmath>
 
 namespace {
-constexpr float kMicrocystinEC = 0.05f; // [µM] daño apreciable en ciliados y rotíferos
+constexpr float kMicrocystinEC = 0.05f; // [µM] daño apreciable en ciliados
 constexpr float kViolaceinDetoxPerHour = 1.0f;
 } // namespace
 
@@ -117,7 +117,7 @@ const char* World::applyEnvironmentStress(entt::entity e, const RingBody& body, 
     in.phStress += thermal + saline + oxic;
     if (info.anaerobe)
         in.fermentationScale = 0.5f;
-    // Microcistina: inhibe fosfatasas; daña a los consumidores (ciliados, rotíferos), no a las algas.
+    // Microcistina: inhibe fosfatasas; daña a los consumidores (ciliados), no a las algas.
     const float sensitivity = info.chloroplasts ? 0.05f : 1.0f;
     const float microcystin = sensitivity * std::max(0.0f, toxin_.grid().sample(body.centroid.x, body.centroid.y)) / kMicrocystinEC;
     float violacein = 0.0f;

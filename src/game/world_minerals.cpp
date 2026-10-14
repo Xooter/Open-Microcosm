@@ -187,39 +187,3 @@ void World::spawnDust(float dt) {
         spawnMineral(kind, randomPoint(rng), rng);
     }
 }
-
-float World::crowdingAround(const RingBody& body, const Undulation& und) const {
-    // Sólidos que tocan el cuerpo del nematodo: partículas asentadas (minerales, detritos) y
-    // granos de arena. Le dan apoyo lateral: como en el suelo o en un gel, el arrastre normal
-    // crece mucho frente al tangencial y la onda empuja contra algo.
-    if (und.spine.empty())
-        return 0.0f;
-    constexpr float kReach = 10.0f; // [µm] del eje (el cuerpo mide ~20 µm de ancho)
-    const Vec2 lo = body.aabbMin - Vec2{kReach, kReach}, hi = body.aabbMax + Vec2{kReach, kReach};
-    float count = 0.0f;
-    for (std::size_t i = 0; i < ambient_.size(); ++i) {
-        const bool solid = ambient_.kind[i] == ParticleKind::Detritus ||
-                           (ambient_.kind[i] == ParticleKind::Mineral && ambient_.radius[i] >= 2.0f);
-        if (!solid)
-            continue;
-        const Vec2 q = body.centroid + Vec2{minImage(ambient_.x[i] - body.centroid.x, width_),
-                                            minImage(ambient_.y[i] - body.centroid.y, height_)};
-        if (q.x < lo.x || q.x > hi.x || q.y < lo.y || q.y > hi.y)
-            continue;
-        const float r = kReach + ambient_.radius[i];
-        for (const Vec2& s : und.spine)
-            if (length(s - q) < r) {
-                count += 1.0f;
-                break;
-            }
-    }
-    for (const auto [e, rock, tag] : registry_.view<RingBody, Rock>().each()) {
-        if (rock.aabbMax.x < lo.x || rock.aabbMin.x > hi.x || rock.aabbMax.y < lo.y || rock.aabbMin.y > hi.y)
-            continue;
-        const int pn = static_cast<int>(rock.poly.size());
-        for (const Vec2& s : und.spine)
-            if (polygon::closestOnBoundary(rock.poly.data(), pn, s).dist2 < (kReach + 4.0f) * (kReach + 4.0f))
-                count += 2.0f;
-    }
-    return std::clamp(count / 10.0f, 0.0f, 1.0f);
-}

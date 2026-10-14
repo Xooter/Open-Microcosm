@@ -127,7 +127,7 @@ TEST_CASE("mapa de limitación: la célula sabe qué nutriente la frena") {
         c.bacteria = 0;
         c.detritus = 0;
         c.cyanoFilaments = 0;
-        c.saprolegnia = c.zoophagus = c.chytridClusters = 0;
+        c.saprolegnia = c.chytridClusters = 0;
         c.medium.detritusSpawnRate = 0.0f;
         c.medium.silicate = silicate;
         c.medium.iron = iron;

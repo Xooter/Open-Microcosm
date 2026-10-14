@@ -87,9 +87,9 @@ ideas en **Notas**. Después uso tus elecciones para ajustar el roadmap.
       envuelve casi cualquier cosa. Son peligrosos de cerca y fáciles de evitar de lejos.
 - [x] **C — Emboscadores sésiles.** Suctorios (_Podophrya_): fijos en un lugar, con tentáculos que
       se pegan a la presa y le succionan el citoplasma. Funcionan como trampas del escenario.
-- [x] **D — Gigantes multicelulares ("jefes").** Rotíferos, _Hydra_ y larvas de copépodo: hasta
+- [ ] **D — Gigantes multicelulares ("jefes").** Rotíferos, _Hydra_ y larvas de copépodo: hasta
       1000 veces más grandes que una bacteria. Tienen una corona ciliada que aspira todo lo que pasa
-      cerca.
+      cerca. _(Se implementó y después se quitó: la gota es solo de microorganismos, sin animales.)_
 - [x] **E — Parásitos e invasores.** _Bdellovibrio_ (bacteria que entra en otra y la consume desde
       adentro), quitridios parásitos y fagos. El peligro es invisible hasta que es tarde.
 
@@ -155,8 +155,9 @@ ideas en **Notas**. Después uso tus elecciones para ajustar el roadmap.
 - [x] **C — Descomponedores con hifas.** _Saprolegnia_ y otros mohos acuáticos (técnicamente
       oomicetos) crecen sobre cadáveres y reciclan nutrientes. Funcionan como el "basurero" del
       ecosistema.
-- [x] **D — Hongos depredadores.** _Zoophagus_ tiene hifas acuáticas con ramitas pegajosas que
-      atrapan rotíferos. Es real y funciona como trampa viva.
+- [ ] **D — Hongos depredadores.** _Zoophagus_ tiene hifas acuáticas con ramitas pegajosas que
+      atrapan rotíferos. Es real y funciona como trampa viva. _(Se quitó junto con los animales: sin
+      rotíferos no tenía presas.)_
 - [x] **E — Hongos simbiontes.** Asociación alga + hongo (estilo liquen): el micobionte busca algas
       verdes, las sujeta con un haustorio y recibe su azúcar; ella recibe fósforo y la protección
       de metabolitos secundarios (los quitridios no la infectan). Sin alga el hongo casi no crece.

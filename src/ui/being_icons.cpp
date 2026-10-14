@@ -131,8 +131,7 @@ void drawBeingIcon(Being b, Rectangle r, bool enabled) {
         DrawEllipseLines(static_cast<int>(c.x), static_cast<int>(c.y), 12.0f, 8.0f, withAlpha({150, 136, 100, 255}, enabled));
         break;
     }
-    case BeingKind::Saprolegnia:
-    case BeingKind::Zoophagus: {
+    case BeingKind::Saprolegnia: {
         const Color col = withAlpha({120, 115, 95, 255}, enabled);
         const Vector2 base = {c.x - 14, c.y + 10};
         const Vector2 mid = {c.x - 2, c.y};
@@ -140,11 +139,7 @@ void drawBeingIcon(Being b, Rectangle r, bool enabled) {
         DrawLineEx(mid, {c.x + 14, c.y - 12}, 1.6f, col);
         DrawLineEx(mid, {c.x + 6, c.y + 12}, 1.4f, col);
         DrawLineEx({c.x + 6, c.y - 5}, {c.x - 4, c.y - 14}, 1.2f, col);
-        if (b.kind == BeingKind::Zoophagus) // ramitas cortas adhesivas (las trampas)
-            for (const Vector2 k : {Vector2{c.x + 14, c.y - 12}, Vector2{c.x + 6, c.y + 12}, Vector2{c.x - 4, c.y - 14}})
-                DrawCircleV(k, 2.2f, col);
-        else
-            DrawEllipse(static_cast<int>(c.x + 14), static_cast<int>(c.y - 12), 2.5f, 4.0f, col); // zoosporangio
+        DrawEllipse(static_cast<int>(c.x + 14), static_cast<int>(c.y - 12), 2.5f, 4.0f, col); // zoosporangio
         break;
     }
     case BeingKind::Phage: {

@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <iterator>
 #include <sstream>
 
 std::string defaultProgressPath() {
@@ -18,6 +19,36 @@ std::string defaultProgressPath() {
     return (base / "biogame" / "progress.txt").string();
 }
 
+namespace {
+
+// Formato 1 (hasta que se quitaron los animales y Zoophagus): los bits de especies y de otros
+// organismos seguían otro orden. Se traducen al actual para no perder la enciclopedia.
+std::uint64_t migrateSpecies(std::uint64_t old) {
+    // Índice viejo → nuevo (−1: especie quitada: rotíferos, Hydra, nauplio, gastrotrico, nematodo).
+    constexpr int kMap[] = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+                            -1, -1, -1, 16, 17, -1, 18, 19, 20, -1, -1};
+    std::uint64_t out = 0;
+    for (int i = 0; i < static_cast<int>(std::size(kMap)); ++i)
+        if ((old >> i) & 1u && kMap[i] >= 0)
+            out |= std::uint64_t{1} << kMap[i];
+    return out;
+}
+
+std::uint32_t migrateOthers(std::uint32_t old) {
+    // Zoophagus era el 6: lo que seguía baja un lugar.
+    return (old & 0x3Fu) | ((old >> 7) << 6);
+}
+
+// Comportamientos de organismos que ya no existen en la simulación.
+bool obsoleteBehavior(const std::string& b) {
+    for (const char* word : {"rotifero", "Hydra", "nauplio", "Zoophagus", "nematodo", "gastrotrico"})
+        if (b.find(word) != std::string::npos)
+            return true;
+    return false;
+}
+
+} // namespace
+
 Progress loadProgress(const std::string& path) {
     Progress p;
     std::ifstream in(path);
@@ -28,10 +59,16 @@ Progress loadProgress(const std::string& path) {
             continue;
         const std::string key = line.substr(0, eq);
         std::istringstream value(line.substr(eq + 1));
-        if (key == "seen_species") value >> p.seenSpecies;
-        else if (key == "seen_others") value >> p.seenOthers;
+        if (key == "seen_species") {
+            value >> p.seenSpecies;
+            p.seenSpecies = migrateSpecies(p.seenSpecies);
+        } else if (key == "seen_others") {
+            value >> p.seenOthers;
+            p.seenOthers = migrateOthers(p.seenOthers);
+        } else if (key == "seen_species_v2") value >> p.seenSpecies;
+        else if (key == "seen_others_v2") value >> p.seenOthers;
         else if (key == "biomes_played") value >> p.biomesPlayed;
-        else if (key == "behavior") p.behaviors.insert(line.substr(eq + 1));
+        else if (key == "behavior" && !obsoleteBehavior(line.substr(eq + 1))) p.behaviors.insert(line.substr(eq + 1));
     }
     return p;
 }
@@ -43,8 +80,8 @@ bool saveProgress(const Progress& p, const std::string& path) {
     std::ofstream out(path);
     if (!out)
         return false;
-    out << "seen_species=" << p.seenSpecies << '\n'
-        << "seen_others=" << p.seenOthers << '\n'
+    out << "seen_species_v2=" << p.seenSpecies << '\n'
+        << "seen_others_v2=" << p.seenOthers << '\n'
         << "biomes_played=" << p.biomesPlayed << '\n';
     for (const std::string& b : p.behaviors)
         out << "behavior=" << b << '\n';

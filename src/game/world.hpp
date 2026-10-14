@@ -75,8 +75,6 @@ struct MediumParams {
     float phageDecayPerHour = 0.05f;  // inactivación (UV, adsorción a partículas)
     float toxinDecayPerHour = 0.02f;  // degradación bacteriana de la microcistina
     float ahlHalfLifeHours = 24.0f;   // a pH 7; a pH alto la lactona se hidroliza más rápido
-    // Llegadas: nauplios que eclosionan de sacos de huevos de copépodos que pasan [1/h biológica].
-    float naupliusArrivalsPerHour = 0.05f;
     // Ambiente de la gota (fase 11).
     float temperature = 20.0f;        // [°C]: Q10 ≈ 2 en las tasas biológicas; cambia la viscosidad
     float salinity = 0.5f;            // [PSU] agua dulce < 1; mar ~35; salmuera del hielo hasta ~100
@@ -121,9 +119,8 @@ struct WorldConfig {
     int oscillatoriaCells = 20;
     std::uint64_t seed = 1;
     MediumParams medium;          // química y ambiente iniciales (bioma)
-    // Hongos al empezar: micelios de Saprolegnia y de Zoophagus, y grupos de zoosporas de
-    // quitridios (10 cada uno).
-    int saprolegnia = 4, zoophagus = 2, chytridClusters = 6;
+    // Hongos al empezar: micelios de Saprolegnia y grupos de zoosporas de quitridios (10 cada uno).
+    int saprolegnia = 4, chytridClusters = 6;
     // Más hongos: Allomyces, hongos liquenizantes (junto a algas verdes) y plasmodios de Physarum.
     int allomyces = 0, lichens = 0, physarum = 0;
     // Cianobacterias del bioma: rango térmico (Anabaena 10–35 °C; Mastigocladus 30–57 °C).
@@ -143,7 +140,6 @@ struct WorldConfig {
 struct Observations {
     int chytridInfections = 0;
     int chytridReleases = 0;
-    int zoophagusCaptures = 0;
     int buds = 0;
     int colonyReleases = 0;
     int filamentDivisions = 0;
@@ -152,9 +148,6 @@ struct Observations {
     int bdelloBursts = 0;
     int quorumSwitches = 0;
     int toxinKills = 0;
-    int hydraCaptures = 0;
-    int eggsLaid = 0, eggsHatched = 0;
-    int arrivals = 0;
     int zoospores = 0, zoosporesSettled = 0;
     int restingFormed = 0, restingGerminated = 0; // Allomyces
     int lichenLinks = 0;                          // algas unidas a un hongo liquenizante
@@ -419,7 +412,6 @@ class World {
     void spawnDust(float dt);
     void rebuildFlowMask();
     entt::entity rockAt(Vec2 position) const;
-    float crowdingAround(const RingBody& body, const Undulation& und) const;
     void addDetritus(Rng& rng, Vec2 position);
     void collectBodies();
     void classifyLod();
@@ -430,7 +422,6 @@ class World {
     // según su movilidad (Stokes: v = F/ζ, con ζ ∝ N/invMass). Un nadador que empuja a otra
     // célula avanza con ella, más despacio; no le clava una cuña ni la atraviesa.
     void limitApproach(float dt, float contactRange);
-    std::uint32_t groupOf(std::uint32_t bodyId) const;
     void beginBodies(float dt);
     void cpuSubsteps(float dt, int stride, float maxRadius);
     void finishBodies();
@@ -445,7 +436,7 @@ class World {
     void anchorHere(entt::entity e);
     void trapWithTentacles(entt::entity e, const RingBody& body);
     void strikeWithNeck(entt::entity e, const RingBody& body, float dt);
-    void linkCells(entt::entity a, entt::entity b, bool rigid = false);
+    void linkCells(entt::entity a, entt::entity b);
     void solveLinks(float h);
     void relinkAfterDivision(entt::entity mother, entt::entity child);
     void maintainLinks(float bioDt);
@@ -495,19 +486,11 @@ class World {
                                        MetabolicInput& in, float bioDt);
     void microbialInteractions(float dt);
     void seedBdellovibrio(std::size_t count);
-    // Metazoos (world_metazoa.cpp).
-    void buildCompoundParts(entt::entity organism, const SpeciesInfo& info, const CellSpec& spec);
-    void growTentacles(entt::entity e, const SpeciesInfo& info);
-    void destroyOrganism(entt::entity e);
     // Micronutrientes (Si, Fe, B₁₂) de una célula: tomar su cuota inicial del agua, crecer con
     // más biomasa y devolverla al morir o ser comida.
     void seedMicronutrients(Metabolism& m, const SpeciesInfo& info, Vec2 at);
     void growMicronutrients(Metabolism& m, Vec2 at, float factor);
     float releaseMicronutrients(entt::entity e, Vec2 at); // devuelve el Si (para la frústula)
-    void updateTentacles(float dt);
-    void layEgg(entt::entity mother);
-    void updateEggs(float bioDt);
-    void arrivals(float dt);
     void stepFungi(float dt);
     void stepLichens(float bioDt);
     void stepPlasmodium(float dt);
@@ -559,7 +542,6 @@ class World {
     ContactSolver contacts_;
     std::vector<RingBody*> bodyList_;
     std::vector<float> bodyMobility_;         // 1/ζ de cada cuerpo (limitApproach)
-    std::vector<std::uint32_t> bodyGroup_;
     std::vector<std::uint8_t> bodySkip_;
     std::vector<CupObstacle> cupObstacles_; // células junto a la presa de la copa (se reusa el buffer)
     std::vector<std::uint8_t> bodyNear_, memberActive_;
@@ -594,7 +576,7 @@ class World {
     std::map<std::pair<SpeciesId, std::string>, int> deathTally_;
     std::vector<DeathRecord> recentDeaths_; // las últimas kRecentDeaths
     std::vector<std::pair<entt::entity, const char*>> dying_;
-    std::vector<entt::entity> settling_, released_, colonyReleases_, eggsToLay_, zoosporeReleases_, zoosporeSettling_;
+    std::vector<entt::entity> settling_, released_, colonyReleases_, zoosporeReleases_, zoosporeSettling_;
     std::vector<AdhesionLink> links_;
     struct PendingSplit {
         entt::entity cell;
@@ -633,7 +615,7 @@ class World {
     Vec2 stirPosition_, stirVelocity_;
     float stirRadius_ = 30.0f;
 
-    float arrivalClock_ = 0.0f, slowDiffusion_ = 0.0f;
+    float slowDiffusion_ = 0.0f;
     std::uint64_t step_ = 0, spawnCounter_ = 0, toolCounter_ = 0, cellCounter_ = 0;
     float spawnAccumulator_ = 0.0f;
     float simTime_ = 0.0f;

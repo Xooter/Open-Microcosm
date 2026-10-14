@@ -18,7 +18,7 @@ inline constexpr int kElementCount = static_cast<int>(Element::Count);
 // Compartimentos. Para el carbono, `Water` es la materia orgánica disuelta y `Gas` el CO₂ disuelto.
 enum class Pool : std::uint8_t {
     Water,         // disuelto en el agua
-    Cells,         // protistas, algas, levaduras, metazoos y huevos (Metabolism)
+    Cells,         // protistas, algas y levaduras (Metabolism)
     Vacuoles,      // presas en digestión
     Bacteria,      // bacterias libres
     Cyanobacteria, // cadenas y tricomas

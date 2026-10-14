@@ -124,33 +124,6 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
      .spec = makeSpec(3.2f, 2.6f, 12.0f, 214, 206, 176, 0.3f), .speedScale = 0.0f,
      .feeding = FeedingMode::Osmotroph, .initialCount = 12, .colonyDaughters = 1, .budding = true,
      .phMin = 3.0f, .phMax = 8.5f, .tMin = 0.0f, .tMax = 40.0f, .salinityMax = 60.0f},
-    // Brachionus calyciflorus (rotífero): ~250 µm, lórica rígida, corona de dos ruedas ciliadas
-    // que nadan y crean una corriente que trae bacterias, algas chicas y levaduras; mástax
-    // (mandíbulas) que tritura. Hembras partenogenéticas llevan el huevo pegado (~1 día).
-    {.name = "Brachionus", .locomotion = LocomotionType::Cilia,
-     .spec = makeSpec(65.0f, 45.0f, 12.0f, 196, 192, 170, 0.22f), .speedScale = 0.35f,
-     .feeding = FeedingMode::OralGroove, .fleeMask = speciesBit(SpeciesId::Hydra), .initialCount = 4,
-     .mouthPreyMask = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Candida),
-     .handlingHours = 0.05f, .tMin = 10.0f, .tMax = 35.0f, .salinityMax = 15.0f, .multicellular = true,
-     .compound = true, .maintenanceScale = 0.7f, .mouthReach = 20.0f, .eggHours = 20.0f},
-    // Hydra (pólipo joven, contraído): columna de ~400 µm fija por el disco basal y tentáculos de
-    // hasta ~0,5 mm con nematocistos que paralizan a la presa al tocarla; la lleva a la boca y la
-    // traga entera. Se reproduce por brotes.
-    {.name = "Hydra", .locomotion = LocomotionType::Cilia,
-     .spec = makeSpec(200.0f, 55.0f, 3.0f, 186, 160, 130, 0.15f, 2.4f, 0.4f), .speedScale = 0.0f,
-     .feeding = FeedingMode::Raptorial,
-     .preyMask = speciesBit(SpeciesId::Rotifer) | speciesBit(SpeciesId::Philodina) | speciesBit(SpeciesId::Nauplius) | speciesBit(SpeciesId::Paramecium) | speciesBit(SpeciesId::Euplotes) | speciesBit(SpeciesId::Didinium) | speciesBit(SpeciesId::Lacrymaria) | speciesBit(SpeciesId::Chaetonotus) | speciesBit(SpeciesId::Rhabditis),
-     .initialCount = 1, .sessile = true, .stalkLength = 5.0f, .handlingHours = 2.0f, .colonyDaughters = 1,
-     .dryMassScale = 0.3f, .budding = true, .tMin = 5.0f, .tMax = 28.0f, .multicellular = true,
-     .maintenanceScale = 0.3f, .tentacles = 6, .tentacleLength = 450.0f},
-    // Nauplio de copépodo (Cyclops): larva de ~200 µm con tres pares de apéndices y un ojo
-    // naupliar rojo; avanza a saltos (varios mm/s) entre pausas y filtra algas.
-    {.name = "Nauplio", .locomotion = LocomotionType::Cilia,
-     .spec = makeSpec(80.0f, 60.0f, 14.0f, 190, 182, 150, 0.2f, 2.3f), .speedScale = 3.0f,
-     .feeding = FeedingMode::OralGroove, .fleeMask = speciesBit(SpeciesId::Hydra), .initialCount = 1,
-     .mouthPreyMask = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Navicula) | speciesBit(SpeciesId::Euglena) | speciesBit(SpeciesId::Candida),
-     .handlingHours = 0.1f, .tMin = 2.0f, .tMax = 30.0f, .salinityMax = 40.0f, .multicellular = true,
-     .maintenanceScale = 0.7f, .mouthReach = 25.0f, .hopper = true},
     // Naegleria gruberi: ameboflagelado de ~20 µm (forma limax, seudópodos eruptivos) que come
     // bacterias; tolera hasta ~45 °C (aguas termales) y forma quistes.
     {.name = "Naegleria", .locomotion = LocomotionType::Pseudopod,
@@ -164,14 +137,6 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
      .spec = makeSpec(75.0f, 40.0f, 6.0f, 200, 186, 150, 0.2f, 2.0f, 0.3f), .speedScale = 0.6f,
      .feeding = FeedingMode::Anterior, .initialCount = 12, .tMin = 15.0f, .tMax = 35.0f, .anaerobe = true,
      .mouthAtRear = true},
-    // Philodina (rotífero bdeloideo): ~400 µm, sin lórica; se arrastra como una sanguijuela o nada
-    // con la corona; dos ojos rojos. Todas son hembras partenogenéticas. Típico del musgo húmedo.
-    {.name = "Philodina", .locomotion = LocomotionType::Cilia,
-     .spec = makeSpec(90.0f, 32.0f, 8.0f, 214, 190, 176, 0.2f), .speedScale = 0.3f,
-     .feeding = FeedingMode::OralGroove, .fleeMask = speciesBit(SpeciesId::Hydra), .initialCount = 4,
-     .mouthPreyMask = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Candida), .walker = true,
-     .handlingHours = 0.05f, .tMin = 0.0f, .tMax = 35.0f, .multicellular = true, .compound = true,
-     .maintenanceScale = 0.7f, .mouthReach = 18.0f, .eggHours = 30.0f},
     // Mougeotia: filamento de células largas y finas (~80 × 16 µm) con un único cloroplasto en
     // placa axial que GIRA según la luz (fitocromo): con luz débil se pone de frente, con luz
     // fuerte de canto. Es el ejemplo clásico de movimiento de cloroplastos.
@@ -197,25 +162,6 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
      .filamentCells = 7, .fragmentationPerHour = 0.02f, .zoosporeChance = 0.25f, .dryMassScale = 0.3f,
      .tMin = 5.0f, .tMax = 32.0f,
      .cyclosis = 1.5f},
-    // Chaetonotus (gastrotrico): animal de ~150 µm con cabeza lobulada, el cuerpo cubierto de
-    // escamas con espinas y una furca (cola bifurcada) con glándulas adhesivas. Se desliza sobre
-    // el fondo con los cilios ventrales y succiona bacterias, algas chicas y diatomeas con la
-    // faringe. Partenogenético: pone pocos huevos grandes (~1 día de incubación).
-    {.name = "Chaetonotus", .locomotion = LocomotionType::Cilia,
-     .spec = makeSpec(45.0f, 16.0f, 10.0f, 206, 200, 178, 0.2f), .speedScale = 0.25f,
-     .feeding = FeedingMode::OralGroove, .fleeMask = speciesBit(SpeciesId::Hydra), .initialCount = 4,
-     .mouthPreyMask = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Candida) | speciesBit(SpeciesId::Navicula),
-     .handlingHours = 0.05f, .tMin = 5.0f, .tMax = 30.0f, .salinityMax = 10.0f, .multicellular = true,
-     .compound = true, .maintenanceScale = 0.7f, .mouthReach = 12.0f, .eggHours = 24.0f},
-    // Rhabditis (nematodo bacterívoro): ~400 × 20 µm, cutícula anillada, faringe con dos bulbos
-    // (el posterior tritura las bacterias) e intestino granuloso. Ondula el cuerpo entero: en
-    // agua libre se agita y avanza poco; entre partículas repta mucho mejor. Típico de charcos,
-    // musgo y suelo. Hermafrodita autofecundante: pone huevos que eclosionan en ~14 h a 20 °C.
-    {.name = "Rhabditis", .locomotion = LocomotionType::Undulation,
-     .spec = makeSpec(200.0f, 10.0f, 30.0f, 214, 208, 186, 0.25f, 2.6f),
-     .feeding = FeedingMode::OralGroove, .fleeMask = speciesBit(SpeciesId::Hydra), .initialCount = 3,
-     .mouthPreyMask = speciesBit(SpeciesId::Candida), .handlingHours = 0.05f, .tMin = 2.0f, .tMax = 32.0f,
-     .salinityMax = 10.0f, .multicellular = true, .maintenanceScale = 0.7f, .mouthReach = 8.0f, .eggHours = 14.0f},
 };
 
 } // namespace
@@ -242,17 +188,11 @@ constexpr SpeciesChemistry kChemistry[kSpeciesCount] = {
     {Storage::Starch, CellWall::Cellulose},       // Volvox
     {Storage::Starch, CellWall::Cellulose},       // Pediastrum
     {Storage::Glycogen, CellWall::YeastGlucan},   // Candida
-    {Storage::Glycogen, CellWall::None},          // Rotifer
-    {Storage::Glycogen, CellWall::None},          // Hydra
-    {Storage::Glycogen, CellWall::None},          // Nauplius
     {Storage::Glycogen, CellWall::None},          // Naegleria
     {Storage::Glycogen, CellWall::None},          // Trichonympha
-    {Storage::Glycogen, CellWall::None},          // Philodina
     {Storage::Starch, CellWall::Cellulose},       // Mougeotia
     {Storage::Starch, CellWall::Cellulose},       // Zygnema
     {Storage::Starch, CellWall::Cellulose},       // Oedogonium
-    {Storage::Glycogen, CellWall::None},          // Chaetonotus
-    {Storage::Glycogen, CellWall::None},          // Rhabditis
 };
 
 } // namespace
@@ -264,7 +204,6 @@ SpeciesId playerSpecies(LocomotionType type) {
     case LocomotionType::Cilia: return SpeciesId::Paramecium;
     case LocomotionType::Flagellum: return SpeciesId::Euglena;
     case LocomotionType::Pseudopod: return SpeciesId::Amoeba;
-    case LocomotionType::Undulation: return SpeciesId::Rhabditis;
     }
     return SpeciesId::Paramecium;
 }
@@ -281,7 +220,6 @@ Genome speciesGenome(SpeciesId id) {
     case SpeciesId::Podophrya:
     case SpeciesId::Euplotes:
     case SpeciesId::Lacrymaria: // toxicistos en el cuello
-    case SpeciesId::Chaetonotus: // animal: sin extrusomas
         g[Gene::Trichocysts] = 0.0f;
         break;
     case SpeciesId::Arcella: g[Gene::Armor] = 0.9f; break; // testa

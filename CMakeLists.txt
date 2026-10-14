@@ -117,7 +117,6 @@ add_library(biosim STATIC
     src/game/world_minerals.cpp
     src/game/inspect.cpp
     src/game/world_chem.cpp
-    src/game/world_metazoa.cpp
     src/game/biome.cpp
     src/game/plate_spec.cpp
     src/game/stain.cpp
@@ -196,7 +195,7 @@ endif()
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_nematode.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp)
+    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp)
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
     add_test(NAME bio_tests COMMAND bio_tests)
 endif()

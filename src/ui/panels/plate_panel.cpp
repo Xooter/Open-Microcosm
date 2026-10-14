@@ -169,7 +169,6 @@ class PlatePanel : public Panel {
         ch |= sliderInt("Anabaena (filamentos)", &c.cyanoFilaments, 0, 80);
         ch |= sliderInt("Oscillatoria (tricomas)", &c.oscillatoriaFilaments, 0, 80);
         ch |= sliderInt("Saprolegnia", &c.saprolegnia, 0, 30);
-        ch |= sliderInt("Zoophagus", &c.zoophagus, 0, 30);
         ch |= sliderInt("Quitridios (grupos)", &c.chytridClusters, 0, 30);
         ch |= sliderInt("Allomyces", &c.allomyces, 0, 30);
         ch |= sliderInt("Hongos liquenizantes", &c.lichens, 0, 30);

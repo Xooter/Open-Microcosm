@@ -8,7 +8,6 @@
 OtherOrganism otherOf(FungusKind kind) {
     switch (kind) {
     case FungusKind::Chytrid: return OtherOrganism::Chytrid;
-    case FungusKind::Zoophagus: return OtherOrganism::Zoophagus;
     case FungusKind::Allomyces: return OtherOrganism::Allomyces;
     case FungusKind::Mycobiont: return OtherOrganism::Lichen;
     default: return OtherOrganism::Saprolegnia;
@@ -23,7 +22,6 @@ const char* otherName(OtherOrganism o) {
     case OtherOrganism::Cyanobacteria: return "Cianobacterias filamentosas";
     case OtherOrganism::Chytrid: return "Rhizophydium (quitridio)";
     case OtherOrganism::Saprolegnia: return "Saprolegnia";
-    case OtherOrganism::Zoophagus: return "Zoophagus insidians";
     case OtherOrganism::Phage: return "Bacteriofagos";
     case OtherOrganism::Bdellovibrio: return "Bdellovibrio bacteriovorus";
     case OtherOrganism::Allomyces: return "Allomyces";
@@ -47,8 +45,6 @@ const char* otherBlurb(OtherOrganism o) {
         return "Hongo parasito de algas: su zoospora nada hasta un alga, se enquista, la vacia con rizoides y libera decenas de zoosporas.";
     case OtherOrganism::Saprolegnia:
         return "'Moho de agua' (oomiceto): hifas que disuelven detritos con enzimas. Sin comida, las puntas se vuelven zoosporangios.";
-    case OtherOrganism::Zoophagus:
-        return "Hongo depredador: sus hifas tienen clavijas adhesivas. El rotifero que muerde una queda pegado y es digerido.";
     case OtherOrganism::Phage:
         return "Virus de bacterias: se pegan, inyectan su ADN y a la media hora la bacteria estalla liberando ~50 copias. Las resistentes sobreviven.";
     case OtherOrganism::Bdellovibrio:
@@ -81,17 +77,11 @@ const char* speciesBlurb(SpeciesId id) {
     case SpeciesId::Volvox: return "Esfera hueca de cientos de celulas que rueda hacia la luz. Las colonias hijas crecen adentro y nacen rompiendo a la madre.";
     case SpeciesId::Pediastrum: return "Colonia plana en estrella de 16 celulas con cuernos; cada ciclo libera una colonia hija.";
     case SpeciesId::Candida: return "Levadura: absorbe azucares disueltos, respira o fermenta sin oxigeno, y se reproduce por gemacion.";
-    case SpeciesId::Rotifer: return "Rotifero (Brachionus): animal de ~1000 celulas con corona ciliada, mastax que mastica y lorica; pone huevos sin macho.";
-    case SpeciesId::Hydra: return "Polipo fijo al fondo: sus tentaculos disparan nematocistos que paralizan a la presa y la llevan a la boca.";
-    case SpeciesId::Nauplius: return "Larva de copepodo con tres pares de patas y un ojo rojo; avanza a saltos y filtra algas.";
     case SpeciesId::Naegleria: return "Ameboflagelado de suelos y aguas termales: tolera mas de 40 grados y se enquista si se seca.";
     case SpeciesId::Trichonympha: return "Flagelado con miles de flagelos del intestino de las termitas: digiere la madera por ellas y no tolera el oxigeno.";
-    case SpeciesId::Philodina: return "Rotifero bdeloideo: se arrastra como una sanguijuela. Desde hace millones de anios son todas hembras.";
     case SpeciesId::Mougeotia: return "Alga filamentosa con un cloroplasto en placa que gira: de frente con poca luz y de canto con mucha.";
     case SpeciesId::Zygnema: return "Alga filamentosa con dos cloroplastos en estrella por celula. Vive en charcas y sobre el suelo humedo.";
     case SpeciesId::Oedogonium: return "Alga filamentosa: cada division deja un anillo (capuchon) en la pared, asi se cuentan las veces que se dividio.";
-    case SpeciesId::Rhabditis: return "Nematodo: ondula el cuerpo entero. En agua libre se agita sin avanzar mucho; entre granos repta con facilidad.";
-    case SpeciesId::Chaetonotus: return "Gastrotrico: animal diminuto cubierto de espinas que se desliza con cilios y tiene una cola en horquilla.";
     default: return "";
     }
 }
@@ -176,18 +166,13 @@ std::vector<std::string> recordBehaviors(Progress& progress, const World& world)
     if (o.physarumFusions > 0) add("Physarum fusiona dos tubos: la red es una sola celula");
     if (o.sclerotiaFormed > 0) add("Physarum se endurece en esclerocio por hambre");
     if (o.sclerotiaGerminated > 0) add("Un esclerocio revive cuando hay comida");
-    if (o.zoophagusCaptures > 0) add("Zoophagus atrapa un rotifero con sus clavijas");
-    if (o.buds > 0) add("Gemacion de levaduras o brotes de Hydra");
+    if (o.buds > 0) add("Gemacion de levaduras");
     if (o.colonyReleases > 0) add("Una colonia libera colonias hijas");
     if (o.filamentDivisions > 0) add("Spirogyra se divide dentro del filamento");
     if (o.phageLyses > 0) add("Bacterias que estallan por fagos");
     if (o.nitrogenFixed > 0.0f) add("Heterocistos fijan nitrogeno del aire");
     if (o.quorumSwitches > 0) add("Quorum sensing: C. violaceum se vuelve violeta");
     if (o.bdelloBursts > 0) add("Bdellovibrio sale de un bdeloplasto con sus hijas");
-    if (o.hydraCaptures > 0) add("Hydra paraliza una presa con nematocistos");
-    if (o.eggsLaid > 0) add("Un rotifero pone un huevo sin macho");
-    if (o.eggsHatched > 0) add("Eclosiona un huevo de rotifero");
-    if (o.arrivals > 0) add("Llega un nauplio de copepodo");
     if (o.zoospores > 0) add("Oedogonium libera una zoospora con una corona de flagelos");
     if (o.zoosporesSettled > 0) add("Una zoospora se fija y empieza un filamento nuevo");
     return fresh;

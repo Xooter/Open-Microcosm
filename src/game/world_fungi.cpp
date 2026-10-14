@@ -1,5 +1,5 @@
 // Hongos en el mundo: zoosporas que buscan hospedador o sustrato, quitridios sobre algas,
-// micelios que descomponen detritos y trampas de Zoophagus.
+// micelios que descomponen detritos.
 #include "game/world.hpp"
 
 #include "core/profiling.hpp"
@@ -20,9 +20,6 @@ constexpr std::uint32_t kChytridHosts =
 // Fotobiontes de los líquenes: algas verdes (los líquenes reales usan Trebouxia y afines).
 constexpr std::uint32_t kPhotobionts = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Pediastrum);
 
-// Zoophagus insidians atrapa rotíferos que muerden sus clavijas.
-constexpr std::uint32_t kZoophagusPrey = speciesBit(SpeciesId::Rotifer) | speciesBit(SpeciesId::Philodina);
-
 bool hostOf(const entt::registry& reg, entt::entity e, std::uint32_t mask) {
     const Species* sp = reg.try_get<Species>(e);
     return sp && (mask & speciesBit(sp->id));
@@ -31,8 +28,8 @@ bool hostOf(const entt::registry& reg, entt::entity e, std::uint32_t mask) {
 } // namespace
 
 void World::seedFungi() {
-    // Al empezar: algunos micelios de Saprolegnia sobre detritos, Zoophagus en el fondo y
-    // zoosporas de quitridios en el agua.
+    // Al empezar: algunos micelios de Saprolegnia sobre detritos y zoosporas de quitridios en el
+    // agua.
     auto spawn = [&](FungusKind kind, std::uint64_t salt) {
         Rng rng(config_.seed, rng_stream::kFungi + 400, salt, 0);
         Vec2 at = randomPoint(rng, 20.0f);
@@ -45,8 +42,6 @@ void World::seedFungi() {
     };
     for (std::uint64_t k = 0; k < static_cast<std::uint64_t>(config_.saprolegnia); ++k)
         spawn(FungusKind::Saprolegnia, k);
-    for (std::uint64_t k = 0; k < static_cast<std::uint64_t>(config_.zoophagus); ++k)
-        spawn(FungusKind::Zoophagus, 100 + k);
     for (std::uint64_t k = 0; k < static_cast<std::uint64_t>(config_.allomyces); ++k)
         spawn(FungusKind::Allomyces, 200 + k);
     // Líquenes: el micobionte nace junto a un alga verde (si hay) para encontrar su fotobionte.
@@ -192,28 +187,6 @@ void World::stepFungi(float dt) {
                     hyphaCover_.at(wrapIndex(cx + dx, hyphaCover_.nx), wrapIndex(cy + dy, hyphaCover_.ny)) = 1.0f;
         }
 
-    // Trampas de Zoophagus: la presa que toca una clavija queda pegada.
-    const std::uint32_t trapMask = kZoophagusPrey;
-    for (const Mycelium& m : fungi_.mycelia) {
-        if (m.kind != FungusKind::Zoophagus)
-            continue;
-        for (std::size_t k = 0; k < m.x.size(); ++k) {
-            if (!m.peg[k])
-                continue;
-            const Vec2 peg = wrapped({m.x[k], m.y[k]});
-            for (auto [e, body] : registry_.view<RingBody>().each()) {
-                if (!hostOf(registry_, e, trapMask) || registry_.any_of<Trapped, Cyst>(e))
-                    continue;
-                const Vec2 q = body.centroid + Vec2{minImage(peg.x - body.centroid.x, width_), minImage(peg.y - body.centroid.y, height_)};
-                if (q.x < body.aabbMin.x || q.x > body.aabbMax.x || q.y < body.aabbMin.y || q.y > body.aabbMax.y)
-                    continue;
-                if (polygon::closestOnBoundary(body.poly.data(), static_cast<int>(body.poly.size()), q).dist2 < 9.0f) {
-                    registry_.emplace<Trapped>(e, Trapped{m.id, peg});
-                    ++observed_.zoophagusCaptures;
-                }
-            }
-        }
-    }
     updateInfections(bioDt);
 }
 
@@ -234,18 +207,6 @@ void World::updateInfections(float bioDt) {
         inf.phosphorus += pOut;
         if (inf.ageHours >= p.chytridMaxHours)
             releaseChytridSpores(e);
-    }
-    // Zoophagus: la hifa invade a la presa pegada y la digiere (~horas).
-    for (auto [e, trap, meta] : registry_.view<Trapped, Metabolism>().each()) {
-        if (!fungi_.find(trap.mycelium))
-            continue; // el micelio murió: la presa sigue pegada hasta morir
-        const float f = 1.0f - std::exp(-hours / 2.0f);
-        const float taken = (meta.reserves + meta.biomass) * f;
-        meta.reserves -= meta.reserves * f;
-        meta.biomass -= meta.biomass * f;
-        const float pOut = meta.phosphorus * f;
-        meta.phosphorus -= pOut;
-        fungi_.feed(trap.mycelium, 0.6f * taken, pOut);
     }
 }
 

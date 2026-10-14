@@ -23,7 +23,7 @@ WorldConfig bare(float temperature) {
     c.bacteria = 3000;
     c.detritus = 0;
     c.cyanoFilaments = 0;
-    c.saprolegnia = c.zoophagus = c.chytridClusters = 0;
+    c.saprolegnia = c.chytridClusters = 0;
     c.seed = 5;
     c.medium.temperature = temperature;
     return c;

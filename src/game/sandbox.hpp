@@ -17,7 +17,6 @@ enum class BeingKind : std::uint8_t {
     Oscillatoria,   // tricoma de Oscillatoria
     Chytrid,        // zoosporas de quitridio
     Saprolegnia,    // micelio descomponedor
-    Zoophagus,      // micelio que atrapa rotíferos
     Allomyces,      // micelio dicotómico con esporangios de resistencia
     Lichen,         // hongo liquenizante: se une a algas verdes
     Physarum,       // plasmodio de moho mucilaginoso (no es un hongo)
@@ -69,7 +68,6 @@ enum class BeingCategory : std::uint8_t {
     Flagellates, // protistas con flagelo que no son algas (Euglena, Trichonympha)
     Amoebae,     // ameboides
     Algae,       // algas unicelulares, coloniales, filamentosas y diatomeas
-    Animals,     // metazoos: rotíferos, Hydra, nauplios, gastrotricos y nematodos
     Fungi,       // levaduras y hongos
     Bacteria,    // bacterias (también cianobacterias) y fagos
     Sediment,    // minerales y granos de arena
@@ -81,8 +79,6 @@ inline BeingCategory categoryOf(Being b) {
     switch (b.kind) {
     case BeingKind::Species: {
         const SpeciesInfo& s = speciesInfo(b.species);
-        if (s.multicellular)
-            return BeingCategory::Animals;
         if (s.budding && s.feeding == FeedingMode::Osmotroph)
             return BeingCategory::Fungi;
         if (s.filament || s.glider || s.colonyDaughters > 0 || (s.feeding == FeedingMode::None && s.chloroplasts))
@@ -95,7 +91,6 @@ inline BeingCategory categoryOf(Being b) {
     }
     case BeingKind::Chytrid:
     case BeingKind::Saprolegnia:
-    case BeingKind::Zoophagus:
     case BeingKind::Allomyces:
     case BeingKind::Lichen:
     case BeingKind::Physarum:
@@ -126,7 +121,6 @@ inline const char* categoryName(BeingCategory c) {
     case BeingCategory::Flagellates: return "Flagelados";
     case BeingCategory::Amoebae: return "Amebas";
     case BeingCategory::Algae: return "Algas";
-    case BeingCategory::Animals: return "Animales";
     case BeingCategory::Fungi: return "Hongos y mohos";
     case BeingCategory::Bacteria: return "Bacterias y virus";
     case BeingCategory::Sediment: return "Sedimento";
@@ -146,7 +140,6 @@ inline const char* beingName(Being b) {
     case BeingKind::Oscillatoria: return "Oscillatoria";
     case BeingKind::Chytrid: return "Quitridio";
     case BeingKind::Saprolegnia: return "Saprolegnia";
-    case BeingKind::Zoophagus: return "Zoophagus";
     case BeingKind::Allomyces: return "Allomyces";
     case BeingKind::Lichen: return "Hongo liquenizante";
     case BeingKind::Physarum: return "Physarum";

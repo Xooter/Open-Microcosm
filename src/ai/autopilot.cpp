@@ -89,19 +89,6 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
             pilot.intent = Intent::Glide;
             return;
         }
-        if (species.hopper) { // nauplio: golpe de los apéndices (salto) y pausa
-            pilot.retarget -= dt;
-            if (pilot.retarget <= 0.0f) {
-                pilot.walking = !pilot.walking;
-                pilot.retarget = pilot.walking ? rng.uniform(0.08f, 0.15f) : rng.uniform(0.5f, 1.5f);
-                if (pilot.walking)
-                    pilot.turn = rng.uniform(-1.0f, 1.0f);
-            }
-            loco.forward = pilot.walking ? 1.0f : 0.0f;
-            loco.turn = pilot.walking ? pilot.turn : 0.0f;
-            pilot.intent = pilot.walking ? Intent::Hop : Intent::Pause;
-            return;
-        }
         if (species.walker) { // Euplotes: camina sobre los cirros con paradas bruscas
             pilot.retarget -= dt;
             if (pilot.retarget <= 0.0f) {
@@ -143,29 +130,6 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
             pilot.retarget = rng.uniform(3.0f, 8.0f);
         }
         loco.target = pilot.target;
-        return;
-    }
-    case LocomotionType::Undulation: {
-        // Nematodo: ante un choque o una amenaza, reversa (la onda corre al revés) y después un
-        // giro brusco ("omega turn" de C. elegans); si no, avanza con cambios de rumbo lentos.
-        loco.active = true;
-        if (((sense.hasThreat && sense.threatDistance < 60.0f) || sense.bumped) && pilot.reverse <= 0.0f) {
-            pilot.intent = sense.hasThreat && sense.threatDistance < 60.0f ? Intent::AvoidThreat : Intent::AvoidBump;
-            pilot.reverse = rng.uniform(1.0f, 2.5f);
-            pilot.turn = rng.uniform() < 0.5f ? -1.0f : 1.0f;
-        }
-        if (pilot.reverse > 0.0f) {
-            pilot.reverse -= dt;
-            loco.forward = pilot.reverse > 0.8f ? -1.0f : 1.0f;
-            loco.turn = pilot.reverse > 0.8f ? 0.0f : pilot.turn;
-            if (pilot.reverse <= 0.8f)
-                pilot.intent = Intent::OmegaTurn;
-            return;
-        }
-        pilot.intent = Intent::Wander;
-        pilot.turn = clampTurn(pilot.turn - pilot.turn * 0.5f * dt + 0.6f * std::sqrt(dt) * rng.normal());
-        loco.forward = 1.0f;
-        loco.turn = 0.5f * pilot.turn;
         return;
     }
     case LocomotionType::Pseudopod: {

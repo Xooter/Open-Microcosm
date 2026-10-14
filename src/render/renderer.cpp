@@ -245,8 +245,8 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
                     }
                 }
             }
-            // Hongos: hifas como tubos hialinos (Saprolegnia, ~12 µm; Zoophagus, finas con
-            // clavijas), zoosporangios en las puntas y zoosporas.
+            // Hongos: hifas como tubos hialinos (Saprolegnia, ~12 µm), zoosporangios en las puntas
+            // y zoosporas.
             for (const Mycelium& m : world.fungi().mycelia) {
                 const float fx = wrapCoord(m.x[0], w) - m.x[0], fy = wrapCoord(m.y[0], h) - m.y[0];
                 const FungusInfo& info = fungusInfo(m.kind);
@@ -261,12 +261,9 @@ void Renderer::drawWorld(const World& world, const Camera2D& camera, Overlay ove
                     if (m.parent[k] >= 0) {
                         const auto pk = static_cast<std::size_t>(m.parent[k]);
                         const Vector2 q = {m.x[pk] + fx + offX, m.y[pk] + fy + offY};
-                        const float wk = m.peg[k] ? 3.0f : width;
-                        DrawLineEx(q, p, wk + 1.2f, wallColor);
-                        DrawLineEx(q, p, wk - 0.6f, hypha);
+                        DrawLineEx(q, p, width + 1.2f, wallColor);
+                        DrawLineEx(q, p, width - 0.6f, hypha);
                     }
-                    if (m.peg[k])
-                        DrawCircleV(p, 2.2f, wallColor); // gota adhesiva
                     if (m.sporangium[k] > 0.0f) {
                         const float r = 0.5f * width + 6.0f * std::min(1.0f, m.sporangium[k]);
                         DrawCircleV(p, r, kSporangium);
