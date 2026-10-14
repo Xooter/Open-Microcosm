@@ -1,4 +1,5 @@
 #include "ui/imgui_raylib.hpp"
+#include "core/paths.hpp"
 
 #include <imgui.h>
 #include <implot.h>
@@ -102,7 +103,7 @@ void initBackend(const char* iniPath, float fontSize) {
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
     io.IniFilename = iniPath;
     io.ConfigDragClickToInputText = true; // Ctrl+click o doble click en un slider: se tipea el valor
-    io.Fonts->AddFontFromFileTTF(BIO_ASSET_DIR "/fonts/Roboto-Medium.ttf", fontSize);
+    io.Fonts->AddFontFromFileTTF(assetPath("fonts/Roboto-Medium.ttf").c_str(), fontSize);
     unsigned char* pixels = nullptr;
     int w = 0, h = 0;
     io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);

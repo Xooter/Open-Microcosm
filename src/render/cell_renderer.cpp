@@ -1,4 +1,5 @@
 #include "render/cell_renderer.hpp"
+#include "core/paths.hpp"
 #include "render/shapes.hpp"
 
 #include "bio/cell.hpp"
@@ -142,7 +143,7 @@ Color limitationColor(Limitation l) {
 }
 
 CellRenderer::CellRenderer() {
-    shader_ = LoadShader(nullptr, BIO_ASSET_DIR "/shaders/cell_brightfield.fs");
+    shader_ = LoadShader(nullptr, assetPath("shaders/cell_brightfield.fs").c_str());
     shaderOk_ = shader_.id != 0 && shader_.id != rlGetShaderIdDefault();
     if (shaderOk_) {
         texelLoc_ = GetShaderLocation(shader_, "texelSize");

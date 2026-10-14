@@ -1,4 +1,5 @@
 #include "render/renderer.hpp"
+#include "core/paths.hpp"
 #include "render/shapes.hpp"
 
 #include "core/profiling.hpp"
@@ -35,13 +36,13 @@ constexpr Color kResting = {110, 78, 44, 230};         // esporangio de resisten
 
 Renderer::Renderer() {
     cells_.setLod(lod_);
-    post_ = LoadShader(nullptr, BIO_ASSET_DIR "/shaders/microscope_post.fs");
+    post_ = LoadShader(nullptr, assetPath("shaders/microscope_post.fs").c_str());
     postOk_ = post_.id != 0 && post_.id != rlGetShaderIdDefault();
     if (postOk_) {
         resolutionLoc_ = GetShaderLocation(post_, "resolution");
         timeLoc_ = GetShaderLocation(post_, "time");
     }
-    glass_ = LoadShader(nullptr, BIO_ASSET_DIR "/shaders/dish_glass.fs");
+    glass_ = LoadShader(nullptr, assetPath("shaders/dish_glass.fs").c_str());
     glassOk_ = glass_.id != 0 && glass_.id != rlGetShaderIdDefault();
     if (glassOk_) {
         glassLoc_.resolution = GetShaderLocation(glass_, "resolution");

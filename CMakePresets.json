@@ -15,6 +15,17 @@
       "cacheVariables": { "CMAKE_BUILD_TYPE": "RelWithDebInfo", "BIO_PROFILING": "ON" }
     },
     {
+      "name": "dist",
+      "inherits": "base",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "BIO_NATIVE": "OFF", "BIO_ARCH": "x86-64-v2", "BIO_BUILD_TESTS": "OFF", "BIO_STATIC_RUNTIME": "ON" }
+    },
+    {
+      "name": "windows",
+      "inherits": "base",
+      "toolchainFile": "${sourceDir}/cmake/mingw-w64.cmake",
+      "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "BIO_NATIVE": "OFF", "BIO_ARCH": "x86-64-v2", "BIO_BUILD_TESTS": "OFF" }
+    },
+    {
       "name": "lite",
       "inherits": "base",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release", "BIO_PROFILE_LITE": "ON", "BIO_BUILD_TESTS": "OFF" }
@@ -24,6 +35,8 @@
     { "name": "debug",   "configurePreset": "debug" },
     { "name": "release", "configurePreset": "release" },
     { "name": "profile", "configurePreset": "profile" },
-    { "name": "lite",    "configurePreset": "lite" }
+    { "name": "lite",    "configurePreset": "lite" },
+    { "name": "dist",    "configurePreset": "dist" },
+    { "name": "windows", "configurePreset": "windows" }
   ]
 }

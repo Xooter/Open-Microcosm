@@ -8,12 +8,18 @@
 //
 //   bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] [--warmup N] [--threads N]
 //             [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate]
+//             [--soak N]
+//
+// Con --soak N (prueba larga) cada N pasos verifica que todo sea finito y que el balance de P, N,
+// Si y Fe cierre, y registra la memoria; termina con código 2 si algo falla.
 //
 // Con --scene reproduce una escena guardada (placa + intervenciones con su paso, incluido el foco):
 // bioma, seed, fauna y foco salen de la escena.
 #include "core/profiling.hpp"
+#include "core/finite.hpp"
 #include "game/biome.hpp"
 #include "game/run.hpp"
+#include "game/mass_budget.hpp"
 #include "game/scene.hpp"
 #include "gpu/gpu_substep_solver.hpp"
 #include "render/renderer.hpp"
@@ -50,7 +56,44 @@ struct Args {
     float zoom = 0.0f; // 0: la placa entera
     float cellDetail = 1.0f;
     std::string scene; // escena (.plate con intervenciones) a reproducir
+    int soak = 0;      // > 0: cada `soak` pasos verifica posiciones finitas, balance y memoria
 };
+
+// Memoria residente [MB] (Linux; 0 si no se puede leer).
+double residentMB() {
+    std::FILE* f = std::fopen("/proc/self/statm", "r");
+    if (!f)
+        return 0.0;
+    long pages = 0, resident = 0;
+    const int n = std::fscanf(f, "%ld %ld", &pages, &resident);
+    std::fclose(f);
+    return n == 2 ? static_cast<double>(resident) * 4096.0 / (1024.0 * 1024.0) : 0.0;
+}
+
+// Prueba larga: ¿algo dejó de ser finito o el balance de masa dejó de cerrar? Devuelve el problema
+// ("" si todo bien).
+std::string soakCheck(const World& world, const MassBudget& start) {
+    const BodyParticles& bp = world.bodies();
+    for (std::size_t s = 0; s < bp.capacity(); ++s)
+        if (bp.alive[s] && (!finiteNumber(bp.x[s]) || !finiteNumber(bp.y[s])))
+            return "partícula de cuerpo no finita (slot " + std::to_string(s) + ")";
+    const Bacteria& bac = world.bacteria();
+    for (std::size_t i = 0; i < bac.size(); ++i)
+        if (!finiteNumber(bac.x[i]) || !finiteNumber(bac.y[i]))
+            return "bacteria no finita (" + std::to_string(i) + ")";
+    const MassBudget now = world.massBudget();
+    for (int e = 0; e < kElementCount; ++e) {
+        const auto el = static_cast<Element>(e);
+        if (!conservedElement(el))
+            continue;
+        const double residual = budgetResidual(start, now, el);
+        const double scale = std::max(1.0, std::abs(now.total(el)));
+        if (!finiteNumber(residual) || std::abs(residual) / scale > 1e-3)
+            return std::string("el balance de ") + elementName(el) + " no cierra (residuo " +
+                   std::to_string(residual) + " pmol de " + std::to_string(now.total(el)) + ")";
+    }
+    return "";
+}
 
 // glFinish no está en rlgl; el GLAD de raylib lo carga (como en gpu_substep_solver.cpp).
 extern "C" {
@@ -70,6 +113,8 @@ bool parse(int argc, char** argv, Args& a) {
             a.render = true;
         else if (k == "--zoom" && hasValue)
             a.zoom = static_cast<float>(std::atof(argv[++i]));
+        else if (k == "--soak" && hasValue)
+            a.soak = std::atoi(argv[++i]);
         else if (k == "--scene" && hasValue)
             a.scene = argv[++i];
         else if (k == "--cell-detail" && hasValue)
@@ -88,7 +133,7 @@ bool parse(int argc, char** argv, Args& a) {
             a.threads = std::atoi(argv[++i]);
         else {
             std::fprintf(stderr, "uso: bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] "
-                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate]\n");
+                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate] [--soak N]\n");
             return false;
         }
     }
@@ -205,7 +250,22 @@ int main(int argc, char** argv) {
     }
     using Clock = std::chrono::steady_clock;
     double ms = 0.0, renderMs = 0.0;
+    // Prueba larga: el balance se mide desde el comienzo de los pasos medidos.
+    const MassBudget soakStart = world.massBudget();
+    const double soakMemStart = residentMB();
+    double soakMemMax = soakMemStart;
+    std::string soakFailure;
     for (int i = 0; i < a.steps; ++i) {
+        if (a.soak > 0 && i > 0 && i % a.soak == 0) {
+            soakMemMax = std::max(soakMemMax, residentMB());
+            soakFailure = soakCheck(world, soakStart);
+            if (!soakFailure.empty()) {
+                std::fprintf(stderr, "FALLA en el paso %llu (t = %.1f s): %s\n",
+                             static_cast<unsigned long long>(world.stepIndex()), static_cast<double>(world.simTime()),
+                             soakFailure.c_str());
+                break;
+            }
+        }
         const auto t0 = Clock::now();
         run.interventions().beforeStep(world, kDt);
         world.step(kDt);
@@ -245,6 +305,13 @@ int main(int argc, char** argv) {
     if (!world.links().empty())
         std::printf("uniones %zu  estiramiento medio %.3f  máximo %.3f\n", world.links().size(),
                     stretch / static_cast<double>(world.links().size()), worst);
+    if (a.soak > 0) {
+        if (soakFailure.empty())
+            soakFailure = soakCheck(world, soakStart);
+        std::printf("prueba larga: %s  memoria %.0f → %.0f MB (máx %.0f)\n",
+                    soakFailure.empty() ? "OK" : soakFailure.c_str(), soakMemStart, residentMB(),
+                    std::max(soakMemMax, residentMB()));
+    }
     if (a.gpu && std::getenv("BIO_GPU_TIMING")) {
         SetTraceLogLevel(LOG_INFO);
         gpu.printTiming(a.warmup + a.steps);
@@ -255,5 +322,5 @@ int main(int argc, char** argv) {
     }
     if (window)
         CloseWindow();
-    return 0;
+    return a.soak > 0 && !soakFailure.empty() ? 2 : 0;
 }

@@ -1,4 +1,5 @@
 #include "ui/i18n.hpp"
+#include "core/paths.hpp"
 
 #include <fstream>
 #include <string>
@@ -33,7 +34,7 @@ bool loadLanguage(const std::string& code) {
     table().clear();
     if (code.empty() || code == "es")
         return true;
-    std::ifstream in(std::string(BIO_ASSET_DIR) + "/lang/" + code + ".txt");
+    std::ifstream in(assetPath("lang/" + code + ".txt"));
     if (!in)
         return false;
     std::string line;

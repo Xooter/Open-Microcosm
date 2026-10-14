@@ -16,7 +16,11 @@
 namespace {
 
 #if defined(__GNUC__)
+#if defined(__MINGW32__)
+__attribute__((format(gnu_printf, 1, 2))) // con __USE_MINGW_ANSI_STDIO, printf es el de C99
+#else
 __attribute__((format(printf, 1, 2)))
+#endif
 #endif
 std::string fmt(const char* f, ...) {
     char buf[320];

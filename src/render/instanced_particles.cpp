@@ -1,4 +1,5 @@
 #include "render/instanced_particles.hpp"
+#include "core/paths.hpp"
 
 #include "core/profiling.hpp"
 
@@ -18,7 +19,7 @@ InstancedParticles::~InstancedParticles() {
 
 void InstancedParticles::init() {
     tried_ = true;
-    shader_ = LoadShader(BIO_ASSET_DIR "/shaders/particles_instanced.vs", BIO_ASSET_DIR "/shaders/particles_instanced.fs");
+    shader_ = LoadShader(assetPath("shaders/particles_instanced.vs").c_str(), assetPath("shaders/particles_instanced.fs").c_str());
     if (shader_.id == 0 || shader_.id == rlGetShaderIdDefault())
         return;
     mvpLoc_ = GetShaderLocation(shader_, "mvp");

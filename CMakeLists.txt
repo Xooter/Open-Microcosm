@@ -7,6 +7,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 option(BIO_NATIVE    "Compilar con -march=native (SIMD de la CPU local)" ON)
+# Distribución: sin native, una base de CPU que corra en cualquier máquina de la última década.
+set(BIO_ARCH "" CACHE STRING "Arquitectura base si BIO_NATIVE=OFF (p. ej. x86-64-v2)")
 option(BIO_PROFILING "Habilitar el profiler Tracy" OFF)
 option(BIO_PROFILE_LITE "Tiempos por PROFILE_SCOPE sin Tracy (bio_bench los imprime)" OFF)
 option(BIO_STRICT_FP "IEEE estricto (sin -ffast-math ni FMA): checksums de bio_bench comparables" OFF)
@@ -28,14 +30,16 @@ set(BUILD_GAMES    OFF CACHE BOOL "" FORCE)
 FetchContent_Declare(raylib
     URL https://github.com/raysan5/raylib/archive/refs/tags/5.5.tar.gz
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    SYSTEM)
+    SYSTEM
+    EXCLUDE_FROM_ALL)
 
 # EnTT: ECS para entidades de alto nivel (organismos, colonias, items...).
 # Las partículas masivas NO van en el ECS: viven en arrays SoA (ver sim/particles.hpp).
 FetchContent_Declare(EnTT
     URL https://github.com/skypjack/entt/archive/refs/tags/v3.14.0.tar.gz
     DOWNLOAD_EXTRACT_TIMESTAMP TRUE
-    SYSTEM)
+    SYSTEM
+    EXCLUDE_FROM_ALL)
 
 # Dear ImGui (rama docking): UI del laboratorio (paneles acoplables). El backend de raylib es
 # propio (src/ui/imgui_raylib.cpp): no se usa rlImGui.
@@ -68,6 +72,11 @@ if(BIO_BUILD_TESTS)
 endif()
 
 find_package(OpenMP REQUIRED)
+if(MINGW)
+    # find_package elige libgomp.dll.a (la DLL); el paquete de Windows no debe depender de ella.
+    find_library(BIO_GOMP_STATIC NAMES libgomp.a REQUIRED)
+    set_property(TARGET OpenMP::OpenMP_CXX PROPERTY INTERFACE_LINK_LIBRARIES "${BIO_GOMP_STATIC};pthread")
+endif()
 
 # ---------------------------------------------------------------------------
 # Opciones de compilación comunes
@@ -82,6 +91,8 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
     endif()
     if(BIO_NATIVE)
         target_compile_options(bio_options INTERFACE -march=native)
+    elseif(BIO_ARCH)
+        target_compile_options(bio_options INTERFACE -march=${BIO_ARCH})
     endif()
 elseif(MSVC)
     target_compile_options(bio_options INTERFACE /W4 $<$<CONFIG:Release,RelWithDebInfo>:/O2 /fp:fast>)
@@ -94,6 +105,7 @@ check_ipo_supported(RESULT ipo_ok OUTPUT ipo_msg)
 # biosim: simulación sin dependencias de render (la usan el juego y los tests)
 # ---------------------------------------------------------------------------
 add_library(biosim STATIC
+    src/core/paths.cpp
     src/sim/fft.cpp
     src/sim/fluid.cpp
     src/sim/chem_field.cpp
@@ -140,12 +152,17 @@ add_library(biosim STATIC
     src/game/export.cpp)
 
 target_include_directories(biosim PUBLIC src ${CMAKE_BINARY_DIR}/generated)
+# Assets del árbol de fuentes: respaldo para desarrollo (instalado, se usan los de junto al ejecutable).
+target_compile_definitions(biosim PRIVATE BIO_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 
 # Procedencia de cada corrida (versión, commit, flags): la exportación la registra.
 set(bio_flags "${CMAKE_BUILD_TYPE}")
 if(BIO_NATIVE)
     string(APPEND bio_flags " native")
+elseif(BIO_ARCH)
+    string(APPEND bio_flags " ${BIO_ARCH}")
 endif()
+string(APPEND bio_flags " ${CMAKE_SYSTEM_NAME}")
 if(BIO_STRICT_FP)
     string(APPEND bio_flags " ieee-estricto")
 else()
@@ -223,16 +240,53 @@ add_executable(bio_bench bench/bio_bench.cpp src/gpu/gpu_substep_solver.cpp
     src/render/renderer.cpp src/render/minerals.cpp src/render/field_overlay.cpp src/render/cell_renderer.cpp
     src/render/instanced_particles.cpp src/render/population_layer.cpp src/render/structure_renderer.cpp)
 target_link_libraries(bio_bench PRIVATE biosim raylib)
-target_compile_definitions(bio_bench PRIVATE BIO_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 
 # SYSTEM: los warnings de headers de terceros no son nuestros.
 target_link_libraries(bio PRIVATE biosim raylib imgui_lib)
-# Ruta absoluta a assets/ para desarrollo (el empaquetado queda para más adelante).
-target_compile_definitions(bio PRIVATE BIO_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 
 if(ipo_ok)
     set_property(TARGET biosim bio PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 endif()
+
+# ---------------------------------------------------------------------------
+# Instalación y paquetes (MVP: distribución). El ejecutable busca assets/ a su lado
+# (core/paths), así que se instala todo en la misma carpeta.
+# ---------------------------------------------------------------------------
+install(TARGETS bio RUNTIME DESTINATION .)
+install(DIRECTORY assets DESTINATION .)
+install(FILES README.md LICENSE DESTINATION . OPTIONAL)
+if(MINGW)
+    # printf de C99 (%zu): el de MSVCRT no lo entiende.
+    target_compile_definitions(bio_options INTERFACE __USE_MINGW_ANSI_STDIO=1)
+endif()
+option(BIO_STATIC_RUNTIME "Enlazar estáticas libstdc++, libgcc y libgomp (paquetes)" OFF)
+if(BIO_STATIC_RUNTIME AND NOT WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    # El paquete de Linux no depende de la versión de libstdc++ ni de que esté libgomp instalada.
+    target_link_options(bio_options INTERFACE -static-libstdc++ -static-libgcc)
+    # libgomp.a está en la carpeta interna del compilador, no en las rutas estándar.
+    execute_process(COMMAND ${CMAKE_CXX_COMPILER} -print-file-name=libgomp.a
+                    OUTPUT_VARIABLE BIO_GOMP_STATIC OUTPUT_STRIP_TRAILING_WHITESPACE)
+    if(IS_ABSOLUTE "${BIO_GOMP_STATIC}" AND EXISTS "${BIO_GOMP_STATIC}")
+        set_property(TARGET OpenMP::OpenMP_CXX PROPERTY INTERFACE_LINK_LIBRARIES "${BIO_GOMP_STATIC};pthread")
+    endif()
+endif()
+if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    # Que ningún ejecutable dependa de las DLL de MinGW (libstdc++, libgcc, libgomp) en la máquina
+    # destino.
+    target_link_options(bio_options INTERFACE -static -static-libgcc -static-libstdc++)
+endif()
+set(CPACK_PACKAGE_NAME "BioGame")
+set(CPACK_PACKAGE_VENDOR "BioGame")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Laboratorio de vida microscópica: simulación y medición")
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_FILE_NAME "BioGame-${PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}")
+set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY ON)
+if(WIN32)
+    set(CPACK_GENERATOR ZIP)
+else()
+    set(CPACK_GENERATOR TGZ)
+endif()
+include(CPack)
 
 # ---------------------------------------------------------------------------
 # Tests

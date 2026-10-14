@@ -1,4 +1,5 @@
 #include "gpu/gpu_substep_solver.hpp"
+#include "core/paths.hpp"
 
 #include "core/finite.hpp"
 #include "core/profiling.hpp"
@@ -60,7 +61,7 @@ GpuSubstepSolver::~GpuSubstepSolver() {
 }
 
 bool GpuSubstepSolver::load(Program& p, const char* file, bool contactHelpers) {
-    const std::string dir = BIO_ASSET_DIR "/shaders/compute/";
+    const std::string dir = assetPath("shaders/compute/");
     std::string code = readText(dir + "common.glsl");
     if (contactHelpers)
         code += readText(dir + "contact_common.glsl");

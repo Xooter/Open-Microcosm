@@ -99,6 +99,12 @@ Hay presets `debug`, `release`, `profile` (Tracy) y `lite` (tiempos por scope si
 tiene que compilar **sin warnings** con `-Wall -Wextra -Wpedantic`, y `ctest --test-dir build/release`
 tiene que pasar.
 
+**Presets de distribución:** `dist` (Linux, sin `-march=native`, base x86-64-v2) y `windows`
+(cruzado con MinGW, `cmake/mingw-w64.cmake`); `cpack` en su carpeta arma el paquete. Los assets
+se buscan junto al ejecutable (`core/paths`) y, en desarrollo, en el árbol de fuentes; los datos
+del usuario en la carpeta de la plataforma (`userDataDir`). `tools/ci.sh` es el CI local
+(`--todo`, `--paquetes`); `ctest -L rapidos` es la verificación rápida.
+
 **Medir:** `bio_bench` corre una gota fija sin ventana y da ms/paso, el censo y un checksum del
 estado (`--wildlife 3` ≈ 700 células, `--gpu` usa el resolvedor de GPU como la app; con el preset
 `lite` desglosa por `PROFILE_SCOPE`). Una optimización que no debe cambiar resultados se verifica
@@ -349,6 +355,26 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   evaluación en el render y, si hace falta, un dato en `SpeciesChemistry`.
 - Las tinciones del usuario se guardan en `<datos>/biogame/stains/*.stain` (texto clave=valor
   versionado, `stain_version`).
+
+### Reproducibilidad (`game/parameters`, `game/intervention`, `game/scene`)
+
+- **Registro de parámetros** (`parameters()`): todo parámetro ajustable de la placa en marcha
+  está en una sola tabla (clave estable, unidad, rango, acceso). Los paneles dibujan sus
+  controles desde ella (`ui/param_controls`) y `runJson` la exporta entera. Un parámetro nuevo se
+  suma ahí, no en un panel.
+- **Intervenciones:** **toda acción que cambia el mundo** (herramientas, parámetros, ambiente,
+  solutos, ser controlado, fijar, foco del LOD, motor) pasa por `App::intervene` /
+  `interveneState` → `Run::interventions()`: se aplica entre pasos y queda anotada con su paso.
+  Nunca llames a `World` directamente desde la interfaz. Lo que se mantiene apretado (tinta,
+  gotero) es un pincel que `InterventionLog::beforeStep` aplica **una vez por paso** (no por
+  cuadro: el resultado no puede depender de los FPS).
+- **Escena** = `.plate` + líneas `event=paso tipo …`. Cargarla y crear la placa repite la corrida
+  (`InterventionLog::schedule`); la exportación la incluye. Nivel prometido: bit a bit con el
+  mismo binario, máquina, motor y opciones; entre máquinas, estadístico (réplicas). La
+  procedencia (versión, commit, flags, motor, GPU, CPU, huella de las intervenciones) va en
+  `runJson`.
+- Los floats de los archivos de texto se escriben con precisión de ida y vuelta (`max_digits10`
+  o `std::to_chars`): con 6 cifras, una placa leída ya no es la misma.
 
 ### Sesión y control (`game/run`, `game/progress`, `ai/autopilot`)
 

@@ -1,5 +1,7 @@
 #include "game/progress.hpp"
 
+#include "core/paths.hpp"
+
 #include <algorithm>
 #include <cstdlib>
 #include <filesystem>
@@ -8,15 +10,9 @@
 #include <sstream>
 
 std::string defaultProgressPath() {
-    namespace fs = std::filesystem;
-    fs::path base;
-    if (const char* xdg = std::getenv("XDG_DATA_HOME"); xdg && *xdg)
-        base = xdg;
-    else if (const char* home = std::getenv("HOME"); home && *home)
-        base = fs::path(home) / ".local" / "share";
-    else
-        base = ".";
-    return (base / "biogame" / "progress.txt").string();
+    // Placas, escenas, tinciones, exportaciones y opciones viven al lado (core/paths: según la
+    // plataforma).
+    return (std::filesystem::path(userDataDir()) / "progress.txt").string();
 }
 
 namespace {
