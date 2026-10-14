@@ -260,6 +260,8 @@ void iterate(Body B, uint L, uint n, float h) {
 
 // Uniones de adhesión con otros cuerpos: este cuerpo corrige solo sus extremos (el otro cuerpo
 // hace lo mismo con los suyos). Serial dentro del cuerpo: un punto puede tener varias uniones.
+// El extremo ajeno se lee de la instantánea del comienzo del despacho (Jacobi entre cuerpos):
+// leerlo en vivo sería una carrera con el grupo de trabajo del otro cuerpo.
 void solveLinks(Body B, uint L, float h) {
     if (L != 0u || B.linkCount == 0u)
         return;
@@ -268,6 +270,10 @@ void solveLinks(Body B, uint L, float h) {
         LinkRef r = linkRefs[B.linkOff + k];
         Link l = links[r.link];
         vec4 pa = pos[l.a], pb = pos[l.b];
+        if (r.end == 0u)
+            pb.xy = linkSnap[2u * r.link + 1u];
+        else
+            pa.xy = linkSnap[2u * r.link];
         vec2 d = vec2(minImage(pb.x - pa.x, uWorld.x), minImage(pb.y - pa.y, uWorld.y));
         float len = length(d), w = pa.w + pb.w;
         if (len < 1e-6 || w <= 0.0)

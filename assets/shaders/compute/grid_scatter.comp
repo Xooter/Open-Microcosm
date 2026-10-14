@@ -1,0 +1,11 @@
+// Reparte cada punto en el tramo de su celda (el orden dentro del tramo no importa: los contactos
+// se suman en punto fijo).
+layout(local_size_x = 256) in;
+
+void main() {
+    uint t = gl_GlobalInvocationID.x;
+    if (t >= uNumMembers)
+        return;
+    uint idx = atomicAdd(gridData[uNumCells + memberCell[t]], 1u);
+    cellSlot[idx] = t;
+}

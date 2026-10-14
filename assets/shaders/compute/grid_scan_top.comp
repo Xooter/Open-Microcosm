@@ -1,0 +1,30 @@
+// Suma prefija, segundo nivel: un solo grupo convierte los totales de los bloques en su
+// comienzo (exclusiva). Cada hilo suma en serie un tramo de bloques.
+layout(local_size_x = 1024) in;
+
+shared uint sTop[1024];
+
+void main() {
+    uint L = gl_LocalInvocationID.x;
+    uint blocks = (uNumCells + kScanBlock - 1u) / kScanBlock;
+    uint per = (blocks + 1023u) / 1024u;
+    uint b0 = min(L * per, blocks), b1 = min(b0 + per, blocks);
+    uint base = 2u * uNumCells;
+    uint sum = 0u;
+    for (uint b = b0; b < b1; ++b)
+        sum += gridData[base + b];
+    sTop[L] = sum;
+    barrier();
+    for (uint off = 1u; off < 1024u; off <<= 1u) {
+        uint add = L >= off ? sTop[L - off] : 0u;
+        barrier();
+        sTop[L] += add;
+        barrier();
+    }
+    uint run = sTop[L] - sum;
+    for (uint b = b0; b < b1; ++b) {
+        uint total = gridData[base + b];
+        gridData[base + b] = run;
+        run += total;
+    }
+}

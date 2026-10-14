@@ -48,14 +48,19 @@ layout(std430, binding = 4) readonly buffer InteriorBuf { InteriorPoint intPts[]
 layout(std430, binding = 5) buffer ScratchBuf { vec2 scratch[]; };      // uno por punto de anillo
 layout(std430, binding = 6) readonly buffer MemberBuf { Member members[]; };
 layout(std430, binding = 7) buffer CellCountBuf { uint cellCount[]; };  // 2 × celdas (doble buffer)
-layout(std430, binding = 8) buffer CellSlotBuf { uint cellSlot[]; };    // celdas × kCellCapacity
+layout(std430, binding = 8) buffer CellSlotBuf { uint cellSlot[]; };    // puntos ordenados por celda
 layout(std430, binding = 9) buffer MemberCellBuf { uint memberCell[]; };
 layout(std430, binding = 10) buffer ContactBuf { vec4 contact[]; };     // xy: corrección; z: puede chocar
 layout(std430, binding = 11) readonly buffer LinkBuf { Link links[]; };
 layout(std430, binding = 12) readonly buffer LinkRefBuf { LinkRef linkRefs[]; };
+// Posiciones de los extremos de cada unión al empezar el despacho de solve (2 por unión): cada
+// cuerpo lee de acá el extremo ajeno, que otro grupo de trabajo está moviendo (sin carrera).
+layout(std430, binding = 13) buffer LinkSnapBuf { vec2 linkSnap[]; };
+// Grilla por conteo (como la de la CPU): [0, celdas) comienzo de cada celda en cellSlot,
+// [celdas, 2·celdas) cursor del reparto, [2·celdas, ...) sumas de los bloques de 256 celdas.
+layout(std430, binding = 14) buffer GridBuf { uint gridData[]; };
 
-// Cubetas de capacidad fija: sin suma prefija (los puntos de más en una celda se ignoran).
-const uint kCellCapacity = 48u;
+const uint kScanBlock = 256u; // celdas por bloque de la suma prefija
 
 uint ringSlot(uint i) { return ringPts[i].slot; }
 

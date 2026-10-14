@@ -1,0 +1,11 @@
+// Instantánea de los extremos de las uniones antes de cada despacho de solve.
+layout(local_size_x = 256) in;
+
+void main() {
+    uint k = gl_GlobalInvocationID.x;
+    if (k >= uNumLinks)
+        return;
+    Link l = links[k];
+    linkSnap[2u * k] = pos[l.a].xy;
+    linkSnap[2u * k + 1u] = pos[l.b].xy;
+}

@@ -54,9 +54,10 @@ class GpuSubstepSolver : public SubstepSolver {
     mutable std::map<unsigned int, double> kernelMs_;
     bool ready_ = false;
     std::string error_;
-    Program predict_, solve_, gridClear_, gridInsert_, crowded_, pairs_, apply_, grab_;
+    Program predict_, solve_, gridClear_, gridCount_, scanBlocks_, scanTop_, scanAdd_, gridScatter_, crowded_,
+        pairs_, apply_, grab_, linkSnap_;
     Buffer pos_, vel_, bodies_, ring_, interior_, scratch_, members_, cellCount_, cellSlot_, memberCell_, contact_,
-        linksBuf_, linkRefs_;
+        linksBuf_, linkRefs_, linkSnapBuf_, grid_;
 
     // Datos de un paso (se reusan entre pasos).
     struct GpuBody {

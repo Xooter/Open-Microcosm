@@ -1,0 +1,11 @@
+// Suma prefija, último tramo: comienzo de cada celda y cursor del reparto.
+layout(local_size_x = 256) in;
+
+void main() {
+    uint c = gl_GlobalInvocationID.x;
+    if (c >= uNumCells)
+        return;
+    uint start = gridData[c] + gridData[2u * uNumCells + c / kScanBlock];
+    gridData[c] = start;
+    gridData[uNumCells + c] = start;
+}

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "core/finite.hpp"
+
 #include <bit>
 #include <cstddef>
 #include <cstdint>
@@ -17,11 +19,7 @@ struct SeriesColumn {
     std::string group; // "Tiempo", "Poblacion", "Quimica", "Balance", "Region"
 };
 
-// ¿Es un número (no NaN ni infinito)? Por bits: con -ffast-math, std::isfinite se optimiza a
-// "siempre verdadero", y la serie usa NaN para marcar valores faltantes.
-inline bool finiteNumber(double v) {
-    return (std::bit_cast<std::uint64_t>(v) & 0x7ff0000000000000ull) != 0x7ff0000000000000ull;
-}
+// La serie usa NaN para marcar valores faltantes: se detectan con finiteNumber (core/finite).
 
 class TimeSeries {
   public:

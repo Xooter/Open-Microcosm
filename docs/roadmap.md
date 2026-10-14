@@ -136,12 +136,16 @@ hilos): el cuello de botella era `World::limitApproach`, serial y en CPU aun con
   backend de ImGui y compute shaders con librerías nuevas, y el cuadro está limitado por la CPU,
   no por el driver. OpenGL 4.6 en Mesa es una ruta de primera. (Prueba sin código:
   `MESA_LOADER_DRIVER_OVERRIDE=zink`.)
-- **Pendiente:** con GPU, 261 células = 16 ms/paso y 718 = 33 ms. Lo que queda: la espera de la
-  GPU (`collect`, kernels ~8 ms con 718; `pairs` es el más caro), `limitApproach` (serial por
-  naturaleza: ~30 % de los pares empujan y forman cadenas de cientos de niveles; paralelizar por
-  grupos o niveles no gana), química+FFT (~6 ms), `resolvePenetrations`, `applyMotion`,
-  `perceive`. El camino de GPU no es determinista entre corridas (el checksum cambia): revisar
-  las reducciones con atómicos.
+- ✅ **GPU determinista y sin contactos perdidos:** la grilla de contactos es por conteo con suma
+  prefija (como la de la CPU; antes, cubetas de 48 que con ~700 células se llenaban y perdían
+  contactos en silencio); las correcciones de contacto se suman en punto fijo (2⁻²² µm: el orden
+  de los hilos no cambia el resultado) y las uniones leen el extremo ajeno de una instantánea
+  (antes, carrera entre grupos de trabajo). Mismo checksum entre corridas y con cualquier número de
+  hilos. Con GPU: 261 células 16 → 12,5 ms/paso; 718 células 33 → 29,6 ms.
+- **Pendiente:** con 718 células lo que queda es `limitApproach` (~8 ms, serial por naturaleza:
+  ~30 % de los pares empujan y forman cadenas de cientos de niveles), la espera de la GPU
+  (`collect` ~6 ms; `pairs` es el kernel más caro), química + FFT (~6 ms), `applyMotion`,
+  `resolvePenetrations` y `perceive`.
 - **Hecho cuando:** 60 FPS con 540+ células y la GPU activa en hardware de escritorio medio.
 
 ---

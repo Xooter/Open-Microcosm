@@ -1,0 +1,23 @@
+// Suma prefija de las cuentas, primer nivel: exclusiva dentro de cada bloque de 256 celdas y el
+// total de cada bloque. Enteros: el resultado no depende del orden.
+layout(local_size_x = 256) in;
+
+shared uint sScan[256];
+
+void main() {
+    uint c = gl_GlobalInvocationID.x;
+    uint L = gl_LocalInvocationID.x;
+    uint v = c < uNumCells ? cellCount[uParity * uNumCells + c] : 0u;
+    sScan[L] = v;
+    barrier();
+    for (uint off = 1u; off < kScanBlock; off <<= 1u) {
+        uint add = L >= off ? sScan[L - off] : 0u;
+        barrier();
+        sScan[L] += add;
+        barrier();
+    }
+    if (c < uNumCells)
+        gridData[c] = sScan[L] - v;
+    if (L == kScanBlock - 1u)
+        gridData[2u * uNumCells + gl_WorkGroupID.x] = sScan[L];
+}

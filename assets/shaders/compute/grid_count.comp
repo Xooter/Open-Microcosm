@@ -1,6 +1,6 @@
-// Grilla de contactos de este sub-paso. Cada hilo, de una vez:
+// Grilla de contactos de este sub-paso, primer tramo. Cada hilo, de una vez:
 //  - aplica la corrección de contacto pendiente de su punto (la última pasada del sub-paso
-//    anterior) y anota el punto en su celda;
+//    anterior), calcula su celda y la cuenta;
 //  - limpia una celda de la otra mitad del doble buffer (la usará el sub-paso siguiente).
 layout(local_size_x = 256) in;
 
@@ -20,7 +20,5 @@ void main() {
     uint cy = min(uGridH - 1u, uint(wrapCoord(p.y, uWorld.y) / uCell.y));
     uint cell = cy * uGridW + cx;
     memberCell[t] = cell;
-    uint idx = atomicAdd(cellCount[uParity * uNumCells + cell], 1u);
-    if (idx < kCellCapacity)
-        cellSlot[cell * kCellCapacity + idx] = t;
+    atomicAdd(cellCount[uParity * uNumCells + cell], 1u);
 }

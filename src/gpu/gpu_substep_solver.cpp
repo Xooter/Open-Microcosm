@@ -1,5 +1,6 @@
 #include "gpu/gpu_substep_solver.hpp"
 
+#include "core/finite.hpp"
 #include "core/profiling.hpp"
 
 #include <raylib.h>
@@ -19,7 +20,7 @@ extern BioFinishFn glad_glFinish;
 }
 
 namespace {
-constexpr std::size_t kCellCapacity = 48; // igual que en common.glsl
+constexpr std::size_t kScanBlock = 256; // igual que en common.glsl
 constexpr unsigned int kShaderStorageBarrierBit = 0x00002000; // GL_SHADER_STORAGE_BARRIER_BIT
 constexpr unsigned int kBufferUpdateBarrierBit = 0x00000200;  // GL_BUFFER_UPDATE_BARRIER_BIT
 
@@ -47,10 +48,11 @@ std::string readText(const std::string& path) {
 
 GpuSubstepSolver::~GpuSubstepSolver() {
     for (Buffer* b : {&pos_, &vel_, &bodies_, &ring_, &interior_, &scratch_, &members_, &cellCount_, &cellSlot_,
-                      &memberCell_, &contact_, &linksBuf_, &linkRefs_})
+                      &memberCell_, &contact_, &linksBuf_, &linkRefs_, &linkSnapBuf_, &grid_})
         if (b->id)
             rlUnloadShaderBuffer(b->id);
-    for (Program* p : {&predict_, &solve_, &gridClear_, &gridInsert_, &crowded_, &pairs_, &apply_, &grab_})
+    for (Program* p : {&predict_, &solve_, &gridClear_, &gridCount_, &scanBlocks_, &scanTop_, &scanAdd_, &gridScatter_,
+                       &crowded_, &pairs_, &apply_, &grab_, &linkSnap_})
         if (p->id)
             rlUnloadShaderProgram(p->id);
 }
@@ -116,7 +118,10 @@ bool GpuSubstepSolver::init() {
         return false;
     }
     ready_ = load(predict_, "predict.comp", false) && load(solve_, "solve.comp", false) && load(gridClear_, "grid_clear.comp", false) &&
-             load(gridInsert_, "grid_insert.comp", false) && load(crowded_, "contact_crowded.comp", true) &&
+             load(gridCount_, "grid_count.comp", false) && load(scanBlocks_, "grid_scan_blocks.comp", false) &&
+             load(scanTop_, "grid_scan_top.comp", false) && load(scanAdd_, "grid_scan_add.comp", false) &&
+             load(gridScatter_, "grid_scatter.comp", false) &&
+             load(crowded_, "contact_crowded.comp", true) && load(linkSnap_, "link_snap.comp", false) &&
              load(pairs_, "contact_pairs.comp", true) && load(apply_, "contact_apply.comp", true) &&
              load(grab_, "links.comp", false);
     if (ready_)
@@ -207,10 +212,12 @@ void GpuSubstepSolver::dispatch(const Program& p, std::uint32_t groups, const Pa
 }
 
 void GpuSubstepSolver::printTiming(int steps) const {
-    const std::pair<const Program*, const char*> names[] = {{&solve_, "solve"},     {&gridClear_, "grid_clear"},
-                                                             {&gridInsert_, "grid_insert"}, {&crowded_, "crowded"},
-                                                             {&pairs_, "pairs"},     {&apply_, "apply"},
-                                                             {&grab_, "grab"}};
+    const std::pair<const Program*, const char*> names[] = {
+        {&solve_, "solve"},            {&gridClear_, "grid_clear"}, {&gridCount_, "grid_count"},
+        {&scanBlocks_, "scan_blocks"}, {&scanTop_, "scan_top"},     {&scanAdd_, "scan_add"},
+        {&gridScatter_, "scatter"},    {&crowded_, "crowded"},
+        {&pairs_, "pairs"},            {&apply_, "apply"},          {&grab_, "grab"},
+        {&linkSnap_, "link_snap"}};
     for (const auto& [p, name] : names) {
         const auto it = kernelMs_.find(p->id);
         if (it != kernelMs_.end())
@@ -325,22 +332,28 @@ bool GpuSubstepSolver::submit(const BodyParticles& bp, const SubstepInput& in) {
         upload(linkRefs_, linkRefData_.data(), linkRefData_.size() * sizeof(GpuLinkRef));
         ensure(scratch_, ringData_.size() * 2 * sizeof(float));
         ensure(cellCount_, 2 * cells * sizeof(std::uint32_t));
-        ensure(cellSlot_, cells * kCellCapacity * sizeof(std::uint32_t));
+        ensure(cellSlot_, members.size() * sizeof(std::uint32_t));
+        ensure(grid_, (2 * cells + (cells + kScanBlock - 1) / kScanBlock) * sizeof(std::uint32_t));
         ensure(memberCell_, members.size() * sizeof(std::uint32_t));
         // Las correcciones pendientes empiezan en cero (se aplican al principio de cada sub-paso).
         contactZero_.assign(members.size() * 4, 0.0f);
         upload(contact_, contactZero_.data(), contactZero_.size() * sizeof(float));
+        ensure(linkSnapBuf_, linkData_.size() * 2 * 2 * sizeof(float));
     }
-    const Buffer* bindings[] = {&pos_,       &vel_,      &bodies_,     &ring_,    &interior_,  &scratch_, &members_,
-                                &cellCount_, &cellSlot_, &memberCell_, &contact_, &linksBuf_, &linkRefs_};
-    for (unsigned int i = 0; i < 13; ++i)
+    const Buffer* bindings[] = {&pos_,       &vel_,      &bodies_,     &ring_,    &interior_, &scratch_,
+                                &members_,   &cellCount_, &cellSlot_, &memberCell_, &contact_, &linksBuf_,
+                                &linkRefs_,  &linkSnapBuf_, &grid_};
+    for (unsigned int i = 0; i < 15; ++i)
         rlBindShaderBuffer(bindings[i]->id, i);
 
     const auto nb = static_cast<std::uint32_t>(bodyData_.size());
     const auto nm = static_cast<std::uint32_t>(memberData_.size());
     const std::uint32_t memberGroups = (nm + 255) / 256;
-    const auto insertGroups = static_cast<std::uint32_t>((std::max<std::size_t>(cells, nm) + 255) / 256);
+    const auto countGroups = static_cast<std::uint32_t>((std::max<std::size_t>(cells, nm) + 255) / 256);
     const auto clearGroups = static_cast<std::uint32_t>((2 * cells + 255) / 256);
+    const auto scanGroups = static_cast<std::uint32_t>((cells + 255) / 256);
+    const auto nl = static_cast<std::uint32_t>(linkData_.size());
+    const std::uint32_t linkGroups = (nl + 255) / 256;
     const int contactPasses = std::min(std::max(1, t.contactPasses), iterations_);
     {
         PROFILE_SCOPE("GpuSubstepSolver::dispatch");
@@ -357,10 +370,16 @@ bool GpuSubstepSolver::submit(const BodyParticles& bp, const SubstepInput& in) {
             dispatch(predict_, nb, pass);
             if (in.grabSlot != ~0u)
                 dispatch(grab_, 1, pass);
-            dispatch(gridInsert_, insertGroups, pass);
+            // Grilla por conteo: cuenta, suma prefija y reparto.
+            dispatch(gridCount_, countGroups, pass);
+            dispatch(scanBlocks_, scanGroups, pass);
+            dispatch(scanTop_, 1, pass);
+            dispatch(scanAdd_, scanGroups, pass);
+            dispatch(gridScatter_, memberGroups, pass);
             dispatch(crowded_, memberGroups, pass);
             pass.predict = 0;
             pass.iterCount = static_cast<std::uint32_t>(iterations_ - contactPasses + 1);
+            dispatch(linkSnap_, linkGroups, pass);
             dispatch(solve_, nb, pass);
             for (int c = 0; c < contactPasses; ++c) {
                 dispatch(pairs_, memberGroups, pass);
@@ -368,6 +387,7 @@ bool GpuSubstepSolver::submit(const BodyParticles& bp, const SubstepInput& in) {
                     pass.predict = 0;
                     pass.apply = 1;
                     pass.iterCount = 1;
+                    dispatch(linkSnap_, linkGroups, pass);
                     dispatch(solve_, nb, pass);
                 }
             }
@@ -388,10 +408,10 @@ bool GpuSubstepSolver::collect(BodyParticles& bp) {
     const std::size_t slots = std::min(slots_, bp.capacity());
     readBarrier();
     rlReadShaderBuffer(pos_.id, posData_.data(), static_cast<unsigned int>(slots * 4 * sizeof(float)), 0);
-    // Red de seguridad: si algo salió no finito, se descarta el paso y lo resuelve la CPU
-    // (las posiciones de `bp` todavía son las de antes).
+    // Red de seguridad: si algo salió no finito, se descarta el paso y lo resuelve la CPU (las
+    // posiciones de `bp` todavía son las de antes).
     for (std::size_t s = 0; s < slots; ++s)
-        if (bp.alive[s] && (!std::isfinite(posData_[4 * s]) || !std::isfinite(posData_[4 * s + 1]))) {
+        if (bp.alive[s] && (!finiteNumber(posData_[4 * s]) || !finiteNumber(posData_[4 * s + 1]))) {
             TraceLog(LOG_WARNING, "bio: la GPU devolvió valores no finitos; este paso se resuelve en CPU");
             return false;
         }
