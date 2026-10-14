@@ -21,7 +21,8 @@ void PanelHost::drawAll(App& app) {
             ImGui::SetNextWindowFocus();
             p->focusNext = false;
         }
-        if (ImGui::Begin(name.c_str(), &p->open)) {
+        // Sin botón de cerrar: los paneles se muestran u ocultan desde el menú Ver.
+        if (ImGui::Begin(name.c_str())) {
             PROFILE_SCOPE("ui panel");
             p->draw(app);
         }

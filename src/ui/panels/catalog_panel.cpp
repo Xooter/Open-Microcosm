@@ -6,6 +6,7 @@
 #include "ui/i18n.hpp"
 
 #include <imgui.h>
+#include <imgui_internal.h>
 
 #include <cstdint>
 
@@ -13,14 +14,29 @@ namespace ui {
 
 namespace {
 
+// Pestaña "Todos": índice kCategoryCount en la tabla (se dibuja primera).
+constexpr int kAllTab = kCategoryCount;
+
 const std::vector<int>& categoryItems(int category) {
     static const std::vector<std::vector<int>> table = [] {
-        std::vector<std::vector<int>> t(kCategoryCount);
-        for (int i = 0; i < kBeingCount; ++i)
+        std::vector<std::vector<int>> t(kCategoryCount + 1);
+        for (int i = 0; i < kBeingCount; ++i) {
             t[static_cast<std::size_t>(categoryOf(beingAt(i)))].push_back(i);
+            t[kAllTab].push_back(i);
+        }
         return t;
     }();
     return table[static_cast<std::size_t>(category)];
+}
+
+// La rueda del mouse sobre la barra desplaza las pestañas (ImGui solo trae flechas).
+void scrollTabBarWithWheel() {
+    ImGuiTabBar* bar = ImGui::GetCurrentTabBar();
+    const float wheel = ImGui::GetIO().MouseWheel + ImGui::GetIO().MouseWheelH;
+    if (bar == nullptr || wheel == 0.0f || !ImGui::IsWindowHovered() ||
+        !ImGui::IsMouseHoveringRect(bar->BarRect.Min, bar->BarRect.Max))
+        return;
+    bar->ScrollingTarget -= wheel * 3.0f * ImGui::GetFontSize();
 }
 
 class CatalogPanel : public Panel {
@@ -39,11 +55,18 @@ class CatalogPanel : public Panel {
             note("Elegí un ser y hacé click en la placa para ponerlo. Esc cancela.");
         if (!ImGui::BeginTabBar("##cats", ImGuiTabBarFlags_FittingPolicyScroll))
             return;
-        for (int c = 0; c < kCategoryCount; ++c) {
-            if (!ImGui::BeginTabItem(tr(categoryName(static_cast<BeingCategory>(c)))))
+        scrollTabBarWithWheel();
+        // "Todos" va primero: es la pestaña que se abre por defecto.
+        for (int t = 0; t <= kCategoryCount; ++t) {
+            const int c = t == 0 ? kAllTab : t - 1;
+            const char* label = c == kAllTab ? tr("Todos") : tr(categoryName(static_cast<BeingCategory>(c)));
+            if (!ImGui::BeginTabItem(label))
                 continue;
             st.category = c;
-            drawIcons(app, c);
+            // Los íconos van en una región propia: se desplazan sin llevarse las pestañas.
+            if (ImGui::BeginChild("##icons"))
+                drawIcons(app, c);
+            ImGui::EndChild();
             ImGui::EndTabItem();
         }
         ImGui::EndTabBar();

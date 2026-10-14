@@ -77,7 +77,7 @@ struct SelectionState {
 // Catálogo de seres (panel Catálogo).
 struct CatalogState {
     int armed = -1;       // índice del catálogo listo para spawnear (-1: ninguno)
-    int category = 0;     // pestaña abierta (BeingCategory)
+    int category = 0;     // pestaña abierta (BeingCategory; kCategoryCount = "Todos")
     bool reshape = false; // transformar al ser controlado en la especie elegida
 };
 
