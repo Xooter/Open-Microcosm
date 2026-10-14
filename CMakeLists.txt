@@ -196,8 +196,11 @@ add_library(imgui_lib STATIC
     ${implot_SOURCE_DIR}/implot_items.cpp)
 target_include_directories(imgui_lib SYSTEM PUBLIC ${imgui_SOURCE_DIR} ${implot_SOURCE_DIR})
 
-# Fase 19: medición del paso de simulación (ms/paso, desglose, checksum; --gpu como la app).
-add_executable(bio_bench bench/bio_bench.cpp src/gpu/gpu_substep_solver.cpp)
+# Fase 19: medición del paso de simulación (ms/paso, desglose, checksum; --gpu como la app) y
+# del dibujo (--render).
+add_executable(bio_bench bench/bio_bench.cpp src/gpu/gpu_substep_solver.cpp
+    src/render/renderer.cpp src/render/minerals.cpp src/render/field_overlay.cpp src/render/cell_renderer.cpp
+    src/render/instanced_particles.cpp src/render/population_layer.cpp src/render/structure_renderer.cpp)
 target_link_libraries(bio_bench PRIVATE biosim raylib)
 target_compile_definitions(bio_bench PRIVATE BIO_ASSET_DIR="${CMAKE_SOURCE_DIR}/assets")
 

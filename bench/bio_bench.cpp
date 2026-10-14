@@ -3,16 +3,19 @@
 // cambiarlo (verificarlo con -DBIO_STRICT_FP=ON: con -ffast-math cualquier cambio de código puede
 // reasociar operaciones y alterar los últimos bits). Con -DBIO_PROFILE_LITE=ON (preset `lite`)
 // desglosa el tiempo por PROFILE_SCOPE. Con --gpu abre una ventana oculta y resuelve XPBD en la GPU,
-// como la app.
+// como la app. Con --render dibuja cada paso medido en una textura de 1600 × 900 (la placa entera,
+// o --zoom Z) y mide el dibujo en la GPU real (esperando con glFinish).
 //
 //   bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] [--warmup N] [--threads N]
-//             [--no-focus] [--gpu]
+//             [--no-focus] [--gpu] [--render] [--zoom Z]
 #include "core/profiling.hpp"
 #include "game/biome.hpp"
 #include "game/run.hpp"
 #include "gpu/gpu_substep_solver.hpp"
+#include "render/renderer.hpp"
 
 #include <raylib.h>
+#include <rlgl.h>
 
 #include <omp.h>
 
@@ -23,6 +26,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <string>
 
 namespace {
@@ -38,7 +42,15 @@ struct Args {
     int threads = 0; // 0: OMP_NUM_THREADS o el valor por defecto de OpenMP
     bool focus = true;
     bool gpu = false;
+    bool render = false;
+    float zoom = 0.0f; // 0: la placa entera
 };
+
+// glFinish no está en rlgl; el GLAD de raylib lo carga (como en gpu_substep_solver.cpp).
+extern "C" {
+typedef void (*BioFinishFn)(void);
+extern BioFinishFn glad_glFinish;
+}
 
 bool parse(int argc, char** argv, Args& a) {
     for (int i = 1; i < argc; ++i) {
@@ -48,6 +60,10 @@ bool parse(int argc, char** argv, Args& a) {
             a.focus = false;
         else if (k == "--gpu")
             a.gpu = true;
+        else if (k == "--render")
+            a.render = true;
+        else if (k == "--zoom" && hasValue)
+            a.zoom = static_cast<float>(std::atof(argv[++i]));
         else if (k == "--biome" && hasValue)
             a.biome = std::atoi(argv[++i]);
         else if (k == "--seed" && hasValue)
@@ -62,7 +78,7 @@ bool parse(int argc, char** argv, Args& a) {
             a.threads = std::atoi(argv[++i]);
         else {
             std::fprintf(stderr, "uso: bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] "
-                                 "[--warmup N] [--threads N] [--no-focus] [--gpu]\n");
+                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z]\n");
             return false;
         }
     }
@@ -109,10 +125,13 @@ int main(int argc, char** argv) {
 
     // La GPU necesita un contexto de OpenGL 4.3: una ventana que no se muestra.
     GpuSubstepSolver gpu;
-    if (a.gpu) {
+    const bool window = a.gpu || a.render;
+    if (window) {
         SetTraceLogLevel(LOG_WARNING);
         SetConfigFlags(FLAG_WINDOW_HIDDEN);
         InitWindow(64, 64, "bio_bench");
+    }
+    if (a.gpu) {
         if (!gpu.init()) {
             std::fprintf(stderr, "GPU no disponible: %s\n", gpu.error().c_str());
             CloseWindow();
@@ -141,12 +160,33 @@ int main(int argc, char** argv) {
 #ifdef BIO_PROFILE_LITE
     ProfileLite::table().clear(); // solo los pasos medidos
 #endif
-    const auto t0 = std::chrono::steady_clock::now();
+    // Dibujo: la placa entera centrada (o el zoom pedido) en una textura del tamaño de la ventana
+    // típica de la app. Se mide aparte del paso.
+    std::unique_ptr<Renderer> renderer;
+    RenderTexture2D target{};
+    Camera2D camera{};
+    if (a.render) {
+        renderer = std::make_unique<Renderer>();
+        target = LoadRenderTexture(1600, 900);
+        camera.target = {world.width() * 0.5f, world.height() * 0.5f};
+        camera.offset = {800.0f, 450.0f};
+        camera.zoom = a.zoom > 0.0f ? a.zoom : 900.0f / world.height();
+    }
+    using Clock = std::chrono::steady_clock;
+    double ms = 0.0, renderMs = 0.0;
     for (int i = 0; i < a.steps; ++i) {
+        const auto t0 = Clock::now();
         world.step(kDt);
         run.update(world, kDt);
+        ms += std::chrono::duration<double, std::milli>(Clock::now() - t0).count();
+        if (renderer) {
+            const auto r0 = Clock::now();
+            renderer->drawWorldTo(world, camera, Overlay::None, target);
+            rlDrawRenderBatchActive();
+            glad_glFinish();
+            renderMs += std::chrono::duration<double, std::milli>(Clock::now() - r0).count();
+        }
     }
-    const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
 
 #ifdef BIO_PROFILE_LITE
     profileLiteReport(a.steps);
@@ -157,6 +197,9 @@ int main(int argc, char** argv) {
                 world.nearBodies(), world.bacteria().size());
     std::printf("paso %.2f ms (%.1f pasos/s)  checksum %016llx\n", ms / a.steps, 1000.0 * a.steps / ms,
                 static_cast<unsigned long long>(checksum(world)));
+    if (renderer)
+        std::printf("dibujo %.2f ms por cuadro (1600 × 900, zoom %.2f)\n", renderMs / a.steps,
+                    static_cast<double>(camera.zoom));
     // Uniones de filamentos y colonias: cuánto se estiran respecto de su largo de reposo (sirve
     // para comparar resolvedores: CPU, GPU).
     const BodyParticles& bp = world.bodies();
@@ -170,12 +213,15 @@ int main(int argc, char** argv) {
     if (!world.links().empty())
         std::printf("uniones %zu  estiramiento medio %.3f  máximo %.3f\n", world.links().size(),
                     stretch / static_cast<double>(world.links().size()), worst);
-    if (a.gpu) {
-        if (std::getenv("BIO_GPU_TIMING")) {
-            SetTraceLogLevel(LOG_INFO);
-            gpu.printTiming(a.warmup + a.steps);
-        }
-        CloseWindow();
+    if (a.gpu && std::getenv("BIO_GPU_TIMING")) {
+        SetTraceLogLevel(LOG_INFO);
+        gpu.printTiming(a.warmup + a.steps);
     }
+    if (renderer) {
+        renderer.reset();
+        UnloadRenderTexture(target);
+    }
+    if (window)
+        CloseWindow();
     return 0;
 }
