@@ -2,6 +2,7 @@
 
 #include "app/tools.hpp"
 #include "game/export.hpp"
+#include "game/parameters.hpp"
 #include "game/plate_spec.hpp"
 #include "game/progress.hpp"
 #include "game/stain.hpp"
@@ -44,9 +45,12 @@ struct App {
     // Cambios del editor que se aplican en vivo sobre el mundo (si `livePlate`).
     bool livePlate = true;
     void pushMediumLive();                          // temperatura, salinidad, luz, anoxia, alcalinidad
+    // Cambia un parámetro del registro (game/parameters) en la placa en marcha.
+    void setParameter(const ParamInfo& p, float value);
     void pushNutrientLive(int soluteIndex, float target); // lleva la concentración media de un soluto a `target`
     // Exporta la serie (CSV), la corrida (JSON) y las fichas de especies a `exportsDir`.
     void exportData();
+    RunProvenance provenance() const; // motor, GPU y LOD de la placa en pantalla
     std::string exportsDir = defaultExportsDir();
     std::string lastExport; // ruta base de la última exportación ("" si falló)
     // Nombre con el que se guarda la placa.

@@ -133,7 +133,13 @@ bool parsePlate(const std::string& text, PlateSpec& s) {
     };
     for (const auto& [k, v] : kv) {
         if (k == "biome") p.biome = static_cast<int>(num(v, 0));
-        else if (k == "seed") p.seed = static_cast<std::uint64_t>(num(v, 1));
+        else if (k == "seed") { // entero: un double pierde precisión desde 2^53
+            try {
+                p.seed = std::stoull(v);
+            } catch (...) {
+                p.seed = 1;
+            }
+        }
         else if (k == "content") p.content = static_cast<DropContent>(std::clamp(static_cast<int>(num(v, 2)), 0, 2));
     }
     p.rebuild();

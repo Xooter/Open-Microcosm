@@ -15,8 +15,10 @@
 extern "C" {
 typedef void (*BioMemoryBarrierFn)(unsigned int);
 typedef void (*BioFinishFn)(void);
+typedef const unsigned char* (*BioGetStringFn)(unsigned int);
 extern BioMemoryBarrierFn glad_glMemoryBarrier;
 extern BioFinishFn glad_glFinish;
+extern BioGetStringFn glad_glGetString;
 }
 
 namespace {
@@ -124,6 +126,9 @@ bool GpuSubstepSolver::init() {
              load(crowded_, "contact_crowded.comp", true) && load(linkSnap_, "link_snap.comp", false) &&
              load(pairs_, "contact_pairs.comp", true) && load(apply_, "contact_apply.comp", true) &&
              load(grab_, "links.comp", false);
+    if (glad_glGetString)
+        if (const unsigned char* name = glad_glGetString(0x1F01)) // GL_RENDERER
+            device_ = reinterpret_cast<const char*>(name);
     if (ready_)
         TraceLog(LOG_INFO, "bio: XPBD en GPU listo (compute shaders)");
     else

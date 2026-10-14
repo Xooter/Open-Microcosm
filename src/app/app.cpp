@@ -216,6 +216,24 @@ void App::createPlate() {
     plateDirty = false;
 }
 
+RunProvenance App::provenance() const {
+    RunProvenance p;
+    const SubstepSolver* solver = world ? world->substepSolver() : nullptr;
+    p.engine = solver ? solver->name() : "CPU";
+    if (solver)
+        p.gpu = gpu.deviceName();
+    p.lod = world && world->lodStride > 1;
+    return p;
+}
+
+void App::setParameter(const ParamInfo& p, float value) {
+    if (!world)
+        return;
+    setParameterValue(*world, p, value);
+    if (&p == findParameter("tiempo.escala_biologica"))
+        options.bioTimeScale = value; // la preferencia de la próxima placa
+}
+
 void App::pushMediumLive() {
     if (!world)
         return;
@@ -242,7 +260,7 @@ void App::exportData() {
     session.sample(*world); // incluye el estado de este instante
     const std::string base = (std::filesystem::path(exportsDir) / timestampedName(plateName)).string();
     const bool ok = writeTextFile(base + ".csv", seriesCsv(session.series())) &&
-                    writeTextFile(base + ".json", runJson(*world, session, plate)) &&
+                    writeTextFile(base + ".json", runJson(*world, session, plate, provenance())) &&
                     writeTextFile((std::filesystem::path(exportsDir) / "especies.json").string(), speciesJson());
     lastExport = ok ? base : std::string();
     notify(ok ? std::string(ui::tr("Datos exportados: ")) + base + ".csv/.json" : ui::tr("No se pudo exportar"));

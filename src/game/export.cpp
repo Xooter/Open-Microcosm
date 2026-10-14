@@ -1,5 +1,8 @@
 #include "game/export.hpp"
 
+#include "build_info.hpp"
+#include "game/parameters.hpp"
+
 #include "game/biome.hpp"
 #include "game/progress.hpp"
 #include "game/run.hpp"
@@ -9,6 +12,7 @@
 #include <charconv>
 #include <cmath>
 #include <cstdio>
+#include <cstdlib>
 #include <ctime>
 #include <filesystem>
 #include <fstream>
@@ -269,12 +273,50 @@ std::string seriesCsv(const TimeSeries& series) {
     return out;
 }
 
-std::string runJson(const World& world, const Run& run, const PlateSpec& plate) {
+std::string machineDescription() {
+#if defined(_WIN32)
+    if (const char* id = std::getenv("PROCESSOR_IDENTIFIER"))
+        return id;
+#else
+    std::ifstream in("/proc/cpuinfo");
+    std::string line;
+    while (std::getline(in, line))
+        if (line.rfind("model name", 0) == 0) {
+            const std::size_t colon = line.find(':');
+            return colon == std::string::npos ? line : line.substr(line.find_first_not_of(' ', colon + 1));
+        }
+#endif
+    return "";
+}
+
+std::string runJson(const World& world, const Run& run, const PlateSpec& plate, const RunProvenance& provenance) {
     Json j;
     j.beginObject();
     j.string("formato", "biogame-run");
-    j.number("version", 1);
+    j.number("version", 2);
     j.string("programa", "BioGame: sandbox de vida microscopica");
+
+    // Procedencia: con el mismo binario, máquina, motor y opciones, la corrida se repite bit a
+    // bit; entre máquinas (otra CPU, otra GPU o driver) solo estadísticamente, con réplicas.
+    j.beginObject("procedencia");
+    j.string("version_programa", BIO_VERSION);
+    j.string("commit", BIO_GIT);
+    j.string("compilacion", BIO_BUILD_FLAGS);
+    j.string("motor_xpbd", provenance.engine);
+    if (!provenance.gpu.empty())
+        j.string("gpu", provenance.gpu);
+    j.boolean("lod", provenance.lod);
+    j.string("maquina", machineDescription());
+    j.string("reproducibilidad", "bit a bit con el mismo binario, maquina, motor y opciones; entre maquinas, "
+                                 "estadistica (replicas)");
+    j.endObject();
+
+    // Todos los parámetros ajustables con su valor vigente (game/parameters).
+    j.beginObject("registro_de_parametros");
+    World& mutableWorld = const_cast<World&>(world); // los accesos del registro no modifican nada
+    for (const ParamInfo& p : parameters())
+        j.quantity(p.key, parameterValue(mutableWorld, p), p.unit);
+    j.endObject();
     j.string("bioma", biome(static_cast<BiomeId>(plate.biome)).name);
     j.string("seed", std::to_string(plate.seed));
     j.quantity("tiempo_simulado", world.simTime(), "s");

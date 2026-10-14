@@ -22,6 +22,8 @@ class GpuSubstepSolver : public SubstepSolver {
     bool init();
     bool ready() const { return ready_; }
     const std::string& error() const { return error_; }
+    // GL_RENDERER de la GPU (para la procedencia de las exportaciones).
+    const std::string& deviceName() const { return device_; }
     const char* name() const override { return "GPU"; }
     bool submit(const BodyParticles& bp, const SubstepInput& in) override;
     bool collect(BodyParticles& bp) override;
@@ -53,7 +55,7 @@ class GpuSubstepSolver : public SubstepSolver {
 
     mutable std::map<unsigned int, double> kernelMs_;
     bool ready_ = false;
-    std::string error_;
+    std::string error_, device_;
     Program predict_, solve_, gridClear_, gridCount_, scanBlocks_, scanTop_, scanAdd_, gridScatter_, crowded_,
         pairs_, apply_, grab_, linkSnap_;
     Buffer pos_, vel_, bodies_, ring_, interior_, scratch_, members_, cellCount_, cellSlot_, memberCell_, contact_,

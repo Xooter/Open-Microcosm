@@ -317,6 +317,8 @@ class World {
     // Punto al azar en el agua de la placa, a `margin` de la pared.
     Vec2 randomPoint(Rng& rng, float margin = 0.0f) const;
     float simTime() const { return simTime_; }
+    // Pasos dados desde la creación (las intervenciones se anotan con el paso en que se aplican).
+    std::uint64_t stepIndex() const { return step_; }
 
     Fluid& fluid() { return fluid_; }
     const Fluid& fluid() const { return fluid_; }

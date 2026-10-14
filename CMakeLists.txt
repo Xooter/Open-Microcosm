@@ -126,6 +126,7 @@ add_library(biosim STATIC
     src/game/world_chem.cpp
     src/game/biome.cpp
     src/game/plate_spec.cpp
+    src/game/parameters.cpp
     src/game/stain.cpp
     src/game/encyclopedia.cpp
     src/game/mass_budget.cpp
@@ -136,7 +137,24 @@ add_library(biosim STATIC
     src/game/population_density.cpp
     src/game/export.cpp)
 
-target_include_directories(biosim PUBLIC src)
+target_include_directories(biosim PUBLIC src ${CMAKE_BINARY_DIR}/generated)
+
+# Procedencia de cada corrida (versión, commit, flags): la exportación la registra.
+set(bio_flags "${CMAKE_BUILD_TYPE}")
+if(BIO_NATIVE)
+    string(APPEND bio_flags " native")
+endif()
+if(BIO_STRICT_FP)
+    string(APPEND bio_flags " ieee-estricto")
+else()
+    string(APPEND bio_flags " fast-math")
+endif()
+add_custom_target(bio_build_info
+    COMMAND ${CMAKE_COMMAND} -DSRC=${CMAKE_SOURCE_DIR} -DOUT=${CMAKE_BINARY_DIR}/generated/build_info.hpp
+            -DVERSION=${PROJECT_VERSION} "-DFLAGS=${bio_flags}" -P ${CMAKE_SOURCE_DIR}/cmake/build_info.cmake
+    BYPRODUCTS ${CMAKE_BINARY_DIR}/generated/build_info.hpp
+    COMMENT "Procedencia de la build")
+add_dependencies(biosim bio_build_info)
 target_link_libraries(biosim PUBLIC OpenMP::OpenMP_CXX EnTT::EnTT bio_options)
 
 if(BIO_PROFILING)
@@ -159,6 +177,7 @@ add_executable(bio
     src/ui/i18n.cpp
     src/ui/theme.cpp
     src/ui/widgets.cpp
+    src/ui/param_controls.cpp
     src/ui/commands.cpp
     src/ui/panel.cpp
     src/ui/being_icons.cpp
@@ -218,7 +237,7 @@ endif()
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp tests/test_render_lod.cpp tests/test_body_plan.cpp)
+    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp tests/test_render_lod.cpp tests/test_body_plan.cpp tests/test_parameters.cpp)
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
     add_test(NAME bio_tests COMMAND bio_tests)
 endif()

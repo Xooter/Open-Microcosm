@@ -3,6 +3,7 @@
 #include "app/app.hpp"
 #include "sim/substep_solver.hpp"
 #include "ui/panels/panel_classes.hpp"
+#include "ui/param_controls.hpp"
 #include "ui/widgets.hpp"
 #include "ui/i18n.hpp"
 
@@ -30,9 +31,7 @@ class SimulationPanel : public Panel {
         }
         sliderLog("Velocidad (x)", &t.simSpeed, 0.125f, 8.0f, "%.2f", "Múltiplo del tiempo real. El paso de la física es fijo.");
         if (section("Tiempo", true)) {
-            if (slider("Tiempo biológico (x)", &world.bioTimeScale(), 1.0f, 600.0f, "%.0f",
-                       "Compresión de la biología: 60 = 1 min real es 1 h biológica. La física siempre va en tiempo real."))
-                app.options.bioTimeScale = world.bioTimeScale();
+            parameterControls(app, ParamGroup::Time);
             readout("Tiempo simulado", "%.1f s (%.2f h bio)", world.simTime(), world.simTime() * world.bioScale() / 3600.0f);
         }
         if (section("Rendimiento y motor", true)) {
@@ -42,17 +41,8 @@ class SimulationPanel : public Panel {
             if (ImGui::SmallButton(tr("Opciones de rendimiento e imagen...")))
                 app.panels.show("preferencias");
         }
-        if (section("Agua y cuerpos blandos (avanzado)")) {
-            slider("Espesor de película [µm]", &world.fluid().gapHeight, 20.0f, 500.0f, "%.0f",
-                   "Controla qué tan locales son las corrientes.");
-            SoftBodyTuning& t2 = world.softTuning();
-            float substeps = static_cast<float>(t2.substeps);
-            if (slider("Subpasos XPBD", &substeps, 1.0f, 30.0f, "%.0f"))
-                t2.substeps = static_cast<int>(substeps + 0.5f);
-            slider("Memoria de forma (x)", &t2.shapeScale, 0.0f, 3.0f, "%.2f");
-            slider("Flexión [1/s]", &t2.bendRate, 0.0f, 400.0f, "%.0f");
-            slider("Área [1/s]", &t2.areaRate, 10.0f, 3000.0f, "%.0f");
-        }
+        if (section("Agua y cuerpos blandos (avanzado)"))
+            parameterControls(app, ParamGroup::Mechanics);
     }
 };
 
