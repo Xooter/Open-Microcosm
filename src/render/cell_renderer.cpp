@@ -1,4 +1,5 @@
 #include "render/cell_renderer.hpp"
+#include "render/shapes.hpp"
 
 #include "bio/cell.hpp"
 #include "bio/division.hpp"
@@ -220,6 +221,22 @@ const Vec2* CellRenderer::outline(const RingBody& body, float zoom, int& count) 
 void CellRenderer::fillCell(const RingBody& body, Color tint, float zoom) {
     int n = 0;
     const Vec2* p = outline(body, zoom, n);
+    // Casi todas las células son estrelladas desde su centroide: entonces el abanico (todos los
+    // triángulos con la misma orientación) cubre exactamente el polígono, en O(n) y sin ear
+    // clipping (O(n²)) en cada cuadro.
+    bool star = n >= 3;
+    float sign = 0.0f;
+    for (int i = 0; i < n && star; ++i) {
+        const float c = cross(p[i] - body.centroid, p[(i + 1) % n] - body.centroid);
+        if (sign == 0.0f)
+            sign = c;
+        star = c * sign > 0.0f;
+    }
+    if (star) {
+        for (int i = 0; i < n; ++i)
+            DrawTriangle(toRay(body.centroid), toRay(p[i]), toRay(p[(i + 1) % n]), tint);
+        return;
+    }
     if (polygon::triangulate(p, n, triangles_, scratch_)) {
         for (std::size_t t = 0; t < triangles_.size(); t += 3)
             DrawTriangle(toRay(p[triangles_[t]]), toRay(p[triangles_[t + 1]]),
@@ -611,7 +628,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     DrawLineEx(toRay(prev), toRay(p), std::max(1.0f, 1.2f * px), kMembrane);
                     prev = p;
                 }
-                DrawCircleV(toRay(hold), std::max(2.0f, 2.0f * px), kMouth);
+                drawCircleFast(toRay(hold), std::max(2.0f, 2.0f * px), kMouth, px);
             }
             for (auto [pe, cap] : reg.view<Captured>().each()) { // tentáculo succionando a la presa
                 if (cap.by != e || !reg.valid(pe))
@@ -684,7 +701,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                         const Vec2 from = body.centroid + d * (0.8f * reach * 0.4f);
                         const Vec2 to = body.centroid + d * reach;
                         DrawLineEx(toRay(from), toRay(to), std::max(0.5f, px), kFlagellum);
-                        DrawCircleV(toRay(to), std::max(1.2f, 1.5f * px), kMouth);
+                        drawCircleFast(toRay(to), std::max(1.2f, 1.5f * px), kMouth, px);
                     }
                 }
             } else if (loco && sid == SpeciesId::Euplotes) {
@@ -707,7 +724,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     const Vec2 dir = neck->length > 1.0f ? neck->direction : bodyHeading(body);
                     const Vec2 tip = head + dir * std::max(6.0f, neck->length);
                     DrawLineEx(toRay(head), toRay(tip), std::max(1.5f, 2.0f * px), kMembrane);
-                    DrawCircleV(toRay(tip), std::max(2.5f, 2.0f * px), kMouth);
+                    drawCircleFast(toRay(tip), std::max(2.5f, 2.0f * px), kMouth, px);
                 }
             } else if (loco && sid == SpeciesId::Chlamydomonas) {
                 drawTwinFlagella(body, *loco, time, px);
@@ -716,7 +733,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 // Citostoma: la boca al final del surco oral.
                 const Vec2 m = ringPos(bp, body, loco->mouthRing);
                 const Vec2 in = outwardAt(bp, body, loco->mouthRing) * -1.0f;
-                DrawCircleV(toRay(m + in * 2.5f), 2.5f, kMouth);
+                drawCircleFast(toRay(m + in * 2.5f), 2.5f, kMouth, px);
             }
             if (!cyst && loco && loco->type == LocomotionType::Flagellum && sid != SpeciesId::Chlamydomonas &&
                 sid != SpeciesId::Volvox && sid != SpeciesId::Trichonympha && sid != SpeciesId::Oedogonium)
@@ -754,14 +771,14 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                         const float amount = storageAmount(reg.try_get<Metabolism>(e));
                         const StainResult dye = evaluateStain(*stain_, st, amount);
                         if (dye.alpha > 0.02f)
-                            DrawCircleV({bp.x[s], bp.y[s]}, std::max(r * (1.4f + 1.2f * amount), 2.2f * px), dyeColor(dye.color, 0.4f + 0.6f * dye.alpha));
+                            drawCircleFast({bp.x[s], bp.y[s]}, std::max(r * (1.4f + 1.2f * amount), 2.2f * px), dyeColor(dye.color, 0.4f + 0.6f * dye.alpha), px);
                     }
                 }
                 switch (static_cast<OrganelleTag>(bp.tag[s])) {
                 case OrganelleTag::Mitochondrion: // bastoncitos
                     if (hydrogenosomes) {
-                        DrawCircleV({bp.x[s], bp.y[s]}, r, kHydrogenosome);
-                        DrawRing({bp.x[s], bp.y[s]}, std::max(0.0f, r - std::max(0.15f * r, px)), r, 0.0f, 360.0f, 24, kVacuoleRim);
+                        drawCircleFast({bp.x[s], bp.y[s]}, r, kHydrogenosome, px);
+                        drawRingFast({bp.x[s], bp.y[s]}, std::max(0.0f, r - std::max(0.15f * r, px)), r, 24, kVacuoleRim, px);
                         break;
                     }
                     DrawRectanglePro({bp.x[s], bp.y[s], 2.6f * r, 1.2f * r}, {1.3f * r, 0.6f * r},
@@ -771,13 +788,13 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     if (sid == SpeciesId::Spirogyra || sid == SpeciesId::Mougeotia || sid == SpeciesId::Zygnema ||
                         (sid == SpeciesId::Oedogonium && !reg.all_of<Zoospore>(e)))
                         break; // su cloroplasto se dibuja entero (cinta, placa, estrellas o red)
-                    DrawCircleV({bp.x[s], bp.y[s]}, r, sid == SpeciesId::Navicula ? kGoldenPlastid : kChloroplast);
+                    drawCircleFast({bp.x[s], bp.y[s]}, r, sid == SpeciesId::Navicula ? kGoldenPlastid : kChloroplast, px);
                     break;
                 case OrganelleTag::Lysosome: {
                     Color fill = kLysosome; // pH ~4,7: los lisosomas son ácidos
                     if (stain_ && stainHasTarget(*stain_, StainTarget::Acidic))
                         fill = overColor(fill, evaluateStain(*stain_, StainTarget::Acidic, 1.0f, 4.7f), 0.9f);
-                    DrawCircleV({bp.x[s], bp.y[s]}, r, fill);
+                    drawCircleFast({bp.x[s], bp.y[s]}, r, fill, px);
                     break;
                 }
                 case OrganelleTag::Granule:
@@ -831,8 +848,8 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                         const float ph = v.open ? 7.0f : (done < 0.1f ? 7.0f - 40.0f * done : (done < 0.4f ? 3.0f : 3.0f + 7.0f * (done - 0.4f)));
                         fill = overColor(fill, evaluateStain(*stain_, StainTarget::Acidic, 1.0f, ph), 0.85f);
                     }
-                    DrawCircleV(c, r, fill);
-                    DrawRing(c, std::max(0.0f, r - std::max(0.6f, px)), r, 0.0f, 360.0f, 32, kVacuoleRim);
+                    drawCircleFast(c, r, fill, px);
+                    drawRingFast(c, std::max(0.0f, r - std::max(0.6f, px)), r, 32, kVacuoleRim, px);
                 }
             }
 
@@ -848,15 +865,15 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     rimN.g = static_cast<unsigned char>(rimN.g * 0.7f);
                     rimN.b = static_cast<unsigned char>(rimN.b * 0.7f);
                 }
-                DrawCircleV(c, r, fillN);
-                DrawRing(c, r - std::max(0.8f, px), r, 0.0f, 360.0f, 40, rimN);
-                DrawCircleV({c.x + 0.2f * r, c.y - 0.15f * r}, 0.3f * r, kNucleolus);
+                drawCircleFast(c, r, fillN, px);
+                drawRingFast(c, r - std::max(0.8f, px), r, 40, rimN, px);
+                drawCircleFast({c.x + 0.2f * r, c.y - 0.15f * r}, 0.3f * r, kNucleolus, px);
             };
             auto contractile = [&](std::uint32_t slot) {
                 const Vector2 c = {bp.x[slot], bp.y[slot]};
                 const float r = bp.radius[slot];
-                DrawCircleV(c, r, kVacuole);
-                DrawRing(c, r - std::max(0.6f, px), r, 0.0f, 360.0f, 32, kVacuoleRim);
+                drawCircleFast(c, r, kVacuole, px);
+                drawRingFast(c, r - std::max(0.6f, px), r, 32, kVacuoleRim, px);
             };
             if (!colony && level >= DetailLevel::Detail && anatomy.nucleus != ~0u)
                 drawEndomembranes(speciesPlan(sid), {bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus],
