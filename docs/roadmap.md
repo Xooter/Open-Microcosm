@@ -177,10 +177,10 @@ Lo mínimo para que un resultado de BioGame se pueda publicar o enseñar. Estado
   30 min sin jugador falla (las bacterias colapsan por fagos y pastoreo: `docs/validacion.md`).
 - 🟡 **Validación científica** (`docs/validacion.md`): fisiología por especie con fuente en
   `assets/species/fisiologia.toml` (toml++), visible en la ficha y exportada en `speciesJson`;
-  pasan µmax de *Paramecium*, Tilman y Jennings (gotero de CO₂). No coincide Monod (la K publicada
-  es de crecimiento y el modelo la usa en la captación: decidir Monod o Droop). Pendiente:
+  pasan µmax de *Paramecium*, Tilman y Jennings (gotero de CO₂). Monod pasa (la K publicada
+  era de crecimiento y se usaba en la captación: ahora el modelo es de Droop y la reproduce). Pendiente:
   depredador–presa y exclusión de Gause (necesitan un modo cultivo: la placa tiene ~10 000× menos
-  volumen), rigidez a la flexión en las uniones de filamentos y verificar las estimaciones.
+  volumen) y verificar las estimaciones. Las uniones de filamentos ya son rígidas a la flexión.
 - **Rendimiento:** lo pendiente de la fase 19.
 - **Hecho cuando:** todos los tests de `validacion` pasan con su tolerancia y fuente, una escena se
   repite bit a bit, el paquete corre en una máquina limpia de Linux y de Windows y el soak de

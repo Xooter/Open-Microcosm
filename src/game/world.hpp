@@ -618,6 +618,7 @@ class World {
     std::vector<std::pair<entt::entity, const char*>> dying_;
     std::vector<entt::entity> settling_, released_, colonyReleases_, zoosporeReleases_, zoosporeSettling_;
     std::vector<AdhesionLink> links_;
+    std::vector<std::uint64_t> brokenWalls_; // paredes cortadas en este paso (par de células)
     struct PendingSplit {
         entt::entity cell;
         std::size_t tipA, tipB;

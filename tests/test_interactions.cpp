@@ -4,6 +4,7 @@
 #include <doctest/doctest.h>
 
 #include <cmath>
+#include <map>
 
 namespace {
 
@@ -27,12 +28,58 @@ entt::entity wild(World& world, SpeciesId id, Vec2 at, float angle = 0.0f) {
     return world.spawnOrganism(id, at, speciesGenome(id), 0, angle);
 }
 
+// Paredes (pares de células unidas) y enlaces por pared.
+std::map<std::pair<entt::entity, entt::entity>, int> walls(const World& world) {
+    std::map<std::pair<entt::entity, entt::entity>, int> w;
+    for (const World::AdhesionLink& l : world.links())
+        ++w[{std::min(l.ownerA, l.ownerB), std::max(l.ownerA, l.ownerB)}];
+    return w;
+}
+
 } // namespace
+
+TEST_CASE("Spirogyra: la unión entre células es la pared transversal entera, no una bisagra") {
+    World world(quietWorld());
+    const auto chain = world.spawnFilament(SpeciesId::Spirogyra, {700.0f, 330.0f}, 0.15f, 4, 0);
+    const auto w = walls(world);
+    REQUIRE(w.size() == 3);
+    const float width = 2.0f * speciesInfo(SpeciesId::Spirogyra).spec.radiusY;
+    for (const auto& [pair, n] : w) {
+        CHECK(n >= 5); // de frente a lo ancho, más los cruzados
+        // Los extremos de la pared en la célula A abarcan casi todo el ancho (antes, ~5 µm).
+        float lo = 1e9f, hi = -1e9f;
+        const RingBody& a = world.registry().get<RingBody>(pair.first);
+        const Vec2 axis = {std::cos(0.15f), std::sin(0.15f)};
+        for (const World::AdhesionLink& l : world.links()) {
+            const std::uint32_t s = l.ownerA == pair.first ? l.a : l.ownerB == pair.first ? l.b : ~0u;
+            if (s == ~0u || !(l.ownerA == pair.second || l.ownerB == pair.second))
+                continue;
+            const float side = cross(axis, Vec2{world.bodies().x[s], world.bodies().y[s]} - a.centroid);
+            lo = std::min(lo, side);
+            hi = std::max(hi, side);
+        }
+        CHECK(hi - lo > 0.7f * width);
+    }
+}
+
+TEST_CASE("Spirogyra: la fragmentación corta paredes enteras") {
+    World world(quietWorld());
+    world.bioTimeScale() = 3600.0f; // 1 s = 1 h: con 0,02/h por pared, alguna se corta en segundos
+    world.spawnFilament(SpeciesId::Spirogyra, {700.0f, 330.0f}, 0.15f, 7, 0);
+    const auto before = walls(world);
+    const int perWall = before.begin()->second;
+    for (int s = 0; s < 60 * 60 && walls(world).size() == before.size(); ++s)
+        world.step(kDt);
+    const auto after = walls(world);
+    REQUIRE(after.size() < before.size());
+    for (const auto& [pair, n] : after)
+        CHECK(n == perWall); // ninguna pared a medias
+}
 
 TEST_CASE("Spirogyra: una célula del filamento se divide con un tabique y las uniones se conservan" * doctest::test_suite("largos")) {
     World world(quietWorld());
     const auto chain = world.spawnFilament(SpeciesId::Spirogyra, {700.0f, 330.0f}, 0.15f, 7, 0);
-    REQUIRE(world.links().size() == 12);
+    REQUIRE(walls(world).size() == 6);
     Metabolism& m = world.registry().get<Metabolism>(chain[3]);
     m.biomass = 2.05f * m.targetBirthBiomass;
     m.reserves = 0.6f * m.biomass;
@@ -40,7 +87,7 @@ TEST_CASE("Spirogyra: una célula del filamento se divide con un tabique y las u
     m.nitrogen = 0.5f * m.biomass;
     steps(world, 60 * 40);
     CHECK(world.cellCount() == 8);
-    CHECK(world.links().size() == 14);
+    CHECK(walls(world).size() == 7);
     CHECK(world.observations().filamentDivisions == 1);
 }
 

@@ -3687,40 +3687,55 @@ std::vector<entt::entity> World::spawnFilament(SpeciesId species, Vec2 start, fl
 }
 
 void World::linkCells(entt::entity ea, entt::entity eb) {
-    // Dos uniones (las esquinas) entre el extremo de A que mira a B y el de B que mira a A.
+    // La unión es la pared transversal compartida: puntos repartidos a lo ancho del extremo de A
+    // que mira a B y del de B que mira a A, enlazados de frente, más dos enlaces cruzados entre los
+    // bordes. Antes eran dos puntos cerca de la punta redondeada: la unión giraba como una bisagra
+    // y un filamento que crecía más que su lugar se doblaba en las uniones (un enlace al doble de
+    // su largo); y con cada enlace tirando de un solo punto, la pared se hundía ahí. Ahora la
+    // curvatura se reparte en la deformación de las células, como en Spirogyra.
     const RingBody& a = registry_.get<RingBody>(ea);
     const RingBody& b = registry_.get<RingBody>(eb);
-    const Vec2 bc = b.centroid + imageShift(b, a.centroid) - b.centroid + b.centroid;
+    const Vec2 bc = b.centroid + imageShift(b, a.centroid);
     const Vec2 axis = (bc - a.centroid) * (1.0f / std::max(1e-3f, length(bc - a.centroid)));
-    auto corner = [&](const RingBody& body, Vec2 c, Vec2 ax, float sideSign) {
-        std::uint32_t best = body.ring[0];
-        float score = -1e9f;
+    const Vec2 shift = bc - b.centroid;
+    constexpr int kWall = 5;
+    constexpr float kOffset[kWall] = {-0.85f, -0.45f, 0.0f, 0.45f, 0.85f}; // fracción del medio ancho
+    // Puntos del extremo (a menos de un cuarto del medio ancho de la punta) más cercanos a cada
+    // desplazamiento lateral; el lado se mide con el mismo eje en las dos células.
+    auto wall = [&](const RingBody& body, Vec2 c, Vec2 out, std::uint32_t (&slots)[kWall]) {
+        float tip = -1e9f, halfWidth = 0.0f;
         for (std::uint32_t s : body.ring) {
             const Vec2 r = Vec2{bodies_.x[s], bodies_.y[s]} - c;
-            const float side = cross(ax, r) * sideSign;
-            if (side <= 0.0f)
-                continue;
-            const float sc = dot(r, ax) + 0.3f * side;
-            if (sc > score) {
-                score = sc;
-                best = s;
+            tip = std::max(tip, dot(r, out));
+            halfWidth = std::max(halfWidth, std::abs(cross(axis, r)));
+        }
+        for (int k = 0; k < kWall; ++k) {
+            float best = 1e9f;
+            slots[k] = body.ring[0];
+            for (std::uint32_t s : body.ring) {
+                const Vec2 r = Vec2{bodies_.x[s], bodies_.y[s]} - c;
+                if (dot(r, out) < tip - 0.25f * halfWidth)
+                    continue;
+                const float miss = std::abs(cross(axis, r) - kOffset[k] * halfWidth);
+                if (miss < best) {
+                    best = miss;
+                    slots[k] = s;
+                }
             }
         }
-        return best;
     };
-    const Vec2 shift = bc - b.centroid;
-    std::uint32_t ca[2], cb[2];
-    for (int k = 0; k < 2; ++k) {
-        const float sideSign = k == 0 ? 1.0f : -1.0f;
-        ca[k] = corner(a, a.centroid, axis, sideSign);
-        cb[k] = corner(b, b.centroid, axis * -1.0f, -sideSign);
-    }
+    std::uint32_t ca[kWall], cb[kWall];
+    wall(a, a.centroid, axis, ca);
+    wall(b, b.centroid, axis * -1.0f, cb);
     auto add = [&](std::uint32_t sa, std::uint32_t sb) {
         const Vec2 pa = {bodies_.x[sa], bodies_.y[sa]}, pb = Vec2{bodies_.x[sb], bodies_.y[sb]} + shift;
         links_.push_back({sa, sb, ea, eb, std::max(length(pb - pa), 2.0f * bodies_.radius[sa])});
     };
-    add(ca[0], cb[0]);
-    add(ca[1], cb[1]);
+    for (int k = 0; k < kWall; ++k)
+        if (k == 0 || ca[k] != ca[k - 1]) // una célula chica puede repetir puntos
+            add(ca[k], cb[k]);
+    add(ca[0], cb[kWall - 1]);
+    add(ca[kWall - 1], cb[0]);
 }
 
 void World::solveLinks(float h) {
@@ -3779,27 +3794,40 @@ void World::relinkAfterDivision(entt::entity mother, entt::entity child) {
 
 void World::maintainLinks(float bioDt) {
     // Se cortan las uniones de células muertas, las muy estiradas y, de a poco, las que se
-    // fragmentan solas (Spirogyra se reproduce también por fragmentación).
+    // fragmentan solas (Spirogyra se reproduce también por fragmentación). Una pared se corta
+    // entera: son varios enlaces por pared y cortarlos de a uno dejaba paredes a medias que giraban
+    // como bisagras. La tirada de fragmentación depende solo del par de células y del paso, así que
+    // todos los enlaces de una pared dan lo mismo.
+    auto pairKey = [](entt::entity x, entt::entity y) {
+        const std::uint64_t i = entt::to_integral(x), j = entt::to_integral(y);
+        return std::min(i, j) << 32 | std::max(i, j);
+    };
+    brokenWalls_.clear();
     std::size_t k = 0;
     for (std::size_t i = 0; i < links_.size(); ++i) {
-        AdhesionLink l = links_[i];
-        bool keep = registry_.valid(l.ownerA) && registry_.valid(l.ownerB) && bodies_.alive[l.a] && bodies_.alive[l.b] &&
-                    bodies_.owner[l.a] == entt::to_integral(l.ownerA) && bodies_.owner[l.b] == entt::to_integral(l.ownerB);
-        if (keep) {
-            const float dx = minImage(bodies_.x[l.b] - bodies_.x[l.a], width_);
-            const float dy = minImage(bodies_.y[l.b] - bodies_.y[l.a], height_);
-            if (std::sqrt(dx * dx + dy * dy) > 4.0f * l.rest + 10.0f)
-                keep = false;
-        }
-        if (keep && registry_.all_of<Species>(l.ownerA)) {
+        const AdhesionLink l = links_[i];
+        if (!(registry_.valid(l.ownerA) && registry_.valid(l.ownerB) && bodies_.alive[l.a] && bodies_.alive[l.b] &&
+              bodies_.owner[l.a] == entt::to_integral(l.ownerA) && bodies_.owner[l.b] == entt::to_integral(l.ownerB)))
+            continue;
+        links_[k++] = l;
+        const std::uint64_t key = pairKey(l.ownerA, l.ownerB);
+        const float dx = minImage(bodies_.x[l.b] - bodies_.x[l.a], width_);
+        const float dy = minImage(bodies_.y[l.b] - bodies_.y[l.a], height_);
+        bool cut = std::sqrt(dx * dx + dy * dy) > 4.0f * l.rest + 10.0f;
+        if (!cut && registry_.all_of<Species>(l.ownerA)) {
             const float rate = speciesInfo(registry_.get<Species>(l.ownerA).id).fragmentationPerHour;
-            Rng rng(config_.seed, rng_stream::kFeeding + 100, l.a, step_);
-            if (rate > 0.0f && rng.uniform() < 0.5f * rate * bioDt / 3600.0f) // dos uniones por pared
-                keep = false;
+            cut = rate > 0.0f && Rng(config_.seed, rng_stream::kFeeding + 100, key, step_).uniform() < rate * bioDt / 3600.0f;
         }
-        if (keep)
-            links_[k++] = l;
+        if (cut && std::find(brokenWalls_.begin(), brokenWalls_.end(), key) == brokenWalls_.end())
+            brokenWalls_.push_back(key);
     }
+    links_.resize(k);
+    if (brokenWalls_.empty())
+        return;
+    k = 0;
+    for (const AdhesionLink& l : links_)
+        if (std::find(brokenWalls_.begin(), brokenWalls_.end(), pairKey(l.ownerA, l.ownerB)) == brokenWalls_.end())
+            links_[k++] = l;
     links_.resize(k);
 }
 

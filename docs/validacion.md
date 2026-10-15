@@ -146,10 +146,10 @@ población:
 - Decidir cómo sostener a las bacterias en la gota («Colapso de las bacterias») y reactivar el
   test de 30 min.
 - Verificar contra las publicaciones las temperaturas de Gause y los valores de Tilman.
-- Uniones de filamentos (el 0,7–0,8 de `bio_bench`): no es un error del resolvedor. Un filamento
-  aislado sin carga las mantiene a 2–7 % del reposo. El desvío aparece cuando el filamento crece
-  más que el lugar disponible y se pandea: se dobla **en las uniones**, que tienen solo dos enlaces
-  en las esquinas y funcionan como bisagras (uno se comprime y el otro llega a 2× su largo). En
-  *Spirogyra* la pared transversal es compartida y el filamento se curva de manera repartida.
-  Propuesta: rigidez a la flexión en la unión (enlaces cruzados o una restricción de ángulo entre
-  los ejes de las dos células).
+- Uniones de filamentos (CORREGIDO, 15/10/2026): el 0,7–0,8 de `bio_bench` no era del resolvedor.
+  Un filamento que crecía más que su lugar se pandeaba doblándose **en las uniones**: eran dos
+  enlaces cerca de la punta redondeada (un perno de ~5 µm que giraba como bisagra) y la
+  fragmentación cortaba enlaces sueltos (paredes a medias). Ahora la unión es la pared transversal
+  entera (5 enlaces a lo ancho y 2 cruzados) y se corta entera. *Spirogyra* creciendo 20 h en la
+  placa: desvío medio de las uniones 0,40 → 0,06 y el filamento se curva repartido entre las
+  células.
