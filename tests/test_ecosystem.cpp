@@ -2,6 +2,8 @@
 #include "game/world.hpp"
 
 #include <doctest/doctest.h>
+
+#include <string>
 #include <omp.h>
 
 #include <cmath>
@@ -128,21 +130,34 @@ TEST_CASE("ecosistema determinista sin importar la cantidad de hilos" * doctest:
     CHECK(a == runEcosystem(4));
 }
 
-// Prueba larga (~5 min): 30 min de gota sin jugador. Correr con: bio_tests -tc="*30 min*" --no-skip
+// 30 min de gota sin jugador (30 h biológicas). FALLA HOY y tarda ~4 h, por eso está en skip
+// (correr con: bio_tests -tc="*30 min*" --no-skip). Diagnóstico (docs/validacion.md, «Colapso de
+// las bacterias»): sin materia orgánica las bacterias no crecen; en una gota de bioma, los fagos
+// matan al 99,9 % en ~2 h y el pastoreo (protistas ~300 veces más densos que en un cultivo) supera
+// la tasa máxima de crecimiento de las resistentes. Después Candida y Naegleria llenan la placa.
 TEST_CASE("30 min sin jugador: ninguna especie se extingue" * doctest::skip()) {
     World world(ecoWorld(50'000));
     world.populateEcosystem();
+    // Solo cuentan las especies sembradas (las de peso 0 no están desde el comienzo).
+    const Census start = world.census();
     int minimum[kSpeciesCount];
     for (int& m : minimum)
         m = 1 << 30;
     for (int minute = 0; minute < 30; ++minute) {
         steps(world, 60 * 60);
         const Census c = world.census();
-        MESSAGE("min " << minute + 1 << ": bact " << c.bacteria << " param " << c.species[0] << " eugl " << c.species[1]
-                       << " ameba " << c.species[2] << " chlamy " << c.species[3] << " didin " << c.species[4]);
+        std::string line = "min " + std::to_string(minute + 1) + ": bact " + std::to_string(c.bacteria);
+        for (int k = 0; k < kSpeciesCount; ++k)
+            if (start.species[k] > 0)
+                line += std::string(" ") + speciesInfo(static_cast<SpeciesId>(k)).name + " " + std::to_string(c.species[k]);
+        MESSAGE(line);
         for (int k = 0; k < kSpeciesCount; ++k)
             minimum[k] = std::min(minimum[k], c.species[k]);
     }
-    for (int k = 0; k < kSpeciesCount; ++k)
+    for (int k = 0; k < kSpeciesCount; ++k) {
+        if (start.species[k] == 0)
+            continue;
+        CAPTURE(std::string(speciesInfo(static_cast<SpeciesId>(k)).name));
         CHECK(minimum[k] > 0);
+    }
 }

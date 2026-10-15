@@ -169,17 +169,18 @@ Lo mínimo para que un resultado de BioGame se pueda publicar o enseñar. Estado
 - ✅ **Distribución:** assets junto al ejecutable (`core/paths`), presets `dist` y `windows`
   (MinGW, probado con Wine), CPack TGZ/ZIP, `tools/paquete-linux.sh` (Ubuntu 22.04 en Docker),
   licencia GPL-3.0-or-later con las licencias de las dependencias en `licencias/`.
-  Pendiente: probar el paquete de Linux en otra distribución; avisar en *Preferencias* por qué no
-  hay GPU.
+  *Preferencias* dice por qué no hay GPU. Pendiente: probar el paquete de Linux en otra
+  distribución.
 - ✅ **Estabilidad:** autoguardado con recuperación por re-simulación, `bio_bench --soak` (finitud,
   balance, memoria), `fallas_numericas` en la exportación, tests `rapidos`/`largos`/`validacion`,
-  `tools/ci.sh`. Pendiente: el test de 30 min sin jugador (hoy en `skip`) y el cruce de la membrana
-  de la ameba al fagocitar.
+  `tools/ci.sh`; corregido el cruce de la membrana de la ameba al fagocitar. Pendiente: el test de
+  30 min sin jugador falla (las bacterias colapsan por fagos y pastoreo: `docs/validacion.md`).
 - 🟡 **Validación científica** (`docs/validacion.md`): fisiología por especie con fuente en
-  `assets/species/fisiologia.toml` (toml++); pasan µmax de *Paramecium* y Tilman. Pendiente: las
-  fuentes visibles en la ficha y en `speciesJson`, Jennings, Monod, depredador–presa y exclusión
-  de Gause (estos dos necesitan un modo cultivo: la placa tiene ~10 000× menos volumen), el
-  estiramiento de las uniones y verificar los valores marcados como estimación.
+  `assets/species/fisiologia.toml` (toml++), visible en la ficha y exportada en `speciesJson`;
+  pasan µmax de *Paramecium*, Tilman y Jennings (gotero de CO₂). No coincide Monod (la K publicada
+  es de crecimiento y el modelo la usa en la captación: decidir Monod o Droop). Pendiente:
+  depredador–presa y exclusión de Gause (necesitan un modo cultivo: la placa tiene ~10 000× menos
+  volumen), rigidez a la flexión en las uniones de filamentos y verificar las estimaciones.
 - **Rendimiento:** lo pendiente de la fase 19.
 - **Hecho cuando:** todos los tests de `validacion` pasan con su tolerancia y fuente, una escena se
   repite bit a bit, el paquete corre en una máquina limpia de Linux y de Windows y el soak de
