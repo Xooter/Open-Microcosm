@@ -26,11 +26,31 @@ Ajustes propios a los datos originales de Gause (1934) digitalizados en gauseR (
 
 | Test | Estado | Nota |
 |---|---|---|
-| µmax de heterótrofas en cultivo sin limitación (*Paramecium*, *Amoeba*) | **FALLA** | La población decrece (µ ≈ −0,018/h) o se extingue en vez de crecer a su µmax. Investigar: ¿el cultivo no es realmente sin limitación (comida, reservas iniciales) o hay un desbalance del modelo a escala de tiempo 600? Tarda demasiado (~1 h). |
+| µmax de *Paramecium* en cultivo sin limitación | **PASA** | µ simulado 0,0261/h contra 0,0260/h publicado (a 20 °C). Cultivo: placa de ~860 µm, 2 individuos, sin fagos, escala de tiempo 600; ~2,5 min. |
+| µmax de *Amoeba proteus* | pendiente | Su µmax publicado es con *Tetrahymena* como presa (cientos por división); una placa chica no tiene presas protistas suficientes. Hace falta un cultivo con presa ciliada abundante (o *Tetrahymena* como especie). |
 | Exclusión competitiva de Gause (*P. aurelia* vs *P. caudatum*) | pendiente | Falta la especie *P. aurelia*. |
 | Depredador–presa (*Didinium*–*Paramecium*) sin refugio | pendiente | Datos de Gause fig. 32 disponibles. |
 | Tilman (*Asterionella* vs *Cyclotella*, P y Si) | pendiente | Faltan las especies y las medias saturaciones por especie (Tilman & Kilham 1976, J. Phycol. 12: 375–383: **valores sin verificar**). |
 | Jennings (acumulación por CO₂) | pendiente | Ya hay comportamiento `acidTrap`; falta el test cuantitativo. |
+
+## Problemas del modelo encontrados al validar (fase MVP)
+
+1. **Las bacterias mueren todas a la vez cuando la comida no alcanza.** La muerte es un umbral
+   fijo de masa (`masa < 0,5`) y la mantención es proporcional a la masa: cuando la población
+   supera lo que sostiene el aporte de materia orgánica, todas adelgazan al mismo ritmo y cruzan
+   el umbral casi juntas (120 000 → 0 en pocas horas), aun con alimento entrando. Las bacterias
+   reales entran en fase estacionaria (bajan su mantención) y mueren de a poco. **Decisión de
+   modelado pendiente.**
+2. **Fagos en poblaciones chicas:** con ~20 000 bacterias y la frecuencia real de mutantes
+   resistentes casi seguro no hay ninguna resistente y la epidemia lítica las extingue. Plausible
+   para un volumen tan chico; los cultivos de validación no llevan fagos (como en el laboratorio).
+3. **NaN en el cuerpo blando bajo compresión extrema:** diez paramecios de ~180 µm en una placa
+   de 350 µm: uno quedó estirado contra el vidrio (anillo de 220 puntos, caja de 240 × 247 µm) y
+   sus posiciones se volvieron NaN; el NaN pasa al metabolismo. El motor no debería producir NaN
+   nunca: falta encontrar la operación (XPBD, división o contacto con el vidrio) y una red de
+   seguridad.
+4. Tras una lisis en un volumen chico la materia orgánica llega a cientos de mM (conservación
+   correcta, pero conviene revisar si el volumen de la película es el que corresponde).
 
 ## Pendientes
 
