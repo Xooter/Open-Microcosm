@@ -3,6 +3,7 @@
 #include "core/vec2.hpp"
 #include "game/stain.hpp"
 #include "render/lod.hpp"
+#include "render/triangle_batch.hpp"
 
 #include <entt/entity/entity.hpp>
 #include <raylib.h>
@@ -56,6 +57,7 @@ class CellRenderer {
     void forEachImage(const World& world, const RingBody& body, Rectangle view, Fn&& fn);
 
     RenderTexture2D target_{};
+    TriangleBatch batch_; // cobertura y detalles en una llamada
     Shader shader_{};
     bool shaderOk_ = false;
     int texelLoc_ = -1, rimLoc_ = -1;

@@ -186,9 +186,17 @@ void CellRenderer::forEachImage(const World& world, const RingBody& body, Rectan
                 body.aabbMax.y + off.y + kMargin < view.y ||
                 body.aabbMin.y + off.y - kMargin > view.y + view.height)
                 continue;
+            // Sin desplazamiento (siempre, con placa) no se toca la matriz: con una traslación
+            // activa rlgl multiplica cada vértice por ella.
+            if (ox == 0 && oy == 0) {
+                fn();
+                continue;
+            }
+            flushBatch(); // el lote no conoce la traslación de rlgl: lo de antes se dibuja sin ella
             rlPushMatrix();
             rlTranslatef(off.x, off.y, 0.0f);
             fn();
+            flushBatch();
             rlPopMatrix();
         }
     }
@@ -253,17 +261,17 @@ void CellRenderer::fillCell(const RingBody& body, Color tint, float zoom) {
     }
     if (star) {
         for (int i = 0; i < n; ++i)
-            DrawTriangle(toRay(body.centroid), toRay(p[i]), toRay(p[(i + 1) % n]), tint);
+            fastTriangle(toRay(body.centroid), toRay(p[i]), toRay(p[(i + 1) % n]), tint);
         return;
     }
     if (polygon::triangulate(p, n, triangles_, scratch_)) {
         for (std::size_t t = 0; t < triangles_.size(); t += 3)
-            DrawTriangle(toRay(p[triangles_[t]]), toRay(p[triangles_[t + 1]]),
+            fastTriangle(toRay(p[triangles_[t]]), toRay(p[triangles_[t + 1]]),
                          toRay(p[triangles_[t + 2]]), tint);
     } else {
         // Polígono degenerado: abanico desde el centroide (aproximado, pero no se rompe).
         for (int i = 0; i < n; ++i)
-            DrawTriangle(toRay(body.centroid), toRay(p[i]), toRay(p[(i + 1) % n]), tint);
+            fastTriangle(toRay(body.centroid), toRay(p[i]), toRay(p[(i + 1) % n]), tint);
     }
 }
 
@@ -274,12 +282,15 @@ void CellRenderer::renderCoverage(const World& world, const Camera2D& camera, Re
     ClearBackground(BLANK);
     BeginMode2D(camera);
     rlDisableBackfaceCulling(); // los polígonos pueden venir en cualquier orientación
+    setActiveBatch(&batch_);
     for (const auto [e, body, look] : world.registry().view<RingBody, CellLook>().each()) {
         const Color tint = limitationMap_ ? limitationTint(world.registry(), e, look) : cellTint(stain_, world.registry(), e, look);
         forEachImage(world, body, view, [&] { fillCell(body, tint, camera.zoom); });
     }
     // raylib dibuja en lotes: hay que vaciar el lote ANTES de reactivar el culling, o los
-    // triángulos se descartan al dibujarse más tarde.
+    // triángulos se descartan al dibujarse más tarde (el nuestro también).
+    flushBatch();
+    setActiveBatch(nullptr);
     rlDrawRenderBatchActive();
     rlEnableBackfaceCulling();
     EndMode2D();
@@ -349,7 +360,7 @@ void drawCilia(const BodyParticles& bp, const RingBody& body, float time, float 
         const float phase = 0.35f * static_cast<float>(i) - 2.0f * kPi * kBeatHz * time;
         const float swing = 0.6f * std::sin(phase);
         const Vec2 dir = rotate(o, std::cos(swing), std::sin(swing));
-        DrawLineEx({base.x, base.y}, {base.x + dir.x * kLength, base.y + dir.y * kLength}, width, kCilia);
+        fastLine({base.x, base.y}, {base.x + dir.x * kLength, base.y + dir.y * kLength}, width, kCilia);
     }
 }
 
@@ -372,12 +383,12 @@ void drawTwinFlagella(const RingBody& body, const Locomotion& loco, float time, 
             const float angle = side * (0.6f + 0.9f * stroke * t); // los brazos se abren y se cierran
             const Vec2 dir = rotate(h, std::cos(angle), std::sin(angle));
             const Vec2 p = prev + dir * (length / kSegments);
-            DrawLineEx({prev.x, prev.y}, {p.x, p.y}, std::max(0.4f, px), kFlagellum);
+            fastLine({prev.x, prev.y}, {p.x, p.y}, std::max(0.4f, px), kFlagellum);
             prev = p;
         }
     }
     const Vec2 eye = base - h * (0.5f * half) + Vec2{-h.y, h.x} * (0.4f * half);
-    DrawCircleV({eye.x, eye.y}, std::max(0.8f, 0.15f * half), kEyespot);
+    fastCircleV({eye.x, eye.y}, std::max(0.8f, 0.15f * half), kEyespot);
 }
 
 void drawFlagellum(const BodyParticles& bp, const RingBody& body, const Locomotion& loco,
@@ -411,13 +422,13 @@ void drawFlagellum(const BodyParticles& bp, const RingBody& body, const Locomoti
             const float amp = 4.0f * beating * t;
             const float wave = amp * std::sin(3.0f * kPi * t - phase0);
             const Vec2 p = base + h * (t * length) + side * wave;
-            DrawLineEx({prev.x, prev.y}, {p.x, p.y}, width, kFlagellum);
+            fastLine({prev.x, prev.y}, {p.x, p.y}, width, kFlagellum);
             prev = p;
         }
     }
     // Mancha ocular (estigma) junto a la base del flagelo.
     const Vec2 eye = base - h * 4.0f + side * 2.0f;
-    DrawCircleV({eye.x, eye.y}, 1.6f, kEyespot);
+    fastCircleV({eye.x, eye.y}, 1.6f, kEyespot);
 }
 
 // Marco del cuerpo: eje largo, lado, semilargo y semiancho de la forma de reposo.
@@ -445,7 +456,7 @@ void drawSpiralPlastid(const RingBody& body, float time) {
         const float wave = std::sin(3.0f * 3.14159265f * t + 0.05f * time);
         const Vec2 p = f.c + f.h * (0.92f * f.half * t) + f.side * (0.7f * f.width * wave);
         if (k > 0)
-            DrawLineEx(toRay(prev), toRay(p), std::max(1.0f, 0.25f * f.width), kColonyCell);
+            fastLine(toRay(prev), toRay(p), std::max(1.0f, 0.25f * f.width), kColonyCell);
         prev = p;
     }
 }
@@ -457,9 +468,9 @@ void drawPlatePlastid(const RingBody& body, float light) {
     const float edgeOn = std::clamp((light - 0.35f) / 0.5f, 0.0f, 1.0f);
     const float w = f.width * (0.8f - 0.65f * edgeOn * edgeOn * (3.0f - 2.0f * edgeOn));
     const Vec2 a = f.c - f.h * (0.88f * f.half), b = f.c + f.h * (0.88f * f.half);
-    DrawLineEx(toRay(a), toRay(b), std::max(1.0f, 2.0f * w), Fade(kChloroplast, 0.55f + 0.35f * edgeOn));
+    fastLine(toRay(a), toRay(b), std::max(1.0f, 2.0f * w), Fade(kChloroplast, 0.55f + 0.35f * edgeOn));
     for (int k = -2; k <= 2; ++k) // pirenoides en fila sobre la placa
-        DrawCircleV(toRay(f.c + f.h * (0.32f * f.half * static_cast<float>(k))), std::max(0.8f, std::min(0.3f * f.width, 2.2f)),
+        fastCircleV(toRay(f.c + f.h * (0.32f * f.half * static_cast<float>(k))), std::max(0.8f, std::min(0.3f * f.width, 2.2f)),
                     Fade(kColonyCell, 0.9f));
 }
 
@@ -472,10 +483,10 @@ void drawStellatePlastids(const RingBody& body, float time) {
         for (int k = 0; k < 9; ++k) { // brazos que irradian hasta la pared
             const float a = 6.2831853f * static_cast<float>(k) / 9.0f + 0.3f * s + 0.02f * time;
             const Vec2 d = f.h * std::cos(a) + f.side * std::sin(a);
-            DrawLineEx(toRay(c), toRay(c + d * (1.55f * r)), std::max(0.8f, 0.22f * r), kChloroplast);
+            fastLine(toRay(c), toRay(c + d * (1.55f * r)), std::max(0.8f, 0.22f * r), kChloroplast);
         }
-        DrawCircleV(toRay(c), std::max(1.2f, 0.55f * r), kChloroplast);
-        DrawCircleV(toRay(c), std::max(0.8f, 0.28f * r), kColonyCell); // pirenoide
+        fastCircleV(toRay(c), std::max(1.2f, 0.55f * r), kChloroplast);
+        fastCircleV(toRay(c), std::max(0.8f, 0.28f * r), kColonyCell); // pirenoide
     }
 }
 
@@ -489,24 +500,24 @@ void drawReticulatePlastid(const RingBody& body, int caps, float px) {
                            f.side * (0.45f * f.width * static_cast<float>(j) + 0.12f * f.width * static_cast<float>(i % 2));
             const Vec2 q = p + f.h * (0.2f * f.half) + f.side * (0.2f * f.width * static_cast<float>((i + j) % 2 ? 1 : -1));
             if (i < 4)
-                DrawLineEx(toRay(p), toRay(q), std::max(0.7f, 0.18f * f.width), Fade(kChloroplast, 0.8f));
-            DrawCircleV(toRay(p), std::max(0.6f, 0.12f * f.width), kChloroplast);
+                fastLine(toRay(p), toRay(q), std::max(0.7f, 0.18f * f.width), Fade(kChloroplast, 0.8f));
+            fastCircleV(toRay(p), std::max(0.6f, 0.12f * f.width), kChloroplast);
         }
     for (int k = 0; k < caps; ++k) {
         const Vec2 c = f.c + f.h * (f.half * (0.9f - 0.07f * static_cast<float>(k)));
-        DrawLineEx(toRay(c - f.side * (1.05f * f.width)), toRay(c + f.side * (1.05f * f.width)), std::max(0.6f, px), kLorica);
+        fastLine(toRay(c - f.side * (1.05f * f.width)), toRay(c + f.side * (1.05f * f.width)), std::max(0.6f, px), kLorica);
     }
 }
 
 // Diatomea pennada: frústula de sílice con rafe central y estrías.
 void drawFrustule(const RingBody& body, float px) {
     const Frame f = frameOf(body);
-    DrawLineEx(toRay(f.c - f.h * (0.85f * f.half)), toRay(f.c + f.h * (0.85f * f.half)), std::max(0.6f, px), kFrustule);
+    fastLine(toRay(f.c - f.h * (0.85f * f.half)), toRay(f.c + f.h * (0.85f * f.half)), std::max(0.6f, px), kFrustule);
     for (int k = -6; k <= 6; ++k) {
         const Vec2 a = f.c + f.h * (0.13f * f.half * static_cast<float>(k));
         const float w = f.width * std::sqrt(std::max(0.0f, 1.0f - (0.13f * k) * (0.13f * k)));
-        DrawLineEx(toRay(a + f.side * (0.25f * w)), toRay(a + f.side * (0.85f * w)), std::max(0.4f, 0.7f * px), kFrustule);
-        DrawLineEx(toRay(a - f.side * (0.25f * w)), toRay(a - f.side * (0.85f * w)), std::max(0.4f, 0.7f * px), kFrustule);
+        fastLine(toRay(a + f.side * (0.25f * w)), toRay(a + f.side * (0.85f * w)), std::max(0.4f, 0.7f * px), kFrustule);
+        fastLine(toRay(a - f.side * (0.25f * w)), toRay(a - f.side * (0.85f * w)), std::max(0.4f, 0.7f * px), kFrustule);
     }
 }
 
@@ -518,17 +529,17 @@ void drawVolvox(const BodyParticles& bp, const RingBody& body, float growth, int
         const Vec2 p = ringPos(bp, body, i);
         const Vec2 o = outwardAt(bp, body, i);
         const Vec2 cpos = p - o * 4.0f;
-        DrawCircleV(toRay(cpos), cell, kColonyCell);
+        fastCircleV(toRay(cpos), cell, kColonyCell);
         const float sw = 0.5f * std::sin(6.2831853f * 2.0f * time + static_cast<float>(i));
-        DrawLineEx(toRay(cpos), toRay(cpos + rotate(o, std::cos(sw), std::sin(sw)) * 7.0f), std::max(0.3f, 0.6f * px), kFlagellum);
+        fastLine(toRay(cpos), toRay(cpos + rotate(o, std::cos(sw), std::sin(sw)) * 7.0f), std::max(0.3f, 0.6f * px), kFlagellum);
     }
     const Frame f = frameOf(body);
     for (int k = 0; k < daughters; ++k) {
         const float a = 6.2831853f * static_cast<float>(k) / static_cast<float>(daughters) + 0.4f;
         const Vec2 c = f.c + rotate(f.h, std::cos(a), std::sin(a)) * (0.45f * f.half);
         const float r = f.half * (0.06f + 0.16f * std::clamp(growth, 0.0f, 1.0f));
-        DrawCircleV(toRay(c), r, Fade(kColonyCell, 0.5f));
-        DrawRing(toRay(c), r - std::max(0.6f, px), r, 0, 360, 32, kColonyCell);
+        fastCircleV(toRay(c), r, Fade(kColonyCell, 0.5f));
+        fastRing(toRay(c), r - std::max(0.6f, px), r, 0, 360, 32, kColonyCell);
     }
 }
 
@@ -540,15 +551,15 @@ void drawPediastrum(const RingBody& body, float px) {
         const float a = 6.2831853f * static_cast<float>(k) / 11.0f;
         const Vec2 d = rotate(f.h, std::cos(a), std::sin(a));
         const Vec2 c = f.c + d * (0.72f * f.half);
-        DrawCircleV(toRay(c), cell, kColonyCell);
+        fastCircleV(toRay(c), cell, kColonyCell);
         const Vec2 t = {-d.y, d.x};
         for (float s : {-1.0f, 1.0f})
-            DrawLineEx(toRay(c + d * cell + t * (0.5f * cell * s)), toRay(c + d * (1.9f * cell) + t * (0.8f * cell * s)),
+            fastLine(toRay(c + d * cell + t * (0.5f * cell * s)), toRay(c + d * (1.9f * cell) + t * (0.8f * cell * s)),
                        std::max(0.6f, px), kColonyCell);
     }
     for (int k = 0; k < 5; ++k) {
         const float a = 6.2831853f * static_cast<float>(k) / 5.0f + 0.3f;
-        DrawCircleV(toRay(f.c + rotate(f.h, std::cos(a), std::sin(a)) * (0.33f * f.half)), cell, kColonyCell);
+        fastCircleV(toRay(f.c + rotate(f.h, std::cos(a), std::sin(a)) * (0.33f * f.half)), cell, kColonyCell);
     }
 }
 
@@ -570,10 +581,10 @@ void drawChytrids(const RingBody& body, const ChytridInfection& inf, float px) {
             reach = f.width;
         const Vec2 wall = f.c + d * reach;
         for (int k = -1; k <= 1; ++k) // rizoides
-            DrawLineEx(toRay(wall), toRay(wall - rotate(d, std::cos(0.5f * k), std::sin(0.5f * k)) * (0.6f * reach)),
+            fastLine(toRay(wall), toRay(wall - rotate(d, std::cos(0.5f * k), std::sin(0.5f * k)) * (0.6f * reach)),
                        std::max(0.4f, 0.6f * px), kRhizoid);
-        DrawCircleV(toRay(wall + d * r), r, Fade(kChytrid, 0.6f));
-        DrawRing(toRay(wall + d * r), r - std::max(0.5f, px), r, 0, 360, 24, kChytrid);
+        fastCircleV(toRay(wall + d * r), r, Fade(kChytrid, 0.6f));
+        fastRing(toRay(wall + d * r), r - std::max(0.5f, px), r, 0, 360, 24, kChytrid);
     }
 }
 
@@ -584,8 +595,8 @@ void drawBud(const RingBody& body, float growth, float px) {
         return;
     const float r = f.width * std::sqrt(std::clamp(growth, 0.0f, 1.0f));
     const Vec2 c = f.c + f.h * (f.half + 0.7f * r);
-    DrawCircleV(toRay(c), r, {226, 220, 196, 200});
-    DrawRing(toRay(c), r - std::max(0.4f, px), r, 0, 360, 24, kYeastWall);
+    fastCircleV(toRay(c), r, {226, 220, 196, 200});
+    fastRing(toRay(c), r - std::max(0.4f, px), r, 0, 360, 24, kYeastWall);
 }
 
 } // namespace
@@ -611,6 +622,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
         drawFluorescence(world, camera, view);
         return;
     }
+    setActiveBatch(&batch_); // membranas, gránulos y apéndices: una sola llamada (ver TriangleBatch)
 
     for (const auto [e, body, anatomy] : reg.view<RingBody, CellAnatomy>().each()) {
         const Locomotion* loco = reg.try_get<Locomotion>(e);
@@ -644,7 +656,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     const float t = static_cast<float>(k) / kTurns;
                     const float coil = (k % 2 ? 1.0f : -1.0f) * 6.0f * anchor->contracted; // zigzag del resorte
                     const Vec2 p = hold + along * t + side * (k < kTurns ? coil : 0.0f);
-                    DrawLineEx(toRay(prev), toRay(p), std::max(1.0f, 1.2f * px), kMembrane);
+                    fastLine(toRay(prev), toRay(p), std::max(1.0f, 1.2f * px), kMembrane);
                     prev = p;
                 }
                 drawCircleFast(toRay(hold), std::max(2.0f, 2.0f * px), kMouth, px);
@@ -655,13 +667,13 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 const RingBody& prey = reg.get<RingBody>(pe);
                 const Vec2 pc = body.centroid + Vec2{minImage(prey.centroid.x - body.centroid.x, world.width()),
                                                      minImage(prey.centroid.y - body.centroid.y, world.height())};
-                DrawLineEx(toRay(body.centroid), toRay(pc), std::max(1.5f, 2.0f * px), kMouth);
+                fastLine(toRay(body.centroid), toRay(pc), std::max(1.5f, 2.0f * px), kMouth);
             }
             {
                 int m = 0;
                 const Vec2* ring = outline(body, camera.zoom, m);
                 for (int i = 0; i < m; ++i)
-                    DrawLineEx(toRay(ring[i]), toRay(ring[(i + 1) % m]), membraneWidth, kMembrane);
+                    fastLine(toRay(ring[i]), toRay(ring[(i + 1) % m]), membraneWidth, kMembrane);
             }
             if (level < DetailLevel::Normal)
                 return;
@@ -672,7 +684,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 drawCilia(bp, body, time, px, CiliaPattern::Rostrum, 1.5f);
             } else if (cyst) { // quiste: pared gruesa y sin apéndices
                 for (std::size_t i = 0; i < n; ++i)
-                    DrawLineEx(toRay(body.poly[i]), toRay(body.poly[(i + 1) % n]), std::max(2.5f, 3.0f * px), kCystWall);
+                    fastLine(toRay(body.poly[i]), toRay(body.poly[(i + 1) % n]), std::max(2.5f, 3.0f * px), kCystWall);
             } else if (loco && sid == SpeciesId::Didinium) {
                 drawCilia(bp, body, time, px, CiliaPattern::Girdles);
                 // Probóscide: el cono del polo anterior con el que ataca.
@@ -681,8 +693,8 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     half = std::max(half, q.x);
                 const Vec2 h = bodyHeading(body);
                 const Vec2 tip = body.centroid + h * half;
-                DrawTriangle(toRay(tip + h * 8.0f), toRay(tip + Vec2{-h.y, h.x} * 5.0f), toRay(tip - Vec2{-h.y, h.x} * 5.0f), kMouth);
-                DrawTriangle(toRay(tip + h * 8.0f), toRay(tip - Vec2{-h.y, h.x} * 5.0f), toRay(tip + Vec2{-h.y, h.x} * 5.0f), kMouth);
+                fastTriangle(toRay(tip + h * 8.0f), toRay(tip + Vec2{-h.y, h.x} * 5.0f), toRay(tip - Vec2{-h.y, h.x} * 5.0f), kMouth);
+                fastTriangle(toRay(tip + h * 8.0f), toRay(tip - Vec2{-h.y, h.x} * 5.0f), toRay(tip + Vec2{-h.y, h.x} * 5.0f), kMouth);
             } else if (sid == SpeciesId::Spirogyra) {
                 drawSpiralPlastid(body, time);
             } else if (sid == SpeciesId::Mougeotia) {
@@ -719,7 +731,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                         const Vec2 d = {std::cos(a), std::sin(a)};
                         const Vec2 from = body.centroid + d * (0.8f * reach * 0.4f);
                         const Vec2 to = body.centroid + d * reach;
-                        DrawLineEx(toRay(from), toRay(to), std::max(0.5f, px), kFlagellum);
+                        fastLine(toRay(from), toRay(to), std::max(0.5f, px), kFlagellum);
                         drawCircleFast(toRay(to), std::max(1.2f, 1.5f * px), kMouth, px);
                     }
                 }
@@ -730,7 +742,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     const Vec2 o = outwardAt(bp, body, i);
                     const float sw = 0.4f * std::sin(6.2831853f * 3.0f * time + static_cast<float>(i));
                     const Vec2 d = rotate(o, std::cos(sw), std::sin(sw));
-                    DrawLineEx(toRay(b), toRay(b + d * 9.0f), std::max(1.2f, 1.5f * px), kCilia);
+                    fastLine(toRay(b), toRay(b + d * 9.0f), std::max(1.2f, 1.5f * px), kCilia);
                 }
             } else if (loco && sid == SpeciesId::Lacrymaria) {
                 drawCilia(bp, body, time, px, CiliaPattern::All, 0.6f);
@@ -742,7 +754,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     const Vec2 head = body.centroid + bodyHeading(body) * half;
                     const Vec2 dir = neck->length > 1.0f ? neck->direction : bodyHeading(body);
                     const Vec2 tip = head + dir * std::max(6.0f, neck->length);
-                    DrawLineEx(toRay(head), toRay(tip), std::max(1.5f, 2.0f * px), kMembrane);
+                    fastLine(toRay(head), toRay(tip), std::max(1.5f, 2.0f * px), kMembrane);
                     drawCircleFast(toRay(tip), std::max(2.5f, 2.0f * px), kMouth, px);
                 }
             } else if (loco && sid == SpeciesId::Chlamydomonas) {
@@ -800,7 +812,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                         drawRingFast({bp.x[s], bp.y[s]}, std::max(0.0f, r - std::max(0.15f * r, px)), r, 24, kVacuoleRim, px);
                         break;
                     }
-                    DrawRectanglePro({bp.x[s], bp.y[s], 2.6f * r, 1.2f * r}, {1.3f * r, 0.6f * r},
+                    fastRectPro({bp.x[s], bp.y[s], 2.6f * r, 1.2f * r}, {1.3f * r, 0.6f * r},
                                      static_cast<float>(s % 180), kMitochondrion);
                     break;
                 case OrganelleTag::Chloroplast:
@@ -817,7 +829,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     break;
                 }
                 case OrganelleTag::Granule:
-                    DrawRectangleV({bp.x[s] - r, bp.y[s] - r}, {2 * r, 2 * r}, kGranule);
+                    fastRect({bp.x[s] - r, bp.y[s] - r}, {2 * r, 2 * r}, kGranule);
                     break;
                 }
             }
@@ -830,7 +842,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     for (std::size_t i = 0; i < n; i += step) {
                         const Vec2 b = ringPos(bp, body, i);
                         const Vec2 in = outwardAt(bp, body, i) * -1.0f;
-                        DrawLineEx(toRay(b + in * 1.5f), toRay(b + in * 4.5f), std::max(0.4f, px), kTrichocyst);
+                        fastLine(toRay(b + in * 1.5f), toRay(b + in * 4.5f), std::max(0.4f, px), kTrichocyst);
                     }
                 }
                 // Coraza: una capa externa gruesa (lórica o testa).
@@ -839,7 +851,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     for (std::size_t i = 0; i < n; ++i) {
                         const Vec2 a = ringPos(bp, body, i) + outwardAt(bp, body, i) * (0.5f * t + 1.0f);
                         const Vec2 b = ringPos(bp, body, i + 1) + outwardAt(bp, body, i + 1) * (0.5f * t + 1.0f);
-                        DrawLineEx(toRay(a), toRay(b), t, kArmor);
+                        fastLine(toRay(a), toRay(b), t, kArmor);
                     }
                 }
             }
@@ -848,7 +860,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 const float len = 25.0f * std::min(1.0f, dis->timer / 2.0f);
                 for (std::size_t i = 0; i < n; i += 3) {
                     const Vec2 b = ringPos(bp, body, i);
-                    DrawLineEx(toRay(b), toRay(b + outwardAt(bp, body, i) * len), std::max(0.4f, px), kDischarge);
+                    fastLine(toRay(b), toRay(b + outwardAt(bp, body, i) * len), std::max(0.4f, px), kDischarge);
                 }
             }
 
@@ -912,6 +924,8 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             }
         });
     }
+    flushBatch();
+    setActiveBatch(nullptr);
 }
 
 // Fluorescencia: sobre el fondo oscuro solo brillan los blancos teñidos (el ADN del núcleo, con un halo).
@@ -934,9 +948,9 @@ void CellRenderer::drawFluorescence(const World& world, const Camera2D&, Rectang
                     return;
                 const Vector2 c = {bp.x[slot], bp.y[slot]};
                 const float r = bp.radius[slot];
-                DrawCircleV(c, r * 2.1f, dyeColor(dye.color, 0.10f * dye.alpha));
-                DrawCircleV(c, r * 1.5f, dyeColor(dye.color, 0.22f * dye.alpha));
-                DrawCircleV(c, r, dyeColor(dye.color, 0.95f * dye.alpha));
+                fastCircleV(c, r * 2.1f, dyeColor(dye.color, 0.10f * dye.alpha));
+                fastCircleV(c, r * 1.5f, dyeColor(dye.color, 0.22f * dye.alpha));
+                fastCircleV(c, r, dyeColor(dye.color, 0.95f * dye.alpha));
             };
             nucleus(anatomy.nucleus);
             if (dividing)

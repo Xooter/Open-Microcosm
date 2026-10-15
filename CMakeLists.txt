@@ -230,6 +230,7 @@ add_executable(bio
     src/render/instanced_particles.cpp
     src/render/population_layer.cpp
     src/render/structure_renderer.cpp
+    src/render/triangle_batch.cpp
     src/gpu/gpu_substep_solver.cpp)
 
 # Dear ImGui como biblioteca aparte: sus fuentes no pasan por nuestros warnings.
@@ -246,7 +247,8 @@ target_include_directories(imgui_lib SYSTEM PUBLIC ${imgui_SOURCE_DIR} ${implot_
 # del dibujo (--render).
 add_executable(bio_bench bench/bio_bench.cpp src/gpu/gpu_substep_solver.cpp
     src/render/renderer.cpp src/render/minerals.cpp src/render/field_overlay.cpp src/render/cell_renderer.cpp
-    src/render/instanced_particles.cpp src/render/population_layer.cpp src/render/structure_renderer.cpp)
+    src/render/instanced_particles.cpp src/render/population_layer.cpp src/render/structure_renderer.cpp
+    src/render/triangle_batch.cpp)
 target_link_libraries(bio_bench PRIVATE biosim raylib)
 
 # SYSTEM: los warnings de headers de terceros no son nuestros.

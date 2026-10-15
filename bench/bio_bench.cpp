@@ -56,6 +56,7 @@ struct Args {
     float zoom = 0.0f; // 0: la placa entera
     float cellDetail = 1.0f;
     std::string scene; // escena (.plate con intervenciones) a reproducir
+    std::string shot;  // con --render: guarda el último cuadro (PNG) para comparar dibujos
     int soak = 0;      // > 0: cada `soak` pasos verifica posiciones finitas, balance y memoria
 };
 
@@ -115,6 +116,8 @@ bool parse(int argc, char** argv, Args& a) {
             a.zoom = static_cast<float>(std::atof(argv[++i]));
         else if (k == "--soak" && hasValue)
             a.soak = std::atoi(argv[++i]);
+        else if (k == "--shot" && hasValue)
+            a.shot = argv[++i];
         else if (k == "--scene" && hasValue)
             a.scene = argv[++i];
         else if (k == "--cell-detail" && hasValue)
@@ -133,7 +136,7 @@ bool parse(int argc, char** argv, Args& a) {
             a.threads = std::atoi(argv[++i]);
         else {
             std::fprintf(stderr, "uso: bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] "
-                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate] [--soak N]\n");
+                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate] [--soak N] [--shot cuadro.png]\n");
             return false;
         }
     }
@@ -317,6 +320,12 @@ int main(int argc, char** argv) {
         gpu.printTiming(a.warmup + a.steps);
     }
     if (renderer) {
+        if (!a.shot.empty()) {
+            Image img = LoadImageFromTexture(target.texture);
+            ImageFlipVertical(&img); // las render textures de OpenGL están invertidas en Y
+            ExportImage(img, a.shot.c_str());
+            UnloadImage(img);
+        }
         renderer.reset();
         UnloadRenderTexture(target);
     }

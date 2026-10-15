@@ -1,5 +1,7 @@
 #pragma once
 
+#include "render/triangle_batch.hpp"
+
 #include <raylib.h>
 
 #include <algorithm>
@@ -21,12 +23,12 @@ inline void drawCircleFast(Vector2 center, float radius, Color color, float px) 
     // vez de 18 (las motas de los gránulos, de lejos, son la mayoría).
     if (radius <= px) {
         const float side = 1.7724539f * radius; // √π·r
-        DrawRectangleV({center.x - 0.5f * side, center.y - 0.5f * side}, {side, side}, color);
+        fastRect({center.x - 0.5f * side, center.y - 0.5f * side}, {side, side}, color);
         return;
     }
-    DrawCircleSector(center, radius, 0.0f, 360.0f, circleSegments(radius, px), color);
+    fastCircle(center, radius, circleSegments(radius, px), color);
 }
 
 inline void drawRingFast(Vector2 center, float inner, float outer, int maxSegments, Color color, float px) {
-    DrawRing(center, inner, outer, 0.0f, 360.0f, circleSegments(outer, px, maxSegments), color);
+    fastRing(center, inner, outer, 0.0f, 360.0f, circleSegments(outer, px, maxSegments), color);
 }
