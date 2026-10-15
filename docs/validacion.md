@@ -57,11 +57,17 @@ Ajustes propios a los datos originales de Gause (1934) digitalizados en gauseR (
 4. Tras una lisis en un volumen chico la materia orgánica llega a cientos de mM (conservación
    correcta, pero conviene revisar si el volumen de la película es el que corresponde).
 
-5. **Cruces de la membrana de la ameba al fagocitar** (test largo «la membrana de la ameba no se
-   cruza al comer presas de distinta forma»): es un error latente de la copa fagocítica que
-   aparece o desaparece según la trayectoria. Con el µmax de Rogerson fallan los casos "tres" y
-   "paramecio"; sin él (crecimiento rápido de antes), el caso "punta" (76 cruces). Antes pasaba
-   por casualidad. Falta revisar la mecánica de la copa (labios, cierre, remallado).
+5. **Cruces de la membrana de la ameba al fagocitar** (CORREGIDO; test largo «la membrana de la
+   ameba no se cruza al comer presas de distinta forma»). Dos defectos de la copa, que aparecían
+   o no según la trayectoria:
+   - el avance de cada labio se medía con el ángulo envuelto a ±π desde el ancla; cuando el
+     ancla se reubicaba cerca de un labio, el otro forro pasaba el antípoda, parecía estar atrás
+     y la membrana nueva se insertaba 8 µm detrás del labio, doblada (caso "tres");
+   - en un pseudópodo fino apretado contra la presa, el forro seguía por la punta hasta la cara
+     de enfrente y la llevaba hacia la presa a través de la otra cara (caso "paramecio").
+   Ahora el avance se acumula punto a punto, el forro termina donde la membrana da la vuelta y
+   cada labio puede avanzar hasta encontrar al otro. La red de seguridad (`untangle`) ya no actúa
+   en estos casos.
 
 6. **Anillos que crecían sin límite al dividirse** (CORREGIDO): la hija se remuestreaba con el
    perímetro de su geometría del momento; una hija estirada nacía con miles de puntos y sus hijas
@@ -92,6 +98,3 @@ población:
 
 - Verificar contra las publicaciones las temperaturas de Gause y los valores de Tilman.
 - Uniones de filamentos: se estiran 0,7–0,8 respecto del reposo en CPU y GPU (`bio_bench`).
-- Test largo nuevo que falla tras el cambio de µmax: «la membrana de la ameba no se cruza al
-  comer presas de distinta forma» (casos "tres" y "paramecio"): la nueva trayectoria muestra un
-  cruce de membrana latente.

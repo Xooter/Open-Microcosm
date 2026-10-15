@@ -1,3 +1,4 @@
+#include "core/finite.hpp"
 #include "game/world.hpp"
 #include "sim/polygon.hpp"
 #include "sim/soft_body.hpp"
@@ -57,7 +58,7 @@ BodyStats measure(const World& world) {
         const std::size_t n = body->ring.size();
         for (std::size_t i = 0; i < n; ++i) {
             const std::uint32_t s = body->ring[i], t = body->ring[(i + 1) % n];
-            st.finite &= std::isfinite(bp.x[s]) && std::isfinite(bp.y[s]);
+            st.finite &= finiteNumber(bp.x[s]) && finiteNumber(bp.y[s]);
             const float len = std::hypot(bp.x[t] - bp.x[s], bp.y[t] - bp.y[s]);
             st.maxEdgeStretch = std::max(st.maxEdgeStretch, len / body->restEdge[i]);
         }

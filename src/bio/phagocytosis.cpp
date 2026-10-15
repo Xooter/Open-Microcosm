@@ -87,21 +87,13 @@ std::size_t ringStep(std::size_t i, int step, std::size_t n) {
     return (i + n + static_cast<std::size_t>(step + static_cast<int>(n))) % n;
 }
 
-// Puntos adheridos a la presa desde el ancla hacia un lado (en orden de anillo).
+// Puntos adheridos a la presa desde el ancla hacia un lado (en orden de anillo) y su avance.
 // El forro incluye la membrana cercana todavía no adherida (`lipReach`): en el tramo que rodea
 // una punta de la presa, la membrana sin guiar se amontonaba y se plegaba sobre sí misma.
-std::vector<std::size_t> liningOf(const RingBody& predator, const BodyParticles& bp,
-                                  const CupFrame& f, std::size_t anchor, int dirStep, float lipReach) {
-    std::vector<std::size_t> lining;
-    const std::size_t n = predator.ring.size();
-    for (std::size_t k = 1; k < n / 2; ++k) {
-        const std::size_t idx = ringStep(anchor, dirStep * static_cast<int>(k), n);
-        if (!f.within(pos(bp, predator.ring[idx]), f.contact + lipReach))
-            break;
-        lining.push_back(idx);
-    }
-    return lining;
-}
+struct Lining {
+    std::vector<std::size_t> idx;
+    float progress = 0.0f; // [rad, ≥ 0 hacia `sense`] hasta el último punto del forro
+};
 
 // Sentido angular de cada lado, fijado una vez al iniciar la copa: compara el ángulo de los
 // vecinos del ancla hacia adelante y hacia atrás en el anillo. Los dos lados quedan opuestos.
@@ -114,6 +106,40 @@ float senseOf(const RingBody& predator, const BodyParticles& bp, const CupFrame&
         cup.sense = ahead >= behind ? 1.0f : -1.0f;
     }
     return dirStep > 0 ? cup.sense : -cup.sense;
+}
+
+// El avance se acumula punto a punto desde el ancla: `angleOf` envuelve a ±π y, si el ancla se
+// reubica cerca de un labio, el otro forro pasa el antípoda; con el ángulo envuelto su último
+// punto parecía estar *detrás* (la membrana nueva caía 8 µm atrás del labio y se doblaba).
+// El forro termina donde la membrana da la vuelta (el ángulo retrocede): en un pseudópodo fino
+// apretado contra la presa, la cara de enfrente también queda a `lipReach` y, tomada como forro,
+// se llevaba hacia la presa a través de la otra cara.
+Lining liningOf(const RingBody& predator, const BodyParticles& bp, const CupFrame& f, std::size_t anchor,
+                int dirStep, float lipReach, float sense) {
+    Lining out;
+    const std::size_t n = predator.ring.size();
+    const float backTolerance = 1.0f / f.arcPerRad; // 1 µm de arco: el forro no es perfectamente parejo
+    float prev = 0.0f, acc = 0.0f, best = 0.0f;     // el ancla está en ángulo 0 por definición del marco
+    for (std::size_t k = 1; k < n / 2; ++k) {
+        const std::size_t idx = ringStep(anchor, dirStep * static_cast<int>(k), n);
+        const Vec2 p = pos(bp, predator.ring[idx]);
+        if (!f.within(p, f.contact + lipReach))
+            break;
+        const float a = f.angleOf(p);
+        float d = a - prev;
+        if (d > units::kPi)
+            d -= 2.0f * units::kPi;
+        else if (d < -units::kPi)
+            d += 2.0f * units::kPi;
+        acc += sense * d;
+        if (acc < best - backTolerance)
+            break;
+        best = std::max(best, acc);
+        prev = a;
+        out.idx.push_back(idx);
+        out.progress = std::max(0.0f, acc);
+    }
+    return out;
 }
 
 // ¿Hay otra célula en `p` (o pegada a él)? Ahí la membrana no puede ir.
@@ -167,6 +193,19 @@ void growLips(RingBody& predator, BodyParticles& bp, const RingBody& prey, Vec2 
     const float shellRadius = f.arcPerRad; // [µm/rad] sobre el contorno de la presa
     const float spacing = bp.radius[predator.ring[0]] / 0.6f; // espaciado de membrana
 
+    // Avance de cada labio antes de agregar membrana: cada uno puede llegar hasta el otro (los
+    // labios se encuentran donde sea, no a media vuelta: el ancla puede haberse reubicado).
+    float progress[2];
+    {
+        const std::size_t anchor = static_cast<std::size_t>(it - predator.ring.begin());
+        for (int sideIndex = 0; sideIndex < 2; ++sideIndex) {
+            const int dirStep = sideIndex == 0 ? 1 : -1;
+            progress[sideIndex] =
+                liningOf(predator, bp, f, anchor, dirStep, params.lipReach, senseOf(predator, bp, f, anchor, dirStep, cup))
+                    .progress;
+        }
+    }
+
     std::vector<std::uint32_t> ring = predator.ring;
     bool changed = false;
     for (int sideIndex = 0; sideIndex < 2; ++sideIndex) {
@@ -175,15 +214,16 @@ void growLips(RingBody& predator, BodyParticles& bp, const RingBody& prey, Vec2 
             std::find(ring.begin(), ring.end(), cup.anchorSlot) - ring.begin());
         RingBody view = predator; // anillo actualizado para medir este lado
         view.ring = ring;
-        const std::vector<std::size_t> lining = liningOf(view, bp, f, anchor, dirStep, params.lipReach);
         const float sense = senseOf(view, bp, f, anchor, dirStep, cup);
+        const Lining lining = liningOf(view, bp, f, anchor, dirStep, params.lipReach, sense);
         float& front = cup.front[sideIndex];
-        const std::size_t last = lining.empty() ? anchor : lining.back();
-        const float lastAngle = std::abs(f.angleOf(pos(bp, ring[last])));
+        const std::size_t last = lining.idx.empty() ? anchor : lining.idx.back();
+        const float lastAngle = lining.progress;
         // El frente nunca queda detrás del forro ya adherido (presa alargada: el contacto
         // inicial puede cubrir un tramo largo), si no `applyCup` amontona los puntos.
         const float held = std::max(front, lastAngle);
-        front = std::min(units::kPi, held + params.zipperSpeed * dt / shellRadius);
+        const float meet = std::max(units::kPi, 2.0f * units::kPi - progress[1 - sideIndex]);
+        front = std::min(meet, held + params.zipperSpeed * dt / shellRadius);
         // Si hay otra célula pegada a la presa más adelante, el labio se detiene: no hay lugar
         // para la membrana entre las dos (si se empuja, queda aplastada y se cruza).
         const float ahead = lastAngle + 2.0f * spacing / shellRadius;
@@ -240,20 +280,18 @@ void applyCup(const RingBody& predator, BodyParticles& bp, const RingBody& prey,
     float coverage = 0.0f;
     for (int sideIndex = 0; sideIndex < 2; ++sideIndex) {
         const int dirStep = sideIndex == 0 ? 1 : -1;
-        const std::vector<std::size_t> lining = liningOf(predator, bp, f, anchor, dirStep, params.lipReach);
         const float sense = senseOf(predator, bp, f, anchor, dirStep, cup);
-        float front = cup.front[sideIndex];
-        if (!lining.empty())
-            front = std::max(front, std::abs(f.angleOf(pos(bp, predator.ring[lining.back()]))));
-        for (std::size_t k = 0; k < lining.size(); ++k) {
-            const float phi = sense * front * static_cast<float>(k + 1) / static_cast<float>(lining.size() + 1);
+        const Lining lining = liningOf(predator, bp, f, anchor, dirStep, params.lipReach, sense);
+        const float reached = lining.progress;
+        const float front = std::max(cup.front[sideIndex], reached);
+        for (std::size_t k = 0; k < lining.idx.size(); ++k) {
+            const float phi = sense * front * static_cast<float>(k + 1) / static_cast<float>(lining.idx.size() + 1);
             const Vec2 goal = f.shellPoint(phi);
             if (!obstacles.empty() && blockedAt(obstacles, goal, f.contact))
                 continue;
-            steer(predator.ring[lining[k]], goal, 2.0f * params.zipperSpeed);
+            steer(predator.ring[lining.idx[k]], goal, 2.0f * params.zipperSpeed);
         }
-        if (!lining.empty())
-            coverage = std::max(coverage, std::abs(f.angleOf(pos(bp, predator.ring[lining.back()]))));
+        coverage = std::max(coverage, reached);
     }
     cup.coverage = coverage;
     (void)dt;

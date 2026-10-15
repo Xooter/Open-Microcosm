@@ -1,3 +1,4 @@
+#include "core/finite.hpp"
 #include "bio/feeding.hpp"
 #include "bio/genome.hpp"
 #include "bio/locomotion.hpp"
@@ -174,7 +175,7 @@ RingHealth ringHealth(const RingBody& body, const BodyParticles& bp) {
     std::vector<Vec2> poly;
     for (std::uint32_t s : body.ring) {
         poly.push_back({bp.x[s], bp.y[s]});
-        h.finite = h.finite && std::isfinite(bp.x[s]) && std::isfinite(bp.y[s]);
+        h.finite = h.finite && finiteNumber(bp.x[s]) && finiteNumber(bp.y[s]);
     }
     for (std::uint32_t s : body.interior)
         if (!polygon::contains(poly.data(), static_cast<int>(poly.size()), {bp.x[s], bp.y[s]}))

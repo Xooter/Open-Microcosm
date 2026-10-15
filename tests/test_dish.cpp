@@ -1,4 +1,5 @@
 // Placa: el mundo es un pocillo circular con pared de vidrio.
+#include "core/finite.hpp"
 #include "game/world.hpp"
 
 #include <doctest/doctest.h>
@@ -98,7 +99,7 @@ TEST_CASE("el vidrio no se lleva fósforo: se conserva y no se acumula afuera" *
     const DishMask& mask = world.dishMask();
     const Grid2D& p = world.phosphate().grid();
     for (std::size_t m = 0; m < mask.outside.size(); m += 97) {
-        REQUIRE(std::isfinite(p.v[mask.outside[m]]));
+        REQUIRE(finiteNumber(p.v[mask.outside[m]]));
         CHECK(p.v[mask.outside[m]] == doctest::Approx(p.v[mask.mirror[m]]));
     }
 }
