@@ -1,4 +1,5 @@
 // Sílice, hierro y vitamina B₁₂: limitan el crecimiento y se conservan.
+#include "bio/metabolism.hpp"
 #include "game/world.hpp"
 
 #include <doctest/doctest.h>
@@ -117,4 +118,43 @@ TEST_CASE("fijar la concentración media: exacta, solo en el agua y estable con 
     const float before = world.meanConcentration(p);
     world.setMeanConcentration(p, 2.0f * before);
     CHECK(world.meanConcentration(p) == doctest::Approx(2.0f * before).epsilon(1e-5));
+}
+
+TEST_CASE("Droop: en equilibrio el crecimiento sigue la Monod publicada (P limitante)") {
+    // Una célula con P externo fijo y todo lo demás de sobra, hasta que su cuota se equilibra
+    // (quimiostato ideal). Con Droop y la captación ligada a µmax, µ(S) = µmax·S/(K+S) con K la
+    // media saturación de CRECIMIENTO (Tilman y Kilham 1976 publican esa).
+    const MetabolismParams p;
+    const float k = 0.04f, muMax = p.growthPerHourMax;
+    for (const float s : {0.25f * k, k, 4.0f * k, 16.0f * k}) {
+        Metabolism m;
+        m.photosynthetic = true;
+        m.biomass = 1.0f;
+        m.phosphorus = p.phosphorusRatio; // cuota mínima: empieza limitada
+        m.nitrogen = p.luxuryQuota * p.nitrogenRatio;
+        m.iron = p.luxuryQuota * p.ironRatio;
+        MetabolicInput in{};
+        in.o2 = 250.0f;
+        in.bioDt = 60.0f;
+        in.phosphorusHalfSaturation = k;
+        in.phosphate = s;
+        in.nitrogen = in.iron = 1e3f; // de sobra
+        float mu = 0.0f;
+        for (int step = 0; step < 60 * 400; ++step) { // 400 h biológicas
+            in.digested = m.biomass; // energía de sobra
+            const float before = m.biomass;
+            updateMetabolism(m, p, in);
+            mu = std::log(m.biomass / before) / (in.bioDt / 3600.0f);
+            // Renormaliza (la biomasa crecería sin límite): misma composición, otra escala.
+            const float r = 1.0f / m.biomass;
+            m.biomass = 1.0f;
+            m.reserves *= r;
+            m.phosphorus *= r;
+            m.nitrogen *= r;
+            m.iron *= r;
+        }
+        CAPTURE(s);
+        const float monod = muMax * s / (k + s);
+        CHECK(std::abs(mu - monod) < 0.03f * monod);
+    }
 }

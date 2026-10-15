@@ -32,7 +32,7 @@ Ajustes propios a los datos originales de Gause (1934) digitalizados en gauseR (
 | Depredador–presa (*Didinium*–*Paramecium*) sin refugio | pendiente | Datos de Gause fig. 32 disponibles. |
 | Tilman (*Asterionella* vs *Cyclotella*, P y Si) | **PASA (débil)** | Cultivo en lote, columna de agua de 2 cm. Con P limitante gana *Asterionella* (0,52 de la biomasa); con Si limitante, *Cyclotella* (*Asterionella* 0,47). La dirección se invierte con la proporción de recursos, como en Tilman (1977), pero el margen es chico: en lote no hay exclusión completa (Tilman usó cultivos semicontinuos con dilución). Constantes de Monod **sin verificar** contra Tilman & Kilham (1976). |
 | Jennings (acumulación por CO₂) | **PASA** | 20 *Paramecium* en una placa de ~1,9 mm con el gotero de CO₂ abierto en el centro (2 mM/s; ~10 mM y pH 5,3 en la fuente). Fracción a menos de 0,2 radios (4 % del área): 0,081 con CO₂ contra 0,031 sin él (el test pide > 1,5× el área y > 2× el control). La densidad crece hacia la fuente (3,4× la media en el centro). Resultado cualitativo: Jennings (1906) no publicó conteos. Con ácido más fuerte vio un anillo alrededor de la burbuja; acá no se modela la evitación del ácido fuerte. |
-| Monod: µ en función del P externo (*Asterionella*) | **NO COINCIDE** | Quimiostato ideal (P fijo, Si y luz de sobra). Con P = K publicado (0,04 µM) el modelo crece al 82 % de µmax en vez del 50 %; satura a 4 K. Causa: la K de Tilman y Kilham (1976) es de **crecimiento** y el modelo la usa como K de **captación**, con una captación máxima de 0,3 cuotas/h (~9× µmax). Ver «Monod o Droop». |
+| Monod: µ en función del P externo (*Asterionella*) | **PASA** (test básico) | Modelo de Droop desde el 15/10/2026: en equilibrio, µ = µmax·S/(K+S) con la K publicada, con un error menor al 3 % (`tests/test_nutrients.cpp`, sin `World`). En la placa, la célula ve menos P que la media (pozo de consumo: 0,028 contra 0,04 µM) y con ese valor local la curva coincide (0,0142 contra 0,0143 /h). |
 
 ## Problemas del modelo encontrados al validar (fase MVP)
 
@@ -110,31 +110,21 @@ placa; una columna de agua más profunda para las bacterias (como en Tilman); re
 bacterias (biofilm, sedimento) y pérdida de fagos (adsorción a partículas); la resistencia
 fenotípica a *Bdellovibrio* ya propuesta; o el modo cultivo para las dinámicas de población.
 
-## Monod o Droop (decisión pendiente)
+## Monod y Droop (elegido: Droop)
 
-Medido con P externo constante (`setMeanConcentration` en cada paso), *Asterionella* a 20 °C:
+Antes, la K de Tilman y Kilham (1976), que es de **crecimiento**, se usaba como K de **captación**
+con una captación máxima fija de 0,3 cuotas/h (~9× µmax): con P = K, *Asterionella* crecía al
+82 % de µmax en vez del 50 %. Ahora (`bio/metabolism`):
 
-| P [µM] | µ simulado [/h] | Monod publicado (µmax 0,0347, K 0,04) |
-|---|---|---|
-| 0,0025 | 0,0037 | 0,0020 |
-| 0,01 | 0,0108 | 0,0069 |
-| 0,04 | 0,0286 | 0,0174 |
-| 0,16 | 0,0343 | 0,0278 |
-| 1 | 0,0343 | 0,0334 |
+- cuota mínima Q₀ (`*Ratio`) y máxima Qmax = L·Q₀ (`luxuryQuota`, L = 1,5);
+- crecimiento de Droop: µ = µ∞(1 − Q₀/Q), µ∞ = µmax·L/(L−1) (a Qmax crece a µmax);
+- captación de Monod con Vm = L·µmax·Q₀ y Ku = L·K.
 
-El modelo es de cuota interna con estequiometría fija: capta con Monod (K de la especie,
-0,3 cuotas/h) hasta 1,5 cuotas y crece mientras la reserva cubra la biomasa nueva. En equilibrio
-µ(S) = mín(µmax, V·S/(K+S)): la K efectiva de crecimiento queda varias veces menor que la publicada.
-Opciones:
-
-1. **Monod de crecimiento** (como Tilman): el crecimiento se acota además por µmax·S/(K+S) con el S
-   local. Reproduce las constantes publicadas tal cual; pierde el crecimiento con la reserva
-   después de agotarse el nutriente (en lote, las células reales dan 1–3 divisiones más).
-2. **Droop** (cuota celular): µ = µ∞(1 − Q₀/Q) con la reserva como Q y captación de Monod. Con la
-   cuota máxima de 1,5 Q₀, µ∞ = 3 µmax, una captación máxima de 1,5 µmax·Q₀ y K de captación =
-   1,5 K de crecimiento, el equilibrio da la K publicada (derivación propia; la relación general
-   entre las constantes de captación y de crecimiento está en Morel 1987, J. Phycol. 23: 137-150);
-   conserva la reserva.
+En equilibrio (µ·Q = captación) eso da exactamente µmax·S/(K+S) (derivación propia; la relación
+general entre constantes de captación y de crecimiento está en Morel 1987, J. Phycol. 23:
+137-150). Después de agotarse el nutriente, la célula sigue creciendo con su reserva. Sin
+verificar: L = 1,5 es un valor bajo para el P (en algas, Qmax/Q₀ llega a 5–50; Droop 1973 da
+valores para B₁₂ y P); se dejó así para no cambiar la estequiometría del resto del modelo.
 
 ## La escala de volumen (lección principal)
 
@@ -153,7 +143,6 @@ población:
 
 ## Pendientes
 
-- Elegir Monod o Droop para la limitación por nutrientes y agregar el test.
 - Decidir cómo sostener a las bacterias en la gota («Colapso de las bacterias») y reactivar el
   test de 30 min.
 - Verificar contra las publicaciones las temperaturas de Gause y los valores de Tilman.

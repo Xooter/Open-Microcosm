@@ -29,27 +29,27 @@ struct MetabolismParams {
     float deathFraction = 0.5f;          // muere al perder la mitad de su biomasa de nacimiento
     // Fósforo (limita a las algas): las fotótrofas lo toman del agua para crecer. Una célula
     // con poco fósforo sigue fotosintetizando y acumula reservas (almidón, paramilón).
+    // Cuotas (modelo de Droop, ver updateMetabolism): la cuota de cada nutriente es la mínima Q₀
+    // (pmol por pmol de biomasa); la célula acumula hasta luxuryQuota·Q₀ y las medias saturaciones
+    // son las de CRECIMIENTO (como se publican).
+    float luxuryQuota = 1.5f;            // Qmax/Q₀ (consumo de lujo). SIN VERIFICAR: para el P de algas
+                                         // suele ser mayor (ver docs/validacion.md)
     float phosphorusRatio = 0.01f;       // pmol P por pmol de biomasa (Redfield, aprox.)
     float phosphorusHalfSaturation = 0.5f; // [µM]
-    float phosphorusUptakePerHour = 0.3f;  // captación máxima relativa a su cuota
     // Nitrógeno (amonio y nitrato): también lo toman las fotótrofas. N:P ≈ 16 (Redfield).
     float nitrogenRatio = 0.16f;           // pmol N por pmol de biomasa
     float nitrogenHalfSaturation = 1.0f;   // [µM]
-    float nitrogenUptakePerHour = 0.3f;
     // Micronutrientes. Cada uno es una cuota (pmol por pmol de biomasa) que la célula toma del agua
-    // con cinética de Monod y que limita su crecimiento (ley del mínimo de Liebig).
+    // y que limita su crecimiento (Droop; entre todas, ley del mínimo de Liebig).
     //  - Sílice: solo las diatomeas; cada valva nueva de la frústula la necesita (Si:C ~ 0,1–0,2).
     //  - Hierro: las fotótrofas (fotosistemas, ferredoxina); Fe:C ~ 10⁻⁴ en cultivo.
     //  - Vitamina B₁₂: auxótrofas (Euglena, diatomeas); la sintetizan solo bacterias y arqueas.
     float siliconRatio = 0.02f; // (la frústula real: Si:C ~ 0,1; acá por pmol de materia seca)
     float siliconHalfSaturation = 2.0f;   // [µM]
-    float siliconUptakePerHour = 0.3f;
     float ironRatio = 1e-4f;
     float ironHalfSaturation = 0.05f;     // [µM]
-    float ironUptakePerHour = 0.3f;
     float vitaminRatio = 1e-7f;
     float vitaminHalfSaturation = 2e-4f;  // [µM] (~200 pM)
-    float vitaminUptakePerHour = 0.3f;
     // pH: fuera del rango de la especie el mantenimiento se encarece (bombas de protones).
     float phStressPerUnit = 1.0f;
 };
