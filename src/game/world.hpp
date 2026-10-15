@@ -451,9 +451,17 @@ class World {
         std::uint32_t a, b;
         Vec2 shift;
     };
-    void resolveApproach(const ApproachPair& pr, float dt, float scanRange, ApproachScratch& sc);
-    ApproachWorst approachScan(std::size_t pi, std::size_t qi, Vec2 qShift, float dt, float scanRange,
-                               ApproachScratch& sc) const;
+    // Aplica la corrección de un par con sus dos mediciones; devuelve si empujó a alguno.
+    bool resolveApproach(const ApproachPair& pr, const ApproachWorst& ab, const ApproachWorst& ba);
+    struct ApproachCandidate {
+        std::uint32_t s, qa, qb; // punto de P y extremos de la arista más cercana de Q
+        float t;                 // posición sobre la arista
+        Vec2 n;                  // normal (de Q hacia P)
+        float gap;               // separación menos los radios [µm]
+    };
+    void approachCandidates(std::size_t pi, std::size_t qi, Vec2 qShift, float scanRange, ApproachScratch& sc,
+                            std::vector<ApproachCandidate>& cands) const;
+    ApproachWorst approachEvaluate(const std::vector<ApproachCandidate>& cands, float dt) const;
     void beginBodies(float dt);
     void cpuSubsteps(float dt, int stride, float maxRadius);
     void finishBodies();
@@ -581,7 +589,8 @@ class World {
     std::vector<Vec2> bodyPolyMin_, bodyPolyMax_;
     std::vector<float> bodyRadiusMax_, bodySpeedMax_;
     std::vector<Vec2> bodyRingMin_, bodyRingMax_;
-    ApproachScratch approachScratch_;
+    std::vector<ApproachScratch> approachScratchPool_; // uno por hilo (geometría en paralelo)
+    std::vector<std::vector<ApproachCandidate>> approachCands_; // por par, A contra B y B contra A
     std::vector<ApproachPair> approachPairs_;
     std::vector<CupObstacle> cupObstacles_; // células junto a la presa de la copa (se reusa el buffer)
     std::vector<std::uint8_t> bodyNear_, memberActive_;

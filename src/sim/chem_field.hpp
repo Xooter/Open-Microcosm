@@ -16,6 +16,9 @@ class ChemField {
 
     // Advección semi-lagrangiana: estable, pero no conserva masa exactamente.
     void advect(const Fluid& fluid, float dt);
+    // Varios campos de la misma grilla a la vez: el punto de partida y los pesos de interpolación
+    // de cada celda se calculan una vez para todos (mismas operaciones que `advect` en cada uno).
+    static void advectAll(ChemField* const* fields, int count, const Fluid& fluid, float dt);
     // Difusión exacta en Fourier: ĉ·exp(-D k² dt). Estable con cualquier dt y conserva masa.
     void diffuse(const Fft2D& fft, float dt);
 

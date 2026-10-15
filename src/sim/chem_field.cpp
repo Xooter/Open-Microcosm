@@ -11,37 +11,62 @@ ChemField::ChemField(int nx, int ny, float cellSize, float diffusion_, float ini
       spec_(static_cast<std::size_t>(nx) * ny) {}
 
 void ChemField::advect(const Fluid& fluid, float dt) {
+    ChemField* self = this;
+    advectAll(&self, 1, fluid, dt);
+}
+
+void ChemField::advectAll(ChemField* const* fields, int count, const Fluid& fluid, float dt) {
     PROFILE_SCOPE("ChemField::advect");
-    absorb();
-    const double water = mask_ ? waterSum() : 0.0;
-    const int nx = c_.nx, ny = c_.ny;
-    const float dx = c_.dx;
+    if (count <= 0)
+        return;
+    double water[16];
+    for (int f = 0; f < count; ++f) {
+        fields[f]->absorb();
+        water[f] = fields[f]->mask_ ? fields[f]->waterSum() : 0.0;
+    }
+    const Grid2D& g0 = fields[0]->c_;
+    const int nx = g0.nx, ny = g0.ny;
+    const float dx = g0.dx;
 #pragma omp parallel for schedule(static)
     for (int j = 0; j < ny; ++j) {
         for (int i = 0; i < nx; ++i) {
             const float x = (i + 0.5f) * dx, y = (j + 0.5f) * dx;
             const float ux = fluid.ux().at(i, j), uy = fluid.uy().at(i, j);
-            tmp_.at(i, j) = c_.sample(x - ux * dt, y - uy * dt);
+            // Igual que Grid2D::sample(x - ux·dt, y - uy·dt), compartido por todos los campos.
+            const float gx = (x - ux * dt) / dx - 0.5f, gy = (y - uy * dt) / dx - 0.5f;
+            const float fx = std::floor(gx), fy = std::floor(gy);
+            const float tx = gx - fx, ty = gy - fy;
+            const int i0 = wrapIndex(static_cast<int>(fx), nx), i1 = wrapIndex(i0 + 1, nx);
+            const int j0 = wrapIndex(static_cast<int>(fy), ny), j1 = wrapIndex(j0 + 1, ny);
+            for (int f = 0; f < count; ++f) {
+                const Grid2D& c = fields[f]->c_;
+                const float a = c.at(i0, j0) + (c.at(i1, j0) - c.at(i0, j0)) * tx;
+                const float b = c.at(i0, j1) + (c.at(i1, j1) - c.at(i0, j1)) * tx;
+                fields[f]->tmp_.at(i, j) = a + (b - a) * ty;
+            }
         }
     }
-    if (mask_) {
-        std::swap(c_.v, tmp_.v);
-        conserve(water);
-        return;
+    for (int f = 0; f < count; ++f) {
+        ChemField& fld = *fields[f];
+        if (fld.mask_) {
+            std::swap(fld.c_.v, fld.tmp_.v);
+            fld.conserve(water[f]);
+            continue;
+        }
+        // Semi-lagrangiano no conserva la masa exactamente (la interpolación suaviza y el flujo
+        // discreto no es del todo incompresible): se reescala para que el total no cambie.
+        double before = 0.0, after = 0.0;
+        for (std::size_t k = 0; k < fld.c_.v.size(); ++k) {
+            before += fld.c_.v[k];
+            after += fld.tmp_.v[k];
+        }
+        if (after > 0.0) {
+            const auto sc = static_cast<float>(before / after);
+            for (float& v : fld.tmp_.v)
+                v *= sc;
+        }
+        std::swap(fld.c_.v, fld.tmp_.v);
     }
-    // Semi-lagrangiano no conserva la masa exactamente (la interpolación suaviza y el flujo
-    // discreto no es del todo incompresible): se reescala para que el total no cambie.
-    double before = 0.0, after = 0.0;
-    for (std::size_t k = 0; k < c_.v.size(); ++k) {
-        before += c_.v[k];
-        after += tmp_.v[k];
-    }
-    if (after > 0.0) {
-        const auto s = static_cast<float>(before / after);
-        for (float& v : tmp_.v)
-            v *= s;
-    }
-    std::swap(c_.v, tmp_.v);
 }
 
 void ChemField::diffuse(const Fft2D& fft, float dt) {
