@@ -1667,8 +1667,47 @@ void World::buildPerceptionGrid() {
 void World::applyMotion(float dt) {
     PROFILE_SCOPE("World::applyMotion");
     buildPerceptionGrid();
+    // La percepción de cada piloto automático lee solo estado de este momento (centroides, cajas y
+    // contornos de los vecinos, química, luz) y se calcula en paralelo antes del bucle. En el
+    // bucle, una copa fagocítica cambia el contorno del depredador y puede dejar a la presa con
+    // Discharge: quien perciba después cerca de ellos vuelve a percibir en serie. Así cada célula
+    // ve exactamente lo mismo que percibiendo en orden.
+    motionOrder_.clear();
+    for (auto [e, body, loco] : registry_.view<RingBody, Locomotion>().each())
+        motionOrder_.push_back(e);
+    motionSense_.resize(motionOrder_.size());
+    {
+        PROFILE_SCOPE("World::perceiveAll");
+        const auto nm = static_cast<std::ptrdiff_t>(motionOrder_.size());
+#pragma omp parallel for schedule(dynamic, 8)
+        for (std::ptrdiff_t i = 0; i < nm; ++i) {
+            const entt::entity e = motionOrder_[static_cast<std::size_t>(i)];
+            if (e == player_ || !registry_.all_of<Autopilot>(e) || registry_.all_of<Cyst>(e))
+                continue;
+            motionSense_[static_cast<std::size_t>(i)] = perceive(e, registry_.get<RingBody>(e), speciesOfEntity(registry_, e));
+        }
+    }
+    perceptionTouched_.clear();
+    // Celda de la grilla de percepción de un centroide; quien está a más de `reach` celdas no
+    // entra en lo que recorre perceive (presas y amenazas: `range`; choques: ±2 alrededor de la
+    // punta, que está a menos de una celda del centroide).
+    auto cellOf = [&](Vec2 c) {
+        return std::pair{wrapIndex(static_cast<int>(c.x / width_ * percGridX_), percGridX_),
+                         wrapIndex(static_cast<int>(c.y / height_ * percGridY_), percGridY_)};
+    };
+    const int reach = static_cast<int>(std::ceil(kPerceptionRange / kPerceptionCell)) + 2;
+    auto near = [&](std::pair<int, int> a, std::pair<int, int> b) {
+        auto wrapDist = [](int d, int n) {
+            d = std::abs(d) % n;
+            return std::min(d, n - d);
+        };
+        return wrapDist(a.first - b.first, percGridX_) <= reach && wrapDist(a.second - b.second, percGridY_) <= reach;
+    };
     // Controles: el jugador por input; el resto del linaje, por su piloto automático.
-    for (auto [e, body, loco] : registry_.view<RingBody, Locomotion>().each()) {
+    for (std::size_t mi = 0; mi < motionOrder_.size(); ++mi) {
+        const entt::entity e = motionOrder_[mi];
+        RingBody& body = registry_.get<RingBody>(e);
+        Locomotion& loco = registry_.get<Locomotion>(e);
         const bool engulfing = registry_.all_of<PhagocyticCup>(e);
         bool disturbed = false;
         if (e == player_) {
@@ -1682,7 +1721,15 @@ void World::applyMotion(float dt) {
                 continue; // el quiste no se mueve
             Rng rng(config_.seed, rng_stream::kAutopilot, body.id, step_);
             const SpeciesId sp = speciesOfEntity(registry_, e);
-            Perception sense = perceive(e, body, sp);
+            Perception sense = motionSense_[mi];
+            if (!perceptionTouched_.empty()) {
+                const auto here = cellOf(body.centroid);
+                for (const auto& [te, cell] : perceptionTouched_)
+                    if (near(here, cell)) {
+                        sense = perceive(e, body, sp);
+                        break;
+                    }
+            }
             if (isSatiated(e))
                 sense.hasPrey = false; // saciada: no persigue presas
             steerAutopilot(*pilot, loco, body, speciesInfo(sp), sense, rng, dt);
@@ -1724,8 +1771,12 @@ void World::applyMotion(float dt) {
             pullTogether(body, registry_.get<RingBody>(cj->partner));
         }
         applyLocomotion(body, bodies_, loco, locomotionParams_, simTime_, width_, height_);
-        if (loco.type == LocomotionType::Pseudopod)
+        if (loco.type == LocomotionType::Pseudopod) {
+            const bool hadCup = registry_.all_of<PhagocyticCup>(e);
             updateCup(e, body, dt);
+            if (hadCup || registry_.all_of<PhagocyticCup>(e)) // la copa puede cambiar su contorno
+                perceptionTouched_.push_back({e, cellOf(body.centroid)});
+        }
     }
 }
 
@@ -3456,6 +3507,11 @@ bool World::repelledByTrichocysts(entt::entity predator, entt::entity preyEntity
     if (rng.uniform() >= h->traits.trichocystDefense)
         return false;
     registry_.emplace_or_replace<Discharge>(preyEntity, Discharge{5.0f});
+    {   // la presa deja de serlo para quien la perciba después (ver applyMotion)
+        const Vec2 c = registry_.get<RingBody>(preyEntity).centroid;
+        perceptionTouched_.push_back({preyEntity, {wrapIndex(static_cast<int>(c.x / width_ * percGridX_), percGridX_),
+                                                   wrapIndex(static_cast<int>(c.y / height_ * percGridY_), percGridY_)}});
+    }
     if (Metabolism* pm = registry_.try_get<Metabolism>(preyEntity))
         pm->reserves = std::max(0.0f, pm->reserves - 0.02f * pm->biomass); // rearmar cuesta
     RingBody& body = registry_.get<RingBody>(predator);

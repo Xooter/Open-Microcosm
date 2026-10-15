@@ -591,6 +591,10 @@ class World {
     std::vector<Vec2> bodyRingMin_, bodyRingMax_;
     std::vector<ApproachScratch> approachScratchPool_; // uno por hilo (geometría en paralelo)
     std::vector<std::vector<ApproachCandidate>> approachCands_; // por par, A contra B y B contra A
+    std::vector<entt::entity> motionOrder_;  // applyMotion: células con locomoción, en el orden de la vista
+    std::vector<Perception> motionSense_;    // y su percepción calculada en paralelo
+    // Cuerpos que cambiaron algo que la percepción lee durante el bucle (y su celda de la grilla).
+    std::vector<std::pair<entt::entity, std::pair<int, int>>> perceptionTouched_;
     std::vector<ApproachPair> approachPairs_;
     std::vector<CupObstacle> cupObstacles_; // células junto a la presa de la copa (se reusa el buffer)
     std::vector<std::uint8_t> bodyNear_, memberActive_;
