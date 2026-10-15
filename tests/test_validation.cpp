@@ -32,6 +32,9 @@ WorldConfig cultureConfig(std::size_t bacteria) {
     // ~20 000 bacterias (sin resistentes a la frecuencia real de mutación) se extingue en horas y
     // el cultivo deja de ser "sin limitación".
     c.medium.phage = 0.0f;
+    // Ni Bdellovibrio: en una placa de 0,86 mm, nadando a 100 µm/s, encuentran a todas las
+    // bacterias y las extinguen (docs/validacion.md).
+    c.bdellovibrioFraction = 0.0f;
     c.seed = 2024;
     return c;
 }
@@ -88,9 +91,7 @@ TEST_CASE("validación: µmax de las heterótrofas en cultivo sin limitación" *
     for (const SpeciesId id : {SpeciesId::Paramecium}) {
         const SourcedValue& mu = speciesPhysiology(id).growthMax;
         REQUIRE(mu.present);
-        // Hasta ~1,5 duplicaciones: después, el colapso de las bacterias (docs/validacion.md) deja al
-        // cultivo sin comida y ya no es "sin limitación".
-        const float hours = 1.5f * std::log(2.0f) / mu.value;
+        const float hours = 2.0f * std::log(2.0f) / mu.value; // dos duplicaciones
         const double sim = cultureGrowthRate(id, hours);
         MESSAGE(std::string(speciesInfo(id).name) << ": µ simulado " << sim << " /h, publicado " << mu.value << " /h a 20 °C ("
                                      << mu.source << ")");

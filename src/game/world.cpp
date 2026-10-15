@@ -123,7 +123,7 @@ World::World(const WorldConfig& config)
     }
     scatterSediment();
     bacteria_.spawn(config.bacteria, width_, height_, config.seed);
-    seedBdellovibrio(config.bacteria / 300);
+    seedBdellovibrio(static_cast<std::size_t>(static_cast<float>(config.bacteria) * std::max(0.0f, config.bdellovibrioFraction)));
     cyano_.params.tMin = config.cyanoTMin;
     cyano_.params.tMax = config.cyanoTMax;
     cyano_.params.temperature = medium_.temperature;
@@ -2341,7 +2341,13 @@ void World::growBacteria(float dt) {
         const float taken = std::min(bacterialDemand_[i], std::max(0.0f, c) / k);
         c -= taken * k;
         float& m = bacteria_.mass[i];
-        m += taken * bp.yield / kBacteriumPmol - maintenance * m;
+        const float gain = taken * bp.yield / kBacteriumPmol;
+        const float full = maintenance * m;
+        // Fase estacionaria: si lo que come no cubre la mantención, baja su gasto (ver
+        // BacteriaParams::starvationMaintenance). Con comida parcial se sostiene sin crecer; sin
+        // comida adelgaza despacio. Continuo en gain = full.
+        const float cost = gain >= full ? full : std::max(gain, bp.starvationMaintenance * full);
+        m += gain - cost;
         if (m < 0.5f) { // muere de hambre: su materia vuelve al agua
             c += m * kBacteriumPmol * k;
             eatenBacteria_.push_back(i);

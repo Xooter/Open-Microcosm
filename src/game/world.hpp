@@ -112,6 +112,9 @@ struct WorldConfig {
     bool dish = true;
     float dishMargin = 80.0f; // [µm]
     std::size_t bacteria = 50'000;
+    // Bdellovibrio libres al empezar, por bacteria (0: cultivo puro de bacterias, como en un
+    // cultivo de laboratorio).
+    float bdellovibrioFraction = 1.0f / 300.0f;
     std::size_t detritus = 60;
     int cyanoFilaments = 15;      // filamentos de Anabaena al empezar
     int cyanoCells = 12;

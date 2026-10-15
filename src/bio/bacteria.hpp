@@ -27,6 +27,13 @@ struct BacteriaParams {
     float halfSaturation = 1.0f;   // Ks [µM]
     float yield = 0.5f;            // biomasa por materia orgánica consumida
     float maintenancePerHour = 0.05f;
+    // Fase estacionaria (respuesta estricta): sin comida que cubra la mantención, la bacteria baja
+    // su gasto a esta fracción y deja de crecer en vez de consumirse al ritmo completo. E. coli
+    // reduce su mantención y su tasa de muerte más de 5 veces al pasar hambre; la viabilidad cae
+    // exponencialmente porque las vivas reciclan la materia de las muertas (Schink, Biselli, Ammar
+    // y Gerland 2019, Cell Systems 9: 64-73). Con el gasto completo, todas adelgazaban al mismo
+    // ritmo y morían casi juntas.
+    float starvationMaintenance = 0.2f;
     std::size_t maxCount = 150'000; // tope de rendimiento (la comida suele limitar antes)
     // Cepas: la mayoría son bacilos gramnegativos genéricos; una fracción es Chromobacterium
     // violaceum, que con quorum sensing (autoinductor AHL) produce violaceína, un pigmento

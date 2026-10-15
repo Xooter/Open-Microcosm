@@ -36,6 +36,10 @@ const ParamInfo kParams[] = {
     // --- Microbiología
     {"bacterias.quimiotaxis", "Quimiotaxis", "", G::Microbiology, 0.0f, 20.0f, "%.1f", false, nullptr,
      BIO_REAL(w.bacteria().params.chemotaxisGain)},
+    {"bacterias.mantencion_ayuno", "Bacterias: gasto en ayuno (x)", "", G::Microbiology, 0.05f, 1.0f, "%.2f", false,
+     "Fracción de la mantención que gasta una bacteria sin comida suficiente (fase estacionaria). "
+     "E. coli la baja más de 5 veces (Schink et al. 2019).",
+     BIO_REAL(w.bacteria().params.starvationMaintenance)},
     {"medio.fagos_inactivacion", "Fagos: inactivación [1/h]", "1/h", G::Microbiology, 0.0f, 1.0f, "%.2f", false, nullptr,
      BIO_REAL(w.medium().phageDecayPerHour)},
     {"medio.toxinas_degradacion", "Toxinas: degradación [1/h]", "1/h", G::Microbiology, 0.0f, 0.5f, "%.2f", false, nullptr,

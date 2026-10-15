@@ -26,7 +26,7 @@ Ajustes propios a los datos originales de Gause (1934) digitalizados en gauseR (
 
 | Test | Estado | Nota |
 |---|---|---|
-| µmax de *Paramecium* en cultivo sin limitación | **PASA** | µ simulado 0,0261/h contra 0,0260/h publicado (a 20 °C). Cultivo: placa de ~860 µm, 2 individuos, sin fagos, escala de tiempo 600; ~2,5 min. |
+| µmax de *Paramecium* en cultivo sin limitación | **PASA** | µ simulado 0,026/h contra 0,026/h publicado (a 20 °C), dos duplicaciones. Cultivo: placa de ~860 µm, 2 individuos, sin fagos ni Bdellovibrio, escala de tiempo 600. |
 | µmax de *Amoeba proteus* | pendiente | Su µmax publicado es con *Tetrahymena* como presa (cientos por división); una placa chica no tiene presas protistas suficientes. Hace falta un cultivo con presa ciliada abundante (o *Tetrahymena* como especie). |
 | Exclusión competitiva de Gause (*P. aurelia* vs *P. caudatum*) | pendiente | Falta la especie *P. aurelia*. |
 | Depredador–presa (*Didinium*–*Paramecium*) sin refugio | pendiente | Datos de Gause fig. 32 disponibles. |
@@ -35,22 +35,35 @@ Ajustes propios a los datos originales de Gause (1934) digitalizados en gauseR (
 
 ## Problemas del modelo encontrados al validar (fase MVP)
 
-1. **Las bacterias mueren todas a la vez cuando la comida no alcanza.** La muerte es un umbral
-   fijo de masa (`masa < 0,5`) y la mantención es proporcional a la masa: cuando la población
-   supera lo que sostiene el aporte de materia orgánica, todas adelgazan al mismo ritmo y cruzan
-   el umbral casi juntas (120 000 → 0 en pocas horas), aun con alimento entrando. Las bacterias
-   reales entran en fase estacionaria (bajan su mantención) y mueren de a poco. **Decisión de
-   modelado pendiente.**
+1. **Las bacterias se extinguían por Bdellovibrio, no por hambre.** (Primero lo atribuimos, sin
+   comprobarlo, a una muerte sincrónica por hambre; los contadores mostraron 177 000 estallidos de
+   Bdellovibrio hasta no dejar ninguna bacteria, con materia orgánica de sobra.) Nadando a
+   100 µm/s, en una placa de 0,86 mm recorren todo y encuentran a cada bacteria. En la realidad
+   la presa no se extingue: una fracción desarrolla resistencia fenotípica transitoria (Shemesh y
+   Jurkevitch 2004). **Propuesta pendiente:** modelar esa resistencia. Los cultivos de
+   validación no llevan Bdellovibrio (`WorldConfig::bdellovibrioFraction = 0`).
+   - Igual se corrigió el ayuno: la bacteria sin comida suficiente baja su mantención a 0,2 de la
+     normal y deja de crecer (fase estacionaria; Schink et al. 2019, Cell Systems 9: 64-73).
+     Antes gastaba la mantención completa hasta morir.
 2. **Fagos en poblaciones chicas:** con ~20 000 bacterias y la frecuencia real de mutantes
    resistentes casi seguro no hay ninguna resistente y la epidemia lítica las extingue. Plausible
    para un volumen tan chico; los cultivos de validación no llevan fagos (como en el laboratorio).
-3. **NaN en el cuerpo blando bajo compresión extrema:** diez paramecios de ~180 µm en una placa
+3. **NaN en el cuerpo blando bajo compresión extrema** (CORREGIDO): la causa era `limitApproach`,
+   que corregía dos veces el acercamiento de cada par; encadenado entre células apretadas, las
+   velocidades llegaban a ~10⁵ µm/s. Además hay una red de seguridad (`recoverNonFinite`,
+   `fallas_numericas` en la exportación). Lo que se vio: diez paramecios de ~180 µm en una placa
    de 350 µm: uno quedó estirado contra el vidrio (anillo de 220 puntos, caja de 240 × 247 µm) y
    sus posiciones se volvieron NaN; el NaN pasa al metabolismo. El motor no debería producir NaN
    nunca: falta encontrar la operación (XPBD, división o contacto con el vidrio) y una red de
    seguridad.
 4. Tras una lisis en un volumen chico la materia orgánica llega a cientos de mM (conservación
    correcta, pero conviene revisar si el volumen de la película es el que corresponde).
+
+5. **Cruces de la membrana de la ameba al fagocitar** (test largo «la membrana de la ameba no se
+   cruza al comer presas de distinta forma»): es un error latente de la copa fagocítica que
+   aparece o desaparece según la trayectoria. Con el µmax de Rogerson fallan los casos "tres" y
+   "paramecio"; sin él (crecimiento rápido de antes), el caso "punta" (76 cruces). Antes pasaba
+   por casualidad. Falta revisar la mecánica de la copa (labios, cierre, remallado).
 
 ## Pendientes
 

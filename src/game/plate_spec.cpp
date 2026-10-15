@@ -99,6 +99,7 @@ std::string serializePlate(const PlateSpec& s) {
     out << "bacteria=" << c.bacteria << '\n' << "detritus=" << c.detritus << '\n';
     out << "cyano_t_min=" << c.cyanoTMin << '\n' << "cyano_t_max=" << c.cyanoTMax << '\n';
     out << "patchiness=" << c.patchiness << '\n';
+    out << "bdellovibrio_fraction=" << c.bdellovibrioFraction << '\n';
     for (const IntField& f : kConfigInts)
         out << f.key << '=' << c.*f.member << '\n';
     for (const FloatField& f : kMediumFloats)
@@ -158,6 +159,7 @@ bool parsePlate(const std::string& text, PlateSpec& s) {
         else if (k == "cyano_t_min") c.cyanoTMin = static_cast<float>(x);
         else if (k == "cyano_t_max") c.cyanoTMax = static_cast<float>(x);
         else if (k == "patchiness") c.patchiness = static_cast<float>(x);
+        else if (k == "bdellovibrio_fraction") c.bdellovibrioFraction = static_cast<float>(x);
         else if (k == "anoxic") c.medium.anoxic = x != 0;
         else if (k == "rock_min") c.sediment.rockMin = static_cast<float>(x);
         else if (k == "rock_max") c.sediment.rockMax = static_cast<float>(x);
