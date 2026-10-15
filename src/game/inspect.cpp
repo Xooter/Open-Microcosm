@@ -2,6 +2,7 @@
 #include "game/inspect.hpp"
 
 #include "bio/body_plan.hpp"
+#include "bio/physiology.hpp"
 #include "core/profiling.hpp"
 #include "core/units.hpp"
 #include "game/encyclopedia.hpp"
@@ -12,6 +13,8 @@
 #include <cmath>
 #include <cstdarg>
 #include <cstdio>
+#include <cstring>
+#include <utility>
 
 namespace {
 
@@ -37,6 +40,37 @@ InspectSection& section(Inspection& ins, const char* title) {
 }
 
 void add(InspectSection& s, std::string label, std::string value) { s.lines.push_back({std::move(label), std::move(value)}); }
+
+// Texto de un archivo de datos (UTF-8) llevado al ASCII de la ficha: acentos sin tilde, ° y µ
+// como en el resto de la ficha ("26 C", "uM"), superíndices como dígitos.
+std::string asciiFold(const std::string& text) {
+    static const std::pair<const char*, const char*> kFold[] = {
+        {"á", "a"}, {"é", "e"}, {"í", "i"}, {"ó", "o"}, {"ú", "u"}, {"ü", "u"}, {"ñ", "n"},
+        {"Á", "A"}, {"É", "E"}, {"Í", "I"}, {"Ó", "O"}, {"Ú", "U"}, {"Ñ", "N"}, {"°", ""},
+        {"µ", "u"}, {"±", "+/-"}, {"⁻", "-"}, {"¹", "1"}, {"²", "2"}, {"³", "3"}, {"–", "-"},
+    };
+    std::string out;
+    for (std::size_t i = 0; i < text.size();) {
+        if (static_cast<unsigned char>(text[i]) < 128) {
+            out += text[i++];
+            continue;
+        }
+        bool folded = false;
+        for (const auto& [from, to] : kFold)
+            if (text.compare(i, std::strlen(from), from) == 0) {
+                out += to;
+                i += std::strlen(from);
+                folded = true;
+                break;
+            }
+        if (!folded) { // otro carácter: se saltea la secuencia UTF-8 entera
+            out += '?';
+            for (++i; i < text.size() && (static_cast<unsigned char>(text[i]) & 0xC0) == 0x80; ++i) {
+            }
+        }
+    }
+    return out;
+}
 
 // El índice de una partícula con id estable: primero prueba el de la foto del click.
 bool resolveIndex(const std::vector<std::uint32_t>& ids, Picked& p) {
@@ -352,6 +386,33 @@ Inspection inspectCell(const World& w, entt::entity e) {
                                                           : "celula eucariota: toma solo la contratincion (rosa palido)");
         add(s, "DAPI / azul de metileno", "el ADN del nucleo");
         add(s, "Rojo neutro", "vacuolas digestivas y lisosomas (acidos)");
+    }
+
+    // --- Fisiología con su fuente (assets/species/fisiologia.toml): de dónde sale cada número.
+    {
+        const SpeciesPhysiology& phys = speciesPhysiology(sid);
+        auto cite = [](InspectSection& s, const SourcedValue& v) {
+            add(s, "", fmt("publicado: %g %s a %.0f C%s", v.published, asciiFold(v.unit).c_str(), v.temperature,
+                           v.estimate ? " - ESTIMACION (sin verificar)" : ""));
+            add(s, "", asciiFold(v.source));
+        };
+        if (phys.growthMax.present || phys.phosphorusHalfSaturation.present || phys.siliconHalfSaturation.present) {
+            InspectSection& s = section(ins, "Fisiologia y fuentes");
+            if (const SourcedValue& g = phys.growthMax; g.present) {
+                add(s, "Crecimiento maximo", fmt("%.3f /h a 20 C (duplicacion %.0f h)", g.value, std::log(2.0f) / g.value));
+                cite(s, g);
+            }
+            if (const SourcedValue& p = phys.phosphorusHalfSaturation; p.present) {
+                add(s, "Media saturacion de P", fmt("%g uM", p.value));
+                cite(s, p);
+            }
+            if (const SourcedValue& si = phys.siliconHalfSaturation; si.present) {
+                add(s, "Media saturacion de Si", fmt("%g uM", si.value));
+                cite(s, si);
+            }
+        } else {
+            add(section(ins, "Fisiologia y fuentes"), "", "sin datos propios: usa los valores generales del metabolismo");
+        }
     }
 
     // --- Medio local.

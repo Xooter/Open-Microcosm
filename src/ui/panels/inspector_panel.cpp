@@ -9,6 +9,7 @@
 #include <imgui.h>
 
 #include <cmath>
+#include <string>
 
 namespace ui {
 
@@ -72,17 +73,27 @@ class InspectorPanel : public Panel {
         for (const InspectSection& s : ins.sections) {
             if (!ImGui::CollapsingHeader(s.title.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
                 continue;
-            if (!ImGui::BeginTable(("##" + s.title).c_str(), 2, ImGuiTableFlags_SizingStretchProp))
-                continue;
-            ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthStretch, 0.38f);
-            ImGui::TableSetupColumn("v", ImGuiTableColumnFlags_WidthStretch, 0.62f);
+            // Las líneas sin rótulo van a todo el ancho: una tabla de ImGui no une columnas, así
+            // que se corta la tabla ahí (antes quedaban apretadas en la columna del rótulo).
+            bool table = false;
+            int part = 0;
             for (const InspectLine& l : s.lines) {
-                ImGui::TableNextRow();
                 if (l.label.empty()) {
-                    ImGui::TableSetColumnIndex(0);
+                    if (table)
+                        ImGui::EndTable();
+                    table = false;
                     ImGui::TextWrapped("%s", l.value.c_str());
                     continue;
                 }
+                if (!table) {
+                    table = ImGui::BeginTable(("##" + s.title + std::to_string(part++)).c_str(), 2,
+                                              ImGuiTableFlags_SizingStretchProp);
+                    if (!table)
+                        continue;
+                    ImGui::TableSetupColumn("l", ImGuiTableColumnFlags_WidthStretch, 0.38f);
+                    ImGui::TableSetupColumn("v", ImGuiTableColumnFlags_WidthStretch, 0.62f);
+                }
+                ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 ImGui::PushStyleColor(ImGuiCol_Text, col(palette().dim));
                 ImGui::TextWrapped("%s", l.label.c_str());
@@ -90,7 +101,8 @@ class InspectorPanel : public Panel {
                 ImGui::TableSetColumnIndex(1);
                 ImGui::TextWrapped("%s", l.value.c_str());
             }
-            ImGui::EndTable();
+            if (table)
+                ImGui::EndTable();
         }
         if (!ins.live && !ins.dead)
             note("Foto del momento del click: las bacterias y las partículas se reordenan en memoria y no se pueden seguir.");

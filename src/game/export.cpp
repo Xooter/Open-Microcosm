@@ -1,4 +1,5 @@
 #include "game/export.hpp"
+#include "bio/physiology.hpp"
 
 #include "build_info.hpp"
 #include "game/parameters.hpp"
@@ -183,6 +184,20 @@ void speciesList(Json& j, const char* key, std::uint32_t mask) {
     j.endArray();
 }
 
+// Un valor de fisiologia.toml: el que usa la simulación (a 20 °C) y el publicado, con su fuente.
+void writeSourced(Json& j, const char* key, const SourcedValue& v, const char* unit) {
+    if (!v.present)
+        return;
+    j.beginObject(key);
+    j.quantity("valor", v.value, unit);
+    j.number("publicado", v.published);
+    j.string("unidad_publicada", v.unit);
+    j.quantity("temperatura_publicada", v.temperature, "°C");
+    j.string("fuente", v.source);
+    j.boolean("estimacion", v.estimate);
+    j.endObject();
+}
+
 void writeSpecies(Json& j, SpeciesId id) {
     const SpeciesInfo& s = speciesInfo(id);
     const SpeciesChemistry& chem = speciesChemistry(id);
@@ -218,6 +233,12 @@ void writeSpecies(Json& j, SpeciesId id) {
     j.quantity("ciclosis", s.cyclosis, "µm/s");
     j.string("reserva", storageName(chem.storage));
     j.string("pared", wallName(chem.wall));
+    const SpeciesPhysiology& phys = speciesPhysiology(id);
+    j.beginObject("fisiologia"); // vacío: usa los valores generales del metabolismo
+    writeSourced(j, "crecimiento_maximo", phys.growthMax, "1/h");
+    writeSourced(j, "p_media_saturacion", phys.phosphorusHalfSaturation, "µM");
+    writeSourced(j, "si_media_saturacion", phys.siliconHalfSaturation, "µM");
+    j.endObject();
     j.endObject();
 }
 
@@ -409,7 +430,7 @@ std::string speciesJson() {
     Json j;
     j.beginObject();
     j.string("formato", "biogame-species");
-    j.number("version", 1);
+    j.number("version", 2); // 2: fisiología con fuentes
     j.beginArray("especies");
     for (int s = 0; s < kSpeciesCount; ++s)
         writeSpecies(j, static_cast<SpeciesId>(s));

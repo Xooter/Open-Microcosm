@@ -2,6 +2,9 @@
 // cada valor lleva su fuente y las conversiones de unidad y temperatura (Q10 = 2) son correctas.
 #include "bio/physiology.hpp"
 #include "core/paths.hpp"
+#include "game/export.hpp"
+#include "game/inspect.hpp"
+#include "game/world.hpp"
 
 #include <doctest/doctest.h>
 
@@ -9,6 +12,7 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <string>
 
 TEST_CASE("fisiología: el archivo de fábrica carga y cada valor tiene fuente") {
     std::string error;
@@ -48,4 +52,40 @@ TEST_CASE("fisiología: unidades, Q10 y avisos") {
     std::filesystem::remove(path);
     // Vuelve la tabla de fábrica para el resto de los tests.
     REQUIRE(loadSpeciesPhysiology(assetPath("species/fisiologia.toml")));
+}
+
+TEST_CASE("fisiología: la ficha y la exportación de especies muestran la fuente") {
+    REQUIRE(loadSpeciesPhysiology(assetPath("species/fisiologia.toml")));
+    // Ficha de un paramecio: la sección con µmax, lo publicado y la cita.
+    WorldConfig config;
+    config.bacteria = 0;
+    config.detritus = 0;
+    config.seed = 5;
+    World world(config);
+    const entt::entity e =
+        world.spawnOrganism(SpeciesId::Paramecium, {world.width() * 0.5f, world.height() * 0.5f}, speciesGenome(SpeciesId::Paramecium), 0);
+    Picked picked;
+    picked.kind = Picked::Kind::Cell;
+    picked.entity = e;
+    const Inspection ins = buildInspection(world, picked);
+    const InspectSection* phys = nullptr;
+    for (const InspectSection& s : ins.sections)
+        if (s.title == "Fisiologia y fuentes")
+            phys = &s;
+    REQUIRE(phys != nullptr);
+    std::string text;
+    for (const InspectLine& l : phys->lines)
+        text += l.label + " " + l.value + "\n";
+    CHECK(text.find("Crecimiento maximo") != std::string::npos);
+    CHECK(text.find("Gause") != std::string::npos);
+    CHECK(text.find("ESTIMACION") != std::string::npos); // la temperatura de Gause no está verificada
+
+    // Exportación: cada especie con datos lleva valor, lo publicado y la fuente.
+    const std::string json = speciesJson();
+    CHECK(json.find("\"fisiologia\"") != std::string::npos);
+    for (int i = 0; i < kSpeciesCount; ++i) {
+        const SourcedValue& mu = speciesPhysiology(static_cast<SpeciesId>(i)).growthMax;
+        if (mu.present)
+            CHECK_MESSAGE(json.find(mu.source.substr(0, 40)) != std::string::npos, speciesInfo(static_cast<SpeciesId>(i)).name);
+    }
 }
