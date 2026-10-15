@@ -209,11 +209,12 @@ TEST_CASE("sandbox: cada ser del catálogo cae en la categoría que le correspon
     using C = BeingCategory;
     const std::pair<C, std::vector<SpeciesId>> expected[] = {
         {C::Ciliates, {SpeciesId::Paramecium, SpeciesId::Didinium, SpeciesId::Vorticella, SpeciesId::Stentor,
-                       SpeciesId::Podophrya, SpeciesId::Euplotes, SpeciesId::Lacrymaria}},
+                       SpeciesId::Podophrya, SpeciesId::Euplotes, SpeciesId::Lacrymaria, SpeciesId::ParameciumAurelia}},
         {C::Flagellates, {SpeciesId::Euglena, SpeciesId::Trichonympha}},
         {C::Amoebae, {SpeciesId::Amoeba, SpeciesId::Arcella, SpeciesId::Naegleria}},
         {C::Algae, {SpeciesId::Chlamydomonas, SpeciesId::Spirogyra, SpeciesId::Navicula, SpeciesId::Volvox,
-                    SpeciesId::Pediastrum, SpeciesId::Mougeotia, SpeciesId::Zygnema, SpeciesId::Oedogonium}},
+                    SpeciesId::Pediastrum, SpeciesId::Mougeotia, SpeciesId::Zygnema, SpeciesId::Oedogonium,
+                    SpeciesId::Asterionella, SpeciesId::Cyclotella}},
         {C::Fungi, {SpeciesId::Candida}},
     };
     int listed = 0;
