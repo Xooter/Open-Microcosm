@@ -109,8 +109,14 @@ Elegido (15/10/2026, "lo más realista"): **refugio en la biopelícula**. Las ba
 contra el vidrio pueden adherirse; las adheridas no nadan, crecen con la comida local y sus hijas
 quedan en la biopelícula; se sueltan de a poco. Los filtradores no las alcanzan y las amebas sí
 (Matz y Kjelleberg 2005, Trends Microbiol. 13: 302-307). La probabilidad de adhesión (0,01 por
-choque) y el desprendimiento (0,2/h) son ESTIMACIONES. Falta comprobar con el test de 30 min
-(largo) si alcanza para sostener a las bacterias.
+choque) y el desprendimiento (0,2/h) son ESTIMACIONES.
+
+Resultado en la gota del Charco (seed 66, 6 h biológicas): la biopelícula se forma rápido (3 480
+adheridas, ~5 %, al cabo de 1 h); la epidemia de fagos igual mata al 99,9 % (la biopelícula no
+protege de los fagos en el modelo), pero ya no hay extinción: quedan 16 resistentes, casi todas
+adheridas, y desde ahí la población vuelve a crecer (16 → 176 en 3 h, duplicándose cada ~50 min).
+Mientras tanto los paramecios bajan de 17 a 3 por falta de bacterias. El test de 30 min sigue
+en `skip`: su placa no tiene materia orgánica, y sin comida las bacterias no crecen igual.
 
 Otras opciones que quedan: densidades iniciales de protistas realistas para el volumen de la
 placa; una columna de agua más profunda para las bacterias (como en Tilman); refugios para las
