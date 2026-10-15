@@ -620,6 +620,8 @@ Inspection inspectBacterium(const World& w, const Picked& picked) {
     add(s, "Quimiotaxis", "compara la concentracion de ahora con la de hace ~1 s");
     add(s, "Tincion de Gram", bacillus ? "grampositiva: pared gruesa de peptidoglicano, retiene el cristal violeta"
                                        : "gramnegativa: pared fina y membrana externa, pierde el cristal violeta y toma la safranina (rosa)");
+    if (b.attached[i])
+        add(s, "Biopelicula", "adherida al vidrio: no nada y los filtradores no la alcanzan (las amebas si)");
     if (b.resistant[i])
         add(s, "Defensa", "resistente a los fagos");
     if (vio)

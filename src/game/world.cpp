@@ -1980,7 +1980,8 @@ void World::feedAtMouth(entt::entity e, RingBody& body, const Locomotion& loco, 
     dig.mouthBudget = std::min(dig.mouthBudget + maxRate * dt, maxRate);
     const Vec2 wm = {wrapCoord(m.x, width_), wrapCoord(m.y, height_)};
     forBacteriaInBox(wm - Vec2{reach, reach}, wm + Vec2{reach, reach}, [&](std::size_t k) {
-        if (takenBacteria_[k] || dig.mouthBudget < 1.0f)
+        // La corriente oral no despega a las de la biopelícula (refugio contra los filtradores).
+        if (takenBacteria_[k] || dig.mouthBudget < 1.0f || bacteria_.attached[k])
             return;
         const float dx = minImage(bacteria_.x[k] - m.x, width_);
         const float dy = minImage(bacteria_.y[k] - m.y, height_);
@@ -2379,15 +2380,23 @@ void World::growBacteria(float dt) {
             c += m * kBacteriumPmol * k;
             eatenBacteria_.push_back(i);
         } else if (m >= 2.0f && bacteria_.size() < bp.maxCount) {
-            // Fisión binaria: la hija sale al lado, con otra orientación.
+            // Fisión binaria: la hija sale al lado, con otra orientación. En la biopelícula queda
+            // adherida junto a la madre, contra el vidrio.
             m *= 0.5f;
             Rng rng(config_.seed, rng_stream::kBacteria + 100, i, step_);
             const std::uint8_t resistant =
                 bacteria_.resistant[i] || rng.uniform() < bp.resistanceMutation ? 1 : 0;
-            bacteria_.add(wrapCoord(bacteria_.x[i] + std::cos(bacteria_.heading[i]), width_),
-                          wrapCoord(bacteria_.y[i] + std::sin(bacteria_.heading[i]), height_),
-                          rng.uniform(0.0f, 2.0f * units::kPi), m, bacteria_.strain[i], resistant);
+            float hx = wrapCoord(bacteria_.x[i] + std::cos(bacteria_.heading[i]), width_);
+            float hy = wrapCoord(bacteria_.y[i] + std::sin(bacteria_.heading[i]), height_);
+            const float hh = rng.uniform(0.0f, 2.0f * units::kPi);
+            if (bacteria_.attached[i])
+                bacteria_.dish.bounce(hx, hy, nullptr, bp.radius);
+            bacteria_.add(hx, hy, hh, m, bacteria_.strain[i], resistant, bacteria_.attached[i]);
         }
+        // Dispersión de la biopelícula: la adherida se suelta y vuelve a nadar.
+        if (bacteria_.attached[i] &&
+            Rng(config_.seed, rng_stream::kBacteria + 101, i, step_).uniform() < bp.detachPerHour * bioDt / 3600.0f)
+            bacteria_.attached[i] = 0;
     }
     removeBacteria(eatenBacteria_);
     microbialInteractions(dt);

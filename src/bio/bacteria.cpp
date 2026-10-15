@@ -22,6 +22,7 @@ void Bacteria::spawn(std::size_t count, float width, float height, std::uint64_t
     quorum.assign(count, 0);
     phage.assign(count, -1.0f);
     bdello.assign(count, -1.0f);
+    attached.assign(count, 0);
     id.resize(count);
     for (std::size_t i = 0; i < count; ++i)
         id[i] = nextId++;
@@ -44,7 +45,8 @@ void Bacteria::spawn(std::size_t count, float width, float height, std::uint64_t
     }
 }
 
-void Bacteria::add(float px, float py, float h, float m, std::uint8_t st, std::uint8_t res) {
+void Bacteria::add(float px, float py, float h, float m, std::uint8_t st, std::uint8_t res, std::uint8_t att) {
+    attached.push_back(att);
     strain.push_back(st);
     resistant.push_back(res);
     quorum.push_back(0);
@@ -95,6 +97,7 @@ void Bacteria::remove(std::size_t i) {
     quorum[i] = quorum[last];
     phage[i] = phage[last];
     bdello[i] = bdello[last];
+    attached[i] = attached[last];
     id[i] = id[last];
     id.pop_back();
     mass.pop_back();
@@ -103,6 +106,7 @@ void Bacteria::remove(std::size_t i) {
     quorum.pop_back();
     phage.pop_back();
     bdello.pop_back();
+    attached.pop_back();
     x.pop_back();
     y.pop_back();
     heading.pop_back();
@@ -129,6 +133,8 @@ void Bacteria::step(const Fluid& fluid, const Grid2D& nutrients, float dt, std::
     // Cada iteración escribe solo su propio índice: sin data races y determinista.
 #pragma omp parallel for schedule(static)
     for (std::ptrdiff_t i = 0; i < n; ++i) {
+        if (attached[i])
+            continue; // en la biopelícula: ni nada ni la arrastra el agua
         Rng rng(seed, rng_stream::kBacteria, static_cast<std::uint64_t>(i), stepIndex);
         float vx = 0.0f, vy = 0.0f;
         // Bdeloplasto: la presa se redondea y deja de nadar. En agregado, nada menos.
@@ -163,6 +169,7 @@ void Bacteria::step(const Fluid& fluid, const Grid2D& nutrients, float dt, std::
         y[i] = wrapCoord(y[i] + (vy + u.y) * dt + transStd * rng.normal(), height);
         // Contra la pared de la placa el rumbo se refleja (las bacterias reales terminan
         // nadando a lo largo de las superficies).
-        dish.bounce(x[i], y[i], &heading[i], p.radius);
+        if (dish.bounce(x[i], y[i], &heading[i], p.radius) && rng.uniform() < p.attachProbability)
+            attached[i] = 1;
     }
 }

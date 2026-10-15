@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <map>
+#include <vector>
 
 namespace {
 
@@ -158,4 +159,57 @@ TEST_CASE("LOD: con el foco lejos, las células siguen sanas y la simulación es
     CHECK(fewer);
     CHECK(a == b);
     (void)fewer2;
+}
+
+TEST_CASE("biopelícula: las bacterias se adhieren al vidrio, quedan quietas y se sueltan") {
+    World world(quietWorld(2000));
+    BacteriaParams& p = world.bacteria().params;
+    p.attachProbability = 1.0f; // cada choque adhiere: el test no depende de cuántos haya
+    p.detachPerHour = 0.0f;
+    for (int s = 0; s < 60 * 10; ++s)
+        world.step(1.0f / 60.0f);
+    const Bacteria& b = world.bacteria();
+    std::vector<std::pair<std::uint32_t, Vec2>> stuck;
+    for (std::size_t i = 0; i < b.size(); ++i)
+        if (b.attached[i]) {
+            stuck.push_back({b.id[i], {b.x[i], b.y[i]}});
+            // Contra la pared de la placa.
+            CHECK(length(Vec2{b.x[i], b.y[i]} - world.dish().center) > world.dish().radius - 3.0f);
+        }
+    REQUIRE(stuck.size() > 10);
+    for (int s = 0; s < 60; ++s)
+        world.step(1.0f / 60.0f);
+    int moved = 0, found = 0;
+    for (std::size_t i = 0; i < b.size(); ++i)
+        for (const auto& [id, at] : stuck)
+            if (b.id[i] == id) {
+                ++found;
+                moved += length(Vec2{b.x[i], b.y[i]} - at) > 1e-3f;
+            }
+    CHECK(found > 0);
+    CHECK(moved == 0); // ni nadan ni las arrastra el agua
+    p.detachPerHour = 1e9f; // dispersión inmediata
+    p.attachProbability = 0.0f;
+    world.step(1.0f / 60.0f);
+    int still = 0;
+    for (std::size_t i = 0; i < b.size(); ++i)
+        still += b.attached[i];
+    CHECK(still == 0);
+}
+
+TEST_CASE("biopelícula: un filtrador no se come a las bacterias adheridas") {
+    auto eaten = [](bool attached) {
+        World world(quietWorld(4000));
+        Bacteria& b = world.bacteria();
+        for (std::size_t i = 0; i < b.size(); ++i)
+            b.attached[i] = attached ? 1 : 0;
+        b.params.detachPerHour = 0.0f;
+        const entt::entity e = world.spawnOrganism(SpeciesId::Paramecium, world.dish().center,
+                                                   speciesGenome(SpeciesId::Paramecium), 0);
+        for (int s = 0; s < 60 * 5; ++s)
+            world.step(1.0f / 60.0f);
+        return world.registry().get<Digestion>(e).bacteriaEaten;
+    };
+    CHECK(eaten(false) > 0);
+    CHECK(eaten(true) == 0);
 }

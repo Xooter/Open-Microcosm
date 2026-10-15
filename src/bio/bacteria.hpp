@@ -35,6 +35,14 @@ struct BacteriaParams {
     // ritmo y morían casi juntas.
     float starvationMaintenance = 0.2f;
     std::size_t maxCount = 150'000; // tope de rendimiento (la comida suele limitar antes)
+    // Biopelícula en el vidrio: una bacteria que choca contra la pared puede quedar adherida
+    // (adhesión inicial) y las adheridas se sueltan de a poco (dispersión). Adheridas no nadan ni
+    // las arrastra el agua; crecen con la comida local y sus hijas quedan en la biopelícula. Los
+    // filtradores (citostoma, polo anterior) no las alcanzan; las amebas, que pastan superficies,
+    // sí (refugio contra el pastoreo: Matz y Kjelleberg 2005, Trends Microbiol. 13: 302-307).
+    // Los dos valores son ESTIMACIONES sin medición directa: fijan una fracción adherida de ~1–2 %.
+    float attachProbability = 0.01f; // por choque contra el vidrio
+    float detachPerHour = 0.2f;      // [1/h biológica]
     // Cepas: la mayoría son bacilos gramnegativos genéricos; una fracción es Chromobacterium
     // violaceum, que con quorum sensing (autoinductor AHL) produce violaceína, un pigmento
     // violeta tóxico para los protistas que la comen, y forma agregados (biopelícula).
@@ -77,6 +85,7 @@ class Bacteria {
     std::vector<std::uint8_t> quorum;    // quorum alcanzado (violaceína, agregado)
     std::vector<float> phage;        // horas desde la infección por un fago (< 0: sana)
     std::vector<float> bdello;       // horas desde que entró un Bdellovibrio (< 0: libre)
+    std::vector<std::uint8_t> attached; // adherida al vidrio (biopelícula)
     // Identidad estable (el índice cambia con swap-and-pop). Solo la leen la inspección y el
     // render (seguir a una bacteria, ubicar sus estructuras); no interviene en la dinámica ni en el
     // azar. Cada hija recibe una nueva.
@@ -92,7 +101,8 @@ class Bacteria {
     void resetMemory(const Grid2D& nutrients);
     // Swap-and-pop: O(1), mueve la última bacteria al índice i.
     void remove(std::size_t i);
-    void add(float px, float py, float heading, float mass, std::uint8_t strain = 0, std::uint8_t resistant = 0);
+    void add(float px, float py, float heading, float mass, std::uint8_t strain = 0, std::uint8_t resistant = 0,
+             std::uint8_t attached = 0);
     // Crecimiento en paralelo: devuelve en `demand` la materia orgánica que cada una quiere
     // absorber [pmol] (el mundo la descuenta del agua según lo que haya).
     void grow(const Grid2D& nutrients, float bioDt, std::vector<float>& demand) const;

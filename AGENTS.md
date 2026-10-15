@@ -239,6 +239,8 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   alcalinidad fija; rango de pH por especie (`phMin/phMax`); quorum sensing de *C. violaceum*
   (`Bacteria::strain/quorum`, violaceína en `Digestion::toxin`); fagos líticos como campo de
   concentración (`phage_`) con mutantes resistentes; *Bdellovibrio* libres y bdeloplastos.
+- Biopelícula (`Bacteria::attached`): las bacterias se adhieren al vidrio al chocar y se sueltan
+  de a poco; adheridas no nadan y los filtradores no las alcanzan (las amebas sí).
 - Más hongos: `FungusInfo` (tabla de datos de `bio/fungi`) define cada tipo; *Allomyces* (ramificación
   dicotómica, esporangios de resistencia en `Fungi::resting`) y el hongo liquenizante (`Mycobiont`,
   componente `Lichenized` en el alga: ella cede azúcar, él devuelve fósforo y la protege de los

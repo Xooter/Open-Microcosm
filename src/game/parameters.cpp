@@ -40,6 +40,13 @@ const ParamInfo kParams[] = {
      "Fracción de la mantención que gasta una bacteria sin comida suficiente (fase estacionaria). "
      "E. coli la baja más de 5 veces (Schink et al. 2019).",
      BIO_REAL(w.bacteria().params.starvationMaintenance)},
+    {"bacterias.adhesion", "Bacterias: adhesión al vidrio", "por choque", G::Microbiology, 0.0f, 0.2f, "%.3f", false,
+     "Probabilidad de quedar adherida al chocar contra el vidrio (biopelícula: refugio contra los filtradores). "
+     "Estimación.",
+     BIO_REAL(w.bacteria().params.attachProbability)},
+    {"bacterias.desprendimiento", "Bacterias: desprendimiento [1/h]", "1/h", G::Microbiology, 0.0f, 2.0f, "%.2f", false,
+     "Tasa a la que las bacterias de la biopelícula se sueltan y vuelven a nadar. Estimación.",
+     BIO_REAL(w.bacteria().params.detachPerHour)},
     {"medio.fagos_inactivacion", "Fagos: inactivación [1/h]", "1/h", G::Microbiology, 0.0f, 1.0f, "%.2f", false, nullptr,
      BIO_REAL(w.medium().phageDecayPerHour)},
     {"medio.toxinas_degradacion", "Toxinas: degradación [1/h]", "1/h", G::Microbiology, 0.0f, 0.5f, "%.2f", false, nullptr,

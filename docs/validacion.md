@@ -105,7 +105,14 @@ medidas con un diagnóstico por separado:
    su crecimiento máximo es 0,023/s (1,4/h biológica a ×60). Es la escala de volumen otra vez:
    20 paramecios en ~0,06 µL son ~3×10⁵ por mL, unas 300 veces más que un cultivo denso.
 
-Opciones (decisión pendiente): densidades iniciales de protistas realistas para el volumen de la
+Elegido (15/10/2026, "lo más realista"): **refugio en la biopelícula**. Las bacterias que chocan
+contra el vidrio pueden adherirse; las adheridas no nadan, crecen con la comida local y sus hijas
+quedan en la biopelícula; se sueltan de a poco. Los filtradores no las alcanzan y las amebas sí
+(Matz y Kjelleberg 2005, Trends Microbiol. 13: 302-307). La probabilidad de adhesión (0,01 por
+choque) y el desprendimiento (0,2/h) son ESTIMACIONES. Falta comprobar con el test de 30 min
+(largo) si alcanza para sostener a las bacterias.
+
+Otras opciones que quedan: densidades iniciales de protistas realistas para el volumen de la
 placa; una columna de agua más profunda para las bacterias (como en Tilman); refugios para las
 bacterias (biofilm, sedimento) y pérdida de fagos (adsorción a partículas); la resistencia
 fenotípica a *Bdellovibrio* ya propuesta; o el modo cultivo para las dinámicas de población.
