@@ -973,16 +973,22 @@ void World::limitApproach(float dt, float contactRange) {
     if (approachCands_.size() < 2 * approachPairs_.size())
         approachCands_.resize(2 * approachPairs_.size());
     approachScratchPool_.resize(static_cast<std::size_t>(omp_get_max_threads()));
+    // Con el alcance máximo: la cota de rapidez crece con los empujones de la pasada serial (con
+    // una cota holgada, muchos pares tenían que rehacer la geometría en serie).
 #pragma omp parallel for schedule(dynamic, 8)
     for (std::ptrdiff_t i = 0; i < np; ++i) {
-        const ApproachPair& pr = approachPairs_[static_cast<std::size_t>(i)];
+        const auto k = static_cast<std::size_t>(i);
+        const ApproachPair& pr = approachPairs_[k];
         ApproachScratch& sc = approachScratchPool_[static_cast<std::size_t>(omp_get_thread_num())];
-        approachCandidates(pr.a, pr.b, pr.shift, scanRange, sc, approachCands_[2 * static_cast<std::size_t>(i)]);
-        approachCandidates(pr.b, pr.a, pr.shift * -1.0f, scanRange, sc, approachCands_[2 * static_cast<std::size_t>(i) + 1]);
+        approachCandidates(pr.a, pr.b, pr.shift, scanRange, scanRange, sc, approachCands_[2 * k]);
+        approachCandidates(pr.b, pr.a, pr.shift * -1.0f, scanRange, scanRange, sc, approachCands_[2 * k + 1]);
     }
-    for (std::size_t i = 0; i < approachPairs_.size(); ++i)
-        resolveApproach(approachPairs_[i], approachEvaluate(approachCands_[2 * i], dt),
-                        approachEvaluate(approachCands_[2 * i + 1], dt));
+    for (std::size_t i = 0; i < approachPairs_.size(); ++i) {
+        const ApproachPair& pr = approachPairs_[i];
+        const float speeds = bodySpeedMax_[pr.a] + bodySpeedMax_[pr.b];
+        resolveApproach(pr, approachEvaluate(approachCands_[2 * i], speeds, dt),
+                        approachEvaluate(approachCands_[2 * i + 1], speeds, dt));
+    }
 }
 
 // Un par de limitApproach: quita la velocidad de acercamiento de A y B y la reparte.
@@ -1047,17 +1053,15 @@ bool World::resolveApproach(const ApproachPair& pr, const ApproachWorst& ab, con
 // Geometría del acercamiento de los puntos de P contra el contorno de Q (Q desplazado `qShift`):
 // para cada punto que puede frenar, su arista más cercana, la normal (de Q hacia P) y la
 // separación. No depende de las velocidades: se calcula en paralelo para todos los pares.
-void World::approachCandidates(std::size_t pi, std::size_t qi, Vec2 qShift, float scanRange, ApproachScratch& sc,
-                               std::vector<ApproachCandidate>& cands) const {
+void World::approachCandidates(std::size_t pi, std::size_t qi, Vec2 qShift, float bound, float scanRange,
+                               ApproachScratch& sc, std::vector<ApproachCandidate>& cands) const {
     constexpr float kHuge = std::numeric_limits<float>::max();
     const RingBody& P = *bodyList_[pi];
     const RingBody& Q = *bodyList_[qi];
     cands.clear();
     const int qn = static_cast<int>(Q.poly.size());
-    // Cota de la distancia útil, con holgura para el redondeo. Sin la cota de rapidez (las
-    // velocidades cambian en la pasada serial): el alcance máximo, que solo agrega puntos que no
-    // pueden frenar (gap > (|vP| + |vQ|)·dt).
-    const float bound = scanRange;
+    // `bound`: cota de la distancia útil (≥ la de limitApproach en el momento de evaluar); más
+    // alcance solo agrega puntos que no pueden frenar. Con holgura para el redondeo.
     const float reach = bound * 1.001f + 0.05f;
     const float reach2 = reach * reach;
     // Solo las aristas de Q al alcance de algún punto de P: contienen la más cercana de todo
@@ -1156,9 +1160,14 @@ void World::approachCandidates(std::size_t pi, std::size_t qi, Vec2 qShift, floa
 
 // Peor acercamiento de los candidatos con las velocidades de ahora: cuánta velocidad hay que
 // quitar y la normal. Recorre los puntos en el orden de siempre (mismos empates).
-World::ApproachWorst World::approachEvaluate(const std::vector<ApproachCandidate>& cands, float dt) const {
+World::ApproachWorst World::approachEvaluate(const std::vector<ApproachCandidate>& cands, float speeds, float dt) const {
     ApproachWorst w;
+    // El acercamiento nunca supera la suma de las cotas de rapidez de los dos cuerpos: un punto más
+    // separado que eso no frena (se descarta sin leer velocidades; con holgura para el redondeo).
+    const float useful = speeds * dt * 1.001f + 1e-6f;
     for (const ApproachCandidate& c : cands) {
+        if (c.gap > useful)
+            continue;
         const Vec2 vq = Vec2{bodies_.vx[c.qa], bodies_.vy[c.qa]} * (1.0f - c.t) + Vec2{bodies_.vx[c.qb], bodies_.vy[c.qb]} * c.t;
         const float approach = -dot(Vec2{bodies_.vx[c.s], bodies_.vy[c.s]} - vq, c.n);
         if (approach <= 0.0f || c.gap > approach * dt)
@@ -1191,8 +1200,11 @@ void World::rebuildBuckets() {
 // extrema), se la saca al borde más cercano. Jacobi: se calcula todo y después se aplica.
 void World::resolvePenetrations() {
     PROFILE_SCOPE("World::resolvePenetrations");
-    for (RingBody* body : bodyList_)
-        soft_body::refresh(*body, bodies_);
+    // Cada cuerpo rehace solo su contorno, centroide y caja: en paralelo.
+    const auto nbodies = static_cast<std::ptrdiff_t>(bodyList_.size());
+#pragma omp parallel for schedule(dynamic, 16)
+    for (std::ptrdiff_t b = 0; b < nbodies; ++b)
+        soft_body::refresh(*bodyList_[static_cast<std::size_t>(b)], bodies_);
     rebuildBuckets();
     const auto n = static_cast<std::ptrdiff_t>(members_.size());
     penetration_.assign(members_.size(), Vec2{});

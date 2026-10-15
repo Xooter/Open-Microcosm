@@ -459,9 +459,9 @@ class World {
         Vec2 n;                  // normal (de Q hacia P)
         float gap;               // separación menos los radios [µm]
     };
-    void approachCandidates(std::size_t pi, std::size_t qi, Vec2 qShift, float scanRange, ApproachScratch& sc,
-                            std::vector<ApproachCandidate>& cands) const;
-    ApproachWorst approachEvaluate(const std::vector<ApproachCandidate>& cands, float dt) const;
+    void approachCandidates(std::size_t pi, std::size_t qi, Vec2 qShift, float bound, float scanRange,
+                            ApproachScratch& sc, std::vector<ApproachCandidate>& cands) const;
+    ApproachWorst approachEvaluate(const std::vector<ApproachCandidate>& cands, float speeds, float dt) const;
     void beginBodies(float dt);
     void cpuSubsteps(float dt, int stride, float maxRadius);
     void finishBodies();
