@@ -27,6 +27,10 @@ class HelpPanel : public Panel {
              "células y mide la química adentro. L: mapa de limitación. Ctrl+E: exportar datos (CSV y JSON).");
         note("Ctrl+N: crear la placa del editor. Los paneles se arrastran y acoplan; Ver > Restablecer disposición.");
         note("Ctrl+click o doble click en un deslizador: tipear el valor.");
+        // Aviso legal que la GPL pide mostrar en las interfaces interactivas (sección 5d).
+        ImGui::Separator();
+        note("BioGame es software libre: podés redistribuirlo y modificarlo bajo la Licencia Pública General de GNU, "
+             "versión 3 o posterior (archivo LICENSE). Se distribuye SIN NINGUNA GARANTÍA.");
     }
 };
 

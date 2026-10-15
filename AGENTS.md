@@ -71,6 +71,8 @@ interviene.
 ## Librerías
 
 Usá **solo** estas. Para agregar otra, primero hay que proponerla y esperar aprobación.
+El proyecto es **GPL-3.0-or-later** (`LICENSE`): una librería o un asset nuevo tiene que tener una
+licencia compatible con la GPLv3 (MIT, BSD, zlib, Apache 2.0 sí; GPLv2-only o no comercial, no).
 
 | Lib | Versión | Uso |
 |---|---|---|

@@ -263,6 +263,13 @@ endif()
 install(TARGETS bio RUNTIME DESTINATION .)
 install(DIRECTORY assets DESTINATION .)
 install(FILES README.md LICENSE DESTINATION . OPTIONAL)
+# Las licencias de lo que va enlazado en el ejecutable (zlib y MIT piden acompañar el aviso).
+install(FILES ${raylib_SOURCE_DIR}/LICENSE DESTINATION licencias RENAME raylib.txt)
+install(FILES ${raylib_SOURCE_DIR}/src/external/glfw/LICENSE.md DESTINATION licencias RENAME glfw.txt)
+install(FILES ${imgui_SOURCE_DIR}/LICENSE.txt DESTINATION licencias RENAME imgui.txt)
+install(FILES ${implot_SOURCE_DIR}/LICENSE DESTINATION licencias RENAME implot.txt)
+install(FILES ${entt_SOURCE_DIR}/LICENSE DESTINATION licencias RENAME entt.txt)
+install(FILES ${tomlplusplus_SOURCE_DIR}/LICENSE DESTINATION licencias RENAME tomlplusplus.txt)
 if(MINGW)
     # printf de C99 (%zu): el de MSVCRT no lo entiende.
     target_compile_definitions(bio_options INTERFACE __USE_MINGW_ANSI_STDIO=1)
