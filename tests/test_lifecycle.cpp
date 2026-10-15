@@ -149,7 +149,11 @@ TEST_CASE("comer hace crecer: el ciliado que se alimenta gana biomasa frente al 
     const auto [hungryGrowth, hungryReserves] = run(0);
     MESSAGE("alimentado: biomasa x" << fedGrowth << ", reservas " << fedReserves
                                     << " | en ayunas: x" << hungryGrowth << ", reservas " << hungryReserves);
-    CHECK(fedGrowth > 1.05f);
+    // Con el µmax real de P. caudatum (~0,026/h a 20 °C, Gause 1934) la biomasa crece ~3 % en 1 h
+    // biológica: alimentada o no (la que ayuna usa sus reservas). Lo que distingue a la alimentada
+    // son las reservas.
+    CHECK(fedGrowth > 1.0f);
+    CHECK(fedGrowth >= hungryGrowth);
     CHECK(fedReserves > hungryReserves);
 }
 
