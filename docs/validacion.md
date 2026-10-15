@@ -30,7 +30,7 @@ Ajustes propios a los datos originales de Gause (1934) digitalizados en gauseR (
 | µmax de *Amoeba proteus* | pendiente | Su µmax publicado es con *Tetrahymena* como presa (cientos por división); una placa chica no tiene presas protistas suficientes. Hace falta un cultivo con presa ciliada abundante (o *Tetrahymena* como especie). |
 | Exclusión competitiva de Gause (*P. aurelia* vs *P. caudatum*) | pendiente | Falta la especie *P. aurelia*. |
 | Depredador–presa (*Didinium*–*Paramecium*) sin refugio | pendiente | Datos de Gause fig. 32 disponibles. |
-| Tilman (*Asterionella* vs *Cyclotella*, P y Si) | pendiente | Faltan las especies y las medias saturaciones por especie (Tilman & Kilham 1976, J. Phycol. 12: 375–383: **valores sin verificar**). |
+| Tilman (*Asterionella* vs *Cyclotella*, P y Si) | **PASA (débil)** | Cultivo en lote, columna de agua de 2 cm. Con P limitante gana *Asterionella* (0,52 de la biomasa); con Si limitante, *Cyclotella* (*Asterionella* 0,47). La dirección se invierte con la proporción de recursos, como en Tilman (1977), pero el margen es chico: en lote no hay exclusión completa (Tilman usó cultivos semicontinuos con dilución). Constantes de Monod **sin verificar** contra Tilman & Kilham (1976). |
 | Jennings (acumulación por CO₂) | pendiente | Ya hay comportamiento `acidTrap`; falta el test cuantitativo. |
 
 ## Problemas del modelo encontrados al validar (fase MVP)
@@ -64,6 +64,31 @@ Ajustes propios a los datos originales de Gause (1934) digitalizados en gauseR (
    aparece o desaparece según la trayectoria. Con el µmax de Rogerson fallan los casos "tres" y
    "paramecio"; sin él (crecimiento rápido de antes), el caso "punta" (76 cruces). Antes pasaba
    por casualidad. Falta revisar la mecánica de la copa (labios, cierre, remallado).
+
+6. **Anillos que crecían sin límite al dividirse** (CORREGIDO): la hija se remuestreaba con el
+   perímetro de su geometría del momento; una hija estirada nacía con miles de puntos y sus hijas
+   más (300 → 5000 puntos, cruzando toda la placa). Ahora: perímetro de la forma de su especie.
+7. **Hijas degeneradas** (CORREGIDO): un surco que cortaba casi en el borde dejaba una mitad sin
+   área y la hija nacía en NaN (Cyclotella en cultivo denso). Cada hija tiene al menos el 20 % del
+   área total.
+8. **Inóculos sin nutrientes** (CORREGIDO): la célula sembrada tomaba su cuota del agua de
+   alrededor y en agua pobre nacía sin P ni Si. Ahora la trae de afuera (entrada externa
+   registrada); los nacimientos internos siguen tomándola del agua.
+
+## La escala de volumen (lección principal)
+
+Los experimentos clásicos de poblaciones son de mililitros (Gause: 0,5 cm³; Tilman: cultivos
+con 10⁴–10⁵ células/mL). La placa simulada es una película de ~0,1 mm sobre ~0,6 mm²: unas
+10 000 veces menos volumen. Con concentraciones reales, **toda la placa tiene menos fósforo que
+una sola diatomea**, y una decena de paramecios ya la llena. Para validar experimentos de
+población:
+
+- la química puede representar una columna de agua más profunda y bien mezclada (`gapHeight`):
+  así se hizo con Tilman;
+- la competencia por bacterias (partículas en 2D) no se arregla así: hay que limitar la comida
+  para que la población de equilibrio quepa en la placa (Gause), o una placa más grande;
+- un "modo cultivo" bien mezclado (sin cuerpos blandos, solo metabolismo y química) permitiría
+  validar dinámicas de población a escala de mL. Propuesta pendiente.
 
 ## Pendientes
 
