@@ -157,6 +157,34 @@ hilos): el cuello de botella era `World::limitApproach`, serial y en CPU aun con
   `resolvePenetrations` y `perceive`.
 - **Hecho cuando:** 60 FPS con 540+ células y la GPU activa en hardware de escritorio medio.
 
+## Fase MVP — P0: herramienta de laboratorio
+
+Lo mínimo para que un resultado de BioGame se pueda publicar o enseñar. Estado al 15/10/2026.
+
+- ✅ **Reproducibilidad:** registro único de parámetros (`game/parameters`), procedencia en la
+  exportación (versión, commit, flags, motor, GPU, CPU, huella de intervenciones), intervenciones
+  por paso (`game/intervention`; el gotero ya no depende de los FPS), escenas `.plate` + eventos que
+  se repiten bit a bit con 1 y 4 hilos (`tests/test_scene.cpp`), `bio_bench --scene`. Nivel
+  prometido: bit a bit con el mismo binario y máquina; estadístico entre máquinas.
+- ✅ **Distribución:** assets junto al ejecutable (`core/paths`), presets `dist` y `windows`
+  (MinGW, probado con Wine), CPack TGZ/ZIP, `tools/paquete-linux.sh` (Ubuntu 22.04 en Docker),
+  licencia GPL-3.0-or-later con las licencias de las dependencias en `licencias/`.
+  Pendiente: probar el paquete de Linux en otra distribución; avisar en *Preferencias* por qué no
+  hay GPU.
+- ✅ **Estabilidad:** autoguardado con recuperación por re-simulación, `bio_bench --soak` (finitud,
+  balance, memoria), `fallas_numericas` en la exportación, tests `rapidos`/`largos`/`validacion`,
+  `tools/ci.sh`. Pendiente: el test de 30 min sin jugador (hoy en `skip`) y el cruce de la membrana
+  de la ameba al fagocitar.
+- 🟡 **Validación científica** (`docs/validacion.md`): fisiología por especie con fuente en
+  `assets/species/fisiologia.toml` (toml++); pasan µmax de *Paramecium* y Tilman. Pendiente: las
+  fuentes visibles en la ficha y en `speciesJson`, Jennings, Monod, depredador–presa y exclusión
+  de Gause (estos dos necesitan un modo cultivo: la placa tiene ~10 000× menos volumen), el
+  estiramiento de las uniones y verificar los valores marcados como estimación.
+- **Rendimiento:** lo pendiente de la fase 19.
+- **Hecho cuando:** todos los tests de `validacion` pasan con su tolerancia y fuente, una escena se
+  repite bit a bit, el paquete corre en una máquina limpia de Linux y de Windows y el soak de
+  varias horas no da fallas.
+
 ---
 
 ## Backlog (ideas sin marcar de `docs/ideas.md`)

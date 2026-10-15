@@ -28,7 +28,7 @@ Ajustes propios a los datos originales de Gause (1934) digitalizados en gauseR (
 |---|---|---|
 | µmax de *Paramecium* en cultivo sin limitación | **PASA** | µ simulado 0,026/h contra 0,026/h publicado (a 20 °C), dos duplicaciones. Cultivo: placa de ~860 µm, 2 individuos, sin fagos ni Bdellovibrio, escala de tiempo 600. |
 | µmax de *Amoeba proteus* | pendiente | Su µmax publicado es con *Tetrahymena* como presa (cientos por división); una placa chica no tiene presas protistas suficientes. Hace falta un cultivo con presa ciliada abundante (o *Tetrahymena* como especie). |
-| Exclusión competitiva de Gause (*P. aurelia* vs *P. caudatum*) | pendiente | Falta la especie *P. aurelia*. |
+| Exclusión competitiva de Gause (*P. aurelia* vs *P. caudatum*) | sin resultado | Las dos especies existen (`ParameciumAurelia`). En la placa no da un resultado comparable: con la comida limitada (`organicInflow` 5) unos 50 paramecios agotan las bacterias y se amontonan en 0,86 mm; Gause tenía cientos por 0,5 cm³. Necesita el modo cultivo (ver «La escala de volumen»). Ajustes propios a sus datos (gauseR): *P. caudatum* r = 0,946 ± 0,109/día, K = 203; *P. aurelia* r = 0,707 ± 0,090/día, K = 222; mezcla, día 25: *aurelia* 140 contra *caudatum* 23. |
 | Depredador–presa (*Didinium*–*Paramecium*) sin refugio | pendiente | Datos de Gause fig. 32 disponibles. |
 | Tilman (*Asterionella* vs *Cyclotella*, P y Si) | **PASA (débil)** | Cultivo en lote, columna de agua de 2 cm. Con P limitante gana *Asterionella* (0,52 de la biomasa); con Si limitante, *Cyclotella* (*Asterionella* 0,47). La dirección se invierte con la proporción de recursos, como en Tilman (1977), pero el margen es chico: en lote no hay exclusión completa (Tilman usó cultivos semicontinuos con dilución). Constantes de Monod **sin verificar** contra Tilman & Kilham (1976). |
 | Jennings (acumulación por CO₂) | pendiente | Ya hay comportamiento `acidTrap`; falta el test cuantitativo. |
@@ -53,9 +53,7 @@ Ajustes propios a los datos originales de Gause (1934) digitalizados en gauseR (
    velocidades llegaban a ~10⁵ µm/s. Además hay una red de seguridad (`recoverNonFinite`,
    `fallas_numericas` en la exportación). Lo que se vio: diez paramecios de ~180 µm en una placa
    de 350 µm: uno quedó estirado contra el vidrio (anillo de 220 puntos, caja de 240 × 247 µm) y
-   sus posiciones se volvieron NaN; el NaN pasa al metabolismo. El motor no debería producir NaN
-   nunca: falta encontrar la operación (XPBD, división o contacto con el vidrio) y una red de
-   seguridad.
+   sus posiciones se volvieron NaN. Tras la corrección, el soak denso da 0 fallas numéricas.
 4. Tras una lisis en un volumen chico la materia orgánica llega a cientos de mM (conservación
    correcta, pero conviene revisar si el volumen de la película es el que corresponde).
 
