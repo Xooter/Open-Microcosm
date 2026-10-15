@@ -519,6 +519,8 @@ class World {
     void seedBdellovibrio(std::size_t count);
     // Micronutrientes (Si, Fe, B₁₂) de una célula: tomar su cuota inicial del agua, crecer con
     // más biomasa y devolverla al morir o ser comida.
+    float endow(ChemField& field, Element e, Vec2 at, float pmol); // cuota de una célula nueva
+    int internalBirth_ = 0; // > 0: el nacimiento es interno (la cuota sale del agua)
     void seedMicronutrients(Metabolism& m, const SpeciesInfo& info, Vec2 at);
     void growMicronutrients(Metabolism& m, Vec2 at, float factor);
     float releaseMicronutrients(entt::entity e, Vec2 at); // devuelve el Si (para la frústula)

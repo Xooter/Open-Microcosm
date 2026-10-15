@@ -1328,8 +1328,8 @@ entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& 
     registry_.emplace<Heredity>(e, Heredity{genome, traits});
     applyTraits(e);
     if (Metabolism& m = registry_.get<Metabolism>(e); m.photosynthetic) {
-        m.phosphorus = -exchange(phosphate_, center, -metabolismParams_.phosphorusRatio * m.biomass, Flow::Spawn);
-        m.nitrogen = -exchange(nitrogen_, center, -metabolismParams_.nitrogenRatio * m.biomass, Flow::Spawn);
+        m.phosphorus = endow(phosphate_, Element::P, center, metabolismParams_.phosphorusRatio * m.biomass);
+        m.nitrogen = endow(nitrogen_, Element::N, center, metabolismParams_.nitrogenRatio * m.biomass);
     }
     seedMicronutrients(registry_.get<Metabolism>(e), info, center);
     Rng rng(config_.seed, rng_stream::kOrganelles, body.id, step_);
@@ -1415,9 +1415,9 @@ entt::entity World::spawnWild(SpeciesId id, Vec2 p, Rng& rng, bool randomStage) 
         Metabolism& m = registry_.get<Metabolism>(e);
         const float stage = rng.uniform(1.0f, info.fissions > 1 ? 3.5f : 1.8f);
         m.biomass *= stage;
-        if (m.photosynthetic) { // el P y el N de la biomasa extra salen del agua
-            m.phosphorus += -exchange(phosphate_, p, -(stage - 1.0f) * m.phosphorus, Flow::Spawn);
-            m.nitrogen += -exchange(nitrogen_, p, -(stage - 1.0f) * m.nitrogen, Flow::Spawn);
+        if (m.photosynthetic) { // el P y el N de la biomasa extra vienen con la célula (de afuera)
+            m.phosphorus += endow(phosphate_, Element::P, p, (stage - 1.0f) * m.phosphorus);
+            m.nitrogen += endow(nitrogen_, Element::N, p, (stage - 1.0f) * m.nitrogen);
         }
         growMicronutrients(m, p, stage);
     }
@@ -1567,11 +1567,15 @@ bool World::forceReproduction(entt::entity e) {
     if (m.biomass < need) {
         const float k = need / m.biomass;
         const Vec2 at = registry_.get<RingBody>(e).centroid;
-        if (m.photosynthetic) { // el P y el N de la biomasa extra salen del agua (se conservan)
-            m.phosphorus += -exchange(phosphate_, at, -(k - 1.0f) * m.phosphorus, Flow::Spawn);
-            m.nitrogen += -exchange(nitrogen_, at, -(k - 1.0f) * m.nitrogen, Flow::Spawn);
+        // Orden de depuración, no un inóculo: la biomasa extra toma sus nutrientes del agua (se
+        // conservan, como lo verifican los tests de balance).
+        ++internalBirth_;
+        if (m.photosynthetic) {
+            m.phosphorus += endow(phosphate_, Element::P, at, (k - 1.0f) * m.phosphorus);
+            m.nitrogen += endow(nitrogen_, Element::N, at, (k - 1.0f) * m.nitrogen);
         }
         growMicronutrients(m, at, k);
+        --internalBirth_;
         m.biomass = need;
     }
     m.reserves = std::max(m.reserves, (cost + 0.05f) * m.biomass);
@@ -2126,21 +2130,34 @@ void World::seedMicronutrients(Metabolism& m, const SpeciesInfo& info, Vec2 at) 
     m.needsSilicon = info.frustule;
     m.needsVitamin = info.vitaminB12;
     if (m.needsSilicon)
-        m.silicon = -exchange(silicate_, at, -p.siliconRatio * m.biomass, Flow::Spawn);
+        m.silicon = endow(silicate_, Element::Si, at, p.siliconRatio * m.biomass);
     if (m.photosynthetic)
-        m.iron = -exchange(iron_, at, -p.ironRatio * m.biomass, Flow::Spawn);
-    if (m.needsVitamin)
-        m.vitamin = -exchange(vitamin_, at, -p.vitaminRatio * m.biomass);
+        m.iron = endow(iron_, Element::Fe, at, p.ironRatio * m.biomass);
+    if (m.needsVitamin) // la B₁₂ no entra en el balance de masa
+        m.vitamin = internalBirth_ > 0 ? -exchange(vitamin_, at, -p.vitaminRatio * m.biomass) : p.vitaminRatio * m.biomass;
+}
+
+// Una célula sembrada (inóculo del usuario o población inicial) trae su cuota de nutrientes de su
+// cultivo de origen: entra de afuera (antes la tomaba del agua de alrededor, y en agua pobre nacía
+// sin fósforo ni sílice y no podía crecer aunque el medio la sostuviera). Se registra como entrada
+// externa. Los nacimientos internos (hijas de colonias, zoosporas: `internalBirth_`) la toman del
+// agua, que la lisis de la madre repone: se conservan.
+float World::endow(ChemField& field, Element e, Vec2 at, float pmol) {
+    if (internalBirth_ > 0)
+        return -exchange(field, at, -pmol, Flow::Spawn);
+    ledger_.add(e, Flow::Spawn, pmol);
+    ledger_.addExternal(e, pmol);
+    return pmol;
 }
 
 // La biomasa extra de una célula nueva (etapa del ciclo al azar) sale del agua.
 void World::growMicronutrients(Metabolism& m, Vec2 at, float factor) {
     if (m.needsSilicon)
-        m.silicon += -exchange(silicate_, at, -(factor - 1.0f) * m.silicon, Flow::Spawn);
+        m.silicon += endow(silicate_, Element::Si, at, (factor - 1.0f) * m.silicon);
     if (m.photosynthetic)
-        m.iron += -exchange(iron_, at, -(factor - 1.0f) * m.iron, Flow::Spawn);
+        m.iron += endow(iron_, Element::Fe, at, (factor - 1.0f) * m.iron);
     if (m.needsVitamin)
-        m.vitamin += -exchange(vitamin_, at, -(factor - 1.0f) * m.vitamin);
+        m.vitamin += (factor - 1.0f) * m.vitamin;
 }
 
 // Simplificación: al ser comida o lisada, el hierro y la B₁₂ vuelven disueltos de inmediato (en
@@ -3788,7 +3805,9 @@ void World::releaseColonies(entt::entity mother) {
         const float a = 6.2831853f * (static_cast<float>(k) + rng.uniform()) / static_cast<float>(info.colonyDaughters);
         const float dist = info.motherDiesAtRelease ? 0.5f * radius : (info.budding ? 1.7f * radius : 2.2f * radius);
         const Vec2 p = c + Vec2{std::cos(a), std::sin(a)} * dist;
+        ++internalBirth_; // nacimiento interno: la cuota sale del agua (la lisis de la madre la repone)
         const entt::entity d = spawnOrganism(sid, {wrapCoord(p.x, width_), wrapCoord(p.y, height_)}, g, run, a);
+        --internalBirth_;
         Metabolism& dm = registry_.get<Metabolism>(d);
         // La hija nace chica: escala su tamaño a la biomasa que le tocó.
         dm.birthBiomass = dm.biomass = std::min(dm.biomass, share);
@@ -3833,7 +3852,9 @@ void World::releaseZoospore(entt::entity mother) {
     if (wasPlayer)
         player_ = entt::null;
 
+    ++internalBirth_; // nacimiento interno: la zoóspora se lleva todo lo de la madre (abajo)
     const entt::entity z = spawnOrganism(sid, at, genome, lin.run, angle);
+    --internalBirth_;
     registry_.get<Lineage>(z).generation = lin.generation;
     Metabolism& zm = registry_.get<Metabolism>(z);
     // spawnOrganism sacó del agua el P y el N de una célula nueva: vuelven, y la zoóspora se
