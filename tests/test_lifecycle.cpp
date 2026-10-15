@@ -47,33 +47,44 @@ bool simplePolygon(const RingBody& b, const BodyParticles& bp) {
 
 } // namespace
 
-TEST_CASE("mitosis física: cada tipo de célula se divide en dos hijas válidas" * doctest::test_suite("largos")) {
-    for (LocomotionType type : {LocomotionType::Cilia, LocomotionType::Flagellum, LocomotionType::Pseudopod}) {
-        CAPTURE(locomotionName(type));
-        World world(emptyWorld());
-        const entt::entity e = world.spawnPlayer(type, {1024.0f, 512.0f});
-        feedToDivision(world, e);
-        const float before = world.registry().get<Metabolism>(e).biomass;
-        for (int s = 0; s < 60 * 90 && world.registry().view<Metabolism>().size() < 2; ++s)
-            world.step(kDt);
-        REQUIRE(world.registry().view<Metabolism>().size() == 2);
+namespace {
+// Mitosis física de un tipo de célula (un caso por tipo: corren en paralelo con ctest -j).
+void dividesIntoTwo(LocomotionType type) {
+    CAPTURE(locomotionName(type));
+    World world(emptyWorld());
+    const entt::entity e = world.spawnPlayer(type, {1024.0f, 512.0f});
+    feedToDivision(world, e);
+    const float before = world.registry().get<Metabolism>(e).biomass;
+    for (int s = 0; s < 60 * 90 && world.registry().view<Metabolism>().size() < 2; ++s)
+        world.step(kDt);
+    REQUIRE(world.registry().view<Metabolism>().size() == 2);
 
-        float total = 0.0f;
-        for (auto [c, body, meta, anatomy] : world.registry().view<RingBody, Metabolism, CellAnatomy>().each()) {
-            total += meta.biomass;
-            CHECK(simplePolygon(body, world.bodies()));
-            CHECK(meta.biomass == doctest::Approx(meta.birthBiomass));
-            // Cada hija tiene su propio núcleo, dentro de su membrana.
-            const Vec2 nucleus = {world.bodies().x[anatomy.nucleus], world.bodies().y[anatomy.nucleus]};
-            CHECK(polygon::contains(body.poly.data(), static_cast<int>(body.poly.size()), nucleus));
-            CHECK_FALSE(world.registry().all_of<Dividing>(c));
-        }
-        // La división cuesta reservas, no biomasa: no se pierde biomasa (y sigue creciendo
-        // mientras se divide, porque tiene reservas).
-        CHECK(total >= 0.99f * before);
-        CHECK(total <= 1.25f * before);
-        CHECK(world.registry().valid(world.player()));
+    float total = 0.0f;
+    for (auto [c, body, meta, anatomy] : world.registry().view<RingBody, Metabolism, CellAnatomy>().each()) {
+        total += meta.biomass;
+        CHECK(simplePolygon(body, world.bodies()));
+        CHECK(meta.biomass == doctest::Approx(meta.birthBiomass));
+        // Cada hija tiene su propio núcleo, dentro de su membrana.
+        const Vec2 nucleus = {world.bodies().x[anatomy.nucleus], world.bodies().y[anatomy.nucleus]};
+        CHECK(polygon::contains(body.poly.data(), static_cast<int>(body.poly.size()), nucleus));
+        CHECK_FALSE(world.registry().all_of<Dividing>(c));
     }
+    // La división cuesta reservas, no biomasa: no se pierde biomasa (y sigue creciendo
+    // mientras se divide, porque tiene reservas).
+    CHECK(total >= 0.99f * before);
+    CHECK(total <= 1.25f * before);
+    CHECK(world.registry().valid(world.player()));
+}
+} // namespace
+
+TEST_CASE("mitosis física: el ciliado se divide en dos hijas válidas" * doctest::test_suite("largos")) {
+    dividesIntoTwo(LocomotionType::Cilia);
+}
+TEST_CASE("mitosis física: el flagelado se divide en dos hijas válidas" * doctest::test_suite("largos")) {
+    dividesIntoTwo(LocomotionType::Flagellum);
+}
+TEST_CASE("mitosis física: la ameba se divide en dos hijas válidas" * doctest::test_suite("largos")) {
+    dividesIntoTwo(LocomotionType::Pseudopod);
 }
 
 TEST_CASE("sin comida la célula se consume, muere y se lisa en detritos y nutrientes" * doctest::test_suite("largos")) {

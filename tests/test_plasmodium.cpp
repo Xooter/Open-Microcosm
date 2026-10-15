@@ -227,7 +227,9 @@ TEST_CASE("liquen: la hifa se une a un alga verde, recibe su azúcar y la proteg
     World world(quiet());
     world.bioTimeScale() = 600.0f;
     const entt::entity alga = world.spawnOrganism(SpeciesId::Chlamydomonas, {1000.0f, 1000.0f}, speciesGenome(SpeciesId::Chlamydomonas), 0);
-    world.spawnFungus(FungusKind::Mycobiont, {1060.0f, 1000.0f}, 3.14159f, 0);
+    // A 45 µm: en agua sin materia orgánica, las reservas de la espora alcanzan para ~50 µm de hifa
+    // (a 60 µm la punta quedaba a 5 µm del alga, justo fuera del contacto, si el alga no crecía).
+    world.spawnFungus(FungusKind::Mycobiont, {1045.0f, 1000.0f}, 3.14159f, 0);
     const double phosphorus = world.totalPhosphorus();
     for (int s = 0; s < 60 * 90 && !world.registry().all_of<Lichenized>(alga); ++s)
         world.step(kDt);

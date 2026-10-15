@@ -4,6 +4,7 @@
 #include <doctest/doctest.h>
 
 #include <cmath>
+#include <set>
 #include <vector>
 
 namespace {
@@ -47,25 +48,44 @@ float tipWander(World& world, std::size_t filament, int n) {
     return worst;
 }
 
+// Paredes del filamento (pares de células unidas): son varios enlaces por pared.
+std::size_t walls(const World& world) {
+    std::set<std::pair<entt::entity, entt::entity>> w;
+    for (const World::AdhesionLink& l : world.links())
+        w.insert({std::min(l.ownerA, l.ownerB), std::max(l.ownerA, l.ownerB)});
+    return w.size();
+}
+
 } // namespace
 
-TEST_CASE("Mougeotia, Zygnema y Oedogonium crecen en filamento y se dividen con un tabique" * doctest::test_suite("largos")) {
-    for (SpeciesId id : {SpeciesId::Mougeotia, SpeciesId::Zygnema, SpeciesId::Oedogonium}) {
-        CAPTURE(speciesInfo(id).name);
-        World world(quietWorld());
-        const auto chain = world.spawnFilament(id, world.dish().center - Vec2{150.0f, 0.0f}, 0.1f, 5, 0);
-        REQUIRE(world.links().size() == 8);
-        REQUIRE(world.forceReproduction(chain[2]));
-        steps(world, 60 * 40);
-        CHECK(world.cellCount() == 6);
-        CHECK(world.links().size() == 10);
-        CHECK(world.observations().filamentDivisions == 1);
-        // La célula que se dividió queda marcada (en Oedogonium, un capuchón por división).
-        std::uint32_t generation = 0;
-        for (auto [e, lin] : world.registry().view<Lineage>().each())
-            generation = std::max(generation, lin.generation);
-        CHECK(generation >= 1);
-    }
+namespace {
+// Crece en filamento y se divide con un tabique (un caso por especie: en paralelo con ctest -j).
+void filamentDivides(SpeciesId id) {
+    CAPTURE(speciesInfo(id).name);
+    World world(quietWorld());
+    const auto chain = world.spawnFilament(id, world.dish().center - Vec2{150.0f, 0.0f}, 0.1f, 5, 0);
+    REQUIRE(walls(world) == 4);
+    REQUIRE(world.forceReproduction(chain[2]));
+    steps(world, 60 * 40);
+    CHECK(world.cellCount() == 6);
+    CHECK(walls(world) == 5);
+    CHECK(world.observations().filamentDivisions == 1);
+    // La célula que se dividió queda marcada (en Oedogonium, un capuchón por división).
+    std::uint32_t generation = 0;
+    for (auto [e, lin] : world.registry().view<Lineage>().each())
+        generation = std::max(generation, lin.generation);
+    CHECK(generation >= 1);
+}
+} // namespace
+
+TEST_CASE("Mougeotia crece en filamento y se divide con un tabique" * doctest::test_suite("largos")) {
+    filamentDivides(SpeciesId::Mougeotia);
+}
+TEST_CASE("Zygnema crece en filamento y se divide con un tabique" * doctest::test_suite("largos")) {
+    filamentDivides(SpeciesId::Zygnema);
+}
+TEST_CASE("Oedogonium crece en filamento y se divide con un tabique" * doctest::test_suite("largos")) {
+    filamentDivides(SpeciesId::Oedogonium);
 }
 
 TEST_CASE("Oscillatoria: sin heterocistos ni fijación de N₂, y la punta oscila al deslizarse" * doctest::test_suite("largos")) {

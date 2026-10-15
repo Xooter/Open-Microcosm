@@ -27,7 +27,7 @@ void steps(World& world, int n) {
 
 } // namespace
 
-TEST_CASE("las bacterias crecen y se dividen con materia orgánica, y mueren sin ella" * doctest::test_suite("largos")) {
+TEST_CASE("las bacterias crecen y se dividen con materia orgánica" * doctest::test_suite("largos")) {
     World fed(ecoWorld(2000));
     for (float& v : fed.nutrients().grid().v)
         v = 20.0f;
@@ -35,7 +35,9 @@ TEST_CASE("las bacterias crecen y se dividen con materia orgánica, y mueren sin
     steps(fed, 60 * 60); // 1 h biológica
     MESSAGE("con comida: 2000 → " << fed.bacteria().size());
     CHECK(fed.bacteria().size() > 2600);
+}
 
+TEST_CASE("las bacterias mueren sin materia orgánica" * doctest::test_suite("largos")) {
     World hungry(ecoWorld(2000));
     hungry.medium().detritusSpawnRate = 0.0f;
     hungry.bioTimeScale() = 600.0f;

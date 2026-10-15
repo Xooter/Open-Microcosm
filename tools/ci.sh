@@ -46,7 +46,8 @@ paso "prueba larga corta (finitos, balance de masa, memoria)"
 
 if [ "$todo" = 1 ]; then
     paso "tests largos y validación"
-    ctest --test-dir build/release -L "largos|validacion" --output-on-failure
+    # Un proceso por caso con 4 hilos cada uno: la mitad de los núcleos lógicos en paralelo.
+    ctest --test-dir build/release -L "largos|validacion" -j "$(( $(nproc) / 2 > 1 ? $(nproc) / 2 : 1 ))" --output-on-failure
 fi
 
 if [ "$paquetes" = 1 ]; then

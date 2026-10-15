@@ -308,15 +308,38 @@ include(CPack)
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    add_executable(bio_tests tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp tests/test_render_lod.cpp tests/test_body_plan.cpp tests/test_parameters.cpp tests/test_scene.cpp tests/test_physiology.cpp tests/test_validation.cpp)
+    set(BIO_TEST_SOURCES tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp tests/test_render_lod.cpp tests/test_body_plan.cpp tests/test_parameters.cpp tests/test_scene.cpp tests/test_physiology.cpp tests/test_validation.cpp)
+    add_executable(bio_tests ${BIO_TEST_SOURCES})
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
-    # Rápidos (~1 min): la verificación de cada cambio. Largos (~30 min): ecosistemas,
-    # conservación en corridas largas, determinismo con muchos pasos. Validación: contra
-    # resultados publicados. `ctest` corre todo; `ctest -L rapidos`, solo los rápidos.
+    # Rápidos (~1 min): la verificación de cada cambio. Largos: ecosistemas, conservación en
+    # corridas largas, determinismo con muchos pasos. Validación: contra resultados publicados.
     add_test(NAME bio_tests_rapidos COMMAND bio_tests --test-suite-exclude=largos,validacion)
     set_tests_properties(bio_tests_rapidos PROPERTIES LABELS rapidos)
-    add_test(NAME bio_tests_largos COMMAND bio_tests --test-suite=largos)
-    set_tests_properties(bio_tests_largos PROPERTIES LABELS largos)
-    add_test(NAME bio_tests_validacion COMMAND bio_tests --test-suite=validacion)
-    set_tests_properties(bio_tests_validacion PROPERTIES LABELS validacion)
+    # Largos y validación: un proceso por caso (el k-ésimo por nombre), para correrlos en paralelo
+    # con `ctest -L largos -j4` sin cambiar ningún test. En un solo proceso tardaban ~25 min: muchos
+    # casos son casi seriales (mundos chicos, la corrida de 1 hilo de los de determinismo) y la
+    # máquina quedaba ociosa. El último proceso corre del k en adelante: un caso nuevo nunca queda
+    # afuera aunque el recuento esté viejo (se recuenta al cambiar los tests). Cada proceso usa 4
+    # hilos (el resultado no depende de la cantidad; los de determinismo fijan los suyos) y espera
+    # pasiva de OpenMP, para que los procesos no se roben núcleos girando.
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${BIO_TEST_SOURCES})
+    foreach(suite largos validacion)
+        set(count 0)
+        foreach(src ${BIO_TEST_SOURCES})
+            file(READ ${CMAKE_SOURCE_DIR}/${src} body)
+            string(REGEX MATCHALL "test_suite\\(\"${suite}\"\\)" found "${body}")
+            list(LENGTH found n)
+            math(EXPR count "${count} + ${n}")
+        endforeach()
+        foreach(k RANGE 1 ${count})
+            if(k EQUAL count)
+                set(range --first=${k})
+            else()
+                set(range --first=${k} --last=${k})
+            endif()
+            add_test(NAME bio_${suite}_${k} COMMAND bio_tests --test-suite=${suite} --order-by=name ${range})
+            set_tests_properties(bio_${suite}_${k} PROPERTIES LABELS ${suite}
+                                 ENVIRONMENT "OMP_NUM_THREADS=4;OMP_WAIT_POLICY=passive")
+        endforeach()
+    endforeach()
 endif()

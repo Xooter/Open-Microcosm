@@ -184,59 +184,72 @@ RingHealth ringHealth(const RingBody& body, const BodyParticles& bp) {
 }
 } // namespace
 
-TEST_CASE("la membrana de la ameba no se cruza al comer presas de distinta forma" * doctest::test_suite("largos")) {
-    // `slack`: cruces tolerados durante la copa (una punta de 2 µm de radio se deforma sola).
-    struct Case { const char* name; float rx, ry; int count; int slack; int species = -1; bool mustEat = true; };
-    const Case cases[] = {{"elipse", 22, 18, 1, 0}, {"grande", 40, 30, 1, 0}, {"chica", 8, 6, 1, 0},
-                          {"alargada", 50, 14, 1, 20}, {"punta", 50, 10, 1, 6, -1, false}, {"dos", 22, 18, 2, 0, -1, false},
-                          {"tres", 18, 14, 3, 0, -1, false},
-                          // Presas vivas: se mueven y huyen; solo importa que la membrana aguante.
-                          {"euglena", 0, 0, 3, 0, static_cast<int>(SpeciesId::Euglena), false},
-                          {"paramecio", 0, 0, 3, 2, static_cast<int>(SpeciesId::Paramecium), false}};
-    for (const Case& c : cases) {
-        CAPTURE(std::string(c.name));
-        World world(quietWorld(300));
-        const entt::entity e = world.spawnPlayer(LocomotionType::Pseudopod, {900.0f, 512.0f});
-        float edge = 0.0f; // borde derecho de la ameba
-        for (std::uint32_t slot : world.registry().get<RingBody>(e).ring)
-            edge = std::max(edge, world.bodies().x[slot]);
-        for (int k = 0; k < c.count; ++k) {
-            // A ~2 µm de la membrana: en contacto, sin solapar; apiladas a lo largo del borde.
-            float rx = c.rx, ry = c.ry;
-            if (c.species >= 0) {
-                rx = speciesInfo(static_cast<SpeciesId>(c.species)).spec.radiusX;
-                ry = speciesInfo(static_cast<SpeciesId>(c.species)).spec.radiusY;
-            }
-            const Vec2 where = {edge + 2.0f + rx, 512.0f + (2.0f * ry + 1.0f) * (static_cast<float>(k) - 0.5f * static_cast<float>(c.count - 1))};
-            if (c.species >= 0) {
-                const auto id = static_cast<SpeciesId>(c.species);
-                world.spawnOrganism(id, where, speciesGenome(speciesInfo(id).locomotion), 0);
-                continue;
-            }
-            CellSpec prey;
-            prey.center = where;
-            prey.radiusX = c.rx;
-            prey.radiusY = c.ry;
-            world.spawnCell(prey);
+namespace {
+// La membrana de la ameba no se cruza al comer presas de distinta forma. Cada presa es un caso
+// aparte (corren en paralelo con ctest -j; antes eran 9 corridas seguidas en un solo caso).
+// `slack`: cruces tolerados durante la copa (una punta de 2 µm de radio se deforma sola).
+struct EatCase { const char* name; float rx, ry; int count; int slack; int species = -1; bool mustEat = true; };
+
+void amoebaEats(const EatCase& c) {
+    CAPTURE(std::string(c.name));
+    World world(quietWorld(300));
+    const entt::entity e = world.spawnPlayer(LocomotionType::Pseudopod, {900.0f, 512.0f});
+    float edge = 0.0f; // borde derecho de la ameba
+    for (std::uint32_t slot : world.registry().get<RingBody>(e).ring)
+        edge = std::max(edge, world.bodies().x[slot]);
+    for (int k = 0; k < c.count; ++k) {
+        // A ~2 µm de la membrana: en contacto, sin solapar; apiladas a lo largo del borde.
+        float rx = c.rx, ry = c.ry;
+        if (c.species >= 0) {
+            rx = speciesInfo(static_cast<SpeciesId>(c.species)).spec.radiusX;
+            ry = speciesInfo(static_cast<SpeciesId>(c.species)).spec.radiusY;
         }
-        int worstCross = 0, worstOutside = 0;
-        bool finite = true;
-        for (int s = 0; s < 60 * 45; ++s) {
-            world.step(kDt);
-            const RingHealth h = ringHealth(world.registry().get<RingBody>(e), world.bodies());
-            finite = finite && h.finite;
-            worstCross = std::max(worstCross, h.crossings);
-            worstOutside = std::max(worstOutside, h.outside);
+        const Vec2 where = {edge + 2.0f + rx, 512.0f + (2.0f * ry + 1.0f) * (static_cast<float>(k) - 0.5f * static_cast<float>(c.count - 1))};
+        if (c.species >= 0) {
+            const auto id = static_cast<SpeciesId>(c.species);
+            world.spawnOrganism(id, where, speciesGenome(speciesInfo(id).locomotion), 0);
+            continue;
         }
-        const RingHealth end = ringHealth(world.registry().get<RingBody>(e), world.bodies());
-        CHECK(finite);
-        if (c.mustEat) // con vecinas pegadas, o una punta de 2 µm, la copa puede no encontrar lugar
-            CHECK(world.registry().get<Digestion>(e).cellsEaten >= 1);
-        CHECK(worstCross <= c.slack);
-        CHECK(worstOutside <= c.slack);
-        CHECK(end.crossings == 0);
-        CHECK(end.outside == 0);
+        CellSpec prey;
+        prey.center = where;
+        prey.radiusX = c.rx;
+        prey.radiusY = c.ry;
+        world.spawnCell(prey);
     }
+    int worstCross = 0, worstOutside = 0;
+    bool finite = true;
+    for (int s = 0; s < 60 * 45; ++s) {
+        world.step(kDt);
+        const RingHealth h = ringHealth(world.registry().get<RingBody>(e), world.bodies());
+        finite = finite && h.finite;
+        worstCross = std::max(worstCross, h.crossings);
+        worstOutside = std::max(worstOutside, h.outside);
+    }
+    const RingHealth end = ringHealth(world.registry().get<RingBody>(e), world.bodies());
+    CHECK(finite);
+    if (c.mustEat) // con vecinas pegadas, o una punta de 2 µm, la copa puede no encontrar lugar
+        CHECK(world.registry().get<Digestion>(e).cellsEaten >= 1);
+    CHECK(worstCross <= c.slack);
+    CHECK(worstOutside <= c.slack);
+    CHECK(end.crossings == 0);
+    CHECK(end.outside == 0);
+}
+} // namespace
+
+TEST_CASE("la membrana de la ameba no se cruza al comer: elipse" * doctest::test_suite("largos")) { amoebaEats({"elipse", 22, 18, 1, 0}); }
+TEST_CASE("la membrana de la ameba no se cruza al comer: grande" * doctest::test_suite("largos")) { amoebaEats({"grande", 40, 30, 1, 0}); }
+TEST_CASE("la membrana de la ameba no se cruza al comer: chica" * doctest::test_suite("largos")) { amoebaEats({"chica", 8, 6, 1, 0}); }
+TEST_CASE("la membrana de la ameba no se cruza al comer: alargada" * doctest::test_suite("largos")) { amoebaEats({"alargada", 50, 14, 1, 20}); }
+TEST_CASE("la membrana de la ameba no se cruza al comer: punta" * doctest::test_suite("largos")) { amoebaEats({"punta", 50, 10, 1, 6, -1, false}); }
+// Con vecinas pegadas, la copa puede no encontrar lugar.
+TEST_CASE("la membrana de la ameba no se cruza al comer: dos" * doctest::test_suite("largos")) { amoebaEats({"dos", 22, 18, 2, 0, -1, false}); }
+TEST_CASE("la membrana de la ameba no se cruza al comer: tres" * doctest::test_suite("largos")) { amoebaEats({"tres", 18, 14, 3, 0, -1, false}); }
+// Presas vivas: se mueven y huyen; solo importa que la membrana aguante.
+TEST_CASE("la membrana de la ameba no se cruza al comer: euglena" * doctest::test_suite("largos")) {
+    amoebaEats({"euglena", 0, 0, 3, 0, static_cast<int>(SpeciesId::Euglena), false});
+}
+TEST_CASE("la membrana de la ameba no se cruza al comer: paramecio" * doctest::test_suite("largos")) {
+    amoebaEats({"paramecio", 0, 0, 3, 2, static_cast<int>(SpeciesId::Paramecium), false});
 }
 
 TEST_CASE("una célula arrastrada a través de una ameba no la parte ni la atraviesa") {

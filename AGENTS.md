@@ -99,7 +99,10 @@ cmake --preset release && cmake --build --preset release && ./build/release/bio
 
 Hay presets `debug`, `release`, `profile` (Tracy) y `lite` (tiempos por scope sin Tracy). El código
 tiene que compilar **sin warnings** con `-Wall -Wextra -Wpedantic`, y `ctest --test-dir build/release`
-tiene que pasar (`ctest -L rapidos`: ~1 min; `largos`: ~30 min; `validacion`: contra resultados publicados).
+tiene que pasar (`ctest -L rapidos`: ~1 min; `ctest -L largos -j8`: ~6 min, ~25 en serie; `validacion`:
+contra resultados publicados, ~3 min con `-j4`). Largos y validación son un proceso de ctest por caso
+(4 hilos cada uno): un caso que repite algo independiente varias veces (presas, especies, tipos de
+célula) va en casos separados, así corren en paralelo.
 
 **Presets de distribución:** `dist` (Linux, sin `-march=native`, base x86-64-v2) y `windows`
 (cruzado con MinGW, `cmake/mingw-w64.cmake`); `cpack` en su carpeta arma el paquete. Los assets

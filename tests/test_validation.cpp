@@ -146,15 +146,19 @@ double tilmanAsterionellaShare(bool siLimited) {
 
 } // namespace
 
-TEST_CASE("validación: Tilman — gana Asterionella con P limitante y Cyclotella con Si limitante" *
-          doctest::test_suite("validacion")) {
-    // Resultado cualitativo confirmado de Tilman (1977, Ecology 58: 338-348). Las constantes de
-    // Monod de fisiologia.toml están SIN VERIFICAR contra Tilman & Kilham (1976).
-    const double pLimited = tilmanAsterionellaShare(false);
-    const double siLimited = tilmanAsterionellaShare(true);
-    MESSAGE("fracción de Asterionella: con P limitante " << pLimited << ", con Si limitante " << siLimited);
-    CHECK(pLimited > 0.5);
-    CHECK(siLimited < 0.5);
+// Resultado cualitativo confirmado de Tilman (1977, Ecology 58: 338-348): con P limitante gana
+// Asterionella y con Si limitante, Cyclotella. Las constantes de fisiologia.toml están SIN
+// VERIFICAR contra Tilman & Kilham (1976). Dos casos: corren en paralelo con ctest -j.
+TEST_CASE("validación: Tilman — con P limitante gana Asterionella" * doctest::test_suite("validacion")) {
+    const double share = tilmanAsterionellaShare(false);
+    MESSAGE("fracción de Asterionella con P limitante: " << share);
+    CHECK(share > 0.5);
+}
+
+TEST_CASE("validación: Tilman — con Si limitante gana Cyclotella" * doctest::test_suite("validacion")) {
+    const double share = tilmanAsterionellaShare(true);
+    MESSAGE("fracción de Asterionella con Si limitante: " << share);
+    CHECK(share < 0.5);
 }
 
 namespace {
