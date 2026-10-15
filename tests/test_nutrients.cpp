@@ -4,6 +4,7 @@
 #include <doctest/doctest.h>
 
 #include <cmath>
+#include <vector>
 
 namespace {
 
@@ -93,4 +94,27 @@ TEST_CASE("la frústula de una diatomea muerta guarda su sílice y la devuelve a
     steps(world, 60 * 8);
     CHECK(world.silicate().sum() > dissolved);
     CHECK(world.totalSilicon() == doctest::Approx(si).epsilon(0.001));
+}
+
+TEST_CASE("fijar la concentración media: exacta, solo en el agua y estable con el agua casi agotada") {
+    World world(quietWorld());
+    ChemField& p = world.phosphateField();
+    // Agua casi agotada con los rizos negativos que deja la difusión espectral junto a un pozo de
+    // consumo: antes, objetivo / media ~ 10⁶ escalaba también los negativos y el campo explotaba.
+    std::vector<float>& v = p.grid().v;
+    for (std::size_t k = 0; k < v.size(); ++k)
+        if (world.dishMask().isWater(k))
+            v[k] = (k % 7 == 0) ? -2e-7f : 1e-7f;
+    world.setMeanConcentration(p, 0.0025f);
+    CHECK(world.meanConcentration(p) == doctest::Approx(0.0025).epsilon(1e-4));
+    int negative = 0; // en el agua (el vidrio guarda fantasmas y no se toca)
+    for (std::size_t k = 0; k < v.size(); ++k)
+        negative += world.dishMask().isWater(k) && v[k] < 0.0f;
+    CHECK(negative == 0);
+    // Subir con distribución: el doble en todas partes; la media exacta (antes el vidrio sumaba ~1 %).
+    for (int s = 0; s < 30; ++s)
+        world.step(1.0f / 60.0f);
+    const float before = world.meanConcentration(p);
+    world.setMeanConcentration(p, 2.0f * before);
+    CHECK(world.meanConcentration(p) == doctest::Approx(2.0f * before).epsilon(1e-5));
 }

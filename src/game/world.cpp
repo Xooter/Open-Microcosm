@@ -2261,14 +2261,23 @@ float World::meanConcentration(const ChemField& field) const {
 
 void World::setMeanConcentration(ChemField& field, float target) {
     const double before = field.sum();
-    const float mean = meanConcentration(field);
-    if (mean > 1e-12f) {
-        const float k = target / mean;
-        for (float& v : field.grid().v)
-            v *= k;
-    } else {
-        std::fill(field.grid().v.begin(), field.grid().v.end(), target);
-    }
+    // Solo el agua: el vidrio guarda fantasmas y lo que difiere de ellos cuenta como masa
+    // (escalarlo agregaba masa espuria). Los negativos son rizos numéricos de la difusión espectral
+    // junto a un pozo de consumo: escalados por un factor grande, el campo explotaba (con la media
+    // casi agotada, objetivo / media ~ 10⁶ y el signo alternaba en cada paso).
+    std::vector<float>& v = field.grid().v;
+    double water = 0.0;
+    for (std::size_t k = 0; k < v.size(); ++k)
+        if (dishMask_.isWater(k)) {
+            v[k] = std::max(0.0f, v[k]);
+            water += v[k];
+        }
+    const double mean = water / static_cast<double>(std::max<std::size_t>(1, dishMask_.waterCells));
+    const bool keepPattern = mean > 1e-6 * std::max(1e-12f, target); // si no, no queda distribución que conservar
+    const float scale = keepPattern ? static_cast<float>(target / mean) : 0.0f;
+    for (std::size_t k = 0; k < v.size(); ++k)
+        if (dishMask_.isWater(k))
+            v[k] = keepPattern ? v[k] * scale : target;
     Element e;
     float perPmol;
     if (fieldElement(field, e, perPmol)) {
