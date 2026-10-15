@@ -49,7 +49,7 @@ struct Args {
     float wildlife = 1.0f;
     int steps = 240;
     int warmup = 30;
-    int threads = 0; // 0: OMP_NUM_THREADS o el valor por defecto de OpenMP
+    int threads = 0; // 0: como la app (OMP_NUM_THREADS o uno por núcleo físico)
     bool focus = true;
     bool gpu = false;
     bool render = false;
@@ -178,8 +178,12 @@ int main(int argc, char** argv) {
     Args a;
     if (!parse(argc, argv, a))
         return 1;
+    // Igual que App::run: con SMT, un hilo por núcleo físico (16 hilos en un Ryzen 7700X dan un
+    // paso ~20 % más lento que 8); medir con otra cantidad no representa a la app.
     if (a.threads > 0)
         omp_set_num_threads(a.threads);
+    else if (!std::getenv("OMP_NUM_THREADS"))
+        omp_set_num_threads(std::max(1, omp_get_num_procs() / 2));
 
     // La GPU necesita un contexto de OpenGL 4.3: una ventana que no se muestra.
     GpuSubstepSolver gpu;

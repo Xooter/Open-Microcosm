@@ -112,7 +112,9 @@ del usuario en la carpeta de la plataforma (`userDataDir`). `tools/ci.sh` es el 
 
 **Medir:** `bio_bench` corre una gota fija sin ventana y da ms/paso, el censo y un checksum del
 estado (`--wildlife 3` ≈ 700 células, `--gpu` usa el resolvedor de GPU como la app; con el preset
-`lite` desglosa por `PROFILE_SCOPE`). Una optimización que no debe cambiar resultados se verifica
+`lite` desglosa por `PROFILE_SCOPE`; `--shot` guarda el cuadro dibujado; por defecto usa un hilo por
+núcleo físico, como la app: con SMT, 16 hilos son más lentos que 8). `BIO_GPU_TIMING=1` da el tiempo
+de cada kernel de la GPU con marcas de tiempo. Una optimización que no debe cambiar resultados se verifica
 comparando checksums de la versión vieja y la nueva compiladas con `-DBIO_STRICT_FP=ON`: con
 `-ffast-math` cualquier cambio de código puede reasociar operaciones y alterar los últimos bits, y
 la dinámica lo amplifica. Preferí veracidad a velocidad: una optimización que cambia el resultado

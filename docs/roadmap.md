@@ -148,9 +148,8 @@ hilos): el cuello de botella era `World::limitApproach`, serial y en CPU aun con
   cuadrado de igual área por debajo de 1 px), contornos diezmados por debajo de 3 px, abanico
   exacto para células estrelladas y la opción *Detalle de células*: 32,5 → 19 ms (placa entera),
   10,4 → 8,5 ms (zoom 2).
-- **Pendiente (render):** gránulos y trazos de membrana instanciados (un buffer y una llamada, como
-  las bacterias) — cuidando el orden de dibujo (gránulos bajo el núcleo); `triangulate` todavía
-  pesa ~10 % para las células no estrelladas.
+- ✅ **Render:** gránulos, membranas y apéndices en un lote de triángulos propio
+  (`render/triangle_batch`), en el mismo orden y sentido de giro que raylib.
 - **Pendiente:** con 718 células lo que queda es `limitApproach` (~8 ms, serial por naturaleza:
   ~30 % de los pares empujan y forman cadenas de cientos de niveles), la espera de la GPU
   (`collect` ~6 ms; `pairs` es el kernel más caro), química + FFT (~6 ms), `applyMotion`,
@@ -181,7 +180,13 @@ Lo mínimo para que un resultado de BioGame se pueda publicar o enseñar. Estado
   era de crecimiento y se usaba en la captación: ahora el modelo es de Droop y la reproduce). Pendiente:
   depredador–presa y exclusión de Gause (necesitan un modo cultivo: la placa tiene ~10 000× menos
   volumen) y verificar las estimaciones. Las uniones de filamentos ya son rígidas a la flexión.
-- **Rendimiento:** lo pendiente de la fase 19.
+- ✅ **Rendimiento** (15/10/2026): `bio_bench --gpu --render --zoom 2` (hilos como la app: uno por
+  núcleo físico) con 551 células: paso 12,7 + dibujo 3,4 = **16,1 ms** (antes 42); con 601,
+  16,5 ms. Sin cambiar resultados: checksums iguales en IEEE estricto con CPU y GPU en tres
+  escenas. Lo que más rindió: `glFlush` tras el envío a la GPU (el driver retenía los despachos
+  hasta la lectura), FFT por bloques de columnas, advección conjunta de los 11 campos, la
+  geometría de `limitApproach` en paralelo, la percepción de los pilotos en paralelo y un lote de
+  triángulos propio para el dibujo de las células.
 - **Hecho cuando:** todos los tests de `validacion` pasan con su tolerancia y fuente, una escena se
   repite bit a bit, el paquete corre en una máquina limpia de Linux y de Windows y el soak de
   varias horas no da fallas.
