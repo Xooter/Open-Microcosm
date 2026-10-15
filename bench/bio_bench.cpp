@@ -308,9 +308,9 @@ int main(int argc, char** argv) {
     if (a.soak > 0) {
         if (soakFailure.empty())
             soakFailure = soakCheck(world, soakStart);
-        std::printf("prueba larga: %s  memoria %.0f → %.0f MB (máx %.0f)\n",
+        std::printf("prueba larga: %s  memoria %.0f → %.0f MB (máx %.0f)  cuerpos rearmados %llu\n",
                     soakFailure.empty() ? "OK" : soakFailure.c_str(), soakMemStart, residentMB(),
-                    std::max(soakMemMax, residentMB()));
+                    std::max(soakMemMax, residentMB()), static_cast<unsigned long long>(world.numericalFaults()));
     }
     if (a.gpu && std::getenv("BIO_GPU_TIMING")) {
         SetTraceLogLevel(LOG_INFO);

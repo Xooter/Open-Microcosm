@@ -774,8 +774,13 @@ void World::finishBodies() {
     for (RingBody* body : bodyList_)
         soft_body::remesh(*body, bodies_, kMembraneSpacing);
 
-#pragma omp parallel for schedule(dynamic, 1)
+    std::uint64_t faults = 0;
+#pragma omp parallel for schedule(dynamic, 1) reduction(+ : faults)
     for (std::ptrdiff_t b = 0; b < nb; ++b) {
+        // Red de seguridad: un cuerpo con posiciones no finitas se rearma antes de que el NaN pase
+        // al metabolismo y a la química (no debería pasar; se cuenta y se exporta).
+        if (soft_body::recoverNonFinite(*bodyList_[b], bodies_))
+            ++faults;
         // Estadísticas (fuera de pantalla): no resuelven restricciones, así que el crecimiento
         // se refleja con un escalado uniforme alrededor del centroide.
         if (bodyNear_[b] == 0)
@@ -790,6 +795,7 @@ void World::finishBodies() {
         soft_body::refresh(*bodyList_[b], bodies_);
         soft_body::wrap(*bodyList_[b], bodies_, width_, height_);
     }
+    numericalFaults_ += faults;
 }
 
 void World::classifyLod() {
@@ -984,24 +990,24 @@ void World::resolveApproach(const ApproachPair& pr, float dt, float scanRange, A
         }
         return false;
     };
-    const Vec2 awayA = ab.need > 0.0f ? ab.n : ba.n * -1.0f; // hacia dónde se aleja A
+    // Una sola corrección por par: `ab` y `ba` miden el MISMO acercamiento visto desde cada lado
+    // (con normales opuestas). Sumar las dos lo corregía dos veces: la velocidad relativa se
+    // invertía en vez de anularse y, encadenado entre células apretadas (A empuja a B, que empuja a
+    // C...), las velocidades crecían sin límite (~10⁵ µm/s) hasta romper los cuerpos. Se quita el
+    // peor de los dos, a lo largo de su normal.
+    const bool fromA = ab.need >= ba.need;
+    const float need = fromA ? ab.need : ba.need;
+    if (need <= 0.0f)
+        return;
+    const Vec2 awayA = fromA ? ab.n : ba.n * -1.0f; // de B hacia A: hacia dónde se aleja A
     float shareA = muA / (muA + muB);
     if (againstGlass(A, awayA))
         shareA = 0.0f;
     else if (againstGlass(B, awayA * -1.0f))
         shareA = 1.0f;
     const float shareB = 1.0f - shareA;
-    Vec2 dA, dB;
-    if (ab.need > 0.0f) {
-        dA = dA + ab.n * (shareA * ab.need);
-        dB = dB - ab.n * (shareB * ab.need);
-    }
-    if (ba.need > 0.0f) {
-        dB = dB + ba.n * (shareB * ba.need);
-        dA = dA - ba.n * (shareA * ba.need);
-    }
-    if (dot(dA, dA) == 0.0f && dot(dB, dB) == 0.0f)
-        return;
+    const Vec2 dA = awayA * (shareA * need);
+    const Vec2 dB = awayA * (-shareB * need);
     // Traslación rígida: todo el cuerpo (membrana y orgánulos).
     auto drive = [&](const RingBody& body, Vec2 dv) {
         for (std::uint32_t s : body.ring) {

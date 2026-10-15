@@ -1,5 +1,7 @@
 #include "sim/soft_body.hpp"
 
+#include "core/finite.hpp"
+
 #include "sim/polygon.hpp"
 
 #include <algorithm>
@@ -219,6 +221,30 @@ void confineGranules(RingBody& body, BodyParticles& bp) {
         bp.x[s] = p.x;
         bp.y[s] = p.y;
     }
+}
+
+bool recoverNonFinite(RingBody& body, BodyParticles& bp) {
+    bool bad = false;
+    for (std::uint32_t s : body.ring)
+        bad |= !finiteNumber(bp.x[s]) || !finiteNumber(bp.y[s]);
+    for (std::uint32_t s : body.interior)
+        bad |= !finiteNumber(bp.x[s]) || !finiteNumber(bp.y[s]);
+    if (!bad)
+        return false;
+    const float c = std::cos(body.angle), sn = std::sin(body.angle);
+    for (std::size_t i = 0; i < body.ring.size(); ++i) {
+        const Vec2 p = body.centroid + rotate(body.restRing[i], c, sn);
+        bp.x[body.ring[i]] = p.x;
+        bp.y[body.ring[i]] = p.y;
+        bp.vx[body.ring[i]] = bp.vy[body.ring[i]] = 0.0f;
+    }
+    for (std::size_t k = 0; k < body.interior.size(); ++k) {
+        const Vec2 p = body.centroid + rotate(k < body.restInterior.size() ? body.restInterior[k] : Vec2{}, c, sn);
+        bp.x[body.interior[k]] = p.x;
+        bp.y[body.interior[k]] = p.y;
+        bp.vx[body.interior[k]] = bp.vy[body.interior[k]] = 0.0f;
+    }
+    return true;
 }
 
 void refresh(RingBody& body, const BodyParticles& bp) {

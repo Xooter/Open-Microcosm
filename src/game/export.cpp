@@ -307,6 +307,8 @@ std::string runJson(const World& world, const Run& run, const PlateSpec& plate, 
         j.string("gpu", provenance.gpu);
     j.boolean("lod", provenance.lod);
     j.string("maquina", machineDescription());
+    // Cuerpos que la red de seguridad tuvo que rearmar (posiciones no finitas): debería ser 0.
+    j.number("fallas_numericas", static_cast<double>(world.numericalFaults()));
     // Intervenciones del usuario (van en la escena .plate que acompaña la exportación).
     j.number("intervenciones", static_cast<double>(run.interventions().entries().size()));
     char hash[20];

@@ -63,6 +63,10 @@ void predict(RingBody& body, BodyParticles& bp, float h);
 void solve(RingBody& body, BodyParticles& bp, const SoftBodyTuning& tuning, float h);
 void confineGranules(RingBody& body, BodyParticles& bp);
 void refresh(RingBody& body, const BodyParticles& bp);
+// Red de seguridad: si alguna partícula del cuerpo dejó de ser finita, lo rearma en su forma de
+// reposo en el último centroide y ángulo válidos (los de la última `refresh`), sin velocidad.
+// Devuelve true si tuvo que hacerlo (el mundo lo cuenta: no debería pasar nunca).
+bool recoverNonFinite(RingBody& body, BodyParticles& bp);
 // Traslada el cuerpo entero si su centroide salió del mundo toroidal.
 void wrap(RingBody& body, BodyParticles& bp, float width, float height);
 // Pared de la placa (vidrio, no cede): cada punto de membrana que la cruza vuelve adentro.

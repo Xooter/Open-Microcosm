@@ -319,6 +319,8 @@ class World {
     float simTime() const { return simTime_; }
     // Pasos dados desde la creación (las intervenciones se anotan con el paso en que se aplican).
     std::uint64_t stepIndex() const { return step_; }
+    // Cuerpos rearmados por la red de seguridad numérica (posiciones no finitas). Debería ser 0.
+    std::uint64_t numericalFaults() const { return numericalFaults_; }
 
     Fluid& fluid() { return fluid_; }
     const Fluid& fluid() const { return fluid_; }
@@ -648,6 +650,7 @@ class World {
     float stirRadius_ = 30.0f;
 
     float slowDiffusion_ = 0.0f;
+    std::uint64_t numericalFaults_ = 0;
     std::uint64_t step_ = 0, spawnCounter_ = 0, toolCounter_ = 0, cellCounter_ = 0;
     float spawnAccumulator_ = 0.0f;
     float simTime_ = 0.0f;
