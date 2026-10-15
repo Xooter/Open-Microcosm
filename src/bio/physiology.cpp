@@ -66,6 +66,29 @@ SourcedValue readRate(const toml::table& t, const std::string& species, const ch
 
 namespace {
 
+// Concentración (media saturación) en µM: sin conversión de temperatura.
+SourcedValue readConcentration(const toml::table& t, const std::string& species, const char* key) {
+    SourcedValue s;
+    const toml::table* e = t[key].as_table();
+    if (!e)
+        return s;
+    const auto v = (*e)["valor"].value<double>();
+    const auto unit = (*e)["unidad"].value<std::string>();
+    if (!v || !unit || *unit != "µM") {
+        gWarnings.push_back(species + "." + key + ": falta valor o la unidad no es µM");
+        return s;
+    }
+    s.published = s.value = static_cast<float>(*v);
+    s.unit = *unit;
+    s.temperature = static_cast<float>((*e)["temperatura"].value_or(20.0));
+    s.source = (*e)["fuente"].value_or(std::string());
+    s.estimate = (*e)["estimacion"].value_or(false);
+    s.present = s.value > 0.0f;
+    if (s.source.empty())
+        gWarnings.push_back(species + "." + key + ": sin fuente");
+    return s;
+}
+
 // Con gLoadMutex tomado. Marca la tabla como cargada al final (también si falla: no se reintenta
 // en cada consulta), así ningún hilo la lee a medio llenar.
 bool loadLocked(const std::string& path, std::string* error) {
@@ -94,6 +117,8 @@ bool loadLocked(const std::string& path, std::string* error) {
             continue;
         }
         gTable[id].growthMax = readRate(*t, std::string(name.str()), "crecimiento_maximo");
+        gTable[id].phosphorusHalfSaturation = readConcentration(*t, std::string(name.str()), "p_media_saturacion");
+        gTable[id].siliconHalfSaturation = readConcentration(*t, std::string(name.str()), "si_media_saturacion");
     }
     gLoaded.store(true, std::memory_order_release);
     return true;

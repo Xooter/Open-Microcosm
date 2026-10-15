@@ -31,7 +31,7 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
     // Amoeba proteus (chica): ~180 µm, fagocita algas y ciliados.
     {.name = "Amoeba", .locomotion = LocomotionType::Pseudopod,
      .spec = makeSpec(90.0f, 90.0f, 0.0f, 188, 176, 160, 0.2f), .feeding = FeedingMode::Phagocytosis,
-     .preyMask = speciesBit(SpeciesId::Euglena) | speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Paramecium) | speciesBit(SpeciesId::Euplotes) | speciesBit(SpeciesId::Navicula) | speciesBit(SpeciesId::Pediastrum),
+     .preyMask = speciesBit(SpeciesId::Euglena) | speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Paramecium) | speciesBit(SpeciesId::ParameciumAurelia) | speciesBit(SpeciesId::Euplotes) | speciesBit(SpeciesId::Navicula) | speciesBit(SpeciesId::Asterionella) | speciesBit(SpeciesId::Cyclotella) | speciesBit(SpeciesId::Pediastrum),
      .initialCount = 2, .handlingHours = 1.5f, .tMin = 10.0f, .tMax = 30.0f},
     // Chlamydomonas reinhardtii: ~10 µm, dos flagelos, un gran cloroplasto en copa; se duplica
     // en ~6–8 h con buena luz (3× la tasa de Euglena). Se divide dentro de la pared madre en
@@ -45,7 +45,7 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
     // enteros. Cuando pasa hambre se enquista.
     {.name = "Didinium", .locomotion = LocomotionType::Cilia,
      .spec = makeSpec(55.0f, 40.0f, 8.0f, 176, 168, 140), .feeding = FeedingMode::Raptorial,
-     .preyMask = speciesBit(SpeciesId::Paramecium), .encysts = true, .initialCount = 2, .handlingHours = 3.0f,
+     .preyMask = speciesBit(SpeciesId::Paramecium) | speciesBit(SpeciesId::ParameciumAurelia), .encysts = true, .initialCount = 2, .handlingHours = 3.0f,
      .tMin = 10.0f, .tMax = 30.0f, .cyclosis = 2.0f},
     // Vorticella campanula: campana de ~80 µm sobre un tallo de ~150 µm con espasmonema (se
     // contrae en ~10 ms, el movimiento más rápido conocido en una célula). Filtra bacterias con
@@ -59,14 +59,14 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
     {.name = "Stentor", .locomotion = LocomotionType::Cilia,
      .spec = makeSpec(100.0f, 55.0f, 6.0f, 120, 150, 200, 0.32f, 2.0f, 0.8f), .speedScale = 0.5f,
      .feeding = FeedingMode::OralGroove, .initialCount = 2, .sessile = true, .stalkLength = 20.0f,
-     .mouthPreyMask = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Euglena) | speciesBit(SpeciesId::Navicula),
+     .mouthPreyMask = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Euglena) | speciesBit(SpeciesId::Navicula) | speciesBit(SpeciesId::Asterionella) | speciesBit(SpeciesId::Cyclotella),
      .handlingHours = 0.5f, .tMin = 5.0f, .tMax = 28.0f, .cyclosis = 3.0f},
     // Podophrya fixa (suctorio): esfera de ~35 µm sobre un tallo; sin cilios de adulto. Sus
     // tentáculos capitados se adhieren a los ciliados que pasan y les succionan el citoplasma.
     {.name = "Podophrya", .locomotion = LocomotionType::Cilia,
      .spec = makeSpec(18.0f, 17.0f, 10.0f, 176, 180, 170), .speedScale = 0.5f,
      .feeding = FeedingMode::Tentacles,
-     .preyMask = speciesBit(SpeciesId::Paramecium) | speciesBit(SpeciesId::Euplotes) | speciesBit(SpeciesId::Vorticella),
+     .preyMask = speciesBit(SpeciesId::Paramecium) | speciesBit(SpeciesId::ParameciumAurelia) | speciesBit(SpeciesId::Euplotes) | speciesBit(SpeciesId::Vorticella),
      .initialCount = 2, .sessile = true, .stalkLength = 40.0f, .tentacleReach = 45.0f, .handlingHours = 4.0f,
      .tMin = 5.0f, .tMax = 30.0f},
     // Euplotes patella: hipotrico aplanado de ~90 µm que "camina" sobre el vidrio con sus
@@ -75,14 +75,14 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
      .spec = makeSpec(45.0f, 32.0f, 10.0f, 178, 176, 160), .speedScale = 0.25f,
      .feeding = FeedingMode::OralGroove,
      .fleeMask = speciesBit(SpeciesId::Lacrymaria) | speciesBit(SpeciesId::Didinium), .initialCount = 4,
-     .mouthPreyMask = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Navicula), .walker = true,
+     .mouthPreyMask = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Navicula) | speciesBit(SpeciesId::Asterionella) | speciesBit(SpeciesId::Cyclotella), .walker = true,
      .handlingHours = 1.0f, .tMin = -2.0f, .tMax = 32.0f, .salinityMax = 45.0f, .cyclosis = 2.0f},
     // Arcella vulgaris: ameba con testa (caparazón orgánico pardo de ~100 µm). Pseudópodos
     // lentos por la abertura; come bacterias y algas; la testa la protege de las amebas.
     {.name = "Arcella", .locomotion = LocomotionType::Pseudopod,
      .spec = makeSpec(50.0f, 50.0f, 0.0f, 196, 170, 120, 0.25f), .speedScale = 0.5f,
      .feeding = FeedingMode::Phagocytosis,
-     .preyMask = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Euglena) | speciesBit(SpeciesId::Navicula),
+     .preyMask = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Euglena) | speciesBit(SpeciesId::Navicula) | speciesBit(SpeciesId::Asterionella) | speciesBit(SpeciesId::Cyclotella),
      .initialCount = 3, .handlingHours = 1.0f, .tMin = 0.0f, .tMax = 30.0f},
     // Lacrymaria olor ("lágrima de cisne"): cuerpo de ~100 µm y un cuello que se estira hasta
     // 7–8 veces ese largo en segundos para atrapar ciliados y flagelados chicos.
@@ -162,6 +162,25 @@ const SpeciesInfo kSpecies[kSpeciesCount] = {
      .filamentCells = 7, .fragmentationPerHour = 0.02f, .zoosporeChance = 0.25f, .dryMassScale = 0.3f,
      .tMin = 5.0f, .tMax = 32.0f,
      .cyclosis = 1.5f},
+    // Paramecium aurelia: ~130 × 40 µm, más chico que P. caudatum; mismo modo de vida (bacterívoro
+    // por surco oral). En el cultivo mixto de Gause (1934) excluye a P. caudatum. (Simplificación:
+    // la conjugación solo está modelada en P. caudatum.)
+    {.name = "Paramecium aurelia", .locomotion = LocomotionType::Cilia,
+     .spec = makeSpec(65.0f, 20.0f, 8.0f, 168, 180, 142), .feeding = FeedingMode::OralGroove,
+     .fleeMask = speciesBit(SpeciesId::Didinium) | speciesBit(SpeciesId::Lacrymaria), .chemokinesis = true,
+     .acidTrap = true, .initialCount = 20, .tMin = 5.0f, .tMax = 35.0f, .cyclosis = 4.0f},
+    // Asterionella formosa: diatomea pennada planctónica, células de ~60 × 3 µm (sin rafe: no se
+    // desliza). En la naturaleza forma colonias en estrella de ~8 células; acá células sueltas, y
+    // algo más anchas (6 µm) para que el cuerpo blando sea estable. Tilman (1977).
+    {.name = "Asterionella", .locomotion = LocomotionType::Cilia,
+     .spec = makeSpec(32.0f, 3.0f, 40.0f, 206, 186, 118, 0.3f, 1.0f), .speedScale = 0.0f,
+     .photosynthesisScale = 1.5f, .initialCount = 20, .chloroplasts = true, .frustule = true, .phMin = 6.0f,
+     .tMin = 2.0f, .tMax = 30.0f},
+    // Cyclotella meneghiniana: diatomea céntrica planctónica, disco de ~15 µm, inmóvil. Tilman (1977).
+    {.name = "Cyclotella", .locomotion = LocomotionType::Cilia,
+     .spec = makeSpec(8.0f, 8.0f, 40.0f, 204, 182, 112, 0.3f), .speedScale = 0.0f,
+     .photosynthesisScale = 1.5f, .initialCount = 20, .chloroplasts = true, .frustule = true, .phMin = 6.0f,
+     .tMin = 2.0f, .tMax = 35.0f},
 };
 
 } // namespace
@@ -193,6 +212,9 @@ constexpr SpeciesChemistry kChemistry[kSpeciesCount] = {
     {Storage::Starch, CellWall::Cellulose},       // Mougeotia
     {Storage::Starch, CellWall::Cellulose},       // Zygnema
     {Storage::Starch, CellWall::Cellulose},       // Oedogonium
+    {Storage::Glycogen, CellWall::None},          // Paramecium aurelia
+    {Storage::Chrysolaminarin, CellWall::Silica}, // Asterionella
+    {Storage::Chrysolaminarin, CellWall::Silica}, // Cyclotella
 };
 
 } // namespace

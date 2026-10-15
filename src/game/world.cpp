@@ -2431,7 +2431,10 @@ void World::updateLifecycle(float dt) {
         const Heredity* her = registry_.try_get<Heredity>(e);
         // µmax de la especie (assets/species/fisiologia.toml, con su fuente) relativo al valor
         // general del metabolismo; sin dato, el general.
-        const SourcedValue& mu = speciesPhysiology(sid).growthMax;
+        const SpeciesPhysiology& physio = speciesPhysiology(sid);
+        in.phosphorusHalfSaturation = physio.phosphorusHalfSaturation.present ? physio.phosphorusHalfSaturation.value : 0.0f;
+        in.siliconHalfSaturation = physio.siliconHalfSaturation.present ? physio.siliconHalfSaturation.value : 0.0f;
+        const SourcedValue& mu = physio.growthMax;
         const float speciesGrowth =
             mu.present && metabolismParams_.growthPerHourMax > 0.0f ? mu.value / metabolismParams_.growthPerHourMax : 1.0f;
         in.growthScale = speciesGrowth;

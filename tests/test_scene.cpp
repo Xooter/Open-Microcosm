@@ -56,9 +56,10 @@ std::vector<Intervention> liveSession(const PlateSpec& plate, std::uint64_t& has
         iv.pos = c;
         if (step == 0) {
             iv.kind = InterventionKind::Spawn;
-            iv.index = static_cast<int>(SpeciesId::Paramecium);
+            iv.index = static_cast<int>(BeingKind::Species);
+            iv.v[0] = static_cast<float>(SpeciesId::Paramecium);
             log.record(world, iv);
-            iv.index = static_cast<int>(SpeciesId::Euglena);
+            iv.v[0] = static_cast<float>(SpeciesId::Euglena);
             iv.pos = c + Vec2{60.0f, 20.0f};
             log.record(world, iv);
         }

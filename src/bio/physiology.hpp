@@ -14,7 +14,7 @@ struct SourcedValue {
     bool present = false;
     float value = 0.0f;       // en la unidad interna, a 20 °C (crecimiento: 1/h biológica)
     float published = 0.0f;   // como figura en la fuente
-    std::string unit;         // la de la fuente: "1/h", "1/dia", "h" (duplicación), "dia" (duplicación)
+    std::string unit;         // la de la fuente: "1/h", "1/dia", "h" o "dia" (duplicación), "µM"
     float temperature = 20.0f; // de la medición [°C]
     std::string source;
     bool estimate = false;
@@ -22,6 +22,9 @@ struct SourcedValue {
 
 struct SpeciesPhysiology {
     SourcedValue growthMax; // tasa máxima de crecimiento de la biomasa [1/h biológica, 20 °C]
+    // Medias saturaciones de Monod [µM] (sin corrección de temperatura): Tilman (1977).
+    SourcedValue phosphorusHalfSaturation;
+    SourcedValue siliconHalfSaturation;
 };
 
 // La de la especie (cargada la primera vez desde assets/species/fisiologia.toml).

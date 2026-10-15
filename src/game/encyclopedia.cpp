@@ -82,6 +82,9 @@ const char* speciesBlurb(SpeciesId id) {
     case SpeciesId::Mougeotia: return "Alga filamentosa con un cloroplasto en placa que gira: de frente con poca luz y de canto con mucha.";
     case SpeciesId::Zygnema: return "Alga filamentosa con dos cloroplastos en estrella por celula. Vive en charcas y sobre el suelo humedo.";
     case SpeciesId::Oedogonium: return "Alga filamentosa: cada division deja un anillo (capuchon) en la pared, asi se cuentan las veces que se dividio.";
+    case SpeciesId::ParameciumAurelia: return "Paramecio mas chico (~130 um). En el cultivo mixto de Gause (1934) desplaza a P. caudatum: exclusion competitiva.";
+    case SpeciesId::Asterionella: return "Diatomea en aguja que en la naturaleza forma estrellas de 8 celulas. Muy eficiente con poco fosforo (Tilman 1977).";
+    case SpeciesId::Cyclotella: return "Diatomea en disco, planctonica. Muy eficiente con poca silice: gana a Asterionella cuando la silice limita (Tilman 1977).";
     default: return "";
     }
 }

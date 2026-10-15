@@ -240,6 +240,7 @@ const BodyPlan& virusPlan(VirusKind kind) { return kVirusPlans[static_cast<int>(
 const BodyPlan& speciesPlan(SpeciesId id) {
     switch (id) {
     case SpeciesId::Paramecium:
+    case SpeciesId::ParameciumAurelia:
     case SpeciesId::Didinium:
     case SpeciesId::Vorticella:
     case SpeciesId::Stentor:
@@ -257,7 +258,9 @@ const BodyPlan& speciesPlan(SpeciesId id) {
     case SpeciesId::Zygnema:
     case SpeciesId::Oedogonium:
     case SpeciesId::Pediastrum: return kGreenPlan;
-    case SpeciesId::Navicula: return kDiatomPlan;
+    case SpeciesId::Navicula:
+    case SpeciesId::Asterionella:
+    case SpeciesId::Cyclotella: return kDiatomPlan;
     case SpeciesId::Candida: return kYeastPlan;
     case SpeciesId::Trichonympha: return kParabasalidPlan;
     case SpeciesId::Count: break;

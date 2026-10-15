@@ -695,7 +695,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             } else if (sid == SpeciesId::Oedogonium) {
                 const Lineage* lin = reg.try_get<Lineage>(e);
                 drawReticulatePlastid(body, lin ? static_cast<int>(std::min<std::uint32_t>(4, lin->generation)) : 0, px);
-            } else if (sid == SpeciesId::Navicula) {
+            } else if (sid == SpeciesId::Navicula || sid == SpeciesId::Asterionella || sid == SpeciesId::Cyclotella) {
                 drawFrustule(body, px);
             } else if (sid == SpeciesId::Volvox) {
                 const Metabolism* vm = reg.try_get<Metabolism>(e);
@@ -807,7 +807,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     if (sid == SpeciesId::Spirogyra || sid == SpeciesId::Mougeotia || sid == SpeciesId::Zygnema ||
                         (sid == SpeciesId::Oedogonium && !reg.all_of<Zoospore>(e)))
                         break; // su cloroplasto se dibuja entero (cinta, placa, estrellas o red)
-                    drawCircleFast({bp.x[s], bp.y[s]}, r, sid == SpeciesId::Navicula ? kGoldenPlastid : kChloroplast, px);
+                    drawCircleFast({bp.x[s], bp.y[s]}, r, (sid == SpeciesId::Navicula || sid == SpeciesId::Asterionella || sid == SpeciesId::Cyclotella) ? kGoldenPlastid : kChloroplast, px);
                     break;
                 case OrganelleTag::Lysosome: {
                     Color fill = kLysosome; // pH ~4,7: los lisosomas son ácidos

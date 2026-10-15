@@ -48,3 +48,54 @@ unidad = "1/h"
 temperatura = 30.0
 fuente = "Cultivo de E. gracilis en digerido de fermentación metánica (10 %), 150 µmol m⁻² s⁻¹: µmax 0,047/h a 30 °C."
 estimacion = true
+
+[ "Paramecium aurelia".crecimiento_maximo ]
+# Ajuste logístico (r) al monocultivo de P. aurelia de la fig. 22 (datos en gauseR):
+# r = 0,707 ± 0,090 /día, K = 222 (volumen relativo).
+valor = 0.707
+unidad = "1/dia"
+temperatura = 26.0
+fuente = "Gause, G. F. (1934). The Struggle for Existence, fig. 22 (P. aurelia en monocultivo). Temperatura del cultivo sin verificar (se asume 26 °C)."
+estimacion = true
+
+# Diatomeas de Tilman (1977, Ecology 58: 338-348) con las constantes de Tilman & Kilham (1976,
+# J. Phycol. 12: 375-383, doi 10.1111/j.1529-8817.1976.tb02860.x). SIN VERIFICAR contra las
+# tablas originales: confirmado solo que Asterionella tiene la K de P más baja (gana con P
+# limitante) y Cyclotella la de Si más baja (gana con Si limitante).
+[Asterionella.crecimiento_maximo]
+valor = 1.1
+unidad = "1/dia"
+temperatura = 24.0
+fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383. SIN VERIFICAR."
+estimacion = true
+
+[Asterionella.p_media_saturacion]
+valor = 0.04
+unidad = "µM"
+fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con fosfato). SIN VERIFICAR."
+estimacion = true
+
+[Asterionella.si_media_saturacion]
+valor = 3.9
+unidad = "µM"
+fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con silicato). SIN VERIFICAR."
+estimacion = true
+
+[Cyclotella.crecimiento_maximo]
+valor = 1.1
+unidad = "1/dia"
+temperatura = 24.0
+fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383. SIN VERIFICAR."
+estimacion = true
+
+[Cyclotella.p_media_saturacion]
+valor = 0.25
+unidad = "µM"
+fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con fosfato). SIN VERIFICAR."
+estimacion = true
+
+[Cyclotella.si_media_saturacion]
+valor = 1.4
+unidad = "µM"
+fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con silicato). SIN VERIFICAR."
+estimacion = true

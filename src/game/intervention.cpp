@@ -67,11 +67,13 @@ bool applyIntervention(World& world, const Intervention& iv) {
     case InterventionKind::Detritus: world.dropDetritus(iv.pos); return true;
     case InterventionKind::Erase: world.removeCellAt(iv.pos); return true;
     case InterventionKind::Lyse: world.lyseAt(iv.pos); return true;
-    case InterventionKind::Spawn:
-        if (iv.index < 0 || iv.index >= kBeingCount)
+    case InterventionKind::Spawn: {
+        const int species = static_cast<int>(iv.v[0]);
+        if (iv.index < 0 || iv.index >= static_cast<int>(BeingKind::Count) || species < 0 || species >= kSpeciesCount)
             return false;
-        world.spawnBeing(beingAt(iv.index), iv.pos);
+        world.spawnBeing({static_cast<BeingKind>(iv.index), static_cast<SpeciesId>(species)}, iv.pos);
         return true;
+    }
     case InterventionKind::Ink:
     case InterventionKind::Dropper:
         return true; // pinceles: los aplica InterventionLog::beforeStep

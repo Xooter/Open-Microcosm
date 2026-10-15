@@ -14,7 +14,7 @@ namespace {
 // Algas que parasitan los quitridios (Rhizophydium spp. infectan diatomeas y clorofitas; hay
 // quitridios específicos de Oedogonium y de las zignematales).
 constexpr std::uint32_t kChytridHosts =
-    speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Navicula) | speciesBit(SpeciesId::Pediastrum) |
+    speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Navicula) | speciesBit(SpeciesId::Asterionella) | speciesBit(SpeciesId::Cyclotella) | speciesBit(SpeciesId::Pediastrum) |
     speciesBit(SpeciesId::Mougeotia) | speciesBit(SpeciesId::Zygnema) | speciesBit(SpeciesId::Oedogonium);
 
 // Fotobiontes de los líquenes: algas verdes (los líquenes reales usan Trebouxia y afines).

@@ -32,6 +32,9 @@ enum class SpeciesId : std::uint8_t {
     Mougeotia,
     Zygnema,
     Oedogonium,
+    ParameciumAurelia, // Gause (1934): excluye a P. caudatum en cultivo mixto
+    Asterionella,      // Tilman (1977): diatomeas que compiten por P y Si
+    Cyclotella,
     Count
 };
 inline constexpr int kSpeciesCount = static_cast<int>(SpeciesId::Count);

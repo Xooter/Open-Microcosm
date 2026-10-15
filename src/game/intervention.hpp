@@ -21,7 +21,8 @@ enum class InterventionKind : std::uint8_t {
     Detritus,      // pos
     Erase,         // pos
     Lyse,          // pos
-    Spawn,         // pos, index = ser del catálogo (beingAt)
+    Spawn,         // pos, index = BeingKind, v[0] = SpeciesId (estables: el índice del catálogo
+                   // cambia cuando se agregan especies)
     Ink,           // pincel: active, pos, v[0] = radio
     Dropper,       // pincel: active, pos, index = soluto, v[0] = radio, v[1] = cantidad relativa
     Stir,          // estado: active, pos, v[0..1] = velocidad, v[2] = radio

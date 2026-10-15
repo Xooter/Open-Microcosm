@@ -845,7 +845,9 @@ void App::toolInput(float dt, const Vec2& pos) {
     case Tool::Spawn:
         if (pressed && catalog.armed >= 0) {
             Intervention iv = at(InterventionKind::Spawn);
-            iv.index = catalog.armed;
+            const Being b = beingAt(catalog.armed);
+            iv.index = static_cast<int>(b.kind);
+            iv.v[0] = static_cast<float>(static_cast<int>(b.species));
             intervene(iv);
         }
         break;

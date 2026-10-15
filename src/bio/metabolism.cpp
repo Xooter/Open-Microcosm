@@ -48,10 +48,11 @@ MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const
     // Fotótrofas: captan fosfato del agua hasta 1,5 veces su cuota (consumo de lujo).
     if (m.photosynthetic) {
         const float quota = p.phosphorusRatio * m.biomass;
+        const float kP = in.phosphorusHalfSaturation > 0.0f ? in.phosphorusHalfSaturation : p.phosphorusHalfSaturation;
         if (m.phosphorus < 1.5f * quota) {
             const float c = std::max(0.0f, in.phosphate);
             const float take = std::min(1.5f * quota - m.phosphorus,
-                                        p.phosphorusUptakePerHour * quota * c / (c + p.phosphorusHalfSaturation) * hours);
+                                        p.phosphorusUptakePerHour * quota * c / (c + kP) * hours);
             m.phosphorus += take;
             out.phosphateTaken = take;
         }
@@ -76,7 +77,9 @@ MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const
         taken = std::min(1.5f * q - store, perHour * q * c / (c + halfSat) * hours);
         store += taken;
     };
-    uptake(m.silicon, m.needsSilicon, p.siliconRatio, p.siliconHalfSaturation, p.siliconUptakePerHour, in.silicate,
+    uptake(m.silicon, m.needsSilicon, p.siliconRatio,
+           in.siliconHalfSaturation > 0.0f ? in.siliconHalfSaturation : p.siliconHalfSaturation, p.siliconUptakePerHour,
+           in.silicate,
            out.siliconTaken);
     uptake(m.iron, m.photosynthetic, p.ironRatio, p.ironHalfSaturation, p.ironUptakePerHour, in.iron, out.ironTaken);
     uptake(m.vitamin, m.needsVitamin, p.vitaminRatio, p.vitaminHalfSaturation, p.vitaminUptakePerHour, in.vitamin,
