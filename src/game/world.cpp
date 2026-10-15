@@ -2,6 +2,7 @@
 
 #include "bio/physiology.hpp"
 
+#include "core/finite.hpp"
 #include "core/profiling.hpp"
 #include "core/rng.hpp"
 #include "core/units.hpp"
@@ -2803,6 +2804,17 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
     // Cada hija vuelve a la forma de su especie, a su tamaño actual.
     const CellShape shape = registry_.get<CellShape>(cell);
     const bool filament = speciesInfo(speciesOfEntity(registry_, cell)).filament;
+    // Área de cada hija: la de su mitad, pero nunca menos del 20 % del total (un surco que corta
+    // casi en el borde dejaba una mitad sin área: se rearmaba con radios nulos y la hija nacía con
+    // todo en NaN). La restricción de área la infla hasta su forma.
+    float totalArea = std::abs(soft_body::area(body, bodies_)) + std::abs(soft_body::area(child_body, bodies_));
+    if (!finiteNumber(totalArea) || totalArea <= 0.0f)
+        totalArea = std::abs(body.restArea);
+    auto halfArea = [&](const RingBody& b) {
+        const float a = std::abs(soft_body::area(b, bodies_));
+        return finiteNumber(a) ? std::max(a, 0.2f * totalArea) : 0.5f * totalArea;
+    };
+    const float targetA = halfArea(body), targetB = halfArea(child_body);
     auto reshape = [&](RingBody& b) {
         if (b.membraneReservoirRate > 0.0f) {
             soft_body::makePlastic(b, bodies_, b.membraneReservoirRate);
@@ -2813,7 +2825,7 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
         // área de la hija (la forma a la que vuelve), no el de la geometría actual: una hija
         // nacida estirada o enredada tenía miles de puntos, se estiraba más y sus hijas más todavía
         // (anillos de 300 → 5000 puntos en pocas divisiones, cruzando toda la placa).
-        const float a = std::abs(soft_body::area(b, bodies_));
+        const float a = &b == &body ? targetA : targetB;
         const float aspect = std::max(1e-3f, shape.radiusX / std::max(1e-3f, shape.radiusY));
         const float ry = std::sqrt(a / (units::kPi * aspect)), rx = aspect * ry;
         const float h = (rx - ry) * (rx - ry) / std::max(1e-6f, (rx + ry) * (rx + ry));
@@ -2834,9 +2846,7 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
     };
     reshape(body);
     reshape(child_body);
-    const float areaA = std::abs(soft_body::area(body, bodies_));
-    const float areaB = std::abs(soft_body::area(child_body, bodies_));
-    const float fA = areaA / (areaA + areaB);
+    const float fA = targetA / (targetA + targetB); // reparto de la materia: por área (nunca 0/0)
 
     // Componentes.
     const Dividing dv = registry_.get<Dividing>(cell);

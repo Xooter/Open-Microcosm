@@ -100,3 +100,58 @@ TEST_CASE("validación: µmax de las heterótrofas en cultivo sin limitación" *
         CHECK(std::abs(sim - mu.value) / mu.value < 0.25);
     }
 }
+
+namespace {
+
+// Tilman (1977): Asterionella y Cyclotella juntas en cultivo en lote con luz. Devuelve la fracción
+// de la biomasa de Asterionella al agotarse el recurso limitante. Columna de agua de 2 cm
+// (gapHeight): en una película de 0,1 mm toda la placa tiene menos fósforo que una sola célula
+// (cuota ~0,04 pmol; 10⁴–10⁵ células/mL en un cultivo real).
+double tilmanAsterionellaShare(bool siLimited) {
+    WorldConfig c;
+    c.gridX = c.gridY = 128;
+    c.bacteria = 0;
+    c.detritus = 0;
+    c.cyanoFilaments = 0;
+    c.saprolegnia = c.chytridClusters = 0;
+    c.medium.temperature = 20.0f;
+    c.medium.detritusSpawnRate = 0.0f;
+    c.medium.phage = 0.0f;
+    c.bdellovibrioFraction = 0.0f;
+    c.seed = 1977;
+    c.medium.phosphate = siLimited ? 10.0f : 0.5f;
+    c.medium.silicate = siLimited ? 2.0f : 100.0f;
+    World world(c);
+    world.bioTimeScale() = 3000.0f;
+    world.fluid().gapHeight = 20000.0f;
+    const Vec2 ctr = {world.width() * 0.5f, world.height() * 0.5f};
+    for (int k = 0; k < 16; ++k) {
+        const float a = 2.4f * k, r = world.dish().radius * (0.15f + 0.6f * std::fmod(0.618f * k, 1.0f));
+        world.spawnBeing({BeingKind::Species, k % 2 ? SpeciesId::Cyclotella : SpeciesId::Asterionella},
+                         ctr + Vec2{r * std::cos(a), r * std::sin(a)});
+    }
+    ChemField& limiting = siLimited ? world.silicateField() : world.phosphateField();
+    const float start = world.meanConcentration(limiting);
+    // Hasta que el recurso limitante cae al 5 % (o 150 h biológicas).
+    while (world.meanConcentration(limiting) > 0.05f * start && world.simTime() * world.bioScale() / 3600.0f < 150.0f)
+        world.step(kDt);
+    double ast = 0.0, cyc = 0.0;
+    for (const auto [e, m, sp] : world.registry().view<const Metabolism, const Species>().each()) {
+        ast += sp.id == SpeciesId::Asterionella ? m.biomass : 0.0;
+        cyc += sp.id == SpeciesId::Cyclotella ? m.biomass : 0.0;
+    }
+    return ast / (ast + cyc);
+}
+
+} // namespace
+
+TEST_CASE("validación: Tilman — gana Asterionella con P limitante y Cyclotella con Si limitante" *
+          doctest::test_suite("validacion")) {
+    // Resultado cualitativo confirmado de Tilman (1977, Ecology 58: 338-348). Las constantes de
+    // Monod de fisiologia.toml están SIN VERIFICAR contra Tilman & Kilham (1976).
+    const double pLimited = tilmanAsterionellaShare(false);
+    const double siLimited = tilmanAsterionellaShare(true);
+    MESSAGE("fracción de Asterionella: con P limitante " << pLimited << ", con Si limitante " << siLimited);
+    CHECK(pLimited > 0.5);
+    CHECK(siLimited < 0.5);
+}
