@@ -20,6 +20,9 @@ struct Solute {
 constexpr Solute kSolutes[] = {
     {"Fosfato", 50.0f},    {"Nitrógeno inorgánico", 500.0f}, {"Sílice (Si)", 200.0f},
     {"Hierro (Fe)", 1.0f}, {"Vitamina B12", 0.002f},         {"Materia orgánica", 20.0f},
+    // Agua cargada de CO2 (Jennings 1906): ácido débil, acidifica y atrae a Paramecium. Al final de
+    // la lista: el índice queda en las escenas guardadas.
+    {"CO2 disuelto", 1000.0f},
 };
 constexpr int kSoluteCount = static_cast<int>(sizeof(kSolutes) / sizeof(kSolutes[0]));
 
@@ -34,6 +37,7 @@ ChemField& soluteField(World& world, int index) {
     case 2: return world.silicateField();
     case 3: return world.ironField();
     case 4: return world.vitaminField();
+    case 6: return world.co2();
     default: return world.nutrients();
     }
 }

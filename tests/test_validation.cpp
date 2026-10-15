@@ -4,6 +4,7 @@
 // docs/validacion.md). Son largos: la biología se acelera con la escala de tiempo biológico (600),
 // que no cambia las proporciones entre procesos.
 #include "bio/physiology.hpp"
+#include "game/intervention.hpp"
 #include "game/sandbox.hpp"
 #include "game/world.hpp"
 
@@ -154,4 +155,64 @@ TEST_CASE("validación: Tilman — gana Asterionella con P limitante y Cyclotell
     MESSAGE("fracción de Asterionella: con P limitante " << pLimited << ", con Si limitante " << siLimited);
     CHECK(pLimited > 0.5);
     CHECK(siLimited < 0.5);
+}
+
+namespace {
+
+// Jennings (1906): paramecios en una placa con una fuente de CO₂ en el centro (la burbuja de su
+// experimento: el gotero de CO₂ abierto). Devuelve la fracción media de paramecios a menos de
+// 0,2 radios del centro (4 % del área), en los últimos 2/3 de la corrida.
+double jenningsFractionNearSource(bool carbonDioxide) {
+    WorldConfig c = cultureConfig(0);
+    c.gridX = c.gridY = 256; // ~1,9 mm: 20 paramecios de ~200 µm sin amontonarse
+    c.seed = 1906;
+    World world(c);
+    InterventionLog log; // el mismo camino que el gotero de la interfaz
+    const Vec2 ctr = {world.width() * 0.5f, world.height() * 0.5f};
+    const float radius = world.dish().radius, zone = 0.2f * radius;
+    for (int k = 0; k < 20; ++k) { // repartidos lejos de la fuente
+        const float a = 2.39996f * static_cast<float>(k);
+        const float r = radius * (0.45f + 0.4f * std::fmod(0.618f * static_cast<float>(k), 1.0f));
+        world.spawnBeing({BeingKind::Species, SpeciesId::Paramecium}, ctr + Vec2{r * std::cos(a), r * std::sin(a)});
+    }
+    if (carbonDioxide) {
+        Intervention drop;
+        drop.kind = InterventionKind::Dropper;
+        drop.active = true;
+        drop.pos = ctr;
+        drop.index = 6;          // CO₂ disuelto
+        drop.v[0] = 0.15f * radius; // radio [µm]
+        drop.v[1] = 2.0f;        // 2 mM/s en la gota: ~10 mM en el centro, pH ~5,3
+        log.recordState(world, drop);
+    }
+    const int steps = static_cast<int>(120.0f / kDt);
+    double inside = 0.0, samples = 0.0;
+    for (int s = 0; s < steps; ++s) {
+        log.beforeStep(world, kDt);
+        world.step(kDt);
+        if (s % 60 != 0 || s < steps / 3)
+            continue;
+        for (const auto [e, body, sp] : world.registry().view<const RingBody, const Species>().each()) {
+            if (sp.id != SpeciesId::Paramecium)
+                continue;
+            samples += 1.0;
+            inside += length(body.centroid - ctr) < zone ? 1.0 : 0.0;
+        }
+    }
+    return inside / samples;
+}
+
+} // namespace
+
+TEST_CASE("validación: Jennings — los paramecios se acumulan en el agua con CO₂" * doctest::test_suite("validacion")) {
+    // Jennings, H. S. (1906). Behavior of the Lower Organisms, cap. sobre Paramecium: entran libremente
+    // a una zona con CO₂ y al salir hacia agua menos ácida hacen la reacción de evitación. Resultado
+    // cualitativo (no hay conteos publicados): la densidad crece hacia la fuente. Simplificación: con
+    // ácido más fuerte Jennings vio un anillo alrededor de la burbuja; acá no se modela la evitación
+    // del ácido fuerte.
+    const double control = jenningsFractionNearSource(false);
+    const double withGas = jenningsFractionNearSource(true);
+    MESSAGE("fracción de paramecios a < 0,2 radios (4 % del área): con CO₂ " << withGas << ", sin CO₂ " << control);
+    CHECK(withGas > 1.5 * 0.04);
+    CHECK(withGas > 2.0 * control);
 }

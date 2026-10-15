@@ -357,6 +357,7 @@ class World {
     ChemField& phosphateField() { return phosphate_; }
     ChemField& nitrogenField() { return nitrogen_; }
     const ChemField& co2() const { return co2_; }
+    ChemField& co2() { return co2_; }
     const ChemField& toxin() const { return toxin_; }
     const ChemField& autoinducer() const { return autoinducer_; }
     const ChemField& phage() const { return phage_; }
