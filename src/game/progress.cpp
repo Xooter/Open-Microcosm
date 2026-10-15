@@ -119,6 +119,8 @@ Options loadOptions(const std::string& path) {
         else if (key == "threads") value >> o.threads;
         else if (key == "lod_stride") value >> o.lodStride;
         else if (key == "max_steps_per_frame") value >> o.maxStepsPerFrame;
+        else if (key == "model_view") value >> o.modelView;
+        else if (key == "tool") value >> o.tool;
     }
     o.bioTimeScale = std::clamp(o.bioTimeScale, 1.0f, 600.0f);
     o.fpsLimit = std::clamp(o.fpsLimit, 0, 1000);
@@ -128,6 +130,7 @@ Options loadOptions(const std::string& path) {
     o.threads = std::clamp(o.threads, 0, 256);
     o.lodStride = std::clamp(o.lodStride, 1, 10);
     o.maxStepsPerFrame = std::clamp(o.maxStepsPerFrame, 1, 16);
+    o.tool = std::max(0, o.tool); // el tope lo pone la App (conoce Tool)
     return o;
 }
 
@@ -183,6 +186,8 @@ bool saveOptions(const Options& o, const std::string& path) {
         << "background_saver=" << o.backgroundSaver << '\n'
         << "threads=" << o.threads << '\n'
         << "lod_stride=" << o.lodStride << '\n'
-        << "max_steps_per_frame=" << o.maxStepsPerFrame << '\n';
+        << "max_steps_per_frame=" << o.maxStepsPerFrame << '\n'
+        << "model_view=" << o.modelView << '\n'
+        << "tool=" << o.tool << '\n';
     return static_cast<bool>(out);
 }

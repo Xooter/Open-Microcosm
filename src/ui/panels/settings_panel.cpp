@@ -88,6 +88,8 @@ class SettingsPanel : public Panel {
                                 "XPBD y contactos en compute shaders (OpenGL 4.3). El redondeo de la GPU difiere del de la CPU: "
                                 "las trayectorias no son idénticas bit a bit.");
             ImGui::EndDisabled();
+            if (!app.gpuOk) // por qué está deshabilitada: la física corre igual, en la CPU
+                note(("Sin física en la GPU (" + app.gpu.error() + "): la simulación corre en la CPU.").c_str());
             changed |= checkbox("LOD: simplificar lo lejano", &o.lod,
                                 "Lo que está fuera de la vista se resuelve con menos sub-pasos de XPBD. Cambia la trayectoria fina de "
                                 "esas células (no su biología).");

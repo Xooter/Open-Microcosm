@@ -65,6 +65,24 @@ tests/                  doctest: medio, células, jugador, ciclo de vida, partid
                         ecosistema e interacciones
 ```
 
+## Reproducibilidad
+
+Una corrida se repite **bit a bit** con el mismo binario, la misma máquina, el mismo motor y las
+mismas opciones (escena = `.plate` + intervenciones; *Placa > Guardar escena*). Entre máquinas la
+reproducibilidad es **estadística** (réplicas): cambian el compilador, la `libm` y la GPU.
+
+Qué opciones de *Preferencias* cambian la trayectoria de la simulación:
+
+| Opción | ¿Cambia la trayectoria? |
+|---|---|
+| Física de células en la GPU | **Sí**: el redondeo de la GPU difiere del de la CPU (cada motor es determinista por separado). |
+| LOD y sub-pasos lejanos | **Sí**: lo que está fuera de la vista se resuelve con menos sub-pasos (la biología no cambia). |
+| Hilos | No: el resultado no depende de la cantidad de hilos. |
+| Pasos por cuadro | No: solo cuánto se recupera por cuadro si la simulación se atrasa. |
+| Calidad, escala de render, óptica, detalle, VSync, tope de FPS, MSAA | No: solo la imagen. |
+
+La exportación (Ctrl+E) anota el motor, el LOD, la versión y la máquina (`procedencia` en el JSON).
+
 ## Licencia
 
 BioGame es software libre bajo la **GNU General Public License, versión 3 o posterior**

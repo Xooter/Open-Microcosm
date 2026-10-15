@@ -50,6 +50,9 @@ struct Options {
     int threads = 0;            // hilos de la simulación (0: automático)
     int lodStride = 5;          // con LOD, lo lejano se resuelve 1 de cada N sub-pasos
     int maxStepsPerFrame = 4;   // pasos de recuperación por cuadro si la simulación se atrasa
+    // --- Espacio de trabajo (se recuerda entre sesiones) ---
+    bool modelView = true;      // vista de modelo (estructuras que el microscopio no resuelve)
+    int tool = 0;               // herramienta activa (app/tools: Tool; Spawn no se recuerda)
 };
 // Lleva las opciones de imagen al preset (Custom no cambia nada).
 void applyGraphicsPreset(Options& options, GraphicsPreset preset);

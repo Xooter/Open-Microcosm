@@ -91,6 +91,9 @@ void worldLabel(ImDrawList* dl, ImVec2 at, const char* text) {
 
 App::App() {
     options = loadOptions(optionsPath);
+    tools.modelView = options.modelView;
+    if (options.tool < static_cast<int>(Tool::Spawn)) // Spawn necesita un ser armado en el catálogo
+        tools.tool = static_cast<Tool>(options.tool);
     progress = loadProgress(progressPath);
     plate.seed = std::random_device{}() & 0x7fffffffu;
     plate.rebuild();
@@ -103,6 +106,10 @@ App::~App() = default;
 
 void App::setTool(Tool t) {
     tools.tool = t;
+    if (t != Tool::Spawn && options.tool != static_cast<int>(t)) {
+        options.tool = static_cast<int>(t);
+        saveOptions();
+    }
     if (t != Tool::Spawn)
         catalog.armed = -1;
     if (t != Tool::Select) {
@@ -373,7 +380,12 @@ void App::registerCommands() {
     add("view.semantic", "Zoom semántico (densidad de lejos)", "Capas", ImGuiKey_None, false,
         [this] { tools.semanticZoom = !tools.semanticZoom; }, {}, [this] { return tools.semanticZoom; });
     add("view.model", "Vista de modelo (estructuras no resolubles)", "Capas", ImGuiKey_None, false,
-        [this] { tools.modelView = !tools.modelView; }, {}, [this] { return tools.modelView; });
+        [this] {
+            tools.modelView = !tools.modelView;
+            options.modelView = tools.modelView;
+            saveOptions();
+        },
+        {}, [this] { return tools.modelView; });
     add("view.scalebar", "Barra de escala", "Capas", ImGuiKey_None, false, [this] { tools.scaleBar = !tools.scaleBar; },
         {}, [this] { return tools.scaleBar; });
     add("view.stain", "Siguiente tinción", "Capas", ImGuiKey_J, false,

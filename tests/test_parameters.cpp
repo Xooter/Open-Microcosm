@@ -3,11 +3,13 @@
 #include "game/export.hpp"
 #include "game/parameters.hpp"
 #include "game/plate_spec.hpp"
+#include "game/progress.hpp"
 #include "game/run.hpp"
 #include "game/world.hpp"
 
 #include <doctest/doctest.h>
 
+#include <filesystem>
 #include <set>
 #include <string>
 
@@ -65,4 +67,21 @@ TEST_CASE("PlateSpec: un seed de 64 bits no pierde precisión") {
     PlateSpec b;
     REQUIRE(parsePlate(serializePlate(a), b));
     CHECK(b.seed == a.seed);
+}
+
+TEST_CASE("opciones: van y vuelven, con la vista de modelo y la herramienta") {
+    Options o;
+    o.modelView = false;
+    o.tool = 10;
+    o.lodStride = 3;
+    o.renderScale = 0.75f;
+    const std::string path = (std::filesystem::temp_directory_path() / "biogame_test_options.txt").string();
+    REQUIRE(saveOptions(o, path));
+    const Options back = loadOptions(path);
+    std::filesystem::remove(path);
+    CHECK_FALSE(back.modelView);
+    CHECK(back.tool == 10);
+    CHECK(back.lodStride == 3);
+    CHECK(back.renderScale == 0.75f);
+    CHECK(Options{}.modelView); // de fábrica, la vista de modelo arranca activada
 }
