@@ -19,7 +19,14 @@ typedef void (*BioFinishFn)(void);
 typedef const unsigned char* (*BioGetStringFn)(unsigned int);
 extern BioMemoryBarrierFn glad_glMemoryBarrier;
 extern BioFinishFn glad_glFinish;
+extern BioFinishFn glad_glFlush;
 extern BioGetStringFn glad_glGetString;
+typedef void (*BioGenQueriesFn)(int, unsigned int*);
+typedef void (*BioQueryCounterFn)(unsigned int, unsigned int);
+typedef void (*BioGetQueryObjectui64vFn)(unsigned int, unsigned int, unsigned long long*);
+extern BioGenQueriesFn glad_glGenQueries;
+extern BioQueryCounterFn glad_glQueryCounter;
+extern BioGetQueryObjectui64vFn glad_glGetQueryObjectui64v;
 }
 
 namespace {
@@ -205,16 +212,43 @@ void GpuSubstepSolver::dispatch(const Program& p, std::uint32_t groups, const Pa
     if (groups == 0)
         return;
     // Diagnóstico (BIO_GPU_TIMING=1): mide cada kernel esperando a que termine.
-    static const bool timing = std::getenv("BIO_GPU_TIMING") != nullptr;
-    const double t0 = timing ? GetTime() : 0.0;
+    static const bool timing = std::getenv("BIO_GPU_TIMING") != nullptr && glad_glQueryCounter;
+    constexpr unsigned int kTimestamp = 0x8E28; // GL_TIMESTAMP
+    if (timing) {
+        if (queryUsed_ + 2 > queries_.size()) {
+            const std::size_t old = queries_.size();
+            queries_.resize(old + 512);
+            queryProgram_.resize(queries_.size() / 2);
+            glad_glGenQueries(512, queries_.data() + old);
+        }
+        queryProgram_[queryUsed_ / 2] = p.id;
+        glad_glQueryCounter(queries_[queryUsed_], kTimestamp);
+    }
     rlEnableShader(p.id);
     setUniforms(p, pass);
     rlComputeShaderDispatch(groups, 1, 1);
     barrier();
     if (timing) {
-        glad_glFinish();
-        kernelMs_[p.id] += 1000.0 * (GetTime() - t0);
+        glad_glQueryCounter(queries_[queryUsed_ + 1], kTimestamp);
+        queryUsed_ += 2;
     }
+}
+
+void GpuSubstepSolver::readTimers() const {
+    constexpr unsigned int kResult = 0x8866; // GL_QUERY_RESULT
+    for (std::size_t q = 0; q + 1 < queryUsed_; q += 2) {
+        unsigned long long t0 = 0, t1 = 0;
+        glad_glGetQueryObjectui64v(queries_[q], kResult, &t0);
+        glad_glGetQueryObjectui64v(queries_[q + 1], kResult, &t1);
+        kernelMs_[queryProgram_[q / 2]] += 1e-6 * static_cast<double>(t1 - t0);
+    }
+    if (queryUsed_ >= 2) { // del comienzo del primero al fin del último: el tiempo de GPU total
+        unsigned long long t0 = 0, t1 = 0;
+        glad_glGetQueryObjectui64v(queries_[0], kResult, &t0);
+        glad_glGetQueryObjectui64v(queries_[queryUsed_ - 1], kResult, &t1);
+        kernelMs_[0] += 1e-6 * static_cast<double>(t1 - t0);
+    }
+    queryUsed_ = 0;
 }
 
 void GpuSubstepSolver::printTiming(int steps) const {
@@ -223,7 +257,9 @@ void GpuSubstepSolver::printTiming(int steps) const {
         {&scanBlocks_, "scan_blocks"}, {&scanTop_, "scan_top"},     {&scanAdd_, "scan_add"},
         {&gridScatter_, "scatter"},    {&crowded_, "crowded"},
         {&pairs_, "pairs"},            {&apply_, "apply"},          {&grab_, "grab"},
-        {&linkSnap_, "link_snap"}};
+        {&linkSnap_, "link_snap"}, {&predict_, "predict"}};
+    if (const auto total = kernelMs_.find(0); total != kernelMs_.end())
+        TraceLog(LOG_INFO, "GPU %-12s %7.3f ms/paso", "TOTAL", total->second / steps);
     for (const auto& [p, name] : names) {
         const auto it = kernelMs_.find(p->id);
         if (it != kernelMs_.end())
@@ -401,6 +437,10 @@ bool GpuSubstepSolver::submit(const BodyParticles& bp, const SubstepInput& in) {
         dispatch(apply_, memberGroups, Pass{});
         rlDisableShader();
     }
+    // Que la GPU empiece ya: sin esto el driver retenía los ~140 despachos en su búfer hasta la
+    // lectura de collect, y la CPU esperaba ahí todo el trabajo de la GPU en vez de superponerlo
+    // con la química.
+    glad_glFlush();
     slots_ = slots;
     pending_ = true;
     return true;
@@ -414,6 +454,8 @@ bool GpuSubstepSolver::collect(BodyParticles& bp) {
     const std::size_t slots = std::min(slots_, bp.capacity());
     readBarrier();
     rlReadShaderBuffer(pos_.id, posData_.data(), static_cast<unsigned int>(slots * 4 * sizeof(float)), 0);
+    if (queryUsed_ > 0)
+        readTimers();
     // Red de seguridad: si algo salió no finito, se descarta el paso y lo resuelve la CPU (las
     // posiciones de `bp` todavía son las de antes).
     for (std::size_t s = 0; s < slots; ++s)

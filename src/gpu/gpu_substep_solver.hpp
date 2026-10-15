@@ -54,6 +54,12 @@ class GpuSubstepSolver : public SubstepSolver {
     void ensure(Buffer& b, std::size_t bytes);
 
     mutable std::map<unsigned int, double> kernelMs_;
+    // Diagnóstico (BIO_GPU_TIMING): marcas de tiempo de la GPU antes y después de cada despacho
+    // (glQueryCounter no frena la cola, a diferencia de glFinish); se leen en collect.
+    mutable std::vector<unsigned int> queries_;
+    mutable std::vector<unsigned int> queryProgram_;
+    mutable std::size_t queryUsed_ = 0;
+    void readTimers() const;
     bool ready_ = false;
     std::string error_, device_;
     Program predict_, solve_, gridClear_, gridCount_, scanBlocks_, scanTop_, scanAdd_, gridScatter_, crowded_,

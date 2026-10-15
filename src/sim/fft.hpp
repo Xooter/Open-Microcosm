@@ -10,12 +10,15 @@ class Fft1D {
   public:
     explicit Fft1D(int n);
     void transform(Complex* data, bool inverse) const;
+    // `lanes` transformadas intercaladas (elemento j de la transformada b en data[j·lanes + b]):
+    // las mismas operaciones que `transform` en cada una, pero recorriendo memoria contigua.
+    void transformLanes(Complex* data, int lanes, bool inverse) const;
     int size() const { return n_; }
 
   private:
     int n_;
     std::vector<int> bitReverse_;
-    std::vector<Complex> twiddle_;
+    std::vector<Complex> twiddle_, twiddleInverse_; // la inversa: conjugados (precalculados)
 };
 
 // FFT 2D sobre una grilla periódica nx·ny en orden fila-mayor. La inversa normaliza por nx·ny.
@@ -32,7 +35,7 @@ class Fft2D {
     void transform(std::vector<Complex>& data, bool inverse) const;
 
     Fft1D rows_, cols_;
-    mutable std::vector<Complex> scratch_; // una columna por hilo
+    mutable std::vector<Complex> scratch_; // un bloque de columnas por hilo
 };
 
 // Número de onda angular del índice i en una dimensión de n celdas y longitud L.
