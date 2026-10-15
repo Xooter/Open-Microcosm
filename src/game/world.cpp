@@ -2792,11 +2792,18 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
             return;
         }
         // Membrana con espaciado uniforme (como al nacer): si no, cada generación tendría la
-        // mitad de puntos que la anterior.
-        const std::size_t count = std::max<std::size_t>(
-            48, static_cast<std::size_t>(soft_body::perimeter(b, bodies_) / kMembraneSpacing));
-        soft_body::resampleRing(b, bodies_, count);
+        // mitad de puntos que la anterior. El perímetro es el de la forma de la especie con el
+        // área de la hija (la forma a la que vuelve), no el de la geometría actual: una hija
+        // nacida estirada o enredada tenía miles de puntos, se estiraba más y sus hijas más todavía
+        // (anillos de 300 → 5000 puntos en pocas divisiones, cruzando toda la placa).
         const float a = std::abs(soft_body::area(b, bodies_));
+        const float aspect = std::max(1e-3f, shape.radiusX / std::max(1e-3f, shape.radiusY));
+        const float ry = std::sqrt(a / (units::kPi * aspect)), rx = aspect * ry;
+        const float h = (rx - ry) * (rx - ry) / std::max(1e-6f, (rx + ry) * (rx + ry));
+        const float ramanujan = units::kPi * (rx + ry) * (1.0f + 3.0f * h / (10.0f + std::sqrt(4.0f - 3.0f * h)));
+        const float perim = filament ? soft_body::perimeter(b, bodies_) : ramanujan;
+        const std::size_t count = std::max<std::size_t>(48, static_cast<std::size_t>(perim / kMembraneSpacing));
+        soft_body::resampleRing(b, bodies_, count);
         if (filament) { // mismo ancho, el largo que dé el área
             const float n = shape.squareness;
             const float g = std::tgamma(1.0f + 1.0f / n);
