@@ -61,16 +61,44 @@ por paso y sus tests. Avance: ✅ hecho · 🟡 en parte (se dice qué falta) ·
    líticos con adsorción de acción de masas y mutantes resistentes. *Queda fuera (declarado en
    `Culture::supports` y en la cabecera de `game/culture`):* conjugación, Bdellovibrio, quorum,
    liberación de B₁₂ por las bacterias, colonias, filamentos, zoosporas y células animales.
-2. **Calibración cruzada:** `bio_bench --respuesta-funcional`, test de validación placa ↔ cultivo.
-3. **Programas** (`game/program`): rampas, pulsos y eventos periódicos, guardados como definición.
-4. **Panel Cultivos y gota de muestra:** `.plate` v3 con seres explícitos con estado; conteo de
+2. ✅ **Calibración cruzada:** `bio_bench --respuesta-funcional`, test de validación placa ↔ cultivo.
+   *Hecho:* las presas chicas tienen altura en la película (la placa tragaba todo lo superpuesto en
+   2D), el aclaramiento con pocas presas sale de la escala de volúmenes corporales (el publicado es
+   a alta densidad) y el radio de captura de bacterias se calibró con esa respuesta funcional; placa
+   y cultivo coinciden dentro de un factor 2 entre 7·10⁴ y 8,5·10⁸ bacterias/mL.
+3. ✅ **Programas** (`game/program`): rampas, pulsos y eventos periódicos, guardados como definición.
+   *Hecho:* rampa, ciclo (fotoperíodo), seno y evento con la hora de laboratorio; acciones del
+   cultivo (bacterias por mL, cambio de medio centrifugado, dilución, inocular); el cambio de medio
+   y la dilución registran lo que sale (`Flow::Washout`) y lo que entra.
+4. ✅ **Panel Cultivos y gota de muestra:** `.plate` v3 con seres explícitos con estado; conteo de
    alícuota con error de Poisson.
-5. **Gause en el cultivo:** exclusión *P. aurelia* / *P. caudatum*; *Didinium*–*Paramecium* sin
+   *Hecho:* `game/culture_run` (sesión de cultivo con su serie, operaciones anotadas por paso y
+   escena `.cultivo` que se repite igual), panel Cultivos (gradilla con velocidad propia, siembra,
+   medio, programa, alícuota, gota de muestra concentrable, gráfico, guardar y exportar), la gota
+   lleva las células con su estado a la placa (`WorldConfig::sampled`, `World::placeSampled`) y saca
+   su volumen del cultivo. Medios `osterhout_gause` y `wc_guillard`; recipientes `tubo_gause`,
+   `erlenmeyer_250` y `tubo_ensayo_10`.
+5. 🟡 **Gause en el cultivo:** exclusión *P. aurelia* / *P. caudatum*; *Didinium*–*Paramecium* sin
    refugio y con inmigración.
-6. **Réplicas y lotes** (`game/experiment`, `bio_lote`, panel Experimento): media, DE, IC 95 % y n.
-7. **Quimiostato** (lavado binomial, `Flow::Washout`) y perfusión en la placa. Monod estacionario y
+   *Hecho:* con el protocolo de Gause (cambio de medio y ración diaria de bacterias, 26 °C) cada
+   especie llega a una meseta, hay exclusión competitiva en el cultivo mixto y *Didinium* extingue a
+   *Paramecium* y se queda sin activos. *Falta:* que gane *P. aurelia* como en Gause (en el modelo gana
+   la que se adelanta: test `should_fail`, `docs/validacion.md`) y el caso con inmigración.
+6. ✅ **Réplicas y lotes** (`game/experiment`, `bio_lote`, panel Experimento): media, DE, IC 95 % y n.
+   *Hecho:* experimento en TOML (cultivo o placa, réplicas, factores con niveles), seeds por nivel y
+   réplica, una corrida por hilo (el resultado no depende de los hilos), formato largo, resumen con
+   media, DE e IC 95 % (t de Student) y JSON con procedencia y seeds; panel Experimento en segundo
+   plano con banda de confianza.
+7. ✅ **Quimiostato** (lavado binomial, `Flow::Washout`) y perfusión en la placa. Monod estacionario y
    exclusión completa de Tilman.
-8. **Siembra y dilución:** por densidad con Poisson, transferencias, diluciones seriadas.
+   *Hecho:* `Culture::setDilutionRate`; paso implícito para el sustrato de las bacterias (con el
+   explícito el quimiostato quedaba en S ≈ 0); S* = 0,652 µM contra 0,647 de Monod; con D = 0,25/día,
+   exclusión completa en los dos sentidos de Tilman. Perfusión de la placa
+   (`medio.perfusion`, en tiempo biológico) con su entrada y salida en el balance.
+8. ✅ **Siembra y dilución:** por densidad con Poisson, transferencias, diluciones seriadas.
+   *Hecho:* inóculo por mL de cultivo (`inocular_densidad`) y desde una suspensión en la placa
+   (Catálogo > Inocular, con los esperados); pasaje entre cultivos con las células con su estado
+   (la escena del que recibe se repite); diluciones seriadas 1:10.
 9. **Inglés:** `assets/lang/en.txt`, claves faltantes registradas, traducción del contenido por
    paquete con huella del texto de origen.
 10. **Protocolos y lecciones:** Jennings, Tilman, Gause, plasmólisis y fragilidad osmótica; cada

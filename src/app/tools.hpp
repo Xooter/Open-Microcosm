@@ -101,6 +101,12 @@ struct CatalogState {
     int inoculateCount = 50;
     bool byDensity = false;
     float density = 5000.0f; // [individuos/cm²]
+    // De una suspensión de densidad conocida (como con la pipeta): `inoculumUl` µL de una suspensión
+    // con `suspensionPerMl` individuos por mL; la cantidad es un sorteo de Poisson (fase P1).
+    bool bySuspension = false;
+    float suspensionPerMl = 1e5f;
+    float inoculumUl = 1.0f;
+    std::uint64_t draws = 0;
     bool spot = false;
     float spotRadius = 300.0f; // [µm]
 };

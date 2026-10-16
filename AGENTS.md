@@ -344,6 +344,18 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   es el mismo que el de la placa.
 - Luz: Beer–Lambert en la columna por la biomasa fotótrofa (cada célula recibe la media). Fagos
   líticos de acción de masas con los parámetros de la placa (las infectadas son cohortes propias).
+- Operaciones: cambio de medio centrifugado (`renewMedium`: los protistas quedan), dilución,
+  quimiostato (`setDilutionRate`, lavado binomial), gota de muestra y pasajes (`withdraw`,
+  `receive`); lo que sale va al balance como `Flow::Washout`. Las bacterias toman el sustrato con un
+  paso implícito (la concentración del final del paso), si no el quimiostato no llega a S*.
+- **Programas** (`game/program`): rampas, ciclos, senos y eventos con la hora de laboratorio, guardados
+  como definición (`programa=` en las escenas); se aplican una vez por paso.
+- **Sesión de cultivo** (`game/culture_run`): como `Run` para la placa: toda operación pasa por
+  `CultureRun::apply`, queda anotada con su paso y la escena `.cultivo` la repite. La gota de muestra
+  (`sampleDrop`) arma un `PlateSpec` v3 con las células con su estado (`WorldConfig::sampled`).
+- **Experimentos por lote** (`game/experiment`, `bio_lote`, panel Experimento): TOML con réplicas y
+  factores; una corrida por hilo (OpenMP en 1, registros precargados); formato largo, resumen con
+  media, DE e IC 95 % y JSON con la procedencia.
 - Lo que todavía no se simula bien mezclado no se siembra (`Culture::supports`): células animales,
   filamentos, colonias y zoosporas. Tampoco hay Bdellovibrio, quorum ni conjugación.
 
@@ -501,7 +513,10 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   dos veces: sin las fuerzas del nadador (`Fluid::backgroundAt`, que es lo que él siente) y con
   ellas (lo que siente todo lo demás). Si no, el nadador se arrastraría con su propio flujo.
 - **Comer:** el ciliado por el citostoma (con corriente oral y caudal máximo), el flagelado por el
-  polo anterior (despacio) y la ameba por contacto. Lo ingerido forma **vacuolas digestivas**
+  polo anterior (despacio) y la ameba por contacto. Las bacterias tienen una **altura en la
+  película** (`World::filmHeight`): la boca solo traga las que pasan a su altura (la vista es 2D,
+  pero la película no). El radio de captura de bacterias está calibrado con el aclaramiento medido
+  (`bio_bench --respuesta-funcional`: la placa y el cultivo tienen que comer lo mismo). Lo ingerido forma **vacuolas digestivas**
   (organelos) que se cierran, se digieren y se expulsan.
 - **Fagocitosis de células** (ameba, componente `PhagocyticCup`): el contacto con una presa
   elegible inicia la copa; la presa queda sujeta (unión ligando–receptor); el frente de cada labio

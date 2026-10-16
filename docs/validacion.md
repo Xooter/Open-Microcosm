@@ -67,6 +67,71 @@ dividían por `bioScale` (compresión × Q10): a 30 °C la célula respiraba en 
 20 °C. Ahora se deshace solo la compresión (`bioTimeScale`): con calor respira más rápido, como el
 cultivo.
 
+## Gause en el cultivo (fase P1, paso 5)
+
+Protocolo de Gause (1934, cap. V): tubos de 0,5 cm³ de medio salino de Osterhout a 26 °C; cada
+día se centrifuga, se cambia el medio y se agrega una ración fija de bacterias (en el modelo,
+5·10⁷/mL). Tests en `tests/test_gause.cpp`:
+
+| Test | Estado | Nota |
+|---|---|---|
+| Monocultivos: meseta | **PASA** | *P. caudatum* ~220–250 por tubo, *P. aurelia* ~550–620 (más chica: más individuos con la misma comida). Gause: K = 203 y 222 en volumen relativo. |
+| Cultivo mixto: exclusión competitiva | **PASA** | Al día 60, una de las dos queda por debajo del 20 % en 4 de 5 réplicas. |
+| Gana *P. aurelia* | **NO PASA** (`should_fail`) | Gana la que se adelanta al principio (2 o 3 de 5 réplicas). La ventaja de *P. aurelia* sale solo de la alometría de la alimentación (~20 % más aclaramiento por biomasa: Hansen et al. 1997) y no alcanza contra el µmax mayor de *P. caudatum*. Gause atribuyó parte de su resultado a la sensibilidad de *P. caudatum* a los desechos del medio, que el modelo no tiene. |
+| *Didinium* sin refugio | **PASA** | *Didinium* se multiplica comiendo y extingue a los paramecios; después no queda ninguno activo (se enquista: Beers 1927). Gause vio que morían; con quistes, el cultivo igual queda sin depredadores activos. |
+| *Didinium* con inmigración (oscilaciones) | pendiente | |
+
+*P. aurelia* no tiene mediciones propias de la alimentación: su ingestión máxima y su aclaramiento
+salen de los de *P. caudatum* con el exponente del zooplancton (V^0,75–0,77). ESTIMACIÓN.
+
+## Quimiostato (fase P1, paso 7)
+
+| Test | Estado | Nota |
+|---|---|---|
+| Monod: sustrato residual | **PASA** | Bacterias con D = 0,5/h: S* = 0,652 µM contra K (D + m) / (µmax − D − m) = 0,647. Antes del paso implícito para el sustrato, en cada paso de 1 min las bacterias se comían todo lo que entraba (S ≈ 0). |
+| Tilman en quimiostato: P limitante | **PASA** | D = 0,25/día (Tilman 1977), 60 días: *Cyclotella* se extingue (0 contra 250 *Asterionella*). |
+| Tilman en quimiostato: Si limitante | **PASA** | *Asterionella* se extingue (0 contra 1366 *Cyclotella*). Exclusión completa, como en los cultivos semicontinuos de Tilman (en lote solo se veía la tendencia). |
+
+## Calibración cruzada placa ↔ cultivo (fase P1, paso 2)
+
+`measureFunctionalResponse` (`game/calibration`, `bio_bench --respuesta-funcional paramecium`) mide
+cuántas bacterias come *Paramecium* en una placa de 0,86 mm a 20 °C y lo compara con la respuesta
+funcional del cultivo (tipo II con los datos). Tres tests de validación (~10⁵, ~10⁶ y ~10⁹
+bacterias/mL) piden que coincidan dentro de un factor 2.
+
+Lo que apareció al medir:
+
+1. **La placa olvidaba la tercera dimensión de las presas chicas.** Toda bacteria superpuesta con la
+   boca en la vista cenital se tragaba, como si estuviera a la misma altura que el ciliado. Ahora
+   cada bacteria tiene una altura en la película (`World::filmHeight`, que cambia al azar cada vez
+   que la cruza nadando) y la boca solo alcanza a las que pasan a su altura; la ameba, a las que
+   nadan a la altura de su cuerpo y a las de la biopelícula.
+2. **El aclaramiento publicado es a alta densidad.** El estudio de la ingestión (106 nL/h) lo calcula
+   a ~2,5·10⁸ bacterias/mL, donde la ingestión ya está casi saturada; usado como pendiente inicial,
+   la media saturación quedaba en 2,5·10⁸/mL y *Paramecium* no podía crecer en los cultivos de Gause.
+   El aclaramiento con pocas presas sale de la escala general del zooplancton (~10⁵ volúmenes
+   corporales por hora en ciliados; Hansen et al. 1997, Kiørboe 2011): ~24 µL/h para *P. caudatum*.
+   Es consistente con el estudio: a 2,5·10⁸/mL la ingestión queda en 0,996 de la máxima y a ~10⁶/mL
+   cae a la mitad, como informa para las concentraciones bajas. ESTIMACIÓN.
+3. **El radio de captura de bacterias de la boca** (6 µm, sin fuente) se separó del alcance para
+   células y detritos y se **calibró** con esa respuesta funcional: `bacteriaCaptureRadius` = 75 µm
+   (la corriente oral arrastra el agua de alrededor del cuerpo).
+
+Resultado (`bio_bench --respuesta-funcional paramecium`):
+
+| bacterias/mL | placa [1/h] | cultivo [1/h] | razón |
+|---|---|---|---|
+| 7,4·10⁴ | 901 | 1595 | 0,56 |
+| 1,1·10⁵ | 1621 | 2257 | 0,72 |
+| 3,5·10⁵ | 4053 | 5664 | 0,72 |
+| 1,9·10⁶ | 10329 | 13069 | 0,79 |
+| 1,4·10⁷ | 18375 | 17412 | 1,06 |
+| 8,5·10⁸ | 18375 | 18368 | 1,00 |
+
+A baja densidad la placa come algo menos: los paramecios agotan las bacterias de alrededor (un pozo
+de consumo que el cultivo bien mezclado no tiene). Pendiente: una respuesta funcional medida a varias
+densidades para *P. caudatum* (hoy hay un solo punto publicado).
+
 ## Problemas del modelo encontrados al validar (fase MVP)
 
 1. **Las bacterias se extinguían por Bdellovibrio, no por hambre.** (Primero lo atribuimos, sin

@@ -64,7 +64,18 @@ class CatalogPanel : public Panel {
         else if (w.dish().active())
             areaCm2 = 3.14159265f * w.dish().radius * w.dish().radius * 1e-8f;
         int count = st.inoculateCount;
-        if (st.byDensity) {
+        checkbox("De una suspensión", &st.bySuspension,
+                 "Un volumen de una suspensión de densidad conocida: la cantidad que entra es un sorteo de Poisson "
+                 "(una suspensión de 10 por mL rara vez deja un individuo en 1 µL).");
+        if (st.bySuspension) {
+            sliderLog("Suspensión [por mL]", &st.suspensionPerMl, 1.0f, 1e10f, "%.3g");
+            sliderLog("Inóculo [µL]", &st.inoculumUl, 0.01f, 100.0f, "%.2f");
+            const double expected = static_cast<double>(st.suspensionPerMl) * st.inoculumUl * 1e-3;
+            readout("Esperados", "%.2f (± %.2f)", expected, std::sqrt(expected));
+            // Se sortea al apretar; la cantidad sorteada queda en la intervención (la escena la repite).
+            Rng rng(w.config().seed, rng_stream::kTools + 77, st.draws, w.stepIndex());
+            count = static_cast<int>(rng.poisson(expected));
+        } else if (st.byDensity) {
             sliderLog("Densidad [1/cm²]", &st.density, 10.0f, 1e7f, "%.0f");
             count = static_cast<int>(std::round(st.density * areaCm2));
             readout("Cantidad", "%d", count);
@@ -85,6 +96,7 @@ class CatalogPanel : public Panel {
                                                  app.camera);
             iv.pos = {c.x, c.y};
             app.intervene(iv);
+            ++st.draws;
         }
         ImGui::TreePop();
     }
