@@ -1,6 +1,7 @@
 #pragma once
 
 #include "app/tools.hpp"
+#include "game/culture_run.hpp"
 #include "game/export.hpp"
 #include "game/parameters.hpp"
 #include "game/plate_spec.hpp"
@@ -66,6 +67,15 @@ struct App {
     // Se cargó contenido nuevo (un paquete importado): el atlas de íconos del catálogo se rehace
     // al empezar el cuadro siguiente (no se puede dibujar en una textura en medio de la UI).
     bool contentChanged = false;
+
+    // --- Cultivos bien mezclados (fase P1): la gradilla, cada uno con su tiempo ---
+    std::vector<std::unique_ptr<CultureRun>> cultures;
+    int cultureIndex = -1;
+    float cultureSpeed = 2.0f; // horas de cultivo por segundo real
+    bool culturesPaused = false;
+    void stepCultures(float dt);
+    // La gota de muestra de un cultivo pasa a ser la placa del centro.
+    void openSampleDrop(const PlateSpec& drop);
 
     // --- Estado ---
     Options options;

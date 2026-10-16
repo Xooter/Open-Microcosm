@@ -1539,6 +1539,54 @@ int World::inoculate(Being being, int count, Vec2 center, float radius) {
     return placed;
 }
 
+int World::placeSampled(const std::vector<SampledCell>& cells) {
+    PROFILE_SCOPE("World::placeSampled");
+    int placed = 0;
+    for (const SampledCell& s : cells) {
+        const SpeciesInfo& info = speciesInfo(s.species);
+        if (info.filament || info.colonyDaughters > 0)
+            continue;
+        const float size = std::max(info.spec.radiusX, info.spec.radiusY);
+        const float reach = size * 1.5f + 10.0f, clearance = size + 6.0f;
+        for (int attempt = 0; attempt < 60; ++attempt) {
+            Rng rng(config_.seed, rng_stream::kTools, toolCounter_++, step_);
+            const Vec2 p = randomPoint(rng, reach);
+            if (!placeIsFree(p, clearance) && attempt < 59)
+                continue;
+            const entt::entity e = spawnOrganism(s.species, p, s.genome, 0, rng.uniform(0.0f, 2.0f * units::kPi));
+            Metabolism& m = registry_.get<Metabolism>(e);
+            // Las cuotas que endosó spawnOrganism (proporcionales a la biomasa) se cambian por las que
+            // la célula traía: la diferencia también entra de afuera.
+            const std::pair<Element, float> delta[] = {{Element::P, s.meta.phosphorus - m.phosphorus},
+                                                       {Element::N, s.meta.nitrogen - m.nitrogen},
+                                                       {Element::Si, s.meta.silicon - m.silicon},
+                                                       {Element::Fe, s.meta.iron - m.iron}};
+            for (const auto& [el, pmol] : delta) {
+                ledger_.add(el, Flow::Spawn, pmol);
+                ledger_.addExternal(el, pmol);
+            }
+            m.biomass = s.meta.biomass;
+            m.birthBiomass = s.meta.birthBiomass;
+            m.reserves = s.meta.reserves;
+            m.phosphorus = s.meta.phosphorus;
+            m.nitrogen = s.meta.nitrogen;
+            m.silicon = s.meta.silicon;
+            m.iron = s.meta.iron;
+            m.vitamin = s.meta.vitamin;
+            m.ageHours = s.meta.ageHours;
+            m.pendingFissions = s.meta.pendingFissions;
+            registry_.get<Lineage>(e).generation = s.generation;
+            if (info.speedScale > 0.0f)
+                registry_.emplace<Autopilot>(e);
+            if (info.sessile)
+                anchorHere(e);
+            ++placed;
+            break;
+        }
+    }
+    return placed;
+}
+
 entt::entity World::spawnWild(SpeciesId id, Vec2 p, Rng& rng, bool randomStage) {
     const SpeciesInfo& info = speciesInfo(id);
     Genome g = speciesGenome(id);

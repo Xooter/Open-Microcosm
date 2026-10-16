@@ -133,6 +133,15 @@ struct Rock {
     std::uint32_t seed = 0; // detalles del render (fracturas, inclusiones)
 };
 
+// Célula que llega a la placa con su estado: la gota de muestra de un cultivo bien mezclado
+// (fase P1). Trae su biomasa, sus reservas y cuotas, su genoma y su generación.
+struct SampledCell {
+    SpeciesId species{};
+    Metabolism meta;
+    Genome genome;
+    std::uint32_t generation = 0;
+};
+
 struct WorldConfig {
     int gridX = 256, gridY = 256; // potencias de 2 (FFT)
     float cellSize = 8.0f;        // [µm] → grilla de 2048 × 2048 µm
@@ -166,6 +175,8 @@ struct WorldConfig {
     Tissue tissue;
     // Siembra inicial de una placa preparada: especie y cantidad (la aplica Run::start).
     std::vector<std::pair<SpeciesId, int>> seeding;
+    // Células con su estado (gota de muestra de un cultivo); las ubica Run::start.
+    std::vector<SampledCell> sampled;
     // Hongos al empezar: micelios de Saprolegnia y grupos de zoosporas de quitridios (10 cada uno).
     int saprolegnia = 4, chytridClusters = 6;
     // Más hongos: Allomyces, hongos liquenizantes (junto a algas verdes) y plasmodios de Physarum.
@@ -307,6 +318,9 @@ class World {
     // Inoculación: `count` individuos de un ser del catálogo al azar en toda la placa (radius <= 0)
     // o en un círculo de `radius` alrededor de `center`, sin encimar células. Devuelve cuántos puso.
     int inoculate(Being being, int count, Vec2 center, float radius);
+    // Ubica al azar (sin superponerse) las células de una gota de muestra con su estado. Sus cuotas
+    // de nutrientes entran de afuera (la gota trae lo que tenían en el cultivo).
+    int placeSampled(const std::vector<SampledCell>& cells);
     // Sin ningún cuerpo a menos de `clearance` de `p` (lugar para una célula nueva).
     bool placeIsFree(Vec2 p, float clearance) const;
     // Sandbox: completa biomasa y reservas hasta el umbral de la especie para que se reproduzca

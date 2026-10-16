@@ -17,6 +17,7 @@ void Run::start(World& world, const RunConfig& config, std::uint32_t runId) {
     // Siembra de una placa preparada (células por cm² del campo, ya convertidas en cantidades).
     for (const auto& [species, count] : world.config().seeding)
         world.inoculate({BeingKind::Species, species}, count, {}, 0.0f);
+    world.placeSampled(world.config().sampled); // gota de muestra de un cultivo
     if (world.config().fixedSlide) { // frotis o corte fijado: nada vivo, nada se mueve
         world.flattenSmear();
         world.fix();

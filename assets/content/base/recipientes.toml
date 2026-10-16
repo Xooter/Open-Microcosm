@@ -55,3 +55,28 @@ id = "portaobjetos"
 nombre = "Portaobjetos con cubreobjetos de 22 mm"
 area_cm2 = 4.84
 volumen_ml = 0.01
+
+# --- Recipientes de los cultivos bien mezclados (fase P1) -------------------------------------------
+
+# Gause (1934, cap. V) cultivaba los paramecios en tubos chicos de fondo plano con 0,5 cm³ de medio.
+# El diámetro del tubo (~1 cm) es una ESTIMACIÓN: fija la profundidad (~0,6 cm) y el intercambio de gases.
+[[recipiente]]
+id = "tubo_gause"
+nombre = "Tubo de Gause (0,5 mL)"
+area_cm2 = 0.8
+volumen_ml = 0.5
+fuente = "Gause, G. F. (1934). The Struggle for Existence, cap. V (0,5 cm3 por tubo); diámetro estimado."
+
+[[recipiente]]
+id = "erlenmeyer_250"
+nombre = "Erlenmeyer de 250 mL (100 mL de medio)"
+area_cm2 = 50.0
+volumen_ml = 100.0
+fuente = "Frasco de Erlenmeyer de 250 mL con 100 mL de medio (fondo de ~8 cm de diámetro)."
+
+[[recipiente]]
+id = "tubo_ensayo_10"
+nombre = "Tubo de ensayo (10 mL)"
+area_cm2 = 2.0
+volumen_ml = 10.0
+fuente = "Tubo de ensayo de 16 mm con 10 mL de medio."

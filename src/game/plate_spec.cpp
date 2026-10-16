@@ -137,7 +137,7 @@ std::string serializePlate(const PlateSpec& s) {
     // seed se redondeaban y la placa leída ya no era la misma (ni su corrida).
     out.precision(std::numeric_limits<float>::max_digits10);
     // Versión 2: bioma, minerales y seres por id de texto (fase 20.0), y los paquetes cargados.
-    out << "plate_version=2\n"
+    out << "plate_version=3\n"
         << "biome=" << biome(static_cast<BiomeId>(s.biome)).key << '\n';
     if (!s.prepared.empty())
         out << "prepared=" << s.prepared << '\n';
@@ -152,6 +152,16 @@ std::string serializePlate(const PlateSpec& s) {
         << "erythrocytes_cm2=" << c.erythrocytesPerCm2 << '\n' << "platelets_cm2=" << c.plateletsPerCm2 << '\n';
     for (const auto& [sp, count] : c.seeding)
         out << "seeding=" << speciesInfo(sp).key << ' ' << count << '\n';
+    // Versión 3: células con su estado (gota de muestra de un cultivo, fase P1).
+    for (const SampledCell& sc : c.sampled) {
+        const Metabolism& m = sc.meta;
+        out << "sampled=" << speciesInfo(sc.species).key << ' ' << sc.generation << ' ' << m.biomass << ' '
+            << m.birthBiomass << ' ' << m.reserves << ' ' << m.phosphorus << ' ' << m.nitrogen << ' ' << m.silicon << ' '
+            << m.iron << ' ' << m.vitamin << ' ' << m.ageHours << ' ' << m.pendingFissions;
+        for (float g : sc.genome.v)
+            out << ' ' << g;
+        out << '\n';
+    }
     out << "dish=" << c.dish << '\n' << "dish_margin=" << c.dishMargin << '\n' << "cell_size=" << c.cellSize << '\n';
     out << "bacteria=" << c.bacteria << '\n' << "detritus=" << c.detritus << '\n';
     out << "cyano_t_min=" << c.cyanoTMin << '\n' << "cyano_t_max=" << c.cyanoTMax << '\n';
@@ -229,7 +239,7 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
     }
     p.rebuild();
     WorldConfig& c = p.config;
-    bool seedingRead = false;
+    bool seedingRead = false, sampledRead = false;
     for (const auto& [k, v] : kv) {
         const double x = num(v, 0);
         if (k == "dish") c.dish = true; // siempre con la pared de vidrio (las placas viejas sin vidrio ya no van)
@@ -261,6 +271,25 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
                 lack("ser '" + id + "'");
         }
         else if (k == "rock_max") c.sediment.rockMax = static_cast<float>(x);
+        else if (k == "sampled") {
+            if (!sampledRead)
+                c.sampled.clear();
+            sampledRead = true;
+            std::istringstream fields(v);
+            std::string id;
+            SampledCell sc;
+            Metabolism& m = sc.meta;
+            fields >> id >> sc.generation >> m.biomass >> m.birthBiomass >> m.reserves >> m.phosphorus >> m.nitrogen >>
+                m.silicon >> m.iron >> m.vitamin >> m.ageHours >> m.pendingFissions;
+            for (float& g : sc.genome.v)
+                fields >> g;
+            if (const auto sp = findSpecies(id); sp && fields) {
+                sc.species = *sp;
+                c.sampled.push_back(sc);
+            } else if (!sp) {
+                lack("ser '" + id + "'");
+            }
+        }
         for (const IntField& f : kConfigInts)
             if (k == f.key) c.*f.member = static_cast<int>(x);
         for (const FloatField& f : kMediumFloats)

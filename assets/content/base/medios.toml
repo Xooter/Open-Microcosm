@@ -70,3 +70,43 @@ fagos = 0.0
 aporte_organico = 0.0
 detritos_entrantes = 0.0
 polvo = 0.0
+
+# --- Medios de los cultivos bien mezclados (fase P1) -----------------------------------------------
+
+[[medio]]
+id = "osterhout_gause"
+nombre = "Solucion salina de Osterhout (Gause)"
+descripcion = "Solucion de sales sin materia organica: las bacterias que se agregan como alimento no se multiplican, asi la comida de los paramecios es la que pone el experimentador cada dia (el protocolo de Gause)."
+fuente = "Gause, G. F. (1934). The Struggle for Existence, cap. V: medio salino de Osterhout con Bacillus pyocyaneus agregado a diario como alimento. Composicion ionica aproximada (ESTIMACION): agua dulce blanda, sin fosfato ni nitrogeno disponibles para algas."
+[medio.composicion]
+salinidad = 0.3
+alcalinidad = 500.0
+fosfato = 0.0
+nitrogeno = 0.0
+silice = 0.0
+hierro = 0.0
+vitamina_b12 = 0.0
+glucosa = 0.0
+fagos = 0.0
+aporte_organico = 0.0
+detritos_entrantes = 0.0
+polvo = 0.0
+
+[[medio]]
+id = "wc_guillard"
+nombre = "Medio WC (Guillard y Lorenzen)"
+descripcion = "Medio definido para algas de agua dulce y diatomeas: nitrato, fosfato, silicato, hierro con EDTA y vitaminas (B12 incluida)."
+fuente = "Guillard, R. R. L. & Lorenzen, C. J. (1972). J. Phycol. 8: 10-14 (medio WC): NaNO3 1 mM, K2HPO4 50 uM, Na2SiO3 100 uM, FeCl3 11,7 uM con EDTA, B12 0,37 nM."
+[medio.composicion]
+salinidad = 0.2
+alcalinidad = 300.0
+fosfato = 50.0
+nitrogeno = 1000.0
+silice = 100.0
+hierro = 11.7
+vitamina_b12 = 3.7e-4
+glucosa = 0.0
+fagos = 0.0
+aporte_organico = 0.0
+detritos_entrantes = 0.0
+polvo = 0.0

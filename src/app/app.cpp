@@ -985,6 +985,26 @@ void App::worldInput(float dt) {
 // Simulación
 // ---------------------------------------------------------------------------
 
+void App::stepCultures(float dt) {
+    if (culturesPaused || cultures.empty())
+        return;
+    // Cada cultivo avanza en pasos fijos (el resultado no depende de los FPS); con muchos o muy
+    // rápidos, lo que no entra en ~10 ms queda para el cuadro siguiente.
+    const double t0 = GetTime();
+    for (const auto& c : cultures) {
+        c->advance(static_cast<double>(cultureSpeed) * 3600.0 * std::min(dt, 0.1f));
+        if (GetTime() - t0 > 0.010)
+            break;
+    }
+}
+
+void App::openSampleDrop(const PlateSpec& drop) {
+    plate = drop;
+    plateScript.clear();
+    createPlate();
+    notify(ui::tr("Gota de muestra del cultivo: la placa del centro."));
+}
+
 void App::stepSimulation(float frameDt) {
     if (recoverTarget_ > 0) {
         // Recuperación: re-simula lo grabado (incluido el foco) tan rápido como se pueda, con
@@ -1288,6 +1308,7 @@ int App::run() {
         const double s0 = GetTime();
         tools.uiMs += (static_cast<float>(1000.0 * (s0 - u0)) - tools.uiMs) * 0.1f;
         stepSimulation(frameDt);
+        stepCultures(frameDt);
         tools.simFrameMs += (static_cast<float>(1000.0 * (GetTime() - s0)) - tools.simFrameMs) * 0.1f;
         autosaveTimer_ += frameDt;
         if (autosaveTimer_ >= 120.0f) { // cada 2 min reales

@@ -18,6 +18,7 @@ void registerPanels(PanelHost& host) {
     host.add(makeGraphsPanel());
     host.add(makeMeasurePanel());
     host.add(makeContentPanel());
+    host.add(makeCulturePanel());
     host.add(makeHelpPanel());
 }
 
