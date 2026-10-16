@@ -17,6 +17,7 @@
 #include "game/inspect.hpp"
 #include "game/lineage.hpp"
 #include "game/mass_budget.hpp"
+#include "game/mineral.hpp"
 #include "game/sandbox.hpp"
 #include "core/rng.hpp"
 #include "core/units.hpp"
@@ -89,9 +90,11 @@ struct MediumParams {
 
 // Sedimento inicial de la gota: partículas minerales sueltas y granos de arena.
 struct Sediment {
-    int clay = 0, quartz = 0, mica = 0, ironOxide = 0, sulfur = 0, frustules = 0;
+    int count[kMaxMinerals] = {};               // partículas sueltas de cada mineral (por MineralKind)
     int rocks = 0;                              // granos de arena (obstáculos fijos)
     float rockMin = 50.0f, rockMax = 120.0f;    // radio de los granos [µm] (arena fina: 60–250 µm de diámetro)
+    int& operator[](MineralKind k) { return count[static_cast<int>(k)]; }
+    int operator[](MineralKind k) const { return count[static_cast<int>(k)]; }
 };
 
 // Componente: grano de arena o piedra. Es un cuerpo con membrana inamovible (LOD "fijo": sin
@@ -101,8 +104,6 @@ struct Rock {
     MineralKind kind = MineralKind::Quartz;
     std::uint32_t seed = 0; // detalles del render (fracturas, inclusiones)
 };
-
-const char* mineralName(MineralKind kind);
 
 struct WorldConfig {
     int gridX = 256, gridY = 256; // potencias de 2 (FFT)
@@ -133,9 +134,11 @@ struct WorldConfig {
     // Multiplicador de la población inicial de cada especie (0 = ausente en esta gota).
     float speciesWeight[kMaxSpecies];
     WorldConfig() {
-        for (float& w : speciesWeight)
-            w = 1.0f;
-        speciesWeight[static_cast<int>(SpeciesId::Trichonympha)] = 0.0f; // solo en termitas
+        // Un simbionte obligado no vive suelto en el agua (Trichonympha, solo en la termita):
+        // solo lo pone un bioma que lo nombra.
+        const int n = speciesCount();
+        for (int k = 0; k < kMaxSpecies; ++k)
+            speciesWeight[k] = k < n && hasTag(static_cast<SpeciesId>(k), "simbionte_obligado") ? 0.0f : 1.0f;
     }
 };
 

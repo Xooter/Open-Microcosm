@@ -202,7 +202,8 @@ void App::createPlate() {
     worldSeed = config.seed;
     worldBiome = plate.biome;
     world = std::make_unique<World>(config);
-    progress.biomesPlayed |= 1u << static_cast<unsigned>(plate.biome);
+    if (plate.biome < 32) // los de fábrica (la enciclopedia guarda una máscara de 32 bits)
+        progress.biomesPlayed |= 1u << static_cast<unsigned>(plate.biome);
     const RunConfig rc = plateRunConfig(plate);
     catalog.armed = -1;
     selection = SelectionState{}; // las entidades del mundo anterior ya no existen
@@ -488,7 +489,7 @@ void App::drawStatusBar() {
             ImGui::SameLine();
             ImGui::TextDisabled("|");
             ImGui::SameLine();
-            ImGui::Text("%s  seed %llu", biome(static_cast<BiomeId>(worldBiome)).name,
+            ImGui::Text("%s  seed %llu", biome(static_cast<BiomeId>(worldBiome)).name.c_str(),
                         static_cast<unsigned long long>(worldSeed));
             ImGui::SameLine();
             ImGui::TextDisabled("|");

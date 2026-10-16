@@ -66,15 +66,15 @@ class PlatePanel : public Panel {
         if (!section("Base", true))
             return;
         std::vector<const char*> names;
-        for (int b = 0; b < kBiomeCount; ++b)
-            names.push_back(biome(static_cast<BiomeId>(b)).name);
+        for (int b = 0; b < biomeCount(); ++b)
+            names.push_back(biome(static_cast<BiomeId>(b)).name.c_str());
         int b = p.biome;
-        if (combo("Bioma", &b, names.data(), kBiomeCount, "Ambiente de partida: química, temperatura y elenco de especies.")) {
+        if (combo("Bioma", &b, names.data(), biomeCount(), "Ambiente de partida: química, temperatura y elenco de especies.")) {
             p.biome = b;
             p.rebuild(); // cambia todo lo derivado del bioma
             app.plateDirty = true;
         }
-        note(biome(static_cast<BiomeId>(p.biome)).description);
+        note(biome(static_cast<BiomeId>(p.biome)).description.c_str());
         ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted(tr("Semilla"));
         ImGui::SameLine();
@@ -141,12 +141,8 @@ class PlatePanel : public Panel {
     void drawSediment(App& app, PlateSpec& p) {
         Sediment& s = p.config.sediment;
         bool c = false;
-        c |= sliderInt("Arcilla", &s.clay, 0, 600);
-        c |= sliderInt("Limo de cuarzo", &s.quartz, 0, 600);
-        c |= sliderInt("Mica", &s.mica, 0, 600);
-        c |= sliderInt("Óxido de hierro", &s.ironOxide, 0, 600);
-        c |= sliderInt("Azufre", &s.sulfur, 0, 600);
-        c |= sliderInt("Frústulas vacías", &s.frustules, 0, 600);
+        for (int k = 0; k < mineralCount(); ++k)
+            c |= sliderInt(mineralName(static_cast<MineralKind>(k)), &s.count[k], 0, 600);
         c |= sliderInt("Granos de arena", &s.rocks, 0, 40);
         c |= slider("Grano mín. [µm]", &s.rockMin, 20.0f, 250.0f, "%.0f");
         c |= slider("Grano máx. [µm]", &s.rockMax, 20.0f, 400.0f, "%.0f");

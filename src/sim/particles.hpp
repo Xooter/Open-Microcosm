@@ -10,7 +10,8 @@ enum class ParticleKind : std::uint8_t {
     Mineral,  // partícula inorgánica (sedimento): no se descompone ni se come
 };
 
-// Minerales del sedimento de una gota, como se ven en campo claro.
+// Minerales del sedimento de una gota, como se ven en campo claro. Son datos (game/mineral): el
+// valor es el índice en el registro; estos nombres son alias de los de fábrica, en su orden.
 enum class MineralKind : std::uint8_t {
     Clay,      // arcilla (< 4 µm): queda en suspensión, browniano visible
     Quartz,    // limo de cuarzo (4–60 µm): grano anguloso, transparente, mucho relieve
@@ -18,8 +19,8 @@ enum class MineralKind : std::uint8_t {
     IronOxide, // óxidos de hierro (y materia húmica asociada): opacos, pardo rojizos
     Sulfur,    // glóbulos de azufre elemental (precipitado de fuentes sulfurosas)
     Frustule,  // frústula vacía de diatomea (sílice): queda cuando muere la célula
-    Count
 };
+inline constexpr int kMaxMinerals = 64; // tope de tipos de mineral (cabe en el uint8 del SoA)
 
 // Partículas ambientales en layout SoA (un array contiguo por campo).
 // Para agregar un campo nuevo, sumalo también en push() y swapRemove().

@@ -4,6 +4,7 @@
 
 #include <toml++/toml.hpp>
 
+#include <atomic>
 #include <deque>
 #include <mutex>
 #include <optional>
@@ -164,6 +165,8 @@ struct PlanRegistry {
     std::vector<std::string> warnings;
     std::recursive_mutex mutex;
     bool baseLoaded = false;
+    // Ya cargado: se lee sin el candado (lo consultan los bucles paralelos de cada paso).
+    std::atomic<bool> ready{false};
 };
 PlanRegistry& plans() {
     static PlanRegistry r;
@@ -268,6 +271,8 @@ void loadPlansDoc(const toml::table& doc, const std::string& source, const std::
 
 void ensurePlans() {
     PlanRegistry& r = plans();
+    if (r.ready.load(std::memory_order_acquire))
+        return;
     std::lock_guard<std::recursive_mutex> lock(r.mutex);
     if (r.baseLoaded)
         return;
@@ -275,6 +280,7 @@ void ensurePlans() {
     std::string error;
     if (!loadBodyPlansFile(assetPath("content/base/planes.toml"), "base", &error))
         r.warnings.push_back("no se pudieron cargar los planes de fábrica: " + error);
+    r.ready.store(true, std::memory_order_release);
 }
 
 } // namespace

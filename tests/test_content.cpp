@@ -3,6 +3,9 @@
 #include "bio/body_plan.hpp"
 #include "bio/species.hpp"
 #include "core/paths.hpp"
+#include "game/biome.hpp"
+#include "game/mineral.hpp"
+#include "game/plate_spec.hpp"
 
 #include <doctest/doctest.h>
 
@@ -169,4 +172,195 @@ semieje_menor = 15.0
     REQUIRE(own.find(StructureKind::Nucleolus));
     CHECK(own.find(StructureKind::Nucleolus)->count == 3);
     CHECK(std::string(speciesPlan(*findSpecies("plan_inexistente")).name) == "eucariota"); // el mínimo
+}
+
+namespace {
+
+bool biomeWarned(const std::string& fragment) {
+    for (const std::string& w : biomeLoadWarnings())
+        if (w.find(fragment) != std::string::npos)
+            return true;
+    return false;
+}
+
+} // namespace
+
+TEST_CASE("contenido: los biomas de fábrica son datos, en el orden de siempre" * doctest::test_suite("paquetes")) {
+    CHECK(biomeCount() == 6);
+    CHECK(biomeLoadWarnings().empty());
+    CHECK(biome(BiomeId::Puddle).key == "charco");
+    CHECK(biome(BiomeId::SeaIce).key == "hielo_marino");
+    CHECK(findBiome("intestino_termita") == BiomeId::TermiteGut);
+    CHECK_FALSE(findBiome("marte").has_value());
+    const Biome& gut = biome(BiomeId::TermiteGut);
+    CHECK(gut.medium.anoxic);
+    CHECK(gut.medium.temperature == doctest::Approx(28.0f));
+    CHECK(gut.sediment[MineralKind::Clay] == 60);
+    CHECK(gut.sediment.rockMax == doctest::Approx(120.0f)); // lo que falta queda por omisión
+    // Trichonympha es simbionte obligado: solo está donde el bioma la nombra.
+    CHECK(gut.weight(SpeciesId::Trichonympha) == doctest::Approx(1.0f));
+    CHECK(biome(BiomeId::Puddle).weight(SpeciesId::Trichonympha) == 0.0f);
+    CHECK(biome(BiomeId::Puddle).weight(SpeciesId::Paramecium) == doctest::Approx(1.0f));
+    CHECK(biome(BiomeId::Moss).weight(SpeciesId::Arcella) == doctest::Approx(3.0f));
+    CHECK(biome(BiomeId::Moss).weight(SpeciesId::Stentor) == 0.0f);
+    CHECK(WorldConfig{}.speciesWeight[static_cast<int>(SpeciesId::Trichonympha)] == 0.0f);
+}
+
+TEST_CASE("contenido: un paquete agrega un bioma; sus pesos nombran seres de cualquier paquete" *
+          doctest::test_suite("paquetes")) {
+    // El bioma nombra un ser que todavía no está cargado: los pesos se buscan por id al armar la gota.
+    const std::string biomes = R"(
+[[bioma]]
+id = "charca_de_prueba"
+nombre = "Charca de prueba"
+bacterias = 10000
+peso_base = 0.0
+pesos = { paramecium = 2.0, halteria_grandinella = 1.5 }
+[bioma.medio]
+temperatura = 15.0
+fosfato = 3.0
+[bioma.sedimento]
+arcilla = 20
+grano_radio = [30.0, 60.0]
+)";
+    std::string error;
+    REQUIRE(loadBiomesText(biomes, "prueba.toml", "prueba", &error));
+    const auto id = findBiome("charca_de_prueba");
+    REQUIRE(id.has_value());
+    const Biome& b = biome(*id);
+    CHECK(b.pack == "prueba");
+    CHECK(b.weight(SpeciesId::Paramecium) == doctest::Approx(2.0f));
+    CHECK(b.weight(SpeciesId::Amoeba) == 0.0f);
+    REQUIRE(loadSpeciesText(R"(
+[[ser]]
+id = "halteria_grandinella"
+nombre = "Halteria grandinella"
+locomocion = "cilios"
+[ser.forma]
+semieje_mayor = 15.0
+semieje_menor = 13.0
+)",
+                            "halteria.toml", "prueba", &error));
+    const auto halteria = findSpecies("halteria_grandinella");
+    REQUIRE(halteria.has_value());
+    CHECK(b.weight(*halteria) == doctest::Approx(1.5f));
+    // La gota usa el medio del bioma (con su variación por seed) y su sedimento.
+    const WorldConfig c = makeDrop(*id, 4);
+    CHECK(c.medium.temperature == doctest::Approx(15.0f).epsilon(0.5));
+    CHECK(c.medium.salinity == doctest::Approx(MediumParams{}.salinity)); // lo que no dice, el agua dulce
+    CHECK(c.sediment.rockMin == doctest::Approx(30.0f));
+}
+
+TEST_CASE("contenido: un bioma con errores se avisa y no se carga" * doctest::test_suite("paquetes")) {
+    const int before = biomeCount();
+    const std::string bad = R"(
+[[bioma]]
+id = "bioma_roto"
+nombre = "Bioma roto"
+humedad = 3
+[bioma.medio]
+fosfato = -5.0
+luz = 2.0
+presion = 1.0
+[[bioma]]
+id = "charco"
+nombre = "Otro charco"
+)";
+    std::string error;
+    CHECK(loadBiomesText(bad, "roto.toml", "roto", &error));
+    CHECK(biomeCount() == before);
+    CHECK_FALSE(findBiome("bioma_roto").has_value());
+    CHECK(biomeWarned("clave desconocida 'humedad'"));
+    CHECK(biomeWarned("clave desconocida 'presion'"));
+    CHECK(biomeWarned("'fosfato' no puede ser negativo"));
+    CHECK(biomeWarned("'luz' es relativa"));
+    CHECK(biomeWarned("el bioma 'charco' ya existe"));
+    CHECK(biome(BiomeId::Puddle).name == "Charco");
+    // Un TOML mal formado: false con el motivo, sin tocar el registro.
+    CHECK_FALSE(loadBiomesText("[[bioma]\nid = ", "mal.toml", "mal", &error));
+    CHECK(error.find("mal.toml") != std::string::npos);
+}
+
+namespace {
+
+bool mineralWarned(const std::string& fragment) {
+    for (const std::string& w : mineralLoadWarnings())
+        if (w.find(fragment) != std::string::npos)
+            return true;
+    return false;
+}
+
+} // namespace
+
+TEST_CASE("contenido: los minerales de fábrica son datos, en el orden de siempre" * doctest::test_suite("paquetes")) {
+    CHECK(mineralCount() == 6);
+    CHECK(mineralLoadWarnings().empty());
+    CHECK(mineralInfo(MineralKind::Clay).key == "arcilla");
+    CHECK(mineralInfo(MineralKind::Clay).flocculates);
+    CHECK(findMineral("frustula") == MineralKind::Frustule);
+    CHECK(mineralInfo(MineralKind::IronOxide).opacity == doctest::Approx(1.0f));
+    CHECK(mineralInfo(MineralKind::Quartz).radiusMax == doctest::Approx(15.0f));
+    CHECK(mineralInfo(MineralKind::Quartz).grainName == "Grano de arena (cuarzo)");
+    CHECK(mineralInfo(MineralKind::Mica).grainName == "Grano de Mica"); // sin nombre_grano
+}
+
+TEST_CASE("contenido: un paquete suma un mineral y un bioma lo usa en su sedimento" * doctest::test_suite("paquetes")) {
+    std::string error;
+    REQUIRE(loadMineralsText(R"(
+[[mineral]]
+id = "calcita"
+nombre = "Calcita"
+descripcion = "Carbonato de calcio: romboedros transparentes con mucho relieve."
+radio = [2.0, 8.0]
+diferencia_densidad = 1710.0
+opacidad = 0.1
+estilo = "grano_anguloso"
+)",
+                             "calcita.toml", "rocas", &error));
+    const auto calcite = findMineral("calcita");
+    REQUIRE(calcite.has_value());
+    CHECK(mineralInfo(*calcite).pack == "rocas");
+    REQUIRE(loadBiomesText(R"(
+[[bioma]]
+id = "laguna_calcarea"
+nombre = "Laguna calcárea"
+peso_base = 0.0
+[bioma.sedimento]
+calcita = 50
+basalto = 3
+)",
+                           "laguna.toml", "rocas", &error));
+    CHECK(biomeWarned("'basalto' no es un mineral conocido"));
+    const auto lagoon = findBiome("laguna_calcarea");
+    REQUIRE(lagoon.has_value());
+    CHECK(biome(*lagoon).sediment[*calcite] == 50);
+    // La placa la guarda con el id del mineral y la vuelve a leer igual.
+    PlateSpec p;
+    p.biome = static_cast<int>(*lagoon);
+    p.seed = 3;
+    p.content = DropContent::Full;
+    p.rebuild();
+    CHECK(p.config.sediment[*calcite] > 0);
+    const std::string text = serializePlate(p);
+    CHECK(text.find("sediment.calcita=") != std::string::npos);
+    PlateSpec q;
+    REQUIRE(parsePlate(text, q));
+    CHECK(q.config.sediment[*calcite] == p.config.sediment[*calcite]);
+}
+
+TEST_CASE("contenido: un mineral con errores se avisa y no se carga" * doctest::test_suite("paquetes")) {
+    const int before = mineralCount();
+    std::string error;
+    CHECK(loadMineralsText(R"(
+[[mineral]]
+id = "piedra_rara"
+nombre = "Piedra rara"
+estilo = "brillante"
+opacidad = 3.0
+)",
+                           "rara.toml", "raro", &error));
+    CHECK(mineralCount() == before);
+    CHECK(mineralWarned("falta 'radio'"));
+    CHECK(mineralWarned("'estilo' tiene que ser uno de"));
+    CHECK(mineralWarned("'opacidad' va de 0 a 1"));
 }

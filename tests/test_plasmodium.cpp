@@ -247,10 +247,10 @@ TEST_CASE("liquen: la hifa se une a un alga verde, recibe su azúcar y la proteg
 
 TEST_CASE("placa de Petri vacía: sin vida, sin minerales, sin granos ni polvo" * doctest::test_suite("largos")) {
     WorldConfig full = makeDrop(BiomeId::Puddle, 4);
-    REQUIRE(full.sediment.clay > 0);
+    REQUIRE(full.sediment[MineralKind::Clay] > 0);
     WorldConfig c = full;
     applyDropContent(c, DropContent::EmptyPetri);
-    CHECK(c.sediment.clay == 0);
+    CHECK(c.sediment[MineralKind::Clay] == 0);
     CHECK(c.sediment.rocks == 0);
     CHECK(c.medium.dustRate == 0.0f);
     CHECK(c.bacteria == 0);
@@ -265,7 +265,7 @@ TEST_CASE("placa de Petri vacía: sin vida, sin minerales, sin granos ni polvo" 
     WorldConfig nl = full;
     applyDropContent(nl, DropContent::NoLife);
     CHECK(nl.bacteria == 0);
-    CHECK(nl.sediment.clay == full.sediment.clay);
+    CHECK(nl.sediment[MineralKind::Clay] == full.sediment[MineralKind::Clay]);
 }
 
 namespace {

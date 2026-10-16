@@ -145,6 +145,8 @@ add_library(biosim STATIC
     src/game/inspect.cpp
     src/game/world_chem.cpp
     src/game/biome.cpp
+    src/game/medium_toml.cpp
+    src/game/mineral.cpp
     src/game/plate_spec.cpp
     src/game/parameters.cpp
     src/game/intervention.cpp

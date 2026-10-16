@@ -49,15 +49,6 @@ constexpr float kMinDetritusMass = 0.0003f; // [pmol] debajo de esto se disolvi�
 // agua con browniano. Simplificación: las asentadas ya están en el fondo (el agua no las lleva).
 constexpr float kSettledRadius = 2.0f; // [µm]
 
-// Fracción de la luz que bloquea cada mineral (el cuarzo y la mica son transparentes).
-float mineralOpacity(MineralKind k) {
-    switch (k) {
-    case MineralKind::Clay: return 0.5f;
-    case MineralKind::IronOxide: return 1.0f;
-    case MineralKind::Sulfur: return 0.3f;
-    default: return 0.1f;
-    }
-}
 
 template <typename T> void hashVector(std::uint64_t& h, const std::vector<T>& v) {
     const auto* bytes = reinterpret_cast<const unsigned char*>(v.data());
@@ -347,6 +338,11 @@ void World::stepAmbient(float dt) {
     // Junto a las hifas, las exoenzimas de los mohos de agua la aceleran.
     const float decayedNearHyphae =
         1.0f - std::exp(-medium_.detritusDecay * fungi_.params.detritusDecayBoost * dt * bioScale());
+    // Fracción de la luz que bloquea cada mineral (dato del mineral: el cuarzo y la mica son
+    // transparentes, los óxidos de hierro opacos).
+    float opacity[kMaxMinerals];
+    for (int k = 0, n = mineralCount(); k < n; ++k)
+        opacity[k] = mineralInfo(static_cast<MineralKind>(k)).opacity;
 
     for (std::size_t i = 0; i < ambient_.size();) {
         if (ambient_.kind[i] == ParticleKind::Ink) {
@@ -370,7 +366,7 @@ void World::stepAmbient(float dt) {
                     continue;
                 }
             }
-            shading_.at(cx, cy) += mineralOpacity(ambient_.mineral[i]) * units::kPi * ambient_.radius[i] *
+            shading_.at(cx, cy) += opacity[static_cast<int>(ambient_.mineral[i])] * units::kPi * ambient_.radius[i] *
                                    ambient_.radius[i] / cellArea;
         } else {
             const int cx = food.cellX(ambient_.x[i]), cy = food.cellY(ambient_.y[i]);

@@ -48,6 +48,7 @@ std::string asciiFold(const std::string& text) {
         {"á", "a"}, {"é", "e"}, {"í", "i"}, {"ó", "o"}, {"ú", "u"}, {"ü", "u"}, {"ñ", "n"},
         {"Á", "A"}, {"É", "E"}, {"Í", "I"}, {"Ó", "O"}, {"Ú", "U"}, {"Ñ", "N"}, {"°", ""},
         {"µ", "u"}, {"±", "+/-"}, {"⁻", "-"}, {"¹", "1"}, {"²", "2"}, {"³", "3"}, {"–", "-"},
+        {"₂", "2"}, {"₃", "3"}, {"₄", "4"}, {"—", "-"},
     };
     std::string out;
     for (std::size_t i = 0; i < text.size();) {
@@ -436,39 +437,6 @@ Inspection inspectCell(const World& w, entt::entity e) {
 // Granos, partículas y microbios
 // ---------------------------------------------------------------------------
 
-const char* mineralBlurb(MineralKind k) {
-    switch (k) {
-    case MineralKind::Clay:
-        return "Arcilla: laminas de silicato de menos de 4 um. Tan chicas que el movimiento browniano supera a la sedimentacion: quedan en suspension y enturbian el agua.";
-    case MineralKind::Quartz:
-        return "Cuarzo (SiO2): el mineral mas comun de la arena. Su indice de refraccion (1,54) es mayor que el del agua (1,33): se ve por el relieve, con un borde oscuro grueso y una linea brillante de Becke por dentro.";
-    case MineralKind::Mica:
-        return "Mica: escamas hexagonales finisimas y brillantes. Por su forma plana se asientan despacio.";
-    case MineralKind::IronOxide:
-        return "Oxidos de hierro: opacos y pardo rojizos, hacen sombra. Dan su color al barro y al suelo.";
-    case MineralKind::Sulfur:
-        return "Globulos de azufre elemental: se forman donde hay sulfuros (fuentes termales). Muy refringentes: borde negro y centro brillante.";
-    case MineralKind::Frustule:
-        return "Frustula vacia de diatomea: la caja de silice (opalo) que queda cuando muere la celula. No se descompone, a diferencia del resto del organismo; el rafe y las estrias siguen intactos.";
-    case MineralKind::Count: break;
-    }
-    return "";
-}
-
-// Diferencia de densidad con el agua [kg/m3] para la ley de Stokes.
-float mineralDensityGap(MineralKind k) {
-    switch (k) {
-    case MineralKind::Clay: return 1650.0f;
-    case MineralKind::Quartz: return 1650.0f;
-    case MineralKind::Mica: return 1800.0f;
-    case MineralKind::IronOxide: return 4000.0f;
-    case MineralKind::Sulfur: return 1000.0f;
-    case MineralKind::Frustule: return 600.0f; // opalo hueco
-    case MineralKind::Count: break;
-    }
-    return 1650.0f;
-}
-
 Inspection inspectRock(const World& w, entt::entity e) {
     const entt::registry& reg = w.registry();
     if (!reg.valid(e) || !reg.all_of<RingBody, Rock>(e)) {
@@ -486,9 +454,9 @@ Inspection inspectRock(const World& w, entt::entity e) {
     ins.entity = e;
     ins.at = body.centroid;
     ins.radius = 0.5f * std::max(body.aabbMax.x - body.aabbMin.x, body.aabbMax.y - body.aabbMin.y) + 4.0f;
-    ins.title = rock.kind == MineralKind::IronOxide ? "Grano de oxido de hierro" : "Grano de arena (cuarzo)";
+    ins.title = asciiFold(mineralInfo(rock.kind).grainName);
     ins.subtitle = "Mineral - no esta vivo";
-    ins.blurb = mineralBlurb(rock.kind);
+    ins.blurb = asciiFold(mineralInfo(rock.kind).description);
     ins.headline = "inmovil, apoyado en el vidrio";
     InspectSection& s = section(ins, "Grano");
     add(s, "Tamano", fmt("%.0f x %.0f um", body.aabbMax.x - body.aabbMin.x, body.aabbMax.y - body.aabbMin.y));
@@ -533,13 +501,13 @@ Inspection inspectParticle(const World& w, const Picked& p) {
         add(s, "Difusion", fmt("%.2f um2/s", units::stokesEinsteinDiffusion(r)));
     } else {
         const MineralKind k = a.mineral[p.index];
-        ins.title = mineralName(k);
+        ins.title = asciiFold(mineralName(k));
         ins.subtitle = "Mineral - inerte";
-        ins.blurb = mineralBlurb(k);
+        ins.blurb = asciiFold(mineralInfo(k).description);
         const bool settled = r >= 2.0f;
         ins.headline = settled ? "asentada en el fondo" : "en suspension";
         // Stokes: v = 2/9 * (rho_p - rho_w) * g * r^2 / mu  ->  0,00218 * delta_rho * r^2 [um/s, r en um].
-        const float fall = 0.002182f * mineralDensityGap(k) * r * r;
+        const float fall = 0.002182f * mineralInfo(k).densityGap * r * r;
         add(s, "Estado", settled ? "asentada en el fondo: solo la mueven las celulas" : "en suspension: sigue el agua con browniano");
         add(s, "Sedimentacion", fmt("caeria a ~%.1f um/s (ley de Stokes)%s", fall, settled ? ": toca el vidrio en segundos" : ""));
         add(s, "No se descompone", "no se come ni se descompone; hace sombra solo si es opaca");

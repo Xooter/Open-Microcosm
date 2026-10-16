@@ -1,0 +1,237 @@
+# Biomas del paquete de fábrica (fase 20.0: el contenido como datos). Cada bioma es un ambiente
+# real con su química, su temperatura y su elenco de seres; la gota de cada placa sale de un bioma
+# con variaciones por seed (game/biome.cpp, makeDrop).
+#
+# [[bioma]]
+#   id, nombre, descripcion
+#   bacterias, detritos            individuos en la gota de referencia (2048 × 1024 µm): en otra
+#                                  placa se escalan por el área, para mantener la densidad
+#   filamentos_fijadores           cianobacterias con heterocistos (Anabaena, Nostoc, Mastigocladus)
+#   filamentos_oscillatoria        cianobacterias sin heterocistos
+#   cianobacterias_temperatura     rango térmico de las cianobacterias del bioma [°C]
+#   saprolegnia, grupos_quitridios, allomyces, liquenes, physarum   hongos y mohos al empezar
+#   manchas                        manchas iniciales de materia orgánica y detritos (0–1)
+#   peso_base, pesos               multiplicador de la población inicial de cada ser: `peso_base`
+#                                  para todos, salvo los listados por id en `pesos` (un ser de otro
+#                                  paquete que no está listado recibe el peso base)
+# [bioma.medio]  química y ambiente; lo que falta queda en el valor general del agua dulce:
+#   temperatura [°C], salinidad [PSU], luz (irradiancia relativa de la lámpara, 0–1),
+#   intercambio_o2 [1/s], anoxico, alcalinidad (bicarbonato) [µM], fosfato [µM], nitrogeno [µM],
+#   silice [µM], hierro [µM], vitamina_b12 [µM], b12_fuente [µM/h], b12_degradacion [1/h],
+#   disolucion_frustulas [1/h], fagos [viriones/µm³], fagos_inactivacion [1/h],
+#   toxinas_degradacion [1/h], ahl_vida_media [h], aporte_organico [µM/h biológica],
+#   descomposicion [1/s biológico], detritos_entrantes [1/s], consumo_nutrientes [1/s],
+#   polvo (partículas que caen del aire) [1/s]
+# [bioma.sedimento]  partículas minerales por gota de referencia: arcilla, cuarzo, mica,
+#   oxido_hierro, azufre, frustula (ids de minerales.toml: un paquete puede sumar los suyos),
+#   granos (de arena: obstáculos fijos) y grano_radio [µm]
+#   (por omisión [50, 120]: arena fina, 60–250 µm de diámetro)
+
+[[bioma]]
+id = "charco"
+nombre = "Charco"
+descripcion = "Agua de lluvia sobre barro y hojas: tibia, luminosa y muy rica. Casi todo vive acá."
+bacterias = 50000
+detritos = 60
+filamentos_fijadores = 15
+filamentos_oscillatoria = 8
+cianobacterias_temperatura = [10.0, 35.0]
+saprolegnia = 4
+grupos_quitridios = 2
+allomyces = 2 # sobre insectos y hojas muertas
+liquenes = 1
+physarum = 1  # el moho de la hojarasca húmeda
+manchas = 0.6
+peso_base = 1.0
+pesos = { mougeotia = 0.5, zygnema = 0.5, oedogonium = 0.5 }
+[bioma.medio]
+temperatura = 22.0
+aporte_organico = 300.0 # hojas y barro: una infusión natural
+polvo = 0.03
+[bioma.sedimento]
+# Barro: mucha arcilla y limo, granos de arena y óxidos de hierro del suelo.
+arcilla = 500
+cuarzo = 140
+mica = 15
+oxido_hierro = 40
+frustula = 10
+granos = 5
+
+# Más frío y menos rico que el charco; algas coloniales y grandes ciliados.
+[[bioma]]
+id = "estanque"
+nombre = "Estanque"
+descripcion = "Agua quieta y templada con plantas acuáticas: Volvox, Spirogyra y Stentor."
+bacterias = 30000
+detritos = 60
+filamentos_fijadores = 15
+filamentos_oscillatoria = 5
+cianobacterias_temperatura = [10.0, 35.0]
+saprolegnia = 4
+grupos_quitridios = 2
+allomyces = 3
+liquenes = 1
+physarum = 0 # no vive en agua libre
+manchas = 0.3
+peso_base = 1.0
+pesos = { stentor = 1.5, spirogyra = 1.5, volvox = 2.0, candida = 0.3, naegleria = 0.0, oedogonium = 1.5 }
+[bioma.medio]
+temperatura = 17.0
+fosfato = 20.0
+nitrogeno = 300.0
+silice = 150.0
+hierro = 0.5
+vitamina_b12 = 0.001
+aporte_organico = 60.0
+polvo = 0.01
+[bioma.sedimento]
+# Fondo fino y más limpio; muchas frústulas de diatomeas muertas.
+arcilla = 160
+cuarzo = 50
+mica = 8
+oxido_hierro = 12
+frustula = 30
+granos = 2
+
+# Película de agua fría, en sombra y ácida (pH ~5,5). Amebas tecadas, Naegleria y Nostoc.
+[[bioma]]
+id = "musgo"
+nombre = "Musgo húmedo"
+descripcion = "La película de agua entre las hojitas del musgo: fría, en sombra y ácida. Amebas con testa y Naegleria."
+bacterias = 30000
+detritos = 60
+filamentos_fijadores = 8 # Nostoc
+filamentos_oscillatoria = 4
+cianobacterias_temperatura = [0.0, 35.0]
+saprolegnia = 4
+grupos_quitridios = 2
+allomyces = 1
+liquenes = 3 # los líquenes crecen sobre el musgo
+physarum = 3 # hojarasca y musgo húmedo
+manchas = 0.4
+peso_base = 0.0
+pesos = { paramecium = 0.3, euglena = 0.5, amoeba = 1.0, chlamydomonas = 0.4, vorticella = 1.0, euplotes = 1.0, arcella = 3.0, navicula = 0.5, candida = 1.0, naegleria = 3.0, zygnema = 0.5 }
+[bioma.medio]
+temperatura = 12.0
+luz = 0.4
+alcalinidad = 80.0 # agua blanda: el CO₂ del aire la acidifica
+fosfato = 10.0
+nitrogeno = 100.0
+silice = 60.0 # aguas ácidas y blandas: poca sílice
+hierro = 1.5  # el hierro es más soluble a pH bajo
+aporte_organico = 40.0 # el musgo y el suelo liberan ácidos húmicos y azúcares
+polvo = 0.02
+[bioma.sedimento]
+# Suelo entre las hojitas: partículas minerales y humus ferruginoso.
+arcilla = 250
+cuarzo = 90
+mica = 12
+oxido_hierro = 60
+frustula = 5
+granos = 3
+
+# Oscuro, sin oxígeno, lleno de astillas de madera y de bacterias.
+[[bioma]]
+id = "intestino_termita"
+nombre = "Intestino de termita"
+descripcion = "Anóxico y oscuro, repleto de astillas de madera. Trichonympha digiere la celulosa por la termita."
+bacterias = 80000
+detritos = 400
+filamentos_fijadores = 0
+filamentos_oscillatoria = 0
+saprolegnia = 0
+grupos_quitridios = 0
+allomyces = 0
+liquenes = 0
+physarum = 0
+manchas = 0.8
+peso_base = 0.0
+pesos = { candida = 0.5, trichonympha = 1.0 }
+[bioma.medio]
+temperatura = 28.0
+luz = 0.0
+intercambio_o2 = 0.0
+anoxico = true
+fosfato = 50.0
+nitrogeno = 200.0 # la madera es pobre en N: lo fijan las bacterias del intestino
+silice = 20.0
+hierro = 2.0
+vitamina_b12 = 0.005 # la microbiota intestinal sintetiza mucha B12
+aporte_organico = 300.0
+detritos_entrantes = 3.0 # la termita sigue comiendo madera
+[bioma.sedimento]
+# Algo de suelo que la termita traga junto con la madera; sin granos ni polvo del aire.
+arcilla = 60
+cuarzo = 10
+
+# 42 °C y alcalina. Tapetes de Mastigocladus y la ameba Naegleria.
+[[bioma]]
+id = "fuente_termal"
+nombre = "Fuente termal"
+descripcion = "Agua a 42 grados: casi ningún eucariota la soporta. Cianobacterias termófilas y Naegleria."
+bacterias = 60000
+detritos = 60
+filamentos_fijadores = 35 # Mastigocladus laminosus
+filamentos_oscillatoria = 15 # tapetes de Oscillatoria/Phormidium termófilas
+cianobacterias_temperatura = [30.0, 57.0]
+saprolegnia = 0
+grupos_quitridios = 0
+allomyces = 0 # 42 °C es demasiado para los hongos y mohos
+liquenes = 0
+physarum = 0
+manchas = 0.2
+peso_base = 0.0
+pesos = { candida = 0.5, naegleria = 4.0 }
+[bioma.medio]
+temperatura = 42.0
+alcalinidad = 3000.0
+fosfato = 30.0
+nitrogeno = 50.0 # pobre en N: domina la fijadora
+silice = 600.0 # el agua caliente disuelve la sílice de la roca
+hierro = 3.0
+vitamina_b12 = 0.001
+aporte_organico = 20.0 # exudados de los tapetes microbianos
+polvo = 0.01
+[bioma.sedimento]
+# Sínter silíceo, glóbulos de azufre y precipitados de hierro.
+arcilla = 40
+cuarzo = 60
+oxido_hierro = 70
+azufre = 140
+granos = 3
+
+# Canales de salmuera a −2 °C, muy salados y con poca luz. Diatomeas, Chlamydomonas de hielo y
+# Euplotes.
+[[bioma]]
+id = "hielo_marino"
+nombre = "Hielo marino"
+descripcion = "Canales de salmuera dentro del hielo: -2 grados y el doble de sal que el mar. Diatomeas."
+bacterias = 20000
+detritos = 60
+filamentos_fijadores = 0
+filamentos_oscillatoria = 0
+saprolegnia = 0
+grupos_quitridios = 3 # quitridios marinos de diatomeas
+allomyces = 0
+liquenes = 0
+physarum = 0
+manchas = 0.3
+peso_base = 0.0
+pesos = { chlamydomonas = 0.6, euplotes = 2.0, navicula = 4.0, candida = 0.5 }
+[bioma.medio]
+temperatura = -2.0
+salinidad = 60.0
+luz = 0.3
+alcalinidad = 2300.0 # agua de mar
+fosfato = 5.0
+nitrogeno = 60.0
+silice = 100.0
+hierro = 0.2 # hierro escaso, como en el mar polar
+vitamina_b12 = 5e-4
+aporte_organico = 10.0
+polvo = 0.005
+[bioma.sedimento]
+# Canales de salmuera: poco sedimento, frústulas de diatomeas del hielo.
+arcilla = 30
+cuarzo = 8
+frustula = 25

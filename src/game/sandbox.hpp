@@ -1,6 +1,7 @@
 #pragma once
 
 #include "bio/species.hpp"
+#include "game/mineral.hpp"
 #include "sim/particles.hpp"
 
 #include <cstdint>
@@ -48,7 +49,8 @@ inline Being beingAt(int index) {
     return {static_cast<BeingKind>(index - speciesCount() + 1), SpeciesId::Paramecium};
 }
 
-// Mineral suelto que corresponde a un ser del catálogo (Count si no es uno).
+// Mineral suelto que corresponde a un ser del catálogo (kNoMineral si no es uno).
+inline constexpr MineralKind kNoMineral = static_cast<MineralKind>(255);
 inline MineralKind beingMineral(BeingKind k) {
     switch (k) {
     case BeingKind::Clay: return MineralKind::Clay;
@@ -57,7 +59,7 @@ inline MineralKind beingMineral(BeingKind k) {
     case BeingKind::IronOxide: return MineralKind::IronOxide;
     case BeingKind::Sulfur: return MineralKind::Sulfur;
     case BeingKind::Frustule: return MineralKind::Frustule;
-    default: return MineralKind::Count;
+    default: return kNoMineral;
     }
 }
 
@@ -145,12 +147,12 @@ inline const char* beingName(Being b) {
     case BeingKind::Physarum: return "Physarum";
     case BeingKind::OatFlake: return "Copo de avena";
     case BeingKind::Phage: return "Fagos";
-    case BeingKind::Clay: return "Arcilla";
-    case BeingKind::Quartz: return "Limo de cuarzo";
-    case BeingKind::Mica: return "Mica";
-    case BeingKind::IronOxide: return "Oxido de hierro";
-    case BeingKind::Sulfur: return "Azufre";
-    case BeingKind::Frustule: return "Frustula vacia";
+    case BeingKind::Clay:
+    case BeingKind::Quartz:
+    case BeingKind::Mica:
+    case BeingKind::IronOxide:
+    case BeingKind::Sulfur:
+    case BeingKind::Frustule: return mineralName(beingMineral(b.kind));
     case BeingKind::Rock: return "Grano de arena";
     case BeingKind::Sediment: return "Barro (mezcla)";
     case BeingKind::Count: break;

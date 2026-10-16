@@ -39,7 +39,14 @@ int countMinerals(const World& world, MineralKind kind) {
 std::uint64_t runSediment(int threads) {
     omp_set_num_threads(threads);
     WorldConfig config = emptyWorld();
-    config.sediment = {.clay = 80, .quartz = 30, .mica = 5, .ironOxide = 10, .sulfur = 5, .frustules = 5, .rocks = 4};
+    config.sediment = {};
+    config.sediment[MineralKind::Clay] = 80;
+    config.sediment[MineralKind::Quartz] = 30;
+    config.sediment[MineralKind::Mica] = 5;
+    config.sediment[MineralKind::IronOxide] = 10;
+    config.sediment[MineralKind::Sulfur] = 5;
+    config.sediment[MineralKind::Frustule] = 5;
+    config.sediment.rocks = 4;
     World world(config);
     world.populateEcosystem(0.2f);
     steps(world, 60 * 3);
@@ -50,7 +57,9 @@ std::uint64_t runSediment(int threads) {
 
 TEST_CASE("minerales: inertes; a las asentadas no las lleva el agua, a la arcilla sí") {
     WorldConfig config = emptyWorld();
-    config.sediment = {.clay = 60, .quartz = 30};
+    config.sediment = {};
+    config.sediment[MineralKind::Clay] = 60;
+    config.sediment[MineralKind::Quartz] = 30;
     World world(config);
     const AmbientParticles& a = world.ambient();
     REQUIRE(a.size() == 90);

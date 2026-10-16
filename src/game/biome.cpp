@@ -1,194 +1,201 @@
 #include "game/biome.hpp"
 
+#include "core/paths.hpp"
 #include "core/rng.hpp"
+#include "game/medium_toml.hpp"
 
 #include <algorithm>
-#include <array>
+#include <atomic>
 #include <cmath>
-#include <initializer_list>
-#include <utility>
+#include <deque>
+#include <mutex>
+
+// Registro de biomas (fase 20.0): los de fábrica vienen de assets/content/base/biomas.toml; los
+// paquetes agregan los suyos detrás. Deque: agregar no mueve los ya cargados.
 
 namespace {
 
-using S = SpeciesId;
-
-// Pesos: todas las especies con `base`, salvo las listadas.
-void setWeights(Biome& b, float base, std::initializer_list<std::pair<S, float>> special) {
-    for (float& w : b.weight)
-        w = base;
-    for (const auto& [id, w] : special)
-        b.weight[static_cast<int>(id)] = w;
+struct Registry {
+    std::deque<Biome> entries;
+    std::vector<std::string> warnings;
+    std::recursive_mutex mutex;
+    bool baseLoaded = false;
+    // Ya cargado: se lee sin el candado (lo consultan los bucles paralelos de cada paso).
+    std::atomic<bool> ready{false};
+};
+Registry& registry() {
+    static Registry r;
+    return r;
 }
 
-std::array<Biome, kBiomeCount> makeBiomes() {
-    std::array<Biome, kBiomeCount> all{};
+constexpr const char* kBiomeKeys[] = {
+    "id",        "nombre",      "descripcion", "bacterias", "detritos", "filamentos_fijadores", "filamentos_oscillatoria",
+    "cianobacterias_temperatura", "saprolegnia", "grupos_quitridios", "allomyces", "liquenes", "physarum",
+    "manchas",   "peso_base",   "pesos",       "medio",     "sedimento"};
 
-    // Charco de lluvia: tibio, a pleno sol y muy rico en materia orgánica (hojas, barro).
-    Biome& puddle = all[static_cast<int>(BiomeId::Puddle)];
-    puddle.name = "Charco";
-    puddle.description = "Agua de lluvia sobre barro y hojas: tibia, luminosa y muy rica. Casi todo vive aca.";
-    puddle.medium.temperature = 22.0f;
-    puddle.medium.organicInflow = 300.0f; // hojas y barro: una infusión natural
-    setWeights(puddle, 1.0f, {{S::Naegleria, 1.0f}, {S::Trichonympha, 0.0f}, {S::Mougeotia, 0.5f}, {S::Zygnema, 0.5f},
-                              {S::Oedogonium, 0.5f}});
-    puddle.bacteria = 50'000;
-    puddle.detritus = 60;
-    puddle.cyanoFilaments = 15;
-    puddle.oscillatoriaFilaments = 8;
-    puddle.cyanoTMin = 10.0f;
-    puddle.cyanoTMax = 35.0f;
-    puddle.saprolegnia = 4;
-    puddle.chytridClusters = 2;
-    puddle.allomyces = 2;  // sobre insectos y hojas muertas
-    puddle.lichens = 1;
-    puddle.physarum = 1;   // el moho de la hojarasca húmeda
-    puddle.patchiness = 0.6f;
-    // Barro: mucha arcilla y limo, granos de arena y óxidos de hierro del suelo.
-    puddle.sediment = {.clay = 500, .quartz = 140, .mica = 15, .ironOxide = 40, .frustules = 10, .rocks = 5};
-    puddle.medium.dustRate = 0.03f;
-
-    // Estanque: más frío y menos rico; algas coloniales y grandes ciliados.
-    Biome& pond = all[static_cast<int>(BiomeId::Pond)];
-    pond = puddle;
-    pond.name = "Estanque";
-    pond.description = "Agua quieta y templada con plantas acuaticas: Volvox, Spirogyra y Stentor.";
-    pond.medium.temperature = 17.0f;
-    pond.medium.organicInflow = 60.0f;
-    pond.medium.phosphate = 20.0f;
-    pond.medium.nitrogen = 300.0f;
-    pond.medium.silicate = 150.0f;
-    pond.medium.iron = 0.5f;
-    pond.medium.vitamin = 1e-3f;
-    setWeights(pond, 1.0f, {{S::Volvox, 2.0f}, {S::Spirogyra, 1.5f}, {S::Stentor, 1.5f}, {S::Naegleria, 0.0f},
-                            {S::Trichonympha, 0.0f}, {S::Candida, 0.3f}, {S::Oedogonium, 1.5f}});
-    pond.bacteria = 30'000;
-    pond.oscillatoriaFilaments = 5;
-    pond.physarum = 0;     // no vive en agua libre
-    pond.allomyces = 3;
-    pond.patchiness = 0.3f;
-    // Fondo fino y más limpio; muchas frústulas de diatomeas muertas.
-    pond.sediment = {.clay = 160, .quartz = 50, .mica = 8, .ironOxide = 12, .frustules = 30, .rocks = 2};
-    pond.medium.dustRate = 0.01f;
-
-    // Musgo húmedo: película de agua fría, en sombra y ácida (pH ~5,5). Amebas tecadas,
-    // Naegleria y Nostoc.
-    Biome& moss = all[static_cast<int>(BiomeId::Moss)];
-    moss = puddle;
-    moss.name = "Musgo humedo";
-    moss.description = "La pelicula de agua entre las hojitas del musgo: fria, en sombra y acida. Amebas con testa y Naegleria.";
-    moss.medium.temperature = 12.0f;
-    moss.medium.organicInflow = 40.0f; // el musgo y el suelo liberan ácidos húmicos y azúcares
-    moss.medium.surfaceLight = 0.4f;
-    moss.medium.alkalinity = 80.0f; // agua blanda: el CO₂ del aire la acidifica
-    moss.medium.phosphate = 10.0f;
-    moss.medium.nitrogen = 100.0f;
-    moss.medium.silicate = 60.0f;  // aguas ácidas y blandas: poca sílice
-    moss.medium.iron = 1.5f;       // el hierro es más soluble a pH bajo
-    moss.medium.vitamin = 2e-3f;
-    setWeights(moss, 0.0f, {{S::Arcella, 3.0f}, {S::Euplotes, 1.0f}, {S::Vorticella, 1.0f}, {S::Paramecium, 0.3f},
-                            {S::Chlamydomonas, 0.4f}, {S::Euglena, 0.5f}, {S::Naegleria, 3.0f}, {S::Navicula, 0.5f},
-                            {S::Candida, 1.0f}, {S::Amoeba, 1.0f}, {S::Zygnema, 0.5f}});
-    moss.bacteria = 30'000;
-    moss.cyanoFilaments = 8; // Nostoc
-    moss.oscillatoriaFilaments = 4;
-    moss.cyanoTMin = 0.0f;
-    moss.physarum = 3;       // hojarasca y musgo húmedo
-    moss.lichens = 3;        // los líquenes crecen sobre el musgo
-    moss.allomyces = 1;
-    moss.patchiness = 0.4f;
-    // Suelo entre las hojitas: partículas minerales y humus ferruginoso.
-    moss.sediment = {.clay = 250, .quartz = 90, .mica = 12, .ironOxide = 60, .frustules = 5, .rocks = 3};
-    moss.medium.dustRate = 0.02f;
-
-    // Intestino de termita: oscuro, sin oxígeno, lleno de astillas de madera y de bacterias.
-    Biome& gut = all[static_cast<int>(BiomeId::TermiteGut)];
-    gut = puddle;
-    gut.name = "Intestino de termita";
-    gut.description = "Anoxico y oscuro, repleto de astillas de madera. Trichonympha digiere la celulosa por la termita.";
-    gut.medium.temperature = 28.0f;
-    gut.medium.surfaceLight = 0.0f;
-    gut.medium.anoxic = true;
-    gut.medium.o2AirExchange = 0.0f;
-    gut.medium.detritusSpawnRate = 3.0f; // la termita sigue comiendo madera
-    gut.medium.phosphate = 50.0f;
-    gut.medium.nitrogen = 200.0f; // la madera es pobre en N: lo fijan las bacterias del intestino
-    gut.medium.silicate = 20.0f;
-    gut.medium.iron = 2.0f;
-    gut.medium.vitamin = 5e-3f;   // la microbiota intestinal sintetiza mucha B12
-    setWeights(gut, 0.0f, {{S::Trichonympha, 1.0f}, {S::Candida, 0.5f}});
-    gut.weight[static_cast<int>(S::Trichonympha)] = 1.0f;
-    gut.bacteria = 80'000;
-    gut.detritus = 400;
-    gut.cyanoFilaments = 0;
-    gut.oscillatoriaFilaments = 0;
-    gut.saprolegnia = gut.chytridClusters = 0;
-    gut.allomyces = gut.lichens = gut.physarum = 0;
-    gut.patchiness = 0.8f;
-    // Algo de suelo que la termita traga junto con la madera; sin granos ni polvo del aire.
-    gut.sediment = {.clay = 60, .quartz = 10};
-    gut.medium.dustRate = 0.0f;
-
-    // Fuente termal: 42 °C y alcalina. Tapetes de Mastigocladus y la ameba Naegleria.
-    Biome& spring = all[static_cast<int>(BiomeId::HotSpring)];
-    spring = puddle;
-    spring.name = "Fuente termal";
-    spring.description = "Agua a 42 grados: casi ningun eucariota la soporta. Cianobacterias termofilas y Naegleria.";
-    spring.medium.temperature = 42.0f;
-    spring.medium.organicInflow = 20.0f; // exudados de los tapetes microbianos
-    spring.medium.alkalinity = 3000.0f;
-    spring.medium.phosphate = 30.0f;
-    spring.medium.nitrogen = 50.0f; // pobre en N: domina la fijadora
-    spring.medium.silicate = 600.0f; // el agua caliente disuelve la sílice de la roca
-    spring.medium.iron = 3.0f;
-    spring.medium.vitamin = 1e-3f;
-    setWeights(spring, 0.0f, {{S::Naegleria, 4.0f}, {S::Candida, 0.5f}});
-    spring.bacteria = 60'000;
-    spring.cyanoFilaments = 35; // Mastigocladus laminosus
-    spring.oscillatoriaFilaments = 15; // tapetes de Oscillatoria/Phormidium termófilas
-    spring.cyanoTMin = 30.0f;
-    spring.cyanoTMax = 57.0f;
-    spring.saprolegnia = spring.chytridClusters = 0;
-    spring.allomyces = spring.lichens = spring.physarum = 0; // 42 °C es demasiado
-    spring.patchiness = 0.2f;
-    // Sínter silíceo, glóbulos de azufre y precipitados de hierro.
-    spring.sediment = {.clay = 40, .quartz = 60, .ironOxide = 70, .sulfur = 140, .rocks = 3};
-    spring.medium.dustRate = 0.01f;
-
-    // Hielo marino: canales de salmuera a −2 °C, muy salados y con poca luz. Diatomeas,
-    // Chlamydomonas de hielo y Euplotes.
-    Biome& ice = all[static_cast<int>(BiomeId::SeaIce)];
-    ice = puddle;
-    ice.name = "Hielo marino";
-    ice.description = "Canales de salmuera dentro del hielo: -2 grados y el doble de sal que el mar. Diatomeas.";
-    ice.medium.temperature = -2.0f;
-    ice.medium.organicInflow = 10.0f;
-    ice.medium.salinity = 60.0f;
-    ice.medium.surfaceLight = 0.3f;
-    ice.medium.phosphate = 5.0f;
-    ice.medium.nitrogen = 60.0f;
-    ice.medium.silicate = 100.0f;
-    ice.medium.iron = 0.2f;        // hierro escaso, como en el mar polar
-    ice.medium.vitamin = 5e-4f;
-    ice.medium.alkalinity = 2300.0f; // agua de mar
-    setWeights(ice, 0.0f, {{S::Navicula, 4.0f}, {S::Chlamydomonas, 0.6f}, {S::Euplotes, 2.0f}, {S::Candida, 0.5f}});
-    ice.bacteria = 20'000;
-    ice.cyanoFilaments = 0;
-    ice.oscillatoriaFilaments = 0;
-    ice.saprolegnia = 0;
-    ice.allomyces = ice.lichens = ice.physarum = 0;
-    ice.chytridClusters = 3; // quitridios marinos de diatomeas
-    ice.patchiness = 0.3f;
-    // Canales de salmuera: poco sedimento, frústulas de diatomeas del hielo.
-    ice.sediment = {.clay = 30, .quartz = 8, .frustules = 25};
-    ice.medium.dustRate = 0.005f;
-    return all;
+// Un [[bioma]] → Biome. false si tiene errores (se descarta).
+bool readBiome(const toml::table& t, const std::string& source, const std::string& pack, Biome& b,
+               std::vector<std::string>& warnings) {
+    toml_io::Reader r{t, source, {}};
+    r.text("id", b.key);
+    r.text("nombre", b.name);
+    if (b.key.empty() || b.name.empty()) {
+        warnings.push_back(source + ": un [[bioma]] sin 'id' o sin 'nombre': se saltea");
+        return false;
+    }
+    r.where = source + " (" + b.key + ")";
+    b.pack = pack;
+    toml_io::warnUnknown(t, kBiomeKeys, r.where, warnings);
+    r.text("descripcion", b.description);
+    r.count("bacterias", b.bacteria);
+    r.count("detritos", b.detritus);
+    r.count("filamentos_fijadores", b.cyanoFilaments);
+    r.count("filamentos_oscillatoria", b.oscillatoriaFilaments);
+    r.range("cianobacterias_temperatura", b.cyanoTMin, b.cyanoTMax);
+    r.count("saprolegnia", b.saprolegnia);
+    r.count("grupos_quitridios", b.chytridClusters);
+    r.count("allomyces", b.allomyces);
+    r.count("liquenes", b.lichens);
+    r.count("physarum", b.physarum);
+    r.count("manchas", b.patchiness);
+    if (b.patchiness > 1.0f)
+        r.errors.push_back(r.where + ": 'manchas' va de 0 a 1");
+    r.count("peso_base", b.baseWeight);
+    if (const toml::table* w = r.table("pesos")) {
+        for (const auto& [k, v] : *w) {
+            const auto x = v.value<double>();
+            if (!x || *x < 0.0)
+                r.errors.push_back(r.where + ": el peso de '" + std::string(k.str()) + "' tiene que ser un número >= 0");
+            else
+                b.weights.emplace_back(std::string(k.str()), static_cast<float>(*x));
+        }
+    }
+    if (const toml::table* m = r.table("medio"))
+        readMedium(*m, r.where + " [medio]", b.medium, r.errors, warnings);
+    if (const toml::table* sed = r.table("sedimento"))
+        readSediment(*sed, r.where + " [sedimento]", b.sediment, r.errors, warnings);
+    if (!r.errors.empty()) {
+        warnings.insert(warnings.end(), r.errors.begin(), r.errors.end());
+        warnings.push_back(r.where + ": el bioma no se carga");
+        return false;
+    }
+    return true;
 }
 
-const std::array<Biome, kBiomeCount> kBiomes = makeBiomes();
+void loadParsed(const toml::table& doc, const std::string& source, const std::string& pack) {
+    Registry& reg = registry();
+    const toml::array* biomes = doc.get("bioma") ? doc.get("bioma")->as_array() : nullptr;
+    if (!biomes)
+        return; // el archivo no trae biomas
+    for (const toml::node& n : *biomes) {
+        const toml::table* t = n.as_table();
+        if (!t)
+            continue;
+        Biome b;
+        if (!readBiome(*t, source, pack, b, reg.warnings))
+            continue;
+        bool duplicate = false;
+        for (const Biome& other : reg.entries)
+            duplicate = duplicate || other.key == b.key;
+        if (duplicate) {
+            reg.warnings.push_back(source + ": el bioma '" + b.key + "' ya existe (paquete '" + pack + "'): se saltea");
+            continue;
+        }
+        if (reg.entries.size() >= 0xFFFF) {
+            reg.warnings.push_back(source + ": se alcanzó el tope de biomas; '" + b.key + "' no se carga");
+            continue;
+        }
+        reg.entries.push_back(std::move(b));
+    }
+}
+
+void ensureBase() {
+    Registry& reg = registry();
+    if (reg.ready.load(std::memory_order_acquire))
+        return;
+    std::lock_guard<std::recursive_mutex> lock(reg.mutex);
+    if (reg.baseLoaded)
+        return;
+    reg.baseLoaded = true;
+    std::string error;
+    if (!loadBiomesFile(assetPath("content/base/biomas.toml"), "base", &error))
+        reg.warnings.push_back("no se pudieron cargar los biomas de fábrica: " + error);
+    reg.ready.store(true, std::memory_order_release);
+}
 
 } // namespace
 
-const Biome& biome(BiomeId id) { return kBiomes[static_cast<int>(id)]; }
+bool loadBiomesFile(const std::string& path, const std::string& pack, std::string* error) {
+    std::lock_guard<std::recursive_mutex> lock(registry().mutex);
+    if (pack != "base")
+        ensureBase();
+    try {
+        loadParsed(toml::parse_file(path), path, pack);
+    } catch (const toml::parse_error& e) {
+        if (error)
+            *error = path + ": " + std::string(e.description());
+        return false;
+    }
+    return true;
+}
+
+bool loadBiomesText(const std::string& text, const std::string& source, const std::string& pack, std::string* error) {
+    std::lock_guard<std::recursive_mutex> lock(registry().mutex);
+    ensureBase();
+    try {
+        loadParsed(toml::parse(text, source), source, pack);
+    } catch (const toml::parse_error& e) {
+        if (error)
+            *error = source + ": " + std::string(e.description());
+        return false;
+    }
+    return true;
+}
+
+const std::vector<std::string>& biomeLoadWarnings() {
+    ensureBase();
+    return registry().warnings;
+}
+
+int biomeCount() {
+    ensureBase();
+    return std::max(1, static_cast<int>(registry().entries.size()));
+}
+
+const Biome& biome(BiomeId id) {
+    ensureBase();
+    const auto& entries = registry().entries;
+    if (entries.empty()) {
+        // Sin el paquete de fábrica: agua dulce sin vida, para que la placa se pueda crear igual.
+        static const Biome water = [] {
+            Biome b;
+            b.key = "agua";
+            b.name = "Agua";
+            b.baseWeight = 0.0f;
+            return b;
+        }();
+        return water;
+    }
+    const auto i = static_cast<std::size_t>(id);
+    return i < entries.size() ? entries[i] : entries.front();
+}
+
+std::optional<BiomeId> findBiome(std::string_view key) {
+    ensureBase();
+    const auto& entries = registry().entries;
+    for (std::size_t i = 0; i < entries.size(); ++i)
+        if (entries[i].key == key)
+            return static_cast<BiomeId>(i);
+    return std::nullopt;
+}
+
+float Biome::weight(SpeciesId id) const {
+    const std::string_view key = speciesInfo(id).key;
+    for (const auto& [k, w] : weights)
+        if (k == key)
+            return w;
+    return hasTag(id, "simbionte_obligado") ? 0.0f : baseWeight;
+}
 
 float dropAreaScale(const WorldConfig& c) {
     constexpr float kReferenceArea = 2048.0f * 1024.0f; // [µm²]
@@ -219,7 +226,7 @@ WorldConfig makeDrop(BiomeId id, std::uint64_t seed) {
     for (int k = 0; k < speciesCount(); ++k) {
         Rng r(seed, rng_stream::kPopulate + 901, static_cast<std::uint64_t>(k), 0);
         const bool absent = r.uniform() < 0.15f; // algunas especies no llegaron a esta gota
-        c.speciesWeight[k] = absent ? 0.0f : b.weight[k] * r.uniform(0.5f, 1.5f);
+        c.speciesWeight[k] = absent ? 0.0f : b.weight(static_cast<SpeciesId>(k)) * r.uniform(0.5f, 1.5f);
     }
     c.bacteria = static_cast<std::size_t>(static_cast<float>(b.bacteria) * rng.uniform(0.7f, 1.3f));
     c.detritus = static_cast<std::size_t>(static_cast<float>(b.detritus) * rng.uniform(0.6f, 1.5f));
@@ -247,9 +254,8 @@ WorldConfig makeDrop(BiomeId id, std::uint64_t seed) {
     c.allomyces = static_cast<int>(scaled(static_cast<float>(c.allomyces)));
     c.lichens = static_cast<int>(scaled(static_cast<float>(c.lichens)));
     c.physarum = static_cast<int>(scaled(static_cast<float>(c.physarum)));
-    for (int* n : {&c.sediment.clay, &c.sediment.quartz, &c.sediment.mica, &c.sediment.ironOxide, &c.sediment.sulfur,
-                   &c.sediment.frustules})
-        *n = static_cast<int>(scaled(static_cast<float>(*n) * muddy));
+    for (int k = 0, n = mineralCount(); k < n; ++k)
+        c.sediment.count[k] = static_cast<int>(scaled(static_cast<float>(c.sediment.count[k]) * muddy));
     c.sediment.rocks = static_cast<int>(scaled(static_cast<float>(c.sediment.rocks)));
     return c;
 }

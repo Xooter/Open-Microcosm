@@ -6,6 +6,9 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <optional>
+#include <string_view>
+#include <utility>
 #include <sstream>
 
 namespace {
@@ -57,16 +60,23 @@ constexpr IntField kConfigInts[] = {
     {"physarum", &WorldConfig::physarum},
 };
 
-struct SedimentField {
-    const char* key;
-    int Sediment::*member;
+// Placas guardadas antes de que los minerales fueran datos: sus claves de sedimento en inglés.
+constexpr std::pair<const char*, const char*> kLegacySediment[] = {
+    {"clay", "arcilla"},      {"quartz", "cuarzo"}, {"mica", "mica"},
+    {"iron_oxide", "oxido_hierro"}, {"sulfur", "azufre"}, {"frustules", "frustula"},
 };
 
-constexpr SedimentField kSedimentInts[] = {
-    {"clay", &Sediment::clay},   {"quartz", &Sediment::quartz},       {"mica", &Sediment::mica},
-    {"iron_oxide", &Sediment::ironOxide}, {"sulfur", &Sediment::sulfur}, {"frustules", &Sediment::frustules},
-    {"rocks", &Sediment::rocks},
-};
+// Mineral de una clave "sediment.<id>" (o de una clave vieja); vacío si no es de un mineral.
+std::optional<MineralKind> sedimentMineral(const std::string& key) {
+    constexpr std::string_view prefix = "sediment.";
+    if (key.compare(0, prefix.size(), prefix) != 0)
+        return std::nullopt;
+    std::string_view id = std::string_view(key).substr(prefix.size());
+    for (const auto& [old, now] : kLegacySediment)
+        if (id == old)
+            id = now;
+    return findMineral(id);
+}
 
 std::string speciesKey(int i) {
     std::string k = "w.";
@@ -78,7 +88,7 @@ std::string speciesKey(int i) {
 } // namespace
 
 void PlateSpec::rebuild() {
-    biome = std::clamp(biome, 0, kBiomeCount - 1);
+    biome = std::clamp(biome, 0, biomeCount() - 1);
     config = makeDrop(static_cast<BiomeId>(biome), seed);
     applyDropContent(config, content);
 }
@@ -105,8 +115,9 @@ std::string serializePlate(const PlateSpec& s) {
     for (const FloatField& f : kMediumFloats)
         out << f.key << '=' << c.medium.*f.member << '\n';
     out << "anoxic=" << c.medium.anoxic << '\n';
-    for (const SedimentField& f : kSedimentInts)
-        out << "sediment." << f.key << '=' << c.sediment.*f.member << '\n';
+    for (int k = 0; k < mineralCount(); ++k)
+        out << "sediment." << mineralInfo(static_cast<MineralKind>(k)).key << '=' << c.sediment.count[k] << '\n';
+    out << "sediment.rocks=" << c.sediment.rocks << '\n';
     out << "rock_min=" << c.sediment.rockMin << '\n' << "rock_max=" << c.sediment.rockMax << '\n';
     for (int i = 0; i < speciesCount(); ++i)
         out << speciesKey(i) << '=' << c.speciesWeight[i] << '\n';
@@ -167,8 +178,8 @@ bool parsePlate(const std::string& text, PlateSpec& s) {
             if (k == f.key) c.*f.member = static_cast<int>(x);
         for (const FloatField& f : kMediumFloats)
             if (k == f.key) c.medium.*f.member = static_cast<float>(x);
-        for (const SedimentField& f : kSedimentInts)
-            if (k == std::string("sediment.") + f.key) c.sediment.*f.member = static_cast<int>(x);
+        if (k == "sediment.rocks") c.sediment.rocks = static_cast<int>(x);
+        else if (const auto mineral = sedimentMineral(k)) c.sediment[*mineral] = static_cast<int>(x);
         for (int i = 0; i < speciesCount(); ++i)
             if (k == speciesKey(i)) c.speciesWeight[i] = static_cast<float>(x);
     }

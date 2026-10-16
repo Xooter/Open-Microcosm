@@ -1,6 +1,8 @@
 #include "render/minerals.hpp"
 #include "render/shapes.hpp"
 
+#include "game/mineral.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <vector>
@@ -38,16 +40,40 @@ void angular(Vector2 c, float r, float angle, int n, float jitter, Vector2* out)
 
 Vector2 toward(Vector2 p, Vector2 c, float k) { return {c.x + (p.x - c.x) * k, c.y + (p.y - c.y) * k}; }
 
+// Estilos de dibujo con nombre (los eligen los datos del mineral, game/mineral).
+enum class Style : std::uint8_t { Floc, Angular, Flake, Opaque, Globule, Frustule };
+
+// Estilo de cada mineral, resuelto una vez por nombre (se recalcula si un paquete suma minerales).
+Style styleOf(MineralKind kind) {
+    static Style cache[kMaxMinerals];
+    static int cached = 0;
+    const int n = mineralCount();
+    if (n != cached) {
+        for (int k = 0; k < n; ++k) {
+            const std::string& s = mineralInfo(static_cast<MineralKind>(k)).style;
+            cache[k] = s == "grano_anguloso"        ? Style::Angular
+                       : s == "escama"              ? Style::Flake
+                       : s == "grano_opaco"         ? Style::Opaque
+                       : s == "globulo_refringente" ? Style::Globule
+                       : s == "frustula"            ? Style::Frustule
+                                                    : Style::Floc;
+        }
+        cached = n;
+    }
+    const auto i = static_cast<int>(kind);
+    return i < n ? cache[i] : Style::Floc;
+}
+
 } // namespace
 
 void drawMineral(MineralKind kind, Vector2 c, float radius, float angle, float minSize) {
     const float r = std::max(radius, 0.5f * minSize);
     const float px = minSize / 1.5f; // un píxel en µm (minSize = 1,5 px)
-    switch (kind) {
-    case MineralKind::Clay:
+    switch (styleOf(kind)) {
+    case Style::Floc:
         drawCircleFast(c, r, {108, 98, 80, 170}, px);
         break;
-    case MineralKind::Quartz: {
+    case Style::Angular: {
         Vector2 p[7], in[7];
         angular(c, r, angle, 7, 0.22f, p);
         for (int i = 0; i < 7; ++i)
@@ -57,7 +83,7 @@ void drawMineral(MineralKind kind, Vector2 c, float radius, float angle, float m
         outline(in, 7, std::max(0.08f * r, 0.4f * minSize), {252, 252, 244, 190}); // línea de Becke
         break;
     }
-    case MineralKind::Mica: {
+    case Style::Flake: {
         // Lámina hexagonal muy fina: casi invisible salvo los bordes y un reflejo.
         Vector2 p[6];
         for (int i = 0; i < 6; ++i)
@@ -67,20 +93,20 @@ void drawMineral(MineralKind kind, Vector2 c, float radius, float angle, float m
         DrawLineEx(toward(p[0], c, 0.6f), toward(p[2], c, 0.6f), std::max(0.06f * r, 0.3f * minSize), {255, 255, 248, 200});
         break;
     }
-    case MineralKind::IronOxide: {
+    case Style::Opaque: {
         Vector2 p[8];
         angular(c, r, angle, 8, 0.3f, p);
         fan(c, p, 8, {124, 72, 40, 225});
         outline(p, 8, std::max(0.12f * r, 0.4f * minSize), {70, 40, 24, 235});
         break;
     }
-    case MineralKind::Sulfur:
+    case Style::Globule:
         // Glóbulo muy refringente: borde oscuro y centro brillante amarillento.
         drawCircleFast(c, r, {232, 220, 128, 210}, px);
         drawRingFast(c, 0.8f * r, r, 24, {96, 88, 40, 220}, px);
         drawCircleFast({c.x - 0.25f * r, c.y - 0.25f * r}, 0.35f * r, {255, 252, 222, 230}, px);
         break;
-    case MineralKind::Frustule: {
+    case Style::Frustule: {
         // Valva naviculoide vacía: contorno de sílice, rafe en el eje y estrías transversales.
         constexpr int kN = 28;
         Vector2 p[kN];
@@ -106,12 +132,11 @@ void drawMineral(MineralKind kind, Vector2 c, float radius, float angle, float m
         }
         break;
     }
-    case MineralKind::Count: break;
     }
 }
 
 void drawRock(const Vector2* pts, int n, Vector2 c, MineralKind kind, std::uint32_t seed, float edge) {
-    const bool iron = kind == MineralKind::IronOxide;
+    const bool iron = styleOf(kind) == Style::Opaque; // grano opaco (óxido de hierro) o transparente
     // Cuerpo: el cuarzo es casi transparente y se aclara hacia el centro (actúa como lente).
     fan(c, pts, n, iron ? Color{150, 104, 70, 225} : Color{214, 212, 198, 190});
     std::vector<Vector2> inner(static_cast<std::size_t>(n));

@@ -140,7 +140,7 @@ bool parse(int argc, char** argv, Args& a) {
             return false;
         }
     }
-    return a.biome >= 0 && a.biome < kBiomeCount && a.steps > 0 && a.warmup >= 0;
+    return a.biome >= 0 && a.biome < biomeCount() && a.steps > 0 && a.warmup >= 0;
 }
 
 // FNV-1a sobre los bits de las posiciones: cualquier diferencia en la trayectoria lo cambia.

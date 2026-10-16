@@ -1,0 +1,71 @@
+# Minerales del sedimento del paquete de fábrica (fase 20.0: el contenido como datos). Partículas
+# inorgánicas sueltas, como se ven en campo claro: no están vivas, no se comen ni se descomponen,
+# pero el agua y las células las sienten. El orden de este archivo es el de los minerales del
+# programa: no se reordena.
+#
+# [[mineral]]
+#   id, nombre, descripcion (ficha); nombre_grano: el de un grano de arena fijo de este mineral
+#   radio [mínimo, máximo] µm: el de cada partícula sale al azar en ese rango
+#   diferencia_densidad [kg/m³]: con el agua; da la velocidad de sedimentación de Stokes
+#   opacidad (0–1): fracción de la luz que bloquea (el cuarzo y la mica son transparentes)
+#   flocula: las partículas forman flóculos al sembrar el sedimento (la materia orgánica las pega)
+#   estilo: dibujo con nombre (floculo, grano_anguloso, escama, grano_opaco, globulo_refringente,
+#     frustula)
+# El mineral "frustula" es además el que dejan las diatomeas al morir (con su sílice).
+
+[[mineral]]
+id = "arcilla"
+nombre = "Arcilla"
+descripcion = "Arcilla: láminas de silicato de menos de 4 µm. Tan chicas que el movimiento browniano supera a la sedimentación: quedan en suspensión y enturbian el agua."
+radio = [0.3, 1.2]
+diferencia_densidad = 1650.0
+opacidad = 0.5
+flocula = true
+estilo = "floculo"
+
+[[mineral]]
+id = "cuarzo"
+nombre = "Limo de cuarzo"
+nombre_grano = "Grano de arena (cuarzo)"
+descripcion = "Cuarzo (SiO₂): el mineral más común de la arena. Su índice de refracción (1,54) es mayor que el del agua (1,33): se ve por el relieve, con un borde oscuro grueso y una línea brillante de Becke por dentro."
+radio = [2.5, 15.0]
+diferencia_densidad = 1650.0
+opacidad = 0.1
+estilo = "grano_anguloso"
+
+[[mineral]]
+id = "mica"
+nombre = "Mica"
+descripcion = "Mica: escamas hexagonales finísimas y brillantes. Por su forma plana se asientan despacio."
+radio = [3.0, 10.0]
+diferencia_densidad = 1800.0
+opacidad = 0.1
+estilo = "escama"
+
+[[mineral]]
+id = "oxido_hierro"
+nombre = "Óxido de hierro"
+nombre_grano = "Grano de óxido de hierro"
+descripcion = "Óxidos de hierro: opacos y pardo rojizos, hacen sombra. Dan su color al barro y al suelo."
+radio = [1.5, 6.0]
+diferencia_densidad = 4000.0
+opacidad = 1.0
+estilo = "grano_opaco"
+
+[[mineral]]
+id = "azufre"
+nombre = "Azufre"
+descripcion = "Glóbulos de azufre elemental: se forman donde hay sulfuros (fuentes termales). Muy refringentes: borde negro y centro brillante."
+radio = [0.8, 3.0]
+diferencia_densidad = 1000.0
+opacidad = 0.3
+estilo = "globulo_refringente"
+
+[[mineral]]
+id = "frustula"
+nombre = "Frústula vacía"
+descripcion = "Frústula vacía de diatomea: la caja de sílice (ópalo) que queda cuando muere la célula. No se descompone, a diferencia del resto del organismo; el rafe y las estrías siguen intactos."
+radio = [18.0, 28.0] # medio largo de Navicula
+diferencia_densidad = 600.0 # ópalo hueco
+opacidad = 0.1
+estilo = "frustula"

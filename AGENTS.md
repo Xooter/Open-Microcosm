@@ -288,6 +288,12 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   Las tolerancias son datos de la especie y se pagan como mantenimiento extra (estrés).
 - `makeDrop(bioma, seed)` arma la gota: química, pesos de población por especie
   (`WorldConfig::speciesWeight`), hongos, cianobacterias (rango térmico) y manchas iniciales.
+- Biomas y minerales son datos del paquete (`assets/content/base/biomas.toml`, `minerales.toml`;
+  registros `game/biome` y `game/mineral`, como los seres): el medio se lee con claves en español
+  (`game/medium_toml`, el mismo lector servirá para los medios de cultivo), el sedimento es un
+  conteo por mineral y los pesos van por id de ser. Un simbionte obligado (etiqueta
+  `simbionte_obligado`) solo aparece donde el bioma lo nombra. Los lectores de los paquetes usan
+  `core/toml_reader` (errores con lugar, claves desconocidas avisadas).
 - La enciclopedia se llena con lo que la cámara ve y con `deathTally`/`observations`.
 
 ### Render (`render/`)
@@ -449,8 +455,11 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
 - **Handles estables:** las partículas se mueven en memoria (swap-and-pop, reordenamiento por
   celda), así que las referencias entre sistemas usan IDs estables con tabla de indirección,
   nunca índices crudos guardados entre frames.
-- **Especies data-driven:** los parámetros de cada especie (tamaño, velocidad, dieta,
-  reproducción, comportamiento) viven en datos, no en código.
+- **Contenido como datos** (`assets/content/base/`: seres, planes corporales, fisiología,
+  minerales y biomas): los parámetros de cada especie (tamaño, velocidad, dieta, reproducción,
+  comportamiento, apariencia) viven en datos, no en código. Los enums (`SpeciesId`, `MineralKind`,
+  `BiomeId`) son índices en el registro con alias para los de fábrica; no agregues casos por
+  especie o por mineral en el código: sumá un mecanismo o un estilo con nombre que los datos elijan.
 
 ### Loop
 

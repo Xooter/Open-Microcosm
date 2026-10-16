@@ -1,10 +1,12 @@
 #include "bio/species.hpp"
 
 #include "core/paths.hpp"
+#include "core/toml_reader.hpp"
 
 #include <toml++/toml.hpp>
 
 #include <algorithm>
+#include <atomic>
 #include <deque>
 #include <mutex>
 
@@ -28,6 +30,8 @@ struct Registry {
     std::vector<std::string> warnings;
     std::recursive_mutex mutex;
     bool baseLoaded = false;
+    // Ya cargado: se lee sin el candado (lo consultan los bucles paralelos de cada paso).
+    std::atomic<bool> ready{false};
 };
 Registry& registry() {
     static Registry r;
@@ -43,16 +47,6 @@ void ensureBase();
 const char* const kGeneKeys[] = {"tamano",      "motor",    "mitocondrias", "cloroplastos", "lisosomas",
                                  "tricocistos", "coraza",   "rigidez",      "apareamiento"};
 static_assert(sizeof(kGeneKeys) / sizeof(kGeneKeys[0]) == kGeneCount);
-
-template <typename E, std::size_t N>
-bool parseEnum(std::string_view text, const std::pair<const char*, E> (&table)[N], E& out) {
-    for (const auto& [name, value] : table)
-        if (text == name) {
-            out = value;
-            return true;
-        }
-    return false;
-}
 
 constexpr std::pair<const char*, LocomotionType> kLocomotion[] = {
     {"cilios", LocomotionType::Cilia}, {"flagelo", LocomotionType::Flagellum}, {"pseudopodo", LocomotionType::Pseudopod}};
@@ -85,83 +79,8 @@ constexpr const char* kLookKeys[] = {"estilo", "color_plastos"};
 constexpr const char* kShapeKeys[] = {"semieje_mayor", "semieje_menor", "memoria_forma", "color",
                                       "nucleo",        "cuadratura",    "afinamiento"};
 
-template <std::size_t N>
-bool known(std::string_view key, const char* const (&keys)[N]) {
-    for (const char* k : keys)
-        if (key == k)
-            return true;
-    return false;
-}
-
-// Lector de un ser: acumula errores (que descartan el ser) y avisos.
-struct Reader {
-    const toml::table& t;
-    std::string where;
-    std::vector<std::string> errors;
-
-    template <typename T> void num(const char* key, T& out) {
-        const toml::node* n = t.get(key);
-        if (!n)
-            return;
-        if (auto v = n->value<double>())
-            out = static_cast<T>(*v);
-        else
-            errors.push_back(where + ": '" + key + "' tiene que ser un número");
-    }
-    void flag(const char* key, bool& out) {
-        const toml::node* n = t.get(key);
-        if (!n)
-            return;
-        if (auto v = n->value<bool>())
-            out = *v;
-        else
-            errors.push_back(where + ": '" + key + "' tiene que ser true o false");
-    }
-    void range(const char* key, float& lo, float& hi) {
-        const toml::node* n = t.get(key);
-        if (!n)
-            return;
-        const toml::array* a = n->as_array();
-        if (!a || a->size() != 2 || !(*a)[0].value<double>() || !(*a)[1].value<double>()) {
-            errors.push_back(where + ": '" + key + "' tiene que ser [mínimo, máximo]");
-            return;
-        }
-        lo = static_cast<float>(*(*a)[0].value<double>());
-        hi = static_cast<float>(*(*a)[1].value<double>());
-    }
-    void strings(const char* key, std::vector<std::string>& out) {
-        const toml::node* n = t.get(key);
-        if (!n)
-            return;
-        const toml::array* a = n->as_array();
-        if (!a) {
-            errors.push_back(where + ": '" + key + "' tiene que ser una lista de textos");
-            return;
-        }
-        for (const toml::node& e : *a) {
-            if (auto v = e.value<std::string>())
-                out.push_back(*v);
-            else
-                errors.push_back(where + ": '" + key + "' tiene que ser una lista de textos");
-        }
-    }
-    template <typename E, std::size_t N>
-    void choice(const char* key, const std::pair<const char*, E> (&table)[N], E& out, bool required = false) {
-        const toml::node* n = t.get(key);
-        if (!n) {
-            if (required)
-                errors.push_back(where + ": falta '" + key + "'");
-            return;
-        }
-        auto v = n->value<std::string>();
-        if (!v || !parseEnum(*v, table, out)) {
-            std::string options;
-            for (const auto& [name, value] : table)
-                options += std::string(options.empty() ? "" : ", ") + name;
-            errors.push_back(where + ": '" + key + "' tiene que ser uno de: " + options);
-        }
-    }
-};
+using toml_io::known;
+using toml_io::Reader;
 
 // Un [[ser]] → Entry. Devuelve false si tiene errores (se descarta).
 bool readBeing(const toml::table& t, const std::string& source, const std::string& pack, Entry& e,
@@ -297,8 +216,6 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
             f.errors.push_back(f.where + ": los semiejes tienen que ser positivos");
         r.errors.insert(r.errors.end(), f.errors.begin(), f.errors.end());
     }
-    if (s.phMin > s.phMax || s.tMin > s.tMax)
-        r.errors.push_back(r.where + ": rango de pH o de temperatura invertido");
     if (!r.errors.empty()) {
         warnings.insert(warnings.end(), r.errors.begin(), r.errors.end());
         warnings.push_back(r.where + ": el ser no se carga");
@@ -369,6 +286,8 @@ bool loadParsed(const toml::table& doc, const std::string& source, const std::st
 }
 
 void ensureBase() {
+    if (registry().ready.load(std::memory_order_acquire))
+        return;
     std::lock_guard<std::recursive_mutex> lock(gMutex);
     if (gBaseLoaded)
         return;
@@ -376,6 +295,7 @@ void ensureBase() {
     std::string error;
     if (!loadSpeciesFile(assetPath("content/base/seres.toml"), "base", &error))
         gWarnings.push_back("no se pudo cargar el paquete de fábrica: " + error);
+    registry().ready.store(true, std::memory_order_release);
 }
 
 } // namespace

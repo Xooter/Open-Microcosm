@@ -52,14 +52,18 @@ sistemas paralelos (los seres actuales se migran, no conviven con un sistema nue
    *Hecho para los seres* (`bio/species`: registro con id de texto, `speciesCount()`, tope
    `kMaxSpecies`, carga del paquete de fábrica en el primer uso). Los nombres del enum quedan solo
    como alias de los seres de fábrica para el código por especie que falta migrar (paso 3).
-   Falta: minerales, medios, biomas y placas preparadas.
+   *Hecho también para minerales* (`game/mineral`: `MineralKind` es el índice, `mineralCount()`,
+   tope `kMaxMinerals`; el sedimento es un conteo por mineral) *y biomas* (`game/biome`:
+   `biomeCount()`, `findBiome`). Los registros se leen sin candado una vez cargados (atómico).
+   Falta: medios y placas preparadas (fase 20a; el lector del medio, `game/medium_toml`, ya es común).
 2. 🟡 **Paquetes** (`<assets>/content/base/` de fábrica y `<datos>/biogame/paquetes/` del usuario):
    archivos TOML con `[paquete]` (id, versión, autor, licencia, versión mínima del programa) y
    tablas de definiciones. Un paquete se comparte como **un solo archivo `.biopack`** (TOML con
    todas sus definiciones; sin bibliotecas nuevas). Se valida al cargar (esquema, unidades,
    rangos, fuentes obligatorias para la fisiología, referencias a mecanismos existentes) y los
    errores se muestran en la interfaz sin cerrar el programa.
-   *Hecho:* `assets/content/base/` (`paquete.toml`, `seres.toml`), carga desde archivo o texto,
+   *Hecho:* `assets/content/base/` (`paquete.toml`, `seres.toml`, `planes.toml`, `fisiologia.toml`,
+   `minerales.toml`, `biomas.toml`), lector TOML común (`core/toml_reader`), carga desde archivo o texto,
    validación con avisos (claves desconocidas, valores fuera de lista, referencias sin resolver,
    ids repetidos) sin cerrar el programa; tests en la suite `paquetes`. Falta: los paquetes del
    usuario, el `.biopack` y mostrar los avisos en la interfaz (paso 7).
@@ -77,11 +81,21 @@ sistemas paralelos (los seres actuales se migran, no conviven con un sistema nue
    (`content/base/fisiologia.toml`, por id del ser; un paquete suma la suya).
 4. ✅ **Dietas por etiquetas:** cada ser tiene etiquetas (`bacteria`, `ciliado`, `alga_verde`,
    `celula_humana`…) y las dietas y huidas son conjuntos de etiquetas, sin límite de cantidad.
-5. 🟡 **Migración de lo existente:** las 24 especies, los minerales y los biomas pasan al paquete de
+5. ✅ **Migración de lo existente:** las 24 especies, los minerales y los biomas pasan al paquete de
    fábrica. **Hecho cuando:** `bio_bench` da el mismo checksum (IEEE estricto) antes y después en
    tres escenas, y los tests rápidos y largos pasan.
    *Hecho para las 24 especies:* checksums estrictos iguales en tres escenas con CPU y GPU (el
-   TOML se generó volcando la tabla C++ con precisión de ida y vuelta). Falta: minerales y biomas.
+   TOML se generó volcando la tabla C++ con precisión de ida y vuelta).
+   *Hecho para minerales y biomas:* `minerales.toml` (tamaño, densidad, opacidad, floculación,
+   estilo de dibujo con nombre, textos de la ficha) y `biomas.toml` (medio con claves en español,
+   sedimento por id de mineral, pesos por id de ser: un bioma puede nombrar seres y minerales de
+   otros paquetes). Trichonympha deja de ser un caso en el código: etiqueta `simbionte_obligado`
+   (solo aparece donde el bioma la nombra). Las placas guardan el sedimento por id de mineral y
+   leen las claves viejas. Verificado: las placas de los 6 biomas × 5 seeds salen idénticas y los
+   checksums estrictos de las tres escenas, con CPU y GPU, no cambian (bioma 1 seed 7 fauna 2,3:
+   56a8a4b097813cc0 / b6e3ea17b6b61a8c; bioma 0 seed 3 fauna 1,5: f61d88a58b1b0d67 /
+   e599a11607eff58e; bioma 2 seed 11 fauna 1: ba6edfcfdabc3afe / 1891c4109b5501f1). Quedan en
+   código, por ahora: las mezclas de barro y de polvo (proporciones de los minerales de fábrica).
 6. **Compatibilidad:** las escenas y `.plate` guardan ids de texto; los archivos viejos (ids
    numéricos) se leen con una tabla de traducción. La exportación (`runJson`) anota los paquetes
    usados con su versión y huella (reproducibilidad).

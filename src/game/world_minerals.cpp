@@ -9,46 +9,17 @@
 #include <algorithm>
 #include <cmath>
 
-namespace {
-
-// Tamaños típicos [µm de radio].
-float mineralRadius(MineralKind kind, Rng& rng) {
-    switch (kind) {
-    case MineralKind::Clay: return rng.uniform(0.3f, 1.2f);
-    case MineralKind::Quartz: return rng.uniform(2.5f, 15.0f);
-    case MineralKind::Mica: return rng.uniform(3.0f, 10.0f);
-    case MineralKind::IronOxide: return rng.uniform(1.5f, 6.0f);
-    case MineralKind::Sulfur: return rng.uniform(0.8f, 3.0f);
-    case MineralKind::Frustule: return rng.uniform(18.0f, 28.0f); // medio largo de Navicula
-    case MineralKind::Count: break;
-    }
-    return 1.0f;
-}
-
-} // namespace
-
-const char* mineralName(MineralKind kind) {
-    switch (kind) {
-    case MineralKind::Clay: return "Arcilla";
-    case MineralKind::Quartz: return "Limo de cuarzo";
-    case MineralKind::Mica: return "Mica";
-    case MineralKind::IronOxide: return "Oxido de hierro";
-    case MineralKind::Sulfur: return "Azufre";
-    case MineralKind::Frustule: return "Frustula vacia";
-    case MineralKind::Count: break;
-    }
-    return "";
-}
-
 void World::spawnMineral(MineralKind kind, Vec2 at, Rng& rng) {
-    const float r = mineralRadius(kind, rng);
+    const MineralInfo& info = mineralInfo(kind); // tamaños típicos: datos del mineral
+    const float r = rng.uniform(info.radiusMin, info.radiusMax);
     const Vec2 p = dish_.clampInside(at, r);
     ambient_.push(ParticleKind::Mineral, wrapCoord(p.x, width_), wrapCoord(p.y, height_), r, 0.0f, kind,
                   rng.uniform(0.0f, 2.0f * units::kPi));
 }
 
 void World::spawnSediment(Vec2 at, int count, Rng& rng) {
-    // Mezcla de un barro típico: sobre todo arcilla y limo, algo de mica y óxidos.
+    // Mezcla de un barro típico: sobre todo arcilla y limo, algo de mica y óxidos (minerales de
+    // fábrica: la mezcla todavía no es un dato).
     for (int k = 0; k < count; ++k) {
         const float u = rng.uniform();
         const MineralKind kind = u < 0.55f ? MineralKind::Clay
@@ -159,19 +130,21 @@ void World::scatterSediment() {
             continue;
         k += spawnRock(at, r, kind, rng) ? 1 : 0;
     }
-    const int counts[] = {sd.clay, sd.quartz, sd.mica, sd.ironOxide, sd.sulfur, sd.frustules};
     std::uint64_t idx = 0;
-    for (int kind = 0; kind < static_cast<int>(MineralKind::Count); ++kind) {
-        for (int k = 0; k < counts[kind]; ++k) {
+    const int kinds = mineralCount();
+    for (int kind = 0; kind < kinds; ++kind) {
+        const MineralKind mk = static_cast<MineralKind>(kind);
+        const bool flocculates = mineralInfo(mk).flocculates;
+        for (int k = 0; k < sd.count[kind]; ++k) {
             Rng rng(config_.seed, rng_stream::kSpawn + 81, idx++, 0);
             Vec2 at = randomPoint(rng);
             // La arcilla forma flóculos: grupos de partículas pegadas por la materia orgánica.
-            if (kind == static_cast<int>(MineralKind::Clay) && k % 8 != 0 && ambient_.size() > 0 &&
-                ambient_.kind.back() == ParticleKind::Mineral && ambient_.mineral.back() == MineralKind::Clay) {
+            if (flocculates && k % 8 != 0 && ambient_.size() > 0 && ambient_.kind.back() == ParticleKind::Mineral &&
+                ambient_.mineral.back() == mk) {
                 const float a = rng.uniform(0.0f, 2.0f * units::kPi), d = rng.uniform(1.0f, 6.0f);
                 at = {ambient_.x.back() + d * std::cos(a), ambient_.y.back() + d * std::sin(a)};
             }
-            spawnMineral(static_cast<MineralKind>(kind), at, rng);
+            spawnMineral(mk, at, rng);
         }
     }
 }

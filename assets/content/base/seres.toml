@@ -7,6 +7,8 @@
 # Claves (las que faltan toman el valor por omisión del programa):
 #   id: estable, sin espacios (lo guardan las escenas); nombre: el que se muestra.
 #   etiquetas: grupos (taxonómicos o funcionales) para dietas, huidas y hospedadores.
+#     simbionte_obligado: vive solo dentro de su hospedador; en una gota aparece solo si el
+#     bioma lo nombra en sus `pesos` (biomas.toml).
 #   locomocion: cilios | flagelo | pseudopodo; velocidad_relativa respecto de la del tipo.
 #   alimentacion: surco_oral | polo_anterior | fagocitosis | raptorial | tentaculos | cuello |
 #     osmotrofia | ninguna.
@@ -561,7 +563,7 @@ nucleo = 0.3
 [[ser]]
 id = "trichonympha"
 nombre = "Trichonympha"
-etiquetas = ["protista", "flagelado", "simbionte_termita"]
+etiquetas = ["protista", "flagelado", "simbionte_termita", "simbionte_obligado"]
 descripcion = "Flagelado con miles de flagelos del intestino de las termitas: digiere la madera por ellas y no tolera el oxigeno."
 locomocion = "flagelo"
 plan = "parabasalido"
