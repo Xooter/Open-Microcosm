@@ -1,0 +1,139 @@
+// Cultivo bien mezclado (fase P1, paso 1): la misma fisiología que la placa, sin espacio.
+#include "bio/physiology.hpp"
+#include "game/culture.hpp"
+
+#include <doctest/doctest.h>
+
+#include <cmath>
+#include <string>
+#include <vector>
+
+namespace {
+
+constexpr float kStep = 60.0f; // [s]
+
+// Tubo de Gause: 0,5 cm³ de medio a 20 °C (la referencia de la fisiología).
+CultureConfig tube(std::uint64_t seed = 1934) {
+    CultureConfig c;
+    c.volumeMl = 0.5f;
+    c.depthUm = 5000.0f;
+    c.seed = seed;
+    c.medium.temperature = 20.0f;
+    c.medium.organic = 200.0f;
+    c.medium.organicInflow = 50.0f;
+    return c;
+}
+
+double speciesBiomass(const Culture& c, SpeciesId id) {
+    double b = 0.0;
+    for (const CultureCell& cell : c.cells())
+        b += cell.species == id ? cell.meta.biomass : 0.0;
+    return b;
+}
+
+} // namespace
+
+TEST_CASE("cultivo: P, N, Si y Fe se conservan con algas, diatomeas, bacterívoros y cazadores") {
+    CultureConfig cfg = tube();
+    cfg.medium.surfaceLight = 1.0f;
+    Culture c(cfg);
+    c.inoculateBacteria(2'000'000);
+    CHECK(c.inoculate(SpeciesId::Paramecium, 20) == 20);
+    CHECK(c.inoculate(SpeciesId::Didinium, 3) == 3);
+    CHECK(c.inoculate(SpeciesId::Chlamydomonas, 30) == 30);
+    CHECK(c.inoculate(SpeciesId::Asterionella, 30) == 30);
+    const MassBudget start = c.massBudget();
+    for (int s = 0; s < 3000; ++s) // 50 h
+        c.step(kStep);
+    const MassBudget end = c.massBudget();
+    for (const Element e : {Element::P, Element::N, Element::Si, Element::Fe}) {
+        const double residual = budgetResidual(start, end, e);
+        MESSAGE(elementName(e) << ": total " << end.total(e) << " pmol, residuo " << residual);
+        CHECK(std::abs(residual) <= 1e-4 * std::max(1.0, end.total(e)));
+    }
+    // Con 4·10⁶ bacterias por mL (lejos de la media saturación, ~2,5·10⁸) los paramecios apenas
+    // comen y Didinium los caza: lo que importa acá es que la masa cierre con todos los procesos.
+    int eaten = 0;
+    for (const CultureCell& cell : c.cells())
+        eaten += cell.digestion.cellsEaten;
+    for (const auto& [key, n] : c.deathTally())
+        eaten += key.second.rfind("comida por", 0) == 0 ? n : 0;
+    CHECK(eaten > 0);
+    CHECK(c.count(SpeciesId::Chlamydomonas) > 30); // las algas crecen con luz y nutrientes
+}
+
+TEST_CASE("cultivo: determinista por seed") {
+    auto run = [](std::uint64_t seed) {
+        Culture c(tube(seed));
+        c.inoculateBacteria(1'000'000);
+        c.inoculate(SpeciesId::Paramecium, 10);
+        c.inoculate(SpeciesId::Didinium, 2);
+        for (int s = 0; s < 600; ++s)
+            c.step(kStep);
+        std::vector<double> state = {static_cast<double>(c.bacteriaCount()), c.amount(Solute::Organic),
+                                     c.amount(Solute::Oxygen)};
+        for (const CultureCell& cell : c.cells())
+            state.push_back(cell.meta.biomass + 1e3 * cell.id);
+        return state;
+    };
+    CHECK(run(7) == run(7));
+    CHECK(run(7) != run(8));
+}
+
+TEST_CASE("cultivo: especies que todavía no se simulan bien mezcladas no se siembran") {
+    Culture c(tube());
+    std::string why;
+    CHECK_FALSE(Culture::supports(SpeciesId::Spirogyra, &why));
+    CHECK_FALSE(why.empty());
+    CHECK(c.inoculate(SpeciesId::Spirogyra, 3) == 0);
+    CHECK(Culture::supports(SpeciesId::Paramecium));
+}
+
+TEST_CASE("cultivo: la respuesta funcional satura en la ingestión publicada") {
+    Culture c(tube());
+    c.inoculate(SpeciesId::Paramecium, 1);
+    const CultureCell& p = c.cells().front();
+    const SpeciesPhysiology& physio = speciesPhysiology(SpeciesId::Paramecium);
+    REQUIRE(physio.maxIngestion.present);
+    REQUIRE(physio.clearance.present);
+    // Con pocas presas, filtra a su aclaramiento; con muchas, come a su ritmo máximo.
+    const double sparse = 1e-9, dense = 1.0; // [bacterias/µm³] (10³ y 10¹² por mL)
+    CHECK(c.bacterivory(p, sparse) == doctest::Approx(physio.clearance.value / 3600.0 * sparse).epsilon(0.01));
+    CHECK(c.bacterivory(p, dense) == doctest::Approx(physio.maxIngestion.value / 3600.0).epsilon(0.01));
+}
+
+// DISCREPANCIA CONOCIDA (docs/validacion.md, «Balance de energía de Paramecium»): con la ingestión
+// publicada (26·10³ bacterias/h, temperatura sin verificar, se asumió 25 °C → 18·10³ a 20 °C) el
+// balance de energía del modelo no alcanza el µmax de Gause (0,026/h a 20 °C): da ~0,007/h. Cierra
+// si la ingestión se midió a ~20 °C. Se marca `should_fail` para que el test avise cuando se resuelva
+// (con los datos verificados), sin ajustar parámetros para que pase.
+TEST_CASE("validación: µmax de Paramecium en el cultivo bien mezclado" * doctest::test_suite("validacion") *
+          doctest::should_fail()) {
+    // El mismo experimento que en la placa (test_validation.cpp): cultivo sin limitación, con
+    // bacterias abundantes que se reponen con materia orgánica. Pero acá a escala de Gause.
+    CultureConfig cfg = tube(26);
+    cfg.medium.organicInflow = 400.0f;
+    Culture c(cfg);
+    c.inoculateBacteria(500'000'000); // 10⁹ por mL: saturante (media saturación ~2,5·10⁸)
+    c.inoculate(SpeciesId::Paramecium, 5);
+    const SourcedValue& mu = speciesPhysiology(SpeciesId::Paramecium).growthMax;
+    REQUIRE(mu.present);
+    const float hours = 3.0f * std::log(2.0f) / mu.value; // tres duplicaciones
+    const int steps = static_cast<int>(hours * 3600.0f / kStep);
+    double st = 0, sy = 0, stt = 0, sty = 0, n = 0;
+    for (int s = 0; s <= steps; ++s) {
+        if (s % 60 == 0 && s > steps / 3) {
+            const double t = c.time() / 3600.0, y = std::log(speciesBiomass(c, SpeciesId::Paramecium));
+            st += t;
+            sy += y;
+            stt += t * t;
+            sty += t * y;
+            n += 1;
+        }
+        c.step(kStep);
+    }
+    const double sim = (n * sty - st * sy) / (n * stt - st * st);
+    MESSAGE("µ simulado " << sim << " /h, publicado " << mu.value << " /h a 20 °C; paramecios " << c.count(SpeciesId::Paramecium)
+                          << ", bacterias " << c.bacteriaCount());
+    CHECK(std::abs(sim - mu.value) / mu.value < 0.25);
+}

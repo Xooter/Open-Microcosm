@@ -323,6 +323,22 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
 - `World::deathTally()` y `World::observations()` registran causas de muerte y comportamientos
   vistos (base de la enciclopedia).
 
+### Cultivo bien mezclado (`game/culture`, fase P1)
+
+- Un tubo o un frasco de mililitros (Gause, Tilman) donde las poblaciones no caben en una placa.
+  Sin espacio ni cuerpos blandos, pero con **la misma fisiología** que la placa: cada célula es un
+  individuo (`CultureCell`: `Metabolism`, `Heredity`, `Digestion`, `Lineage`); las bacterias,
+  cohortes (`BacterialCohort`, superindividuos: exacto hasta `maxBacterialCohorts`).
+- Los encuentros salen de la teoría física: filtradores con respuesta funcional de tipo II
+  (`ingestion_maxima` y `aclaramiento` en `fisiologia.toml`; sin dato, la corriente oral y el
+  citostoma de la placa) y cazadores con el núcleo de Gerritsen y Strickler (1977).
+- No hay `bioTimeScale`: `step(dt)` avanza `dt` segundos y la biología `dt · Q10`; los gases se
+  intercambian con el aire a su tasa real (D / profundidad²). El balance (`massBudget`, `FluxLedger`)
+  es el mismo que el de la placa.
+- Lo que todavía no se simula bien mezclado no se siembra (`Culture::supports`): células animales,
+  filamentos, colonias y zoosporas. Tampoco hay luz atenuada, fagos, Bdellovibrio, quorum ni
+  conjugación (pendientes).
+
 ### Ambiente, biomas y enciclopedia (`game/biome`, `game/encyclopedia`)
 
 - `MediumParams` (en `WorldConfig::medium`): temperatura (Q10 = 2 en todo lo biológico vía

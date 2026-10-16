@@ -64,26 +64,26 @@ template <typename T> void hashVector(std::uint64_t& h, const std::vector<T>& v)
 } // namespace
 
 // O₂ disuelto en equilibrio con el aire [µM] (agua dulce; ~457 a 0 °C, ~284 a 20 °C, ~206 a 40 °C).
-static float o2SaturationAt(float celsius) {
+float o2SaturationAt(float celsius) {
     const float t = std::clamp(celsius, -2.0f, 80.0f);
     return t < 20.0f ? 457.0f + (284.0f - 457.0f) * t / 20.0f : std::max(80.0f, 284.0f + (206.0f - 284.0f) * (t - 20.0f) / 20.0f);
 }
 
 // Fracción de O₂ del aire: en una incubadora el CO₂ agregado desplaza al resto del aire.
-static float o2AirFraction(const MediumParams& m) { return (1.0f - m.co2Atmosphere) / (1.0f - 4.2e-4f); }
+float o2AirFraction(const MediumParams& m) { return (1.0f - m.co2Atmosphere) / (1.0f - 4.2e-4f); }
 
 // CO₂ disuelto en equilibrio con el aire [µM]. Ley de Henry con la dependencia de la temperatura
 // de van 't Hoff (d ln K_H / d(1/T) = 2400 K; Sander 2015, Atmos. Chem. Phys. 15:4399): 15 µM a
 // 20 °C con 420 ppm, ~10 a 37 °C, ~29 a −2 °C. La sal la baja ~0,5 % por PSU (Weiss 1974,
 // Mar. Chem. 2:203: el agua de mar disuelve ~15 % menos que la dulce).
-static float co2SaturationAt(const MediumParams& m) {
+float co2SaturationAt(const MediumParams& m) {
     const float kelvin = std::clamp(m.temperature, -2.0f, 80.0f) + 273.15f;
     return units::kCO2Saturation * std::exp(2400.0f * (1.0f / kelvin - 1.0f / 293.15f)) *
            std::exp(-0.0047f * std::max(0.0f, m.salinity)) / std::exp(-0.0047f * 0.5f) * (m.co2Atmosphere / 4.2e-4f);
 }
 
 // Viscosidad del agua (Vogel): 1,0 mPa·s a 20 °C, 1,8 a 0 °C, 0,47 a 60 °C.
-static float waterViscosity(float celsius) {
+float waterViscosity(float celsius) {
     return 2.414e-2f * std::pow(10.0f, 247.8f / (celsius + 273.15f - 140.0f)); // [mPa·s]
 }
 
@@ -1350,12 +1350,6 @@ CellSpec speciesSpec(LocomotionType type) { return speciesInfo(playerSpecies(typ
 
 namespace {
 // Biomasa de nacimiento de la especie con un gen de tamaño dado (masa ∝ tamaño³).
-float targetBirthBiomassOf(SpeciesId species, float size) {
-    const CellSpec base = speciesInfo(species).spec;
-    return cellMassPmol(units::kPi * base.radiusX * base.radiusY) * size * size * size *
-           speciesInfo(species).dryMassScale;
-}
-
 SpeciesId speciesOfEntity(const entt::registry& reg, entt::entity e) {
     if (const Species* sp = reg.try_get<Species>(e))
         return sp->id;
@@ -1371,7 +1365,7 @@ void World::applyTraits(entt::entity e) {
     registry_.get<Digestion>(e).rateScale = h.traits.digestion;
     Metabolism& meta = registry_.get<Metabolism>(e);
     meta.photosynthetic = h.traits.photosynthesis > 0.0f;
-    meta.targetBirthBiomass = targetBirthBiomassOf(speciesOfEntity(registry_, e), h.traits.sizeScale);
+    meta.targetBirthBiomass = targetBirthBiomass(speciesOfEntity(registry_, e), h.traits.sizeScale);
     meta.fissions = info.fissions;
     CellShape& shape = registry_.get<CellShape>(e);
     shape.shapeRate = info.spec.shapeRate * h.traits.rigidity;
@@ -2294,16 +2288,6 @@ void World::feedByContact(RingBody& body, Digestion& dig, float dt) {
 
 namespace {
 
-float maxSpeedOf(const LocomotionParams& p, LocomotionType type) {
-    switch (type) {
-    case LocomotionType::Cilia: return p.ciliaSpeed;
-    case LocomotionType::Flagellum: return p.flagellumSpeed;
-    case LocomotionType::Pseudopod: return p.pseudopodSpeed;
-    case LocomotionType::Crawl: return 1.0f;
-    case LocomotionType::None: return 1.0f;
-    }
-    return 1.0f;
-}
 
 // Citostoma del ciliado: en el surco oral, ~54° del polo anterior.
 void placeMouth(const RingBody& body, Locomotion& loco) {
@@ -3102,24 +3086,7 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
     Metabolism& meta = registry_.get<Metabolism>(cell);
     // Palintomía: las hijas siguen dividiéndose hasta completar el ciclo.
     meta.pendingFissions = meta.pendingFissions > 0 ? meta.pendingFissions - 1 : meta.fissions - 1;
-    Metabolism childMeta = meta;
-    childMeta.biomass = meta.biomass * (1.0f - fA);
-    childMeta.reserves = meta.reserves * (1.0f - fA);
-    childMeta.phosphorus = meta.phosphorus * (1.0f - fA);
-    childMeta.nitrogen = meta.nitrogen * (1.0f - fA);
-    childMeta.silicon = meta.silicon * (1.0f - fA);
-    childMeta.iron = meta.iron * (1.0f - fA);
-    childMeta.vitamin = meta.vitamin * (1.0f - fA);
-    meta.biomass *= fA;
-    meta.reserves *= fA;
-    meta.phosphorus *= fA;
-    meta.nitrogen *= fA;
-    meta.silicon *= fA;
-    meta.iron *= fA;
-    meta.vitamin *= fA;
-    meta.birthBiomass = meta.biomass;
-    childMeta.birthBiomass = childMeta.biomass;
-    meta.ageHours = childMeta.ageHours = 0.0f;
+    const Metabolism childMeta = splitMetabolism(meta, fA);
 
     Digestion childDig;
     if (Digestion* dig = registry_.try_get<Digestion>(cell)) {
@@ -3174,15 +3141,11 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
     // organelos (se replican al crecer).
     if (const Heredity* mh = registry_.try_get<Heredity>(cell)) {
         const LocomotionType type = registry_.get<Locomotion>(cell).type;
-        Heredity hb = *mh;
-        Heredity ha = *mh;
+        Heredity ha, hb;
         Rng ra(config_.seed, rng_stream::kMutation, entt::to_integral(cell) * 2ull, step_);
         Rng rb(config_.seed, rng_stream::kMutation, entt::to_integral(cell) * 2ull + 1, step_);
         const float rate = registry_.all_of<AnimalCell>(cell) ? 0.0f : 0.25f; // somáticas: clonales
-        mutate(ha.genome, type, ra, rate);
-        mutate(hb.genome, type, rb, rate);
-        ha.traits = traitsOf(ha.genome, type);
-        hb.traits = traitsOf(hb.genome, type);
+        daughterGenomes(*mh, type, ra, rb, rate, ha, hb);
         registry_.replace<Heredity>(cell, ha);
         registry_.emplace<Heredity>(child, hb);
         applyTraits(cell);
@@ -3196,11 +3159,7 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
         // así que una de ellas es más chica (regla de MacDonald–Pfitzer). Por debajo de ~75%
         // del tamaño forma una auxospora y recupera el tamaño máximo.
         if (sinfo.frustule && registry_.all_of<Heredity>(child)) {
-            Heredity& h = registry_.get<Heredity>(child);
-            h.genome[Gene::Size] *= 0.97f;
-            if (h.genome[Gene::Size] < 0.75f)
-                h.genome[Gene::Size] = 1.0f; // auxospora
-            h.traits = traitsOf(h.genome, sinfo.locomotion);
+            shrinkFrustule(registry_.get<Heredity>(child), sinfo.locomotion);
             applyTraits(child);
         }
         if (sinfo.filament) {
@@ -3275,7 +3234,7 @@ void World::lyse(entt::entity cell, const char* cause, bool apoptotic) {
                 cells.emplace_back(food.cellX(x), food.cellY(y));
     if (cells.empty())
         cells.emplace_back(food.cellX(body.centroid.x), food.cellY(body.centroid.y));
-    const float dissolved = (apoptotic ? 0.0f : 0.4f) * total * microMolarPerPmol() / static_cast<float>(cells.size());
+    const float dissolved = (apoptotic ? 0.0f : kLysisDissolved) * total * microMolarPerPmol() / static_cast<float>(cells.size());
     for (const auto& [cx, cy] : cells)
         food.at(cx, cy) += dissolved;
 
@@ -3293,7 +3252,7 @@ void World::lyse(entt::entity cell, const char* cause, bool apoptotic) {
     const float silicon = releaseMicronutrients(cell, body.centroid); // el Si queda en la frústula
     // Las cianobacterias tóxicas no están en cuerpos blandos; acá no hay toxina que liberar.
 
-    const float particulate = (apoptotic ? 1.0f : 0.6f) * total;
+    const float particulate = (apoptotic ? 1.0f : kLysisParticulate) * total;
     const int count = apoptotic ? 5 : std::clamp(static_cast<int>(particulate / 0.05f), 4, 60);
     const float each = particulate / static_cast<float>(count);
     for (int k = 0; k < count; ++k) {

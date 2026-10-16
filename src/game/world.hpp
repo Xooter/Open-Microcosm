@@ -110,6 +110,12 @@ struct MediumParams {
     float phenolRed = 0.0f;
 };
 
+// Gases y agua del medio (placa y cultivo bien mezclado).
+float o2SaturationAt(float celsius);         // O₂ en equilibrio con el aire [µM]
+float o2AirFraction(const MediumParams& m);  // fracción de O₂ del aire (la incubadora agrega CO₂)
+float co2SaturationAt(const MediumParams& m); // CO₂ disuelto en equilibrio con el aire [µM]
+float waterViscosity(float celsius);          // [mPa·s]
+
 // Sedimento inicial de la gota: partículas minerales sueltas y granos de arena.
 struct Sediment {
     int count[kMaxMinerals] = {};               // partículas sueltas de cada mineral (por MineralKind)

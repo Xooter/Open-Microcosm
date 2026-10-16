@@ -130,11 +130,19 @@ struct MetabolicOutput {
 
 MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const MetabolicInput& in);
 
-inline bool readyToDivide(const Metabolism& m, float cost) {
+// División: la madre se queda con la fracción `motherShare` de la materia y devuelve la de la hija.
+// Las dos empiezan su ciclo (biomasa al nacer, edad 0).
+Metabolism splitMetabolism(Metabolism& mother, float motherShare);
+
+// Biomasa con la que se divide [pmol] (0: sin tamaño de nacimiento).
+inline float divisionBiomass(const Metabolism& m) {
     const float birth = m.targetBirthBiomass > 0.0f ? m.targetBirthBiomass : m.birthBiomass;
     // En palintomía la célula crece 2^n veces y después se divide n veces seguidas.
-    const float need = m.pendingFissions > 0 ? 1.8f * birth : static_cast<float>(1 << m.fissions) * birth;
-    return m.biomass >= need && m.reserves >= cost * m.biomass;
+    return m.pendingFissions > 0 ? 1.8f * birth : static_cast<float>(1 << m.fissions) * birth;
+}
+
+inline bool readyToDivide(const Metabolism& m, float cost) {
+    return m.biomass >= divisionBiomass(m) && m.reserves >= cost * m.biomass;
 }
 
 inline bool isDead(const Metabolism& m, const MetabolismParams& p) {

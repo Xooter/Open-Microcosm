@@ -1,7 +1,8 @@
 # Fisiología por especie (MVP: validación científica). Cada valor como se publicó: valor, unidad,
 # temperatura de la medición [°C] y fuente. El programa lo lleva a 20 °C con Q10 = 2.
 #
-# Unidades: "1/h" o "1/dia" (tasa), "h" o "dia" (tiempo de duplicación).
+# Unidades: "1/h" o "1/dia" (tasa), "h" o "dia" (tiempo de duplicación); para la alimentación por
+# filtración, "bacterias/h" (ingestión máxima) y "nL/h", "uL/h" o "mL/h" (aclaramiento).
 # estimacion = true: no es una medición directa en condiciones comparables (temperatura sin
 # verificar, otra cepa u otro medio); la ficha lo dice. REVISAR antes de publicar resultados.
 # Cada tabla es [id_del_ser.parametro] (el id de seres.toml). Las especies que no figuran usan el valor general del metabolismo (metabolismo.crecimiento_maximo).
@@ -16,6 +17,23 @@ valor = 0.946
 unidad = "1/dia"
 temperatura = 26.0
 fuente = "Gause, G. F. (1934). The Struggle for Existence. Williams & Wilkins, fig. 22 (P. caudatum en monocultivo). Temperatura del cultivo sin verificar (se asume 26 °C)."
+estimacion = true
+
+[paramecium.ingestion_maxima]
+# Ingestión de bacterias en suspensión pura (Salmonella, de tamaño parecido a E. coli), por
+# individuo. Un solo estudio en microcosmos; temperatura sin verificar (se asume la del laboratorio).
+valor = 26000.0
+unidad = "bacterias/h"
+temperatura = 25.0
+fuente = "Applied Water Science (2013), doi:10.1007/s13201-013-0130-1: P. caudatum ingiere ~26 x 10^3 bacterias por individuo y por hora en suspensión pura. Temperatura sin verificar (se asume 25 °C)."
+estimacion = true
+
+[paramecium.aclaramiento]
+# Aclaramiento = ingestión / concentración de presas (el mismo estudio).
+valor = 106.0
+unidad = "nL/h"
+temperatura = 25.0
+fuente = "Applied Water Science (2013), doi:10.1007/s13201-013-0130-1: aclaramiento de P. caudatum ~106 nL por individuo y por hora con S. typhi. Temperatura sin verificar (se asume 25 °C)."
 estimacion = true
 
 [amoeba.crecimiento_maximo]

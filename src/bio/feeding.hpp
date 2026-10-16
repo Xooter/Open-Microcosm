@@ -108,10 +108,12 @@ float digestVacuole(FoodVacuole& v, const DigestionFractions& f, Digestion& dig,
 bool vacuoleSpent(const FoodVacuole& v);
 void expelVacuole(const FoodVacuole& v, Excreted& excreted);
 // Agrega una presa al contenido de la vacuola.
-void addToVacuole(FoodVacuole& v, Digestion& dig, float area, float pmol, float phosphorus, float nitrogen);
+// `items`: cuántas presas son (la vacuola se cierra al llenarse).
+void addToVacuole(FoodVacuole& v, Digestion& dig, float area, float pmol, float phosphorus, float nitrogen,
+                  int items = 1);
 
 // Sin cuerpo (cultivo): la presa va a la vacuola abierta o a una nueva; `digestContents` cierra,
 // digiere y expulsa igual que `digest`.
 void ingestContents(Digestion& dig, float area, float pmol, bool forceNew, float phosphorus = 0.0f,
-                    float nutritionScale = 1.0f, float nitrogen = 0.0f);
+                    float nutritionScale = 1.0f, float nitrogen = 0.0f, int items = 1);
 float digestContents(Digestion& dig, const FeedingParams& params, float dt, float bioDt, Excreted& excreted);

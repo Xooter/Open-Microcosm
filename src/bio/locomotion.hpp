@@ -40,6 +40,9 @@ struct LocomotionParams {
     float oralCurrent = 80.0f;     // corriente de alimentación del ciliado hacia la boca
 };
 
+// Velocidad máxima de nado o de avance de cada tipo de locomoción [µm/s].
+float maxSpeedOf(const LocomotionParams& p, LocomotionType type);
+
 // Componente: control y estado del aparato locomotor.
 struct Locomotion {
     LocomotionType type = LocomotionType::Cilia;

@@ -32,7 +32,33 @@ Ajustes propios a los datos originales de Gause (1934) digitalizados en gauseR (
 | Depredador–presa (*Didinium*–*Paramecium*) sin refugio | pendiente | Datos de Gause fig. 32 disponibles. |
 | Tilman (*Asterionella* vs *Cyclotella*, P y Si) | **PASA** | Cultivo en lote, columna de agua de 2 cm. Con P limitante gana *Asterionella* (0,71 de la biomasa); con Si limitante, *Cyclotella* (*Asterionella* 0,22). Con el modelo de Droop (antes 0,52 y 0,47: la K de crecimiento publicada se usaba en la captación y la limitación quedaba débil). En lote no hay exclusión completa (Tilman usó cultivos semicontinuos). Constantes de Monod **sin verificar** contra Tilman & Kilham (1976). |
 | Jennings (acumulación por CO₂) | **PASA** | 20 *Paramecium* en una placa de ~1,9 mm con el gotero de CO₂ abierto en el centro (2 mM/s; ~10 mM y pH 5,3 en la fuente). Fracción a menos de 0,2 radios (4 % del área): 0,081 con CO₂ contra 0,031 sin él (el test pide > 1,5× el área y > 2× el control). La densidad crece hacia la fuente (3,4× la media en el centro). Resultado cualitativo: Jennings (1906) no publicó conteos. Con ácido más fuerte vio un anillo alrededor de la burbuja; acá no se modela la evitación del ácido fuerte. |
+| µmax de *Paramecium* en el cultivo bien mezclado (ingestión publicada) | **NO PASA** (`should_fail`) | 0,007/h contra 0,026/h: la ingestión publicada no alcanza para el µmax de Gause con el balance de energía del modelo (ver «Balance de energía de *Paramecium*»). |
 | Monod: µ en función del P externo (*Asterionella*) | **PASA** (test básico) | Modelo de Droop desde el 15/10/2026: en equilibrio, µ = µmax·S/(K+S) con la K publicada, con un error menor al 3 % (`tests/test_nutrients.cpp`, sin `World`). En la placa, la célula ve menos P que la media (pozo de consumo: 0,028 contra 0,04 µM) y con ese valor local la curva coincide (0,0142 contra 0,0143 /h). |
+
+## Balance de energía de *Paramecium* (cultivo bien mezclado, fase P1)
+
+El cultivo bien mezclado (`game/culture`) usa la ingestión y el aclaramiento publicados de
+*P. caudatum* (Applied Water Science 2013, doi:10.1007/s13201-013-0130-1: ~26·10³ bacterias por
+individuo y por hora, ~106 nL/h; temperatura sin verificar, se asumió 25 °C) en vez del caudal del
+citostoma de la placa (30 bacterias/s, sin fuente: ~108·10³/h, cuatro veces el valor medido).
+
+Con esa ingestión el balance de energía **no alcanza el µmax de Gause**: con bacterias saturantes
+(~10⁹/mL) el cultivo crece a ~0,007/h contra 0,026/h publicado a 20 °C (test
+«validación: µmax de Paramecium en el cultivo», marcado `should_fail`). La cuenta a mano: un
+paramecio de ~1000 pmol gasta ~16 pmol/h en mantenerse y nadar; crecer a 0,026/h pide ~43 pmol/h
+más (rendimiento 0,6), unas **25·10³ bacterias/h**. A 20 °C la ingestión publicada da 18·10³
+(si se midió a 25 °C) o 26·10³ (si se midió a 20 °C): el balance cierra solo en el segundo caso y
+a saturación completa. Pendiente: verificar las temperaturas de Gause y del estudio de ingestión
+(o encontrar una medición de la respuesta funcional de *P. caudatum* con su temperatura) antes de
+tocar parámetros. Mientras tanto, la placa sobrealimenta a los paramecios (su caudal máximo es 4×
+el medido): eso se va a ver en la calibración cruzada placa ↔ cultivo (paso 2 de P1).
+
+**Corregido al hacerlo:** las células limitadas por la comida no se dividían nunca. El metabolismo
+invertía en biomasa todo lo que pasaba del colchón de reservas (0,1 de la biomasa) y dividirse pedía
+reservas por 0,1 de la biomasa: nunca alcanzaba, y la célula crecía sin límite pasado el doble de su
+tamaño. Ahora, con el tamaño de división, deja de invertir y junta las reservas de la citocinesis
+(punto de control del ciclo; las células animales ya lo tenían). Cambia la placa en condiciones de
+comida limitada.
 
 ## Problemas del modelo encontrados al validar (fase MVP)
 

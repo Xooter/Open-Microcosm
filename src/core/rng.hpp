@@ -27,6 +27,25 @@ class Rng {
         return std::sqrt(-2.0f * std::log(u1)) * std::cos(6.28318530718f * u2);
     }
 
+    // Poisson de media `mean` (Knuth hasta 30; arriba, normal redondeada, que ya no se distingue).
+    std::uint64_t poisson(double mean) {
+        if (!(mean > 0.0))
+            return 0;
+        if (mean > 30.0) {
+            const double x = std::floor(mean + std::sqrt(mean) * static_cast<double>(normal()) + 0.5);
+            return x > 0.0 ? static_cast<std::uint64_t>(x) : 0;
+        }
+        const double limit = std::exp(-mean);
+        std::uint64_t k = 0;
+        double p = 1.0;
+        for (;;) {
+            p *= static_cast<double>(uniform());
+            if (p <= limit)
+                return k;
+            ++k;
+        }
+    }
+
   private:
     static std::uint64_t mix(std::uint64_t z) {
         z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
@@ -55,4 +74,5 @@ inline constexpr std::uint64_t kOrganelles = 13;
 inline constexpr std::uint64_t kDefense = 14;
 inline constexpr std::uint64_t kCyano = 15;
 inline constexpr std::uint64_t kFungi = 16;
+inline constexpr std::uint64_t kCulture = 1000; // cultivo bien mezclado (sus sub-streams: + 0..99)
 } // namespace rng_stream

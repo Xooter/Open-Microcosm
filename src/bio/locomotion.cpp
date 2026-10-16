@@ -169,3 +169,14 @@ void applySwimmerForces(const RingBody& body, const BodyParticles& bp, const Loc
         pushWater(fluid, c - out * (length(m - c) + kR), out, p.oralCurrent, kR);
     }
 }
+
+float maxSpeedOf(const LocomotionParams& p, LocomotionType type) {
+    switch (type) {
+    case LocomotionType::Cilia: return p.ciliaSpeed;
+    case LocomotionType::Flagellum: return p.flagellumSpeed;
+    case LocomotionType::Pseudopod: return p.pseudopodSpeed;
+    case LocomotionType::Crawl: return 1.0f;
+    case LocomotionType::None: return 1.0f;
+    }
+    return 1.0f;
+}

@@ -76,9 +76,17 @@ MetabolicOutput updateMetabolism(Metabolism& m, const MetabolismParams& p, const
 
     // Crecimiento con lo que sobra por encima del colchón. Cada factor acota la inversión; el que
     // la deja más baja es el limitante (Liebig).
+    // Punto de control del ciclo: con el tamaño de división la célula deja de invertir en biomasa y
+    // junta las reservas que paga la citocinesis. Sin él, una célula limitada por la comida invertía
+    // todo lo que pasaba del colchón, nunca llegaba al costo de dividirse y crecía sin límite (el
+    // crecimiento y el ciclo celular están acoplados; Jorgensen y Tyers 2004, Curr. Biol. 14: R1014).
+    const float divisionSize = divisionBiomass(m);
+    const bool atCheckpoint = divisionSize > 0.0f && m.biomass >= divisionSize;
     const float spare = m.reserves - p.reserveBuffer * m.biomass;
     m.limiting = m.starving ? Limitation::Starving : Limitation::Energy;
-    if (spare > 0.0f) {
+    if (atCheckpoint && !m.starving)
+        m.limiting = Limitation::None;
+    if (spare > 0.0f && !atCheckpoint) {
         const float maxRate = p.growthPerHourMax * in.growthScale * m.biomass * hours / p.growthYield;
         float invest = maxRate;
         m.limiting = Limitation::None;
@@ -125,4 +133,26 @@ const char* limitationName(Limitation l) {
     case Limitation::Count: break;
     }
     return "";
+}
+
+Metabolism splitMetabolism(Metabolism& meta, float fA) {
+    Metabolism childMeta = meta;
+    childMeta.biomass = meta.biomass * (1.0f - fA);
+    childMeta.reserves = meta.reserves * (1.0f - fA);
+    childMeta.phosphorus = meta.phosphorus * (1.0f - fA);
+    childMeta.nitrogen = meta.nitrogen * (1.0f - fA);
+    childMeta.silicon = meta.silicon * (1.0f - fA);
+    childMeta.iron = meta.iron * (1.0f - fA);
+    childMeta.vitamin = meta.vitamin * (1.0f - fA);
+    meta.biomass *= fA;
+    meta.reserves *= fA;
+    meta.phosphorus *= fA;
+    meta.nitrogen *= fA;
+    meta.silicon *= fA;
+    meta.iron *= fA;
+    meta.vitamin *= fA;
+    meta.birthBiomass = meta.biomass;
+    childMeta.birthBiomass = childMeta.biomass;
+    meta.ageHours = childMeta.ageHours = 0.0f;
+    return childMeta;
 }

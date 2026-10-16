@@ -1,6 +1,8 @@
 #include "bio/cell_physiology.hpp"
 
+#include "bio/feeding.hpp"
 #include "bio/physiology.hpp"
+#include "core/units.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -77,4 +79,27 @@ const char* applyEnvironmentStress(const SpeciesInfo& info, const CellSurroundin
 
 float osmotrophDemand(float biomass, float organic, float bioDt) {
     return kOsmotrophUptakePerHour * biomass * bioDt / 3600.0f * organic / (organic + kOsmotrophHalfSaturation);
+}
+
+float targetBirthBiomass(SpeciesId species, float size) {
+    const CellSpec base = speciesInfo(species).spec;
+    return cellMassPmol(units::kPi * base.radiusX * base.radiusY) * size * size * size *
+           speciesInfo(species).dryMassScale;
+}
+
+void daughterGenomes(const Heredity& mother, LocomotionType type, Rng& ra, Rng& rb, float rate, Heredity& a,
+                     Heredity& b) {
+    b = mother;
+    a = mother;
+    mutate(a.genome, type, ra, rate);
+    mutate(b.genome, type, rb, rate);
+    a.traits = traitsOf(a.genome, type);
+    b.traits = traitsOf(b.genome, type);
+}
+
+void shrinkFrustule(Heredity& h, LocomotionType type) {
+    h.genome[Gene::Size] *= 0.97f;
+    if (h.genome[Gene::Size] < 0.75f)
+        h.genome[Gene::Size] = 1.0f; // auxospora
+    h.traits = traitsOf(h.genome, type);
 }

@@ -67,18 +67,18 @@ void ingest(Digestion& dig, RingBody& body, BodyParticles& bp, Vec2 where, float
     bp.radius[target->slot] = vacuoleRadius(target->contentArea);
 }
 
-void addToVacuole(FoodVacuole& v, Digestion& dig, float area, float pmol, float phosphorus, float nitrogen) {
+void addToVacuole(FoodVacuole& v, Digestion& dig, float area, float pmol, float phosphorus, float nitrogen, int items) {
     v.contentArea += area;
     v.contentPmol += pmol;
     v.initialPmol += pmol;
     v.phosphorus += phosphorus;
     v.nitrogen += nitrogen;
-    ++v.items;
+    v.items += items;
     dig.pmolIngested += pmol;
 }
 
 void ingestContents(Digestion& dig, float area, float pmol, bool forceNew, float phosphorus, float nutritionScale,
-                    float nitrogen) {
+                    float nitrogen, int items) {
     FoodVacuole* target = nullptr;
     if (!forceNew) {
         for (FoodVacuole& v : dig.vacuoles)
@@ -92,7 +92,7 @@ void ingestContents(Digestion& dig, float area, float pmol, bool forceNew, float
         target->wholeCell = forceNew;
         target->nutritionScale = nutritionScale;
     }
-    addToVacuole(*target, dig, area, pmol, phosphorus, nitrogen);
+    addToVacuole(*target, dig, area, pmol, phosphorus, nitrogen, items);
 }
 
 DigestionFractions digestionFractions(const Digestion& dig, const FeedingParams& params, float bioDt) {

@@ -39,6 +39,10 @@ struct SpeciesPhysiology {
     SourcedValue glutamineKm;    // [µM]
     SourcedValue lactatePerGlucose; // lactato secretado por glucosa captada [mol/mol] (Warburg)
     SourcedValue oxygenUptake;   // consumo de O₂ [fmol/h]
+    // Alimentación por filtración (cultivo bien mezclado, fase P1): respuesta funcional de tipo II
+    // con el aclaramiento a baja densidad de presas y la ingestión máxima a saturación (a 20 °C).
+    SourcedValue maxIngestion; // bacterias por hora [1/h]
+    SourcedValue clearance;    // agua que filtra por hora [µm³/h]
 };
 
 // Las claves de fisiologia.toml de cada valor, para listarlos (ficha, exportación).

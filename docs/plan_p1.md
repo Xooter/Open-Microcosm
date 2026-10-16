@@ -43,9 +43,19 @@ por paso y sus tests. Avance: ✅ hecho · 🟡 en parte (se dice qué falta) ·
    escenas (cuatro biomas, cultivo humano inoculado y epidermis de cebolla); `ingestContents` y
    `digestContents` para células sin cuerpo (`tests/test_cell_physiology.cpp`). El registro de
    parámetros sigue atado a `World`: se generaliza en el paso 1, cuando el cultivo lo necesite.
-1. **Modelo de cultivo** (`game/culture`, en `biosim`): recipiente, medio bien mezclado, células,
+1. 🟡 **Modelo de cultivo** (`game/culture`, en `biosim`): recipiente, medio bien mezclado, células,
    bacterias por cepa, detritos y fagos; luz por Beer–Lambert en la columna; el mismo balance de
    masa. Tests: conservación, determinismo 1/4 hilos, µmax de *Paramecium*.
+   *Hecho:* células por individuo con la fisiología compartida, bacterias en cohortes, filtradores
+   con respuesta funcional de tipo II (`ingestion_maxima` y `aclaramiento` de *P. caudatum* con
+   fuente), cazadores con Gerritsen–Strickler, quistes, división con mutación, lisis, detritos y
+   frústulas; el mismo balance de masa (cierra a 10⁻⁴); determinista por seed (es serial: no
+   depende de los hilos). *Encontrado:* las células limitadas por la comida no se dividían nunca
+   (invertían todo lo que pasaba del colchón de reservas y no llegaban al costo de la división);
+   corregido en el metabolismo compartido con un punto de control al tamaño de división (también
+   en la placa). *Falta:* luz atenuada por las células, fagos, conjugación y las especies que
+   `Culture::supports` rechaza. *Discrepancia abierta:* el µmax de *Paramecium* no cierra con la
+   ingestión publicada (ver `docs/validacion.md`).
 2. **Calibración cruzada:** `bio_bench --respuesta-funcional`, test de validación placa ↔ cultivo.
 3. **Programas** (`game/program`): rampas, pulsos y eventos periódicos, guardados como definición.
 4. **Panel Cultivos y gota de muestra:** `.plate` v3 con seres explícitos con estado; conteo de

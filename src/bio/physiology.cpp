@@ -65,7 +65,7 @@ SourcedValue readRate(const toml::table& t, const std::string& species, const ch
     return s;
 }
 
-enum class Kind { Speed, Time, Density, Flux, Concentration, Ratio };
+enum class Kind { Speed, Time, Density, Flux, Concentration, Ratio, Ingestion, Clearance };
 
 // Rapidez [µm/h], tiempo [h] o densidad [1/cm²] en la unidad publicada; las dos primeras,
 // llevadas a 20 °C con Q10 (una rapidez escala como una tasa; un tiempo, al revés).
@@ -94,6 +94,10 @@ SourcedValue readScaled(const toml::table& t, const std::string& species, const 
         factor = s.unit == "1/cm2" ? 1.0f : 0.0f;
     else if (kind == Kind::Flux) // por célula → fmol/h (1 amol/s = 3,6 fmol/h)
         factor = s.unit == "fmol/h" ? 1.0f : s.unit == "amol/s" ? 3.6f : s.unit == "pmol/h" ? 1000.0f : 0.0f;
+    else if (kind == Kind::Ingestion) // presas por hora
+        factor = s.unit == "bacterias/h" ? 1.0f : s.unit == "bacterias/min" ? 60.0f : 0.0f;
+    else if (kind == Kind::Clearance) // → µm³/h
+        factor = s.unit == "nL/h" ? 1e6f : s.unit == "uL/h" || s.unit == "µL/h" ? 1e9f : s.unit == "mL/h" ? 1e12f : 0.0f;
     else if (kind == Kind::Concentration)
         factor = s.unit == "uM" || s.unit == "µM" ? 1.0f : s.unit == "mM" ? 1000.0f : 0.0f;
     else
@@ -103,7 +107,7 @@ SourcedValue readScaled(const toml::table& t, const std::string& species, const 
         return s;
     }
     s.value = s.published * factor;
-    if (kind == Kind::Speed || kind == Kind::Flux)
+    if (kind == Kind::Speed || kind == Kind::Flux || kind == Kind::Ingestion || kind == Kind::Clearance)
         s.value *= std::pow(kQ10, (kReferenceTemperature - s.temperature) / 10.0f);
     else if (kind == Kind::Time)
         s.value *= std::pow(kQ10, (s.temperature - kReferenceTemperature) / 10.0f);
@@ -172,6 +176,8 @@ void loadTables(const toml::table& doc) {
         ph.glutamineKm = readScaled(*t, sp, "glutamina_km", Kind::Concentration);
         ph.lactatePerGlucose = readScaled(*t, sp, "lactato_por_glucosa", Kind::Ratio);
         ph.oxygenUptake = readScaled(*t, sp, "o2_consumo", Kind::Flux);
+        ph.maxIngestion = readScaled(*t, sp, "ingestion_maxima", Kind::Ingestion);
+        ph.clearance = readScaled(*t, sp, "aclaramiento", Kind::Clearance);
         gSource[id] = toml_io::tableSnippet("fisiologia", name.str(), *t);
     }
 }
@@ -269,6 +275,8 @@ const std::vector<PhysiologyKey>& physiologyKeys() {
         {"glutamina_km", &P::glutamineKm, "uM", "Km de la glutamina"},
         {"lactato_por_glucosa", &P::lactatePerGlucose, "mol/mol", "Lactato por glucosa (Warburg)"},
         {"o2_consumo", &P::oxygenUptake, "fmol/h", "Consumo de O2"},
+        {"ingestion_maxima", &P::maxIngestion, "bacterias/h", "Ingestion maxima de bacterias"},
+        {"aclaramiento", &P::clearance, "um3/h", "Aclaramiento (agua filtrada)"},
     };
     return keys;
 }
