@@ -33,11 +33,12 @@ e interviene.
   sedimento, poblaciones y geometría) y se crea con *Crear placa* (Ctrl+N). Ambiente y
   nutrientes se aplican **en vivo** a la placa en marcha; lo demás, al crearla. Las placas se
   guardan en `<datos>/biogame/plates/*.plate`.
-- **Placas preparadas** (en desarrollo, antes del lanzamiento): además de la gota de agua, tipos
-  de placa como en un laboratorio real —**cultivo celular** (medio de cultivo, células adheridas al
-  fondo) y **preparado vegetal** (un tejido montado)—, con **tamaño de placa** configurable y
-  **mezclas** (inocular células o microorganismos de un tipo en otro, p. ej. bacterias en un
-  cultivo celular). La inoculación es una intervención como las demás (reproducible).
+- **Placas preparadas** (`game/prepared`; datos en `medios.toml`, `recipientes.toml`,
+  `placas.toml`): además de la gota de agua, tipos de placa como en un laboratorio real. Hecho: el
+  **cultivo celular** (DMEM en incubadora a 37 °C y 10 % de CO₂: un campo periódico del fondo de un
+  recipiente, con la profundidad del medio del recipiente y estéril). Pendientes: las células
+  humanas (fase 20b) y el **preparado vegetal**. **Mezclas:** cualquier ser del catálogo se inocula
+  en cualquier placa (Catálogo > Inocular..., intervención `Inoculate`, reproducible).
 - **Paneles acoplables** (Dear ImGui, ver "Interfaz"): Placa, Catálogo (cualquier ser, con
   íconos), Ficha, Herramientas, Simulación, Preferencias (imagen, fluidez y rendimiento),
   Procesos (tasas de química, microbiología y hongos), Estadísticas (censo, totales conservados
@@ -165,7 +166,9 @@ físico no se acepta.
   es la respuesta instantánea a las fuerzas. El espesor de la película (`gapHeight`) controla
   qué tan locales son las corrientes.
 - **Química:** difusión exacta en Fourier + advección semi-lagrangiana (`sim/chem_field`). El O₂
-  entra por intercambio con el aire en toda la superficie. Macronutrientes (P, N, Si) y
+  entra por intercambio con el aire en toda la superficie; el CO₂ se equilibra con el del aire
+  (`MediumParams::co2Atmosphere`: la incubadora pone 5-10 %) según la ley de Henry a la temperatura
+  y la salinidad del medio, y el pH sale del bicarbonato con el pK′ del medio (`carbonatePK`). Macronutrientes (P, N, Si) y
   micronutrientes (Fe, B₁₂) son campos disueltos; cada célula toma su cuota con cinética de Monod
   (`bio/metabolism`) y el crecimiento lo limita el más escaso (Liebig). El Si de una diatomea
   muerta queda en su frústula (`AmbientParticles::mass`) y se redisuelve despacio.

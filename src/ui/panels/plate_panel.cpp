@@ -1,5 +1,5 @@
-// Editor de placa: preconfigura la placa de Petri (bioma, seed, contenido, ambiente, nutrientes,
-// sedimento y poblaciones). Lo que se puede cambiar con la placa en marcha (ambiente y
+// Editor de placa: preconfigura la placa (una gota de un bioma o una placa preparada, como un
+// cultivo celular; seed, contenido, ambiente, nutrientes, sedimento y poblaciones). Lo que se puede cambiar con la placa en marcha (ambiente y
 // nutrientes) se aplica en vivo; el resto se aplica al crear la placa.
 #include "app/app.hpp"
 #include "game/scene.hpp"
@@ -49,9 +49,10 @@ class PlatePanel : public Panel {
             drawEnvironment(app, p);
         if (section("Nutrientes (en vivo)", true))
             drawNutrients(app, p);
-        if (section("Sedimento (al crear)"))
+        // Un cultivo es estéril: sin sedimento ni fauna silvestre (se inocula desde el Catálogo).
+        if (p.kind() == PlateKind::Drop && section("Sedimento (al crear)"))
             drawSediment(app, p);
-        if (section("Poblaciones (al crear)"))
+        if (p.kind() == PlateKind::Drop && section("Poblaciones (al crear)"))
             drawPopulations(app, p);
         if (section("Placa y grilla (al crear)"))
             drawGeometry(app, p);
@@ -65,6 +66,25 @@ class PlatePanel : public Panel {
     void drawBase(App& app, PlateSpec& p) {
         if (!section("Base", true))
             return;
+        // Tipo de placa: la gota de un bioma o una placa preparada (placas.toml).
+        std::vector<const char*> kinds = {tr("Gota (de un bioma)")};
+        int kind = 0;
+        for (int i = 0; i < preparedPlateCount(); ++i) {
+            kinds.push_back(preparedPlate(i).name.c_str());
+            if (preparedPlate(i).key == p.prepared)
+                kind = i + 1;
+        }
+        if (combo("Tipo de placa", &kind, kinds.data(), static_cast<int>(kinds.size()),
+                  "Una gota de agua con su fauna (de un bioma) o una placa preparada como en el laboratorio: un "
+                  "cultivo celular en su medio, en la incubadora.")) {
+            p.prepared = kind == 0 ? std::string() : preparedPlate(kind - 1).key;
+            p.rebuild();
+            app.plateDirty = true;
+        }
+        if (!p.prepared.empty()) {
+            drawPrepared(app, p);
+            return;
+        }
         std::vector<const char*> names;
         for (int b = 0; b < biomeCount(); ++b)
             names.push_back(biome(static_cast<BiomeId>(b)).name.c_str());
@@ -100,6 +120,42 @@ class PlatePanel : public Panel {
         note("Cambiar bioma, semilla o contenido restablece los ajustes de abajo.");
     }
 
+    // Placa preparada: qué recipiente y qué medio, y la semilla (la siembra y lo inoculado).
+    void drawPrepared(App& app, PlateSpec& p) {
+        const PreparedPlate* pp = findPreparedPlate(p.prepared);
+        if (!pp)
+            return;
+        note(pp->description.c_str());
+        if (const Vessel* v = findVessel(pp->vessel))
+            readout("Recipiente", "%s: %.1f cm², %.1f mL (%.1f mm de medio)", v->name.c_str(), static_cast<double>(v->areaCm2),
+                    static_cast<double>(v->volumeMl), static_cast<double>(v->depthUm() * 1e-3f));
+        if (const CultureMedium* m = findCultureMedium(pp->medium)) {
+            readout("Medio", "%s", m->name.c_str());
+            tooltip(m->reference.c_str());
+            const MediumParams& c = p.config.medium;
+            readout("Glucosa", "%.1f mM", static_cast<double>(c.organic * 1e-3f));
+            readout("Glutamina", "%.1f mM", static_cast<double>(c.glutamine * 1e-3f));
+            readout("Bicarbonato", "%.0f mM", static_cast<double>(c.alkalinity * 1e-3f));
+            readout("Suero", "%.0f %%", static_cast<double>(c.serum * 100.0f));
+            readout("Rojo fenol", "%.0f mg/L", static_cast<double>(c.phenolRed));
+        }
+        const float side = static_cast<float>(p.config.gridX) * p.config.cellSize;
+        readout("Campo simulado", "%.1f × %.1f mm (%.3f cm²)", static_cast<double>(side * 1e-3f),
+                static_cast<double>(side * 1e-3f), static_cast<double>(side * side * 1e-8f));
+        tooltip("Un recorte del fondo del recipiente, lejos de las paredes: los bordes son periódicos, como si el "
+                "cultivo siguiera.");
+        ImGui::AlignTextToFramePadding();
+        ImGui::TextUnformatted(tr("Semilla"));
+        ImGui::SameLine();
+        ImGui::SetNextItemWidth(-60.0f);
+        if (ImGui::InputScalar("##seed", ImGuiDataType_U64, &p.seed)) {
+            p.rebuild();
+            app.plateDirty = true;
+        }
+        tooltip("Fija dónde caen las células de la siembra y de cada inoculación.");
+        note("Estéril al crearla: se le inocula cualquier ser desde el Catálogo (Inocular...).");
+    }
+
     void drawEnvironment(App& app, PlateSpec& p) {
         MediumParams& m = p.config.medium;
         bool changed = false;
@@ -107,8 +163,15 @@ class PlatePanel : public Panel {
                           "Q10 = 2 en todas las tasas biológicas; cambia la viscosidad y el O2 de saturación.");
         changed |= slider("Salinidad [PSU]", &m.salinity, 0.0f, 100.0f, "%.1f", "Agua dulce < 1; mar ~35; salmuera hasta ~100.");
         changed |= slider("Luz", &m.surfaceLight, 0.0f, 1.0f, "%.2f", "Irradiancia relativa de la lámpara.");
-        changed |= slider("Intercambio O2 [1/s]", &m.o2AirExchange, 0.0f, 0.5f, "%.3f", "Reposición de oxígeno desde el aire.");
-        changed |= sliderLog("Alcalinidad [µM]", &m.alkalinity, 50.0f, 5000.0f, "%.0f", "Bicarbonato: fija el pH junto con el CO2.");
+        changed |= sliderLog("Intercambio O2 [1/s]", &m.o2AirExchange, 1e-5f, 0.5f, "%.2g",
+                             "Reposición de O2 (y salida de CO2) por la superficie: rápida en la película de una gota; en "
+                             "2-3 mm de medio quieto tarda ~1 h (difusión).");
+        changed |= sliderLog("Alcalinidad [µM]", &m.alkalinity, 50.0f, 60000.0f, "%.0f",
+                             "Bicarbonato: fija el pH junto con el CO2 (agua dulce ~1000; DMEM 44 000).");
+        changed |= sliderLog("CO2 del aire [%]", &m.co2Atmosphere, 1e-4f, 0.2f, "%.3f",
+                             "Aire libre: 0,042 %. Una incubadora de cultivo: 5-10 %, para que el bicarbonato del "
+                             "medio quede en pH ~7,4.",
+                             100.0f);
         changed |= checkbox("Anóxico (sin O2 del aire)", &m.anoxic);
         if (changed) {
             if (app.livePlate)
@@ -131,10 +194,13 @@ class PlatePanel : public Panel {
     void drawNutrients(App& app, PlateSpec& p) {
         MediumParams& m = p.config.medium;
         nutrient(app, "Fosfato [µM]", 0, &m.phosphate, 0.1f, 2000.0f, "%.1f", "Limita a las algas cuando florecen.");
-        nutrient(app, "Nitrógeno [µM]", 1, &m.nitrogen, 1.0f, 10000.0f, "%.0f", "Con N:P < 16 el agua queda limitada por N: favorece a las cianobacterias fijadoras.");
+        nutrient(app, "Nitrógeno [µM]", 1, &m.nitrogen, 1.0f, 30000.0f, "%.0f", "Con N:P < 16 el agua queda limitada por N: favorece a las cianobacterias fijadoras.");
         nutrient(app, "Sílice [µM]", 2, &m.silicate, 1.0f, 1000.0f, "%.0f", "Las diatomeas la necesitan para cada valva.");
         nutrient(app, "Hierro [µM]", 3, &m.iron, 0.01f, 50.0f, "%.2f", "Limita a los fotótrofos en el mar abierto.");
         nutrient(app, "Vitamina B12 [pM]", 4, &m.vitamin, 1e-5f, 0.1f, "%.1f", "Euglena y las diatomeas no la sintetizan: la aportan las bacterias.", 1e6f);
+        nutrient(app, "Materia orgánica [µM]", 5, &m.organic, 0.1f, 50000.0f, "%.0f",
+                 "Carbono orgánico disuelto (equivalente de glucosa) que toman bacterias y levaduras. Un medio de "
+                 "cultivo como el DMEM trae 25 000 µM (4,5 g/L de glucosa).");
         note("Llevan la concentración media de toda la placa al valor elegido.");
     }
 
@@ -199,6 +265,9 @@ class PlatePanel : public Panel {
             ch = true;
         }
         ch |= slider("Celda [µm]", &c.cellSize, 2.0f, 16.0f, "%.1f", "La placa mide grilla × celda.");
+        ch |= sliderLog("Profundidad [µm]", &c.depth, 20.0f, 5000.0f, "%.0f",
+                        "Del agua o del medio: la película de una gota ~200 µm; un recipiente de cultivo, 2-3 mm. Fija "
+                        "cuánto medio hay sobre cada punto y qué tan locales son las corrientes.");
         readout("Lado", "%.0f µm", static_cast<float>(c.gridX) * c.cellSize);
         dirtyIf(app, ch);
     }

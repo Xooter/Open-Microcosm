@@ -3,7 +3,8 @@
 // Post-proceso del microscopio de campo claro:
 //  - viñeta suave (el diafragma de campo y la caída de luz hacia el borde del objetivo);
 //  - aberración cromática lateral leve, que crece hacia el borde del campo;
-//  - grano del sensor de la cámara, animado.
+//  - grano del sensor de la cámara, animado;
+//  - el color del medio que atraviesa la luz (fragColor: el rojo fenol de un medio de cultivo).
 
 in vec2 fragTexCoord;
 in vec4 fragColor;
@@ -29,5 +30,5 @@ void main() {
     color.b = texture(texture0, uv - shift).b;
     float vignette = 1.0 - 0.35 * smoothstep(0.25, 0.9, r2);
     float grain = (hash(gl_FragCoord.xy + fract(time * 13.0) * 100.0) - 0.5) * 0.025;
-    finalColor = vec4(color * vignette + grain, 1.0);
+    finalColor = vec4(color * fragColor.rgb * vignette + grain, 1.0);
 }

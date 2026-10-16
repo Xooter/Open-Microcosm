@@ -66,6 +66,19 @@ static float o2SaturationAt(float celsius) {
     return t < 20.0f ? 457.0f + (284.0f - 457.0f) * t / 20.0f : std::max(80.0f, 284.0f + (206.0f - 284.0f) * (t - 20.0f) / 20.0f);
 }
 
+// Fracción de O₂ del aire: en una incubadora el CO₂ agregado desplaza al resto del aire.
+static float o2AirFraction(const MediumParams& m) { return (1.0f - m.co2Atmosphere) / (1.0f - 4.2e-4f); }
+
+// CO₂ disuelto en equilibrio con el aire [µM]. Ley de Henry con la dependencia de la temperatura
+// de van 't Hoff (d ln K_H / d(1/T) = 2400 K; Sander 2015, Atmos. Chem. Phys. 15:4399): 15 µM a
+// 20 °C con 420 ppm, ~10 a 37 °C, ~29 a −2 °C. La sal la baja ~0,5 % por PSU (Weiss 1974,
+// Mar. Chem. 2:203: el agua de mar disuelve ~15 % menos que la dulce).
+static float co2SaturationAt(const MediumParams& m) {
+    const float kelvin = std::clamp(m.temperature, -2.0f, 80.0f) + 273.15f;
+    return units::kCO2Saturation * std::exp(2400.0f * (1.0f / kelvin - 1.0f / 293.15f)) *
+           std::exp(-0.0047f * std::max(0.0f, m.salinity)) / std::exp(-0.0047f * 0.5f) * (m.co2Atmosphere / 4.2e-4f);
+}
+
 // Viscosidad del agua (Vogel): 1,0 mPa·s a 20 °C, 1,8 a 0 °C, 0,47 a 60 °C.
 static float waterViscosity(float celsius) {
     return 2.414e-2f * std::pow(10.0f, 247.8f / (celsius + 273.15f - 140.0f)); // [mPa·s]
@@ -76,14 +89,14 @@ World::World(const WorldConfig& config)
       height_(config.gridY * config.cellSize), fft_(config.gridX, config.gridY),
       fluid_(config.gridX, config.gridY, config.cellSize),
       oxygen_(config.gridX, config.gridY, config.cellSize, units::kDiffusionO2,
-              config.medium.anoxic ? 0.0f : o2SaturationAt(config.medium.temperature)),
-      nutrients_(config.gridX, config.gridY, config.cellSize, units::kDiffusionGlucose, 0.0f),
+              config.medium.anoxic ? 0.0f : o2SaturationAt(config.medium.temperature) * o2AirFraction(config.medium)),
+      nutrients_(config.gridX, config.gridY, config.cellSize, units::kDiffusionGlucose, config.medium.organic),
       phosphate_(config.gridX, config.gridY, config.cellSize, units::kDiffusionPhosphate, config.medium.phosphate),
       nitrogen_(config.gridX, config.gridY, config.cellSize, units::kDiffusionAmmonium, config.medium.nitrogen),
       silicate_(config.gridX, config.gridY, config.cellSize, units::kDiffusionSilicate, config.medium.silicate),
       iron_(config.gridX, config.gridY, config.cellSize, units::kDiffusionIron, config.medium.iron),
       vitamin_(config.gridX, config.gridY, config.cellSize, units::kDiffusionVitamin, config.medium.vitamin),
-      co2_(config.gridX, config.gridY, config.cellSize, units::kDiffusionCO2, units::kCO2Saturation),
+      co2_(config.gridX, config.gridY, config.cellSize, units::kDiffusionCO2, co2SaturationAt(config.medium)),
       toxin_(config.gridX, config.gridY, config.cellSize, units::kDiffusionSmallSolute, 0.0f),
       autoinducer_(config.gridX, config.gridY, config.cellSize, units::kDiffusionSmallSolute, 0.0f),
       phage_(config.gridX, config.gridY, config.cellSize, units::kDiffusionVirus, config.medium.phage),
@@ -96,7 +109,8 @@ World::World(const WorldConfig& config)
     // Temperatura: Q10 = 2 para las tasas biológicas; el agua más fría es más viscosa y frena a
     // los nadadores (a bajo Reynolds la velocidad es fuerza / viscosidad).
     temperatureFactor_ = std::pow(2.0f, (medium_.temperature - 20.0f) / 10.0f);
-    o2Saturation_ = medium_.anoxic ? 0.0f : o2SaturationAt(medium_.temperature);
+    o2Saturation_ = medium_.anoxic ? 0.0f : o2SaturationAt(medium_.temperature) * o2AirFraction(medium_);
+    co2Saturation_ = co2SaturationAt(medium_);
     viscositySpeed_ = waterViscosity(20.0f) / waterViscosity(medium_.temperature);
     bucketsX_ = std::max(1, static_cast<int>(width_ / bucketSize_));
     bucketsY_ = std::max(1, static_cast<int>(height_ / bucketSize_));
@@ -129,6 +143,7 @@ World::World(const WorldConfig& config)
         inflowPattern_.v[k] *= dishMask_.isWater(k) ? 1.0f : 0.0f; // sin aporte dentro del vidrio
     for (ChemField* f : {&oxygen_, &nutrients_, &phosphate_, &nitrogen_, &silicate_, &iron_, &vitamin_, &co2_, &toxin_, &autoinducer_, &phage_})
         f->setMask(&dishMask_);
+    fluid_.gapHeight = config.depth;
     bacteria_.resetMemory(nutrients_.grid());
     fluid_.solve(fft_);
     computeLight();
@@ -136,7 +151,8 @@ World::World(const WorldConfig& config)
 
 void World::refreshMedium() {
     temperatureFactor_ = std::pow(2.0f, (medium_.temperature - 20.0f) / 10.0f);
-    o2Saturation_ = medium_.anoxic ? 0.0f : o2SaturationAt(medium_.temperature);
+    o2Saturation_ = medium_.anoxic ? 0.0f : o2SaturationAt(medium_.temperature) * o2AirFraction(medium_);
+    co2Saturation_ = co2SaturationAt(medium_);
     viscositySpeed_ = waterViscosity(20.0f) / waterViscosity(medium_.temperature);
     cyano_.params.temperature = medium_.temperature;
     for (auto e : registry_.view<Heredity>())
@@ -1416,29 +1432,62 @@ void World::populateEcosystem(float scale) {
             const Vec2 p = randomPoint(rng, std::max(info.spec.radiusX, info.spec.radiusY) * 1.5f + 10.0f);
             if (std::abs(minImage(p.x - middle.x, width_)) < 250.0f && std::abs(minImage(p.y - middle.y, height_)) < 200.0f)
                 continue;
-            // Lugar libre: un círculo del tamaño de la nueva célula (más un margen) que no toque
-            // a ninguna otra (prueba contra el contorno real, no contra su caja).
-            const float clearance = std::max(info.spec.radiusX, info.spec.radiusY) + 6.0f;
-            bool free = true;
-            for (auto [e, b] : registry_.view<RingBody>().each()) {
-                const Vec2 q = b.centroid + Vec2{minImage(p.x - b.centroid.x, width_), minImage(p.y - b.centroid.y, height_)};
-                if (q.x < b.aabbMin.x - clearance || q.x > b.aabbMax.x + clearance || q.y < b.aabbMin.y - clearance ||
-                    q.y > b.aabbMax.y + clearance)
-                    continue;
-                const int pn = static_cast<int>(b.poly.size());
-                if (polygon::contains(b.poly.data(), pn, q) ||
-                    polygon::closestOnBoundary(b.poly.data(), pn, q).dist2 < clearance * clearance) {
-                    free = false;
-                    break;
-                }
-            }
-            if (!free)
+            if (!placeIsFree(p, std::max(info.spec.radiusX, info.spec.radiusY) + 6.0f))
                 continue;
             spawnWild(id, p, rng, true);
             ++placed;
         }
     }
     seedFungi();
+}
+
+bool World::placeIsFree(Vec2 p, float clearance) const {
+    // Un círculo del tamaño de la nueva célula (más un margen) que no toque a ninguna otra (prueba
+    // contra el contorno real, no contra su caja).
+    for (auto [e, b] : registry_.view<RingBody>().each()) {
+        const Vec2 q = b.centroid + Vec2{minImage(p.x - b.centroid.x, width_), minImage(p.y - b.centroid.y, height_)};
+        if (q.x < b.aabbMin.x - clearance || q.x > b.aabbMax.x + clearance || q.y < b.aabbMin.y - clearance ||
+            q.y > b.aabbMax.y + clearance)
+            continue;
+        const int pn = static_cast<int>(b.poly.size());
+        if (polygon::contains(b.poly.data(), pn, q) || polygon::closestOnBoundary(b.poly.data(), pn, q).dist2 < clearance * clearance)
+            return false;
+    }
+    return true;
+}
+
+int World::inoculate(Being being, int count, Vec2 center, float radius) {
+    PROFILE_SCOPE("World::inoculate");
+    // Como con la pipeta: `count` individuos repartidos al azar en toda la placa (radius <= 0) o
+    // en un círculo. Las células no caen encima de otra; las bacterias van de a una.
+    const bool bacterium = being.kind == BeingKind::Bacterium || being.kind == BeingKind::Bacillus ||
+                           being.kind == BeingKind::Violaceum;
+    float reach = 12.0f, clearance = 0.0f;
+    if (being.kind == BeingKind::Species && !speciesInfo(being.species).filament) {
+        const CellSpec& spec = speciesInfo(being.species).spec;
+        reach = std::max(spec.radiusX, spec.radiusY) * 1.5f + 10.0f;
+        clearance = std::max(spec.radiusX, spec.radiusY) + 6.0f;
+    }
+    int placed = 0;
+    for (int attempts = 0; placed < count && attempts < 50 * count + 50; ++attempts) {
+        Rng rng(config_.seed, rng_stream::kTools, toolCounter_++, step_);
+        Vec2 p;
+        if (radius <= 0.0f) {
+            p = randomPoint(rng, reach);
+        } else {
+            const float a = rng.uniform(0.0f, 2.0f * units::kPi), r = radius * std::sqrt(rng.uniform());
+            p = wrapped(dish_.clampInside({center.x + r * std::cos(a), center.y + r * std::sin(a)}, reach));
+        }
+        if (clearance > 0.0f && !placeIsFree(p, clearance))
+            continue;
+        if (bacterium)
+            bacteria_.add(p.x, p.y, rng.uniform(0.0f, 2.0f * units::kPi), rng.uniform(1.0f, 2.0f),
+                          being.kind == BeingKind::Violaceum ? 1 : (being.kind == BeingKind::Bacillus ? 2 : 0));
+        else
+            spawnBeing(being, p);
+        ++placed;
+    }
+    return placed;
 }
 
 entt::entity World::spawnWild(SpeciesId id, Vec2 p, Rng& rng, bool randomStage) {
@@ -3465,8 +3514,8 @@ Perception World::perceive(entt::entity e, const RingBody& body, SpeciesId speci
         }
     }
     p.food = std::log1p(std::max(0.0f, nutrients_.grid().sample(body.centroid.x, body.centroid.y)));
-    p.acid = std::log1p(std::max(0.0f, co2_.grid().sample(body.centroid.x, body.centroid.y) - units::kCO2Saturation) /
-                        units::kCO2Saturation);
+    p.acid = std::log1p(std::max(0.0f, co2_.grid().sample(body.centroid.x, body.centroid.y) - co2Saturation_) /
+                        co2Saturation_);
     // Choque del polo anterior contra otra célula o contra la pared de la placa.
     {
         const Vec2 head = bodyHeading(body);

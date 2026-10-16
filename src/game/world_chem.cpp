@@ -80,7 +80,7 @@ void World::updateWaterChemistry(float dt) {
         if (!dishMask_.isWater(k))
             continue; // vidrio de la placa (celdas fantasma)
         const float before = co2[k];
-        co2[k] = units::kCO2Saturation + (co2[k] - units::kCO2Saturation) * co2Keep;
+        co2[k] = co2Saturation_ + (co2[k] - co2Saturation_) * co2Keep;
         fromAir += co2[k] - before;
         tox[k] *= toxinKeep;
         phg[k] *= phageKeep;
@@ -95,11 +95,14 @@ void World::updateWaterChemistry(float dt) {
 }
 
 void World::computePH() {
-    // Sistema carbonato con alcalinidad fija: pH = pKa₁ + log₁₀([HCO₃⁻]/[CO₂]). La fotosíntesis
-    // consume CO₂ y sube el pH (hasta 9–10 en un bloom); la respiración lo baja.
+    // Sistema carbonato con alcalinidad fija: pH = pK′₁ + log₁₀([HCO₃⁻]/[CO₂]) (Henderson–
+    // Hasselbalch). La fotosíntesis consume CO₂ y sube el pH (hasta 9–10 en un bloom); la
+    // respiración lo baja; la incubadora lo fija con su CO₂. Simplificación: sin el carbonato
+    // (pK′₂ ~10), que frena la suba del pH por encima de ~9.
     const auto& co2 = co2_.grid().v;
+    const float pk = medium_.carbonatePK;
     for (std::size_t k = 0; k < co2.size(); ++k)
-        ph_.v[k] = std::clamp(6.35f + std::log10(medium_.alkalinity / std::max(0.05f, co2[k])), 4.0f, 11.0f);
+        ph_.v[k] = std::clamp(pk + std::log10(medium_.alkalinity / std::max(0.05f, co2[k])), 4.0f, 11.0f);
 }
 
 const char* World::applyEnvironmentStress(entt::entity e, const RingBody& body, const SpeciesInfo& info,

@@ -268,6 +268,15 @@ void App::pushMediumLive() {
     iv.v[4] = s.alkalinity;
     iv.v[5] = s.anoxic ? 1.0f : 0.0f;
     intervene(iv);
+    // El aire sobre el medio (CO₂ de la incubadora) va aparte: no entra en los 6 valores de arriba.
+    const MediumParams& now = world->medium();
+    if (now.co2Atmosphere != s.co2Atmosphere || now.carbonatePK != s.carbonatePK) {
+        Intervention air;
+        air.kind = InterventionKind::Atmosphere;
+        air.v[0] = s.co2Atmosphere;
+        air.v[1] = s.carbonatePK;
+        intervene(air);
+    }
 }
 
 void App::pushNutrientLive(int soluteIndex, float target) {
@@ -490,7 +499,8 @@ void App::drawStatusBar() {
             ImGui::SameLine();
             ImGui::TextDisabled("|");
             ImGui::SameLine();
-            ImGui::Text("%s  seed %llu", biome(static_cast<BiomeId>(worldBiome)).name.c_str(),
+            const PreparedPlate* prepared = runPlate.prepared.empty() ? nullptr : findPreparedPlate(runPlate.prepared);
+            ImGui::Text("%s  seed %llu", prepared ? prepared->name.c_str() : biome(static_cast<BiomeId>(worldBiome)).name.c_str(),
                         static_cast<unsigned long long>(worldSeed));
             ImGui::SameLine();
             ImGui::TextDisabled("|");

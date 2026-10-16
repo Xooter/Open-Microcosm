@@ -1,0 +1,50 @@
+# Recipientes de cultivo del paquete de fábrica (fase 20a). Un recipiente da el área de cultivo y
+# el volumen de medio: la profundidad (volumen / área) fija cuánto medio hay sobre cada célula
+# (la química se toma bien mezclada en la vertical) y qué tan rápido entra el O₂ y sale el CO₂
+# por la superficie (difusión a través de la capa quieta: D / profundidad²).
+#
+# [[recipiente]]: id, nombre, area_cm2 (de cultivo), volumen_ml (de trabajo recomendado), fuente.
+# Fuente de las áreas y los volúmenes: Corning, "Surface Areas and Recommended Medium Volumes for
+# Corning Cell Culture Vessels" (CLS-AN-209).
+
+[[recipiente]]
+id = "placa_35mm"
+nombre = "Placa de 35 mm"
+area_cm2 = 8.0
+volumen_ml = 2.0
+
+[[recipiente]]
+id = "placa_60mm"
+nombre = "Placa de 60 mm"
+area_cm2 = 21.0
+volumen_ml = 5.0
+
+[[recipiente]]
+id = "placa_100mm"
+nombre = "Placa de 100 mm"
+area_cm2 = 55.0
+volumen_ml = 10.0
+
+[[recipiente]]
+id = "pocillo_6"
+nombre = "Pocillo de placa de 6"
+area_cm2 = 9.5
+volumen_ml = 2.0
+
+[[recipiente]]
+id = "pocillo_24"
+nombre = "Pocillo de placa de 24"
+area_cm2 = 1.9
+volumen_ml = 0.5
+
+[[recipiente]]
+id = "pocillo_96"
+nombre = "Pocillo de placa de 96"
+area_cm2 = 0.32
+volumen_ml = 0.1
+
+[[recipiente]]
+id = "frasco_t25"
+nombre = "Frasco T-25"
+area_cm2 = 25.0
+volumen_ml = 5.0

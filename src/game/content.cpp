@@ -6,6 +6,7 @@
 #include "core/paths.hpp"
 #include "core/toml_reader.hpp"
 #include "game/plate_spec.hpp"
+#include "game/prepared.hpp"
 #include "game/progress.hpp"
 
 #include <algorithm>
@@ -130,9 +131,10 @@ void loadDefinitions(const std::string& text, const std::string& source, const s
     // Los avisos nuevos de cada registro (claves desconocidas, referencias sin resolver…) también
     // van a `messages`, así quien importa ve qué pasó con su paquete.
     const std::vector<std::string>* lists[] = {&bodyPlanWarnings(), &mineralLoadWarnings(), &speciesLoadWarnings(),
-                                               &physiologyWarnings(), &biomeLoadWarnings()};
-    std::size_t before[5];
-    for (int i = 0; i < 5; ++i)
+                                               &physiologyWarnings(), &biomeLoadWarnings(), &preparedLoadWarnings()};
+    constexpr int kLists = 6;
+    std::size_t before[kLists];
+    for (int i = 0; i < kLists; ++i)
         before[i] = lists[i]->size();
     std::string error;
     if (!loadBodyPlansText(text, source, pack, &error))
@@ -145,7 +147,9 @@ void loadDefinitions(const std::string& text, const std::string& source, const s
         messages.push_back(error);
     if (!loadBiomesText(text, source, pack, &error))
         messages.push_back(error);
-    for (int i = 0; i < 5; ++i)
+    if (!loadPreparedText(text, source, pack, &error)) // medios, recipientes y placas preparadas
+        messages.push_back(error);
+    for (int i = 0; i < kLists; ++i)
         messages.insert(messages.end(), lists[i]->begin() + static_cast<std::ptrdiff_t>(std::min(before[i], lists[i]->size())),
                         lists[i]->end());
 }
@@ -233,8 +237,10 @@ void ensureBase() {
     p.list.push_front(std::move(base));
 }
 
-constexpr const char* kDirFiles[] = {"planes.toml", "minerales.toml", "seres.toml", "fisiologia.toml", "biomas.toml"};
-constexpr const char* kBiopackKeys[] = {"paquete", "ser", "plan", "mineral", "bioma", "fisiologia", "escena"};
+constexpr const char* kDirFiles[] = {"planes.toml", "minerales.toml", "seres.toml",   "fisiologia.toml",
+                                     "biomas.toml", "medios.toml",    "recipientes.toml", "placas.toml"};
+constexpr const char* kBiopackKeys[] = {"paquete", "ser",   "plan",       "mineral", "bioma",
+                                        "fisiologia", "medio", "recipiente", "placa",   "escena"};
 
 } // namespace
 
@@ -404,6 +410,20 @@ std::string biopackText(const BiopackSpec& spec, std::vector<std::string>& messa
         out << mineralInfo(m).source << "\n\n";
     for (const BiomeId b : spec.biomes)
         out << biome(b).source << "\n\n";
+    // Una placa preparada viaja con su medio y su recipiente si no son de fábrica.
+    std::set<std::string> media, vessels;
+    for (const std::string& key : spec.prepared) {
+        const PreparedPlate* p = findPreparedPlate(key);
+        if (!p)
+            continue;
+        const CultureMedium* m = findCultureMedium(p->medium);
+        if (m && m->pack != "base" && media.insert(m->key).second)
+            out << m->source << "\n\n";
+        const Vessel* v = findVessel(p->vessel);
+        if (v && v->pack != "base" && vessels.insert(v->key).second)
+            out << v->source << "\n\n";
+        out << p->source << "\n\n";
+    }
     for (const auto& [name, text] : spec.scenes) {
         toml::table scene;
         scene.insert("id", sanitizeFileName(name));
@@ -432,7 +452,7 @@ std::string biopackText(const BiopackSpec& spec, std::vector<std::string>& messa
 std::vector<std::string> contentWarnings() {
     std::vector<std::string> all;
     for (const auto* list : {&speciesLoadWarnings(), &bodyPlanWarnings(), &physiologyWarnings(), &mineralLoadWarnings(),
-                             &biomeLoadWarnings()})
+                             &biomeLoadWarnings(), &preparedLoadWarnings()})
         all.insert(all.end(), list->begin(), list->end());
     ensureBase();
     std::lock_guard<std::recursive_mutex> lock(packs().mutex);

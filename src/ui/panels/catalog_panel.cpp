@@ -8,6 +8,8 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
 
 namespace ui {
@@ -18,14 +20,17 @@ namespace {
 constexpr int kAllTab = kCategoryCount;
 
 const std::vector<int>& categoryItems(int category) {
-    static const std::vector<std::vector<int>> table = [] {
-        std::vector<std::vector<int>> t(kCategoryCount + 1);
-        for (int i = 0; i < beingCount(); ++i) {
-            t[static_cast<std::size_t>(categoryOf(beingAt(i)))].push_back(i);
-            t[kAllTab].push_back(i);
+    // Se rehace si un paquete importado sumó seres.
+    static std::vector<std::vector<int>> table;
+    static int built = -1;
+    if (built != beingCount()) {
+        built = beingCount();
+        table.assign(kCategoryCount + 1, {});
+        for (int i = 0; i < built; ++i) {
+            table[static_cast<std::size_t>(categoryOf(beingAt(i)))].push_back(i);
+            table[kAllTab].push_back(i);
         }
-        return t;
-    }();
+    }
     return table[static_cast<std::size_t>(category)];
 }
 
@@ -40,6 +45,50 @@ void scrollTabBarWithWheel() {
 }
 
 class CatalogPanel : public Panel {
+    // Inocular el ser armado: muchos individuos de una vez, repartidos al azar (una intervención
+    // reproducible, como las demás).
+    static void drawInoculate(App& app, CatalogState& st) {
+        const Being b = beingAt(st.armed);
+        const bool cells = b.kind == BeingKind::Species || b.kind == BeingKind::Bacterium ||
+                           b.kind == BeingKind::Bacillus || b.kind == BeingKind::Violaceum;
+        if (!cells || !app.world || !ImGui::TreeNode("##inocular", "%s", tr("Inocular...")))
+            return;
+        checkbox("Por densidad", &st.byDensity, "Individuos por cm² del área donde se inocula (como se siembra un cultivo).");
+        checkbox("Alrededor del centro de la vista", &st.spot, "Si no, en toda la placa.");
+        if (st.spot)
+            slider("Radio [µm]", &st.spotRadius, 20.0f, 2000.0f, "%.0f");
+        const World& w = *app.world;
+        float areaCm2 = w.width() * w.height() * 1e-8f;
+        if (st.spot)
+            areaCm2 = 3.14159265f * st.spotRadius * st.spotRadius * 1e-8f;
+        else if (w.dish().active())
+            areaCm2 = 3.14159265f * w.dish().radius * w.dish().radius * 1e-8f;
+        int count = st.inoculateCount;
+        if (st.byDensity) {
+            sliderLog("Densidad [1/cm²]", &st.density, 10.0f, 1e7f, "%.0f");
+            count = static_cast<int>(std::round(st.density * areaCm2));
+            readout("Cantidad", "%d", count);
+        } else {
+            sliderInt("Cantidad", &st.inoculateCount, 1, 2000);
+            readout("Densidad", "%.0f /cm²", static_cast<double>(static_cast<float>(count) / areaCm2));
+        }
+        // Tope: una inoculación no puede colgar la placa (cada célula es un cuerpo blando).
+        count = std::min(count, b.kind == BeingKind::Species ? 2000 : 200000);
+        if (ImGui::Button(tr("Inocular")) && count > 0) {
+            Intervention iv;
+            iv.kind = InterventionKind::Inoculate;
+            iv.index = static_cast<int>(b.kind);
+            iv.v[0] = static_cast<float>(static_cast<int>(b.species));
+            iv.v[1] = static_cast<float>(count);
+            iv.v[2] = st.spot ? st.spotRadius : 0.0f;
+            const Vector2 c = GetScreenToWorld2D({app.viewport.x + 0.5f * app.viewport.width, app.viewport.y + 0.5f * app.viewport.height},
+                                                 app.camera);
+            iv.pos = {c.x, c.y};
+            app.intervene(iv);
+        }
+        ImGui::TreePop();
+    }
+
   public:
     const char* key() const override { return "catalogo"; }
     const char* title() const override { return "Catálogo"; }
@@ -49,9 +98,10 @@ class CatalogPanel : public Panel {
         CatalogState& st = app.catalog;
         checkbox("Transformar al ser controlado", &st.reshape,
                  "En vez de spawnear, el ícono transforma al ser controlado en esa especie (solo especies).");
-        if (st.armed >= 0)
+        if (st.armed >= 0) {
             ImGui::TextColored({0.45f, 0.80f, 0.50f, 1.0f}, "%s: %s", tr("Armado"), tr(beingName(beingAt(st.armed))));
-        else
+            drawInoculate(app, st);
+        } else
             note("Elegí un ser y hacé click en la placa para ponerlo. Esc cancela.");
         if (!ImGui::BeginTabBar("##cats", ImGuiTabBarFlags_FittingPolicyScroll))
             return;

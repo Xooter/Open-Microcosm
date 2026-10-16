@@ -14,6 +14,30 @@
 
 namespace {
 constexpr Color kBackground = {236, 231, 214, 255}; // luz de lámpara halógena filtrada
+
+// El medio de cultivo filtra la luz que lo atraviesa: el rojo fenol (indicador de pH) es amarillo
+// en medio ácido (forma ácida, máximo a 430 nm), rojo anaranjado a pH 7,4 y fucsia en medio
+// alcalino (forma básica, máximo a 558 nm). Beer–Lambert con la profundidad del medio; pKa 7,9 y
+// absortividades molares ~2,2·10⁴ (ácida) y ~5,8·10⁴ M⁻¹cm⁻¹ (básica), repartidas en los tres
+// canales según la forma de cada banda (estimación). La exposición se ajusta al canal más
+// brillante, como hace la cámara: queda el tono, no la oscuridad.
+Color mediumTint(const World& world, Vector2 at) {
+    const MediumParams& m = world.medium();
+    if (m.phenolRed <= 0.0f)
+        return WHITE;
+    const float ph = world.ph().sample(at.x, at.y);
+    const float basic = 1.0f / (1.0f + std::pow(10.0f, 7.9f - ph));
+    const float molar = m.phenolRed * 1e-3f / 354.4f; // mg/L → mol/L
+    const float pathCm = world.config().depth * 1e-4f;
+    constexpr float kAcid[3] = {0.0f, 0.12f * 2.2e4f, 0.9f * 2.2e4f};
+    constexpr float kBasic[3] = {0.25f * 5.8e4f, 1.0f * 5.8e4f, 0.2f * 5.8e4f};
+    float t[3];
+    for (int c = 0; c < 3; ++c)
+        t[c] = std::pow(10.0f, -molar * pathCm * ((1.0f - basic) * kAcid[c] + basic * kBasic[c]));
+    const float top = std::max({t[0], t[1], t[2], 1e-3f});
+    auto byte = [&](float v) { return static_cast<unsigned char>(std::clamp(v / top, 0.0f, 1.0f) * 255.0f + 0.5f); };
+    return {byte(t[0]), byte(t[1]), byte(t[2]), 255};
+}
 constexpr Color kInk = {25, 30, 45, 170};
 constexpr Color kDetritus = {120, 92, 55, 190};
 constexpr Color kHypha = {150, 146, 128, 120};        // hifa hialina, casi transparente
@@ -621,16 +645,20 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
     if (out_)
         BeginTextureMode(*out_);
     // La vista de modelo es un esquema, no una imagen de microscopio: sin la óptica simulada.
+    // La vista de modelo es un esquema: sin el color del medio.
+    const Color tint = lod_.view == ViewMode::Microscope
+                           ? mediumTint(world, GetScreenToWorld2D({0.5f * static_cast<float>(width()), 0.5f * static_cast<float>(height())}, camera))
+                           : WHITE;
     if (postOk_ && postEnabled_ && lod_.view == ViewMode::Microscope) {
         const float res[2] = {sw, sh};
         const float t = static_cast<float>(GetTime());
         SetShaderValue(post_, resolutionLoc_, res, SHADER_UNIFORM_VEC2);
         SetShaderValue(post_, timeLoc_, &t, SHADER_UNIFORM_FLOAT);
         BeginShaderMode(post_);
-        DrawTexturePro(scene_.texture, src, dst, {0, 0}, 0.0f, WHITE);
+        DrawTexturePro(scene_.texture, src, dst, {0, 0}, 0.0f, tint);
         EndShaderMode();
     } else {
-        DrawTexturePro(scene_.texture, src, dst, {0, 0}, 0.0f, WHITE);
+        DrawTexturePro(scene_.texture, src, dst, {0, 0}, 0.0f, tint);
     }
     if (out_)
         EndTextureMode();

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "game/biome.hpp"
+#include "game/prepared.hpp"
 #include "game/world.hpp"
 
 #include <cstdint>
@@ -12,14 +13,17 @@
 // que recibe `World`; cambiar bioma, seed o contenido lo regenera desde el bioma (los ajustes
 // a mano se pierden, como al elegir otro preset).
 struct PlateSpec {
+    // Placa preparada (placas.toml: un cultivo celular, por ejemplo); vacío: una gota del bioma.
+    std::string prepared;
     int biome = 0;
     std::uint64_t seed = 1;
     DropContent content = DropContent::EmptyPetri;
     WorldConfig config;
 
     PlateSpec() { rebuild(); }
-    // config = bioma + seed + contenido.
+    // config = bioma + seed + contenido (o la placa preparada + seed).
     void rebuild();
+    PlateKind kind() const;
     // Población silvestre inicial que `Run::start` agrega (0 en una placa vacía).
     float wildlife() const;
 };

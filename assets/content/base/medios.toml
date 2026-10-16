@@ -1,0 +1,34 @@
+# Medios de cultivo del paquete de fábrica (fase 20a: placas preparadas). Cada [[medio]] es una
+# composición publicada; sus claves son las mismas que las del medio de un bioma ([bioma.medio],
+# ver biomas.toml), todas en µM salvo que se diga otra cosa, más:
+#   glucosa [µM]: carbono orgánico disuelto (el campo de materia orgánica de la simulación, que las
+#     bacterias y las levaduras toman)
+#   glutamina [µM], suero (fracción de suero fetal bovino, 0–1), rojo_fenol [mg/L]: los usan las
+#     células humanas (fase 20b) y el render (el rojo fenol tiñe el medio según el pH)
+#   pka_carbonato: pK′ aparente de CO₂/HCO₃⁻ en el medio (temperatura y fuerza iónica)
+# La temperatura, el CO₂ y la luz no son del medio sino del ambiente (la incubadora, placas.toml).
+
+[[medio]]
+id = "dmem_alta_glucosa"
+nombre = "DMEM alta glucosa + 10 % SFB"
+descripcion = "Medio de Eagle modificado por Dulbecco con 4,5 g/L de glucosa, L-glutamina y rojo fenol, con 10 % de suero fetal bovino: el medio más usado para fibroblastos, HeLa y muchas otras líneas."
+fuente = "Dulbecco, R. & Freeman, G. (1959). Virology 8:396-397; composición de la formulación comercial (Gibco 11965: DMEM, high glucose, L-glutamine, phenol red). El 3,7 g/L de NaHCO3 está pensado para 10 % de CO2 (pH 7,4)."
+[medio.composicion]
+glucosa = 25000.0        # 4,5 g/L
+glutamina = 4000.0       # 584 mg/L
+alcalinidad = 44000.0    # NaHCO3 3,7 g/L
+pka_carbonato = 6.1      # 37 °C, fuerza iónica ~0,16 M (el mismo valor que en el plasma)
+fosfato = 906.0          # NaH2PO4·H2O 125 mg/L
+hierro = 0.248           # Fe(NO3)3·9H2O 0,1 mg/L (el suero agrega transferrina, no contada)
+# Nitrógeno disponible para bacterias y levaduras: el de los aminoácidos (la glutamina, 8 mM de
+# N, y el resto, ~9 mM). Simplificación: la simulación tiene un solo campo de nitrógeno.
+nitrogeno = 17350.0
+silice = 0.0
+vitamina_b12 = 3e-5      # el DMEM no tiene B12: la trae el suero (estimación, ~0,3 nM al 10 %)
+salinidad = 10.9         # sales disueltas [g/kg]: NaCl 6,4 + NaHCO3 3,7 + KCl, CaCl2, MgSO4, fosfato
+suero = 0.10
+rojo_fenol = 15.0        # mg/L
+fagos = 0.0
+aporte_organico = 0.0
+detritos_entrantes = 0.0
+polvo = 0.0

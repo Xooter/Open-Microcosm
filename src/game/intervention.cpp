@@ -65,6 +65,18 @@ bool applyIntervention(World& world, const Intervention& iv) {
         world.refreshMedium();
         return true;
     }
+    case InterventionKind::Inoculate: {
+        const int species = static_cast<int>(iv.v[0]);
+        if (iv.index < 0 || iv.index >= static_cast<int>(BeingKind::Count) || species < 0 || species >= speciesCount())
+            return false;
+        return world.inoculate({static_cast<BeingKind>(iv.index), static_cast<SpeciesId>(species)},
+                               static_cast<int>(iv.v[1]), iv.pos, iv.v[2]) > 0;
+    }
+    case InterventionKind::Atmosphere:
+        world.medium().co2Atmosphere = iv.v[0];
+        world.medium().carbonatePK = iv.v[1];
+        world.refreshMedium();
+        return true;
     case InterventionKind::Concentration:
         world.setMeanConcentration(soluteField(world, iv.index), iv.v[0]); // entra al balance como externo
         return true;
@@ -206,7 +218,8 @@ void putFloat(std::string& out, float v) {
 
 // Ser al que se refiere una intervención (Spawn de un ser, PlayerSpecies), o -1.
 int speciesOf(const Intervention& iv) {
-    if (iv.kind == InterventionKind::Spawn && iv.index == static_cast<int>(BeingKind::Species))
+    if ((iv.kind == InterventionKind::Spawn || iv.kind == InterventionKind::Inoculate) &&
+        iv.index == static_cast<int>(BeingKind::Species))
         return static_cast<int>(iv.v[0]);
     if (iv.kind == InterventionKind::PlayerSpecies)
         return iv.index;
@@ -280,7 +293,7 @@ std::vector<Intervention> parseInterventions(const std::string& text, std::vecto
                     missing->push_back("ser '" + iv.key + "'");
                 continue;
             }
-            if (iv.kind == InterventionKind::Spawn)
+            if (iv.kind == InterventionKind::Spawn || iv.kind == InterventionKind::Inoculate)
                 iv.v[0] = static_cast<float>(*sp);
             else
                 iv.index = static_cast<int>(*sp);

@@ -97,7 +97,9 @@ sistemas paralelos (los seres actuales se migran, no conviven con un sistema nue
    leen las claves viejas. Verificado: las placas de los 6 biomas × 5 seeds salen idénticas y los
    checksums estrictos de las tres escenas, con CPU y GPU, no cambian (bioma 1 seed 7 fauna 2,3:
    56a8a4b097813cc0 / b6e3ea17b6b61a8c; bioma 0 seed 3 fauna 1,5: f61d88a58b1b0d67 /
-   e599a11607eff58e; bioma 2 seed 11 fauna 1: ba6edfcfdabc3afe / 1891c4109b5501f1). Quedan en
+   e599a11607eff58e; bioma 2 seed 11 fauna 1: ba6edfcfdabc3afe / 1891c4109b5501f1). Desde 20a la
+   solubilidad del CO₂ depende de la temperatura (cambio físico, no optimización): el bioma 2
+   (musgo, 12 °C) pasa a 3b4e92277afb47e6 / 1f0ac66569028f83; los otros dos no cambian en 200 pasos. Quedan en
    código, por ahora: las mezclas de barro y de polvo (proporciones de los minerales de fábrica).
 6. ✅ **Compatibilidad:** las escenas y `.plate` guardan ids de texto; los archivos viejos (ids
    numéricos) se leen con una tabla de traducción. La exportación (`runJson`) anota los paquetes
@@ -130,25 +132,50 @@ sistemas paralelos (los seres actuales se migran, no conviven con un sistema nue
 
 ## 20a — Placas preparadas
 
-1. **Tipo de placa** (`PlateKind`: gota, cultivo celular; preparado vegetal en una fase
+1. ✅ **Tipo de placa** (`PlateKind`: gota, cultivo celular; preparado vegetal en una fase
    siguiente) en `PlateSpec` y `.plate`. Las placas preparadas son datos (20.0): tipo, medio,
    recipiente, campo, siembra inicial.
-2. **Medios de cultivo como datos** con su composición y fuente: DMEM alta glucosa (25 mM de
+   *Hecho:* `game/prepared` (registro de medios, recipientes y placas preparadas, como los demás);
+   `assets/content/base/placas.toml` («Cultivo celular (DMEM, incubadora)»); `PlateSpec::prepared`
+   y `prepared=`, `depth=` y `seeding=` en el `.plate`; los `.biopack` llevan `[[medio]]`,
+   `[[recipiente]]` y `[[placa]]`.
+2. ✅ **Medios de cultivo como datos** con su composición y fuente: DMEM alta glucosa (25 mM de
    glucosa, 4 mM de glutamina, 44 mM de bicarbonato, rojo fenol), con 10 % de suero fetal bovino
-   como fuente de factores de crecimiento. Incubadora: 37 °C, 5 % de CO₂, 95 % de humedad.
-3. **Química nueva:** CO₂ atmosférico variable (`MediumParams::co2Atmosphere`; la incubadora fija
+   como fuente de factores de crecimiento. Incubadora: 37 °C, ~~5 %~~ **10 %** de CO₂, 95 % de humedad.
+   *Hecho:* `medios.toml` (DMEM con su composición y fuente, el mismo lector que el medio de los
+   biomas). Corrección: el DMEM de 3,7 g/L de bicarbonato está formulado para 10 % de CO₂ (pH 7,4);
+   con 5 % queda en ~7,7 (Henderson–Hasselbalch con pK′ 6,1), así que la incubadora de la placa
+   preparada usa 10 %. El CO₂ se puede cambiar en vivo.
+3. 🟡 **Química nueva:** CO₂ atmosférico variable (`MediumParams::co2Atmosphere`; la incubadora fija
    el pH 7,4 con el bicarbonato), glucosa (el campo de materia orgánica actual, en mM), glutamina,
    lactato y factores de crecimiento del suero como campos con difusión. El rojo fenol tiñe el
    medio según el pH (render).
-4. **Recipiente y campo:** el recipiente da el volumen y la profundidad del medio (`gapHeight` y
+   *Hecho:* CO₂ del aire variable (intervención `Atmosphere`), solubilidad del CO₂ con la
+   temperatura (van 't Hoff) y la sal (Weiss), pK′ del carbonato como dato del medio
+   (`carbonatePK`), O₂ desplazado por el CO₂ de la incubadora, glucosa inicial en el campo de
+   materia orgánica (`MediumParams::organic`), rojo fenol en el render (Beer–Lambert con la
+   profundidad del medio). La glutamina y el suero son datos del medio; sus campos con difusión, y
+   el del lactato, se suman en 20b, cuando haya células que los consuman o produzcan.
+4. ✅ **Recipiente y campo:** el recipiente da el volumen y la profundidad del medio (`gapHeight` y
    química bien mezclada en la vertical, como en la validación de Tilman); el campo da la grilla.
-5. **Inoculación** (intervención `Inoculate`, reproducible): un ser del catálogo con cantidad o
+   *Hecho:* `recipientes.toml` (áreas y volúmenes de Corning); `WorldConfig::depth` (la gota sigue
+   en 200 µm); el intercambio de gases por la superficie sale de la difusión por la capa quieta
+   (D/profundidad²: ~50 min en 2,5 mm); el campo es periódico (sin vidrio: un recorte del fondo).
+5. ✅ **Inoculación** (intervención `Inoculate`, reproducible): un ser del catálogo con cantidad o
    densidad (células/cm²) en toda la placa, un punto o una región dibujada. **Mezclas:** cualquier
    ser en cualquier placa (contaminación de un cultivo con bacterias o levaduras, por ejemplo).
-6. **Panel Placa:** selector de tipo y secciones según el tipo; el Catálogo ofrece «Inocular…».
-7. **Tests básicos:** `.plate` va y vuelve con tipo, medio, recipiente y campo; la inoculación a
+   *Hecho:* `World::inoculate` (sin encimar células; las bacterias de a una) y la intervención
+   `Inoculate`, en toda la placa o en un círculo alrededor del centro de la vista. La región
+   dibujada queda pendiente (la intervención no lleva el polígono).
+6. ✅ **Panel Placa:** selector de tipo y secciones según el tipo; el Catálogo ofrece «Inocular…».
+7. ✅ **Tests básicos:** `.plate` va y vuelve con tipo, medio, recipiente y campo; la inoculación a
    una densidad siembra la cantidad esperada y se repite bit a bit; el DMEM en la incubadora queda
    en pH 7,4 ± 0,1 y al aire libre se alcaliniza (pérdida de CO₂, como en la realidad).
+   *Hecho:* DMEM 7,41 con 10 % de CO₂ y 7,71 con 5 %; al aire sube a 8,7; solubilidad del CO₂ con
+   la temperatura y la sal (Sander, Weiss); placa preparada de ida y vuelta; inoculación en toda la
+   placa o en un punto, con la misma seed igual; y el criterio de la fase (abajo). Los 60 tests
+   (rápidos, largos y validación) pasan con la química nueva. Probado en la interfaz: tipo de placa,
+   cultivo creado, 50 levaduras inoculadas, medio teñido por el rojo fenol.
 
 ## 20b — Cultivo celular humano
 
@@ -209,7 +236,7 @@ Mecanismos nuevos (código), parametrizados por datos:
    panel *Contenido* (exportar e importar). Hecho cuando un ser nuevo definido solo en un
    `.biopack` (por ejemplo, otra especie de *Paramecium*) aparece en el catálogo, se siembra, vive
    y se exporta e importa en otra instalación sin compilar.
-2. **20a** tipo de placa → medios y química nueva → recipiente y campo → inoculación y mezclas →
+2. ✅ **20a** tipo de placa → medios y química nueva → recipiente y campo → inoculación y mezclas →
    panel. Hecho cuando un cultivo de DMEM en incubadora se crea, se le inocula una levadura del
    catálogo y la escena se repite bit a bit.
 3. **20b** fibroblasto (arrastre, ciclo, inhibición por contacto, metabolismo, apoptosis) → HeLa

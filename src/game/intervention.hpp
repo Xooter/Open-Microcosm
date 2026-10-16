@@ -36,6 +36,9 @@ enum class InterventionKind : std::uint8_t {
     Fix,           // fijar la muestra
     Focus,         // estado: pos = centro de la vista, v[0..1] = medio ancho y alto [µm] (LOD)
     Engine,        // marca: index = 0 CPU, 1 GPU (la aplica quien reproduce, si puede)
+    Atmosphere,    // v[0] = fracción de CO₂ del aire (incubadora), v[1] = pK′ del carbonato del medio
+    Inoculate,     // index = BeingKind, v[0] = SpeciesId, key = su id, v[1] = cantidad, v[2] = radio
+                   // [µm] alrededor de pos (0: toda la placa)
     Count
 };
 

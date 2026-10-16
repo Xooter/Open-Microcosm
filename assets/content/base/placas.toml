@@ -1,0 +1,25 @@
+# Placas preparadas del paquete de fábrica (fase 20a). Además de la gota de agua (que sale de un
+# bioma), tipos de placa como en un laboratorio: un cultivo celular es un recipiente con medio de
+# cultivo, en una incubadora, del que se simula un campo (un recorte del fondo, lejos de las
+# paredes: los bordes del campo son periódicos, como si la monocapa siguiera).
+#
+# [[placa]]
+#   id, nombre, descripcion
+#   tipo: cultivo (el preparado vegetal llega en una fase siguiente)
+#   medio: id de medios.toml; recipiente: id de recipientes.toml
+#   campo_um: lado del campo simulado [µm] (se lleva a la potencia de 2 de celdas de 8 µm)
+#   [placa.ambiente]: temperatura [°C], co2 (fracción del aire), luz (0 en la incubadora)
+#   [[placa.siembra]]: ser (id) y densidad_cm2 [células/cm²] al crear la placa
+
+[[placa]]
+id = "cultivo_dmem"
+nombre = "Cultivo celular (DMEM, incubadora)"
+descripcion = "Placa de 35 mm con 2 mL de DMEM alta glucosa y 10 % de suero, en una incubadora a 37 °C y 10 % de CO2 (pH 7,4). Estéril: se le inocula lo que se quiera desde el Catálogo."
+tipo = "cultivo"
+medio = "dmem_alta_glucosa"
+recipiente = "placa_35mm"
+campo_um = 2048.0
+[placa.ambiente]
+temperatura = 37.0
+co2 = 0.10
+luz = 0.0

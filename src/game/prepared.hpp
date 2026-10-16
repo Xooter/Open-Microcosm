@@ -1,0 +1,60 @@
+#pragma once
+
+#include "game/world.hpp"
+
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+// Placas preparadas (fase 20a): además de la gota de un bioma, placas como en un laboratorio. Son
+// datos de los paquetes (medios.toml, recipientes.toml, placas.toml), con el mismo esquema de
+// registro que los seres y los biomas.
+
+// Medio de cultivo: una composición publicada (las mismas claves que el medio de un bioma).
+struct CultureMedium {
+    std::string key, name, description, reference, pack, source;
+    MediumParams composition; // lo que el medio no dice queda como en MediumParams{}
+};
+
+// Recipiente: área de cultivo y volumen de medio de trabajo.
+struct Vessel {
+    std::string key, name, pack, source;
+    float areaCm2 = 8.0f, volumeMl = 2.0f;
+    // Profundidad del medio [µm] = volumen / área.
+    float depthUm() const { return volumeMl / areaCm2 * 1e4f; }
+};
+
+enum class PlateKind : std::uint8_t { Drop, CellCulture };
+
+struct PreparedPlate {
+    std::string key, name, description, pack, source;
+    PlateKind kind = PlateKind::CellCulture;
+    std::string medium, vessel; // ids
+    float fieldUm = 2048.0f;    // lado del campo simulado
+    float temperature = 37.0f, co2 = 0.05f, light = 0.0f; // ambiente (incubadora)
+    std::vector<std::pair<std::string, float>> seeding;   // id del ser, células/cm²
+};
+
+int cultureMediumCount();
+const CultureMedium* findCultureMedium(std::string_view key);
+const CultureMedium& cultureMedium(int index);
+int vesselCount();
+const Vessel* findVessel(std::string_view key);
+const Vessel& vessel(int index);
+int preparedPlateCount();
+const PreparedPlate* findPreparedPlate(std::string_view key);
+const PreparedPlate& preparedPlate(int index);
+
+// Carga [[medio]], [[recipiente]] y [[placa]] de un texto TOML de un paquete. Los que tienen
+// errores se saltean y quedan en `preparedLoadWarnings`.
+bool loadPreparedText(const std::string& text, const std::string& source, const std::string& pack,
+                      std::string* error = nullptr);
+const std::vector<std::string>& preparedLoadWarnings();
+
+// La placa que sale de una placa preparada: el medio con el ambiente de la incubadora, el campo
+// periódico (un recorte del fondo de un recipiente grande), la profundidad del medio del recipiente
+// y sin nada vivo ni sedimento (estéril). La siembra va en `WorldConfig::seeding`.
+WorldConfig makePrepared(const PreparedPlate& plate, std::uint64_t seed);

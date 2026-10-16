@@ -35,6 +35,12 @@ constexpr FloatField kMediumFloats[] = {
     {"vitamin_decay_per_hour", &MediumParams::vitaminDecayPerHour},
     {"frustule_dissolution_per_hour", &MediumParams::frustuleDissolutionPerHour},
     {"alkalinity", &MediumParams::alkalinity},
+    {"carbonate_pk", &MediumParams::carbonatePK},
+    {"co2_atmosphere", &MediumParams::co2Atmosphere},
+    {"organic", &MediumParams::organic},
+    {"glutamine", &MediumParams::glutamine},
+    {"serum", &MediumParams::serum},
+    {"phenol_red", &MediumParams::phenolRed},
     {"phage", &MediumParams::phage},
     {"phage_decay_per_hour", &MediumParams::phageDecayPerHour},
     {"toxin_decay_per_hour", &MediumParams::toxinDecayPerHour},
@@ -104,11 +110,25 @@ std::optional<SpeciesId> weightSpecies(const std::string& key) {
 
 void PlateSpec::rebuild() {
     biome = std::clamp(biome, 0, biomeCount() - 1);
+    if (!prepared.empty()) {
+        if (const PreparedPlate* pp = findPreparedPlate(prepared)) {
+            config = makePrepared(*pp, seed);
+            return;
+        }
+        prepared.clear(); // no está cargada (se avisa al leer la placa): queda la gota
+    }
     config = makeDrop(static_cast<BiomeId>(biome), seed);
     applyDropContent(config, content);
 }
 
-float PlateSpec::wildlife() const { return content == DropContent::Full ? dropAreaScale(config) : 0.0f; }
+float PlateSpec::wildlife() const {
+    return prepared.empty() && content == DropContent::Full ? dropAreaScale(config) : 0.0f;
+}
+
+PlateKind PlateSpec::kind() const {
+    const PreparedPlate* pp = prepared.empty() ? nullptr : findPreparedPlate(prepared);
+    return pp ? pp->kind : PlateKind::Drop;
+}
 
 std::string serializePlate(const PlateSpec& s) {
     std::ostringstream out;
@@ -117,12 +137,18 @@ std::string serializePlate(const PlateSpec& s) {
     out.precision(std::numeric_limits<float>::max_digits10);
     // Versión 2: bioma, minerales y seres por id de texto (fase 20.0), y los paquetes cargados.
     out << "plate_version=2\n"
-        << "biome=" << biome(static_cast<BiomeId>(s.biome)).key << '\n'
+        << "biome=" << biome(static_cast<BiomeId>(s.biome)).key << '\n';
+    if (!s.prepared.empty())
+        out << "prepared=" << s.prepared << '\n';
+    out
         << "seed=" << s.seed << '\n'
         << "content=" << static_cast<int>(s.content) << '\n';
     const WorldConfig& c = s.config;
     for (const PackInfo& pack : loadedPacks())
         out << "pack=" << pack.id << ' ' << pack.version << ' ' << fingerprintHex(pack.fingerprint) << '\n';
+    out << "depth=" << c.depth << '\n' << "cell_culture=" << c.cellCulture << '\n';
+    for (const auto& [sp, count] : c.seeding)
+        out << "seeding=" << speciesInfo(sp).key << ' ' << count << '\n';
     out << "dish=" << c.dish << '\n' << "dish_margin=" << c.dishMargin << '\n' << "cell_size=" << c.cellSize << '\n';
     out << "bacteria=" << c.bacteria << '\n' << "detritus=" << c.detritus << '\n';
     out << "cyano_t_min=" << c.cyanoTMin << '\n' << "cyano_t_max=" << c.cyanoTMax << '\n';
@@ -190,10 +216,17 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
                 p.seed = 1;
             }
         }
+        else if (k == "prepared") {
+            if (findPreparedPlate(v))
+                p.prepared = v;
+            else
+                lack("placa preparada '" + v + "'");
+        }
         else if (k == "content") p.content = static_cast<DropContent>(std::clamp(static_cast<int>(num(v, 2)), 0, 2));
     }
     p.rebuild();
     WorldConfig& c = p.config;
+    bool seedingRead = false;
     for (const auto& [k, v] : kv) {
         const double x = num(v, 0);
         if (k == "dish") c.dish = x != 0;
@@ -207,6 +240,20 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
         else if (k == "bdellovibrio_fraction") c.bdellovibrioFraction = static_cast<float>(x);
         else if (k == "anoxic") c.medium.anoxic = x != 0;
         else if (k == "rock_min") c.sediment.rockMin = static_cast<float>(x);
+        else if (k == "cell_culture") c.cellCulture = x != 0;
+        else if (k == "depth") c.depth = static_cast<float>(std::max(1.0, x));
+        else if (k == "seeding") {
+            // La siembra del archivo reemplaza a la de la placa preparada.
+            if (!seedingRead)
+                c.seeding.clear();
+            seedingRead = true;
+            const std::size_t space = v.find(' ');
+            const std::string id = v.substr(0, space);
+            if (const auto sp = findSpecies(id))
+                c.seeding.emplace_back(*sp, space == std::string::npos ? 0 : static_cast<int>(num(v.substr(space + 1), 0)));
+            else
+                lack("ser '" + id + "'");
+        }
         else if (k == "rock_max") c.sediment.rockMax = static_cast<float>(x);
         for (const IntField& f : kConfigInts)
             if (k == f.key) c.*f.member = static_cast<int>(x);

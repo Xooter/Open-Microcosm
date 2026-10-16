@@ -14,6 +14,9 @@ void Run::start(World& world, const RunConfig& config, std::uint32_t runId) {
     world.setRun(runId);
     world.populateEcosystem(config.wildlife);
     world.populate(config.competitors);
+    // Siembra de una placa preparada (células por cm² del campo, ya convertidas en cantidades).
+    for (const auto& [species, count] : world.config().seeding)
+        world.inoculate({BeingKind::Species, species}, count, {}, 0.0f);
     if (config.spawnFounder)
         world.spawnPlayer(config.founder, {0.5f * world.width(), 0.5f * world.height()}, &config.genome);
     census_ = world.census();

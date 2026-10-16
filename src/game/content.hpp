@@ -10,9 +10,10 @@
 #include <vector>
 
 // Paquetes de contenido (fase 20.0). Un paquete es una carpeta con `paquete.toml` y sus archivos
-// (seres.toml, planes.toml, fisiologia.toml, minerales.toml, biomas.toml), o un solo archivo
-// `.biopack`: un TOML con `[paquete]` y todas sus definiciones (`[[ser]]`, `[[plan]]`,
-// `[[mineral]]`, `[[bioma]]`, `[fisiologia.<id del ser>]`, `[[escena]]`). Son solo datos: nada
+// (seres.toml, planes.toml, fisiologia.toml, minerales.toml, biomas.toml, medios.toml,
+// recipientes.toml, placas.toml), o un solo archivo `.biopack`: un TOML con `[paquete]` y todas sus
+// definiciones (`[[ser]]`, `[[plan]]`, `[[mineral]]`, `[[bioma]]`, `[fisiologia.<id del ser>]`,
+// `[[medio]]`, `[[recipiente]]`, `[[placa]]`, `[[escena]]`). Son solo datos: nada
 // ejecutable, con tamaños y cantidades acotados. El de fábrica es "base" (assets/content/base/);
 // los del usuario viven en <datos>/biogame/paquetes/ y se cargan al empezar.
 struct PackInfo {
@@ -44,6 +45,7 @@ struct BiopackSpec {
     std::vector<SpeciesId> beings;
     std::vector<MineralKind> minerals;
     std::vector<BiomeId> biomes;
+    std::vector<std::string> prepared; // ids de placas preparadas (con su medio y su recipiente)
     std::vector<std::pair<std::string, std::string>> scenes;
 };
 // El texto del .biopack (vacío si no se puede armar; el motivo va a `messages`).

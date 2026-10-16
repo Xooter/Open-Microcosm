@@ -96,6 +96,13 @@ struct CatalogState {
     int armed = -1;       // índice del catálogo listo para spawnear (-1: ninguno)
     int category = 0;     // pestaña abierta (BeingCategory; kCategoryCount = "Todos")
     bool reshape = false; // transformar al ser controlado en la especie elegida
+    // Inoculación (como con la pipeta): cantidad o densidad, en toda la placa o alrededor del
+    // centro de la vista.
+    int inoculateCount = 50;
+    bool byDensity = false;
+    float density = 5000.0f; // [individuos/cm²]
+    bool spot = false;
+    float spotRadius = 300.0f; // [µm]
 };
 
 // Gotero de solutos.

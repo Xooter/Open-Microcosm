@@ -190,3 +190,66 @@ TEST_CASE("escena: una sesión con intervenciones se repite idéntica, con 1 y 4
     CHECK(one == live);
     CHECK(four == live);
 }
+
+namespace {
+
+// Cultivo de DMEM en la incubadora (fase 20a): se le inocula una levadura del catálogo y después
+// se contamina con bacterias en un punto.
+std::vector<Intervention> cultureSession(const PlateSpec& plate, std::uint64_t& hash, int& yeasts) {
+    World world(plate.config);
+    Run run;
+    run.start(world, plateRunConfig(plate), 1);
+    InterventionLog& log = run.interventions();
+    const Vec2 c = {world.width() * 0.5f, world.height() * 0.5f};
+    for (int step = 0; step < kSteps; ++step) {
+        if (step == 5) {
+            Intervention iv;
+            iv.kind = InterventionKind::Inoculate;
+            iv.index = static_cast<int>(BeingKind::Species);
+            iv.v[0] = static_cast<float>(SpeciesId::Candida);
+            iv.v[1] = 12.0f;
+            log.record(world, iv);
+        }
+        if (step == 40) {
+            Intervention iv;
+            iv.kind = InterventionKind::Inoculate;
+            iv.index = static_cast<int>(BeingKind::Bacterium);
+            iv.v[1] = 400.0f;
+            iv.v[2] = 80.0f;
+            iv.pos = c;
+            log.record(world, iv);
+        }
+        log.beforeStep(world, kDt);
+        world.step(kDt);
+        run.update(world, kDt);
+    }
+    hash = positionsHash(world);
+    yeasts = world.census().species[static_cast<int>(SpeciesId::Candida)];
+    return log.entries();
+}
+
+} // namespace
+
+TEST_CASE("escena: un cultivo de DMEM con una levadura inoculada se repite bit a bit, con 1 y 4 hilos") {
+    PlateSpec plate;
+    plate.prepared = "cultivo_dmem";
+    plate.seed = 2024;
+    plate.rebuild();
+    REQUIRE(plate.kind() == PlateKind::CellCulture);
+    plate.config.gridX = plate.config.gridY = 64; // 512 µm: rápido
+    std::uint64_t live = 0;
+    int yeasts = 0;
+    const std::vector<Intervention> events = cultureSession(plate, live, yeasts);
+    CHECK(yeasts == 12);
+    const std::string text = serializeScene(plate, events);
+    CHECK(text.find("prepared=cultivo_dmem") != std::string::npos);
+    CHECK(text.find(" candida\n") != std::string::npos);
+    const int threads = omp_get_max_threads();
+    omp_set_num_threads(1);
+    const std::uint64_t one = replay(text);
+    omp_set_num_threads(4);
+    const std::uint64_t four = replay(text);
+    omp_set_num_threads(threads);
+    CHECK(one == live);
+    CHECK(four == live);
+}

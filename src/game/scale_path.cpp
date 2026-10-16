@@ -115,7 +115,7 @@ const char* bioScaleName(BioScale scale) {
 ScalePath scalePath(const World& world, Vec2 center, float viewMicrons, const Picked& focus) {
     ScalePath out;
     out.scale = bioScaleFor(viewMicrons);
-    out.crumbs.emplace_back(world.dish().active() ? "Placa" : "Gota");
+    out.crumbs.emplace_back(world.config().cellCulture ? "Cultivo" : world.dish().active() ? "Placa" : "Gota");
     if (out.scale == BioScale::Environment)
         return out;
     const float half = 0.5f * viewMicrons;

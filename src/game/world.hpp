@@ -71,7 +71,14 @@ struct MediumParams {
     float vitaminDecayPerHour = 0.02f;
     // Disolución de las frústulas muertas (la sílice biogénica es opal, apenas soluble): ~0,2%/h.
     float frustuleDissolutionPerHour = 0.002f;
-    float alkalinity = 1000.0f;       // bicarbonato [µM]: fija el pH con el CO₂ (pKa 6,35)
+    float alkalinity = 1000.0f;       // bicarbonato [µM]: fija el pH con el CO₂ (pK′ `carbonatePK`)
+    // pK′ aparente de CO₂/HCO₃⁻ en este medio: depende de la temperatura y de la fuerza iónica
+    // (6,35 en agua dulce a 25 °C; ~6,1 a 37 °C con la fuerza iónica del plasma o de un medio de
+    // cultivo). Es un dato del medio.
+    float carbonatePK = 6.35f;
+    // Fracción de CO₂ del aire sobre el medio: el aire libre ~420 ppm; una incubadora de cultivo,
+    // 0,05–0,10. El CO₂ disuelto de equilibrio sale de la ley de Henry a la temperatura del medio.
+    float co2Atmosphere = 4.2e-4f;
     float phage = 2e-7f;              // fagos libres iniciales [viriones/µm³] (2·10⁵/mL)
     float phageDecayPerHour = 0.05f;  // inactivación (UV, adsorción a partículas)
     float toxinDecayPerHour = 0.02f;  // degradación bacteriana de la microcistina
@@ -86,6 +93,15 @@ struct MediumParams {
     // Polvo que cae del aire a la película de agua (cuarzo, arcilla, mica) [partículas/s, tiempo
     // real: es física, no biología].
     float dustRate = 0.0f;
+    // Materia orgánica disuelta al empezar [µM equivalente de glucosa]: la gota empieza sin ella
+    // (llega con las hojas, las manchas y los detritos); un medio de cultivo la trae (DMEM: 25 mM).
+    float organic = 0.0f;
+    // Componentes de los medios de cultivo que usan las células humanas (fase 20b) y el render:
+    // glutamina [µM], fracción de suero fetal bovino (factores de crecimiento) y rojo fenol [mg/L],
+    // el indicador de pH del medio.
+    float glutamine = 0.0f;
+    float serum = 0.0f;
+    float phenolRed = 0.0f;
 };
 
 // Sedimento inicial de la gota: partículas minerales sueltas y granos de arena.
@@ -123,6 +139,14 @@ struct WorldConfig {
     int oscillatoriaCells = 20;
     std::uint64_t seed = 1;
     MediumParams medium;          // química y ambiente iniciales (bioma)
+    // Profundidad del agua o del medio [µm] (`Fluid::gapHeight`): la película de una gota ~0,2 mm;
+    // el medio de un recipiente de cultivo, ~2–3 mm. Fija el volumen sobre cada punto del fondo
+    // (la química se toma bien mezclada en la vertical) y qué tan locales son las corrientes.
+    float depth = 200.0f;
+    // Cultivo celular (placa preparada): un campo del fondo de un recipiente, no una gota.
+    bool cellCulture = false;
+    // Siembra inicial de una placa preparada: especie y cantidad (la aplica Run::start).
+    std::vector<std::pair<SpeciesId, int>> seeding;
     // Hongos al empezar: micelios de Saprolegnia y grupos de zoosporas de quitridios (10 cada uno).
     int saprolegnia = 4, chytridClusters = 6;
     // Más hongos: Allomyces, hongos liquenizantes (junto a algas verdes) y plasmodios de Physarum.
@@ -258,6 +282,11 @@ class World {
     entt::entity setPlayerSpecies(SpeciesId species, Vec2 fallback);
     // Sandbox: spawnea un ser del catálogo en `at` (silvestre, linaje 0).
     void spawnBeing(Being being, Vec2 at);
+    // Inoculación: `count` individuos de un ser del catálogo al azar en toda la placa (radius <= 0)
+    // o en un círculo de `radius` alrededor de `center`, sin encimar células. Devuelve cuántos puso.
+    int inoculate(Being being, int count, Vec2 center, float radius);
+    // Sin ningún cuerpo a menos de `clearance` de `p` (lugar para una célula nueva).
+    bool placeIsFree(Vec2 p, float clearance) const;
     // Sandbox: completa biomasa y reservas hasta el umbral de la especie para que se reproduzca
     // por su vía normal (fisión, palintomía, colonias, gemación o huevo). false si no puede.
     bool forceReproduction(entt::entity cell);
@@ -298,6 +327,7 @@ class World {
     float bioScale() const { return bioTimeScale_ * temperatureFactor_; }
     // O₂ en equilibrio con el aire a la temperatura de la gota [µM] (0 si es anóxica).
     float oxygenSaturation() const { return o2Saturation_; }
+    float co2Saturation() const { return co2Saturation_; } // CO₂ disuelto en equilibrio con el aire [µM]
     const char* lastDeathCause() const { return lastDeathCause_; }
     // Muertes por especie y causa desde el comienzo (enciclopedia, balance).
     const std::map<std::pair<SpeciesId, std::string>, int>& deathTally() const { return deathTally_; }
@@ -305,6 +335,7 @@ class World {
     const DeathRecord* deathOf(entt::entity e) const;
     // ¿Está saciada (manipulando una presa entera o con el citoplasma lleno)?
     bool isSatiated(entt::entity e) const;
+    const WorldConfig& config() const { return config_; } // con la que se creó
     const MediumParams& medium() const { return medium_; }
     // Debug: mata (lisa) a la célula bajo el cursor.
     void lyseAt(Vec2 position);
@@ -628,6 +659,7 @@ class World {
     MetabolismParams metabolismParams_;
     float bioTimeScale_ = units::kBioTimeScale;
     float temperatureFactor_ = 1.0f, o2Saturation_ = units::kO2Saturation, viscositySpeed_ = 1.0f;
+    float co2Saturation_ = units::kCO2Saturation;
     const char* lastDeathCause_ = "";
     std::map<std::pair<SpeciesId, std::string>, int> deathTally_;
     std::vector<DeathRecord> recentDeaths_; // las últimas kRecentDeaths

@@ -34,6 +34,12 @@ constexpr MediumKey kMediumKeys[] = {
     {"detritos_entrantes", &MediumParams::detritusSpawnRate, true},
     {"consumo_nutrientes", &MediumParams::nutrientUptake, true},
     {"polvo", &MediumParams::dustRate, true},
+    {"glucosa", &MediumParams::organic, true},
+    {"glutamina", &MediumParams::glutamine, true},
+    {"suero", &MediumParams::serum, true},
+    {"rojo_fenol", &MediumParams::phenolRed, true},
+    {"pka_carbonato", &MediumParams::carbonatePK, true},
+    {"co2_aire", &MediumParams::co2Atmosphere, true},
 };
 
 } // namespace
