@@ -62,6 +62,16 @@ e interviene.
   conjugación. Los organelos ocupan espacio físico dentro de la célula.
 - **Ecosistema de la gota:** protistas carnívoros (cazadores, envolvedores, emboscadores y
   parásitos), herbívoros (algívoros y bacterívoros), algas, hongos, bacterias y fagos.
+- **Células humanas en cultivo** (`bio/animal_cell`, `game/world_animal.cpp`): fibroblasto dérmico,
+  HeLa y neutrófilo (`[ser.celula]` en los datos, valores medidos con fuente en `fisiologia.toml`).
+  Adheridas al fondo (`Adherent`: el agua no las arrastra), migran por arrastre (`LocomotionType::Crawl`)
+  en un paseo aleatorio persistente (rapidez y persistencia de los datos), con inhibición por
+  contacto de la locomoción (Abercrombie) y de la proliferación; ciclo por fases G1/S/G2/M con punto
+  de restricción (suero) y G0; mitosis redondeada; captación de glucosa y glutamina con
+  Michaelis–Menten y lactato (Warburg) que se lleva el bicarbonato; apoptosis (sin energía, sin
+  suero o por edad) que deja cuerpos apoptóticos sin lisis; el neutrófilo sigue el fMLP que liberan
+  las bacterias y las fagocita. Glutamina, lactato y fMLP son campos que solo difunden si hay
+  células animales.
 - **Células de organismos pluricelulares:** células humanas y animales en cultivo (líneas y tipos
   reales: fibroblastos, queratinocitos, neutrófilos…) y tejidos vegetales, con la biología de cada
   una (adhesión al sustrato, migración, inhibición por contacto, apoptosis, pared celular). Se
@@ -85,7 +95,10 @@ e interviene.
   comprime con **una sola constante**, `units::kBioTimeScale` (60: 1 min real = 1 h biológica),
   respetando las proporciones entre procesos y especies. Consecuencias que hay que mantener:
   - lo digerido rinde ×`bioTimeScale` (la alimentación es mecánica, en tiempo real);
-  - el intercambio de O₂ de cada célula con el agua se hace a la tasa real (÷`bioTimeScale`).
+  - el intercambio de O₂ de cada célula con el agua se hace a la tasa real (÷`bioTimeScale`);
+  - excepción: la **migración por arrastre** de las células animales (lamelipodio, adhesiones focales)
+    es biología —polimerización de actina— y corre en tiempo biológico (un fibroblasto a 40 µm/h se
+    ve a ~0,7 µm/s con kBioTimeScale 60). Nadar sigue siendo física, en tiempo real.
 - **Masas:** pmol equivalentes de glucosa de materia SECA (`units::kDryMassFraction` = 0,3).
 - Unidades internas: **micrómetros (µm)** y **segundos de simulación**. Las conversiones a
   píxeles van solo en el render.

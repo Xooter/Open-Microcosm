@@ -49,6 +49,7 @@ const char* locomotionName(LocomotionType type) {
     case LocomotionType::Cilia: return "cilios";
     case LocomotionType::Flagellum: return "flagelo";
     case LocomotionType::Pseudopod: return "pseudopodo";
+    case LocomotionType::Crawl: return "arrastre";
     }
     return "";
 }
@@ -103,6 +104,29 @@ void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
         for (std::size_t k = body.organelleCount; k < body.interior.size(); ++k)
             addVelocity(bp, body.interior[k], u * p.streamingSpeed);
         return;
+    }
+    case LocomotionType::Crawl: {
+        // `loco.speed` [µm/s reales] y `loco.target` los fija el mundo (paseo persistente en
+        // tiempo biológico). El cuerpo entero se traslada (las adhesiones focales lo llevan) y se
+        // alinea con la dirección; el borde de adelante (lamelipodio) protruye un poco más.
+        if (!loco.active || loco.speed <= 0.0f)
+            return;
+        const Vec2 to = {minImage(loco.target.x - c.x, width), minImage(loco.target.y - c.y, height)};
+        if (length(to) < 1e-3f)
+            return;
+        const Vec2 u = normalized(to);
+        linear = u * loco.speed;
+        // El eje largo del cuerpo (cualquiera de sus dos sentidos) gira hacia la dirección: se
+        // realinea en lo que tarda en avanzar medio largo de cuerpo.
+        const float delta = std::atan2(cross(h, u), dot(h, u));
+        const float axial = delta > 1.5707963f ? delta - 3.1415927f : delta < -1.5707963f ? delta + 3.1415927f : delta;
+        omega = axial * loco.speed / std::max(5.0f, halfLength(body));
+        for (std::size_t i = 0; i < body.ring.size(); ++i) {
+            const float w = dot(outwardNormal(body, bp, i), u);
+            if (w > 0.7f)
+                addVelocity(bp, body.ring[i], u * (0.5f * loco.speed * (w - 0.7f) / 0.3f));
+        }
+        break;
     }
     }
 

@@ -182,23 +182,39 @@ sistemas paralelos (los seres actuales se migran, no conviven con un sistema nue
 
 Mecanismos nuevos (código), parametrizados por datos:
 
-1. **Locomoción por arrastre** (`Crawling`, tiempo biológico): lamelipodio en el frente y adhesión
+*Hecho (pasos 1–7):* `bio/animal_cell` (componentes `AnimalCell` y `Adherent`) y
+`game/world_animal.cpp`; `LocomotionType::Crawl` (el cuerpo se traslada con las adhesiones y se
+alinea con la dirección; la polaridad difunde con D_r = 1/P en tiempo biológico); ciclo G1/S/G2/M
+(con datos; sin dato, la célula típica de Alberts) con punto de restricción (suero, contacto,
+energía) y G0; mitosis redondeada que reutiliza el surco y la división existentes; contacto medido
+cada 15 pasos en paralelo; captación de glucosa y glutamina (Michaelis–Menten) con lactato que baja
+el bicarbonato y el pH; apoptosis (sin energía 4 h, sin suero si la especie lo pide, por edad) que
+se encoge y se parte en cuerpos apoptóticos sin derramar nada; neutrófilo con quimiotaxis a fMLP
+(liberado por las bacterias, Marasco et al. 1984; detección relativa de ~1 %, Zigmond 1977) y
+fagocitosis de bacterias. Datos de fibroblasto dérmico, HeLa y neutrófilo en `seres.toml` y
+`fisiologia.toml` (lo no medido en el tipo exacto, como estimación). Simplificaciones documentadas:
+la masa celular sale de los aminoácidos y el suero del medio (la glucosa da la energía y el ritmo);
+la vía de señalización no se modela, solo sus efectos medidos; el fMLP de una fuente en el fondo
+llena una capa de ~200 µm, no toda la profundidad del medio. Tests en `tests/test_animal_cells.cpp`.
+Categoría «Células humanas» en el Catálogo.
+
+1. ✅ **Locomoción por arrastre** (`Crawling`, tiempo biológico): lamelipodio en el frente y adhesión
    al sustrato; **paseo aleatorio persistente** con rapidez y tiempo de persistencia medidos.
    Redondeo durante la mitosis (la célula se despega y se redondea, visible).
-2. **Ciclo celular por fases** (G1, S, G2, M) con duraciones de los datos; **punto de restricción**
+2. ✅ **Ciclo celular por fases** (G1, S, G2, M) con duraciones de los datos; **punto de restricción**
    en G1 que exige factores de crecimiento; G0 (quiescencia) sin ellos.
-3. **Inhibición por contacto:** de la locomoción (Abercrombie: al tocar a otra célula retrae ese
+3. ✅ **Inhibición por contacto:** de la locomoción (Abercrombie: al tocar a otra célula retrae ese
    frente y se repolariza) y de la proliferación (con la periferia ocupada queda en G0/G1). HeLa no
    tiene inhibición de la proliferación.
-4. **Metabolismo celular:** captación de glucosa y glutamina (Michaelis–Menten, con Km y Vmax
+4. ✅ **Metabolismo celular:** captación de glucosa y glutamina (Michaelis–Menten, con Km y Vmax
    publicados), respiración y glucólisis aeróbica (Warburg en HeLa) con secreción de lactato que
    baja el pH; consumo de O₂ por célula medido. Masa y volumen celular crecen en el ciclo.
-5. **Apoptosis:** sin factores de crecimiento, sin glucosa o por edad (neutrófilos): la célula se
+5. ✅ **Apoptosis:** sin factores de crecimiento, sin glucosa o por edad (neutrófilos): la célula se
    encoge, forma vesículas y se fragmenta en cuerpos apoptóticos sin lisis (sin inflamación). La
    lisis actual queda como necrosis.
-6. **Neutrófilo:** quimiotaxis hacia péptidos formilados (fMLP) que liberan las bacterias (campo
+6. ✅ **Neutrófilo:** quimiotaxis hacia péptidos formilados (fMLP) que liberan las bacterias (campo
    nuevo, con difusión real) y fagocitosis de bacterias con la copa existente; vida corta.
-7. **Datos (paquete de fábrica «células humanas»):** fibroblasto dérmico humano, HeLa, neutrófilo,
+7. ✅ **Datos (paquete de fábrica «células humanas»):** fibroblasto dérmico humano, HeLa, neutrófilo,
    cada valor con fuente (duplicación, duración de fases, tamaño adherido y redondeado, rapidez y
    persistencia de migración, Km y Vmax de glucosa y glutamina, consumo de O₂, densidad de
    confluencia).

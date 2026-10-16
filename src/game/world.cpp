@@ -100,6 +100,9 @@ World::World(const WorldConfig& config)
       toxin_(config.gridX, config.gridY, config.cellSize, units::kDiffusionSmallSolute, 0.0f),
       autoinducer_(config.gridX, config.gridY, config.cellSize, units::kDiffusionSmallSolute, 0.0f),
       phage_(config.gridX, config.gridY, config.cellSize, units::kDiffusionVirus, config.medium.phage),
+      glutamine_(config.gridX, config.gridY, config.cellSize, units::kDiffusionGlucose, config.medium.glutamine),
+      lactate_(config.gridX, config.gridY, config.cellSize, units::kDiffusionSmallSolute, 0.0f),
+      fmlp_(config.gridX, config.gridY, config.cellSize, units::kDiffusionSmallSolute, 0.0f),
       light_(config.gridX, config.gridY, config.cellSize, 1.0f),
       shading_(config.gridX, config.gridY, config.cellSize),
       slime_(config.gridX, config.gridY, config.cellSize),
@@ -141,8 +144,11 @@ World::World(const WorldConfig& config)
         scatterPatches();
     for (std::size_t k = 0; k < inflowPattern_.v.size(); ++k)
         inflowPattern_.v[k] *= dishMask_.isWater(k) ? 1.0f : 0.0f; // sin aporte dentro del vidrio
-    for (ChemField* f : {&oxygen_, &nutrients_, &phosphate_, &nitrogen_, &silicate_, &iron_, &vitamin_, &co2_, &toxin_, &autoinducer_, &phage_})
+    for (ChemField* f : {&oxygen_, &nutrients_, &phosphate_, &nitrogen_, &silicate_, &iron_, &vitamin_, &co2_, &toxin_,
+                         &autoinducer_, &phage_, &glutamine_, &lactate_, &fmlp_})
         f->setMask(&dishMask_);
+    // Un medio de cultivo trae glutamina: sus campos difunden desde el principio.
+    cultureFields_ = config.medium.glutamine > 0.0f;
     fluid_.gapHeight = config.depth;
     bacteria_.resetMemory(nutrients_.grid());
     fluid_.solve(fft_);
@@ -242,6 +248,10 @@ void World::step(float dt) {
         ChemField* const advected[] = {&oxygen_, &nutrients_, &phosphate_, &nitrogen_, &silicate_, &iron_,
                                        &vitamin_, &co2_, &toxin_, &autoinducer_, &phage_};
         ChemField::advectAll(advected, static_cast<int>(std::size(advected)), fluid_, dt);
+        if (cultureFields_) { // los del cultivo, solo si hay células animales
+            ChemField* const culture[] = {&glutamine_, &lactate_, &fmlp_};
+            ChemField::advectAll(culture, 3, fluid_, dt);
+        }
     }
     updateChemistrySources(dt);
     updateWaterChemistry(dt);
@@ -255,6 +265,9 @@ void World::step(float dt) {
         phosphate_.diffuse(fft_, slowDiffusion_);
         for (ChemField* f : {&nitrogen_, &silicate_, &iron_, &vitamin_, &toxin_, &autoinducer_, &phage_})
             f->diffuse(fft_, slowDiffusion_);
+        if (cultureFields_)
+            for (ChemField* f : {&glutamine_, &lactate_, &fmlp_})
+                f->diffuse(fft_, slowDiffusion_);
         slowDiffusion_ = 0.0f;
     }
     co2_.diffuse(fft_, dt);
@@ -268,6 +281,11 @@ void World::step(float dt) {
     stepPlasmodium(dt);
     finishBodies();
     updateFeeding(dt);       // eventos de topología (fagocitosis): al final del paso
+    if (cultureFields_) {
+        releaseFmlp(dt);
+        if (step_ % 15 == 0) // el contacto entre células animales cambia en minutos biológicos
+            measureAnimalContacts();
+    }
     updateLifecycle(dt);     // metabolismo, división y muerte
     tickDefenses(dt);
     excludeFromCells();
@@ -592,11 +610,12 @@ void World::beginBodies(float dt) {
         }
         if (registry_.all_of<Rock>(static_cast<entt::entity>(body.id)))
             continue; // el grano está apoyado en el vidrio: ni el agua ni la compresión lo mueven
-        // Los nadadores sienten solo el flujo de fondo.
+        // Los nadadores sienten solo el flujo de fondo; una célula adherida al fondo, ninguno.
         const bool swimmer = registry_.all_of<Locomotion>(static_cast<entt::entity>(body.id));
+        const bool adherent = registry_.all_of<Adherent>(static_cast<entt::entity>(body.id));
         std::function<void(std::uint32_t)> external = [&](std::uint32_t s) {
             const Vec2 p = {bodies_.x[s], bodies_.y[s]};
-            const Vec2 v = (swimmer ? fluid_.backgroundAt(p) : fluid_.velocityAt(p)) + push;
+            const Vec2 v = (adherent ? Vec2{} : swimmer ? fluid_.backgroundAt(p) : fluid_.velocityAt(p)) + push;
             bodies_.vx[s] = v.x;
             bodies_.vy[s] = v.y;
         };
@@ -604,7 +623,7 @@ void World::beginBodies(float dt) {
         // esfuerzos viscosos de una corriente de agua, así que el flujo traslada y rota a la
         // célula entera; no estira cada punto por separado (como una línea de tinta, se
         // plegaría y cruzaría). Se ajusta el flujo a un movimiento rígido.
-        const bool rigidFlow = body.membraneReservoirRate > 0.0f;
+        const bool rigidFlow = body.membraneReservoirRate > 0.0f && !adherent;
         Vec2 flowMean, flowCenter;
         float flowOmega = 0.0f;
         if (rigidFlow) {
@@ -1386,6 +1405,10 @@ entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& 
     seedMicronutrients(registry_.get<Metabolism>(e), info, center);
     Rng rng(config_.seed, rng_stream::kOrganelles, body.id, step_);
     refillOrganelles(body, bodies_, genome, rng);
+    if (info.animalCell.present) {
+        Rng cellRng(config_.seed, rng_stream::kCells + 61, body.id, step_);
+        setupAnimalCell(e, cellRng);
+    }
     return e;
 }
 
@@ -1493,7 +1516,8 @@ int World::inoculate(Being being, int count, Vec2 center, float radius) {
 entt::entity World::spawnWild(SpeciesId id, Vec2 p, Rng& rng, bool randomStage) {
     const SpeciesInfo& info = speciesInfo(id);
     Genome g = speciesGenome(id);
-    mutate(g, info.locomotion, rng, 0.5f);
+    // Las células somáticas de un cultivo son clonales: sin la variación genética de un protista.
+    mutate(g, info.locomotion, rng, info.animalCell.present ? 0.0f : 0.5f);
     g[Gene::MatingType] = rng.uniform() < 0.5f ? 0.0f : 1.0f;
     const entt::entity e = spawnOrganism(id, p, g, 0, rng.uniform(0.0f, 2.0f * units::kPi));
     if (randomStage) {
@@ -1773,7 +1797,13 @@ void World::applyMotion(float dt) {
             loco.turn = playerInput_.turn;
             loco.target = playerInput_.aim;
             loco.active = (loco.type == LocomotionType::Flagellum && playerInput_.propel) ||
-                          (loco.type == LocomotionType::Pseudopod && playerInput_.pseudopod);
+                          ((loco.type == LocomotionType::Pseudopod || loco.type == LocomotionType::Crawl) &&
+                           playerInput_.pseudopod);
+            if (loco.type == LocomotionType::Crawl)
+                steerCrawler(e, body, loco, dt, true);
+        } else if (loco.type == LocomotionType::Crawl) {
+            // Célula animal: paseo persistente, contacto y quimiotaxis (game/world_animal.cpp).
+            steerCrawler(e, body, loco, dt, false);
         } else if (Autopilot* pilot = registry_.try_get<Autopilot>(e)) {
             if (registry_.all_of<Cyst>(e))
                 continue; // el quiste no se mueve
@@ -1819,7 +1849,7 @@ void World::applyMotion(float dt) {
         if (const Neck* neck = registry_.try_get<Neck>(e); neck && neck->length > 5.0f)
             loco.forward = loco.turn = 0.0f;
         // La ameba deja de desplazarse mientras forma una copa fagocítica.
-        if (loco.type == LocomotionType::Pseudopod && engulfing)
+        if ((loco.type == LocomotionType::Pseudopod || loco.type == LocomotionType::Crawl) && engulfing)
             loco.active = false;
         // Durante la conjugación la pareja queda unida por la región oral y no nada.
         if (const Conjugating* cj = registry_.try_get<Conjugating>(e);
@@ -1829,7 +1859,8 @@ void World::applyMotion(float dt) {
             pullTogether(body, registry_.get<RingBody>(cj->partner));
         }
         applyLocomotion(body, bodies_, loco, locomotionParams_, simTime_, width_, height_);
-        if (loco.type == LocomotionType::Pseudopod) {
+        if (loco.type == LocomotionType::Pseudopod ||
+            (loco.type == LocomotionType::Crawl && speciesInfo(speciesOfEntity(registry_, e)).feeding == FeedingMode::Phagocytosis)) {
             const bool hadCup = registry_.all_of<PhagocyticCup>(e);
             updateCup(e, body, dt);
             if (hadCup || registry_.all_of<PhagocyticCup>(e)) // la copa puede cambiar su contorno
@@ -2236,6 +2267,7 @@ float maxSpeedOf(const LocomotionParams& p, LocomotionType type) {
     case LocomotionType::Cilia: return p.ciliaSpeed;
     case LocomotionType::Flagellum: return p.flagellumSpeed;
     case LocomotionType::Pseudopod: return p.pseudopodSpeed;
+    case LocomotionType::Crawl: return 1.0f;
     }
     return 1.0f;
 }
@@ -2558,6 +2590,7 @@ void World::updateLifecycle(float dt) {
     const MetabolismParams& mp = metabolismParams_;
     dying_.clear();
     splits_.clear();
+    apoptosisDone_.clear();
     conjugationsDone_.clear();
 
     for (auto [e, body, meta] : registry_.view<RingBody, Metabolism>().each()) {
@@ -2581,6 +2614,8 @@ void World::updateLifecycle(float dt) {
             if (want > 0.0f)
                 in.digested -= exchange(nutrients_, body.centroid, -want);
         }
+        if (registry_.all_of<AnimalCell>(e)) // glucosa y glutamina del medio; secreta lactato
+            in.digested += animalUptake(e, body, meta, bioDt);
         if (excreted.phosphorus > 0.0f)
             exchange(phosphate_, body.centroid, excreted.phosphorus, Flow::Excretion);
         if (excreted.nitrogen > 0.0f) // amonio excretado al digerir
@@ -2592,7 +2627,7 @@ void World::updateLifecycle(float dt) {
         in.vitamin = vitamin_.grid().sample(body.centroid.x, body.centroid.y);
         in.activity = 0.0f;
         if (loco) {
-            in.activity = loco->type == LocomotionType::Pseudopod
+            in.activity = loco->type == LocomotionType::Pseudopod || loco->type == LocomotionType::Crawl
                               ? (loco->active ? 1.0f : 0.0f)
                               : std::min(1.0f, std::abs(loco->speed) / maxSpeedOf(locomotionParams_, loco->type));
         }
@@ -2681,8 +2716,10 @@ void World::updateLifecycle(float dt) {
         }
 
         // Tamaño: biomasa + lo que hay en las vacuolas. Los organelos crecen con la célula.
-        const float target = cellAreaForMass(meta.biomass / info.dryMassScale) * (her ? her->traits.volume : 1.0f) +
-                             (dig ? vacuoleContentArea(*dig) : 0.0f);
+        float target = cellAreaForMass(meta.biomass / info.dryMassScale) * (her ? her->traits.volume : 1.0f) +
+                       (dig ? vacuoleContentArea(*dig) : 0.0f);
+        if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e)) // redondeada en mitosis y apoptosis
+            target = animalTargetArea(e, *ac, target);
         const float before = std::abs(body.restArea);
         // Las células de un filamento crecen solo a lo largo (pared rígida de ancho fijo).
         if (info.filament && !registry_.all_of<Zoospore>(e))
@@ -2700,6 +2737,9 @@ void World::updateLifecycle(float dt) {
             }
         }
 
+        // Células animales: su ciclo por fases, el contacto y la apoptosis (game/world_animal.cpp).
+        if (updateAnimalCell(e, body, meta, bioDt))
+            continue;
         // Quistes (Didinium): se enquista con hambre y sale cuando vuelve a haber presas cerca.
         if (cyst) {
             cyst->age += dt;
@@ -2822,6 +2862,9 @@ void World::updateLifecycle(float dt) {
     for (const auto& [e, cause] : dying_)
         if (registry_.valid(e))
             lyse(e, cause);
+    for (entt::entity e : apoptosisDone_)
+        if (registry_.valid(e))
+            lyse(e, "apoptosis", true);
 }
 
 bool World::septumTips(const RingBody& body, std::size_t& tipA, std::size_t& tipB) const {
@@ -3093,8 +3136,9 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
         Heredity ha = *mh;
         Rng ra(config_.seed, rng_stream::kMutation, entt::to_integral(cell) * 2ull, step_);
         Rng rb(config_.seed, rng_stream::kMutation, entt::to_integral(cell) * 2ull + 1, step_);
-        mutate(ha.genome, type, ra);
-        mutate(hb.genome, type, rb);
+        const float rate = registry_.all_of<AnimalCell>(cell) ? 0.0f : 0.25f; // somáticas: clonales
+        mutate(ha.genome, type, ra, rate);
+        mutate(hb.genome, type, rb, rate);
         ha.traits = traitsOf(ha.genome, type);
         hb.traits = traitsOf(hb.genome, type);
         registry_.replace<Heredity>(cell, ha);
@@ -3122,6 +3166,8 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
             ++observed_.filamentDivisions;
         }
     }
+    if (registry_.all_of<AnimalCell>(cell))
+        afterAnimalDivision(cell, child);
     if (cell == player_)
         events_.push_back({WorldEvent::Type::PlayerDivided, cell, child, ""});
     if (grabSlot_ != kNoGrab && bodies_.owner[grabSlot_] == childId)
@@ -3156,9 +3202,10 @@ const DeathRecord* World::deathOf(entt::entity e) const {
     return nullptr;
 }
 
-void World::lyse(entt::entity cell, const char* cause) {
+void World::lyse(entt::entity cell, const char* cause, bool apoptotic) {
     recordDeath(cell, cause);
-    {
+    if (!apoptotic) { // la apoptosis no revienta: no hay estallido
+
         const RingBody& b = registry_.get<RingBody>(cell);
         const CellLook look = registry_.all_of<CellLook>(cell) ? registry_.get<CellLook>(cell) : CellLook{180, 180, 160};
         const float radius = 0.25f * ((b.aabbMax.x - b.aabbMin.x) + (b.aabbMax.y - b.aabbMin.y));
@@ -3174,7 +3221,9 @@ void World::lyse(entt::entity cell, const char* cause) {
             total += v.contentPmol;
 
     // La membrana revienta: ~40% del contenido se disuelve (aminoácidos, azúcares) y el resto
-    // queda como detritos particulados, que las bacterias y los hongos descomponen.
+    // queda como detritos particulados, que las bacterias y los hongos descomponen. En la
+    // apoptosis no se derrama nada: la célula se parte en cuerpos apoptóticos, vesículas cerradas
+    // de membrana (Kerr, Wyllie y Currie 1972).
     const int pn = static_cast<int>(body.poly.size());
     Grid2D& food = nutrients_.grid();
     std::vector<std::pair<int, int>> cells;
@@ -3184,7 +3233,7 @@ void World::lyse(entt::entity cell, const char* cause) {
                 cells.emplace_back(food.cellX(x), food.cellY(y));
     if (cells.empty())
         cells.emplace_back(food.cellX(body.centroid.x), food.cellY(body.centroid.y));
-    const float dissolved = 0.4f * total * microMolarPerPmol() / static_cast<float>(cells.size());
+    const float dissolved = (apoptotic ? 0.0f : 0.4f) * total * microMolarPerPmol() / static_cast<float>(cells.size());
     for (const auto& [cx, cy] : cells)
         food.at(cx, cy) += dissolved;
 
@@ -3202,8 +3251,8 @@ void World::lyse(entt::entity cell, const char* cause) {
     const float silicon = releaseMicronutrients(cell, body.centroid); // el Si queda en la frústula
     // Las cianobacterias tóxicas no están en cuerpos blandos; acá no hay toxina que liberar.
 
-    const float particulate = 0.6f * total;
-    const int count = std::clamp(static_cast<int>(particulate / 0.05f), 4, 60);
+    const float particulate = (apoptotic ? 1.0f : 0.6f) * total;
+    const int count = apoptotic ? 5 : std::clamp(static_cast<int>(particulate / 0.05f), 4, 60);
     const float each = particulate / static_cast<float>(count);
     for (int k = 0; k < count; ++k) {
         Rng rng(config_.seed, rng_stream::kLysis, body.id * 64ull + static_cast<std::uint64_t>(k), step_);
@@ -3215,8 +3264,9 @@ void World::lyse(entt::entity cell, const char* cause) {
                 break;
             }
         }
+        // Un cuerpo apoptótico mide ~1–5 µm (Elmore 2007).
         ambient_.push(ParticleKind::Detritus, wrapCoord(p.x, width_), wrapCoord(p.y, height_),
-                      std::min(4.0f, radiusFromMass(each)), each);
+                      apoptotic ? 2.5f : std::min(4.0f, radiusFromMass(each)), each);
     }
     // Diatomeas: la frústula de sílice no se descompone; queda vacía en el sedimento (las que
     // se ven en cualquier muestra de agua son, en buena parte, frústulas de células muertas).

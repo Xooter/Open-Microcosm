@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ai/autopilot.hpp"
+#include "bio/animal_cell.hpp"
 #include "bio/bacteria.hpp"
 #include "bio/cell.hpp"
 #include "bio/cyanobacteria.hpp"
@@ -168,6 +169,7 @@ struct WorldConfig {
 
 // Comportamientos e interacciones vistos en la partida (enciclopedia).
 struct Observations {
+    int apoptoses = 0; // células animales que murieron por apoptosis
     int chytridInfections = 0;
     int chytridReleases = 0;
     int buds = 0;
@@ -370,6 +372,14 @@ class World {
     const ChemField& silicate() const { return silicate_; }
     const ChemField& iron() const { return iron_; }
     const ChemField& vitamin() const { return vitamin_; }
+    // Medio de cultivo (fase 20b): glutamina, lactato secretado y fMLP de las bacterias [µM]. Solo
+    // difunden cuando hay células animales (o glutamina en el medio): en una gota no cuestan nada.
+    const ChemField& glutamine() const { return glutamine_; }
+    const ChemField& lactate() const { return lactate_; }
+    const ChemField& fmlp() const { return fmlp_; }
+    bool cultureFields() const { return cultureFields_; }
+    bool isAnimalCell(entt::entity e) const;
+    float crawlSpeed(entt::entity e) const; // [µm/s reales] de su migración
     // Totales conservados [pmol] (agua + células + frústulas): lo disuelto en la sílice y el hierro.
     double totalSilicon() const;
     double totalIron() const;
@@ -531,7 +541,9 @@ class World {
     void duplicateOrganelles(entt::entity cell);
     bool septumTips(const RingBody& body, std::size_t& tipA, std::size_t& tipB) const;
     void divide(entt::entity cell, std::size_t tipA, std::size_t tipB);
-    void lyse(entt::entity cell, const char* cause);
+    // `apoptotic`: muerte ordenada de una célula animal (se fragmenta en cuerpos apoptóticos sin
+    // derramar su contenido); si no, necrosis o lisis (revienta).
+    void lyse(entt::entity cell, const char* cause, bool apoptotic = false);
     void recordDeath(entt::entity cell, const std::string& cause);
     void noteDeath(entt::entity e, SpeciesId species, Vec2 at, const std::string& cause,
                    entt::entity successor = entt::null);
@@ -574,6 +586,15 @@ class World {
     void releaseChytridSpores(entt::entity host);
     Vec2 wrapped(Vec2 at) const;
     float microMolarPerPmol() const;
+    // Células animales (game/world_animal.cpp).
+    void setupAnimalCell(entt::entity e, Rng& rng);
+    void steerCrawler(entt::entity e, const RingBody& body, Locomotion& loco, float dt, bool player);
+    void measureAnimalContacts();
+    float animalUptake(entt::entity e, const RingBody& body, const Metabolism& meta, float bioDt);
+    float animalTargetArea(entt::entity e, const AnimalCell& ac, float spreadArea) const;
+    bool updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, float bioDt);
+    void afterAnimalDivision(entt::entity mother, entt::entity child);
+    void releaseFmlp(float dt);
     void excludeFromCells();
     void rebuildBuckets();
     void resolvePenetrations();
@@ -589,6 +610,10 @@ class World {
     Fft2D fft_;
     Fluid fluid_;
     ChemField oxygen_, nutrients_, phosphate_, nitrogen_, silicate_, iron_, vitamin_, co2_, toxin_, autoinducer_, phage_;
+    ChemField glutamine_, lactate_, fmlp_;
+    bool cultureFields_ = false;
+    std::vector<entt::entity> animalList_, apoptosisDone_;
+    std::vector<const RingBody*> allBodies_;
     Grid2D light_, shading_;
     AmbientParticles ambient_;
     Bacteria bacteria_;

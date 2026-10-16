@@ -50,7 +50,8 @@ const char* const kGeneKeys[] = {"tamano",      "motor",    "mitocondrias", "clo
 static_assert(sizeof(kGeneKeys) / sizeof(kGeneKeys[0]) == kGeneCount);
 
 constexpr std::pair<const char*, LocomotionType> kLocomotion[] = {
-    {"cilios", LocomotionType::Cilia}, {"flagelo", LocomotionType::Flagellum}, {"pseudopodo", LocomotionType::Pseudopod}};
+    {"cilios", LocomotionType::Cilia}, {"flagelo", LocomotionType::Flagellum}, {"pseudopodo", LocomotionType::Pseudopod},
+    {"arrastre", LocomotionType::Crawl}};
 constexpr std::pair<const char*, FeedingMode> kFeeding[] = {
     {"surco_oral", FeedingMode::OralGroove}, {"polo_anterior", FeedingMode::Anterior},
     {"fagocitosis", FeedingMode::Phagocytosis}, {"raptorial", FeedingMode::Raptorial},
@@ -75,7 +76,10 @@ constexpr const char* kBeingKeys[] = {
     "alcance_cuello", "manipulacion_horas", "cloroplastos", "desliza_por_rafe", "auxotrofa_b12", "frustula",
     "filamento", "celulas_filamento", "fragmentacion_por_hora", "zoosporas", "colonias_hijas",
     "madre_muere_al_liberar", "masa_seca_relativa", "gemacion", "anaerobia", "boca_posterior", "ciclosis", "ph",
-    "temperatura", "salinidad_max", "reserva", "pared", "genoma", "forma", "apariencia"};
+    "temperatura", "salinidad_max", "reserva", "pared", "genoma", "forma", "apariencia", "celula"};
+constexpr const char* kAnimalCellKeys[] = {"adherente", "radio_redondeada", "inhibicion_contacto_locomocion",
+                                           "inhibicion_contacto_proliferacion", "suero_minimo",
+                                           "apoptosis_sin_suero_h", "se_divide", "quimiotaxis_fmlp"};
 constexpr const char* kLookKeys[] = {"estilo", "color_plastos"};
 constexpr const char* kShapeKeys[] = {"semieje_mayor", "semieje_menor", "memoria_forma", "color",
                                       "nucleo",        "cuadratura",    "afinamiento"};
@@ -163,6 +167,23 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         } else {
             r.errors.push_back(r.where + ": 'genoma' tiene que ser una tabla {gen = valor}");
         }
+    }
+    if (const toml::table* cell = r.table("celula")) {
+        AnimalCellInfo& a = s.animalCell;
+        a.present = true;
+        toml_io::warnUnknown(*cell, kAnimalCellKeys, r.where + " [celula]", warnings);
+        toml_io::Reader cr{*cell, r.where + " [celula]", {}};
+        cr.flag("adherente", a.adherent);
+        cr.count("radio_redondeada", a.roundRadius);
+        cr.flag("inhibicion_contacto_locomocion", a.contactLocomotion);
+        cr.flag("inhibicion_contacto_proliferacion", a.contactProliferation);
+        cr.count("suero_minimo", a.serumMinimum);
+        cr.count("apoptosis_sin_suero_h", a.apoptosisWithoutSerumHours);
+        cr.flag("se_divide", a.cycles);
+        cr.flag("quimiotaxis_fmlp", a.chemotaxisFmlp);
+        if (a.roundRadius <= 0.0f)
+            cr.errors.push_back(cr.where + ": 'radio_redondeada' tiene que ser positivo");
+        r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
     }
     if (const toml::table* look = t.get("apariencia") ? t.get("apariencia")->as_table() : nullptr) {
         for (const auto& [k, v] : *look)
@@ -310,7 +331,8 @@ const std::vector<std::string>& drawingStyles() {
         "cinturones_y_proboscide", "cinta_helicoidal", "placa_axial",   "plastos_estrellados",
         "plasto_reticulado", "frustula",           "colonia_esferica",  "colonia_plana",
         "corona_peristomal", "corona_de_membranelas", "tentaculos_capitados", "cirros",
-        "cuello_extensible", "dos_flagelos",        "levadura"};
+        "cuello_extensible", "dos_flagelos",        "levadura",          "celula_adherida",
+        "neutrofilo"};
     return styles;
 }
 

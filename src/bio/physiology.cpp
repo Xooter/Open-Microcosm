@@ -65,6 +65,54 @@ SourcedValue readRate(const toml::table& t, const std::string& species, const ch
     return s;
 }
 
+enum class Kind { Speed, Time, Density, Flux, Concentration, Ratio };
+
+// Rapidez [µm/h], tiempo [h] o densidad [1/cm²] en la unidad publicada; las dos primeras,
+// llevadas a 20 °C con Q10 (una rapidez escala como una tasa; un tiempo, al revés).
+SourcedValue readScaled(const toml::table& t, const std::string& species, const char* key, Kind kind) {
+    SourcedValue s;
+    const toml::table* e = t[key].as_table();
+    if (!e)
+        return s;
+    const auto v = (*e)["valor"].value<double>();
+    const auto unit = (*e)["unidad"].value<std::string>();
+    if (!v || !unit) {
+        gWarnings.push_back(species + "." + key + ": falta valor o unidad");
+        return s;
+    }
+    s.published = static_cast<float>(*v);
+    s.unit = *unit;
+    s.temperature = static_cast<float>((*e)["temperatura"].value_or(static_cast<double>(kReferenceTemperature)));
+    s.source = (*e)["fuente"].value_or(std::string());
+    s.estimate = (*e)["estimacion"].value_or(false);
+    float factor = 0.0f;
+    if (kind == Kind::Speed)
+        factor = s.unit == "um/h" ? 1.0f : s.unit == "um/min" ? 60.0f : 0.0f;
+    else if (kind == Kind::Time)
+        factor = s.unit == "h" ? 1.0f : s.unit == "min" ? 1.0f / 60.0f : s.unit == "dia" ? 24.0f : 0.0f;
+    else if (kind == Kind::Density)
+        factor = s.unit == "1/cm2" ? 1.0f : 0.0f;
+    else if (kind == Kind::Flux) // por célula → fmol/h (1 amol/s = 3,6 fmol/h)
+        factor = s.unit == "fmol/h" ? 1.0f : s.unit == "amol/s" ? 3.6f : s.unit == "pmol/h" ? 1000.0f : 0.0f;
+    else if (kind == Kind::Concentration)
+        factor = s.unit == "uM" || s.unit == "µM" ? 1.0f : s.unit == "mM" ? 1000.0f : 0.0f;
+    else
+        factor = s.unit == "mol/mol" ? 1.0f : 0.0f;
+    if (factor == 0.0f) {
+        gWarnings.push_back(species + "." + key + ": unidad desconocida '" + s.unit + "'");
+        return s;
+    }
+    s.value = s.published * factor;
+    if (kind == Kind::Speed || kind == Kind::Flux)
+        s.value *= std::pow(kQ10, (kReferenceTemperature - s.temperature) / 10.0f);
+    else if (kind == Kind::Time)
+        s.value *= std::pow(kQ10, (s.temperature - kReferenceTemperature) / 10.0f);
+    s.present = s.value > 0.0f;
+    if (s.source.empty())
+        gWarnings.push_back(species + "." + key + ": sin fuente");
+    return s;
+}
+
 } // namespace
 
 namespace {
@@ -108,6 +156,22 @@ void loadTables(const toml::table& doc) {
         gTable[id].growthMax = readRate(*t, std::string(name.str()), "crecimiento_maximo");
         gTable[id].phosphorusHalfSaturation = readConcentration(*t, std::string(name.str()), "p_media_saturacion");
         gTable[id].siliconHalfSaturation = readConcentration(*t, std::string(name.str()), "si_media_saturacion");
+        const std::string sp(name.str());
+        SpeciesPhysiology& ph = gTable[id];
+        ph.migrationSpeed = readScaled(*t, sp, "rapidez_migracion", Kind::Speed);
+        ph.persistence = readScaled(*t, sp, "persistencia", Kind::Time);
+        ph.phaseG1 = readScaled(*t, sp, "fase_g1", Kind::Time);
+        ph.phaseS = readScaled(*t, sp, "fase_s", Kind::Time);
+        ph.phaseG2 = readScaled(*t, sp, "fase_g2", Kind::Time);
+        ph.phaseM = readScaled(*t, sp, "fase_m", Kind::Time);
+        ph.lifespan = readScaled(*t, sp, "vida", Kind::Time);
+        ph.confluence = readScaled(*t, sp, "confluencia", Kind::Density);
+        ph.glucoseVmax = readScaled(*t, sp, "glucosa_vmax", Kind::Flux);
+        ph.glucoseKm = readScaled(*t, sp, "glucosa_km", Kind::Concentration);
+        ph.glutamineVmax = readScaled(*t, sp, "glutamina_vmax", Kind::Flux);
+        ph.glutamineKm = readScaled(*t, sp, "glutamina_km", Kind::Concentration);
+        ph.lactatePerGlucose = readScaled(*t, sp, "lactato_por_glucosa", Kind::Ratio);
+        ph.oxygenUptake = readScaled(*t, sp, "o2_consumo", Kind::Flux);
         gSource[id] = toml_io::tableSnippet("fisiologia", name.str(), *t);
     }
 }
@@ -184,3 +248,27 @@ std::string physiologySource(SpeciesId id) {
 }
 
 const std::vector<std::string>& physiologyWarnings() { return gWarnings; }
+
+const std::vector<PhysiologyKey>& physiologyKeys() {
+    using P = SpeciesPhysiology;
+    static const std::vector<PhysiologyKey> keys = {
+        {"crecimiento_maximo", &P::growthMax, "1/h", "Crecimiento maximo"},
+        {"p_media_saturacion", &P::phosphorusHalfSaturation, "uM", "Media saturacion de P"},
+        {"si_media_saturacion", &P::siliconHalfSaturation, "uM", "Media saturacion de Si"},
+        {"rapidez_migracion", &P::migrationSpeed, "um/h", "Rapidez de migracion"},
+        {"persistencia", &P::persistence, "h", "Persistencia de la direccion"},
+        {"fase_g1", &P::phaseG1, "h", "Fase G1"},
+        {"fase_s", &P::phaseS, "h", "Fase S"},
+        {"fase_g2", &P::phaseG2, "h", "Fase G2"},
+        {"fase_m", &P::phaseM, "h", "Mitosis"},
+        {"vida", &P::lifespan, "h", "Vida media"},
+        {"confluencia", &P::confluence, "1/cm2", "Densidad de confluencia"},
+        {"glucosa_vmax", &P::glucoseVmax, "fmol/h", "Captacion maxima de glucosa"},
+        {"glucosa_km", &P::glucoseKm, "uM", "Km de la glucosa"},
+        {"glutamina_vmax", &P::glutamineVmax, "fmol/h", "Captacion maxima de glutamina"},
+        {"glutamina_km", &P::glutamineKm, "uM", "Km de la glutamina"},
+        {"lactato_por_glucosa", &P::lactatePerGlucose, "mol/mol", "Lactato por glucosa (Warburg)"},
+        {"o2_consumo", &P::oxygenUptake, "fmol/h", "Consumo de O2"},
+    };
+    return keys;
+}

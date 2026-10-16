@@ -101,8 +101,19 @@ void World::computePH() {
     // (pK′₂ ~10), que frena la suba del pH por encima de ~9.
     const auto& co2 = co2_.grid().v;
     const float pk = medium_.carbonatePK;
-    for (std::size_t k = 0; k < co2.size(); ++k)
-        ph_.v[k] = std::clamp(pk + std::log10(medium_.alkalinity / std::max(0.05f, co2[k])), 4.0f, 11.0f);
+    if (!cultureFields_) {
+        for (std::size_t k = 0; k < co2.size(); ++k)
+            ph_.v[k] = std::clamp(pk + std::log10(medium_.alkalinity / std::max(0.05f, co2[k])), 4.0f, 11.0f);
+        return;
+    }
+    // El ácido láctico que secretan las células (pKa 3,9: todo disociado) se lleva una base por
+    // lactato: el bicarbonato baja y el medio se acidifica (el rojo fenol vira a naranja y amarillo).
+    // El CO₂ que libera esa reacción se va al aire de la incubadora.
+    const auto& lac = lactate_.grid().v;
+    for (std::size_t k = 0; k < co2.size(); ++k) {
+        const float bicarbonate = std::max(1.0f, medium_.alkalinity - std::max(0.0f, lac[k]));
+        ph_.v[k] = std::clamp(pk + std::log10(bicarbonate / std::max(0.05f, co2[k])), 4.0f, 11.0f);
+    }
 }
 
 const char* World::applyEnvironmentStress(entt::entity e, const RingBody& body, const SpeciesInfo& info,

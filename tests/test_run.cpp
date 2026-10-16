@@ -216,6 +216,7 @@ TEST_CASE("sandbox: cada ser del catálogo cae en la categoría que le correspon
                     SpeciesId::Pediastrum, SpeciesId::Mougeotia, SpeciesId::Zygnema, SpeciesId::Oedogonium,
                     SpeciesId::Asterionella, SpeciesId::Cyclotella}},
         {C::Fungi, {SpeciesId::Candida}},
+        {C::HumanCells, {*findSpecies("fibroblasto_dermico_humano"), *findSpecies("hela"), *findSpecies("neutrofilo")}},
     };
     int listed = 0;
     for (const auto& [category, species] : expected)

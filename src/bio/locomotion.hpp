@@ -13,6 +13,10 @@ enum class LocomotionType : std::uint8_t {
     Cilia,     // ciliados (Paramecium): deslizamiento continuo, giro por batido diferencial
     Flagellum, // flagelados (Euglena, Chlamydomonas): un flagelo anterior que tira
     Pseudopod, // ameboides (Amoeba): protrusión del frente y contracción de la cola
+    // Células animales adheridas al fondo (fibroblastos, neutrófilos): el lamelipodio protruye
+    // en el frente y las adhesiones focales tiran del cuerpo. Es biología (polimerización de
+    // actina), así que corre en tiempo biológico: unos µm/min reales son µm/s con kBioTimeScale 60.
+    Crawl,
 };
 
 const char* locomotionName(LocomotionType type);

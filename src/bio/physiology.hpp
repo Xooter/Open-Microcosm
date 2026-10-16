@@ -25,7 +25,30 @@ struct SpeciesPhysiology {
     // Medias saturaciones de Monod [µM] (sin corrección de temperatura): Tilman (1977).
     SourcedValue phosphorusHalfSaturation;
     SourcedValue siliconHalfSaturation;
+    // Células de organismos pluricelulares en cultivo (fase 20b). Tasas y tiempos llevados a 20 °C
+    // con Q10 = 2 (la referencia de World::bioScale: a 37 °C vuelven a su valor publicado).
+    SourcedValue migrationSpeed; // rapidez del paseo persistente [µm/h]
+    SourcedValue persistence;    // tiempo de persistencia de la dirección [h]
+    SourcedValue phaseG1, phaseS, phaseG2, phaseM; // duración de cada fase del ciclo [h]
+    SourcedValue lifespan;       // vida media sin dividirse (neutrófilo) [h]
+    SourcedValue confluence;     // densidad de confluencia [células/cm²] (sin Q10)
+    // Metabolismo de una célula animal (por célula; las tasas, a 20 °C por Q10).
+    SourcedValue glucoseVmax;    // captación máxima de glucosa [fmol/h]
+    SourcedValue glucoseKm;      // [µM] (sin Q10)
+    SourcedValue glutamineVmax;  // [fmol/h]
+    SourcedValue glutamineKm;    // [µM]
+    SourcedValue lactatePerGlucose; // lactato secretado por glucosa captada [mol/mol] (Warburg)
+    SourcedValue oxygenUptake;   // consumo de O₂ [fmol/h]
 };
+
+// Las claves de fisiologia.toml de cada valor, para listarlos (ficha, exportación).
+struct PhysiologyKey {
+    const char* key;
+    SourcedValue SpeciesPhysiology::*member;
+    const char* unit; // la interna
+    const char* label;
+};
+const std::vector<PhysiologyKey>& physiologyKeys();
 
 // La de la especie (la de fábrica se carga la primera vez, de assets/content/base/fisiologia.toml).
 const SpeciesPhysiology& speciesPhysiology(SpeciesId id);

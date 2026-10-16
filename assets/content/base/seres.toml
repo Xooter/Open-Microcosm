@@ -786,3 +786,107 @@ nucleo = 0.3
 [ser.apariencia]
 estilo = "frustula"
 color_plastos = [176, 140, 50]
+
+# --- Células humanas en cultivo (fase 20b) -------------------------------------------------------
+# Tipos y líneas reales; los valores medidos (duplicación, fases, migración, metabolismo) están en
+# fisiologia.toml con su fuente. [ser.celula]: mecanismos de una célula de organismo pluricelular
+# (adherente, radio_redondeada [µm], inhibicion_contacto_locomocion, inhibicion_contacto_proliferacion,
+# suero_minimo [fracción], apoptosis_sin_suero_h, se_divide, quimiotaxis_fmlp). masa_seca_relativa:
+# la célula extendida es mucho más delgada que una esfera de su área (el volumen de cada tipo, en el
+# comentario).
+
+# Fibroblasto dérmico humano: célula fusiforme del tejido conectivo, extendida ~130 × 30 µm sobre el
+# fondo, ~3000 µm³. Migra con un lamelipodio en el frente; se detiene al tocar a otra (inhibición por
+# contacto) y deja de dividirse en confluencia.
+[[ser]]
+id = "fibroblasto_dermico_humano"
+nombre = "Fibroblasto dermico humano"
+etiquetas = ["celula_humana", "celula_animal", "fibroblasto"]
+descripcion = "Celula del tejido conectivo de la dermis, en cultivo: fusiforme, pegada al fondo, migra con un lamelipodio y se detiene al tocar a otra. Deja de dividirse cuando la monocapa se completa (inhibicion por contacto)."
+locomocion = "arrastre"
+alimentacion = "ninguna"
+masa_seca_relativa = 0.024
+ph = [6.8, 7.8]
+temperatura = [30.0, 40.0]
+salinidad_max = 16.0
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 65.0
+semieje_menor = 15.0
+memoria_forma = 2.0
+color = [214, 210, 198]
+nucleo = 0.4
+[ser.celula]
+adherente = true
+radio_redondeada = 11.0
+inhibicion_contacto_locomocion = true
+inhibicion_contacto_proliferacion = true
+suero_minimo = 0.01
+[ser.apariencia]
+estilo = "celula_adherida"
+
+# HeLa: línea de adenocarcinoma de cuello uterino (1951, Henrietta Lacks). Epitelial, poligonal, ~40 µm
+# extendida, ~2600 µm³. Sin inhibición por contacto de la proliferación (se apila) y con glucólisis
+# aeróbica alta (efecto Warburg).
+[[ser]]
+id = "hela"
+nombre = "HeLa"
+etiquetas = ["celula_humana", "celula_animal", "linea_tumoral"]
+descripcion = "Linea celular de cancer de cuello uterino, la primera humana inmortal (1951). Epitelial y poligonal; no deja de dividirse al llenarse la placa y consume mucha glucosa que convierte en lactato (efecto Warburg), que acidifica el medio."
+locomocion = "arrastre"
+alimentacion = "ninguna"
+masa_seca_relativa = 0.11
+ph = [6.6, 7.9]
+temperatura = [30.0, 40.0]
+salinidad_max = 16.0
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 21.0
+semieje_menor = 16.0
+memoria_forma = 2.0
+color = [212, 206, 196]
+nucleo = 0.55
+cuadratura = 3.0
+[ser.celula]
+adherente = true
+radio_redondeada = 10.5
+inhibicion_contacto_locomocion = false
+inhibicion_contacto_proliferacion = false
+suero_minimo = 0.001
+[ser.apariencia]
+estilo = "celula_adherida"
+
+# Neutrófilo: el leucocito más abundante de la sangre (~8 µm redondo, ~330 µm³; ~15 × 8 µm al
+# migrar). No se divide; vive horas y muere por apoptosis. Sigue los péptidos formilados de las
+# bacterias (fMLP) y las fagocita.
+[[ser]]
+id = "neutrofilo"
+nombre = "Neutrofilo"
+etiquetas = ["celula_humana", "celula_animal", "leucocito", "fagocito"]
+descripcion = "Globulo blanco que caza bacterias: sigue el rastro quimico que ellas dejan (peptidos formilados, fMLP), las envuelve y las digiere. No se divide y vive solo horas; muere por apoptosis, sin inflamar."
+locomocion = "arrastre"
+alimentacion = "fagocitosis"
+presas = ["levadura"]
+masa_seca_relativa = 0.06
+ph = [6.8, 7.8]
+temperatura = [30.0, 40.0]
+salinidad_max = 16.0
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 7.5
+semieje_menor = 4.5
+memoria_forma = 1.0
+color = [218, 214, 206]
+nucleo = 0.55
+[ser.celula]
+adherente = true
+radio_redondeada = 4.2
+inhibicion_contacto_locomocion = false
+inhibicion_contacto_proliferacion = false
+se_divide = false
+quimiotaxis_fmlp = true
+[ser.apariencia]
+estilo = "neutrofilo"

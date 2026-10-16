@@ -84,6 +84,22 @@ enum class FeedingMode : std::uint8_t {
     None,         // autótrofa estricta (Chlamydomonas)
 };
 
+// Célula de un organismo pluricelular en cultivo (fase 20b): qué mecanismos tiene, por nombre en
+// los datos ([ser.celula]). Los valores medidos (rapidez, persistencia, fases del ciclo…) van con
+// su fuente en fisiologia.toml.
+struct AnimalCellInfo {
+    bool present = false;
+    bool adherent = true;              // adherida al fondo por adhesiones focales: el agua no la lleva
+    float roundRadius = 9.0f;          // radio redondeada (mitosis, en suspensión) [µm]
+    bool contactLocomotion = true;     // inhibición por contacto de la locomoción (Abercrombie)
+    bool contactProliferation = true;  // inhibición por contacto de la proliferación
+    float serumMinimum = 0.005f;       // suero (fracción) que pide el punto de restricción de G1
+    // Horas sin factores de crecimiento antes de entrar en apoptosis (0: sobrevive quiescente).
+    float apoptosisWithoutSerumHours = 0.0f;
+    bool cycles = true;                // prolifera (el neutrófilo maduro ya no se divide)
+    bool chemotaxisFmlp = false;       // sigue el gradiente de péptidos formilados bacterianos
+};
+
 struct SpeciesInfo {
     const char* key = "";  // id estable de los datos ("paramecium"): lo guardan las escenas
     const char* name = ""; // el que se muestra
@@ -150,6 +166,7 @@ struct SpeciesInfo {
     const char* style = "";
     bool plastidColorSet = false;
     std::uint8_t plastidColor[3] = {0, 0, 0};
+    AnimalCellInfo animalCell;
 };
 // Estilos de dibujo que el render sabe hacer (para validar los datos).
 const std::vector<std::string>& drawingStyles();

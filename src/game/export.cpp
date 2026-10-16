@@ -236,9 +236,10 @@ void writeSpecies(Json& j, SpeciesId id) {
     j.string("pared", wallName(chem.wall));
     const SpeciesPhysiology& phys = speciesPhysiology(id);
     j.beginObject("fisiologia"); // vacío: usa los valores generales del metabolismo
-    writeSourced(j, "crecimiento_maximo", phys.growthMax, "1/h");
-    writeSourced(j, "p_media_saturacion", phys.phosphorusHalfSaturation, "µM");
-    writeSourced(j, "si_media_saturacion", phys.siliconHalfSaturation, "µM");
+    for (const PhysiologyKey& k : physiologyKeys()) {
+        const std::string unit = std::string(k.unit) == "uM" ? "µM" : std::string(k.unit) == "um/h" ? "µm/h" : k.unit;
+        writeSourced(j, k.key, phys.*k.member, unit.c_str());
+    }
     j.endObject();
     j.endObject();
 }

@@ -149,5 +149,6 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
         loco.target = pilot.target;
         return;
     }
+    case LocomotionType::Crawl: return; // las células animales las guía el mundo (world_animal)
     }
 }

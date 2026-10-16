@@ -71,6 +71,7 @@ enum class BeingCategory : std::uint8_t {
     Amoebae,     // ameboides
     Algae,       // algas unicelulares, coloniales, filamentosas y diatomeas
     Fungi,       // levaduras y hongos
+    HumanCells,  // células humanas en cultivo (fibroblastos, HeLa, neutrófilos)
     Bacteria,    // bacterias (también cianobacterias) y fagos
     Sediment,    // minerales y granos de arena
     Count
@@ -81,6 +82,8 @@ inline BeingCategory categoryOf(Being b) {
     switch (b.kind) {
     case BeingKind::Species: {
         const SpeciesInfo& s = speciesInfo(b.species);
+        if (s.animalCell.present)
+            return BeingCategory::HumanCells;
         if (s.budding && s.feeding == FeedingMode::Osmotroph)
             return BeingCategory::Fungi;
         if (s.filament || s.glider || s.colonyDaughters > 0 || (s.feeding == FeedingMode::None && s.chloroplasts))
@@ -124,6 +127,7 @@ inline const char* categoryName(BeingCategory c) {
     case BeingCategory::Amoebae: return "Amebas";
     case BeingCategory::Algae: return "Algas";
     case BeingCategory::Fungi: return "Hongos y mohos";
+    case BeingCategory::HumanCells: return "Células humanas";
     case BeingCategory::Bacteria: return "Bacterias y virus";
     case BeingCategory::Sediment: return "Sedimento";
     case BeingCategory::Count: break;

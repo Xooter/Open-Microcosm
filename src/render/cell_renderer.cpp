@@ -356,6 +356,7 @@ CellStyle resolveStyle(SpeciesId sid) {
     switch (info.locomotion) {
     case LocomotionType::Flagellum: return CellStyle::Flagellate;
     case LocomotionType::Pseudopod: return CellStyle::Amoeboid;
+    case LocomotionType::Crawl: return CellStyle::Amoeboid;
     case LocomotionType::Cilia: break;
     }
     return CellStyle::Ciliate;

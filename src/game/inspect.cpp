@@ -136,6 +136,7 @@ const char* locomotionText(LocomotionType t) {
     case LocomotionType::Cilia: return "cilios";
     case LocomotionType::Flagellum: return "flagelo";
     case LocomotionType::Pseudopod: return "pseudopodos";
+    case LocomotionType::Crawl: return "arrastre sobre el fondo (lamelipodio)";
     }
     return "";
 }
@@ -155,6 +156,7 @@ const char* kindName(const SpeciesInfo& info) {
     case LocomotionType::Cilia: return "Ciliado";
     case LocomotionType::Flagellum: return "Flagelado";
     case LocomotionType::Pseudopod: return "Ameba";
+    case LocomotionType::Crawl: return info.animalCell.present ? "Celula humana en cultivo" : "Celula que se arrastra";
     }
     return "";
 }
@@ -168,6 +170,7 @@ const char* intentText(Intent i, LocomotionType type, const SpeciesInfo& info) {
                                      : "nada con giros al azar";
         case LocomotionType::Flagellum: return "nada hacia objetivos que cambian al azar";
         case LocomotionType::Pseudopod: return "extiende pseudopodos en direcciones al azar";
+        case LocomotionType::Crawl: return "migra sobre el fondo en un paseo al azar persistente";
         }
         return "deambula";
     case Intent::Chase: return "persigue a una presa que detecta";
@@ -397,19 +400,22 @@ Inspection inspectCell(const World& w, entt::entity e) {
                            v.estimate ? " - ESTIMACION (sin verificar)" : ""));
             add(s, "", asciiFold(v.source));
         };
-        if (phys.growthMax.present || phys.phosphorusHalfSaturation.present || phys.siliconHalfSaturation.present) {
+        bool any = false;
+        for (const PhysiologyKey& k : physiologyKeys())
+            any = any || (phys.*k.member).present;
+        if (any) {
             InspectSection& s = section(ins, "Fisiologia y fuentes");
-            if (const SourcedValue& g = phys.growthMax; g.present) {
-                add(s, "Crecimiento maximo", fmt("%.3f /h a 20 C (duplicacion %.0f h)", g.value, std::log(2.0f) / g.value));
-                cite(s, g);
-            }
-            if (const SourcedValue& p = phys.phosphorusHalfSaturation; p.present) {
-                add(s, "Media saturacion de P", fmt("%g uM", p.value));
-                cite(s, p);
-            }
-            if (const SourcedValue& si = phys.siliconHalfSaturation; si.present) {
-                add(s, "Media saturacion de Si", fmt("%g uM", si.value));
-                cite(s, si);
+            for (const PhysiologyKey& k : physiologyKeys()) {
+                const SourcedValue& v = phys.*k.member;
+                if (!v.present)
+                    continue;
+                if (k.member == &SpeciesPhysiology::growthMax)
+                    add(s, k.label, fmt("%.3f /h a 20 C (duplicacion %.0f h)", v.value, std::log(2.0f) / v.value));
+                else if (std::string(k.unit) == "uM" || std::string(k.unit) == "1/cm2" || std::string(k.unit) == "mol/mol")
+                    add(s, k.label, fmt("%g %s", v.value, k.unit));
+                else
+                    add(s, k.label, fmt("%.3g %s a 20 C", v.value, k.unit));
+                cite(s, v);
             }
         } else {
             add(section(ins, "Fisiologia y fuentes"), "", "sin datos propios: usa los valores generales del metabolismo");

@@ -60,6 +60,7 @@ void drawControlled(App& app) {
     case LocomotionType::Cilia: note("Cilios: W/S avanzar, A/D girar"); break;
     case LocomotionType::Flagellum: note("Flagelo: W o click sostenido, gira hacia el mouse"); break;
     case LocomotionType::Pseudopod: note("Ameba: click sostenido = pseudópodo; toca y envuelve"); break;
+    case LocomotionType::Crawl: note("Célula adherida: click sostenido = migra hacia el mouse (en tiempo biológico)"); break;
     }
     note("R reproducir | V conjugar | F seguir con la cámara");
 }

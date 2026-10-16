@@ -99,3 +99,226 @@ valor = 1.4
 unidad = "µM"
 fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con silicato). SIN VERIFICAR."
 estimacion = true
+
+# --- Células humanas en cultivo (fase 20b) -------------------------------------------------------
+# Tiempos en "h" (también "min"), rapidez en "um/h" o "um/min", densidad en "1/cm2", flujos por
+# célula en "fmol/h" (o "amol/s"), Km en "mM" o "uM", lactato por glucosa en "mol/mol". Todos a
+# 37 °C; el programa los lleva a 20 °C con Q10 = 2 y a 37 °C vuelven a su valor.
+
+[fibroblasto_dermico_humano.crecimiento_maximo]
+valor = 30.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Fibroblastos dérmicos humanos de donante joven en DMEM con 10 % de SFB: duplicación de la población de ~24–48 h según el donante y el pasaje. Valor central del rango."
+estimacion = true
+
+[fibroblasto_dermico_humano.fase_g1]
+valor = 17.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Completa la duplicación de ~30 h con S, G2 y M de la célula humana típica (Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4: S 8 h, G2 4 h, M 1 h). La fase G1 es la que varía entre tipos celulares."
+estimacion = true
+
+[fibroblasto_dermico_humano.fase_s]
+valor = 8.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4 (célula humana típica en cultivo)."
+estimacion = true
+
+[fibroblasto_dermico_humano.fase_g2]
+valor = 4.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4 (célula humana típica en cultivo)."
+estimacion = true
+
+[fibroblasto_dermico_humano.fase_m]
+valor = 1.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4 (célula humana típica en cultivo)."
+estimacion = true
+
+[fibroblasto_dermico_humano.rapidez_migracion]
+valor = 40.0
+unidad = "um/h"
+temperatura = 37.0
+fuente = "Fibroblastos sobre vidrio o plástico: ~0,5–1 µm/min. El modelo de paseo aleatorio persistente es el de Gail & Boone (1970), Biophys. J. 10:980, medido en fibroblastos 3T3 de ratón."
+estimacion = true
+
+[fibroblasto_dermico_humano.persistencia]
+valor = 1.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Persistencia de la dirección de fibroblastos en 2D del orden de 1 h (modelo de Gail & Boone 1970, Biophys. J. 10:980)."
+estimacion = true
+
+[fibroblasto_dermico_humano.confluencia]
+valor = 40000.0
+unidad = "1/cm2"
+fuente = "Monocapa confluente de fibroblastos humanos: ~3–5·10⁴ células/cm²."
+estimacion = true
+
+[fibroblasto_dermico_humano.glucosa_vmax]
+valor = 60.0
+unidad = "fmol/h"
+temperatura = 37.0
+fuente = "Consumo de glucosa de fibroblastos en cultivo ~1–2 µmol por 10⁶ células por día (~40–80 fmol/h por célula)."
+estimacion = true
+
+[fibroblasto_dermico_humano.glucosa_km]
+valor = 3.0
+unidad = "mM"
+temperatura = 37.0
+fuente = "Km de GLUT1, el transportador de glucosa de los fibroblastos: ~1–3 mM (Carruthers 1990, Physiol. Rev. 70:1135)."
+
+[fibroblasto_dermico_humano.glutamina_vmax]
+valor = 12.0
+unidad = "fmol/h"
+temperatura = 37.0
+fuente = "Consumo de glutamina de células humanas no tumorales en cultivo ~20 % del de glucosa."
+estimacion = true
+
+[fibroblasto_dermico_humano.glutamina_km]
+valor = 0.1
+unidad = "mM"
+temperatura = 37.0
+fuente = "Km de los transportadores de glutamina (ASCT2/SLC1A5) del orden de 0,1 mM."
+estimacion = true
+
+[fibroblasto_dermico_humano.lactato_por_glucosa]
+valor = 1.0
+unidad = "mol/mol"
+temperatura = 37.0
+fuente = "Las células en cultivo convierten buena parte de la glucosa en lactato aun con O2: ~1 lactato por glucosa en células no tumorales (2 sería toda)."
+estimacion = true
+
+[hela.crecimiento_maximo]
+valor = 22.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Puck, Marcus & Cieciura (1956), J. Exp. Med. 103:273: tiempo de generación de HeLa S3 de ~20 h a 37 °C; las líneas HeLa de laboratorio duplican en ~20–24 h."
+
+[hela.fase_g1]
+valor = 9.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Completa la duplicación de ~22 h con S, G2 y M de la célula humana típica (Alberts et al., MBoC 6ª ed., fig. 17-4); HeLa tiene una G1 algo más corta."
+estimacion = true
+
+[hela.fase_s]
+valor = 8.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4."
+estimacion = true
+
+[hela.fase_g2]
+valor = 4.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4."
+estimacion = true
+
+[hela.fase_m]
+valor = 1.0
+unidad = "h"
+temperatura = 37.0
+fuente = "La mitosis de HeLa dura ~1 h de la ruptura de la envoltura nuclear a la citocinesis (videomicroscopía)."
+estimacion = true
+
+[hela.rapidez_migracion]
+valor = 15.0
+unidad = "um/h"
+temperatura = 37.0
+fuente = "HeLa migra poco en 2D: ~0,2–0,3 µm/min."
+estimacion = true
+
+[hela.persistencia]
+valor = 0.5
+unidad = "h"
+temperatura = 37.0
+fuente = "Persistencia corta de células epiteliales en 2D."
+estimacion = true
+
+[hela.confluencia]
+valor = 150000.0
+unidad = "1/cm2"
+fuente = "Sin inhibición por contacto de la proliferación: HeLa llega a ~1–2·10⁵ células/cm² y se apila."
+estimacion = true
+
+[hela.glucosa_vmax]
+valor = 200.0
+unidad = "fmol/h"
+temperatura = 37.0
+fuente = "Líneas tumorales en cultivo: ~100–400 nmol de glucosa por 10⁶ células por hora (Jain et al. 2012, Science 336:1040, perfiles de consumo de las NCI-60)."
+estimacion = true
+
+[hela.glucosa_km]
+valor = 3.0
+unidad = "mM"
+temperatura = 37.0
+fuente = "Km de GLUT1: ~1–3 mM (Carruthers 1990, Physiol. Rev. 70:1135)."
+
+[hela.glutamina_vmax]
+valor = 40.0
+unidad = "fmol/h"
+temperatura = 37.0
+fuente = "Las líneas tumorales consumen glutamina a ~20 % de su consumo de glucosa (Jain et al. 2012, Science 336:1040)."
+estimacion = true
+
+[hela.glutamina_km]
+valor = 0.1
+unidad = "mM"
+temperatura = 37.0
+fuente = "Km de ASCT2 (SLC1A5) del orden de 0,1 mM."
+estimacion = true
+
+[hela.lactato_por_glucosa]
+valor = 1.7
+unidad = "mol/mol"
+temperatura = 37.0
+fuente = "Glucólisis aeróbica (efecto Warburg): las líneas tumorales secretan ~1,5–2 lactatos por glucosa consumida (Jain et al. 2012, Science 336:1040)."
+estimacion = true
+
+[neutrofilo.rapidez_migracion]
+valor = 15.0
+unidad = "um/min"
+temperatura = 37.0
+fuente = "Neutrófilos humanos que migran en un gradiente de fMLP: ~10–20 µm/min (Zigmond 1977, J. Cell Biol. 75:606)."
+estimacion = true
+
+[neutrofilo.persistencia]
+valor = 5.0
+unidad = "min"
+temperatura = 37.0
+fuente = "Sin gradiente, los neutrófilos cambian de dirección cada pocos minutos."
+estimacion = true
+
+[neutrofilo.vida]
+valor = 20.0
+unidad = "h"
+temperatura = 37.0
+fuente = "En cultivo, la mayoría de los neutrófilos aislados entra en apoptosis espontánea en ~1 día (en la sangre circulan ~6–8 h)."
+estimacion = true
+
+[neutrofilo.glucosa_vmax]
+valor = 20.0
+unidad = "fmol/h"
+temperatura = 37.0
+fuente = "El neutrófilo obtiene casi toda su energía de la glucólisis (pocas mitocondrias funcionales)."
+estimacion = true
+
+[neutrofilo.glucosa_km]
+valor = 3.0
+unidad = "mM"
+temperatura = 37.0
+fuente = "Km de GLUT1: ~1–3 mM (Carruthers 1990, Physiol. Rev. 70:1135)."
+
+[neutrofilo.lactato_por_glucosa]
+valor = 1.8
+unidad = "mol/mol"
+temperatura = 37.0
+fuente = "Metabolismo casi totalmente glucolítico: la mayor parte de la glucosa sale como lactato."
+estimacion = true
