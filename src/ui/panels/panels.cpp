@@ -19,6 +19,7 @@ void registerPanels(PanelHost& host) {
     host.add(makeMeasurePanel());
     host.add(makeContentPanel());
     host.add(makeCulturePanel());
+    host.add(makeExperimentPanel());
     host.add(makeHelpPanel());
 }
 
