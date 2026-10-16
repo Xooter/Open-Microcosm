@@ -2556,7 +2556,7 @@ void World::updateLifecycle(float dt) {
         const SpeciesInfo& info = speciesInfo(sid);
         Cyst* cyst = registry_.try_get<Cyst>(e);
         const Heredity* her = registry_.try_get<Heredity>(e);
-        // µmax de la especie (assets/species/fisiologia.toml, con su fuente) relativo al valor
+        // µmax de la especie (assets/content/base/fisiologia.toml, con su fuente) relativo al valor
         // general del metabolismo; sin dato, el general.
         const SpeciesPhysiology& physio = speciesPhysiology(sid);
         in.phosphorusHalfSaturation = physio.phosphorusHalfSaturation.present ? physio.phosphorusHalfSaturation.value : 0.0f;

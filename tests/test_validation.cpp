@@ -1,6 +1,6 @@
 // Validación contra resultados publicados (MVP). Suite "validacion": ctest -L validacion.
 //
-// Cada test reproduce un experimento real y compara con la fuente (assets/species/fisiologia.toml,
+// Cada test reproduce un experimento real y compara con la fuente (assets/content/base/fisiologia.toml,
 // docs/validacion.md). Son largos: la biología se acelera con la escala de tiempo biológico (600),
 // que no cambia las proporciones entre procesos.
 #include "bio/physiology.hpp"

@@ -4,11 +4,11 @@
 # Unidades: "1/h" o "1/dia" (tasa), "h" o "dia" (tiempo de duplicación).
 # estimacion = true: no es una medición directa en condiciones comparables (temperatura sin
 # verificar, otra cepa u otro medio); la ficha lo dice. REVISAR antes de publicar resultados.
-# Las especies que no figuran usan el valor general del metabolismo (metabolismo.crecimiento_maximo).
+# Cada tabla es [id_del_ser.parametro] (el id de seres.toml). Las especies que no figuran usan el valor general del metabolismo (metabolismo.crecimiento_maximo).
 
 version = 1
 
-[Paramecium.crecimiento_maximo]
+[paramecium.crecimiento_maximo]
 # Ajuste logístico (r) al monocultivo de P. caudatum de la fig. 22 (datos digitalizados en el paquete
 # de R gauseR, Clark et al.): r = 0,946 ± 0,109 /día, K = 203 (volumen relativo). La figura mide
 # volumen, no individuos.
@@ -18,14 +18,14 @@ temperatura = 26.0
 fuente = "Gause, G. F. (1934). The Struggle for Existence. Williams & Wilkins, fig. 22 (P. caudatum en monocultivo). Temperatura del cultivo sin verificar (se asume 26 °C)."
 estimacion = true
 
-[Amoeba.crecimiento_maximo]
+[amoeba.crecimiento_maximo]
 # Generación más corta a 20 °C, bien alimentada con Tetrahymena (rango 44-84 h según el alimento).
 valor = 44.0
 unidad = "h"
 temperatura = 20.0
 fuente = "Rogerson, A. (1980). Can. J. Zool.: tiempo de generación de Amoeba proteus alimentada con Tetrahymena pyriformis, 44 h a 20 °C (tesis de Rogerson 1978, Univ. of Stirling: 44-84 h a 20 °C)."
 
-[Didinium.crecimiento_maximo]
+[didinium.crecimiento_maximo]
 # Aumento de los depredadores con presa abundante en la fig. 32 (días 4 a 6: de 4,8 a 31): ln(31/4,8)/2.
 valor = 0.93
 unidad = "1/dia"
@@ -33,7 +33,7 @@ temperatura = 26.0
 fuente = "Gause, G. F. (1934). The Struggle for Existence, fig. 32 (Didinium nasutum con P. caudatum; datos en gauseR). Temperatura sin verificar."
 estimacion = true
 
-[Chlamydomonas.crecimiento_maximo]
+[chlamydomonas.crecimiento_maximo]
 # Duplicación de la clorofila de la cepa silvestre a ~70 µmol fotones m⁻² s⁻¹ (no conteo de células).
 valor = 20.0
 unidad = "h"
@@ -41,7 +41,7 @@ temperatura = 25.0
 fuente = "PNAS (1997), tabla de crecimiento y fotosíntesis de cepas de C. reinhardtii: duplicación de la clorofila ~20 h a ~70 µmol fotones m⁻² s⁻¹. Temperatura sin verificar."
 estimacion = true
 
-[Euglena.crecimiento_maximo]
+[euglena.crecimiento_maximo]
 # Medio con digerido de fermentación metánica al 10 % (no es un medio estándar).
 valor = 0.047
 unidad = "1/h"
@@ -49,7 +49,7 @@ temperatura = 30.0
 fuente = "Cultivo de E. gracilis en digerido de fermentación metánica (10 %), 150 µmol m⁻² s⁻¹: µmax 0,047/h a 30 °C."
 estimacion = true
 
-[ "Paramecium aurelia".crecimiento_maximo ]
+[paramecium_aurelia.crecimiento_maximo]
 # Ajuste logístico (r) al monocultivo de P. aurelia de la fig. 22 (datos en gauseR):
 # r = 0,707 ± 0,090 /día, K = 222 (volumen relativo).
 valor = 0.707
@@ -62,39 +62,39 @@ estimacion = true
 # J. Phycol. 12: 375-383, doi 10.1111/j.1529-8817.1976.tb02860.x). SIN VERIFICAR contra las
 # tablas originales: confirmado solo que Asterionella tiene la K de P más baja (gana con P
 # limitante) y Cyclotella la de Si más baja (gana con Si limitante).
-[Asterionella.crecimiento_maximo]
+[asterionella.crecimiento_maximo]
 valor = 1.1
 unidad = "1/dia"
 temperatura = 24.0
 fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383. SIN VERIFICAR."
 estimacion = true
 
-[Asterionella.p_media_saturacion]
+[asterionella.p_media_saturacion]
 valor = 0.04
 unidad = "µM"
 fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con fosfato). SIN VERIFICAR."
 estimacion = true
 
-[Asterionella.si_media_saturacion]
+[asterionella.si_media_saturacion]
 valor = 3.9
 unidad = "µM"
 fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con silicato). SIN VERIFICAR."
 estimacion = true
 
-[Cyclotella.crecimiento_maximo]
+[cyclotella.crecimiento_maximo]
 valor = 1.1
 unidad = "1/dia"
 temperatura = 24.0
 fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383. SIN VERIFICAR."
 estimacion = true
 
-[Cyclotella.p_media_saturacion]
+[cyclotella.p_media_saturacion]
 valor = 0.25
 unidad = "µM"
 fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con fosfato). SIN VERIFICAR."
 estimacion = true
 
-[Cyclotella.si_media_saturacion]
+[cyclotella.si_media_saturacion]
 valor = 1.4
 unidad = "µM"
 fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con silicato). SIN VERIFICAR."

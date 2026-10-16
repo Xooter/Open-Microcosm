@@ -7,6 +7,7 @@
 #include <cmath>
 #include <atomic>
 #include <mutex>
+#include <optional>
 
 namespace {
 
@@ -91,10 +92,12 @@ SourcedValue readConcentration(const toml::table& t, const std::string& species,
 
 // Con gLoadMutex tomado. Marca la tabla como cargada al final (también si falla: no se reintenta
 // en cada consulta), así ningún hilo la lee a medio llenar.
-bool loadLocked(const std::string& path, std::string* error) {
-    for (SpeciesPhysiology& p : gTable)
-        p = SpeciesPhysiology{};
-    gWarnings.clear();
+bool loadLocked(const std::string& path, std::string* error, bool reset = true) {
+    if (reset) {
+        for (SpeciesPhysiology& p : gTable)
+            p = SpeciesPhysiology{};
+        gWarnings.clear();
+    }
     toml::table doc;
     try {
         doc = toml::parse_file(path);
@@ -108,10 +111,9 @@ bool loadLocked(const std::string& path, std::string* error) {
         const toml::table* t = node.as_table();
         if (!t)
             continue; // "version" y otras claves sueltas
-        int id = -1;
-        for (int i = 0; i < speciesCount(); ++i)
-            if (std::string_view(name.str()) == speciesInfo(static_cast<SpeciesId>(i)).name)
-                id = i;
+        // Por el id del ser (seres.toml de algún paquete cargado).
+        const std::optional<SpeciesId> found = findSpecies(name.str());
+        const int id = found ? static_cast<int>(*found) : -1;
         if (id < 0) {
             gWarnings.push_back("especie desconocida: " + std::string(name.str()));
             continue;
@@ -131,12 +133,19 @@ bool loadSpeciesPhysiology(const std::string& path, std::string* error) {
     return loadLocked(path, error);
 }
 
+bool addSpeciesPhysiology(const std::string& path, std::string* error) {
+    std::lock_guard<std::mutex> lock(gLoadMutex);
+    if (!gLoaded.load(std::memory_order_relaxed))
+        loadLocked(assetPath("content/base/fisiologia.toml"), nullptr);
+    return loadLocked(path, error, false);
+}
+
 const SpeciesPhysiology& speciesPhysiology(SpeciesId id) {
     if (!gLoaded.load(std::memory_order_acquire)) {
         // La primera consulta carga la tabla de fábrica (los loops paralelos esperan acá).
         std::lock_guard<std::mutex> lock(gLoadMutex);
         if (!gLoaded.load(std::memory_order_relaxed))
-            loadLocked(assetPath("species/fisiologia.toml"), nullptr);
+            loadLocked(assetPath("content/base/fisiologia.toml"), nullptr);
     }
     return gTable[static_cast<int>(id)];
 }

@@ -63,7 +63,7 @@ sistemas paralelos (los seres actuales se migran, no conviven con un sistema nue
    validación con avisos (claves desconocidas, valores fuera de lista, referencias sin resolver,
    ids repetidos) sin cerrar el programa; tests en la suite `paquetes`. Falta: los paquetes del
    usuario, el `.biopack` y mostrar los avisos en la interfaz (paso 7).
-3. 🟡 **Ser como datos:** morfología (semiejes, forma, rigidez), mecanismos por nombre (locomoción,
+3. ✅ **Ser como datos:** morfología (semiejes, forma, rigidez), mecanismos por nombre (locomoción,
    modo de alimentación, reproducción, quistes, sésil…), fisiología con fuentes (lo de
    `fisiologia.toml` se integra), química (reserva, pared), plan corporal (estructuras y tamaños),
    textos de la ficha y la enciclopedia, y **apariencia** (colores, organelos visibles, estilo de
@@ -73,8 +73,8 @@ sistemas paralelos (los seres actuales se migran, no conviven con un sistema nue
    (ficha y enciclopedia), plan corporal (`planes.toml`, un paquete puede traer planes nuevos),
    apariencia (`[ser.apariencia]`: estilo de dibujo con nombre y color de los plastos; el render ya
    no distingue especies, verificado con capturas) y conjugación (dato; ahora solo dentro de la
-   especie: antes cualquier ciliado podía ser pareja). Falta: integrar la fisiología (sigue en
-   `fisiologia.toml`, por nombre).
+   especie: antes cualquier ciliado podía ser pareja) y fisiología con fuentes
+   (`content/base/fisiologia.toml`, por id del ser; un paquete suma la suya).
 4. ✅ **Dietas por etiquetas:** cada ser tiene etiquetas (`bacteria`, `ciliado`, `alga_verde`,
    `celula_humana`…) y las dietas y huidas son conjuntos de etiquetas, sin límite de cantidad.
 5. 🟡 **Migración de lo existente:** las 24 especies, los minerales y los biomas pasan al paquete de
