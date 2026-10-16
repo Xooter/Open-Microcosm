@@ -48,3 +48,10 @@ id = "frasco_t25"
 nombre = "Frasco T-25"
 area_cm2 = 25.0
 volumen_ml = 5.0
+
+# Portaobjetos con cubreobjetos de 22 × 22 mm sobre una gota de ~10 µL: una capa de ~20 µm.
+[[recipiente]]
+id = "portaobjetos"
+nombre = "Portaobjetos con cubreobjetos de 22 mm"
+area_cm2 = 4.84
+volumen_ml = 0.01

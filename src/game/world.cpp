@@ -15,6 +15,11 @@
 #include <limits>
 
 namespace {
+// Grupo de contacto de los protoplastos de un tejido (ningún id de entidad llega a este valor).
+constexpr std::uint32_t kTissueGroup = 0xFFFFFFF0u;
+} // namespace
+
+namespace {
 SpeciesId speciesOfEntity(const entt::registry& reg, entt::entity e);
 } // namespace
 
@@ -150,6 +155,9 @@ World::World(const WorldConfig& config)
     // Un medio de cultivo trae glutamina: sus campos difunden desde el principio.
     cultureFields_ = config.medium.glutamine > 0.0f;
     fluid_.gapHeight = config.depth;
+    if (config.tissue.enabled) // preparado: las paredes del tejido y sus protoplastos
+        buildTissue(config.tissue);
+    seedBlood(); // glóbulos rojos y plaquetas de un preparado de sangre
     bacteria_.resetMemory(nutrients_.grid());
     fluid_.solve(fft_);
     computeLight();
@@ -280,6 +288,9 @@ void World::step(float dt) {
     stepFungi(dt);
     stepPlasmodium(dt);
     finishBodies();
+    confineProtoplasts();    // la pared celular de un tejido es rígida
+    updateTissue(dt);        // ósmosis de los protoplastos (tiempo real)
+    updateBlood(dt);         // y la de los glóbulos rojos
     updateFeeding(dt);       // eventos de topología (fagocitosis): al final del paso
     if (cultureFields_) {
         releaseFmlp(dt);
@@ -689,7 +700,10 @@ void World::beginBodies(float dt) {
         const RingBody* body = bodyList_[bi];
         const auto n = static_cast<std::uint32_t>(body->ring.size());
         const auto first = static_cast<std::uint32_t>(members_.size());
-        const std::uint32_t group = body->id;
+        // Los protoplastos de un tejido no se tocan: cada uno está encerrado en su pared
+        // (confineProtoplasts), que es la que separa a dos células vecinas.
+        const bool protoplast = registry_.all_of<Protoplast>(static_cast<entt::entity>(body->id));
+        const std::uint32_t group = protoplast ? kTissueGroup : body->id;
         for (std::uint32_t i = 0; i < n; ++i) {
             members_.push_back({body->ring[i], first + (i + 1) % n, body->id, i, n, group,
                                 static_cast<std::uint8_t>(body->membraneReservoirRate > 0.0f ? 1 : 0)});
@@ -1262,6 +1276,8 @@ void World::resolvePenetrations() {
             const int pn = static_cast<int>(other.poly.size());
             if (!polygon::contains(other.poly.data(), pn, q))
                 continue;
+            if (me.group == kTissueGroup && registry_.all_of<Protoplast>(static_cast<entt::entity>(other.id)))
+                continue; // entre dos protoplastos hay una pared
             const polygon::Closest cl = polygon::closestOnBoundary(other.poly.data(), pn, q);
             const float r = bodies_.radius[me.slot] + bodies_.radius[other.ring[0]];
             penetration_[k] = cl.point - polygon::inwardNormal(cl.edgeDir, other.restArea) * r - q;
@@ -1367,16 +1383,30 @@ void World::applyTraits(entt::entity e) {
 }
 
 entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& genome, std::uint32_t run,
-                                  float angle) {
+                                  float angle, const CellSpec* shape) {
     const SpeciesInfo& info = speciesInfo(species);
-    CellSpec spec = info.spec;
+    CellSpec spec = shape ? *shape : info.spec;
     spec.center = center;
     spec.angle = angle;
     const Traits traits = traitsOf(genome, info.locomotion);
     spec.radiusX *= traits.sizeScale;
     spec.radiusY *= traits.sizeScale;
     spec.shapeRate *= traits.rigidity;
+    // Una célula animal adherente nace redonda (cae de la suspensión de la siembra) y se extiende
+    // después: el cuerpo empieza como un círculo, con la masa y la forma extendida de su tipo.
+    const bool seededRound = info.animalCell.present && info.animalCell.adherent && !shape;
+    const CellSpec spread = spec;
+    if (seededRound) {
+        const float r = info.animalCell.roundRadius * traits.sizeScale;
+        spec.radiusX = spec.radiusY = r;
+        spec.squareness = 2.0f;
+        spec.taper = 0.0f;
+        spec.nucleusFraction = std::min(0.8f, spread.nucleusFraction * spread.radiusY / r);
+    }
     const entt::entity e = spawnCell(spec);
+    if (seededRound)
+        registry_.replace<CellShape>(e, CellShape{spread.radiusX, spread.radiusY, spread.shapeRate, spread.nucleusFraction,
+                                                  spread.squareness, spread.taper});
     RingBody& body = registry_.get<RingBody>(e);
     Locomotion loco;
     loco.type = info.locomotion;
@@ -1389,7 +1419,8 @@ entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& 
     if (info.locomotion == LocomotionType::Pseudopod)
         soft_body::makePlastic(body, bodies_, 1.0f);
     Metabolism meta;
-    meta.biomass = meta.birthBiomass = cellMassPmol(body.restArea) * info.dryMassScale;
+    meta.biomass = meta.birthBiomass =
+        cellMassPmol(seededRound ? units::kPi * spread.radiusX * spread.radiusY : body.restArea) * info.dryMassScale;
     meta.reserves = 0.3f * meta.biomass;
     registry_.emplace<Species>(e, Species{species});
     registry_.emplace<Locomotion>(e, loco);
@@ -1487,9 +1518,12 @@ int World::inoculate(Being being, int count, Vec2 center, float radius) {
                            being.kind == BeingKind::Violaceum;
     float reach = 12.0f, clearance = 0.0f;
     if (being.kind == BeingKind::Species && !speciesInfo(being.species).filament) {
-        const CellSpec& spec = speciesInfo(being.species).spec;
-        reach = std::max(spec.radiusX, spec.radiusY) * 1.5f + 10.0f;
-        clearance = std::max(spec.radiusX, spec.radiusY) + 6.0f;
+        const SpeciesInfo& info = speciesInfo(being.species);
+        // Una célula animal llega redonda de la suspensión (se extiende después).
+        const float size = info.animalCell.adherent ? info.animalCell.roundRadius
+                                                    : std::max(info.spec.radiusX, info.spec.radiusY);
+        reach = size * 1.5f + 10.0f;
+        clearance = size + 6.0f;
     }
     int placed = 0;
     for (int attempts = 0; placed < count && attempts < 50 * count + 50; ++attempts) {
@@ -2268,6 +2302,7 @@ float maxSpeedOf(const LocomotionParams& p, LocomotionType type) {
     case LocomotionType::Flagellum: return p.flagellumSpeed;
     case LocomotionType::Pseudopod: return p.pseudopodSpeed;
     case LocomotionType::Crawl: return 1.0f;
+    case LocomotionType::None: return 1.0f;
     }
     return 1.0f;
 }
@@ -2594,6 +2629,14 @@ void World::updateLifecycle(float dt) {
     conjugationsDone_.clear();
 
     for (auto [e, body, meta] : registry_.view<RingBody, Metabolism>().each()) {
+        // Un cuerpo con posiciones no finitas (lo rearma la red de seguridad) no toca la química.
+        if (!finiteNumber(body.centroid.x) || !finiteNumber(body.centroid.y))
+            continue;
+        // Protoplasto de un tejido: su tamaño lo da la ósmosis (updateTissue). Simplificación: un
+        // tejido montado vive horas con sus reservas (la escama del bulbo de cebolla está llena de
+        // azúcares); no se simula su metabolismo ni se divide (es un tejido maduro).
+        if (registry_.all_of<Protoplast>(e))
+            continue;
         Digestion* dig = registry_.try_get<Digestion>(e);
         const Locomotion* loco = registry_.try_get<Locomotion>(e);
         MetabolicInput in;
@@ -2651,6 +2694,11 @@ void World::updateLifecycle(float dt) {
             in.photosynthesisScale = her->traits.photosynthesis * info.photosynthesisScale;
             in.motilityCostScale = her->traits.motilityCost;
         }
+        // Célula animal: quiescente (G0) o muriendo no crece, y ninguna pasa del doble de su masa al
+        // nacer antes de dividirse (el crecimiento y el ciclo están acoplados).
+        if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e);
+            ac && (ac->phase == CellPhase::G0 || ac->phase == CellPhase::Apoptotic || meta.biomass >= 2.0f * meta.birthBiomass))
+            in.growthScale = 0.0f;
         if (cyst) { // metabolismo mínimo dentro de la pared del quiste
             in.maintenanceScale *= 0.05f;
             in.activity = 0.0f;
@@ -2726,7 +2774,21 @@ void World::updateLifecycle(float dt) {
             soft_body::setRestAreaAxial(body, body.restArea >= 0.0f ? target : -target);
         else
             soft_body::setRestArea(body, body.restArea >= 0.0f ? target : -target);
-        if (before > 0.0f) {
+        if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e); ac && registry_.all_of<CellShape>(e)) {
+            // El núcleo crece con la masa, no con el área: extenderse o redondearse no lo cambia.
+            const CellShape& shape = registry_.get<CellShape>(e);
+            const CellAnatomy& an = registry_.get<CellAnatomy>(e);
+            const float grow = std::cbrt(std::max(0.5f, meta.biomass / std::max(1e-6f, meta.birthBiomass)));
+            // En mitosis la envoltura nuclear se desarma: lo que ocupa lugar son los cromosomas
+            // condensados (cada juego, ~1/3 del diámetro del núcleo). En apoptosis, picnosis.
+            const float condensed = ac->phase == CellPhase::M || ac->phase == CellPhase::Apoptotic ? 0.35f : 1.0f;
+            float rn = shape.nucleusFraction * shape.radiusY * grow * condensed;
+            if (const Dividing* dv = registry_.try_get<Dividing>(e); dv && dv->nucleus2 != ~0u) {
+                rn /= std::sqrt(2.0f); // anafase: cada polo se lleva un juego (la mitad)
+                bodies_.radius[dv->nucleus2] = rn;
+            }
+            bodies_.radius[an.nucleus] = rn;
+        } else if (before > 0.0f) {
             const float k = std::sqrt(target / before);
             const CellAnatomy& an = registry_.get<CellAnatomy>(e);
             bodies_.radius[an.nucleus] *= k;
@@ -2922,6 +2984,11 @@ void World::duplicateOrganelles(entt::entity cell) {
 void World::applyDivisionForces() {
     for (auto [e, body, dv] : registry_.view<RingBody, Dividing>().each()) {
         if (dv.progress < 0.3f || speciesInfo(speciesOfEntity(registry_, e)).filament)
+            continue;
+        // Célula animal: el anillo contráctil es la forma de reposo de las dos hijas, que se cierra
+        // al ritmo de su fase M (world_animal.cpp); un empuje aparte iba más rápido que ella y
+        // plegaba la membrana sobre un núcleo.
+        if (registry_.all_of<AnimalCell>(e))
             continue;
         // Velocidad para cerrar el surco en el tiempo que queda (con un mínimo).
         const float remaining = std::max(0.5f, (1.0f - dv.progress) * metabolismParams_.divisionHours *

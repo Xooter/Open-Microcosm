@@ -24,6 +24,7 @@
 #include "game/mass_budget.hpp"
 #include "game/content.hpp"
 #include "game/scene.hpp"
+#include "game/stain.hpp"
 #include "gpu/gpu_substep_solver.hpp"
 #include "render/renderer.hpp"
 
@@ -175,6 +176,21 @@ std::uint64_t checksum(const World& world) {
         hash.add(bac.x[i]);
         hash.add(bac.y[i]);
     }
+    // Preparados: glóbulos rojos (posición y volumen) y el tejido (paredes y volumen de cada
+    // protoplasto). Una gota no tiene ninguno de los dos: su checksum no cambia.
+    const Erythrocytes& blood = world.erythrocytes();
+    for (std::size_t i = 0; i < blood.size(); ++i) {
+        hash.add(blood.x[i]);
+        hash.add(blood.y[i]);
+        hash.add(blood.volume[i]);
+    }
+    for (const TissueCell& cell : world.tissue().cells) {
+        for (const Vec2& q : cell.wall) {
+            hash.add(q.x);
+            hash.add(q.y);
+        }
+        hash.add(cell.volume);
+    }
     return hash.h;
 }
 
@@ -272,6 +288,11 @@ int main(int argc, char** argv) {
         camera.target = {world.width() * 0.5f, world.height() * 0.5f};
         camera.offset = {800.0f, 450.0f};
         camera.zoom = a.zoom > 0.0f ? a.zoom : 900.0f / world.height();
+        // Un preparado se dibuja con su tinción (frotis con Giemsa, papa con Lugol…).
+        if (const PreparedPlate* pp = plate.prepared.empty() ? nullptr : findPreparedPlate(plate.prepared); pp && !pp->stain.empty())
+            for (const StainSpec& s : builtinStains())
+                if (s.id == pp->stain)
+                    renderer->setStain(&s);
     }
     using Clock = std::chrono::steady_clock;
     double ms = 0.0, renderMs = 0.0;

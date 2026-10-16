@@ -22,6 +22,7 @@ const char* stainTargetName(StainTarget t) {
     case StainTarget::Chlorophyll: return "Clorofila";
     case StainTarget::Nucleoid: return "Nucleoide bacteriano";
     case StainTarget::Bacteria: return "Bacteria entera";
+    case StainTarget::Hemoglobin: return "Hemoglobina";
     case StainTarget::Count: break;
     }
     return "";
@@ -219,6 +220,29 @@ std::vector<StainSpec> makeBuiltins() {
         r.pivot = 5.0f;
         r.width = 1.0f;
         s.rules.push_back(r);
+        v.push_back(s);
+    }
+    {
+        StainSpec s;
+        s.id = "giemsa";
+        s.name = "Giemsa (sangre)";
+        s.note = "Mezcla de azur B y azul de metileno (básicos) con eosina (ácida), sobre un frotis fijado con metanol. El ADN y los gránulos azurófilos toman violeta; el citoplasma rico en ARN, celeste; la hemoglobina, rosa anaranjado. Distingue los leucocitos: neutrófilo de núcleo lobulado, linfocito casi todo núcleo, monocito de citoplasma gris azulado; las plaquetas, violetas. Fija y mata.";
+        s.vital = false;
+        s.rules.push_back(rule(StainTarget::Nucleus, rgb8(86, 38, 128), 0.92f));
+        s.rules.push_back(rule(StainTarget::Cytoplasm, rgb8(150, 172, 222), 0.35f));
+        s.rules.push_back(rule(StainTarget::Hemoglobin, rgb8(226, 140, 150), 0.8f));
+        s.rules.push_back(rule(StainTarget::Bacteria, rgb8(96, 50, 140), 0.8f));
+        s.rules.push_back(rule(StainTarget::Nucleoid, rgb8(96, 50, 140), 0.6f));
+        v.push_back(s);
+    }
+    {
+        StainSpec s;
+        s.id = "orceina_acetica";
+        s.name = "Orceína acética (cromosomas)";
+        s.note = "Orceína en ácido acético: fija y tiñe la cromatina de rojo vinoso intenso. Sobre una punta de raíz aplastada deja ver los cromosomas en cada fase de la mitosis; el citoplasma queda casi incoloro. Fija y mata.";
+        s.vital = false;
+        s.rules.push_back(rule(StainTarget::Nucleus, rgb8(132, 24, 66), 0.95f));
+        s.rules.push_back(rule(StainTarget::Cytoplasm, rgb8(230, 190, 200), 0.08f));
         v.push_back(s);
     }
     return v;

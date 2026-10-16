@@ -165,11 +165,12 @@ mostrar a alumnos. El lanzamiento se atrasa hasta tener las placas preparadas y 
 humano. Orden decidido:
 
 1. AGENTS.md con la visión nueva (hecho).
-2. **Fase 20** (plan completo en `docs/plan_fase20.md`): contenido como datos y paquetes
+2. ✅ **Fase 20** (plan completo en `docs/plan_fase20.md`): contenido como datos y paquetes
    compartibles sin recompilar (20.0), placas preparadas con medios, recipiente y campo,
-   inoculación y mezclas (20a), y cultivo celular humano —fibroblasto, HeLa, neutrófilo— a grado
-   universitario y de investigación (20b).
-3. Después: preparado vegetal, modo cultivo (Gause), P1 y lanzamiento.
+   inoculación y mezclas (20a), cultivo celular humano —fibroblasto, HeLa, neutrófilo— a grado
+   universitario y de investigación (20b) y preparados en portaobjetos con células vegetales y
+   animales —cebolla, *Elodea*, papa, raíz, estomas, mucosa bucal, sangre— con ósmosis (20c).
+3. Después: modo cultivo (Gause), P1 y lanzamiento.
 
 ## Fase MVP — P0: herramienta de laboratorio
 

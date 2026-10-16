@@ -75,6 +75,7 @@ bool applyIntervention(World& world, const Intervention& iv) {
     case InterventionKind::Atmosphere:
         world.medium().co2Atmosphere = iv.v[0];
         world.medium().carbonatePK = iv.v[1];
+        world.medium().osmolytes = iv.v[2];
         world.refreshMedium();
         return true;
     case InterventionKind::Concentration:

@@ -2,6 +2,8 @@
 
 #include "ai/autopilot.hpp"
 #include "bio/animal_cell.hpp"
+#include "bio/erythrocytes.hpp"
+#include "bio/tissue.hpp"
 #include "bio/bacteria.hpp"
 #include "bio/cell.hpp"
 #include "bio/cyanobacteria.hpp"
@@ -94,6 +96,9 @@ struct MediumParams {
     // Polvo que cae del aire a la película de agua (cuarzo, arcilla, mica) [partículas/s, tiempo
     // real: es física, no biología].
     float dustRate = 0.0f;
+    // Osmolitos disueltos que no atraviesan la membrana, además de las sales (sacarosa, manitol)
+    // [mOsm/L]: con la salinidad dan la osmolaridad del medio (bio/osmosis).
+    float osmolytes = 0.0f;
     // Materia orgánica disuelta al empezar [µM equivalente de glucosa]: la gota empieza sin ella
     // (llega con las hojas, las manchas y los detritos); un medio de cultivo la trae (DMEM: 25 mM).
     float organic = 0.0f;
@@ -146,6 +151,13 @@ struct WorldConfig {
     float depth = 200.0f;
     // Cultivo celular (placa preparada): un campo del fondo de un recipiente, no una gota.
     bool cellCulture = false;
+    // Preparado fijado (y teñido): al crearlo todo queda muerto y quieto (Run::start fija).
+    bool fixedSlide = false;
+    // Sangre (preparados): glóbulos rojos y plaquetas por cm² del campo.
+    float erythrocytesPerCm2 = 0.0f, plateletsPerCm2 = 0.0f;
+    // Tejido de un preparado (fase 20c): disposición, contenido y ósmosis; las células las genera
+    // World al crearse (sus paredes dependen de la placa).
+    Tissue tissue;
     // Siembra inicial de una placa preparada: especie y cantidad (la aplica Run::start).
     std::vector<std::pair<SpeciesId, int>> seeding;
     // Hongos al empezar: micelios de Saprolegnia y grupos de zoosporas de quitridios (10 cada uno).
@@ -253,8 +265,10 @@ class World {
     entt::entity spawnPlayer(LocomotionType type, Vec2 center, const Genome* genome = nullptr);
     // Organismo de una especie con un genoma dado (del linaje actual, sin control).
     entt::entity spawnOrganism(LocomotionType type, Vec2 center, const Genome& genome);
+    // `shape`: otra forma que la de la especie (el protoplasto de una célula vegetal toma la de su
+    // pared).
     entt::entity spawnOrganism(SpeciesId species, Vec2 center, const Genome& genome, std::uint32_t run,
-                               float angle = 0.0f);
+                               float angle = 0.0f, const CellSpec* shape = nullptr);
     // Ecosistema silvestre: las especies con sus poblaciones iniciales (× scale).
     void populateEcosystem(float scale = 1.0f);
     // Filamento de `cells` células unidas extremo con extremo (Spirogyra).
@@ -297,6 +311,8 @@ class World {
     // nada, no metaboliza, no se divide ni se descompone. Es irreversible; una placa nueva vuelve a
     // empezar. Desde entonces `step` no avanza.
     void fix() { fixed_ = true; }
+    // Frotis secado al aire: las células animales se aplastan contra el vidrio antes de fijarse.
+    void flattenSmear();
     bool fixed() const { return fixed_; }
     // Inspección: qué hay en `position` (a `tolerance` µm de su borde). Lo más grande y lo más
     // cercano tienen prioridad: células, granos y después partículas. `skip` (bits de `pickBit`)
@@ -374,6 +390,8 @@ class World {
     const ChemField& vitamin() const { return vitamin_; }
     // Medio de cultivo (fase 20b): glutamina, lactato secretado y fMLP de las bacterias [µM]. Solo
     // difunden cuando hay células animales (o glutamina en el medio): en una gota no cuestan nada.
+    const Tissue& tissue() const { return tissue_; }
+    const Erythrocytes& erythrocytes() const { return blood_; }
     const ChemField& glutamine() const { return glutamine_; }
     const ChemField& lactate() const { return lactate_; }
     const ChemField& fmlp() const { return fmlp_; }
@@ -595,6 +613,12 @@ class World {
     bool updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, float bioDt);
     void afterAnimalDivision(entt::entity mother, entt::entity child);
     void releaseFmlp(float dt);
+    // Tejidos de los preparados (game/world_tissue.cpp).
+    void buildTissue(const Tissue& spec);
+    void updateTissue(float dt);
+    void confineProtoplasts();
+    void seedBlood();
+    void updateBlood(float dt);
     void excludeFromCells();
     void rebuildBuckets();
     void resolvePenetrations();
@@ -612,6 +636,8 @@ class World {
     ChemField oxygen_, nutrients_, phosphate_, nitrogen_, silicate_, iron_, vitamin_, co2_, toxin_, autoinducer_, phage_;
     ChemField glutamine_, lactate_, fmlp_;
     bool cultureFields_ = false;
+    Tissue tissue_;
+    Erythrocytes blood_;
     std::vector<entt::entity> animalList_, apoptosisDone_;
     std::vector<const RingBody*> allBodies_;
     Grid2D light_, shading_;

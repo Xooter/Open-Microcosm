@@ -38,11 +38,23 @@ template <typename T> bool duplicate(const std::deque<T>& list, const std::strin
 
 constexpr const char* kMediumKeys[] = {"id", "nombre", "descripcion", "fuente", "composicion"};
 constexpr const char* kVesselKeys[] = {"id", "nombre", "area_cm2", "volumen_ml", "fuente"};
-constexpr const char* kPlateKeys[] = {"id",        "nombre",   "descripcion", "tipo", "medio",
-                                      "recipiente", "campo_um", "ambiente",    "siembra"};
+constexpr const char* kPlateKeys[] = {"id",         "nombre",   "descripcion", "tipo",   "medio",  "recipiente",
+                                      "campo_um",   "ambiente", "siembra",     "tejido", "fijado", "tincion",
+                                      "celda_um",   "eritrocitos_cm2", "plaquetas_cm2", "bacterias_cm2"};
+constexpr const char* kTissueKeys[] = {"disposicion", "contenido", "ser", "largo_um", "ancho_um", "pared_um",
+                                       "osmolaridad_jugo", "inactivo", "equilibrio_s", "fases_mitosis"};
+constexpr std::pair<const char*, TissueLayout> kLayouts[] = {{"hileras", TissueLayout::Rows},
+                                                             {"poligonal", TissueLayout::Polygonal},
+                                                             {"filas", TissueLayout::Files},
+                                                             {"rompecabezas", TissueLayout::Jigsaw}};
+constexpr std::pair<const char*, TissueContent> kContents[] = {{"protoplasto", TissueContent::Protoplast},
+                                                               {"almidon", TissueContent::Starch},
+                                                               {"mitosis", TissueContent::Mitosis},
+                                                               {"estomas", TissueContent::Stomata}};
 constexpr const char* kAmbientKeys[] = {"temperatura", "co2", "luz"};
 constexpr const char* kSeedKeys[] = {"ser", "densidad_cm2"};
-constexpr std::pair<const char*, PlateKind> kKinds[] = {{"cultivo", PlateKind::CellCulture}};
+constexpr std::pair<const char*, PlateKind> kKinds[] = {{"cultivo", PlateKind::CellCulture},
+                                                        {"preparado", PlateKind::Slide}};
 
 // Id y nombre obligatorios; el resto, con los errores en el lector.
 bool head(toml_io::Reader& r, const std::string& source, const char* what, std::string& key, std::string& name,
@@ -165,6 +177,41 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
                 p.seeding.emplace_back(being, density);
             }
         }
+        r.flag("fijado", p.fixed);
+        r.text("tincion", p.stain);
+        r.count("celda_um", p.cellSize);
+        r.count("eritrocitos_cm2", p.erythrocytesPerCm2);
+        r.count("plaquetas_cm2", p.plateletsPerCm2);
+        r.count("bacterias_cm2", p.bacteriaPerCm2);
+        if (p.cellSize < 2.0f || p.cellSize > 16.0f)
+            r.errors.push_back(r.where + ": 'celda_um' va de 2 a 16 µm");
+        if (const toml::table* t2 = r.table("tejido")) {
+            Tissue& ts = p.tissue;
+            ts.enabled = true;
+            toml_io::warnUnknown(*t2, kTissueKeys, r.where + " [tejido]", reg.warnings);
+            toml_io::Reader tr{*t2, r.where + " [tejido]", {}};
+            tr.choice("disposicion", kLayouts, ts.layout, true);
+            tr.choice("contenido", kContents, ts.content, true);
+            tr.text("ser", ts.species);
+            tr.count("largo_um", ts.cellLength);
+            tr.count("ancho_um", ts.cellWidth);
+            tr.count("pared_um", ts.wallThickness);
+            tr.count("osmolaridad_jugo", ts.sapOsmolarity);
+            tr.count("inactivo", ts.inactive);
+            tr.count("equilibrio_s", ts.osmoticSeconds);
+            if (const toml::node* f = t2->get("fases_mitosis")) {
+                const toml::array* a = f->as_array();
+                if (!a || a->size() != 4)
+                    tr.errors.push_back(tr.where + ": 'fases_mitosis' es [profase, metafase, anafase, telofase] (fracciones)");
+                for (std::size_t i = 0; a && i < 4 && i < a->size(); ++i)
+                    ts.mitoticFractions[i] = static_cast<float>((*a)[i].value<double>().value_or(0.0));
+            }
+            if (ts.cellLength <= 0.0f || ts.cellWidth <= 0.0f)
+                tr.errors.push_back(tr.where + ": 'largo_um' y 'ancho_um' tienen que ser positivos");
+            if (ts.content == TissueContent::Protoplast && !findSpecies(ts.species))
+                tr.errors.push_back(tr.where + ": 'ser' tiene que ser el id de un ser cargado ('" + ts.species + "')");
+            r.errors.insert(r.errors.end(), tr.errors.begin(), tr.errors.end());
+        }
         p.pack = pack;
         if (!finish(r, reg.warnings, "la placa"))
             return;
@@ -275,9 +322,14 @@ WorldConfig makePrepared(const PreparedPlate& plate, std::uint64_t seed) {
     // vidrio, como junto a la pared real).
     c.dish = true;
     c.cellCulture = plate.kind == PlateKind::CellCulture;
+    c.fixedSlide = plate.fixed;
+    c.erythrocytesPerCm2 = plate.erythrocytesPerCm2;
+    c.plateletsPerCm2 = plate.plateletsPerCm2;
+    c.cellSize = plate.cellSize;
     int cells = 64;
     while (cells < 1024 && static_cast<float>(cells) * c.cellSize < plate.fieldUm)
         cells *= 2;
+    c.tissue = plate.tissue; // las paredes las genera World con la placa (dependen de la seed)
     c.gridX = c.gridY = cells;
     if (const Vessel* v = findVessel(plate.vessel)) {
         c.depth = v->depthUm();
@@ -285,8 +337,9 @@ WorldConfig makePrepared(const PreparedPlate& plate, std::uint64_t seed) {
         // tiempo de equilibrio es el de la difusión, profundidad² / D (unos 50 min en 2,5 mm).
         c.medium.o2AirExchange = units::kDiffusionO2 / (c.depth * c.depth);
     }
-    // Estéril: nada vivo, ni detritos, ni sedimento, ni polvo, ni fagos.
-    c.bacteria = 0;
+    // Estéril: nada vivo, ni detritos, ni sedimento, ni polvo, ni fagos (salvo las bacterias que trae
+    // la muestra misma, como las de la boca en un raspado de mucosa).
+    c.bacteria = static_cast<std::size_t>(std::lround(plate.bacteriaPerCm2 * 3.14159265f * 0.25f * plate.fieldUm * plate.fieldUm * 1e-8f));
     c.bdellovibrioFraction = 0.0f;
     c.detritus = 0;
     c.cyanoFilaments = c.oscillatoriaFilaments = 0;

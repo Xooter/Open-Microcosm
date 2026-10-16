@@ -30,6 +30,7 @@ struct RingBody {
     std::vector<Vec2> restRing;      // forma de reposo centrada, en el marco del cuerpo
     std::vector<float> restEdge;     // |r[i+1] − r[i]|
     float restArea = 0.0f;           // con signo (indica la orientación del anillo)
+    Vec2 lastFinite;                 // último centro finito (para rearmar un cuerpo roto)
     float shapeRate = 0.0f;          // memoria de forma [1/s]: película rígida alta, ameba ~0
     // Membrana plástica (ameba): sin forma propia; la forma de reposo es un círculo cuyo
     // perímetro sigue al real con esta tasa [1/s] (reservorio de membrana). 0 = no plástica.
@@ -109,6 +110,14 @@ void resampleRing(RingBody& body, BodyParticles& bp, std::size_t count);
 // `squareness`: exponente de superelipse (2 = elipse, mayor = rectángulo redondeado).
 void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry, float squareness = 2.0f,
                  float taper = 0.0f);
+// Igual, pero los puntos se reparten parejos por longitud de arco sobre la forma meta, en el orden
+// del anillo (el primero queda en la dirección que tiene ahora). Para cambiar mucho de forma (una
+// célula redonda que se extiende en un huso): la proyección radial de reshapeRest amontona los
+// puntos en los lados largos y la forma de reposo se cruza consigo misma.
+// `pinMinorAxis`: corre el reparto para que dos puntos caigan justo en los extremos del eje menor
+// (con un número par de puntos), donde una división estrangula la cintura.
+void reshapeRestEven(RingBody& body, const BodyParticles& bp, float rx, float ry, float squareness = 2.0f,
+                     float taper = 0.0f, bool pinMinorAxis = false);
 // Membrana plástica: inserta partículas donde la membrana se estiró y quita donde se juntó
 // (la célula real agrega membrana desde reservorios internos). Devuelve true si cambió.
 bool remesh(RingBody& body, BodyParticles& bp, float spacing);

@@ -218,18 +218,33 @@ Categoría «Células humanas» en el Catálogo.
    cada valor con fuente (duplicación, duración de fases, tamaño adherido y redondeado, rapidez y
    persistencia de migración, Km y Vmax de glucosa y glutamina, consumo de O₂, densidad de
    confluencia).
-8. **Render, ficha y enciclopedia:** células aplanadas con núcleo y nucléolos, redondeadas en
+8. ✅ **Render, ficha y enciclopedia:** células aplanadas con núcleo y nucléolos, redondeadas en
    mitosis, cuerpos apoptóticos; categoría «Células humanas» en el catálogo; textos de qué es cada
    una y por qué hace lo que hace. El contraste de fase (lente) queda para la fase de lentes.
-9. **Tests básicos:** la célula se adhiere, migra en tiempo biológico, pasa por las fases y se
+   *Hecho:* estilos `AdherentCell` (lamelipodio, halo mitótico, cromosomas en M, núcleo picnótico y
+   vesículas en la apoptosis) y `Neutrophil` (núcleo lobulado); la ficha muestra la fase del ciclo,
+   el contacto y la adhesión; la célula sembrada llega redonda y se extiende en ~1 h.
+9. ✅ **Tests básicos:** la célula se adhiere, migra en tiempo biológico, pasa por las fases y se
    divide; sin suero queda en G0 y entra en apoptosis; la inhibición por contacto detiene la
    proliferación en confluencia (fibroblasto) y no en HeLa; el neutrófilo encuentra y fagocita una
    bacteria.
-10. **Validación** (suite `validacion`, contra publicaciones): tiempo de duplicación de HeLa y del
+10. ✅ **Validación** (suite `validacion`, contra publicaciones): tiempo de duplicación de HeLa y del
     fibroblasto; rapidez y persistencia del fibroblasto (desplazamiento cuadrático medio del
     paseo persistente); curva de crecimiento hasta confluencia (latencia, fase exponencial y
     meseta en la densidad de confluencia publicada); consumo de glucosa y producción de lactato en
     72 h; rapidez del neutrófilo en quimiotaxis.
+    *Medido:* duplicación de HeLa 22 h (dato 22 h) y del fibroblasto 30 h (dato 30 h) con siembra
+    asincrónica; desplazamiento cuadrático medio dentro del 10 % de Fürth a 0,5, 1 y 2 h; meseta del
+    fibroblasto ~34 000 células/cm² (dato ~40 000); lactato/glucosa de HeLa 1,67; neutrófilo a
+    15 µm/min hacia el fMLP. Para llegar ahí se corrigieron artefactos de la mecánica: la forma de
+    reposo de una célula que pasa de redonda a huso (o al revés) se reparte por longitud de arco
+    (`soft_body::reshapeRestEven`; la proyección radial la dejaba cruzada y la célula se empujaba
+    sola a ~8 µm/s); en la mitosis la membrana se pone sobre el círculo (un rulo atrapaba al
+    núcleo), la placa metafásica se centra, cada juego de cromosomas mide 1/√2, la célula se alarga
+    en la anafase B y el surco entra recién con los cromosomas en los polos (el anillo contráctil es
+    la forma de reposo de las dos hijas). Las catástrofes mitóticas de HeLa bajaron de ~50 % a ~3 %.
+    Los tests de división corren con kBioTimeScale 600: con 3600 una hora de M dura 0,3 s reales y el
+    surco (física, en tiempo real) no alcanza a cerrarse.
 
 ## 20c — Preparados (portaobjetos): células vegetales y animales
 
@@ -239,47 +254,70 @@ primero. Cada preparado tiene que verse como en el microscopio real a cada aumen
 de lejos el tejido como textura; de cerca, cada célula con su pared, su núcleo, sus plastos y sus
 gránulos; el LOD como en el resto del render) y lo que hace tiene que ser mecanismo real con datos.
 
+*Hecho:* `bio/osmosis` (osmolaridad del medio con el coeficiente osmótico del NaCl y los
+osmolitos; volumen de Boyle–van 't Hoff), `bio/tissue` (disposiciones hileras, poligonal, filas y
+rompecabezas; contenidos protoplasto, almidón, mitosis y estomas), `bio/erythrocytes` (glóbulos
+rojos y plaquetas como partículas, con volumen crítico de hemólisis por célula),
+`game/world_tissue.cpp` (generador de paredes que llena el campo, protoplastos encerrados por su
+pared y sin chocar entre sí, gránulos en la capa cortical, núcleo contra la pared, ósmosis en tiempo
+real, frotis y sangre), `render/tissue_renderer` (paredes, granos de almidón con sus capas y su hilo,
+fases de la mitosis con orceína, estomas, glóbulos bicóncavos, crenados, esferocitos y fantasmas,
+plaquetas). Datos: 8 placas en `placas.toml`, medios de montaje (agua destilada, solución
+fisiológica), el portaobjetos en `recipientes.toml`, 5 seres nuevos (protoplastos de cebolla y de
+*Elodea*, célula escamosa, linfocito, monocito; `locomocion = "ninguna"`). Tests en
+`tests/test_preparations.cpp`. El panel Placa elige la solución de montaje (en vivo, como la gota que
+se tira bajo el cubreobjetos en clase); la sal y la sacarosa también en Ambiente.
+*Medido:* la epidermis de cebolla (jugo de 450 mOsm/L) queda turgente con el medio a 0,9 veces el
+jugo y se plasmoliza a 1,15 veces (volumen 0,88); con ~950 mOsm/L el protoplasto queda en ~0,44 del
+área de la pared y vuelve a llenarla en agua. Fragilidad osmótica: 0 % de hemólisis con NaCl
+0,55 %, 51 % con 0,42 % y 100 % con 0,30 % (Parpart et al. 1947: empieza ~0,50 %, mitad ~0,42 %,
+toda ~0,35 %). Punta de raíz: índice mitótico 7,7 % con la profase la fase más frecuente. Frotis:
+1,1·10⁶ glóbulos rojos/cm², plaquetas y los tres leucocitos en la fórmula normal. Rendimiento (con
+la máquina cargada): cebolla 5,4 ms/paso, *Elodea* 2,5, sangre viva 0,65; mismo checksum con 1 y 8
+hilos (`bio_bench` suma al checksum los glóbulos rojos y el tejido). Probado en la interfaz:
+plasmólisis de la cebolla con sal y vuelta con agua destilada, hemólisis de la sangre en agua.
+
 **Base común**
 
-1. **Tipo de placa «preparado»** (`PlateKind::Slide`): portaobjetos y cubreobjetos con una capa fina
+1. ✅ **Tipo de placa «preparado»** (`PlateKind::Slide`): portaobjetos y cubreobjetos con una capa fina
    de montaje (~10–20 µm de agua, solución salina o medio), a temperatura ambiente y con la luz de la
    lámpara; vivo o fijado (`World::fix`). Se le puede agregar una solución en vivo (agua, NaCl,
    sacarosa), como en clase: la gota se pone en un borde del cubreobjetos y se tira con un papel
    del otro.
-2. **Ósmosis** (`bio/osmosis`): el volumen de una célula (el protoplasto de una vegetal, un
+2. ✅ **Ósmosis** (`bio/osmosis`): el volumen de una célula (el protoplasto de una vegetal, un
    eritrocito) sigue la osmolaridad del medio con la conductividad hidráulica de su membrana y la ley
    de Boyle–van 't Hoff (solo cambia el agua; los solutos quedan).
-3. **Pared celular vegetal** (`bio/tissue`): la pared es un anillo rígido y el protoplasto un cuerpo
+3. ✅ **Pared celular vegetal** (`bio/tissue`): la pared es un anillo rígido y el protoplasto un cuerpo
    aparte adentro; con turgencia lo aprieta, en medio hipertónico se despega (plasmólisis) y se
    recupera en agua (deplasmólisis). Un tejido son paredes compartidas con las vecinas, empaquetadas
    por un generador según el tejido.
-4. **Tinciones nuevas como datos:** orceína o carmín acético (cromosomas, rojo), Giemsa/Wright (núcleos
+4. ✅ **Tinciones nuevas como datos:** orceína o carmín acético (cromosomas, rojo), Giemsa/Wright (núcleos
    violeta, gránulos, eritrocitos rosados) y eosina; con las que ya hay (Lugol: almidón; azul de
    metileno: núcleos).
 
 **Vegetales (los más comunes)**
 
-5. **Epidermis de cebolla** (*Allium cepa*): monocapa de células alargadas con pared, núcleo y vacuola
+5. ✅ **Epidermis de cebolla** (*Allium cepa*): monocapa de células alargadas con pared, núcleo y vacuola
    grande; Lugol o azul de metileno; plasmólisis con NaCl.
-6. **Hoja de *Elodea*** (*Egeria densa*): cloroplastos con ciclosis; plasmólisis.
-7. **Tubérculo de papa con Lugol:** amiloplastos (granos de almidón azul-negro, con sus capas).
-8. **Punta de raíz de cebolla aplastada y teñida** (fijada): células en todas las fases de la mitosis;
+6. ✅ **Hoja de *Elodea*** (*Egeria densa*): cloroplastos con ciclosis; plasmólisis.
+7. ✅ **Tubérculo de papa con Lugol:** amiloplastos (granos de almidón azul-negro, con sus capas).
+8. ✅ **Punta de raíz de cebolla aplastada y teñida** (fijada): células en todas las fases de la mitosis;
    índice mitótico y fracción de cada fase de las duraciones publicadas; cromosomas por fase.
-9. **Epidermis de hoja con estomas:** células oclusivas y ostíolo (estructura; la apertura después).
+9. ✅ **Epidermis de hoja con estomas:** células oclusivas y ostíolo (estructura; la apertura después).
 
 **Animales (los más comunes)**
 
-10. **Mucosa bucal con azul de metileno:** células escamosas planas y poligonales (~50–80 µm) con
+10. ✅ **Mucosa bucal con azul de metileno:** células escamosas planas y poligonales (~50–80 µm) con
     núcleo chico y bacterias adheridas.
-11. **Frotis de sangre humana** (Giemsa/Wright): eritrocitos bicóncavos sin núcleo, neutrófilos
+11. ✅ **Frotis de sangre humana** (Giemsa/Wright): eritrocitos bicóncavos sin núcleo, neutrófilos
     (núcleo multilobulado, los de 20b), linfocitos, monocitos y plaquetas en la fórmula leucocitaria
     normal; en sangre viva diluida, la ósmosis da crenación (hipertónico) y hemólisis (hipotónico).
 
 **Cierre**
 
-12. **Panel Placa:** el preparado elige el tejido, vivo o fijado y la solución de montaje; el
+12. ✅ **Panel Placa:** el preparado elige el tejido, vivo o fijado y la solución de montaje; el
     Catálogo suma las categorías «Células vegetales» y «Células humanas».
-13. **Tests y validación:** volumen del eritrocito según la osmolaridad (Boyle–van 't Hoff), NaCl de
+13. ✅ **Tests y validación:** volumen del eritrocito según la osmolaridad (Boyle–van 't Hoff), NaCl de
     plasmólisis incipiente en la epidermis de cebolla, índice mitótico y fracción de cada fase en la
     punta de raíz, tamaños de cada tipo celular con su fuente.
 
@@ -315,10 +353,10 @@ gránulos; el LOD como en el resto del render) y lo que hace tiene que ser mecan
 2. ✅ **20a** tipo de placa → medios y química nueva → recipiente y campo → inoculación y mezclas →
    panel. Hecho cuando un cultivo de DMEM en incubadora se crea, se le inocula una levadura del
    catálogo y la escena se repite bit a bit.
-3. **20b** fibroblasto (arrastre, ciclo, inhibición por contacto, metabolismo, apoptosis) → HeLa
+3. ✅ **20b** fibroblasto (arrastre, ciclo, inhibición por contacto, metabolismo, apoptosis) → HeLa
    → neutrófilo → render y textos → validación. Hecho cuando pasan los tests de validación de
    20b con sus fuentes y tolerancias.
-4. **20c** preparado y ósmosis → pared celular y tejidos → cebolla, *Elodea*, papa → raíz y estomas
+4. ✅ **20c** preparado y ósmosis → pared celular y tejidos → cebolla, *Elodea*, papa → raíz y estomas
    → mucosa bucal y sangre → panel y validación. Hecho cuando un preparado de epidermis de cebolla
    se plasmoliza al agregar NaCl y se recupera con agua, y en un frotis de sangre teñido con Giemsa
    se distinguen los tipos celulares, con datos con fuente y reproducible.

@@ -26,6 +26,9 @@ struct AnimalCell {
     float ageHours = 0.0f;       // edad (el neutrófilo vive horas)
     float apoptosis = 0.0f;      // avance de la apoptosis (0–1)
     bool repolarized = false;    // ya se dio vuelta por este contacto (Abercrombie)
+    // Extensión sobre el fondo (0: redonda, recién sembrada; 1: extendida). Una célula que cae de
+    // la suspensión se adhiere y se extiende en ~1 h.
+    float spread = 1.0f;
 };
 
 // Componente marcador: adherida al sustrato por adhesiones focales. El agua no la arrastra (una

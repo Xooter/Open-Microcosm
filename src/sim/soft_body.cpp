@@ -231,15 +231,31 @@ bool recoverNonFinite(RingBody& body, BodyParticles& bp) {
         bad |= !finiteNumber(bp.x[s]) || !finiteNumber(bp.y[s]);
     if (!bad)
         return false;
-    const float c = std::cos(body.angle), sn = std::sin(body.angle);
+    // El centro y el ángulo del último refresh pueden ser NaN también (si el cuerpo ya venía roto):
+    // entonces se rearma alrededor de las partículas que sigan finitas, o del último centro finito.
+    Vec2 center = body.centroid;
+    if (!finiteNumber(center.x) || !finiteNumber(center.y)) {
+        Vec2 sum;
+        int n = 0;
+        for (std::uint32_t q : body.ring)
+            if (finiteNumber(bp.x[q]) && finiteNumber(bp.y[q])) {
+                sum = sum + Vec2{bp.x[q], bp.y[q]};
+                ++n;
+            }
+        center = n > 0 ? sum * (1.0f / static_cast<float>(n)) : body.lastFinite;
+        body.centroid = center;
+    }
+    const float angle = finiteNumber(body.angle) ? body.angle : 0.0f;
+    body.angle = angle;
+    const float c = std::cos(angle), sn = std::sin(angle);
     for (std::size_t i = 0; i < body.ring.size(); ++i) {
-        const Vec2 p = body.centroid + rotate(body.restRing[i], c, sn);
+        const Vec2 p = center + rotate(body.restRing[i], c, sn);
         bp.x[body.ring[i]] = p.x;
         bp.y[body.ring[i]] = p.y;
         bp.vx[body.ring[i]] = bp.vy[body.ring[i]] = 0.0f;
     }
     for (std::size_t k = 0; k < body.interior.size(); ++k) {
-        const Vec2 p = body.centroid + rotate(k < body.restInterior.size() ? body.restInterior[k] : Vec2{}, c, sn);
+        const Vec2 p = center + rotate(k < body.restInterior.size() ? body.restInterior[k] : Vec2{}, c, sn);
         bp.x[body.interior[k]] = p.x;
         bp.y[body.interior[k]] = p.y;
         bp.vx[body.interior[k]] = bp.vy[body.interior[k]] = 0.0f;
@@ -250,6 +266,8 @@ bool recoverNonFinite(RingBody& body, BodyParticles& bp) {
 void refresh(RingBody& body, const BodyParticles& bp) {
     gatherPoly(body, bp);
     bestFit(body, bp, body.centroid, body.angle);
+    if (finiteNumber(body.centroid.x) && finiteNumber(body.centroid.y))
+        body.lastFinite = body.centroid;
     Vec2 lo = body.poly.front(), hi = body.poly.front();
     float margin = 0.0f;
     for (std::size_t i = 0; i < body.poly.size(); ++i) {
@@ -526,6 +544,83 @@ void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry, fl
     body.angle = theta;
     for (std::size_t k = 0; k < body.interior.size(); ++k)
         body.restInterior[k] = toLocal(body, pos(bp, body.interior[k]));
+    refresh(body, bp);
+}
+
+void reshapeRestEven(RingBody& body, const BodyParticles& bp, float rx, float ry, float squareness, float taper,
+                     bool pinMinorAxis) {
+    const std::size_t n = body.ring.size();
+    if (n < 3)
+        return;
+    Vec2 c;
+    for (std::uint32_t s : body.ring)
+        c = c + pos(bp, s);
+    c = c * (1.0f / static_cast<float>(n));
+    float sxx = 0.0f, syy = 0.0f, sxy = 0.0f;
+    for (std::uint32_t s : body.ring) {
+        const Vec2 d = pos(bp, s) - c;
+        sxx += d.x * d.x;
+        syy += d.y * d.y;
+        sxy += d.x * d.y;
+    }
+    const float theta = 0.5f * std::atan2(2.0f * sxy, sxx - syy);
+    const float co = std::cos(theta), si = std::sin(theta);
+    // Contorno meta denso (superelipse con el polo afinado), recorrido con el ángulo creciente.
+    auto contour = [&](float phi) {
+        const float cp = std::cos(phi), sp = std::sin(phi);
+        const float r = std::pow(std::pow(std::abs(cp) / rx, squareness) + std::pow(std::abs(sp) / ry, squareness),
+                                 -1.0f / squareness);
+        const float x = r * cp;
+        const float tf = taper > 0.0f ? (1.0f - taper) + taper * std::clamp(0.5f * (x / rx + 1.0f), 0.0f, 1.0f) : 1.0f;
+        return Vec2{x, r * sp * tf};
+    };
+    const std::size_t m = 8 * n;
+    // Buffers por hilo (se llama en cada paso mientras la célula cambia de forma): sin asignar.
+    thread_local std::vector<Vec2> dense;
+    thread_local std::vector<float> arc;
+    dense.resize(m + 1);
+    arc.assign(m + 1, 0.0f);
+    for (std::size_t k = 0; k <= m; ++k) {
+        dense[k] = contour(6.2831853f * static_cast<float>(k) / static_cast<float>(m));
+        if (k > 0)
+            arc[k] = arc[k - 1] + length(dense[k] - dense[k - 1]);
+    }
+    const float total = arc[m];
+    // El primer punto conserva su dirección; el sentido de recorrido es el del anillo.
+    const Vec2 d0 = rotate(pos(bp, body.ring[0]) - c, co, -si);
+    float phi0 = std::atan2(d0.y, d0.x);
+    if (phi0 < 0.0f)
+        phi0 += 6.2831853f;
+    const std::size_t k0 = std::min(m, static_cast<std::size_t>(phi0 / 6.2831853f * static_cast<float>(m)));
+    float s0 = arc[k0];
+    if (pinMinorAxis) { // el reparto pasa por φ = π/2 (y, con n par, por 3π/2)
+        const float spacing = total / static_cast<float>(n);
+        const float waist = arc[m / 4];
+        s0 = waist + spacing * std::round((s0 - waist) / spacing);
+    }
+    float twiceArea = 0.0f; // sentido del anillo, de las posiciones actuales
+    for (std::size_t i = 0; i < n; ++i)
+        twiceArea += cross(pos(bp, body.ring[i]), pos(bp, body.ring[(i + 1) % n]));
+    const float dir = twiceArea >= 0.0f ? 1.0f : -1.0f;
+    body.restRing.resize(n);
+    body.restEdge.resize(n);
+    for (std::size_t i = 0; i < n; ++i) {
+        float s = std::fmod(s0 + dir * total * static_cast<float>(i) / static_cast<float>(n), total);
+        if (s < 0.0f)
+            s += total;
+        std::size_t k = static_cast<std::size_t>(std::lower_bound(arc.begin(), arc.end(), s) - arc.begin());
+        k = std::clamp<std::size_t>(k, 1, m);
+        const float seg = arc[k] - arc[k - 1];
+        const float t = seg > 1e-9f ? (s - arc[k - 1]) / seg : 0.0f;
+        body.restRing[i] = dense[k - 1] + (dense[k] - dense[k - 1]) * t;
+    }
+    for (std::size_t i = 0; i < n; ++i)
+        body.restEdge[i] = length(body.restRing[(i + 1) % n] - body.restRing[i]);
+    body.restArea = polygon::signedArea(body.restRing.data(), static_cast<int>(n));
+    body.centroid = c;
+    body.angle = theta;
+    for (std::size_t q = 0; q < body.interior.size(); ++q)
+        body.restInterior[q] = toLocal(body, pos(bp, body.interior[q]));
     refresh(body, bp);
 }
 

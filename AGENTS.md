@@ -34,10 +34,10 @@ e interviene.
   nutrientes se aplican **en vivo** a la placa en marcha; lo demás, al crearla. Las placas se
   guardan en `<datos>/biogame/plates/*.plate`.
 - **Placas preparadas** (`game/prepared`; datos en `medios.toml`, `recipientes.toml`,
-  `placas.toml`): además de la gota de agua, tipos de placa como en un laboratorio real. Hecho: el
+  `placas.toml`): además de la gota de agua, tipos de placa como en un laboratorio real: el
   **cultivo celular** (DMEM en incubadora a 37 °C y 10 % de CO₂: un campo circular del fondo de un
-  recipiente, con la profundidad del medio del recipiente y estéril). Pendientes: las células
-  humanas (fase 20b) y el **preparado vegetal**. **Mezclas:** cualquier ser del catálogo se inocula
+  recipiente, con la profundidad del medio del recipiente y estéril) y los **preparados** en
+  portaobjetos (`PlateKind::Slide`, ver abajo). **Mezclas:** cualquier ser del catálogo se inocula
   en cualquier placa (Catálogo > Inocular..., intervención `Inoculate`, reproducible).
 - **Paneles acoplables** (Dear ImGui, ver "Interfaz"): Placa, Catálogo (cualquier ser, con
   íconos), Ficha, Herramientas, Simulación, Preferencias (imagen, fluidez y rendimiento),
@@ -72,6 +72,19 @@ e interviene.
   suero o por edad) que deja cuerpos apoptóticos sin lisis; el neutrófilo sigue el fMLP que liberan
   las bacterias y las fagocita. Glutamina, lactato y fMLP son campos que solo difunden si hay
   células animales.
+- **Preparados** (`bio/osmosis`, `bio/tissue`, `bio/erythrocytes`, `game/world_tissue.cpp`,
+  `render/tissue_renderer`): epidermis de cebolla, hoja de *Elodea*, papa con Lugol, punta de raíz
+  con mitosis, epidermis de hoja con estomas, mucosa bucal, frotis de sangre con Giemsa y sangre
+  diluida. Un tejido (`[placa.tejido]`) son paredes de celulosa generadas por disposición
+  (hileras, poligonal, filas, rompecabezas) y un protoplasto vivo (cuerpo blando, componente
+  `Protoplast`) en cada célula, encerrado por su pared (`confineProtoplasts`; los protoplastos no
+  chocan entre sí) con los gránulos en la capa cortical. **Ósmosis** (Boyle–van 't Hoff, en tiempo
+  real): la osmolaridad del medio sale de la sal y de `MediumParams::osmolytes` (sacarosa); el
+  protoplasto se plasmoliza en un medio más concentrado que su jugo celular y se recupera en agua;
+  los glóbulos rojos (partículas, miles por campo) se arrugan o se hinchan y se hemolizan al pasar
+  su volumen crítico (fragilidad osmótica de Parpart). Fijado (`fijado`), el preparado no se mueve
+  y el frotis aplasta los leucocitos contra el vidrio (`World::flattenSmear`). Las células que no se
+  mueven solas usan `LocomotionType::None` (`locomocion = "ninguna"`).
 - **Células de organismos pluricelulares:** células humanas y animales en cultivo (líneas y tipos
   reales: fibroblastos, queratinocitos, neutrófilos…) y tejidos vegetales, con la biología de cada
   una (adhesión al sustrato, migración, inhibición por contacto, apoptosis, pared celular). Se
@@ -224,6 +237,10 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   forma; tensión cortical (flujo de curvatura) que alisa arrugas sin frenar lóbulos; área
   conservada en ~1 s (el citoplasma fluye); remallado que agrega o quita membrana. Su membrana
   tiene más masa inversa, así que cede en los contactos.
+- **Cambios grandes de forma** (una célula animal que pasa de redonda a huso, o se redondea para la
+  mitosis): `reshapeRestEven` reparte la forma de reposo por longitud de arco. La proyección radial
+  de `reshapeRest` amontona los puntos y deja la forma cruzada; con flexión de ventanas eso hace que
+  la célula se empuje sola.
 - **Topología:** `replaceRing` / `resizeRing` cambian el anillo (fusión, inserción de membrana).
   Los eventos de topología se aplican al final del paso.
 
@@ -395,7 +412,8 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   gramnegativa, clorofila…). Las respuestas: `Fixed`, `PhIndicator` (vira con el pH) y
   `GramRetention` (pierde el colorante con el tiempo de decolorante: la pared fina en ~3 s, la
   gruesa en ~60 s; sobre-decolorar vuelve rosa a la grampositiva). De fábrica: Gram, Lugol,
-  DAPI (fluorescencia, fondo oscuro), rojo neutro, azul de metileno y rojo Congo.
+  DAPI (fluorescencia, fondo oscuro), rojo neutro, azul de metileno, rojo Congo, Giemsa (sangre:
+  núcleos violeta, hemoglobina rosa) y orceína acética (cromosomas).
 - **Bioquímica real en la simulación:** `speciesChemistry(id)` da la reserva (`Storage`: almidón,
   glucógeno, paramilón, crisolaminarina) y la pared (`CellWall`) de cada especie; solo el almidón
   verdadero (clorofitas) vira a azul-negro con Lugol y *Euglena* (paramilón) no reacciona.

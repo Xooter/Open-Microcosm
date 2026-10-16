@@ -17,6 +17,9 @@ enum class LocomotionType : std::uint8_t {
     // en el frente y las adhesiones focales tiran del cuerpo. Es biología (polimerización de
     // actina), así que corre en tiempo biológico: unos µm/min reales son µm/s con kBioTimeScale 60.
     Crawl,
+    // Sin locomoción propia: células de un tejido (con pared), escamosas descamadas, leucocitos de
+    // un frotis. No tienen cilios ni flagelo (los genes de tricocistos y cloroplastos no aplican).
+    None,
 };
 
 const char* locomotionName(LocomotionType type);

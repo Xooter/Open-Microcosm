@@ -27,7 +27,7 @@ struct Vessel {
     float depthUm() const { return volumeMl / areaCm2 * 1e4f; }
 };
 
-enum class PlateKind : std::uint8_t { Drop, CellCulture };
+enum class PlateKind : std::uint8_t { Drop, CellCulture, Slide };
 
 struct PreparedPlate {
     std::string key, name, description, pack, source;
@@ -36,6 +36,12 @@ struct PreparedPlate {
     float fieldUm = 2048.0f;    // lado del campo simulado
     float temperature = 37.0f, co2 = 0.05f, light = 0.0f; // ambiente (incubadora)
     std::vector<std::pair<std::string, float>> seeding;   // id del ser, células/cm²
+    Tissue tissue;       // preparado: el tejido montado (si tiene)
+    bool fixed = false;  // preparado fijado (y teñido): nada vivo
+    std::string stain;   // tinción con la que se prepara ("" ninguna)
+    float cellSize = 8.0f; // celda de la grilla [µm] (un frotis de sangre necesita 4 µm)
+    float erythrocytesPerCm2 = 0.0f, plateletsPerCm2 = 0.0f; // sangre
+    float bacteriaPerCm2 = 0.0f; // bacterias del preparado (un raspado de mucosa trae las de la boca)
 };
 
 int cultureMediumCount();

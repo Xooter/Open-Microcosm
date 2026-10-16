@@ -227,6 +227,11 @@ void App::createPlate() {
         intervene(engine);
     }
     session.interventions().schedule(plateScript);
+    // Un preparado se arma ya teñido (frotis con Giemsa, papa con Lugol…): la tinción de sus datos.
+    if (const PreparedPlate* pp = plate.prepared.empty() ? nullptr : findPreparedPlate(plate.prepared); pp && !pp->stain.empty())
+        for (std::size_t i = 0; i < stains.size(); ++i)
+            if (stains[i].id == pp->stain)
+                setStainIndex(static_cast<int>(i));
     camera.target = {0.5f * world->width(), 0.5f * world->height()};
     if (world->dish().active())
         camera.zoom = std::min(viewport.width, viewport.height) / (2.3f * world->dish().radius);
@@ -270,11 +275,12 @@ void App::pushMediumLive() {
     intervene(iv);
     // El aire sobre el medio (CO₂ de la incubadora) va aparte: no entra en los 6 valores de arriba.
     const MediumParams& now = world->medium();
-    if (now.co2Atmosphere != s.co2Atmosphere || now.carbonatePK != s.carbonatePK) {
+    if (now.co2Atmosphere != s.co2Atmosphere || now.carbonatePK != s.carbonatePK || now.osmolytes != s.osmolytes) {
         Intervention air;
         air.kind = InterventionKind::Atmosphere;
         air.v[0] = s.co2Atmosphere;
         air.v[1] = s.carbonatePK;
+        air.v[2] = s.osmolytes;
         intervene(air);
     }
 }

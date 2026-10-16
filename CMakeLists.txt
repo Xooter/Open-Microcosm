@@ -143,6 +143,7 @@ add_library(biosim STATIC
     src/game/world_plasmodium.cpp
     src/game/world_minerals.cpp
     src/game/world_animal.cpp
+    src/game/world_tissue.cpp
     src/game/inspect.cpp
     src/game/world_chem.cpp
     src/game/biome.cpp
@@ -231,6 +232,7 @@ add_executable(bio
     src/ui/panels/help_panel.cpp
     src/render/renderer.cpp
     src/render/minerals.cpp
+    src/render/tissue_renderer.cpp
     src/render/field_overlay.cpp
     src/render/cell_renderer.cpp
     src/render/instanced_particles.cpp
@@ -252,8 +254,8 @@ target_include_directories(imgui_lib SYSTEM PUBLIC ${imgui_SOURCE_DIR} ${implot_
 # Fase 19: medición del paso de simulación (ms/paso, desglose, checksum; --gpu como la app) y
 # del dibujo (--render).
 add_executable(bio_bench bench/bio_bench.cpp src/gpu/gpu_substep_solver.cpp
-    src/render/renderer.cpp src/render/minerals.cpp src/render/field_overlay.cpp src/render/cell_renderer.cpp
-    src/render/instanced_particles.cpp src/render/population_layer.cpp src/render/structure_renderer.cpp
+    src/render/renderer.cpp src/render/minerals.cpp src/render/tissue_renderer.cpp src/render/field_overlay.cpp
+    src/render/cell_renderer.cpp src/render/instanced_particles.cpp src/render/population_layer.cpp src/render/structure_renderer.cpp
     src/render/triangle_batch.cpp)
 target_link_libraries(bio_bench PRIVATE biosim raylib)
 
@@ -316,7 +318,7 @@ include(CPack)
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    set(BIO_TEST_SOURCES tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp tests/test_render_lod.cpp tests/test_body_plan.cpp tests/test_parameters.cpp tests/test_scene.cpp tests/test_physiology.cpp tests/test_validation.cpp tests/test_content.cpp tests/test_animal_cells.cpp)
+    set(BIO_TEST_SOURCES tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp tests/test_render_lod.cpp tests/test_body_plan.cpp tests/test_parameters.cpp tests/test_scene.cpp tests/test_physiology.cpp tests/test_validation.cpp tests/test_content.cpp tests/test_animal_cells.cpp tests/test_preparations.cpp)
     add_executable(bio_tests ${BIO_TEST_SOURCES})
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
     # Rápidos (~1 min): la verificación de cada cambio. Largos: ecosistemas, conservación en

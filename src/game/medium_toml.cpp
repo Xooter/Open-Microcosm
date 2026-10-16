@@ -40,6 +40,7 @@ constexpr MediumKey kMediumKeys[] = {
     {"rojo_fenol", &MediumParams::phenolRed, true},
     {"pka_carbonato", &MediumParams::carbonatePK, true},
     {"co2_aire", &MediumParams::co2Atmosphere, true},
+    {"osmolitos", &MediumParams::osmolytes, true},
 };
 
 } // namespace

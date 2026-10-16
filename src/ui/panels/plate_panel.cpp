@@ -2,6 +2,7 @@
 // cultivo celular; seed, contenido, ambiente, nutrientes, sedimento y poblaciones). Lo que se puede cambiar con la placa en marcha (ambiente y
 // nutrientes) se aplica en vivo; el resto se aplica al crear la placa.
 #include "app/app.hpp"
+#include "bio/osmosis.hpp"
 #include "game/scene.hpp"
 #include "ui/panels/panel_classes.hpp"
 #include "ui/widgets.hpp"
@@ -11,6 +12,7 @@
 
 #include <algorithm>
 #include <random>
+#include <vector>
 
 namespace ui {
 
@@ -129,7 +131,43 @@ class PlatePanel : public Panel {
         if (const Vessel* v = findVessel(pp->vessel))
             readout("Recipiente", "%s: %.1f cm², %.1f mL (%.1f mm de medio)", v->name.c_str(), static_cast<double>(v->areaCm2),
                     static_cast<double>(v->volumeMl), static_cast<double>(v->depthUm() * 1e-3f));
-        if (const CultureMedium* m = findCultureMedium(pp->medium)) {
+        if (pp->kind == PlateKind::Slide) {
+            // Solución de montaje: cambiarla con la placa en marcha es lo que se hace en clase (una
+            // gota en un borde del cubreobjetos y un papel que la tira del otro): cambia el agua de
+            // abajo, con su sal y su sacarosa (se aplica como el ambiente, en vivo).
+            MediumParams& env = p.config.medium;
+            std::vector<const char*> names;
+            int current = -1;
+            for (int i = 0; i < cultureMediumCount(); ++i) {
+                const CultureMedium& cm = cultureMedium(i);
+                names.push_back(cm.name.c_str());
+                if (cm.composition.salinity == env.salinity && cm.composition.osmolytes == env.osmolytes)
+                    current = i;
+            }
+            names.push_back("A medida");
+            if (current < 0)
+                current = static_cast<int>(names.size()) - 1;
+            int chosen = current;
+            if (combo("Solución de montaje", &chosen, names.data(), static_cast<int>(names.size())) &&
+                chosen < cultureMediumCount()) {
+                env.salinity = cultureMedium(chosen).composition.salinity;
+                env.osmolytes = cultureMedium(chosen).composition.osmolytes;
+                if (app.livePlate)
+                    app.pushMediumLive();
+                else
+                    app.plateDirty = true;
+            }
+            tooltip("Reemplaza el agua bajo el cubreobjetos. La sal y la sacarosa también se ajustan a mano en Ambiente.");
+            if (current == cultureMediumCount())
+                note("Montaje a medida (sal o sacarosa cambiadas en Ambiente).");
+            readout("Osmolaridad", "%.0f mOsm/L",
+                    static_cast<double>(osmosis::mediumOsmolarity(p.config.medium.salinity, p.config.medium.osmolytes)));
+            if (pp->tissue.enabled && pp->tissue.content == TissueContent::Protoplast)
+                readout("Jugo celular", "%.0f mOsm/L", static_cast<double>(pp->tissue.sapOsmolarity));
+            readout("Estado", "%s", pp->fixed ? "fijado y tenido" : "vivo");
+            if (!pp->fixed)
+                note("Para fijarlo y teñirlo: panel Tinción (Fijar la muestra).");
+        } else if (const CultureMedium* m = findCultureMedium(pp->medium)) {
             readout("Medio", "%s", m->name.c_str());
             tooltip(m->reference.c_str());
             const MediumParams& c = p.config.medium;
@@ -173,6 +211,10 @@ class PlatePanel : public Panel {
                              "medio quede en pH ~7,4.",
                              100.0f);
         changed |= checkbox("Anóxico (sin O2 del aire)", &m.anoxic);
+        changed |= slider("Sacarosa [mOsm/L]", &m.osmolytes, 0.0f, 2000.0f, "%.0f",
+                          "Soluto que no atraviesa la membrana: sube la osmolaridad del medio sin agregar sal (1 M de "
+                          "sacarosa ≈ 1000 mOsm/L).");
+        readout("Osmolaridad del medio", "%.0f mOsm/L", static_cast<double>(osmosis::mediumOsmolarity(m.salinity, m.osmolytes)));
         if (changed) {
             if (app.livePlate)
                 app.pushMediumLive();

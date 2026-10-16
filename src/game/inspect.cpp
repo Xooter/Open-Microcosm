@@ -137,6 +137,7 @@ const char* locomotionText(LocomotionType t) {
     case LocomotionType::Flagellum: return "flagelo";
     case LocomotionType::Pseudopod: return "pseudopodos";
     case LocomotionType::Crawl: return "arrastre sobre el fondo (lamelipodio)";
+    case LocomotionType::None: return "ninguna (no se mueve sola)";
     }
     return "";
 }
@@ -157,6 +158,7 @@ const char* kindName(const SpeciesInfo& info) {
     case LocomotionType::Flagellum: return "Flagelado";
     case LocomotionType::Pseudopod: return "Ameba";
     case LocomotionType::Crawl: return info.animalCell.present ? "Celula humana en cultivo" : "Celula que se arrastra";
+    case LocomotionType::None: return "Celula de un organismo pluricelular";
     }
     return "";
 }
@@ -171,6 +173,7 @@ const char* intentText(Intent i, LocomotionType type, const SpeciesInfo& info) {
         case LocomotionType::Flagellum: return "nada hacia objetivos que cambian al azar";
         case LocomotionType::Pseudopod: return "extiende pseudopodos en direcciones al azar";
         case LocomotionType::Crawl: return "migra sobre el fondo en un paseo al azar persistente";
+        case LocomotionType::None: return "queda quieta";
         }
         return "deambula";
     case Intent::Chase: return "persigue a una presa que detecta";
@@ -282,6 +285,26 @@ Inspection inspectCell(const World& w, entt::entity e) {
         now(fmt("manipulando una presa entera (%.1f h bio)", dig->handling / 3600.0f));
     else if (w.isSatiated(e))
         now("saciada: no persigue presas");
+    if (const AnimalCell* ac = reg.try_get<AnimalCell>(e)) {
+        // Célula humana: dónde está de su ciclo y por qué (fase 20b).
+        const AnimalCellInfo& ai = info.animalCell;
+        if (ac->phase == CellPhase::Apoptotic)
+            now(fmt("en apoptosis (%.0f%%): se encoge, burbujea y se partira en cuerpos apoptoticos, sin reventar",
+                    100.0f * ac->apoptosis));
+        else if (ac->phase == CellPhase::G0)
+            now(!ai.cycles ? "no se divide (celula diferenciada terminal)"
+                : w.medium().serum < ai.serumMinimum ? "quiescente (G0): sin factores de crecimiento del suero no pasa el punto de restriccion"
+                : ac->contact >= 0.5f && ai.contactProliferation ? "quiescente (G0): rodeada de vecinas (inhibicion por contacto)"
+                                                                   : "quiescente (G0)");
+        else
+            now(fmt("ciclo celular: fase %s (%.1f h en la fase)", asciiFold(cellPhaseName(ac->phase)).c_str(),
+                    ac->phaseHours * w.bioTimeScale() / w.bioScale())); // horas a su temperatura (sin el Q10)
+        if (ac->contact > 0.05f)
+            now(fmt("toca a otras celulas en el %.0f%% de su borde%s", 100.0f * ac->contact,
+                    ai.contactLocomotion ? ": se repolariza hacia el lado libre (Abercrombie)" : ""));
+        if (reg.all_of<Adherent>(e))
+            now("adherida al fondo por adhesiones focales");
+    }
     if (state.lines.empty())
         now("sin eventos especiales");
     ins.headline = state.lines.front().value;

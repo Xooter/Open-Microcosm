@@ -9,7 +9,8 @@
 #   etiquetas: grupos (taxonómicos o funcionales) para dietas, huidas y hospedadores.
 #     simbionte_obligado: vive solo dentro de su hospedador; en una gota aparece solo si el
 #     bioma lo nombra en sus `pesos` (biomas.toml).
-#   locomocion: cilios | flagelo | pseudopodo; velocidad_relativa respecto de la del tipo.
+#   locomocion: cilios | flagelo | pseudopodo | arrastre (células animales) | ninguna (células de
+#   tejidos y frotis); velocidad_relativa respecto de la del tipo.
 #   alimentacion: surco_oral | polo_anterior | fagocitosis | raptorial | tentaculos | cuello |
 #     osmotrofia | ninguna.
 #   presas, presas_boca (lo que traga con la corriente oral), huye_de: ids de seres o etiquetas.
@@ -803,6 +804,7 @@ id = "fibroblasto_dermico_humano"
 nombre = "Fibroblasto dermico humano"
 etiquetas = ["celula_humana", "celula_animal", "fibroblasto"]
 descripcion = "Celula del tejido conectivo de la dermis, en cultivo: fusiforme, pegada al fondo, migra con un lamelipodio y se detiene al tocar a otra. Deja de dividirse cuando la monocapa se completa (inhibicion por contacto)."
+plan = "celula_humana_adherida"
 locomocion = "arrastre"
 alimentacion = "ninguna"
 masa_seca_relativa = 0.024
@@ -817,6 +819,7 @@ semieje_menor = 15.0
 memoria_forma = 2.0
 color = [214, 210, 198]
 nucleo = 0.4
+cuadratura = 1.4
 [ser.celula]
 adherente = true
 radio_redondeada = 11.0
@@ -834,6 +837,7 @@ id = "hela"
 nombre = "HeLa"
 etiquetas = ["celula_humana", "celula_animal", "linea_tumoral"]
 descripcion = "Linea celular de cancer de cuello uterino, la primera humana inmortal (1951). Epitelial y poligonal; no deja de dividirse al llenarse la placa y consume mucha glucosa que convierte en lactato (efecto Warburg), que acidifica el medio."
+plan = "celula_humana_adherida"
 locomocion = "arrastre"
 alimentacion = "ninguna"
 masa_seca_relativa = 0.11
@@ -866,6 +870,7 @@ id = "neutrofilo"
 nombre = "Neutrofilo"
 etiquetas = ["celula_humana", "celula_animal", "leucocito", "fagocito"]
 descripcion = "Globulo blanco que caza bacterias: sigue el rastro quimico que ellas dejan (peptidos formilados, fMLP), las envuelve y las digiere. No se divide y vive solo horas; muere por apoptosis, sin inflamar."
+plan = "neutrofilo"
 locomocion = "arrastre"
 alimentacion = "fagocitosis"
 presas = ["levadura"]
@@ -890,3 +895,137 @@ se_divide = false
 quimiotaxis_fmlp = true
 [ser.apariencia]
 estilo = "neutrofilo"
+
+# --- Preparados (fase 20c) -------------------------------------------------------------------------
+# Protoplastos de tejidos vegetales (viven dentro de su pared, que genera el preparado) y células
+# de la sangre y de la mucosa bucal. No forman parte de una gota (cantidad_inicial 0).
+
+# Epidermis de la escama de una cebolla morada (Allium cepa): células alargadas (~200–400 × 40–70
+# µm) con una vacuola enorme teñida de antocianinas, que muestra la plasmólisis sin teñir.
+[[ser]]
+id = "celula_epidermica_cebolla"
+nombre = "Celula de epidermis de cebolla"
+etiquetas = ["celula_vegetal", "epidermis"]
+descripcion = "Celula de la epidermis interna de la escama del bulbo de cebolla morada: pared de celulosa, una vacuola enorme con antocianinas (violeta) y el citoplasma en una capa delgada con el nucleo contra la pared. En agua salada pierde agua y el protoplasto se despega de la pared (plasmolisis)."
+plan = "celula_vegetal"
+locomocion = "ninguna"
+velocidad_relativa = 0.0
+alimentacion = "ninguna"
+ph = [5.0, 8.0]
+temperatura = [2.0, 35.0]
+salinidad_max = 60.0
+reserva = "ninguna"
+pared = "celulosa"
+[ser.forma]
+semieje_mayor = 120.0
+semieje_menor = 25.0
+memoria_forma = 2.0
+color = [196, 136, 176]
+nucleo = 0.3
+[ser.apariencia]
+estilo = "protoplasto_vegetal"
+
+# Hoja de Elodea (Egeria densa): dos capas de células rectangulares (~40–80 × 15–25 µm) con
+# decenas de cloroplastos que giran junto a la pared (ciclosis).
+[[ser]]
+id = "celula_hoja_elodea"
+nombre = "Celula de hoja de Elodea"
+etiquetas = ["celula_vegetal", "fototrofa"]
+descripcion = "Celula de la hoja de Elodea (Egeria densa), una planta de acuario: llena de cloroplastos que giran junto a la pared llevados por la corriente citoplasmatica (ciclosis). En agua salada se plasmoliza."
+plan = "celula_vegetal_cloroplastos"
+locomocion = "ninguna"
+velocidad_relativa = 0.0
+alimentacion = "ninguna"
+cloroplastos = true
+ciclosis = 3.0
+ph = [5.0, 9.0]
+temperatura = [2.0, 32.0]
+salinidad_max = 40.0
+reserva = "almidon"
+pared = "celulosa"
+[ser.forma]
+semieje_mayor = 30.0
+semieje_menor = 10.0
+memoria_forma = 2.0
+color = [206, 222, 190]
+nucleo = 0.35
+[ser.apariencia]
+estilo = "hoja_elodea"
+
+# Célula escamosa de la mucosa bucal: plana y poligonal (~50–80 µm), con un núcleo chico (~8 µm);
+# las que se raspan de la mejilla son las superficiales, que se descaman.
+[[ser]]
+id = "celula_escamosa_bucal"
+nombre = "Celula escamosa de la mucosa bucal"
+etiquetas = ["celula_humana", "celula_animal", "epitelio"]
+descripcion = "Celula del epitelio plano estratificado de la cara interna de la mejilla: grande, plana y poligonal, con un nucleo chico en el centro. Se descama sola; en el raspado suelen tener bacterias de la boca pegadas."
+plan = "celula_escamosa"
+locomocion = "ninguna"
+velocidad_relativa = 0.0
+alimentacion = "ninguna"
+masa_seca_relativa = 0.05
+ph = [6.0, 8.0]
+temperatura = [10.0, 40.0]
+salinidad_max = 16.0
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 32.0
+semieje_menor = 27.0
+memoria_forma = 4.0
+color = [226, 222, 212]
+nucleo = 0.15
+cuadratura = 3.0
+[ser.apariencia]
+estilo = "celula_escamosa"
+
+# Linfocito: el leucocito chico de la sangre (~7–10 µm), casi todo núcleo redondo y denso con un
+# anillo delgado de citoplasma.
+[[ser]]
+id = "linfocito"
+nombre = "Linfocito"
+etiquetas = ["celula_humana", "celula_animal", "leucocito"]
+descripcion = "Globulo blanco chico (~8 um) de la inmunidad adaptativa (celulas T y B): un nucleo redondo y oscuro casi lo llena, con un anillo delgado de citoplasma celeste en la tincion de Giemsa."
+plan = "leucocito"
+locomocion = "ninguna"
+velocidad_relativa = 0.0
+alimentacion = "ninguna"
+masa_seca_relativa = 0.3
+ph = [6.8, 7.8]
+temperatura = [10.0, 40.0]
+salinidad_max = 16.0
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 4.0
+semieje_menor = 3.8
+memoria_forma = 4.0
+color = [222, 220, 214]
+nucleo = 0.85
+[ser.apariencia]
+estilo = "linfocito"
+
+# Monocito: el leucocito más grande (~12–20 µm), con núcleo arriñonado y citoplasma gris azulado.
+[[ser]]
+id = "monocito"
+nombre = "Monocito"
+etiquetas = ["celula_humana", "celula_animal", "leucocito", "fagocito"]
+descripcion = "El globulo blanco mas grande (~15 um): nucleo en forma de rinon y citoplasma gris azulado con vacuolas. En los tejidos se vuelve macrofago."
+plan = "leucocito"
+locomocion = "ninguna"
+velocidad_relativa = 0.0
+alimentacion = "ninguna"
+masa_seca_relativa = 0.25
+ph = [6.8, 7.8]
+temperatura = [10.0, 40.0]
+salinidad_max = 16.0
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 7.5
+semieje_menor = 7.0
+memoria_forma = 4.0
+color = [218, 218, 214]
+nucleo = 0.6
+[ser.apariencia]
+estilo = "monocito"

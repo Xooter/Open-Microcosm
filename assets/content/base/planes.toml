@@ -149,3 +149,88 @@ estructuras = [
     { tipo = "golgi", fuente = "declarada", disposicion = "perinuclear", largo = 1.0, ancho = 0.3, cantidad = 1, campo_claro = false, nombre = "aparato de Golgi (un dictiosoma)" },
     { tipo = "ribosomas", fuente = "declarada", disposicion = "interior", largo = 0.025, ancho = 0.025, por_um3 = 3000.0, campo_claro = false, nombre = "ribosomas 80S" },
 ]
+
+# Célula humana adherida en cultivo (fibroblasto, HeLa): núcleo ovalado con 1–4 nucléolos,
+# mitocondrias tubulares, retículo y Golgi junto al núcleo, lisosomas; sin vacuola contráctil (en un
+# medio isotónico no la necesita).
+[[plan]]
+id = "celula_humana_adherida"
+nombre = "celula humana adherida"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "membrana plasmatica (lamelipodio en el frente)" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "nucleo" },
+    { tipo = "nucleolo", fuente = "declarada", disposicion = "interior", largo = 2.0, ancho = 2.0, cantidad = 3, campo_claro = true, nombre = "nucleolos" },
+    { tipo = "mitocondria", fuente = "simulada", disposicion = "interior", largo = 3.0, ancho = 0.5, campo_claro = false, nombre = "mitocondrias (red tubular)" },
+    { tipo = "lisosoma", fuente = "simulada", disposicion = "interior", campo_claro = false, nombre = "lisosomas" },
+    { tipo = "granulo_reserva", fuente = "simulada", disposicion = "interior", campo_claro = false, nombre = "granulos de glucogeno" },
+    { tipo = "reticulo_endoplasmico", fuente = "declarada", disposicion = "perinuclear", largo = 8.0, ancho = 0.05, cantidad = 1, campo_claro = false, nombre = "reticulo endoplasmico rugoso" },
+    { tipo = "golgi", fuente = "declarada", disposicion = "perinuclear", largo = 3.0, ancho = 0.5, cantidad = 1, campo_claro = false, nombre = "aparato de Golgi (cinta junto al nucleo)" },
+    { tipo = "ribosomas", fuente = "declarada", disposicion = "interior", largo = 0.025, ancho = 0.025, por_um3 = 3000.0, campo_claro = false, nombre = "ribosomas 80S" },
+]
+
+# Neutrófilo: núcleo de 3–5 lóbulos, citoplasma lleno de gránulos (primarios con mieloperoxidasa,
+# secundarios), pocas mitocondrias.
+[[plan]]
+id = "neutrofilo"
+nombre = "neutrofilo"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "membrana plasmatica (lamelipodio en el frente)" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "nucleo multilobulado (3-5 lobulos)" },
+    { tipo = "lisosoma", fuente = "simulada", disposicion = "interior", campo_claro = false, nombre = "granulos primarios (azurofilos) y secundarios" },
+    { tipo = "vacuola_digestiva", fuente = "simulada", disposicion = "interior", campo_claro = true, nombre = "fagosomas con bacterias" },
+    { tipo = "mitocondria", fuente = "simulada", disposicion = "interior", largo = 1.0, ancho = 0.3, campo_claro = false, nombre = "mitocondrias (pocas)" },
+    { tipo = "golgi", fuente = "declarada", disposicion = "perinuclear", largo = 1.0, ancho = 0.3, cantidad = 1, campo_claro = false, nombre = "aparato de Golgi" },
+    { tipo = "ribosomas", fuente = "declarada", disposicion = "interior", largo = 0.025, ancho = 0.025, por_um3 = 1000.0, campo_claro = false, nombre = "ribosomas 80S" },
+]
+
+# Célula vegetal (protoplasto dentro de su pared): vacuola central enorme, citoplasma periférico.
+[[plan]]
+id = "celula_vegetal"
+nombre = "celula vegetal"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "pared", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "pared de celulosa" },
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "membrana plasmatica (se despega de la pared en la plasmolisis)" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "nucleo (contra la pared)" },
+    { tipo = "nucleolo", fuente = "declarada", disposicion = "interior", largo = 3.0, ancho = 3.0, cantidad = 2, campo_claro = false, nombre = "nucleolos" },
+    { tipo = "mitocondria", fuente = "declarada", disposicion = "interior", largo = 1.5, ancho = 0.5, cantidad = 200, campo_claro = false, nombre = "mitocondrias" },
+    { tipo = "reticulo_endoplasmico", fuente = "declarada", disposicion = "perinuclear", largo = 6.0, ancho = 0.05, cantidad = 1, campo_claro = false, nombre = "reticulo endoplasmico" },
+    { tipo = "golgi", fuente = "declarada", disposicion = "perinuclear", largo = 1.0, ancho = 0.3, cantidad = 10, campo_claro = false, nombre = "dictiosomas" },
+    { tipo = "ribosomas", fuente = "declarada", disposicion = "interior", largo = 0.025, ancho = 0.025, por_um3 = 1000.0, campo_claro = false, nombre = "ribosomas 80S" },
+]
+
+[[plan]]
+id = "celula_vegetal_cloroplastos"
+nombre = "celula vegetal con cloroplastos"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "pared", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "pared de celulosa" },
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "membrana plasmatica" },
+    { tipo = "cloroplasto", fuente = "declarada", disposicion = "envoltura", largo = 5.0, ancho = 2.5, cantidad = 60, campo_claro = true, nombre = "cloroplastos (giran con la ciclosis)" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = false, nombre = "nucleo (tapado por los cloroplastos)" },
+    { tipo = "mitocondria", fuente = "declarada", disposicion = "interior", largo = 1.5, ancho = 0.5, cantidad = 100, campo_claro = false, nombre = "mitocondrias" },
+    { tipo = "ribosomas", fuente = "declarada", disposicion = "interior", largo = 0.025, ancho = 0.025, por_um3 = 1000.0, campo_claro = false, nombre = "ribosomas 80S" },
+]
+
+[[plan]]
+id = "celula_escamosa"
+nombre = "celula escamosa"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "membrana plasmatica (pliegues de queratina)" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "nucleo chico" },
+    { tipo = "granulo_reserva", fuente = "simulada", disposicion = "interior", campo_claro = false, nombre = "granulos de queratohialina" },
+]
+
+[[plan]]
+id = "leucocito"
+nombre = "leucocito"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "membrana plasmatica" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "nucleo" },
+    { tipo = "lisosoma", fuente = "simulada", disposicion = "interior", campo_claro = false, nombre = "granulos y lisosomas" },
+    { tipo = "mitocondria", fuente = "simulada", disposicion = "interior", largo = 1.0, ancho = 0.3, campo_claro = false, nombre = "mitocondrias" },
+]

@@ -41,6 +41,7 @@ constexpr FloatField kMediumFloats[] = {
     {"glutamine", &MediumParams::glutamine},
     {"serum", &MediumParams::serum},
     {"phenol_red", &MediumParams::phenolRed},
+    {"osmolytes", &MediumParams::osmolytes},
     {"phage", &MediumParams::phage},
     {"phage_decay_per_hour", &MediumParams::phageDecayPerHour},
     {"toxin_decay_per_hour", &MediumParams::toxinDecayPerHour},
@@ -146,7 +147,9 @@ std::string serializePlate(const PlateSpec& s) {
     const WorldConfig& c = s.config;
     for (const PackInfo& pack : loadedPacks())
         out << "pack=" << pack.id << ' ' << pack.version << ' ' << fingerprintHex(pack.fingerprint) << '\n';
-    out << "depth=" << c.depth << '\n' << "cell_culture=" << c.cellCulture << '\n';
+    out << "depth=" << c.depth << '\n' << "cell_culture=" << c.cellCulture << '\n'
+        << "fixed_slide=" << c.fixedSlide << '\n'
+        << "erythrocytes_cm2=" << c.erythrocytesPerCm2 << '\n' << "platelets_cm2=" << c.plateletsPerCm2 << '\n';
     for (const auto& [sp, count] : c.seeding)
         out << "seeding=" << speciesInfo(sp).key << ' ' << count << '\n';
     out << "dish=" << c.dish << '\n' << "dish_margin=" << c.dishMargin << '\n' << "cell_size=" << c.cellSize << '\n';
@@ -241,6 +244,9 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
         else if (k == "anoxic") c.medium.anoxic = x != 0;
         else if (k == "rock_min") c.sediment.rockMin = static_cast<float>(x);
         else if (k == "cell_culture") c.cellCulture = x != 0;
+        else if (k == "fixed_slide") c.fixedSlide = x != 0;
+        else if (k == "erythrocytes_cm2") c.erythrocytesPerCm2 = static_cast<float>(x);
+        else if (k == "platelets_cm2") c.plateletsPerCm2 = static_cast<float>(x);
         else if (k == "depth") c.depth = static_cast<float>(std::max(1.0, x));
         else if (k == "seeding") {
             // La siembra del archivo reemplaza a la de la placa preparada.

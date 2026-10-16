@@ -30,6 +30,7 @@ enum class StainTarget : std::uint8_t {
     Chlorophyll,  // clorofila (autofluorescencia)
     Nucleoid,     // ADN bacteriano
     Bacteria,     // toda la bacteria (colorantes que no distinguen)
+    Hemoglobin,   // hemoglobina de los glóbulos rojos (acidófila: la tiñe la eosina)
     Count
 };
 const char* stainTargetName(StainTarget t);
@@ -86,7 +87,8 @@ Rgba stainOver(Rgba base, const StainResult& dye);
 // Color del fondo del campo para `natural`.
 Rgba stainBackground(const StainSpec& spec, Rgba natural);
 
-// Las tinciones de fábrica: ninguna, Gram, Lugol, DAPI, rojo neutro, azul de metileno y rojo Congo.
+// Las tinciones de fábrica: ninguna, Gram, Lugol, DAPI, rojo neutro, azul de metileno, rojo Congo,
+// Giemsa (sangre) y orceína acética (cromosomas).
 const std::vector<StainSpec>& builtinStains();
 
 // Texto clave=valor versionado (`stain_version=1`).

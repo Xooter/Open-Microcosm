@@ -51,7 +51,7 @@ static_assert(sizeof(kGeneKeys) / sizeof(kGeneKeys[0]) == kGeneCount);
 
 constexpr std::pair<const char*, LocomotionType> kLocomotion[] = {
     {"cilios", LocomotionType::Cilia}, {"flagelo", LocomotionType::Flagellum}, {"pseudopodo", LocomotionType::Pseudopod},
-    {"arrastre", LocomotionType::Crawl}};
+    {"arrastre", LocomotionType::Crawl}, {"ninguna", LocomotionType::None}};
 constexpr std::pair<const char*, FeedingMode> kFeeding[] = {
     {"surco_oral", FeedingMode::OralGroove}, {"polo_anterior", FeedingMode::Anterior},
     {"fagocitosis", FeedingMode::Phagocytosis}, {"raptorial", FeedingMode::Raptorial},
@@ -332,7 +332,8 @@ const std::vector<std::string>& drawingStyles() {
         "plasto_reticulado", "frustula",           "colonia_esferica",  "colonia_plana",
         "corona_peristomal", "corona_de_membranelas", "tentaculos_capitados", "cirros",
         "cuello_extensible", "dos_flagelos",        "levadura",          "celula_adherida",
-        "neutrofilo"};
+        "neutrofilo",       "protoplasto_vegetal", "hoja_elodea",      "celula_escamosa",
+        "linfocito",        "monocito"};
     return styles;
 }
 

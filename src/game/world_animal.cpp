@@ -7,6 +7,7 @@
 #include "bio/animal_cell.hpp"
 #include "bio/division.hpp"
 #include "bio/physiology.hpp"
+#include "core/finite.hpp"
 #include "core/profiling.hpp"
 #include "sim/polygon.hpp"
 
@@ -52,6 +53,13 @@ float phaseHoursOf(const SpeciesPhysiology& p, CellPhase phase) {
     }
 }
 
+// Una célula sembrada se adhiere y se extiende en ~30–60 min (Döbereiner et al. 2004, Phys. Rev.
+// Lett. 93:108105: fibroblastos sobre fibronectina).
+constexpr float kSpreadingHours = 1.0f;
+// La célula que entra en mitosis se redondea en ~10–20 min (prometafase; Cramer y Mitchison 1997,
+// Mol. Biol. Cell 8:109).
+constexpr float kRoundingHours = 0.25f;
+
 // Duración de la apoptosis, del encogimiento a los cuerpos apoptóticos: ~1–3 h en cultivo (la
 // fase de ejecución, con burbujeo de la membrana; Elmore 2007, Toxicol. Pathol. 35:495).
 constexpr float kApoptosisHours = 2.0f;
@@ -71,11 +79,33 @@ bool World::isAnimalCell(entt::entity e) const { return registry_.all_of<AnimalC
 void World::setupAnimalCell(entt::entity e, Rng& rng) {
     const SpeciesInfo& info = speciesInfo(speciesOfEntity(registry_, e));
     AnimalCell ac;
+    // Llega redonda (de la suspensión de la siembra; spawnOrganism la crea así) y se extiende.
+    if (info.animalCell.adherent)
+        ac.spread = 0.0f;
     ac.polarity = rng.uniform(0.0f, 2.0f * units::kPi);
-    // Asincrónicas: cada una en un punto distinto de G1 (si no, todas se dividirían juntas).
-    ac.phaseHours = rng.uniform(0.0f, phaseHoursOf(speciesPhysiology(speciesOfEntity(registry_, e)), CellPhase::G1));
-    if (!info.animalCell.cycles)
+    // Asincrónicas, como las que vienen de un cultivo que crece en forma exponencial: la edad dentro
+    // del ciclo sigue f(a) = 2·ln2/T · 2^(−a/T) (hay el doble de recién nacidas que de las que van a
+    // dividirse) y la masa crece con la edad.
+    if (info.animalCell.cycles) {
+        const SpeciesPhysiology& phys = speciesPhysiology(speciesOfEntity(registry_, e));
+        const CellPhase order[] = {CellPhase::G1, CellPhase::S, CellPhase::G2};
+        float cycle = phaseHoursOf(phys, CellPhase::M);
+        for (CellPhase ph : order)
+            cycle += phaseHoursOf(phys, ph);
+        const float age = -cycle * std::log2(1.0f - 0.5f * rng.uniform());
+        float left = std::min(age, cycle - phaseHoursOf(phys, CellPhase::M) - 1e-3f); // no empieza a mitad de la mitosis
+        for (CellPhase ph : order) {
+            ac.phase = ph;
+            ac.phaseHours = left;
+            if (left < phaseHoursOf(phys, ph))
+                break;
+            left -= phaseHoursOf(phys, ph);
+        }
+        if (Metabolism* m = registry_.try_get<Metabolism>(e))
+            m->biomass *= std::exp2(age / cycle);
+    } else {
         ac.phase = CellPhase::G0;
+    }
     registry_.emplace_or_replace<AnimalCell>(e, ac);
     if (info.animalCell.adherent)
         registry_.emplace_or_replace<Adherent>(e);
@@ -104,6 +134,13 @@ void World::steerCrawler(entt::entity e, const RingBody& body, Locomotion& loco,
     const AnimalCellInfo& info = speciesInfo(sid).animalCell;
     const float bioDt = dt * bioScale();
     Rng rng(config_.seed, rng_stream::kAutopilot + 50, body.id, step_);
+    // Un cuerpo que la red de seguridad está rearmando no tiene dirección que seguir.
+    if (!finiteNumber(body.centroid.x) || !finiteNumber(body.centroid.y)) {
+        loco.active = false;
+        return;
+    }
+    if (!finiteNumber(ac->polarity))
+        ac->polarity = rng.uniform(0.0f, 2.0f * units::kPi);
     // Paseo aleatorio persistente: la dirección del frente difunde con D_r = 1/P (P: tiempo de
     // persistencia medido). Su desplazamiento cuadrático medio es el de Fürth–Ornstein:
     // <d²> = 2 S² P [t − P (1 − e^(−t/P))] (Gail & Boone 1970).
@@ -112,10 +149,14 @@ void World::steerCrawler(entt::entity e, const RingBody& body, Locomotion& loco,
     // Inhibición por contacto de la locomoción (Abercrombie y Heaysman 1954): al tocar a otra
     // célula, el lamelipodio de ese lado se retrae y la célula se repolariza hacia el lado libre.
     if (info.contactLocomotion && ac->contact > 0.05f && length(ac->contactDirection) > 0.1f) {
-        if (!ac->repolarized) {
-            const Vec2 away = ac->contactDirection * -1.0f;
-            ac->polarity = std::atan2(away.y, away.x) + 0.6f * rng.normal();
+        const Vec2 away = ac->contactDirection * -1.0f;
+        const float target = std::atan2(away.y, away.x);
+        if (!ac->repolarized) { // el choque: el frente se retrae y la célula se da vuelta
+            ac->polarity = target + 0.6f * rng.normal();
             ac->repolarized = true;
+        } else { // mientras siga tocando, el lamelipodio crece solo del lado libre
+            const float delta = std::remainder(target - ac->polarity, 2.0f * units::kPi);
+            ac->polarity += delta * std::min(1.0f, bioDt / 600.0f);
         }
     } else {
         ac->repolarized = false;
@@ -140,6 +181,10 @@ void World::steerCrawler(entt::entity e, const RingBody& body, Locomotion& loco,
             ac->polarity += delta * std::min(1.0f, bioDt / 60.0f); // se reorienta en ~1 min
         }
     }
+    // En una monocapa densa la migración casi se detiene: sin borde libre no hay lamelipodio que
+    // avance (Abercrombie y Heaysman 1954: la rapidez cae con los contactos).
+    if (info.contactLocomotion) // sin borde libre (rodeada del todo) ya no avanza
+        loco.speed *= std::clamp((1.0f - ac->contact) / 0.3f, 0.0f, 1.0f);
     const Vec2 dir = {std::cos(ac->polarity), std::sin(ac->polarity)};
     loco.target = body.centroid + dir * 100.0f;
     loco.active = !still && loco.speed > 0.0f;
@@ -164,8 +209,14 @@ void World::measureAnimalContacts() {
         constexpr float kRange = 3.0f; // [µm] membranas a esta distancia se tocan
         int touching = 0;
         Vec2 toward;
+        if (!finiteNumber(body.centroid.x) || !finiteNumber(body.centroid.y)) {
+            ac.contact = 0.0f;
+            ac.contactDirection = {};
+            continue;
+        }
         for (const RingBody* other : allBodies_) {
-            if (other == &body || registry_.all_of<Rock>(static_cast<entt::entity>(other->id)))
+            if (other == &body || registry_.all_of<Rock>(static_cast<entt::entity>(other->id)) ||
+                !finiteNumber(other->centroid.x) || !finiteNumber(other->centroid.y))
                 continue;
             const Vec2 shift = imageShift(*other, body.centroid);
             if (other->aabbMax.x + shift.x < body.aabbMin.x - kRange || other->aabbMin.x + shift.x > body.aabbMax.x + kRange ||
@@ -219,22 +270,34 @@ float World::animalUptake(entt::entity e, const RingBody& body, const Metabolism
     }
     const float fullEnergy = 0.5f * p.glucoseVmax.value * 1e-3f * hours;
     const float fed = fullEnergy > 0.0f ? std::clamp(energy / fullEnergy, 0.0f, 1.0f) : 0.0f;
-    // Lo que pide: crecer a su tasa máxima (rendimiento 0,6) y su mantenimiento (~1 %/h).
-    const float mu = p.growthMax.present ? p.growthMax.value : 0.03f;
-    const float demand = meta.biomass * (mu / 0.6f + metabolismParams_.maintenancePerHour) * hours * 1.2f;
+    // Lo que pide: crecer a su tasa máxima (rendimiento 0,6) y su mantenimiento (~1 %/h). Quiescente
+    // (G0) o muriendo, no crece: solo se mantiene.
+    const AnimalCell* ac = registry_.try_get<AnimalCell>(e);
+    const bool growing = ac && ac->phase != CellPhase::G0 && ac->phase != CellPhase::Apoptotic;
+    const float mu = !growing ? 0.0f : p.growthMax.present ? p.growthMax.value : 0.03f;
+    // La energía, con la misma cuenta que el metabolismo (bio/metabolism): mantenimiento, el gasto de
+    // migrar y, si falta O₂, la glucólisis anaerobia, que pide mucha más glucosa.
+    const MetabolismParams& mp = metabolismParams_;
+    const float o2 = std::max(0.0f, oxygen_.grid().sample(c.x, c.y));
+    const float aerobic = o2 / (o2 + mp.o2HalfSaturation);
+    const Locomotion* loco = registry_.try_get<Locomotion>(e);
+    const float activity = loco && loco->active ? 1.0f : 0.0f;
+    const float maintenance = mp.maintenancePerHour * meta.biomass * (1.0f + mp.motilityCost * activity) *
+                              (aerobic + (1.0f - aerobic) * mp.fermentationPenalty);
+    const float demand = (meta.biomass * mu / 0.6f + maintenance) * hours * 1.1f;
     return fed * demand;
 }
 
 float World::animalTargetArea(entt::entity e, const AnimalCell& ac, float spreadArea) const {
     const AnimalCellInfo& info = speciesInfo(speciesOfEntity(registry_, e)).animalCell;
     const float round = units::kPi * info.roundRadius * info.roundRadius;
-    if (ac.phase == CellPhase::M) // se despega a medias y se redondea (aumenta su volumen, no su área)
-        return round;
-    if (ac.phase == CellPhase::Apoptotic) { // se encoge (pierde agua) y se redondea
-        const float shrink = std::max(0.4f, 1.0f - 0.6f * ac.apoptosis);
-        return std::min(spreadArea, round) * shrink;
-    }
-    return spreadArea;
+    // Extendida o redondeada (mitosis, apoptosis, recién sembrada): el área sigue a la forma.
+    const float area = ac.phase == CellPhase::M || ac.phase == CellPhase::Apoptotic || ac.spread < 1.0f
+                           ? round + (spreadArea - round) * ac.spread
+                           : spreadArea;
+    if (ac.phase == CellPhase::Apoptotic) // además se encoge (pierde agua)
+        return area * std::max(0.4f, 1.0f - 0.6f * ac.apoptosis);
+    return area;
 }
 
 bool World::updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, float bioDt) {
@@ -248,6 +311,28 @@ bool World::updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, f
     const float hours = bioDt / 3600.0f;
     ac.ageHours += hours;
 
+    // Forma: se extiende sobre el fondo (recién sembrada o recién dividida) y se redondea para la
+    // mitosis (~15 min) o la apoptosis. El cuerpo blando cambia de forma en tiempo real (física):
+    // con el tiempo biológico muy comprimido no se le pide hacerlo en menos de ~1 s real (el
+    // anillo se enredaría).
+    const bool roundUp = ac.phase == CellPhase::M || ac.phase == CellPhase::Apoptotic;
+    const float wanted = roundUp ? 0.0f : 1.0f;
+    if (ac.spread != wanted && !registry_.all_of<Dividing>(e)) {
+        const float realDt = bioDt / bioScale();
+        const float tau = ac.phase == CellPhase::M ? kRoundingHours : ac.phase == CellPhase::Apoptotic ? 0.5f : kSpreadingHours;
+        const float stepBy = std::min(hours / tau, realDt / 1.0f);
+        ac.spread = wanted > ac.spread ? std::min(wanted, ac.spread + stepBy) : std::max(wanted, ac.spread - stepBy);
+        body.shapeRate = roundUp ? 8.0f : body.shapeRate;
+        if (const CellShape* shape = registry_.try_get<CellShape>(e)) {
+            const float r = info.animalCell.roundRadius;
+            const float k = std::sqrt(std::abs(body.restArea) / (units::kPi * shape->radiusX * shape->radiusY));
+            const float t = ac.spread * ac.spread * (3.0f - 2.0f * ac.spread);
+            // Por longitud de arco: de redonda a huso (o al revés) la proyección radial amontona los
+            // puntos en los lados y la forma de reposo se cruza (la célula se empujaba sola).
+            soft_body::reshapeRestEven(body, bodies_, r + (shape->radiusX * k - r) * t, r + (shape->radiusY * k - r) * t,
+                                       2.0f + (shape->squareness - 2.0f) * t, shape->taper * t);
+        }
+    }
     if (ac.phase == CellPhase::Apoptotic) {
         ac.apoptosis += hours / kApoptosisHours;
         if (ac.apoptosis >= 1.0f)
@@ -269,10 +354,7 @@ bool World::updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, f
     if (apoptosis && !registry_.all_of<Dividing>(e)) {
         ac.phase = CellPhase::Apoptotic;
         ac.phaseHours = ac.apoptosis = 0.0f;
-        registry_.remove<Adherent>(e); // se despega
-        const float r = std::sqrt(std::abs(body.restArea) / units::kPi);
-        soft_body::reshapeRest(body, bodies_, r, r);
-        body.shapeRate = 8.0f;
+        registry_.remove<Adherent>(e); // se despega (y se redondea de a poco, arriba)
         ++observed_.apoptoses;
         return true;
     }
@@ -310,24 +392,78 @@ bool World::updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, f
         if (ac.phaseHours >= phaseHoursOf(phys, ac.phase)) {
             ac.phase = ac.phase == CellPhase::S ? CellPhase::G2 : CellPhase::M;
             ac.phaseHours = 0.0f;
-            if (ac.phase == CellPhase::M) {
-                // Mitosis: la célula se redondea (retrae las adhesiones) y el surco la parte.
-                const float r = info.animalCell.roundRadius;
-                soft_body::reshapeRest(body, bodies_, r, r);
-                body.shapeRate = 8.0f;
-                Dividing& d = registry_.emplace_or_replace<Dividing>(e);
-                d.motherRest = body.restRing;
-                d.motherArea = units::kPi * r * r;
-            }
+            // Mitosis: primero se redondea (retrae las adhesiones, arriba); después el surco la parte.
         }
         break;
     case CellPhase::M: {
-        Dividing* dv = registry_.try_get<Dividing>(e);
-        if (!dv)
+        // Catástrofe mitótica: si no logra dividirse (el huso o el surco fallan, por ejemplo
+        // apretada entre vecinas), termina muriendo por apoptosis.
+        if (ac.phaseHours > 6.0f * phaseHoursOf(phys, CellPhase::M)) {
+            registry_.remove<Dividing>(e);
+            ac.phase = CellPhase::Apoptotic;
+            ac.phaseHours = ac.apoptosis = 0.0f;
+            registry_.remove<Adherent>(e);
+            ++observed_.apoptoses;
             break;
-        dv->progress += hours / phaseHoursOf(phys, CellPhase::M);
-        // Citocinesis: la forma de reposo pasa de la célula redonda a dos hijas.
-        const float t = std::clamp((dv->progress - 0.5f) / 0.5f, 0.0f, 1.0f);
+        }
+        Dividing* dv = registry_.try_get<Dividing>(e);
+        if (!dv) {
+            if (ac.spread > 0.0f)
+                break; // todavía redondeándose
+            const float r = info.animalCell.roundRadius;
+            // Redondeada desde el huso, los puntos de la membrana quedaron amontonados en los
+            // costados: se reparten parejos antes del surco (si no, no se estrangula bien).
+            // Par: un punto en cada extremo de la cintura, donde el surco cierra.
+            soft_body::resampleRing(body, bodies_, std::max<std::size_t>(48, static_cast<std::size_t>(6.2831853f * r / kMembraneSpacing) & ~std::size_t{1}));
+            // Círculo por longitud de arco: si el cuerpo todavía no terminó de redondearse, la
+            // proyección radial dejaba la forma de reposo plegada y el surco no cerraba.
+            soft_body::reshapeRestEven(body, bodies_, r, r, 2.0f, 0.0f, true);
+            // La célula mitótica es una esfera tensa (el córtex se contrae al redondearse): la
+            // membrana se pone sobre su círculo, en el mismo orden. Al retraerse desde el huso podía
+            // quedar un rulo cerrado alrededor del núcleo que la flexión no deshace (lo atrapaba).
+            {
+                const float c = std::cos(body.angle), sn = std::sin(body.angle);
+                for (std::size_t i = 0; i < body.ring.size(); ++i) {
+                    const Vec2 q = body.restRing[i];
+                    bodies_.x[body.ring[i]] = body.centroid.x + q.x * c - q.y * sn;
+                    bodies_.y[body.ring[i]] = body.centroid.y + q.x * sn + q.y * c;
+                }
+                soft_body::refresh(body, bodies_);
+            }
+            // Los organelos y gránulos se dimensionaron para la célula extendida (varias veces más
+            // grande): en la célula redonda ocupan poco y se reparten a los dos lados del surco. Las
+            // hijas rearman los suyos al nacer (refillOrganelles).
+            const CellAnatomy& an = registry_.get<CellAnatomy>(e);
+            for (std::size_t k = 0; k < body.interior.size(); ++k) {
+                if (body.interior[k] != an.nucleus) {
+                    bodies_.radius[body.interior[k]] *= 0.5f;
+                } else { // metafase: el huso centra los cromosomas en la célula redonda
+                    body.restInterior[k] = {};
+                    body.anchorRate[k] = std::max(body.anchorRate[k], 3.0f);
+                }
+            }
+            Dividing& d = registry_.emplace<Dividing>(e);
+            d.motherRest = body.restRing;
+            d.motherArea = units::kPi * r * r;
+            dv = &d;
+        }
+        // El redondeo es parte de la mitosis: lo que queda de M es la división en sí.
+        dv->progress += hours / std::max(0.25f, phaseHoursOf(phys, CellPhase::M) - kRoundingHours);
+        // El surco entra entre los dos juegos de cromosomas ya separados: hasta que cada uno llega
+        // a su mitad de la célula, la división no pasa de la anafase (si la cintura se cierra
+        // antes, la membrana se pliega sobre un núcleo y la célula no se parte).
+        if (dv->nucleus2 != ~0u && dv->progress > 0.35f) {
+            const CellAnatomy& an = registry_.get<CellAnatomy>(e);
+            const Vec2 a = soft_body::toLocal(body, {bodies_.x[an.nucleus], bodies_.y[an.nucleus]});
+            const Vec2 b = soft_body::toLocal(body, {bodies_.x[dv->nucleus2], bodies_.y[dv->nucleus2]});
+            const bool apart = a.x > bodies_.radius[an.nucleus] && b.x < -bodies_.radius[dv->nucleus2];
+            if (!apart)
+                dv->progress = 0.35f;
+        }
+        // Anafase B y citocinesis: la célula se alarga a medida que los cromosomas se separan (desde
+        // que se duplican) y después el surco la estrangula; la forma de reposo pasa de la célula
+        // redonda a dos hijas. Alargarse ya en la anafase fija el eje de la división.
+        const float t = std::clamp((dv->progress - 0.3f) / 0.7f, 0.0f, 1.0f);
         if (dv->motherArea > 0.0f) {
             const float scale = std::sqrt(std::abs(body.restArea) / dv->motherArea);
             divisionRestShape(dv->motherRest, scale, t * t * (3.0f - 2.0f * t), body.restRing);
@@ -360,14 +496,11 @@ void World::afterAnimalDivision(entt::entity mother, entt::entity child) {
     registry_.emplace_or_replace<AnimalCell>(child, c);
     if (registry_.all_of<Adherent>(mother))
         registry_.emplace_or_replace<Adherent>(child);
+    // Salen redondas de la citocinesis y se vuelven a extender en ~1 h.
     for (entt::entity e : {mother, child}) {
-        if (!registry_.all_of<CellShape, RingBody>(e))
-            continue;
-        const CellShape& shape = registry_.get<CellShape>(e);
-        RingBody& b = registry_.get<RingBody>(e);
-        const float k = std::sqrt(std::abs(b.restArea) / (units::kPi * shape.radiusX * shape.radiusY));
-        soft_body::reshapeRest(b, bodies_, shape.radiusX * k, shape.radiusY * k, shape.squareness, shape.taper);
-        b.shapeRate = shape.shapeRate;
+        registry_.get<AnimalCell>(e).spread = 0.0f;
+        if (const CellShape* shape = registry_.try_get<CellShape>(e))
+            registry_.get<RingBody>(e).shapeRate = shape->shapeRate;
     }
 }
 
@@ -395,4 +528,29 @@ void World::releaseFmlp(float dt) {
     const float keep = std::exp(-dt * bioScale() / (6.0f * 3600.0f));
     for (float& v : g.v)
         v *= keep;
+}
+
+void World::flattenSmear() {
+    // Al secarse el frotis, cada leucocito se aplasta contra el vidrio: el neutrófilo, de ~8 µm en
+    // suspensión, mide 12–15 µm en un frotis teñido (Bain, Blood Cells: A Practical Guide, 5ª ed.).
+    // Las células sin datos de suspensión (linfocito, monocito) ya traen su tamaño de frotis.
+    constexpr float kFlattening = 1.6f;
+    for (auto [e, ac, body] : registry_.view<AnimalCell, RingBody>().each()) {
+        const Vec2 c = body.centroid;
+        auto spread = [&](std::uint32_t s) {
+            bodies_.x[s] = c.x + (bodies_.x[s] - c.x) * kFlattening;
+            bodies_.y[s] = c.y + (bodies_.y[s] - c.y) * kFlattening;
+        };
+        for (std::uint32_t s : body.ring)
+            spread(s);
+        for (std::uint32_t s : body.interior) {
+            spread(s);
+            bodies_.radius[s] *= kFlattening;
+        }
+        soft_body::refresh(body, bodies_);
+        const float r = std::sqrt(std::abs(soft_body::area(body, bodies_)) / units::kPi);
+        // Más membrana para el contorno más grande, con el espaciado de siempre.
+        soft_body::resampleRing(body, bodies_, std::max<std::size_t>(48, static_cast<std::size_t>(6.2831853f * r / kMembraneSpacing) & ~std::size_t{1}));
+        soft_body::reshapeRestEven(body, bodies_, r, r);
+    }
 }

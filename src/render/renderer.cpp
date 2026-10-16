@@ -5,6 +5,7 @@
 #include "core/profiling.hpp"
 #include "game/world.hpp"
 #include "render/minerals.hpp"
+#include "render/tissue_renderer.hpp"
 #include "render/structure_renderer.hpp"
 
 #include <rlgl.h>
@@ -455,6 +456,10 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                 drawRock(rockPts_.data(), static_cast<int>(rockPts_.size()), {body.centroid.x + offX, body.centroid.y + offY},
                          rock.kind, rock.seed, std::max(2.5f, 2.0f * minSize));
             }
+            // Preparados: las paredes del tejido con su contenido fijo y la sangre (debajo de las
+            // células, que se dibujan después).
+            drawTissue(world, offX, offY, view, minSize, px, world.simTime(), stain_);
+            drawBlood(world, offX, offY, view, minSize, px, stain_);
             // Cianobacterias filamentosas: cadenas de células verde-azuladas; los heterocistos,
             // más grandes, pálidos y de pared gruesa.
             for (const CyanoFilament& fil : world.cyanobacteria().filaments) {

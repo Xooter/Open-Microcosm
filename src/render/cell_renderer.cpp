@@ -48,6 +48,12 @@ constexpr Color kChytrid = {150, 140, 110, 230};      // esporangio de quitridio
 constexpr Color kRhizoid = {120, 110, 90, 140};
 constexpr Color kYeastWall = {150, 140, 110, 220};
 constexpr Color kLorica = {120, 112, 84, 230};        // pared engrosada (capuchones de Oedogonium)
+// Células humanas en cultivo (fase 20b).
+constexpr Color kLamellipodium = {196, 194, 184, 110}; // lamina delgada del frente, apenas visible
+constexpr Color kMitoticHalo = {252, 252, 244, 170};   // la célula redondeada refracta: borde brillante
+constexpr Color kChromosome = {58, 44, 70, 230};       // cromosomas condensados
+constexpr Color kPyknotic = {48, 40, 58, 235};          // núcleo condensado de la apoptosis
+constexpr Color kBleb = {224, 221, 210, 210};           // burbujas de membrana de la apoptosis
 constexpr float kRimMicrometers = 5.0f;
 constexpr float kPi = 3.14159265f;
 
@@ -323,8 +329,16 @@ namespace {
 enum class CellStyle : std::uint8_t {
     Ciliate, Flagellate, Amoeboid, RostrumFlagella, GirdlesProboscis, HelicalRibbon, AxialPlate,
     StellatePlastids, ReticulatePlastid, Frustule, SphericalColony, PlateColony, PeristomeCrown,
-    MembranelleCrown, CapitateTentacles, Cirri, Neck, TwinFlagella, Yeast
+    MembranelleCrown, CapitateTentacles, Cirri, Neck, TwinFlagella, Yeast, AdherentCell, Neutrophil,
+    PlantProtoplast, ElodeaLeaf, Squamous, Lymphocyte, Monocyte
 };
+
+// Células de organismos pluricelulares: sin vacuola contráctil (viven en un medio isotónico o dentro
+// de su pared).
+bool multicellular(CellStyle s) {
+    return s == CellStyle::AdherentCell || s == CellStyle::Neutrophil || s == CellStyle::PlantProtoplast ||
+           s == CellStyle::ElodeaLeaf || s == CellStyle::Squamous || s == CellStyle::Lymphocyte || s == CellStyle::Monocyte;
+}
 
 CellStyle resolveStyle(SpeciesId sid) {
     const SpeciesInfo& info = speciesInfo(sid);
@@ -348,7 +362,14 @@ CellStyle resolveStyle(SpeciesId sid) {
         {"cirros", CellStyle::Cirri},
         {"cuello_extensible", CellStyle::Neck},
         {"dos_flagelos", CellStyle::TwinFlagella},
-        {"levadura", CellStyle::Yeast}};
+        {"levadura", CellStyle::Yeast},
+        {"celula_adherida", CellStyle::AdherentCell},
+        {"neutrofilo", CellStyle::Neutrophil},
+        {"protoplasto_vegetal", CellStyle::PlantProtoplast},
+        {"hoja_elodea", CellStyle::ElodeaLeaf},
+        {"celula_escamosa", CellStyle::Squamous},
+        {"linfocito", CellStyle::Lymphocyte},
+        {"monocito", CellStyle::Monocyte}};
     for (const auto& [key, style] : kNames)
         if (name == key)
             return style;
@@ -357,6 +378,7 @@ CellStyle resolveStyle(SpeciesId sid) {
     case LocomotionType::Flagellum: return CellStyle::Flagellate;
     case LocomotionType::Pseudopod: return CellStyle::Amoeboid;
     case LocomotionType::Crawl: return CellStyle::Amoeboid;
+    case LocomotionType::None: return CellStyle::Squamous;
     case LocomotionType::Cilia: break;
     }
     return CellStyle::Ciliate;
@@ -642,6 +664,104 @@ void drawChytrids(const RingBody& body, const ChytridInfection& inf, float px) {
     }
 }
 
+// Célula humana (fase 20b): el lamelipodio del frente (una lámina de ~0,2 µm, apenas visible en campo
+// claro), el borde brillante de la célula redondeada en mitosis y las burbujas de la apoptosis.
+void drawAnimalSurface(const BodyParticles& bp, const RingBody& body, const AnimalCell& ac, const Locomotion* loco,
+                       float px) {
+    const std::size_t n = body.ring.size();
+    if (ac.phase == CellPhase::M) {
+        for (std::size_t i = 0; i < n; ++i) {
+            const Vec2 a = ringPos(bp, body, i) + outwardAt(bp, body, i) * 1.2f;
+            const Vec2 b = ringPos(bp, body, i + 1) + outwardAt(bp, body, i + 1) * 1.2f;
+            fastLine(toRay(a), toRay(b), std::max(1.5f, 1.5f * px), kMitoticHalo);
+        }
+        return;
+    }
+    if (ac.phase == CellPhase::Apoptotic) {
+        const int blebs = 4 + static_cast<int>(8.0f * ac.apoptosis);
+        for (int k = 0; k < blebs; ++k) {
+            const std::size_t i = (static_cast<std::size_t>(k) * 7919u + body.id) % n;
+            const float r = 1.0f + 2.0f * ac.apoptosis * (0.5f + 0.5f * static_cast<float>((k * 37 + 11) % 10) / 10.0f);
+            const Vec2 c = ringPos(bp, body, i) + outwardAt(bp, body, i) * r;
+            drawCircleFast(toRay(c), r, kBleb, px);
+            drawRingFast(toRay(c), std::max(0.0f, r - std::max(0.4f, px)), r, 16, kMembrane, px);
+        }
+        return;
+    }
+    if (!loco || !loco->active || loco->speed <= 0.0f)
+        return;
+    const Vec2 u = loco->target - body.centroid;
+    const float l = length(u);
+    if (l < 1e-3f)
+        return;
+    const Vec2 dir = u * (1.0f / l);
+    for (std::size_t i = 0; i < n; ++i) {
+        const float w = dot(outwardAt(bp, body, i), dir);
+        if (w < 0.5f)
+            continue;
+        const float ext = 4.0f * (w - 0.5f) / 0.5f; // la lámina se extiende unos µm por delante
+        const Vec2 a = ringPos(bp, body, i), b = ringPos(bp, body, i + 1);
+        const Vec2 oa = outwardAt(bp, body, i), ob = outwardAt(bp, body, i + 1);
+        fastTriangle(toRay(a), toRay(b + ob * ext), toRay(a + oa * ext), kLamellipodium);
+        fastTriangle(toRay(a), toRay(b), toRay(b + ob * ext), kLamellipodium);
+    }
+}
+
+// Núcleo de una célula humana según su estado: ovalado con nucléolos en interfase; sin envoltura y con
+// los cromosomas condensados en mitosis (placa metafásica y después dos grupos que se separan);
+// condensado y fragmentado en la apoptosis; lobulado en el neutrófilo.
+void drawAnimalNucleus(Vector2 c, float r, const AnimalCell& ac, const Dividing* dv, Vec2 heading, bool lobed,
+                       Color fill, Color rim, float px) {
+    if (ac.phase == CellPhase::M) {
+        const Vec2 side = {-heading.y, heading.x};
+        const float progress = dv ? std::clamp(dv->progress, 0.0f, 1.0f) : 0.0f;
+        // Metafase hasta la mitad; anafase y telofase: los dos juegos van a los polos.
+        const float apart = progress < 0.5f ? 0.0f : (progress - 0.5f) * 2.0f * 2.2f * r;
+        for (int g = 0; g < (apart > 0.0f ? 2 : 1); ++g) {
+            const float sgn = g == 0 ? 1.0f : -1.0f;
+            const Vec2 at = Vec2{c.x, c.y} + heading * (sgn * apart);
+            for (int k = -4; k <= 4; ++k) {
+                const Vec2 m = at + side * (0.25f * r * static_cast<float>(k));
+                const Vec2 d = heading * (0.25f * r) + side * (0.06f * r * static_cast<float>(k % 2));
+                fastLine(toRay(m - d), toRay(m + d), std::max(0.8f, 0.18f * r), kChromosome);
+            }
+        }
+        return;
+    }
+    if (ac.phase == CellPhase::Apoptotic) {
+        if (ac.apoptosis < 0.5f) { // picnosis: la cromatina se condensa
+            drawCircleFast(c, r * (1.0f - 0.8f * ac.apoptosis), kPyknotic, px);
+        } else { // cariorrexis: el núcleo se parte en fragmentos
+            for (int k = 0; k < 4; ++k) {
+                const float a = 1.57f * static_cast<float>(k) + 0.4f;
+                drawCircleFast({c.x + 0.45f * r * std::cos(a), c.y + 0.45f * r * std::sin(a)}, 0.25f * r, kPyknotic, px);
+            }
+        }
+        return;
+    }
+    if (lobed) { // neutrófilo: 3–5 lóbulos unidos por hebras finas de cromatina
+        const Vec2 side = {-heading.y, heading.x};
+        Vec2 prev{};
+        for (int k = 0; k < 4; ++k) {
+            const float t = static_cast<float>(k) - 1.5f;
+            const Vec2 p = Vec2{c.x, c.y} + side * (0.55f * r * t) + heading * (0.3f * r * (t * t - 1.0f));
+            if (k > 0)
+                fastLine(toRay(prev), toRay(p), std::max(0.5f, 0.12f * r), rim);
+            drawCircleFast(toRay(p), 0.42f * r, fill, px);
+            drawRingFast(toRay(p), std::max(0.0f, 0.42f * r - std::max(0.5f, px)), 0.42f * r, 24, rim, px);
+            prev = p;
+        }
+        return;
+    }
+    // Interfase: núcleo ovalado (con la célula) y sus nucléolos, oscuros y densos.
+    drawCircleFast(c, r, fill, px);
+    drawRingFast(c, r - std::max(0.8f, px), r, 40, rim, px);
+    for (int k = 0; k < 3; ++k) {
+        const float a = 2.1f * static_cast<float>(k) + 0.7f;
+        drawCircleFast({c.x + 0.4f * r * std::cos(a), c.y + 0.4f * r * std::sin(a)}, 0.16f * r, kNucleolus, px);
+    }
+}
+
 // Levadura en gemación: la yema crece en un polo hasta separarse.
 void drawBud(const RingBody& body, float growth, float px) {
     const Frame f = frameOf(body);
@@ -728,6 +848,11 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 const Vec2* ring = outline(body, camera.zoom, m);
                 for (int i = 0; i < m; ++i)
                     fastLine(toRay(ring[i]), toRay(ring[(i + 1) % m]), membraneWidth, kMembrane);
+                // De cerca el trazo tiene varios píxeles de ancho: sin unir los segmentos, cada
+                // vértice deja una muesca y la membrana se ve punteada.
+                if (membraneWidth > 3.0f * px)
+                    for (int i = 0; i < m; ++i)
+                        drawCircleFast(toRay(ring[i]), 0.5f * membraneWidth, kMembrane, px);
             }
             if (level < DetailLevel::Normal)
                 return;
@@ -966,16 +1091,62 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             if (!colony && level >= DetailLevel::Detail && anatomy.nucleus != ~0u)
                 drawEndomembranes(speciesPlan(sid), {bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus],
                                   bodyHeading(body), static_cast<std::uint32_t>(entt::to_integral(e)), ctx);
-            if (!colony) {
-                nucleus(anatomy.nucleus);
-                contractile(anatomy.contractileVacuole);
+            const AnimalCell* animal = reg.try_get<AnimalCell>(e);
+            if (animal) { // célula humana: sin vacuola contráctil (vive en un medio isotónico)
+                drawAnimalSurface(bp, body, *animal, loco, px);
+                Color fillN = kNucleus, rimN = kNucleusRim;
+                if (stain_) {
+                    const StainResult dye = evaluateStain(*stain_, StainTarget::Nucleus);
+                    fillN = overColor(kNucleus, dye, 0.8f);
+                    rimN = overColor(kNucleusRim, dye, 0.9f);
+                }
+                drawAnimalNucleus({bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus], *animal,
+                                  dividing, bodyHeading(body), style == CellStyle::Neutrophil, fillN, rimN, px);
+            } else if (!colony) {
+                if (style == CellStyle::Monocyte) { // núcleo arriñonado
+                    const Vector2 c = {bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]};
+                    const float r = bp.radius[anatomy.nucleus];
+                    Color fillN = kNucleus;
+                    if (stain_)
+                        fillN = overColor(kNucleus, evaluateStain(*stain_, StainTarget::Nucleus), 0.85f);
+                    const Vec2 h = bodyHeading(body);
+                    drawCircleFast({c.x - 0.35f * r * h.x, c.y - 0.35f * r * h.y}, 0.75f * r, fillN, px);
+                    drawCircleFast({c.x + 0.35f * r * h.x, c.y + 0.35f * r * h.y}, 0.75f * r, fillN, px);
+                } else {
+                    nucleus(anatomy.nucleus);
+                }
+                if (!multicellular(style))
+                    contractile(anatomy.contractileVacuole);
+                if (style == CellStyle::ElodeaLeaf) {
+                    // Cloroplastos de Elodea: decenas de discos de ~5 µm junto a la pared, que la
+                    // corriente citoplasmática (ciclosis) hace girar alrededor de la célula.
+                    int m = 0;
+                    const Vec2* ring = outline(body, camera.zoom, m);
+                    if (m > 3) {
+                        const float speed = speciesInfo(sid).cyclosis;
+                        float perimeter = 0.0f;
+                        for (int i = 0; i < m; ++i)
+                            perimeter += length(ring[(i + 1) % m] - ring[i]);
+                        const int count = std::clamp(static_cast<int>(perimeter / 6.0f), 8, 80);
+                        const float shift = std::fmod(speed * time / std::max(1.0f, perimeter), 1.0f);
+                        for (int k = 0; k < count; ++k) {
+                            const float u = std::fmod(static_cast<float>(k) / static_cast<float>(count) + shift, 1.0f) * static_cast<float>(m);
+                            const int i0 = static_cast<int>(u) % m;
+                            const float f = u - std::floor(u);
+                            const Vec2 p = ring[i0] + (ring[(i0 + 1) % m] - ring[i0]) * f;
+                            const Vec2 in = body.centroid - p;
+                            const float l = std::max(1e-3f, length(in));
+                            drawCircleFast(toRay(p + in * (3.5f / l)), 2.4f, kChloroplast, px);
+                        }
+                    }
+                }
             }
             if (const ChytridInfection* inf = reg.try_get<ChytridInfection>(e))
                 drawChytrids(body, *inf, px);
             if (speciesInfo(sid).budding) // gemación: la yema que crece en un polo
                 if (const Metabolism* ym = reg.try_get<Metabolism>(e); ym && ym->birthBiomass > 0.0f)
                     drawBud(body, ym->biomass / ym->birthBiomass - 1.0f, px);
-            if (dividing && dividing->nucleus2 != ~0u) {
+            if (dividing && dividing->nucleus2 != ~0u && !animal) {
                 nucleus(dividing->nucleus2);
                 contractile(dividing->vacuole2);
             }

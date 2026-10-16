@@ -32,3 +32,41 @@ fagos = 0.0
 aporte_organico = 0.0
 detritos_entrantes = 0.0
 polvo = 0.0
+
+# --- Medios de montaje de los preparados (fase 20c) ------------------------------------------------
+
+[[medio]]
+id = "agua_destilada"
+nombre = "Agua destilada"
+descripcion = "Agua sin sales: hipotonica para cualquier celula. Una celula vegetal queda turgente (la pared la contiene); un globulo rojo se hincha y estalla (hemolisis)."
+fuente = "Agua sin solutos (osmolaridad ~0)."
+[medio.composicion]
+salinidad = 0.0
+alcalinidad = 50.0
+fosfato = 0.0
+nitrogeno = 0.0
+silice = 0.0
+hierro = 0.0
+vitamina_b12 = 0.0
+fagos = 0.0
+aporte_organico = 0.0
+detritos_entrantes = 0.0
+polvo = 0.0
+
+[[medio]]
+id = "solucion_salina_09"
+nombre = "Solucion salina 0,9 % (fisiologica)"
+descripcion = "NaCl al 0,9 %: isotonica con la sangre (~290 mOsm/L). Los globulos rojos conservan su forma de disco."
+fuente = "Solución fisiológica: 9 g/L de NaCl, 308 mOsm/L nominales (~286 medidos por el coeficiente osmótico del NaCl)."
+[medio.composicion]
+salinidad = 9.0
+alcalinidad = 50.0
+fosfato = 0.0
+nitrogeno = 0.0
+silice = 0.0
+hierro = 0.0
+vitamina_b12 = 0.0
+fagos = 0.0
+aporte_organico = 0.0
+detritos_entrantes = 0.0
+polvo = 0.0

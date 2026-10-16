@@ -17,6 +17,10 @@ void Run::start(World& world, const RunConfig& config, std::uint32_t runId) {
     // Siembra de una placa preparada (células por cm² del campo, ya convertidas en cantidades).
     for (const auto& [species, count] : world.config().seeding)
         world.inoculate({BeingKind::Species, species}, count, {}, 0.0f);
+    if (world.config().fixedSlide) { // frotis o corte fijado: nada vivo, nada se mueve
+        world.flattenSmear();
+        world.fix();
+    }
     if (config.spawnFounder)
         world.spawnPlayer(config.founder, {0.5f * world.width(), 0.5f * world.height()}, &config.genome);
     census_ = world.census();

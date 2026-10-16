@@ -27,9 +27,9 @@ bool warned(const std::string& fragment) {
 
 } // namespace
 
-TEST_CASE("contenido: el paquete de fábrica carga sus 27 seres en el orden de siempre, sin avisos" *
+TEST_CASE("contenido: el paquete de fábrica carga sus 32 seres en el orden de siempre, sin avisos" *
           doctest::test_suite("paquetes")) {
-    CHECK(speciesCount() == 27); // 24 de la gota y 3 células humanas (fase 20b)
+    CHECK(speciesCount() == 32); // 24 de la gota, 3 de cultivo (20b) y 5 de los preparados (20c)
     CHECK(speciesLoadWarnings().empty());
     CHECK(std::string(speciesInfo(SpeciesId::Paramecium).key) == "paramecium");
     CHECK(std::string(speciesInfo(SpeciesId::Cyclotella).key) == "cyclotella");

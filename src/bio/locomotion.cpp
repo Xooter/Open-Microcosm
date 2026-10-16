@@ -50,6 +50,7 @@ const char* locomotionName(LocomotionType type) {
     case LocomotionType::Flagellum: return "flagelo";
     case LocomotionType::Pseudopod: return "pseudopodo";
     case LocomotionType::Crawl: return "arrastre";
+    case LocomotionType::None: return "ninguna";
     }
     return "";
 }
@@ -105,6 +106,7 @@ void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
             addVelocity(bp, body.interior[k], u * p.streamingSpeed);
         return;
     }
+    case LocomotionType::None: return; // no se mueve sola
     case LocomotionType::Crawl: {
         // `loco.speed` [µm/s reales] y `loco.target` los fija el mundo (paseo persistente en
         // tiempo biológico). El cuerpo entero se traslada (las adhesiones focales lo llevan) y se
