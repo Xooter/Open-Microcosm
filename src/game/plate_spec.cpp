@@ -50,6 +50,7 @@ constexpr FloatField kMediumFloats[] = {
     {"salinity", &MediumParams::salinity},
     {"organic_inflow", &MediumParams::organicInflow},
     {"dust_rate", &MediumParams::dustRate},
+    {"perfusion_per_hour", &MediumParams::perfusionPerHour},
 };
 
 struct IntField {

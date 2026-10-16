@@ -26,6 +26,9 @@ const ParamInfo kParams[] = {
      BIO_REAL(w.medium().organicInflow)},
     {"medio.polvo", "Polvo mineral [1/s]", "1/s", G::Chemistry, 0.0f, 0.2f, "%.3f", false, nullptr,
      BIO_REAL(w.medium().dustRate)},
+    {"medio.perfusion", "Perfusión del medio [1/h bio]", "1/h", G::Chemistry, 0.0f, 5.0f, "%.3f", false,
+     "Renueva lo disuelto con el medio de la placa al crearla (cámara de perfusión); las células se quedan.",
+     BIO_REAL(w.medium().perfusionPerHour)},
     // --- Micronutrientes
     {"medio.b12_fuente", "B12 de las bacterias", "µM/h", G::Micronutrients, 1e-7f, 1e-3f, "%.1e", true, nullptr,
      BIO_REAL(w.medium().vitaminSourcePerHour)},

@@ -93,6 +93,10 @@ struct MediumParams {
     // Aporte de materia orgánica disuelta desde afuera de la gota (hojas y barro que se
     // descomponen, como en una infusión de heno) [µM por hora biológica, en promedio].
     float organicInflow = 0.0f;
+    // Perfusión (fase P1): el medio disuelto se renueva a esta tasa con el medio de la placa al
+    // crearla, como en una cámara de perfusión; las células se quedan. En tiempo biológico (como el
+    // consumo de nutrientes de las células, para respetar su proporción) [1/h biológica].
+    float perfusionPerHour = 0.0f;
     // Polvo que cae del aire a la película de agua (cuarzo, arcilla, mica) [partículas/s, tiempo
     // real: es física, no biología].
     float dustRate = 0.0f;
@@ -576,6 +580,7 @@ class World {
     // segundos (lo que tarda en cruzar la película nadando) toma otra al azar. La placa es 2D, pero
     // una bacteria que se superpone con la boca de un ciliado puede estar más arriba o más abajo.
     float filmHeight(std::uint64_t id, float period) const;
+    void perfuse(float dt); // cámara de perfusión (MediumParams::perfusionPerHour)
     void removeBacteria(std::vector<std::size_t>& indices);
     void removeAmbient(std::vector<std::size_t>& indices);
     void updateLifecycle(float dt);

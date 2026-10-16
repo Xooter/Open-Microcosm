@@ -345,6 +345,38 @@ void World::updateChemistrySources(float dt) {
         food[k] = food[k] * nutrientKeep + inflow * inflowPattern_.v[k];
         b12[k] = b12[k] * vitaminKeep + vitaminSource;
     }
+    if (medium_.perfusionPerHour > 0.0f)
+        perfuse(dt);
+}
+
+void World::perfuse(float dt) {
+    PROFILE_SCOPE("World::perfuse");
+    // Cámara de perfusión: lo disuelto se reemplaza por el medio con que se creó la placa. Lo que
+    // sale y lo que entra cruzan la frontera de la gota (entradas y salidas externas del balance).
+    const float f = 1.0f - std::exp(-medium_.perfusionPerHour * dt * bioTimeScale_ / 3600.0f);
+    const MediumParams& fresh = config_.medium;
+    const std::pair<ChemField*, float> fields[] = {{&phosphate_, fresh.phosphate}, {&nitrogen_, fresh.nitrogen},
+                                                   {&silicate_, fresh.silicate},   {&iron_, fresh.iron},
+                                                   {&vitamin_, fresh.vitamin},     {&nutrients_, fresh.organic}};
+    const double perCell = 1.0 / microMolarPerPmol();
+    for (const auto& [field, target] : fields) {
+        auto& v = field->grid().v;
+        double in = 0.0, out = 0.0;
+        for (std::size_t k = 0; k < v.size(); ++k) {
+            if (!dishMask_.isWater(k))
+                continue;
+            out += f * v[k];
+            in += f * target;
+            v[k] += f * (target - v[k]);
+        }
+        Element e;
+        float perPmol;
+        if (fieldElement(*field, e, perPmol)) {
+            ledger_.add(e, Flow::Washout, -out * perCell * perPmol);
+            ledger_.add(e, Flow::Dose, in * perCell * perPmol);
+            ledger_.addExternal(e, (in - out) * perCell * perPmol);
+        }
+    }
 }
 
 void World::stepAmbient(float dt) {
