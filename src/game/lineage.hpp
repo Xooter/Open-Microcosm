@@ -29,7 +29,7 @@ struct Census {
     int lineageCells = 0;
     int otherCells = 0;
     std::uint32_t maxGeneration = 0;
-    int species[kSpeciesCount] = {}; // individuos vivos por especie (silvestres y del linaje)
+    int species[kMaxSpecies] = {}; // individuos vivos por especie (silvestres y del linaje)
     int bacteria = 0;
     int cyanoCells = 0;
     int mycelia[kFungusKinds] = {}; // por FungusKind

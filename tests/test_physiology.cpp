@@ -20,7 +20,7 @@ TEST_CASE("fisiología: el archivo de fábrica carga y cada valor tiene fuente")
     for (const std::string& w : physiologyWarnings())
         FAIL_CHECK(w);
     int present = 0;
-    for (int i = 0; i < kSpeciesCount; ++i) {
+    for (int i = 0; i < speciesCount(); ++i) {
         const SourcedValue& mu = speciesPhysiology(static_cast<SpeciesId>(i)).growthMax;
         if (!mu.present)
             continue;
@@ -83,7 +83,7 @@ TEST_CASE("fisiología: la ficha y la exportación de especies muestran la fuent
     // Exportación: cada especie con datos lleva valor, lo publicado y la fuente.
     const std::string json = speciesJson();
     CHECK(json.find("\"fisiologia\"") != std::string::npos);
-    for (int i = 0; i < kSpeciesCount; ++i) {
+    for (int i = 0; i < speciesCount(); ++i) {
         const SourcedValue& mu = speciesPhysiology(static_cast<SpeciesId>(i)).growthMax;
         if (mu.present)
             CHECK_MESSAGE(json.find(mu.source.substr(0, 40)) != std::string::npos, speciesInfo(static_cast<SpeciesId>(i)).name);

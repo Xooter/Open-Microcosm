@@ -131,7 +131,7 @@ struct WorldConfig {
     float patchiness = 0.0f;      // manchas iniciales de materia orgánica y detritos (0–1)
     Sediment sediment;            // minerales y granos de arena iniciales
     // Multiplicador de la población inicial de cada especie (0 = ausente en esta gota).
-    float speciesWeight[kSpeciesCount];
+    float speciesWeight[kMaxSpecies];
     WorldConfig() {
         for (float& w : speciesWeight)
             w = 1.0f;

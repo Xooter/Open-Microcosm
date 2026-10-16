@@ -180,11 +180,11 @@ class PlatePanel : public Panel {
         helpMarker("Multiplica la población que le toca al bioma. 0 = ausente. Solo vale con contenido Completa.");
         for (int cat = 0; cat < kCategoryCount; ++cat) {
             bool any = false;
-            for (int i = 0; i < kSpeciesCount; ++i)
+            for (int i = 0; i < speciesCount(); ++i)
                 any |= static_cast<int>(categoryOf(beingAt(i))) == cat;
             if (!any || !ImGui::TreeNode(tr(categoryName(static_cast<BeingCategory>(cat)))))
                 continue;
-            for (int i = 0; i < kSpeciesCount; ++i)
+            for (int i = 0; i < speciesCount(); ++i)
                 if (static_cast<int>(categoryOf(beingAt(i))) == cat)
                     ch |= slider(speciesInfo(static_cast<SpeciesId>(i)).name, &c.speciesWeight[i], 0.0f, 5.0f, "%.2f");
             ImGui::TreePop();

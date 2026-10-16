@@ -192,12 +192,12 @@ int gColumns = 8;
 
 void buildBeingIcons() {
     gColumns = 12;
-    const int rows = (kBeingCount + gColumns - 1) / gColumns;
+    const int rows = (beingCount() + gColumns - 1) / gColumns;
     gAtlas = LoadRenderTexture(gColumns * kCell, rows * kCell);
     SetTextureFilter(gAtlas.texture, TEXTURE_FILTER_BILINEAR);
     BeginTextureMode(gAtlas);
     ClearBackground({244, 240, 226, 255}); // fondo claro de campo claro: los íconos se ven como en el microscopio
-    for (int i = 0; i < kBeingCount; ++i) {
+    for (int i = 0; i < beingCount(); ++i) {
         const Rectangle r = {static_cast<float>((i % gColumns) * kCell), static_cast<float>((i / gColumns) * kCell),
                              static_cast<float>(kCell), static_cast<float>(kCell)};
         drawBeingIcon(beingAt(i), r, true);

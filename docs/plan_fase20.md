@@ -1,7 +1,7 @@
 # Plan — Fase 20: contenido como datos, placas preparadas y cultivo celular humano
 
 Primera fase de la visión nueva (AGENTS.md, «Visión»): BioGame como herramienta de investigación y
-de estudio. Plan del 15/10/2026, aprobado en sus decisiones; se implementa en el orden de abajo,
+de estudio. Avance: ✅ hecho · 🟡 en parte (se dice qué falta) · sin marca: pendiente. Plan del 15/10/2026, aprobado en sus decisiones; se implementa en el orden de abajo,
 con commits chicos y tests básicos en cada paso. El lanzamiento espera a que esta fase esté hecha.
 
 ## Decisiones tomadas
@@ -43,27 +43,40 @@ con commits chicos y tests básicos en cada paso. El lanzamiento espera a que es
 **Objetivo:** que todo el contenido viva en paquetes de datos, los de fábrica incluidos, sin
 sistemas paralelos (los seres actuales se migran, no conviven con un sistema nuevo).
 
-1. **Registro de contenido** (`game/content`, sin raylib): tipos de ser, minerales y sedimentos,
+1. 🟡 **Registro de contenido** (`game/content`, sin raylib): tipos de ser, minerales y sedimentos,
    medios, biomas y placas preparadas, cada uno con **id estable de texto**
    (`"protista.paramecium_caudatum"`, `"celula.fibroblasto_dermico_humano"`) y un índice de
    ejecución. `SpeciesId` deja de ser un enum: pasa a ser el índice en el registro.
-2. **Paquetes** (`<assets>/content/base/` de fábrica y `<datos>/biogame/paquetes/` del usuario):
+   *Hecho para los seres* (`bio/species`: registro con id de texto, `speciesCount()`, tope
+   `kMaxSpecies`, carga del paquete de fábrica en el primer uso). Los nombres del enum quedan solo
+   como alias de los seres de fábrica para el código por especie que falta migrar (paso 3).
+   Falta: minerales, medios, biomas y placas preparadas.
+2. 🟡 **Paquetes** (`<assets>/content/base/` de fábrica y `<datos>/biogame/paquetes/` del usuario):
    archivos TOML con `[paquete]` (id, versión, autor, licencia, versión mínima del programa) y
    tablas de definiciones. Un paquete se comparte como **un solo archivo `.biopack`** (TOML con
    todas sus definiciones; sin bibliotecas nuevas). Se valida al cargar (esquema, unidades,
    rangos, fuentes obligatorias para la fisiología, referencias a mecanismos existentes) y los
    errores se muestran en la interfaz sin cerrar el programa.
-3. **Ser como datos:** morfología (semiejes, forma, rigidez), mecanismos por nombre (locomoción,
+   *Hecho:* `assets/content/base/` (`paquete.toml`, `seres.toml`), carga desde archivo o texto,
+   validación con avisos (claves desconocidas, valores fuera de lista, referencias sin resolver,
+   ids repetidos) sin cerrar el programa; tests en la suite `paquetes`. Falta: los paquetes del
+   usuario, el `.biopack` y mostrar los avisos en la interfaz (paso 7).
+3. 🟡 **Ser como datos:** morfología (semiejes, forma, rigidez), mecanismos por nombre (locomoción,
    modo de alimentación, reproducción, quistes, sésil…), fisiología con fuentes (lo de
    `fisiologia.toml` se integra), química (reserva, pared), plan corporal (estructuras y tamaños),
    textos de la ficha y la enciclopedia, y **apariencia** (colores, organelos visibles, estilo de
    dibujo por nombre). Lo que hoy es código por especie en el render pasa a estilos con nombre
    (`"cinta_helicoidal"`, `"frustula"`, `"colonia_volvox"`…) que los datos eligen.
-4. **Dietas por etiquetas:** cada ser tiene etiquetas (`bacteria`, `ciliado`, `alga_verde`,
+   *Hecho:* morfología, mecanismos, química (reserva y pared), genoma y etiquetas. Falta:
+   fisiología integrada (sigue en `fisiologia.toml`, por nombre), plan corporal, textos y
+   apariencia (siguen en código por especie).
+4. ✅ **Dietas por etiquetas:** cada ser tiene etiquetas (`bacteria`, `ciliado`, `alga_verde`,
    `celula_humana`…) y las dietas y huidas son conjuntos de etiquetas, sin límite de cantidad.
-5. **Migración de lo existente:** las 24 especies, los minerales y los biomas pasan al paquete de
+5. 🟡 **Migración de lo existente:** las 24 especies, los minerales y los biomas pasan al paquete de
    fábrica. **Hecho cuando:** `bio_bench` da el mismo checksum (IEEE estricto) antes y después en
    tres escenas, y los tests rápidos y largos pasan.
+   *Hecho para las 24 especies:* checksums estrictos iguales en tres escenas con CPU y GPU (el
+   TOML se generó volcando la tabla C++ con precisión de ida y vuelta). Falta: minerales y biomas.
 6. **Compatibilidad:** las escenas y `.plate` guardan ids de texto; los archivos viejos (ids
    numéricos) se leen con una tabla de traducción. La exportación (`runJson`) anota los paquetes
    usados con su versión y huella (reproducibilidad).

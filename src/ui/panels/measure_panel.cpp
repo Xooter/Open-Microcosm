@@ -81,7 +81,7 @@ class MeasurePanel : public Panel {
         readout("Sílice / Hierro", "%.1f / %.3f µM", r.silicate, r.iron);
         readout("Vitamina B12", "%.1f pM", r.vitamin * 1e6f);
         readout("Materia orgánica", "%.2f µM", r.organic);
-        for (int s = 0; s < kSpeciesCount; ++s)
+        for (int s = 0; s < speciesCount(); ++s)
             if (r.species[s] > 0)
                 readout(speciesInfo(static_cast<SpeciesId>(s)).name, "%d", r.species[s]);
         if (ImGui::SmallButton(tr("Borrar región")))

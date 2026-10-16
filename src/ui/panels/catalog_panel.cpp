@@ -20,7 +20,7 @@ constexpr int kAllTab = kCategoryCount;
 const std::vector<int>& categoryItems(int category) {
     static const std::vector<std::vector<int>> table = [] {
         std::vector<std::vector<int>> t(kCategoryCount + 1);
-        for (int i = 0; i < kBeingCount; ++i) {
+        for (int i = 0; i < beingCount(); ++i) {
             t[static_cast<std::size_t>(categoryOf(beingAt(i)))].push_back(i);
             t[kAllTab].push_back(i);
         }

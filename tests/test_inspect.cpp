@@ -137,8 +137,8 @@ TEST_CASE("fichas: todas las especies, el grano y los microbios se arman y son A
     World world(emptyWorld());
     const Vec2 c = world.dish().center;
     std::vector<entt::entity> all;
-    for (int k = 0; k < kSpeciesCount; ++k) {
-        const float a = 6.2831853f * static_cast<float>(k) / kSpeciesCount;
+    for (int k = 0; k < speciesCount(); ++k) {
+        const float a = 6.2831853f * static_cast<float>(k) / speciesCount();
         const auto id = static_cast<SpeciesId>(k);
         const entt::entity e = spawn(world, id, c + Vec2{std::cos(a), std::sin(a)} * 600.0f, a);
         if (speciesInfo(id).speedScale > 0.0f)
@@ -147,7 +147,7 @@ TEST_CASE("fichas: todas las especies, el grano y los microbios se arman y son A
     }
     steps(world, 20);
     for (int pass = 0; pass < 2; ++pass) {
-        for (int k = 0; k < kSpeciesCount; ++k) {
+        for (int k = 0; k < speciesCount(); ++k) {
             CAPTURE(std::string(speciesInfo(static_cast<SpeciesId>(k)).name));
             if (!world.registry().valid(all[k]))
                 continue;

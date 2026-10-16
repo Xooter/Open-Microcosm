@@ -1394,13 +1394,14 @@ void World::populateEcosystem(float scale) {
     const Vec2 middle = {0.5f * width_, 0.5f * height_};
     std::uint64_t k = 0;
     // Las más grandes primero (las colonias no entrarían entre las demás).
-    int order[kSpeciesCount];
-    for (int sp = 0; sp < kSpeciesCount; ++sp)
+    int order[kMaxSpecies];
+    for (int sp = 0; sp < speciesCount(); ++sp)
         order[sp] = sp;
-    std::stable_sort(order, order + kSpeciesCount, [](int a, int b) {
+    std::stable_sort(order, order + speciesCount(), [](int a, int b) {
         return speciesInfo(static_cast<SpeciesId>(a)).spec.radiusX > speciesInfo(static_cast<SpeciesId>(b)).spec.radiusX;
     });
-    for (int sp : order) {
+    for (int oi = 0; oi < speciesCount(); ++oi) {
+        const int sp = order[oi];
         const auto id = static_cast<SpeciesId>(sp);
         const SpeciesInfo& info = speciesInfo(id);
         const int count = static_cast<int>(std::round(static_cast<float>(info.initialCount) * scale * config_.speciesWeight[sp]));
@@ -1641,7 +1642,7 @@ std::vector<const RingBody*> World::preyFor(const RingBody& predator) const {
             continue;
         // Solo las especies de su dieta; nunca la propia especie ni el propio linaje.
         if (const Species* ps = registry_.try_get<Species>(e); ps && predatorSpecies) {
-            if (ps->id == predatorSpecies->id || !(speciesInfo(predatorSpecies->id).preyMask & speciesBit(ps->id)))
+            if (ps->id == predatorSpecies->id || !speciesInfo(predatorSpecies->id).prey.test(static_cast<std::size_t>(ps->id)))
                 continue;
         }
         if (const Lineage* pl = registry_.try_get<Lineage>(e);
@@ -2089,11 +2090,11 @@ void World::feedAtMouth(entt::entity e, RingBody& body, const Locomotion& loco, 
 
     // Filtradores grandes (Stentor, Euplotes): la corriente oral también trae algas chicas, que
     // entran enteras por el citostoma.
-    if (const std::uint32_t mask = speciesInfo(speciesOfEntity(registry_, e)).mouthPreyMask; mask && !isSatiated(e)) {
+    if (const SpeciesSet& mask = speciesInfo(speciesOfEntity(registry_, e)).mouthPrey; mask.any() && !isSatiated(e)) {
         for (const RingBody* other : bodyList_) {
             const auto oe = static_cast<entt::entity>(other->id);
             const Species* os = registry_.try_get<Species>(oe);
-            if (!os || !(mask & speciesBit(os->id)) || !smallPrey(*other) || registry_.any_of<Cyst, Captured>(oe))
+            if (!os || !mask.test(static_cast<std::size_t>(os->id)) || !smallPrey(*other) || registry_.any_of<Cyst, Captured>(oe))
                 continue;
             if (std::any_of(swallows_.begin(), swallows_.end(), [&](const auto& sw) { return sw.second == oe; }))
                 continue;
@@ -3441,10 +3442,10 @@ Perception World::perceive(entt::entity e, const RingBody& body, SpeciesId speci
             continue;
         const RingBody& other = registry_.get<RingBody>(oe);
         const Species& os = registry_.get<Species>(oe);
-        const std::uint32_t bit = speciesBit(os.id);
-        const bool prey = (info.preyMask & bit) && !registry_.any_of<Cyst, Discharge>(oe) &&
+        const auto bit = static_cast<std::size_t>(os.id);
+        const bool prey = info.prey.test(bit) && !registry_.any_of<Cyst, Discharge>(oe) &&
                           (info.feeding != FeedingMode::Phagocytosis || std::abs(other.restArea) <= maxPreyArea);
-        const bool threat = (info.fleeMask & bit) && !registry_.all_of<Cyst>(oe);
+        const bool threat = info.flee.test(bit) && !registry_.all_of<Cyst>(oe);
         if (!prey && !threat)
             continue;
         const Vec2 d = {minImage(other.centroid.x - body.centroid.x, width_),
@@ -3553,11 +3554,11 @@ void World::hunt(entt::entity predator, const RingBody& body) {
     const Vec2 mouth = {bodies_.x[body.ring[front]], bodies_.y[body.ring[front]]};
     if (isSatiated(predator))
         return; // digiriendo: Didinium caza ~1 paramecio cada pocas horas
-    const std::uint32_t preyMask = speciesInfo(speciesOfEntity(registry_, predator)).preyMask;
+    const SpeciesSet& preyMask = speciesInfo(speciesOfEntity(registry_, predator)).prey;
     for (const RingBody* other : bodyList_) {
         const auto oe = static_cast<entt::entity>(other->id);
         const Species* os = registry_.try_get<Species>(oe);
-        if (!os || !(preyMask & speciesBit(os->id)) || registry_.any_of<Cyst, Discharge>(oe))
+        if (!os || !preyMask.test(static_cast<std::size_t>(os->id)) || registry_.any_of<Cyst, Discharge>(oe))
             continue;
         if (std::any_of(swallows_.begin(), swallows_.end(), [&](const auto& sw) { return sw.second == oe; }))
             continue;
@@ -3702,7 +3703,7 @@ void World::trapWithTentacles(entt::entity e, const RingBody& body) {
     for (const RingBody* other : bodyList_) {
         const auto oe = static_cast<entt::entity>(other->id);
         const Species* os = registry_.try_get<Species>(oe);
-        if (!os || !(info.preyMask & speciesBit(os->id)) || registry_.any_of<Cyst, Captured, Discharge>(oe))
+        if (!os || !info.prey.test(static_cast<std::size_t>(os->id)) || registry_.any_of<Cyst, Captured, Discharge>(oe))
             continue;
         const Vec2 shift = imageShift(*other, body.centroid);
         const float d2 = polygon::closestOnBoundary(other->poly.data(), static_cast<int>(other->poly.size()),
@@ -3731,7 +3732,7 @@ void World::strikeWithNeck(entt::entity e, const RingBody& body, float dt) {
     auto preyOk = [&](entt::entity oe) {
         if (!registry_.valid(oe) || !registry_.all_of<RingBody, Species>(oe) || registry_.any_of<Cyst, Captured>(oe))
             return false;
-        return (info.preyMask & speciesBit(registry_.get<Species>(oe).id)) != 0;
+        return info.prey.test(static_cast<std::size_t>(registry_.get<Species>(oe).id));
     };
     auto imageCenter = [&](entt::entity oe) {
         const RingBody& o = registry_.get<RingBody>(oe);

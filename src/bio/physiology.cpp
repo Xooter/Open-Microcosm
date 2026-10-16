@@ -10,7 +10,7 @@
 
 namespace {
 
-SpeciesPhysiology gTable[kSpeciesCount];
+SpeciesPhysiology gTable[kMaxSpecies];
 std::vector<std::string> gWarnings;
 std::atomic<bool> gLoaded{false}; // hay una tabla cargada (la de fábrica o una explícita)
 std::mutex gLoadMutex;
@@ -109,7 +109,7 @@ bool loadLocked(const std::string& path, std::string* error) {
         if (!t)
             continue; // "version" y otras claves sueltas
         int id = -1;
-        for (int i = 0; i < kSpeciesCount; ++i)
+        for (int i = 0; i < speciesCount(); ++i)
             if (std::string_view(name.str()) == speciesInfo(static_cast<SpeciesId>(i)).name)
                 id = i;
         if (id < 0) {

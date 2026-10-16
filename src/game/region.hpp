@@ -14,7 +14,7 @@ struct RegionStats {
     bool valid = false;
     float area = 0.0f;       // [µm²]
     int cells = 0;           // individuos (sin granos de arena)
-    int species[kSpeciesCount] = {};
+    int species[kMaxSpecies] = {};
     int bacteria = 0;
     float biomass = 0.0f;    // [pmol] de las células
     int waterCells = 0;      // celdas de la grilla química promediadas

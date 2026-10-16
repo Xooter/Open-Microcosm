@@ -73,7 +73,7 @@ bool applyIntervention(World& world, const Intervention& iv) {
     case InterventionKind::Lyse: world.lyseAt(iv.pos); return true;
     case InterventionKind::Spawn: {
         const int species = static_cast<int>(iv.v[0]);
-        if (iv.index < 0 || iv.index >= static_cast<int>(BeingKind::Count) || species < 0 || species >= kSpeciesCount)
+        if (iv.index < 0 || iv.index >= static_cast<int>(BeingKind::Count) || species < 0 || species >= speciesCount())
             return false;
         world.spawnBeing({static_cast<BeingKind>(iv.index), static_cast<SpeciesId>(species)}, iv.pos);
         return true;
@@ -115,7 +115,7 @@ bool applyIntervention(World& world, const Intervention& iv) {
         return true;
     }
     case InterventionKind::PlayerSpecies:
-        if (iv.index < 0 || iv.index >= kSpeciesCount)
+        if (iv.index < 0 || iv.index >= speciesCount())
             return false;
         world.setPlayerSpecies(static_cast<SpeciesId>(iv.index), iv.pos);
         return true;

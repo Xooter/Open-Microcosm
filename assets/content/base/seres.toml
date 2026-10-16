@@ -1,0 +1,644 @@
+# Seres de la gota del paquete de fábrica (fase 20.0: el contenido como datos).
+#
+# Cada [[ser]] combina mecanismos que implementa el programa (locomoción, alimentación,
+# reproducción, ciclo de vida) y los parametriza. El orden de este archivo es el de las especies
+# del programa: no se reordena (las escenas viejas guardan el índice).
+#
+# Claves (las que faltan toman el valor por omisión del programa):
+#   id: estable, sin espacios (lo guardan las escenas); nombre: el que se muestra.
+#   etiquetas: grupos (taxonómicos o funcionales) para dietas, huidas y hospedadores.
+#   locomocion: cilios | flagelo | pseudopodo; velocidad_relativa respecto de la del tipo.
+#   alimentacion: surco_oral | polo_anterior | fagocitosis | raptorial | tentaculos | cuello |
+#     osmotrofia | ninguna.
+#   presas, presas_boca (lo que traga con la corriente oral), huye_de: ids de seres o etiquetas.
+#   ph y temperatura [°C]: rango tolerado; fuera se paga como mantenimiento extra.
+#   reserva: ninguna | almidon | glucogeno | paramilon | crisolaminarina (tinciones).
+#   pared: ninguna | celulosa | silice | glucano_levadura.
+#   genoma: genes que difieren de los de su locomoción (tamano, motor, mitocondrias,
+#     cloroplastos, lisosomas, tricocistos, coraza, rigidez, apareamiento).
+#   [ser.forma]: semiejes [µm], memoria_forma [1/s], color RGB del citoplasma, nucleo (radio
+#     relativo), cuadratura (2 elipse, ~6 cilindro), afinamiento del polo posterior.
+# Paramecium caudatum: ~180 × 50 µm, ciliado bacterívoro.
+[[ser]]
+id = "paramecium"
+nombre = "Paramecium"
+etiquetas = ["protista", "ciliado", "bacterivoro"]
+locomocion = "cilios"
+alimentacion = "surco_oral"
+huye_de = ["didinium", "lacrymaria"]
+quimiocinesis = true
+trampa_acida = true
+cantidad_inicial = 20
+ciclosis = 4.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 35.0]
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 90.0
+semieje_menor = 25.0
+memoria_forma = 8.0
+color = [160, 176, 138]
+nucleo = 0.32
+
+# Euglena gracilis: ~50 × 14 µm, mixótrofa con cloroplastos y estigma.
+[[ser]]
+id = "euglena"
+nombre = "Euglena"
+etiquetas = ["protista", "flagelado", "euglenido", "fototrofa"]
+locomocion = "flagelo"
+alimentacion = "polo_anterior"
+huye_de = ["lacrymaria"]
+fototaxis = true
+cantidad_inicial = 20
+cloroplastos = true
+auxotrofa_b12 = true
+ciclosis = 1.0
+ph = [3.0, 9.5]
+temperatura = [10.0, 35.0]
+reserva = "paramilon"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 25.0
+semieje_menor = 7.0
+memoria_forma = 4.0
+color = [120, 172, 92]
+nucleo = 0.32
+
+# Amoeba proteus (chica): ~180 µm, fagocita algas y ciliados.
+[[ser]]
+id = "amoeba"
+nombre = "Amoeba"
+etiquetas = ["protista", "ameba"]
+locomocion = "pseudopodo"
+alimentacion = "fagocitosis"
+presas = ["paramecium", "euglena", "chlamydomonas", "euplotes", "navicula", "pediastrum", "paramecium_aurelia", "asterionella", "cyclotella"]
+cantidad_inicial = 2
+manipulacion_horas = 1.5
+ph = [6.0, 9.5]
+temperatura = [10.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 90.0
+semieje_menor = 90.0
+memoria_forma = 0.0
+color = [188, 176, 160]
+nucleo = 0.2
+
+# Chlamydomonas reinhardtii: ~10 µm, dos flagelos, un gran cloroplasto en copa; se duplica
+# en ~6–8 h con buena luz (3× la tasa de Euglena). Se divide dentro de la pared madre en
+# 4 hijas (palintomía).
+[[ser]]
+id = "chlamydomonas"
+nombre = "Chlamydomonas"
+etiquetas = ["alga", "alga_verde", "flagelado", "fototrofa", "hospeda_quitridios", "fotobionte"]
+locomocion = "flagelo"
+velocidad_relativa = 1.25
+huye_de = ["amoeba"]
+fototaxis = true
+fotosintesis_relativa = 3.0
+divisiones_por_ciclo = 2
+cantidad_inicial = 150
+cloroplastos = true
+ph = [5.0, 9.5]
+temperatura = [-2.0, 35.0]
+salinidad_max = 60.0
+reserva = "almidon"
+pared = "celulosa"
+[ser.forma]
+semieje_mayor = 5.5
+semieje_menor = 4.5
+memoria_forma = 6.0
+color = [110, 170, 80]
+nucleo = 0.32
+
+# Didinium nasutum: ~110 × 80 µm, en barril; caza paramecios con su probóscide y los traga
+# enteros. Cuando pasa hambre se enquista.
+[[ser]]
+id = "didinium"
+nombre = "Didinium"
+etiquetas = ["protista", "ciliado"]
+locomocion = "cilios"
+alimentacion = "raptorial"
+presas = ["paramecium", "paramecium_aurelia"]
+enquista = true
+cantidad_inicial = 2
+manipulacion_horas = 3.0
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [10.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 55.0
+semieje_menor = 40.0
+memoria_forma = 8.0
+color = [176, 168, 140]
+nucleo = 0.32
+
+# Vorticella campanula: campana de ~80 µm sobre un tallo de ~150 µm con espasmonema (se
+# contrae en ~10 ms, el movimiento más rápido conocido en una célula). Filtra bacterias con
+# la corona ciliar del peristoma. Al dividirse, una hija nada como telotroco y se fija.
+[[ser]]
+id = "vorticella"
+nombre = "Vorticella"
+etiquetas = ["protista", "ciliado", "bacterivoro"]
+locomocion = "cilios"
+alimentacion = "surco_oral"
+velocidad_relativa = 0.4
+cantidad_inicial = 8
+sesil = true
+largo_tallo = 150.0
+espasmonema = true
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 32.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 40.0
+semieje_menor = 30.0
+memoria_forma = 10.0
+color = [182, 186, 168]
+nucleo = 0.32
+
+# Stentor coeruleus: trompeta azul (pigmento stentorina), extendida hasta ~1 mm; aquí una
+# contraída de ~200 µm. Se fija por el pie; su corriente oral trae bacterias y algas chicas.
+[[ser]]
+id = "stentor"
+nombre = "Stentor"
+etiquetas = ["protista", "ciliado", "bacterivoro"]
+locomocion = "cilios"
+alimentacion = "surco_oral"
+velocidad_relativa = 0.5
+presas_boca = ["euglena", "chlamydomonas", "navicula", "asterionella", "cyclotella"]
+cantidad_inicial = 2
+sesil = true
+largo_tallo = 20.0
+manipulacion_horas = 0.5
+ciclosis = 3.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 28.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 100.0
+semieje_menor = 55.0
+memoria_forma = 6.0
+color = [120, 150, 200]
+nucleo = 0.32
+afinamiento = 0.8
+
+# Podophrya fixa (suctorio): esfera de ~35 µm sobre un tallo; sin cilios de adulto. Sus
+# tentáculos capitados se adhieren a los ciliados que pasan y les succionan el citoplasma.
+[[ser]]
+id = "podophrya"
+nombre = "Podophrya"
+etiquetas = ["protista", "ciliado", "suctorio"]
+locomocion = "cilios"
+alimentacion = "tentaculos"
+velocidad_relativa = 0.5
+presas = ["paramecium", "vorticella", "euplotes", "paramecium_aurelia"]
+cantidad_inicial = 2
+sesil = true
+largo_tallo = 40.0
+alcance_tentaculos = 45.0
+manipulacion_horas = 4.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 18.0
+semieje_menor = 17.0
+memoria_forma = 10.0
+color = [176, 180, 170]
+nucleo = 0.32
+
+# Euplotes patella: hipotrico aplanado de ~90 µm que "camina" sobre el vidrio con sus
+# cirros, con paradas bruscas. Pasta bacterias y algas chicas.
+[[ser]]
+id = "euplotes"
+nombre = "Euplotes"
+etiquetas = ["protista", "ciliado", "bacterivoro"]
+locomocion = "cilios"
+alimentacion = "surco_oral"
+velocidad_relativa = 0.25
+presas_boca = ["chlamydomonas", "navicula", "asterionella", "cyclotella"]
+huye_de = ["didinium", "lacrymaria"]
+cantidad_inicial = 4
+camina = true
+manipulacion_horas = 1.0
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [-2.0, 32.0]
+salinidad_max = 45.0
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 45.0
+semieje_menor = 32.0
+memoria_forma = 10.0
+color = [178, 176, 160]
+nucleo = 0.32
+
+# Arcella vulgaris: ameba con testa (caparazón orgánico pardo de ~100 µm). Pseudópodos
+# lentos por la abertura; come bacterias y algas; la testa la protege de las amebas.
+[[ser]]
+id = "arcella"
+nombre = "Arcella"
+etiquetas = ["protista", "ameba", "tecameba"]
+locomocion = "pseudopodo"
+alimentacion = "fagocitosis"
+velocidad_relativa = 0.5
+presas = ["euglena", "chlamydomonas", "navicula", "asterionella", "cyclotella"]
+cantidad_inicial = 3
+manipulacion_horas = 1.0
+ph = [6.0, 9.5]
+temperatura = [0.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { coraza = 0.9 }
+[ser.forma]
+semieje_mayor = 50.0
+semieje_menor = 50.0
+memoria_forma = 0.0
+color = [196, 170, 120]
+nucleo = 0.25
+
+# Lacrymaria olor ("lágrima de cisne"): cuerpo de ~100 µm y un cuello que se estira hasta
+# 7–8 veces ese largo en segundos para atrapar ciliados y flagelados chicos.
+[[ser]]
+id = "lacrymaria"
+nombre = "Lacrymaria"
+etiquetas = ["protista", "ciliado"]
+locomocion = "cilios"
+alimentacion = "cuello"
+velocidad_relativa = 0.5
+presas = ["euglena", "chlamydomonas", "euplotes"]
+cantidad_inicial = 2
+alcance_cuello = 400.0
+manipulacion_horas = 1.5
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 50.0
+semieje_menor = 15.0
+memoria_forma = 6.0
+color = [184, 188, 172]
+nucleo = 0.32
+
+# Spirogyra: alga verde filamentosa; células cilíndricas de ~60 × 30 µm unidas extremo con
+# extremo, con un cloroplasto en cinta helicoidal. Crece por división intercalar y se
+# fragmenta. Forma matas que dan refugio.
+[[ser]]
+id = "spirogyra"
+nombre = "Spirogyra"
+etiquetas = ["alga", "alga_verde", "filamentosa", "fototrofa"]
+locomocion = "cilios"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.5
+cantidad_inicial = 3
+cloroplastos = true
+filamento = true
+celulas_filamento = 8
+fragmentacion_por_hora = 0.02
+masa_seca_relativa = 0.3
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 35.0]
+reserva = "almidon"
+pared = "celulosa"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 30.0
+semieje_menor = 15.0
+memoria_forma = 15.0
+color = [140, 184, 118]
+nucleo = 0.25
+cuadratura = 6.0
+
+# Navicula: diatomea pennada de ~50 × 14 µm en frústula de sílice; se desliza por el rafe
+# a unos µm/s con inversiones. Cloroplastos dorados (fucoxantina).
+[[ser]]
+id = "navicula"
+nombre = "Navicula"
+etiquetas = ["alga", "diatomea", "fototrofa", "hospeda_quitridios"]
+locomocion = "cilios"
+velocidad_relativa = 0.012
+fotosintesis_relativa = 1.5
+cantidad_inicial = 20
+cloroplastos = true
+desliza_por_rafe = true
+auxotrofa_b12 = true
+frustula = true
+ph = [6.5, 9.5]
+temperatura = [-2.0, 35.0]
+salinidad_max = 70.0
+reserva = "crisolaminarina"
+pared = "silice"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0, coraza = 0.3 }
+[ser.forma]
+semieje_mayor = 25.0
+semieje_menor = 7.0
+memoria_forma = 40.0
+color = [200, 182, 120]
+nucleo = 0.32
+
+# Volvox: colonia esférica de ~250 µm con cientos de células biflageladas en su superficie;
+# rueda nadando hacia la luz. Las colonias hijas crecen adentro y nacen rompiendo a la madre.
+[[ser]]
+id = "volvox"
+nombre = "Volvox"
+etiquetas = ["alga", "alga_verde", "colonia", "fototrofa"]
+locomocion = "flagelo"
+velocidad_relativa = 1.5
+fototaxis = true
+cantidad_inicial = 2
+cloroplastos = true
+colonias_hijas = 4
+madre_muere_al_liberar = true
+masa_seca_relativa = 0.03
+ph = [6.0, 9.5]
+temperatura = [10.0, 32.0]
+reserva = "almidon"
+pared = "celulosa"
+[ser.forma]
+semieje_mayor = 120.0
+semieje_menor = 120.0
+memoria_forma = 20.0
+color = [150, 196, 120]
+nucleo = 0.12
+
+# Pediastrum: colonia plana (cenobio) de 16 células en estrella, inmóvil; cada ciclo libera
+# una colonia hija formada por zoosporas. Es una placa de una célula de espesor (~10 µm).
+[[ser]]
+id = "pediastrum"
+nombre = "Pediastrum"
+etiquetas = ["alga", "alga_verde", "colonia", "fototrofa", "hospeda_quitridios", "fotobionte"]
+locomocion = "cilios"
+velocidad_relativa = 0.0
+cantidad_inicial = 6
+cloroplastos = true
+colonias_hijas = 1
+masa_seca_relativa = 0.25
+ph = [6.0, 9.5]
+temperatura = [5.0, 35.0]
+reserva = "almidon"
+pared = "celulosa"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 30.0
+semieje_menor = 30.0
+memoria_forma = 30.0
+color = [150, 190, 110]
+nucleo = 0.15
+
+# Candida (levadura de agua dulce): célula oval de ~6 × 5 µm con pared de quitina, inmóvil.
+# Absorbe azúcares y aminoácidos disueltos; respira con O₂ y fermenta sin él. Se reproduce
+# por gemación: la yema crece en un polo y se separa (cicatriz de gemación).
+[[ser]]
+id = "candida"
+nombre = "Candida"
+etiquetas = ["hongo", "levadura"]
+locomocion = "cilios"
+alimentacion = "osmotrofia"
+velocidad_relativa = 0.0
+cantidad_inicial = 12
+colonias_hijas = 1
+gemacion = true
+ph = [3.0, 8.5]
+temperatura = [0.0, 40.0]
+salinidad_max = 60.0
+reserva = "glucogeno"
+pared = "glucano_levadura"
+[ser.forma]
+semieje_mayor = 3.2
+semieje_menor = 2.6
+memoria_forma = 12.0
+color = [214, 206, 176]
+nucleo = 0.3
+
+# Naegleria gruberi: ameboflagelado de ~20 µm (forma limax, seudópodos eruptivos) que come
+# bacterias; tolera hasta ~45 °C (aguas termales) y forma quistes.
+[[ser]]
+id = "naegleria"
+nombre = "Naegleria"
+etiquetas = ["protista", "ameba", "bacterivoro"]
+locomocion = "pseudopodo"
+alimentacion = "fagocitosis"
+velocidad_relativa = 2.0
+enquista = true
+cantidad_inicial = 6
+manipulacion_horas = 0.3
+ph = [5.0, 9.5]
+temperatura = [10.0, 46.0]
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 11.0
+semieje_menor = 8.0
+memoria_forma = 0.0
+color = [196, 190, 170]
+nucleo = 0.3
+
+# Trichonympha: flagelado hipermastigino de ~150 µm del intestino de las termitas, con miles
+# de flagelos en el rostro; anaerobio estricto. Fagocita astillas de madera por el polo
+# posterior y fermenta la celulosa.
+[[ser]]
+id = "trichonympha"
+nombre = "Trichonympha"
+etiquetas = ["protista", "flagelado", "simbionte_termita"]
+locomocion = "flagelo"
+alimentacion = "polo_anterior"
+velocidad_relativa = 0.6
+cantidad_inicial = 12
+anaerobia = true
+boca_posterior = true
+ph = [6.0, 9.5]
+temperatura = [15.0, 35.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { cloroplastos = 0.0 }
+[ser.forma]
+semieje_mayor = 75.0
+semieje_menor = 40.0
+memoria_forma = 6.0
+color = [200, 186, 150]
+nucleo = 0.2
+afinamiento = 0.3
+
+# Mougeotia: filamento de células largas y finas (~80 × 16 µm) con un único cloroplasto en
+# placa axial que GIRA según la luz (fitocromo): con luz débil se pone de frente, con luz
+# fuerte de canto. Es el ejemplo clásico de movimiento de cloroplastos.
+[[ser]]
+id = "mougeotia"
+nombre = "Mougeotia"
+etiquetas = ["alga", "alga_verde", "filamentosa", "fototrofa", "hospeda_quitridios"]
+locomocion = "cilios"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.3
+cantidad_inicial = 2
+cloroplastos = true
+filamento = true
+celulas_filamento = 6
+fragmentacion_por_hora = 0.03
+masa_seca_relativa = 0.3
+ciclosis = 1.5
+ph = [6.0, 9.5]
+temperatura = [2.0, 32.0]
+reserva = "almidon"
+pared = "celulosa"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 40.0
+semieje_menor = 8.0
+memoria_forma = 15.0
+color = [150, 190, 128]
+nucleo = 0.3
+cuadratura = 6.0
+
+# Zygnema: células de ~40 × 28 µm con dos cloroplastos estrellados (cada uno con un
+# pirenoide) y el núcleo entre ambos. Vive en charcas y sobre suelo y musgo húmedos.
+[[ser]]
+id = "zygnema"
+nombre = "Zygnema"
+etiquetas = ["alga", "alga_verde", "filamentosa", "fototrofa", "hospeda_quitridios"]
+locomocion = "cilios"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.4
+cantidad_inicial = 2
+cloroplastos = true
+filamento = true
+celulas_filamento = 8
+fragmentacion_por_hora = 0.02
+masa_seca_relativa = 0.35
+ciclosis = 1.5
+ph = [6.0, 9.5]
+temperatura = [0.0, 30.0]
+reserva = "almidon"
+pared = "celulosa"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 20.0
+semieje_menor = 14.0
+memoria_forma = 15.0
+color = [146, 186, 120]
+nucleo = 0.25
+cuadratura = 6.0
+
+# Oedogonium: células de ~70 × 22 µm con un cloroplasto parietal reticulado. Al dividirse,
+# la pared se rompe en un anillo y deja "capuchones" apilados en un extremo de la célula (se
+# cuentan las divisiones). También se reproduce por zoósporas: todo el protoplasto sale como
+# una célula grande con una corona de flagelos, nada ~1 h, se fija y forma un filamento nuevo.
+[[ser]]
+id = "oedogonium"
+nombre = "Oedogonium"
+etiquetas = ["alga", "alga_verde", "filamentosa", "fototrofa", "hospeda_quitridios"]
+locomocion = "cilios"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.4
+cantidad_inicial = 2
+cloroplastos = true
+filamento = true
+celulas_filamento = 7
+fragmentacion_por_hora = 0.02
+zoosporas = 0.25
+masa_seca_relativa = 0.3
+ciclosis = 1.5
+ph = [6.0, 9.5]
+temperatura = [5.0, 32.0]
+reserva = "almidon"
+pared = "celulosa"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 35.0
+semieje_menor = 11.0
+memoria_forma = 15.0
+color = [136, 182, 116]
+nucleo = 0.3
+cuadratura = 6.0
+
+# Paramecium aurelia: ~130 × 40 µm, más chico que P. caudatum; mismo modo de vida (bacterívoro
+# por surco oral). En el cultivo mixto de Gause (1934) excluye a P. caudatum. (Simplificación:
+# la conjugación solo está modelada en P. caudatum.)
+[[ser]]
+id = "paramecium_aurelia"
+nombre = "Paramecium aurelia"
+etiquetas = ["protista", "ciliado", "bacterivoro"]
+locomocion = "cilios"
+alimentacion = "surco_oral"
+huye_de = ["didinium", "lacrymaria"]
+quimiocinesis = true
+trampa_acida = true
+cantidad_inicial = 20
+ciclosis = 4.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 35.0]
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 65.0
+semieje_menor = 20.0
+memoria_forma = 8.0
+color = [168, 180, 142]
+nucleo = 0.32
+
+# Asterionella formosa: diatomea pennada planctónica, células de ~60 × 3 µm (sin rafe: no se
+# desliza). En la naturaleza forma colonias en estrella de ~8 células; acá células sueltas, y
+# algo más anchas (6 µm) para que el cuerpo blando sea estable. Tilman (1977).
+[[ser]]
+id = "asterionella"
+nombre = "Asterionella"
+etiquetas = ["alga", "diatomea", "fototrofa", "hospeda_quitridios"]
+locomocion = "cilios"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.5
+cantidad_inicial = 20
+cloroplastos = true
+frustula = true
+ph = [6.0, 9.5]
+temperatura = [2.0, 30.0]
+reserva = "crisolaminarina"
+pared = "silice"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 32.0
+semieje_menor = 3.0
+memoria_forma = 40.0
+color = [206, 186, 118]
+nucleo = 0.3
+cuadratura = 1.0
+
+# Cyclotella meneghiniana: diatomea céntrica planctónica, disco de ~15 µm, inmóvil. Tilman (1977).
+[[ser]]
+id = "cyclotella"
+nombre = "Cyclotella"
+etiquetas = ["alga", "diatomea", "fototrofa", "hospeda_quitridios"]
+locomocion = "cilios"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.5
+cantidad_inicial = 20
+cloroplastos = true
+frustula = true
+ph = [6.0, 9.5]
+temperatura = [2.0, 35.0]
+reserva = "crisolaminarina"
+pared = "silice"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 8.0
+semieje_menor = 8.0
+memoria_forma = 40.0
+color = [204, 182, 112]
+nucleo = 0.3

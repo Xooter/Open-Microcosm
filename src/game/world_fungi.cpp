@@ -12,17 +12,12 @@
 namespace {
 
 // Algas que parasitan los quitridios (Rhizophydium spp. infectan diatomeas y clorofitas; hay
-// quitridios específicos de Oedogonium y de las zignematales).
-constexpr std::uint32_t kChytridHosts =
-    speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Navicula) | speciesBit(SpeciesId::Asterionella) | speciesBit(SpeciesId::Cyclotella) | speciesBit(SpeciesId::Pediastrum) |
-    speciesBit(SpeciesId::Mougeotia) | speciesBit(SpeciesId::Zygnema) | speciesBit(SpeciesId::Oedogonium);
-
-// Fotobiontes de los líquenes: algas verdes (los líquenes reales usan Trebouxia y afines).
-constexpr std::uint32_t kPhotobionts = speciesBit(SpeciesId::Chlamydomonas) | speciesBit(SpeciesId::Pediastrum);
-
-bool hostOf(const entt::registry& reg, entt::entity e, std::uint32_t mask) {
+// quitridios específicos de Oedogonium y de las zignematales): los seres con la etiqueta
+// "hospeda_quitridios". Fotobiontes de los líquenes (los reales usan Trebouxia y afines): los de
+// la etiqueta "fotobionte". Son datos de los paquetes de contenido.
+bool hostOf(const entt::registry& reg, entt::entity e, const char* tag) {
     const Species* sp = reg.try_get<Species>(e);
-    return sp && (mask & speciesBit(sp->id));
+    return sp && hasTag(sp->id, tag);
 }
 
 } // namespace
@@ -50,7 +45,7 @@ void World::seedFungi() {
         Vec2 at = randomPoint(rng, 20.0f);
         std::size_t seen = 0;
         for (auto [e, body] : registry_.view<RingBody>().each())
-            if (hostOf(registry_, e, kPhotobionts) && rng.uniform() * static_cast<float>(++seen) < 1.0f)
+            if (hostOf(registry_, e, "fotobionte") && rng.uniform() * static_cast<float>(++seen) < 1.0f)
                 at = dish_.clampInside(body.centroid + Vec2{20.0f, 0.0f}, 20.0f);
         spawnFungus(FungusKind::Mycobiont, at, rng.uniform(0.0f, 2.0f * units::kPi), 300 + k);
     }
@@ -89,9 +84,9 @@ void World::stepFungi(float dt) {
     photoPoints_.clear();
     for (auto [e, body] : registry_.view<RingBody>().each()) {
         // Los líquenes protegen a su alga con metabolitos secundarios: no la infectan.
-        if (hostOf(registry_, e, kChytridHosts) && !registry_.any_of<Cyst, Lichenized>(e))
+        if (hostOf(registry_, e, "hospeda_quitridios") && !registry_.any_of<Cyst, Lichenized>(e))
             hostCells_.push_back(e);
-        if (hostOf(registry_, e, kPhotobionts) && !registry_.any_of<Cyst, Lichenized>(e)) {
+        if (hostOf(registry_, e, "fotobionte") && !registry_.any_of<Cyst, Lichenized>(e)) {
             photoCells_.push_back(e);
             photoPoints_.push_back(body.centroid);
         }

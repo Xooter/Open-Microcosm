@@ -142,21 +142,21 @@ TEST_CASE("30 min sin jugador: ninguna especie se extingue" * doctest::skip()) {
     world.populateEcosystem();
     // Solo cuentan las especies sembradas (las de peso 0 no están desde el comienzo).
     const Census start = world.census();
-    int minimum[kSpeciesCount];
+    int minimum[kMaxSpecies];
     for (int& m : minimum)
         m = 1 << 30;
     for (int minute = 0; minute < 30; ++minute) {
         steps(world, 60 * 60);
         const Census c = world.census();
         std::string line = "min " + std::to_string(minute + 1) + ": bact " + std::to_string(c.bacteria);
-        for (int k = 0; k < kSpeciesCount; ++k)
+        for (int k = 0; k < speciesCount(); ++k)
             if (start.species[k] > 0)
                 line += std::string(" ") + speciesInfo(static_cast<SpeciesId>(k)).name + " " + std::to_string(c.species[k]);
         MESSAGE(line);
-        for (int k = 0; k < kSpeciesCount; ++k)
+        for (int k = 0; k < speciesCount(); ++k)
             minimum[k] = std::min(minimum[k], c.species[k]);
     }
-    for (int k = 0; k < kSpeciesCount; ++k) {
+    for (int k = 0; k < speciesCount(); ++k) {
         if (start.species[k] == 0)
             continue;
         CAPTURE(std::string(speciesInfo(static_cast<SpeciesId>(k)).name));

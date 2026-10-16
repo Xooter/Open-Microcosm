@@ -42,7 +42,7 @@ TEST_CASE("Plan corporal: el fago T4 es un virus de cabeza y cola, sin envoltura
 }
 
 TEST_CASE("Plan corporal: los cloroplastos solo están en las fotótrofas y nada se repite") {
-    for (int k = 0; k < kSpeciesCount; ++k) {
+    for (int k = 0; k < speciesCount(); ++k) {
         const auto id = static_cast<SpeciesId>(k);
         const BodyPlan& plan = speciesPlan(id);
         INFO(speciesInfo(id).name);

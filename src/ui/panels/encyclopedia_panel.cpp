@@ -21,12 +21,12 @@ class EncyclopediaPanel : public Panel {
     void draw(App& app) override {
         const Progress& pr = app.progress;
         int seen = 0;
-        for (int k = 0; k < kSpeciesCount; ++k)
+        for (int k = 0; k < speciesCount(); ++k)
             seen += (pr.seenSpecies >> k) & 1u;
-        ImGui::Text("%s: %d/%d", tr("Especies vistas"), seen, kSpeciesCount);
+        ImGui::Text("%s: %d/%d", tr("Especies vistas"), seen, speciesCount());
         ImGui::Separator();
         if (section("Especies", true)) {
-            for (int k = 0; k < kSpeciesCount; ++k) {
+            for (int k = 0; k < speciesCount(); ++k) {
                 const auto id = static_cast<SpeciesId>(k);
                 if ((pr.seenSpecies >> k) & 1u) {
                     if (ImGui::TreeNode(speciesInfo(id).name)) {

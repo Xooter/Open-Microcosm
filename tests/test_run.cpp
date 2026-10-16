@@ -178,11 +178,11 @@ TEST_CASE("sandbox: se puede spawnear cada ser del catálogo y la sesión sigue"
     const Vec2 c = {0.5f * world.width(), 0.5f * world.height()};
     const std::size_t cells = world.cellCount(), bacteria = world.bacteria().size();
     const std::size_t filaments = world.cyanobacteria().filaments.size(), mycelia = world.fungi().mycelia.size();
-    for (int i = 0; i < kBeingCount; ++i) {
-        const float a = 6.2831853f * static_cast<float>(i) / kBeingCount;
+    for (int i = 0; i < beingCount(); ++i) {
+        const float a = 6.2831853f * static_cast<float>(i) / beingCount();
         world.spawnBeing(beingAt(i), {c.x + 300.0f * std::cos(a), c.y + 300.0f * std::sin(a)});
     }
-    CHECK(world.cellCount() >= cells + kSpeciesCount);
+    CHECK(world.cellCount() >= cells + speciesCount());
     CHECK(world.bacteria().size() > bacteria);
     CHECK(world.bdellovibrios().size() > 0);
     CHECK(world.cyanobacteria().filaments.size() == filaments + 2); // Anabaena y Oscillatoria
@@ -224,7 +224,7 @@ TEST_CASE("sandbox: cada ser del catálogo cae en la categoría que le correspon
             CHECK(categoryOf({BeingKind::Species, id}) == category);
             ++listed;
         }
-    CHECK(listed == kSpeciesCount); // ninguna especie quedó sin revisar
+    CHECK(listed == speciesCount()); // ninguna especie quedó sin revisar
 
     CHECK(categoryOf({BeingKind::Chytrid, SpeciesId::Paramecium}) == C::Fungi);
     CHECK(categoryOf({BeingKind::Saprolegnia, SpeciesId::Paramecium}) == C::Fungi);
@@ -237,12 +237,12 @@ TEST_CASE("sandbox: cada ser del catálogo cae en la categoría que le correspon
 
     // Ninguna pestaña queda vacía y entre todas suman el catálogo entero.
     int count[kCategoryCount] = {}, total = 0;
-    for (int i = 0; i < kBeingCount; ++i)
+    for (int i = 0; i < beingCount(); ++i)
         ++count[static_cast<int>(categoryOf(beingAt(i)))];
     for (int c = 0; c < kCategoryCount; ++c) {
         CHECK(count[c] > 0);
         CHECK(std::string(categoryName(static_cast<C>(c))).size() > 0);
         total += count[c];
     }
-    CHECK(total == kBeingCount);
+    CHECK(total == beingCount());
 }

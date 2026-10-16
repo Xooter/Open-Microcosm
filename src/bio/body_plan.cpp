@@ -263,7 +263,6 @@ const BodyPlan& speciesPlan(SpeciesId id) {
     case SpeciesId::Cyclotella: return kDiatomPlan;
     case SpeciesId::Candida: return kYeastPlan;
     case SpeciesId::Trichonympha: return kParabasalidPlan;
-    case SpeciesId::Count: break;
     }
     return kAmoebaPlan;
 }

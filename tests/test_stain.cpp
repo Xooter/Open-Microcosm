@@ -119,7 +119,7 @@ TEST_CASE("Química de las especies: lo que ve Lugol y Gram") {
     CHECK(speciesChemistry(SpeciesId::Paramecium).storage == Storage::Glycogen);
     CHECK(speciesChemistry(SpeciesId::Candida).wall == CellWall::YeastGlucan);
     // Solo fotótrofas con cloroplasto verdadero guardan almidón.
-    for (int i = 0; i < kSpeciesCount; ++i) {
+    for (int i = 0; i < speciesCount(); ++i) {
         const auto id = static_cast<SpeciesId>(i);
         if (speciesChemistry(id).storage == Storage::Starch)
             CHECK(speciesInfo(id).chloroplasts);

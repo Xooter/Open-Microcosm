@@ -167,7 +167,7 @@ TEST_CASE("exportar: CSV con unidades y JSON con parámetros, serie y balance") 
     CHECK(json.find("nan") == std::string::npos);
 
     const std::string species = speciesJson();
-    for (int s = 0; s < kSpeciesCount; ++s)
+    for (int s = 0; s < speciesCount(); ++s)
         CHECK(species.find(speciesInfo(static_cast<SpeciesId>(s)).name) != std::string::npos);
     CHECK(species.find("\"unidad\": \"°C\"") != std::string::npos);
 }

@@ -64,7 +64,7 @@ void Run::buildColumns() {
     std::vector<SeriesColumn> c;
     c.push_back({"t", "s", "Tiempo"});
     c.push_back({"t bio", "h", "Tiempo"});
-    for (int s = 0; s < kSpeciesCount; ++s)
+    for (int s = 0; s < speciesCount(); ++s)
         c.push_back({speciesInfo(static_cast<SpeciesId>(s)).name, "individuos", "Poblacion"});
     c.push_back({"Bacterias", "individuos", "Poblacion"});
     c.push_back({"Cianobacterias", "células", "Poblacion"});
@@ -101,7 +101,7 @@ void Run::sample(const World& world) {
     auto put = [&](double v) { row_[k++] = static_cast<float>(v); };
     put(world.simTime());
     put(world.simTime() * world.bioTimeScale() / 3600.0f); // horas biológicas (a 20 °C)
-    for (int s = 0; s < kSpeciesCount; ++s)
+    for (int s = 0; s < speciesCount(); ++s)
         put(census_.species[s]);
     put(census_.bacteria);
     put(census_.cyanoCells);

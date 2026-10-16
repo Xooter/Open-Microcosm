@@ -310,13 +310,16 @@ include(CPack)
 # ---------------------------------------------------------------------------
 if(BIO_BUILD_TESTS)
     enable_testing()
-    set(BIO_TEST_SOURCES tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp tests/test_render_lod.cpp tests/test_body_plan.cpp tests/test_parameters.cpp tests/test_scene.cpp tests/test_physiology.cpp tests/test_validation.cpp)
+    set(BIO_TEST_SOURCES tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp tests/test_render_lod.cpp tests/test_body_plan.cpp tests/test_parameters.cpp tests/test_scene.cpp tests/test_physiology.cpp tests/test_validation.cpp tests/test_content.cpp)
     add_executable(bio_tests ${BIO_TEST_SOURCES})
     target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
     # Rápidos (~1 min): la verificación de cada cambio. Largos: ecosistemas, conservación en
     # corridas largas, determinismo con muchos pasos. Validación: contra resultados publicados.
-    add_test(NAME bio_tests_rapidos COMMAND bio_tests --test-suite-exclude=largos,validacion)
+    add_test(NAME bio_tests_rapidos COMMAND bio_tests --test-suite-exclude=largos,validacion,paquetes)
     set_tests_properties(bio_tests_rapidos PROPERTIES LABELS rapidos)
+    # Paquetes de contenido: en su propio proceso (cargar seres de prueba cambia el registro global).
+    add_test(NAME bio_tests_paquetes COMMAND bio_tests --test-suite=paquetes)
+    set_tests_properties(bio_tests_paquetes PROPERTIES LABELS rapidos)
     # Largos y validación: un proceso por caso (el k-ésimo por nombre), para correrlos en paralelo
     # con `ctest -L largos -j4` sin cambiar ningún test. En un solo proceso tardaban ~25 min: muchos
     # casos son casi seriales (mundos chicos, la corrida de 1 hilo de los de determinismo) y la

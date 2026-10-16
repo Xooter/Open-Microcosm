@@ -108,7 +108,7 @@ std::string serializePlate(const PlateSpec& s) {
     for (const SedimentField& f : kSedimentInts)
         out << "sediment." << f.key << '=' << c.sediment.*f.member << '\n';
     out << "rock_min=" << c.sediment.rockMin << '\n' << "rock_max=" << c.sediment.rockMax << '\n';
-    for (int i = 0; i < kSpeciesCount; ++i)
+    for (int i = 0; i < speciesCount(); ++i)
         out << speciesKey(i) << '=' << c.speciesWeight[i] << '\n';
     return out.str();
 }
@@ -169,7 +169,7 @@ bool parsePlate(const std::string& text, PlateSpec& s) {
             if (k == f.key) c.medium.*f.member = static_cast<float>(x);
         for (const SedimentField& f : kSedimentInts)
             if (k == std::string("sediment.") + f.key) c.sediment.*f.member = static_cast<int>(x);
-        for (int i = 0; i < kSpeciesCount; ++i)
+        for (int i = 0; i < speciesCount(); ++i)
             if (k == speciesKey(i)) c.speciesWeight[i] = static_cast<float>(x);
     }
     // La grilla tiene que ser potencia de 2 (la FFT lo necesita).

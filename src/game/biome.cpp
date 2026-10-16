@@ -216,7 +216,7 @@ WorldConfig makeDrop(BiomeId id, std::uint64_t seed) {
     c.medium.silicate *= micro.uniform(0.6f, 1.6f);
     c.medium.iron *= micro.uniform(0.5f, 1.8f);
     c.medium.vitamin *= micro.uniform(0.5f, 1.8f);
-    for (int k = 0; k < kSpeciesCount; ++k) {
+    for (int k = 0; k < speciesCount(); ++k) {
         Rng r(seed, rng_stream::kPopulate + 901, static_cast<std::uint64_t>(k), 0);
         const bool absent = r.uniform() < 0.15f; // algunas especies no llegaron a esta gota
         c.speciesWeight[k] = absent ? 0.0f : b.weight[k] * r.uniform(0.5f, 1.5f);

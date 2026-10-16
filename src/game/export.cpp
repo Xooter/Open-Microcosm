@@ -176,10 +176,10 @@ const char* wallName(CellWall w) {
     return "";
 }
 
-void speciesList(Json& j, const char* key, std::uint32_t mask) {
+void speciesList(Json& j, const char* key, const SpeciesSet& mask) {
     j.beginArray(key);
-    for (int s = 0; s < kSpeciesCount; ++s)
-        if (mask & speciesBit(static_cast<SpeciesId>(s)))
+    for (int s = 0; s < speciesCount(); ++s)
+        if (mask.test(static_cast<std::size_t>(s)))
             j.string(nullptr, speciesInfo(static_cast<SpeciesId>(s)).name);
     j.endArray();
 }
@@ -209,8 +209,8 @@ void writeSpecies(Json& j, SpeciesId id) {
     j.quantity("semieje_menor", s.spec.radiusY, "µm");
     j.number("velocidad_relativa", s.speedScale);
     j.string("alimentacion", feedingName(s.feeding));
-    speciesList(j, "presas", s.preyMask | s.mouthPreyMask);
-    speciesList(j, "huye_de", s.fleeMask);
+    speciesList(j, "presas", s.prey | s.mouthPrey);
+    speciesList(j, "huye_de", s.flee);
     j.quantity("manipulacion_por_presa", s.handlingHours, "h");
     j.boolean("fotosintesis", s.chloroplasts);
     j.number("fotosintesis_relativa", s.photosynthesisScale);
@@ -432,7 +432,7 @@ std::string speciesJson() {
     j.string("formato", "biogame-species");
     j.number("version", 2); // 2: fisiología con fuentes
     j.beginArray("especies");
-    for (int s = 0; s < kSpeciesCount; ++s)
+    for (int s = 0; s < speciesCount(); ++s)
         writeSpecies(j, static_cast<SpeciesId>(s));
     j.endArray();
     j.endObject();

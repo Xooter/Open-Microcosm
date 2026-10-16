@@ -105,10 +105,10 @@ void addStructures(Inspection& ins, const BodyPlan& plan, const char* title = "E
     }
 }
 
-std::string speciesNames(std::uint32_t mask) {
+std::string speciesNames(const SpeciesSet& mask) {
     std::string out;
-    for (int k = 0; k < kSpeciesCount; ++k)
-        if (mask & speciesBit(static_cast<SpeciesId>(k))) {
+    for (int k = 0; k < speciesCount(); ++k)
+        if (mask.test(static_cast<std::size_t>(k))) {
             if (!out.empty())
                 out += ", ";
             out += speciesInfo(static_cast<SpeciesId>(k)).name;
@@ -302,14 +302,14 @@ Inspection inspectCell(const World& w, entt::entity e) {
         if (ins.headline == "sin eventos especiales")
             ins.headline = move;
         add(s, "Come", feedingText(info.feeding));
-        std::string prey = speciesNames(info.preyMask | info.mouthPreyMask);
+        std::string prey = speciesNames(info.prey | info.mouthPrey);
         if (info.feeding == FeedingMode::OralGroove || info.feeding == FeedingMode::Anterior ||
             info.feeding == FeedingMode::Phagocytosis)
             prey = prey.empty() ? "bacterias y detritos" : "bacterias, detritos, " + prey;
         if (!prey.empty())
             add(s, "Presas", prey);
-        if (info.fleeMask)
-            add(s, "Huye de", speciesNames(info.fleeMask));
+        if (info.flee.any())
+            add(s, "Huye de", speciesNames(info.flee));
         if (her && her->traits.armor >= 0.5f)
             add(s, "Defensa", "coraza gruesa: no se la puede fagocitar");
         else if (info.frustule)

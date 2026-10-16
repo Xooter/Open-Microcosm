@@ -1,0 +1,8 @@
+# Paquete de fábrica de BioGame (fase 20.0). Un paquete es una carpeta con archivos TOML (o un
+# solo archivo .biopack con todo adentro): seres, minerales, medios, biomas y placas preparadas.
+[paquete]
+id = "base"
+nombre = "BioGame: contenido de fábrica"
+version = "1"
+autor = "BioGame"
+licencia = "GPL-3.0-or-later"

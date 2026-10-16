@@ -6,11 +6,20 @@
 
 #include <entt/entity/entity.hpp>
 
+#include <bitset>
 #include <cstdint>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 
-// Especies del ecosistema (datos, no código: el comportamiento sale de estos campos).
-enum class SpeciesId : std::uint8_t {
+// Tipos de ser con cuerpo blando (especies de protistas, algas, levaduras y, en adelante, células
+// de organismos pluricelulares). Son DATOS: se cargan de los paquetes de contenido
+// (assets/content/base/seres.toml y los del usuario) en un registro; el índice en el registro es
+// el SpeciesId. Los nombres de abajo son los seres de fábrica en su orden de carga (las escenas
+// viejas guardan ese índice): el código que todavía distingue especies por nombre los usa.
+enum class SpeciesId : std::uint16_t {
     Paramecium,
     Euglena,
     Amoeba,
@@ -35,9 +44,13 @@ enum class SpeciesId : std::uint8_t {
     ParameciumAurelia, // Gause (1934): excluye a P. caudatum en cultivo mixto
     Asterionella,      // Tilman (1977): diatomeas que compiten por P y Si
     Cyclotella,
-    Count
 };
-inline constexpr int kSpeciesCount = static_cast<int>(SpeciesId::Count);
+// Tope de tipos de ser cargados (tablas de tamaño fijo: censo, pesos de población).
+inline constexpr int kMaxSpecies = 512;
+// Cantidad de tipos de ser cargados (los de fábrica y los de los paquetes del usuario).
+int speciesCount();
+// Conjunto de tipos de ser (dietas, huidas, hospedadores).
+using SpeciesSet = std::bitset<kMaxSpecies>;
 
 // Química de las reservas y de la pared: lo que las tinciones ven (el color no sale del nombre de
 // la especie sino de qué polisacárido guarda y de qué está hecha su pared).
@@ -60,8 +73,6 @@ struct SpeciesChemistry {
 };
 const SpeciesChemistry& speciesChemistry(SpeciesId id);
 
-inline constexpr std::uint32_t speciesBit(SpeciesId s) { return 1u << static_cast<unsigned>(s); }
-
 enum class FeedingMode : std::uint8_t {
     OralGroove,   // citostoma con corriente oral (Paramecium: bacterias y detritos)
     Anterior,     // polo anterior, poco (euglénidos)
@@ -74,13 +85,14 @@ enum class FeedingMode : std::uint8_t {
 };
 
 struct SpeciesInfo {
-    const char* name = "";
+    const char* key = "";  // id estable de los datos ("paramecium"): lo guardan las escenas
+    const char* name = ""; // el que se muestra
     LocomotionType locomotion = LocomotionType::Cilia;
     CellSpec spec;                  // forma, tamaño y color típicos
     float speedScale = 1.0f;        // respecto de la velocidad de su tipo de locomoción
     FeedingMode feeding = FeedingMode::None;
-    std::uint32_t preyMask = 0;     // especies que caza, fagocita o atrapa
-    std::uint32_t fleeMask = 0;     // especies de las que huye (reacción de evitación)
+    SpeciesSet prey;                // especies que caza, fagocita o atrapa
+    SpeciesSet flee;                // especies de las que huye (reacción de evitación)
     bool chemokinesis = false;      // nada más recto cuando la comida mejora (ciliados)
     bool acidTrap = false;          // se acumula en zonas con CO₂ (Paramecium, Jennings)
     bool phototaxis = false;        // se orienta hacia la luz (estigma)
@@ -92,7 +104,7 @@ struct SpeciesInfo {
     bool sessile = false;
     float stalkLength = 0.0f;       // [µm]
     bool contractileStalk = false;  // espasmonema (Vorticella): se retrae en ms al ser perturbada
-    std::uint32_t mouthPreyMask = 0; // células chicas que el filtrador traga con su corriente oral
+    SpeciesSet mouthPrey;           // células chicas que el filtrador traga con su corriente oral
     bool walker = false;            // camina sobre cirros con paradas (hipotricos: Euplotes)
     float tentacleReach = 0.0f;     // suctorios: alcance de los tentáculos desde el centro [µm]
     float neckReach = 0.0f;         // Lacrymaria: largo máximo del cuello [µm]
@@ -126,11 +138,33 @@ struct SpeciesInfo {
     // Ciclosis: corriente citoplasmática que hace girar gránulos y vacuolas [µm/s]
     // (Paramecium ~2–5; en las células vegetales, como Spirogyra, a lo largo de la pared).
     float cyclosis = 0.0f;
+    SpeciesChemistry chemistry;     // reserva y pared (tinciones)
+    // Genes que difieren de los de su locomoción (p. ej. sin tricocistos, con testa).
+    std::vector<std::pair<Gene, float>> genome;
+    std::vector<std::string> tags;  // grupos (taxonómicos o funcionales): dietas, hospedadores
 };
 
 const SpeciesInfo& speciesInfo(SpeciesId id);
 SpeciesId playerSpecies(LocomotionType type);
 Genome speciesGenome(SpeciesId id);
+// Por id de los datos ("paramecium"); vacío si no está cargado.
+std::optional<SpeciesId> findSpecies(std::string_view key);
+// Los tipos de ser con una etiqueta (vacío si nadie la tiene).
+SpeciesSet speciesWithTag(std::string_view tag);
+bool hasTag(SpeciesId id, std::string_view tag);
+
+// Carga los [[ser]] de un archivo TOML de un paquete (se agregan al registro, después de los que
+// ya hay). Las referencias (presas, huidas) se resuelven al final de cada carga, contra todo lo
+// cargado. Devuelve false y deja el motivo en `error` si el archivo no se puede leer; los seres
+// con errores se saltean y quedan en `speciesLoadWarnings`. El registro carga solo el paquete de
+// fábrica la primera vez que se lo usa.
+bool loadSpeciesFile(const std::string& path, const std::string& pack, std::string* error = nullptr);
+// Lo mismo desde el texto (paquetes .biopack).
+bool loadSpeciesText(const std::string& text, const std::string& source, const std::string& pack,
+                     std::string* error = nullptr);
+const std::vector<std::string>& speciesLoadWarnings();
+// Paquete de donde vino cada ser ("base" para los de fábrica).
+const std::string& speciesPack(SpeciesId id);
 
 // Componente: especie de la célula.
 struct Species {

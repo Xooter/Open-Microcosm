@@ -13,7 +13,7 @@ struct Biome {
     const char* name;
     const char* description;
     MediumParams medium;
-    float weight[kSpeciesCount]; // multiplicador de la población inicial de cada especie
+    float weight[kMaxSpecies]; // multiplicador de la población inicial de cada especie
     std::size_t bacteria, detritus;
     int cyanoFilaments;
     int oscillatoriaFilaments;

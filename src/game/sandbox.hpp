@@ -40,12 +40,12 @@ struct Being {
 };
 
 // Primero las especies (en el orden de SpeciesId), después los microbios.
-inline constexpr int kBeingCount = kSpeciesCount + static_cast<int>(BeingKind::Count) - 1;
+inline int beingCount() { return speciesCount() + static_cast<int>(BeingKind::Count) - 1; }
 
 inline Being beingAt(int index) {
-    if (index < kSpeciesCount)
+    if (index < speciesCount())
         return {BeingKind::Species, static_cast<SpeciesId>(index)};
-    return {static_cast<BeingKind>(index - kSpeciesCount + 1), SpeciesId::Paramecium};
+    return {static_cast<BeingKind>(index - speciesCount() + 1), SpeciesId::Paramecium};
 }
 
 // Mineral suelto que corresponde a un ser del catálogo (Count si no es uno).
