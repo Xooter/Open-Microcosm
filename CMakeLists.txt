@@ -213,6 +213,7 @@ add_executable(bio
     src/ui/being_icons.cpp
     src/ui/stain_preview.cpp
     src/ui/panels/stain_panel.cpp
+    src/ui/panels/content_panel.cpp
     src/ui/panels/panels.cpp
     src/ui/panels/plate_panel.cpp
     src/ui/panels/catalog_panel.cpp
@@ -321,8 +322,11 @@ if(BIO_BUILD_TESTS)
     add_test(NAME bio_tests_rapidos COMMAND bio_tests --test-suite-exclude=largos,validacion,paquetes)
     set_tests_properties(bio_tests_rapidos PROPERTIES LABELS rapidos)
     # Paquetes de contenido: en su propio proceso (cargar seres de prueba cambia el registro global).
+    # Corre junto a los rápidos (ctest -j): con pocos hilos y espera pasiva, así los dos procesos no
+    # se pisan girando en las barreras de OpenMP (se volvían 10 veces más lentos).
     add_test(NAME bio_tests_paquetes COMMAND bio_tests --test-suite=paquetes)
-    set_tests_properties(bio_tests_paquetes PROPERTIES LABELS rapidos)
+    set_tests_properties(bio_tests_paquetes PROPERTIES LABELS rapidos
+                         ENVIRONMENT "OMP_NUM_THREADS=2;OMP_WAIT_POLICY=passive")
     # Largos y validación: un proceso por caso (el k-ésimo por nombre), para correrlos en paralelo
     # con `ctest -L largos -j4` sin cambiar ningún test. En un solo proceso tardaban ~25 min: muchos
     # casos son casi seriales (mundos chicos, la corrida de 1 hilo de los de determinismo) y la

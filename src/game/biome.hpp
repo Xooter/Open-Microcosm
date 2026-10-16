@@ -18,6 +18,7 @@ int biomeCount();
 
 struct Biome {
     std::string key, name, description, pack; // key: id estable de los datos ("charco")
+    std::string source;                        // el [[bioma]] como se leyó (para exportarlo)
     MediumParams medium;
     // Multiplicador de la población inicial: `baseWeight` para todos, salvo los listados por id.
     float baseWeight = 1.0f;

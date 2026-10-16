@@ -6,6 +6,7 @@
 #include "core/profiling.hpp"
 #include "core/units.hpp"
 #include "game/biome.hpp"
+#include "game/content.hpp"
 #include "game/encyclopedia.hpp"
 #include "game/export.hpp"
 #include "game/region.hpp"
@@ -1220,6 +1221,14 @@ int App::run() {
     ui::loadLanguage(options.language);
     ui::initBackend(layoutPath_.c_str(), 15.0f);
     ui::applyTheme();
+    // Paquetes de contenido del usuario (<datos>/biogame/paquetes): antes del catálogo y de la
+    // primera placa, así sus seres tienen ícono y las placas que los nombran se leen.
+    {
+        std::vector<std::string> messages;
+        loadUserPacks(messages);
+        if (!messages.empty())
+            notify(std::string(ui::tr("Paquetes de contenido con avisos: ver el panel Contenido")));
+    }
     ui::buildBeingIcons();
     ui::registerPanels(panels);
     registerCommands();
@@ -1245,6 +1254,11 @@ int App::run() {
     createPlate(); // arranca con la placa preconfigurada (vacía por defecto)
 
     while (!WindowShouldClose() && !quit) {
+        if (contentChanged) {
+            ui::freeBeingIcons();
+            ui::buildBeingIcons();
+            contentChanged = false;
+        }
         applyFrameCap();
         const float frameDt = GetFrameTime();
         tools.frameHistory[tools.frameHead] = 1000.0f * frameDt;

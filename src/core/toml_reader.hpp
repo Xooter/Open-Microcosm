@@ -6,6 +6,7 @@
 
 #include <toml++/toml.hpp>
 
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -139,5 +140,28 @@ struct Reader {
         return nullptr;
     }
 };
+
+// Una definición como texto TOML autónomo (`[[clave]]` con sus subtablas), para exportarla en un
+// paquete: se guarda al cargarla, así lo exportado es exactamente lo que se leyó.
+inline std::string snippet(const char* arrayKey, const toml::table& t) {
+    toml::array list;
+    list.push_back(t);
+    toml::table root;
+    root.insert(arrayKey, std::move(list));
+    std::ostringstream out;
+    out << root;
+    return out.str();
+}
+
+// Lo mismo para una tabla con nombre dentro de otra (`[fisiologia.paramecium]`).
+inline std::string tableSnippet(const char* parent, std::string_view key, const toml::table& t) {
+    toml::table inner;
+    inner.insert(key, t);
+    toml::table root;
+    root.insert(parent, std::move(inner));
+    std::ostringstream out;
+    out << root;
+    return out.str();
+}
 
 } // namespace toml_io

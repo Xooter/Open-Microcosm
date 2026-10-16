@@ -1,6 +1,7 @@
 #include "bio/body_plan.hpp"
 
 #include "core/paths.hpp"
+#include "core/toml_reader.hpp"
 
 #include <toml++/toml.hpp>
 
@@ -155,6 +156,7 @@ namespace {
 
 struct PlanEntry {
     std::string id, name, pack;
+    std::string source; // el [[plan]] como se leyó (para exportarlo)
     std::deque<std::string> names; // nombres de las estructuras (direcciones estables)
     std::vector<StructureSpec> structures;
     BodyPlan plan{};
@@ -233,6 +235,7 @@ void loadPlansDoc(const toml::table& doc, const std::string& source, const std::
         PlanEntry e;
         e.id = *id;
         e.pack = pack;
+        e.source = toml_io::snippet("plan", *t);
         e.name = t->get("nombre") ? t->get("nombre")->value<std::string>().value_or(*id) : *id;
         Morphology morphology = Morphology::Eukaryote;
         if (t->get("morfologia") && !pick(*t, "morfologia", kMorphologies, morphology))
@@ -318,6 +321,19 @@ const BodyPlan* findBodyPlan(std::string_view id) {
         if (e.id == id)
             return &e.plan;
     return nullptr;
+}
+
+std::string bodyPlanSource(std::string_view id, std::string* pack) {
+    ensurePlans();
+    PlanRegistry& r = plans();
+    std::lock_guard<std::recursive_mutex> lock(r.mutex);
+    for (const PlanEntry& e : r.entries)
+        if (e.id == id) {
+            if (pack)
+                *pack = e.pack;
+            return e.source;
+        }
+    return {};
 }
 
 const std::vector<std::string>& bodyPlanWarnings() {

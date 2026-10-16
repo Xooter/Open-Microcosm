@@ -1,6 +1,7 @@
 #include "bio/physiology.hpp"
 
 #include "core/paths.hpp"
+#include "core/toml_reader.hpp"
 
 #include <toml++/toml.hpp>
 
@@ -12,6 +13,7 @@
 namespace {
 
 SpeciesPhysiology gTable[kMaxSpecies];
+std::string gSource[kMaxSpecies]; // la tabla de cada ser como se leyó (para exportarla)
 std::vector<std::string> gWarnings;
 std::atomic<bool> gLoaded{false}; // hay una tabla cargada (la de fábrica o una explícita)
 std::mutex gLoadMutex;
@@ -90,23 +92,8 @@ SourcedValue readConcentration(const toml::table& t, const std::string& species,
     return s;
 }
 
-// Con gLoadMutex tomado. Marca la tabla como cargada al final (también si falla: no se reintenta
-// en cada consulta), así ningún hilo la lee a medio llenar.
-bool loadLocked(const std::string& path, std::string* error, bool reset = true) {
-    if (reset) {
-        for (SpeciesPhysiology& p : gTable)
-            p = SpeciesPhysiology{};
-        gWarnings.clear();
-    }
-    toml::table doc;
-    try {
-        doc = toml::parse_file(path);
-    } catch (const toml::parse_error& e) {
-        if (error)
-            *error = std::string(e.description());
-        gLoaded.store(true, std::memory_order_release);
-        return false;
-    }
+// Las tablas [id_del_ser.parametro] de un documento (o de la tabla [fisiologia] de un .biopack).
+void loadTables(const toml::table& doc) {
     for (const auto& [name, node] : doc) {
         const toml::table* t = node.as_table();
         if (!t)
@@ -121,7 +108,30 @@ bool loadLocked(const std::string& path, std::string* error, bool reset = true) 
         gTable[id].growthMax = readRate(*t, std::string(name.str()), "crecimiento_maximo");
         gTable[id].phosphorusHalfSaturation = readConcentration(*t, std::string(name.str()), "p_media_saturacion");
         gTable[id].siliconHalfSaturation = readConcentration(*t, std::string(name.str()), "si_media_saturacion");
+        gSource[id] = toml_io::tableSnippet("fisiologia", name.str(), *t);
     }
+}
+
+// Con gLoadMutex tomado. Marca la tabla como cargada al final (también si falla: no se reintenta
+// en cada consulta), así ningún hilo la lee a medio llenar.
+bool loadLocked(const std::string& path, std::string* error, bool reset = true) {
+    if (reset) {
+        for (SpeciesPhysiology& p : gTable)
+            p = SpeciesPhysiology{};
+        for (std::string& src : gSource)
+            src.clear();
+        gWarnings.clear();
+    }
+    toml::table doc;
+    try {
+        doc = toml::parse_file(path);
+    } catch (const toml::parse_error& e) {
+        if (error)
+            *error = std::string(e.description());
+        gLoaded.store(true, std::memory_order_release);
+        return false;
+    }
+    loadTables(doc);
     gLoaded.store(true, std::memory_order_release);
     return true;
 }
@@ -148,6 +158,29 @@ const SpeciesPhysiology& speciesPhysiology(SpeciesId id) {
             loadLocked(assetPath("content/base/fisiologia.toml"), nullptr);
     }
     return gTable[static_cast<int>(id)];
+}
+
+bool addSpeciesPhysiologyText(const std::string& text, const std::string& source, std::string* error) {
+    std::lock_guard<std::mutex> lock(gLoadMutex);
+    if (!gLoaded.load(std::memory_order_relaxed))
+        loadLocked(assetPath("content/base/fisiologia.toml"), nullptr);
+    toml::table doc;
+    try {
+        doc = toml::parse(text, source);
+    } catch (const toml::parse_error& e) {
+        if (error)
+            *error = source + ": " + std::string(e.description());
+        return false;
+    }
+    const toml::table* root = doc.get("fisiologia") ? doc.get("fisiologia")->as_table() : nullptr;
+    loadTables(root ? *root : doc);
+    return true;
+}
+
+std::string physiologySource(SpeciesId id) {
+    speciesPhysiology(id); // carga la de fábrica si hace falta
+    std::lock_guard<std::mutex> lock(gLoadMutex);
+    return gSource[static_cast<int>(id)];
 }
 
 const std::vector<std::string>& physiologyWarnings() { return gWarnings; }

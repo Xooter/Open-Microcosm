@@ -45,7 +45,7 @@ Avance: ✅ hecho · 🟡 en parte (se dice qué falta) · sin marca: pendiente.
 **Objetivo:** que todo el contenido viva en paquetes de datos, los de fábrica incluidos, sin
 sistemas paralelos (los seres actuales se migran, no conviven con un sistema nuevo).
 
-1. 🟡 **Registro de contenido** (`game/content`, sin raylib): tipos de ser, minerales y sedimentos,
+1. ✅ **Registro de contenido** (`game/content`, sin raylib): tipos de ser, minerales y sedimentos,
    medios, biomas y placas preparadas, cada uno con **id estable de texto**
    (`"protista.paramecium_caudatum"`, `"celula.fibroblasto_dermico_humano"`) y un índice de
    ejecución. `SpeciesId` deja de ser un enum: pasa a ser el índice en el registro.
@@ -55,8 +55,9 @@ sistemas paralelos (los seres actuales se migran, no conviven con un sistema nue
    *Hecho también para minerales* (`game/mineral`: `MineralKind` es el índice, `mineralCount()`,
    tope `kMaxMinerals`; el sedimento es un conteo por mineral) *y biomas* (`game/biome`:
    `biomeCount()`, `findBiome`). Los registros se leen sin candado una vez cargados (atómico).
-   Falta: medios y placas preparadas (fase 20a; el lector del medio, `game/medium_toml`, ya es común).
-2. 🟡 **Paquetes** (`<assets>/content/base/` de fábrica y `<datos>/biogame/paquetes/` del usuario):
+   Medios y placas preparadas se registran igual en la fase 20a (el lector del medio,
+   `game/medium_toml`, ya es común).
+2. ✅ **Paquetes** (`<assets>/content/base/` de fábrica y `<datos>/biogame/paquetes/` del usuario):
    archivos TOML con `[paquete]` (id, versión, autor, licencia, versión mínima del programa) y
    tablas de definiciones. Un paquete se comparte como **un solo archivo `.biopack`** (TOML con
    todas sus definiciones; sin bibliotecas nuevas). Se valida al cargar (esquema, unidades,
@@ -65,8 +66,10 @@ sistemas paralelos (los seres actuales se migran, no conviven con un sistema nue
    *Hecho:* `assets/content/base/` (`paquete.toml`, `seres.toml`, `planes.toml`, `fisiologia.toml`,
    `minerales.toml`, `biomas.toml`), lector TOML común (`core/toml_reader`), carga desde archivo o texto,
    validación con avisos (claves desconocidas, valores fuera de lista, referencias sin resolver,
-   ids repetidos) sin cerrar el programa; tests en la suite `paquetes`. Falta: los paquetes del
-   usuario, el `.biopack` y mostrar los avisos en la interfaz (paso 7).
+   ids repetidos) sin cerrar el programa; tests en la suite `paquetes`. Paquetes del usuario en
+   `<datos>/biogame/paquetes/` (carpeta o `.biopack`), cargados al arrancar; el `.biopack` es un
+   TOML con `[paquete]` y `[[ser]]`, `[[plan]]`, `[[mineral]]`, `[[bioma]]`,
+   `[fisiologia.<id>]` y `[[escena]]`; los avisos se ven en el panel *Contenido* (paso 7).
 3. ✅ **Ser como datos:** morfología (semiejes, forma, rigidez), mecanismos por nombre (locomoción,
    modo de alimentación, reproducción, quistes, sésil…), fisiología con fuentes (lo de
    `fisiologia.toml` se integra), química (reserva, pared), plan corporal (estructuras y tamaños),
@@ -106,10 +109,24 @@ sistemas paralelos (los seres actuales se migran, no conviven con un sistema nue
    cargado (paquete, bioma, ser, mineral) se avisa al cargarla (interfaz y `bio_bench`) y se carga
    lo demás. `game/content`: paquetes cargados con su manifiesto y huella (FNV-1a de sus archivos);
    `runJson` los anota en la procedencia (y el id del bioma).
-7. **Compartir:** exportar e importar desde la interfaz (panel nuevo *Contenido*): un ser, un
+7. ✅ **Compartir:** exportar e importar desde la interfaz (panel nuevo *Contenido*): un ser, un
    medio, una placa preparada, una escena o un paquete entero, a un `.biopack` o desde uno. Al
    cargar una escena que usa un paquete que falta, se avisa cuál.
-8. **Seguridad:** los paquetes son solo datos (nada ejecutable); tamaños y cantidades acotados.
+   *Hecho:* panel *Contenido* (paquetes cargados con versión, licencia, cantidades y huella;
+   avisos de todos los registros; importar un `.biopack` por ruta —se copia a la carpeta del
+   usuario y se carga en el momento, el catálogo rehace sus íconos—; exportar seres, minerales,
+   biomas y la placa en pantalla con sus intervenciones). Cada definición se exporta tal como se
+   leyó, con su plan corporal si no es de fábrica y su fisiología; las escenas de un paquete
+   importado aparecen entre las placas guardadas. `bio_bench --paquete` carga paquetes sin
+   ventana. Probado en la interfaz (importar *Colpoda cucullus* desde un `.biopack`, verlo en el
+   catálogo, sembrarlo, ver su ficha, exportarlo con la placa) y en limpio (otra carpeta de
+   datos: el paquete exportado se carga y su escena se reproduce). Los medios y las placas
+   preparadas se exportarán igual cuando existan (20a).
+8. ✅ **Seguridad:** los paquetes son solo datos (nada ejecutable); tamaños y cantidades acotados.
+   *Hecho:* solo TOML; un paquete de más de 8 MB se rechaza; id del paquete de 1 a 64 caracteres
+   `[a-z0-9_]` (no arma rutas); los nombres de las escenas instaladas se sanean; topes de
+   seres (`kMaxSpecies`), minerales (`kMaxMinerals`) y biomas; `programa_minimo` rechaza paquetes
+   para una versión más nueva; ids repetidos se saltean; claves desconocidas se avisan.
 
 ## 20a — Placas preparadas
 
@@ -188,7 +205,7 @@ Mecanismos nuevos (código), parametrizados por datos:
 
 ## Orden y criterios de «hecho»
 
-1. **20.0** registro y paquetes → migración con checksums iguales → ids de texto en escenas →
+1. ✅ **20.0** registro y paquetes → migración con checksums iguales → ids de texto en escenas →
    panel *Contenido* (exportar e importar). Hecho cuando un ser nuevo definido solo en un
    `.biopack` (por ejemplo, otra especie de *Paramecium*) aparece en el catálogo, se siembra, vive
    y se exporta e importa en otra instalación sin compilar.

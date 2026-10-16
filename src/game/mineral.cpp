@@ -80,6 +80,7 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
         MineralInfo m;
         if (!readMineral(*t, source, pack, m, reg.warnings))
             continue;
+        m.source = toml_io::snippet("mineral", *t);
         bool duplicate = false;
         for (const MineralInfo& other : reg.entries)
             duplicate = duplicate || other.key == m.key;

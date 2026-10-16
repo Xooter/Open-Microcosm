@@ -173,6 +173,8 @@ bool loadSpeciesFile(const std::string& path, const std::string& pack, std::stri
 bool loadSpeciesText(const std::string& text, const std::string& source, const std::string& pack,
                      std::string* error = nullptr);
 const std::vector<std::string>& speciesLoadWarnings();
+// El [[ser]] como se leyó, en TOML (para exportarlo a un paquete).
+const std::string& speciesSource(SpeciesId id);
 // Paquete de donde vino cada ser ("base" para los de fábrica).
 const std::string& speciesPack(SpeciesId id);
 

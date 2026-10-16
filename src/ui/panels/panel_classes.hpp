@@ -19,5 +19,6 @@ std::unique_ptr<Panel> makeStatsPanel();
 std::unique_ptr<Panel> makeGraphsPanel();
 std::unique_ptr<Panel> makeMeasurePanel();
 std::unique_ptr<Panel> makeHelpPanel();
+std::unique_ptr<Panel> makeContentPanel();
 
 } // namespace ui

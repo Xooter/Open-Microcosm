@@ -34,5 +34,10 @@ const SpeciesPhysiology& speciesPhysiology(SpeciesId id);
 bool loadSpeciesPhysiology(const std::string& path, std::string* error = nullptr);
 // Suma la de un paquete a la cargada (las tablas son [id_del_ser.parametro]).
 bool addSpeciesPhysiology(const std::string& path, std::string* error = nullptr);
+// Lo mismo desde el texto de un paquete: las tablas [fisiologia.id_del_ser.parametro] de un
+// .biopack, o [id_del_ser.parametro] si el texto es un fisiologia.toml.
+bool addSpeciesPhysiologyText(const std::string& text, const std::string& source, std::string* error = nullptr);
+// La fisiología del ser como se leyó, en TOML ([fisiologia.id]); "" si no tiene.
+std::string physiologySource(SpeciesId id);
 // Avisos de la última carga (unidades desconocidas, especies inexistentes...).
 const std::vector<std::string>& physiologyWarnings();

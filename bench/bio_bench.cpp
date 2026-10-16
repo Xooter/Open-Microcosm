@@ -8,8 +8,10 @@
 //
 //   bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] [--warmup N] [--threads N]
 //             [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate]
-//             [--soak N]
+//             [--paquete ruta] [--soak N]
 //
+// Con --paquete carga un paquete de contenido (carpeta o .biopack; se puede repetir) antes de la
+// escena, así una escena con seres o biomas de ese paquete se reproduce sin la interfaz.
 // Con --soak N (prueba larga) cada N pasos verifica que todo sea finito y que el balance de P, N,
 // Si y Fe cierre, y registra la memoria; termina con código 2 si algo falla.
 //
@@ -20,6 +22,7 @@
 #include "game/biome.hpp"
 #include "game/run.hpp"
 #include "game/mass_budget.hpp"
+#include "game/content.hpp"
 #include "game/scene.hpp"
 #include "gpu/gpu_substep_solver.hpp"
 #include "render/renderer.hpp"
@@ -56,6 +59,7 @@ struct Args {
     float zoom = 0.0f; // 0: la placa entera
     float cellDetail = 1.0f;
     std::string scene; // escena (.plate con intervenciones) a reproducir
+    std::vector<std::string> packs; // paquetes de contenido a cargar (carpeta o .biopack)
     std::string shot;  // con --render: guarda el último cuadro (PNG) para comparar dibujos
     int soak = 0;      // > 0: cada `soak` pasos verifica posiciones finitas, balance y memoria
 };
@@ -120,6 +124,8 @@ bool parse(int argc, char** argv, Args& a) {
             a.shot = argv[++i];
         else if (k == "--scene" && hasValue)
             a.scene = argv[++i];
+        else if (k == "--paquete" && hasValue)
+            a.packs.push_back(argv[++i]);
         else if (k == "--cell-detail" && hasValue)
             a.cellDetail = static_cast<float>(std::atof(argv[++i]));
         else if (k == "--biome" && hasValue)
@@ -136,7 +142,7 @@ bool parse(int argc, char** argv, Args& a) {
             a.threads = std::atoi(argv[++i]);
         else {
             std::fprintf(stderr, "uso: bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] "
-                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate] [--soak N] [--shot cuadro.png]\n");
+                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate] [--paquete ruta] [--soak N] [--shot cuadro.png]\n");
             return false;
         }
     }
@@ -203,6 +209,15 @@ int main(int argc, char** argv) {
 
     PlateSpec plate;
     std::vector<Intervention> events;
+    // Paquetes de contenido (antes de la escena, que puede nombrar sus seres y biomas).
+    for (const std::string& pack : a.packs) {
+        std::vector<std::string> messages;
+        const bool ok = loadPack(pack, messages);
+        for (const std::string& m : messages)
+            std::fprintf(stderr, "%s\n", m.c_str());
+        if (!ok)
+            return 1;
+    }
     std::vector<std::string> missing;
     if (!a.scene.empty() && !loadScene(a.scene, plate, events, &missing)) {
         std::fprintf(stderr, "no se pudo leer la escena %s\n", a.scene.c_str());

@@ -138,3 +138,5 @@ bool loadBodyPlansText(const std::string& text, const std::string& source, const
                        std::string* error = nullptr);
 const BodyPlan* findBodyPlan(std::string_view id);
 const std::vector<std::string>& bodyPlanWarnings();
+// El [[plan]] como se leyó, en TOML ("" si no existe), y su paquete.
+std::string bodyPlanSource(std::string_view id, std::string* pack = nullptr);

@@ -12,6 +12,7 @@
 // en el registro (los nombres del enum son alias de los de fábrica, en su orden).
 struct MineralInfo {
     std::string key, name, grainName, description, style, pack;
+    std::string source; // el [[mineral]] como se leyó (para exportarlo)
     float radiusMin = 1.0f, radiusMax = 1.0f; // [µm]
     float densityGap = 1650.0f;               // densidad menos la del agua [kg/m³] (ley de Stokes)
     float opacity = 0.1f;                     // fracción de la luz que bloquea

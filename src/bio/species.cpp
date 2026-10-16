@@ -19,6 +19,7 @@ namespace {
 struct Entry {
     SpeciesInfo info;
     std::string key, name, description, plan, style, pack;
+    std::string source; // el [[ser]] como se leyó (para exportarlo)
     // Referencias sin resolver (ids o etiquetas): se resuelven contra todo lo cargado.
     std::vector<std::string> prey, mouthPrey, flee;
 };
@@ -240,8 +241,10 @@ void resolve() {
                     found = true;
                 }
             }
-            if (!found)
-                gWarnings.push_back(owner.key + ": '" + ref + "' en " + what + " no es un ser ni una etiqueta conocida");
+            // Se resuelve todo en cada carga: el aviso de una referencia rota se da una sola vez.
+            const std::string warning = owner.key + ": '" + ref + "' en " + what + " no es un ser ni una etiqueta conocida";
+            if (!found && std::find(gWarnings.begin(), gWarnings.end(), warning) == gWarnings.end())
+                gWarnings.push_back(warning);
         }
         return set;
     };
@@ -268,6 +271,7 @@ bool loadParsed(const toml::table& doc, const std::string& source, const std::st
         Entry e;
         if (!readBeing(*t, source, pack, e, gWarnings))
             continue;
+        e.source = toml_io::snippet("ser", *t);
         bool duplicate = false;
         for (const Entry& other : gEntries)
             duplicate = duplicate || other.key == e.key;
@@ -355,6 +359,11 @@ const SpeciesInfo& speciesInfo(SpeciesId id) {
 }
 
 const SpeciesChemistry& speciesChemistry(SpeciesId id) { return speciesInfo(id).chemistry; }
+
+const std::string& speciesSource(SpeciesId id) {
+    ensureBase();
+    return gEntries[static_cast<std::size_t>(id)].source;
+}
 
 const std::string& speciesPack(SpeciesId id) {
     ensureBase();

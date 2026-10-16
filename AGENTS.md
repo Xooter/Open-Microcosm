@@ -41,7 +41,8 @@ e interviene.
 - **Paneles acoplables** (Dear ImGui, ver "Interfaz"): Placa, Catálogo (cualquier ser, con
   íconos), Ficha, Herramientas, Simulación, Preferencias (imagen, fluidez y rendimiento),
   Procesos (tasas de química, microbiología y hongos), Estadísticas (censo, totales conservados
-  de P, N, Si y Fe, y el ser controlado), Enciclopedia y Gráficos, Medición y Ayuda.
+  de P, N, Si y Fe, y el ser controlado), Enciclopedia y Gráficos, Medición, Contenido (paquetes
+  cargados, avisos de los datos, importar y exportar `.biopack`) y Ayuda.
 - **Herramientas** (barra izquierda o teclas 1-0, M y G): Seleccionar, Controlar, Tinta, Detrito,
   Borrar, Lisar, Apretar, Revolver, Estirar, Gotero, Medir, Región y Spawnear (al armar un ser del
   catálogo).
@@ -455,6 +456,12 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
 - **Handles estables:** las partículas se mueven en memoria (swap-and-pop, reordenamiento por
   celda), así que las referencias entre sistemas usan IDs estables con tabla de indirección,
   nunca índices crudos guardados entre frames.
+- **Paquetes de contenido** (`game/content`): el de fábrica (`assets/content/base/`) y los del
+  usuario (`<datos>/biogame/paquetes/`, carpeta o un solo `.biopack`), cargados al arrancar; se
+  importan y exportan desde el panel Contenido y `bio_bench --paquete` los carga sin ventana. Son
+  solo datos, acotados (8 MB, ids `[a-z0-9_]`); cada registro guarda el TOML de origen de cada
+  definición para exportarla tal cual. Las placas y escenas nombran todo por id de texto y listan
+  los paquetes (`pack=`), y `runJson` anota sus huellas.
 - **Contenido como datos** (`assets/content/base/`: seres, planes corporales, fisiología,
   minerales y biomas): los parámetros de cada especie (tamaño, velocidad, dieta, reproducción,
   comportamiento, apariencia) viven en datos, no en código. Los enums (`SpeciesId`, `MineralKind`,

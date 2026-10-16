@@ -94,6 +94,7 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
         Biome b;
         if (!readBiome(*t, source, pack, b, reg.warnings))
             continue;
+        b.source = toml_io::snippet("bioma", *t);
         bool duplicate = false;
         for (const Biome& other : reg.entries)
             duplicate = duplicate || other.key == b.key;

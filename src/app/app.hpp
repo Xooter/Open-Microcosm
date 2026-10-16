@@ -63,6 +63,9 @@ struct App {
     // Nombre con el que se guarda la placa.
     std::string plateName = "mi_placa";
     std::string platesDir = defaultPlatesDir();
+    // Se cargó contenido nuevo (un paquete importado): el atlas de íconos del catálogo se rehace
+    // al empezar el cuadro siguiente (no se puede dibujar en una textura en medio de la UI).
+    bool contentChanged = false;
 
     // --- Estado ---
     Options options;

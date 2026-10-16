@@ -3,12 +3,17 @@
 #include "bio/body_plan.hpp"
 #include "bio/species.hpp"
 #include "core/paths.hpp"
+#include "bio/physiology.hpp"
 #include "game/biome.hpp"
+#include "game/content.hpp"
+#include "game/world.hpp"
 #include "game/mineral.hpp"
 #include "game/plate_spec.hpp"
 
 #include <doctest/doctest.h>
 
+#include <filesystem>
+#include <fstream>
 #include <string>
 
 namespace {
@@ -363,4 +368,160 @@ opacidad = 3.0
     CHECK(mineralWarned("falta 'radio'"));
     CHECK(mineralWarned("'estilo' tiene que ser uno de"));
     CHECK(mineralWarned("'opacidad' va de 0 a 1"));
+}
+
+namespace {
+
+// Un ser que solo existe en este .biopack (Colpoda cucullus: ciliado bacterívoro de las infusiones
+// de heno, ~50–100 µm, en forma de riñón). La fisiología es un dato de prueba.
+const char* const kColpodaPack = R"(
+[paquete]
+id = "infusiones"
+nombre = "Ciliados de infusiones"
+version = "1"
+autor = "pruebas"
+licencia = "GPL-3.0-or-later"
+
+[[ser]]
+id = "colpoda_cucullus"
+nombre = "Colpoda cucullus"
+etiquetas = ["protista", "ciliado", "bacterivoro"]
+descripcion = "Ciliado en forma de rinon de las infusiones de heno: come bacterias y se enquista al secarse."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "surco_oral"
+enquista = true
+temperatura = [5.0, 30.0]
+reserva = "glucogeno"
+[ser.forma]
+semieje_mayor = 35.0
+semieje_menor = 22.0
+memoria_forma = 8.0
+color = [168, 170, 140]
+
+[fisiologia.colpoda_cucullus.crecimiento_maximo]
+valor = 4.0
+unidad = "h"
+temperatura = 20.0
+fuente = "Dato de prueba (no publicado)."
+estimacion = true
+
+[[bioma]]
+id = "infusion_de_heno"
+nombre = "Infusion de heno"
+peso_base = 0.0
+pesos = { colpoda_cucullus = 1.0, paramecium = 1.0 }
+bacterias = 40000
+[bioma.medio]
+aporte_organico = 200.0
+)";
+
+std::string writeTemp(const std::string& name, const std::string& text) {
+    const auto dir = std::filesystem::temp_directory_path() / "biogame_tests_paquetes";
+    std::filesystem::create_directories(dir);
+    const auto path = dir / name;
+    std::ofstream(path, std::ios::binary) << text;
+    return path.string();
+}
+
+} // namespace
+
+TEST_CASE("contenido: un ser que solo está en un .biopack vive, se exporta y se vuelve a importar" *
+          doctest::test_suite("paquetes")) {
+    std::vector<std::string> messages;
+    REQUIRE(loadPack(writeTemp("infusiones.biopack", kColpodaPack), messages));
+    for (const std::string& m : messages)
+        MESSAGE(m);
+    const PackInfo* pack = findPack("infusiones");
+    REQUIRE(pack != nullptr);
+    CHECK(pack->version == "1");
+    CHECK(pack->fingerprint != 0);
+    const auto colpoda = findSpecies("colpoda_cucullus");
+    REQUIRE(colpoda.has_value());
+    CHECK(speciesPack(*colpoda) == "infusiones");
+    CHECK(speciesPhysiology(*colpoda).growthMax.present);
+    REQUIRE(findBiome("infusion_de_heno").has_value());
+
+    // Vive: nada, come y mantiene su biomasa en una placa como cualquier ser de fábrica.
+    WorldConfig config;
+    config.gridX = config.gridY = 64; // 512 µm: alcanza para verlo nadar
+    config.bacteria = 800;
+    config.detritus = 0;
+    config.seed = 21;
+    World world(config);
+    const Vec2 center{0.5f * world.width(), 0.5f * world.height()};
+    world.spawnBeing({BeingKind::Species, *colpoda}, center);
+    REQUIRE(world.census().species[static_cast<int>(*colpoda)] == 1);
+    Vec2 start{}, end{};
+    for (auto [e, sp, body] : world.registry().view<Species, RingBody>().each())
+        if (sp.id == *colpoda)
+            start = body.centroid;
+    for (int s = 0; s < 600; ++s)
+        world.step(1.0f / 60.0f);
+    CHECK(world.census().species[static_cast<int>(*colpoda)] >= 1);
+    for (auto [e, sp, body] : world.registry().view<Species, RingBody>().each())
+        if (sp.id == *colpoda)
+            end = body.centroid;
+    MESSAGE("Colpoda nadó " << length(end - start) << " µm en 10 s");
+    CHECK(length(end - start) > 20.0f);
+
+    // Se exporta con su fisiología y vuelve a entrar como otro paquete (con otro id: los ids no se
+    // repiten entre paquetes).
+    BiopackSpec spec;
+    spec.id = "infusiones_copia";
+    spec.beings.push_back(*colpoda);
+    spec.biomes.push_back(*findBiome("infusion_de_heno"));
+    spec.scenes.emplace_back("una placa", "plate_version=2\nbiome=charco\nseed=4\n");
+    messages.clear();
+    std::string text = biopackText(spec, messages);
+    REQUIRE_FALSE(text.empty());
+    CHECK(text.find("[[ser]]") != std::string::npos);
+    CHECK(text.find("crecimiento_maximo") != std::string::npos);
+    CHECK(text.find("[[escena]]") != std::string::npos);
+    CHECK(text.find("programa_minimo") != std::string::npos);
+    for (const auto& [from, to] : {std::pair<std::string, std::string>{"colpoda_cucullus", "colpoda_inflata"},
+                                   {"infusion_de_heno", "infusion_de_lechuga"}})
+        for (std::size_t at = text.find(from); at != std::string::npos; at = text.find(from, at + to.size()))
+            text.replace(at, from.size(), to);
+    spec.scenes.clear();
+    messages.clear();
+    // Sin la escena (instalarla escribiría en la carpeta de placas del usuario).
+    const std::size_t scene = text.find("[[escena]]");
+    REQUIRE(loadPack(writeTemp("copia.biopack", text.substr(0, scene)), messages));
+    const auto copy = findSpecies("colpoda_inflata");
+    REQUIRE(copy.has_value());
+    CHECK(speciesInfo(*copy).spec.radiusX == doctest::Approx(speciesInfo(*colpoda).spec.radiusX));
+    CHECK(speciesPhysiology(*copy).growthMax.value == doctest::Approx(speciesPhysiology(*colpoda).growthMax.value));
+    CHECK(biome(*findBiome("infusion_de_lechuga")).weight(*copy) == doctest::Approx(1.0f));
+}
+
+TEST_CASE("contenido: los paquetes inválidos se rechazan sin cerrar el programa" * doctest::test_suite("paquetes")) {
+    std::vector<std::string> messages;
+    // El mismo id que uno cargado.
+    CHECK_FALSE(loadPack(writeTemp("base.biopack", "[paquete]\nid = \"base\"\nversion = \"9\"\n"), messages));
+    // Id con caracteres que no van (podría usarse para armar rutas).
+    CHECK_FALSE(loadPack(writeTemp("ruta.biopack", "[paquete]\nid = \"../x\"\nversion = \"1\"\n"), messages));
+    // Para un programa más nuevo.
+    CHECK_FALSE(loadPack(writeTemp("futuro.biopack",
+                                   "[paquete]\nid = \"futuro\"\nversion = \"1\"\nprograma_minimo = \"999.0\"\n"),
+                         messages));
+    // Sin manifiesto, o TOML roto.
+    CHECK_FALSE(loadPack(writeTemp("suelto.biopack", "[[ser]]\nid = \"x\"\n"), messages));
+    CHECK_FALSE(loadPack(writeTemp("roto.biopack", "[paquete\nid ="), messages));
+    // Demasiado grande.
+    CHECK_FALSE(loadPack(writeTemp("enorme.biopack", std::string(kMaxPackBytes + 1, '#')), messages));
+    CHECK(findPack("futuro") == nullptr);
+    bool tooBig = false;
+    for (const std::string& m : messages)
+        tooBig = tooBig || m.find("tamaño máximo") != std::string::npos;
+    CHECK(tooBig);
+    // Una clave de primer nivel desconocida se avisa (el resto se carga).
+    messages.clear();
+    CHECK(loadPack(writeTemp("raro.biopack", "[paquete]\nid = \"raro\"\nversion = \"1\"\nlicencia = \"MIT\"\n"
+                                             "[[criatura]]\nid = \"x\"\n"),
+                   messages));
+    bool unknown = false;
+    for (const std::string& m : messages)
+        unknown = unknown || m.find("clave desconocida 'criatura'") != std::string::npos;
+    CHECK(unknown);
 }
