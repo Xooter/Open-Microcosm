@@ -131,3 +131,39 @@ TEST_CASE("validación: µmax de Paramecium en el cultivo bien mezclado" * docte
                           << ", bacterias " << c.bacteriaCount());
     CHECK(std::abs(sim - mu.value) / mu.value < 0.25);
 }
+
+TEST_CASE("cultivo: los fagos líticos causan una epidemia y quedan las resistentes") {
+    CultureConfig cfg = tube(3);
+    cfg.medium.organicInflow = 0.0f;
+    cfg.medium.organic = 2000.0f;
+    cfg.medium.phage = 2e-7f; // 2·10⁵ por mL
+    Culture c(cfg);
+    c.inoculateBacteria(5'000'000);
+    const double phagesBefore = c.phages();
+    std::uint64_t peak = 0;
+    for (int s = 0; s < 24 * 60; ++s) { // 24 h
+        c.step(kStep);
+        peak = std::max(peak, c.bacteriaCount());
+    }
+    std::uint64_t resistant = 0, total = c.bacteriaCount();
+    for (const BacterialCohort& b : c.bacteria())
+        resistant += b.resistant ? b.count : 0;
+    MESSAGE("fagos " << phagesBefore << " -> " << c.phages() << "; bacterias pico " << peak << ", final " << total
+                     << " (resistentes " << resistant << ")");
+    CHECK(c.phages() > 100.0 * phagesBefore); // se multiplicaron
+    CHECK(total > 0);
+    CHECK(resistant > total / 2); // las sensibles se lisaron; las resistentes siguen
+}
+
+TEST_CASE("cultivo: las algas se sombrean a sí mismas (Beer–Lambert en la columna)") {
+    CultureConfig cfg = tube(5);
+    cfg.medium.surfaceLight = 1.0f;
+    Culture sparse(cfg), dense(cfg);
+    sparse.inoculate(SpeciesId::Chlamydomonas, 10);
+    dense.inoculate(SpeciesId::Chlamydomonas, 100000);
+    sparse.step(kStep);
+    dense.step(kStep);
+    MESSAGE("luz media: " << sparse.light() << " con 10 algas, " << dense.light() << " con 10⁵");
+    CHECK(sparse.light() > 0.999);
+    CHECK(dense.light() < sparse.light());
+}

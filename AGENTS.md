@@ -342,9 +342,10 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
 - No hay `bioTimeScale`: `step(dt)` avanza `dt` segundos y la biología `dt · Q10`; los gases se
   intercambian con el aire a su tasa real (D / profundidad²). El balance (`massBudget`, `FluxLedger`)
   es el mismo que el de la placa.
+- Luz: Beer–Lambert en la columna por la biomasa fotótrofa (cada célula recibe la media). Fagos
+  líticos de acción de masas con los parámetros de la placa (las infectadas son cohortes propias).
 - Lo que todavía no se simula bien mezclado no se siembra (`Culture::supports`): células animales,
-  filamentos, colonias y zoosporas. Tampoco hay luz atenuada, fagos, Bdellovibrio, quorum ni
-  conjugación (pendientes).
+  filamentos, colonias y zoosporas. Tampoco hay Bdellovibrio, quorum ni conjugación.
 
 ### Ambiente, biomas y enciclopedia (`game/biome`, `game/encyclopedia`)
 

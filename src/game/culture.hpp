@@ -33,10 +33,15 @@
 // avanza `dt` segundos; la biología, `dt · Q10` (la misma referencia de 20 °C que la placa). El
 // intercambio de gases con el aire va a su tasa real.
 //
-// Simplificaciones de esta versión (se dicen en la ficha del cultivo): sin luz atenuada por las
-// células (la lámpara ilumina parejo), sin fagos, Bdellovibrio ni quorum sensing, sin conjugación,
-// sin colonias, filamentos, zoosporas ni células animales (esas especies no se pueden sembrar), y
-// los suctorios tragan a la presa entera en vez de succionarla.
+// Luz: la lámpara ilumina la superficie y las fotótrofas la atenúan en la columna (Beer–Lambert);
+// cada célula recibe la media de la columna (está bien mezclada). Fagos líticos con adsorción de
+// acción de masas, período latente, estallido y mutantes resistentes (los mismos parámetros que la
+// placa).
+//
+// Simplificaciones de esta versión (se dicen en la ficha del cultivo): sin Bdellovibrio ni quorum
+// sensing, sin conjugación, sin colonias, filamentos, zoosporas ni células animales (esas especies
+// no se pueden sembrar), las bacterias no liberan B₁₂ (un medio para auxótrofas la trae) y los
+// suctorios tragan a la presa entera en vez de succionarla.
 
 enum class Solute : std::uint8_t { Oxygen, CO2, Phosphate, Nitrogen, Silicate, Iron, Vitamin, Organic, Count };
 inline constexpr int kSoluteCount = static_cast<int>(Solute::Count);
@@ -71,6 +76,8 @@ struct BacterialCohort {
     std::uint64_t count = 1;
     float mass = 1.0f;
     std::uint8_t strain = 0;
+    std::uint8_t resistant = 0; // a los fagos (receptor alterado)
+    float phage = -1.0f;        // horas desde la infección por un fago (< 0: sanas)
 };
 
 struct CultureCensus {
@@ -99,6 +106,9 @@ class Culture {
     double concentration(Solute s) const { return amount_[static_cast<int>(s)] / pmolPerMicroMolar_; } // [µM]
     double amount(Solute s) const { return amount_[static_cast<int>(s)]; }                             // [pmol]
     double ph() const { return ph_; }
+    double phages() const { return phages_; }          // viriones libres
+    double light() const { return light_; }            // irradiancia relativa media de la columna
+    void setPhages(double virions);                    // la diferencia entra de afuera
     double volumeUm3() const { return volumeUm3_; }
     double detritus() const { return detritus_; } // materia orgánica particulada [pmol]
     double time() const { return time_; }          // [s]
@@ -130,6 +140,8 @@ class Culture {
     void refreshMedium();
     void stepGases(float dt);
     void stepBacteria(float bioDt);
+    void stepPhages(float bioDt);
+    void computeLight();
     void feed(float dt, float bioDt);
     void stepCells(float dt, float bioDt);
     void divide(std::size_t index);
@@ -154,12 +166,12 @@ class Culture {
     double volumeUm3_ = 0.0, pmolPerMicroMolar_ = 1.0;
     double amount_[kSoluteCount] = {};
     double detritus_ = 0.0, frustules_ = 0.0; // [pmol] y [pmol Si] (sílice biogénica sin disolver)
-    double ph_ = 7.0;
+    double ph_ = 7.0, light_ = 1.0, phages_ = 0.0;
     float q10_ = 1.0f, viscositySpeed_ = 1.0f, o2Saturation_ = 0.0f, co2Saturation_ = 0.0f, airExchange_ = 0.0f;
     double time_ = 0.0;
     std::uint64_t step_ = 0;
     std::uint32_t nextId_ = 1;
-    std::uint64_t inoculations_ = 0;
+    std::uint64_t inoculations_ = 0, phageEvents_ = 0;
     std::vector<CultureCell> cells_;
     std::vector<BacterialCohort> bacteria_;
     FluxLedger ledger_;

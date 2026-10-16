@@ -23,6 +23,13 @@ constexpr std::uint64_t kStreamMutation = rng_stream::kCulture + 1;
 constexpr std::uint64_t kStreamGrazing = rng_stream::kCulture + 2;
 constexpr std::uint64_t kStreamHunting = rng_stream::kCulture + 3;
 constexpr std::uint64_t kStreamBacteria = rng_stream::kCulture + 4;
+constexpr std::uint64_t kStreamPhage = rng_stream::kCulture + 5;
+
+// Atenuación de la luz por la biomasa fotótrofa [µm² por pmol de materia seca]: absorción específica
+// de la clorofila a ~0,02 m²/mg (Kirk 2011, Light and Photosynthesis in Aquatic Ecosystems, 3.ª ed.,
+// cap. 9) con ~1,5 % de clorofila en la materia seca → ~0,3 µm²/pg, ×180 pg por pmol de glucosa
+// equivalente. ESTIMACIÓN: la clorofila por célula cambia con la luz (fotoaclimatación).
+constexpr double kChlorophyllShading = 54.0;
 
 bool elementOf(Solute s, Element& e, double& perPmol) {
     switch (s) {
@@ -67,6 +74,7 @@ Culture::Culture(const CultureConfig& config) : config_(config), medium_(config.
     set(Solute::Iron, medium_.iron);
     set(Solute::Vitamin, medium_.vitamin);
     set(Solute::Organic, medium_.organic);
+    phages_ = static_cast<double>(medium_.phage) * volumeUm3_;
     ph_ = std::clamp(medium_.carbonatePK + std::log10(medium_.alkalinity / std::max(0.05, static_cast<double>(co2Saturation_))), 4.0, 11.0);
 }
 
@@ -274,6 +282,8 @@ void Culture::step(float dt) {
     amount_[static_cast<int>(Solute::Vitamin)] *=
         std::exp(-medium_.vitaminDecayPerHour * medium_.surfaceLight * bioDt / 3600.0);
     stepBacteria(bioDt);
+    stepPhages(bioDt);
+    computeLight();
     feed(dt, bioDt);
     stepCells(dt, bioDt);
     time_ += dt;
@@ -305,15 +315,16 @@ void Culture::stepBacteria(float bioDt) {
     // Lo que piden todas; si no alcanza, cada una toma su parte (el medio está bien mezclado).
     double demand = 0.0;
     for (const BacterialCohort& b : bacteria_)
-        demand += static_cast<double>(b.count) * bacterialDemand(bp, c, b.mass, bacterialHealth(bp, false, false), hours);
+        demand += static_cast<double>(b.count) *
+                  bacterialDemand(bp, c, b.mass, bacterialHealth(bp, b.phage >= 0.0f, b.resistant != 0), hours);
     const double available = std::max(0.0, amount(Solute::Organic));
     const double share = demand > available ? available / demand : 1.0;
     double taken = 0.0, released = 0.0;
     const std::size_t n = bacteria_.size();
     for (std::size_t i = 0; i < n; ++i) {
         BacterialCohort& b = bacteria_[i];
-        const float each =
-            static_cast<float>(share * bacterialDemand(bp, c, b.mass, bacterialHealth(bp, false, false), hours));
+        const float each = static_cast<float>(
+            share * bacterialDemand(bp, c, b.mass, bacterialHealth(bp, b.phage >= 0.0f, b.resistant != 0), hours));
         taken += static_cast<double>(b.count) * each;
         b.mass += bacterialMassChange(bp, each, b.mass, maintenance);
         if (b.mass < 0.5f) { // mueren de hambre: su materia vuelve al agua
@@ -321,10 +332,25 @@ void Culture::stepBacteria(float bioDt) {
             b.count = 0;
         } else if (b.mass >= 2.0f) { // fisión binaria
             b.mass *= 0.5f;
-            if (static_cast<int>(bacteria_.size()) < config_.maxBacterialCohorts)
-                bacteria_.push_back(b); // la referencia `b` ya no vale después de esto
-            else
-                b.count *= 2;
+            // Mutantes resistentes a los fagos: una fracción de las hijas (como en la placa).
+            std::uint64_t mutants = 0;
+            if (!b.resistant) {
+                Rng rng(config_.seed, kStreamBacteria + 50, i, step_);
+                mutants = std::min<std::uint64_t>(b.count, rng.poisson(static_cast<double>(b.count) * bp.resistanceMutation));
+            }
+            BacterialCohort daughters = b;
+            daughters.count -= mutants;
+            if (static_cast<int>(bacteria_.size()) < config_.maxBacterialCohorts) {
+                bacteria_.push_back(daughters); // la referencia `b` ya no vale después de esto
+            } else {
+                b.count += daughters.count;
+            }
+            if (mutants > 0) {
+                BacterialCohort r = daughters;
+                r.count = mutants;
+                r.resistant = 1;
+                bacteria_.push_back(r);
+            }
         }
     }
     // La masa que pierden al mantenerse se respira (C abierto); la que ganan sale del agua.
@@ -333,6 +359,76 @@ void Culture::stepBacteria(float bioDt) {
         exchange(Solute::Organic, released, Flow::Death);
     bacteria_.erase(std::remove_if(bacteria_.begin(), bacteria_.end(), [](const BacterialCohort& b) { return b.count == 0; }),
                     bacteria_.end());
+}
+
+void Culture::setPhages(double virions) {
+    phages_ = std::max(0.0, virions);
+}
+
+void Culture::stepPhages(float bioDt) {
+    PROFILE_SCOPE("Culture::stepPhages");
+    const BacteriaParams& bp = bacteriaParams_;
+    const float hours = bioDt / 3600.0f;
+    phages_ *= std::exp(-medium_.phageDecayPerHour * hours); // inactivación (UV, adsorción a partículas)
+    // Las infectadas cumplen su período latente y estallan: viriones nuevos y su contenido al agua.
+    double released = 0.0;
+    for (BacterialCohort& b : bacteria_) {
+        if (b.phage < 0.0f)
+            continue;
+        b.phage += hours;
+        if (b.phage >= bp.phageLatentHours) {
+            phages_ += static_cast<double>(b.count) * bp.phageBurst;
+            released += static_cast<double>(b.count) * b.mass * kBacteriumPmol;
+            b.count = 0;
+        }
+    }
+    if (released > 0.0)
+        exchange(Solute::Organic, released, Flow::Death);
+    // Adsorción a las sensibles (acción de masas): cada una se infecta con probabilidad
+    // k·[fago]·dt. Las de este paso forman una cohorte nueva por cepa.
+    const double concentration = phages_ / volumeUm3_;
+    const double p = std::min(1.0, static_cast<double>(bp.phageAdsorption) * concentration * hours);
+    BacterialCohort newly[3];
+    std::uint64_t infected[3] = {};
+    double massSum[3] = {};
+    const std::size_t n = bacteria_.size();
+    for (std::size_t i = 0; i < n && p > 0.0; ++i) {
+        BacterialCohort& b = bacteria_[i];
+        if (b.phage >= 0.0f || b.resistant || b.count == 0)
+            continue;
+        Rng rng(config_.seed, kStreamPhage, phageEvents_++, step_);
+        const std::uint64_t k = std::min<std::uint64_t>(b.count, rng.poisson(static_cast<double>(b.count) * p));
+        if (k == 0)
+            continue;
+        b.count -= k;
+        const int s = std::min<int>(b.strain, 2);
+        infected[s] += k;
+        massSum[s] += static_cast<double>(k) * b.mass;
+        newly[s].strain = b.strain;
+    }
+    for (int s = 0; s < 3; ++s) {
+        if (infected[s] == 0)
+            continue;
+        const double used = std::min(phages_, static_cast<double>(infected[s]));
+        phages_ -= used; // cada infección consume el virión que se adsorbió
+        BacterialCohort c = newly[s];
+        c.count = infected[s];
+        c.mass = static_cast<float>(massSum[s] / static_cast<double>(infected[s]));
+        c.phage = 0.0f;
+        bacteria_.push_back(c);
+    }
+    bacteria_.erase(std::remove_if(bacteria_.begin(), bacteria_.end(), [](const BacterialCohort& b) { return b.count == 0; }),
+                    bacteria_.end());
+}
+
+void Culture::computeLight() {
+    // Beer–Lambert en la columna: k = atenuación específica × biomasa fotótrofa por volumen; la célula
+    // bien mezclada recibe la media de la columna, I₀ (1 − e^(−kD)) / (kD).
+    double phototrophs = 0.0;
+    for (const CultureCell& c : cells_)
+        phototrophs += c.meta.photosynthetic ? c.meta.biomass : 0.0;
+    const double kd = kChlorophyllShading * phototrophs / volumeUm3_ * config_.depthUm;
+    light_ = medium_.surfaceLight * (kd > 1e-6 ? (1.0 - std::exp(-kd)) / kd : 1.0);
 }
 
 float Culture::cruiseSpeed(const CultureCell& c) const {
@@ -538,7 +634,7 @@ void Culture::stepCells(float dt, float bioDt) {
         const SpeciesInfo& info = speciesInfo(c.species);
         MetabolicInput in;
         in.o2 = static_cast<float>(concentration(Solute::Oxygen));
-        in.light = medium_.surfaceLight;
+        in.light = static_cast<float>(light_);
         Excreted excreted;
         in.digested = digestContents(c.digestion, feedingParams_, dt, bioDt, excreted);
         c.digestion.handling = std::max(0.0f, c.digestion.handling - bioDt);

@@ -43,7 +43,7 @@ por paso y sus tests. Avance: ✅ hecho · 🟡 en parte (se dice qué falta) ·
    escenas (cuatro biomas, cultivo humano inoculado y epidermis de cebolla); `ingestContents` y
    `digestContents` para células sin cuerpo (`tests/test_cell_physiology.cpp`). El registro de
    parámetros sigue atado a `World`: se generaliza en el paso 1, cuando el cultivo lo necesite.
-1. 🟡 **Modelo de cultivo** (`game/culture`, en `biosim`): recipiente, medio bien mezclado, células,
+1. ✅ **Modelo de cultivo** (`game/culture`, en `biosim`): recipiente, medio bien mezclado, células,
    bacterias por cepa, detritos y fagos; luz por Beer–Lambert en la columna; el mismo balance de
    masa. Tests: conservación, determinismo 1/4 hilos, µmax de *Paramecium*.
    *Hecho:* células por individuo con la fisiología compartida, bacterias en cohortes, filtradores
@@ -56,8 +56,11 @@ por paso y sus tests. Avance: ✅ hecho · 🟡 en parte (se dice qué falta) ·
    en la placa); la masa de las células alargadas salía de la esfera de su silueta (un paramecio
    pesaba casi el doble): ahora es la del esferoide (`espesor`); la placa usa la ingestión medida
    de la especie (antes, 4× sobrealimentada); los gases de la placa acompañan al Q10. Con eso el
-   µmax de *Paramecium* pasa en el cultivo (0,023/h) y en la placa (0,024/h) contra 0,026/h. *Falta:*
-   luz atenuada por las células, fagos, conjugación y las especies que `Culture::supports` rechaza.
+   µmax de *Paramecium* pasa en el cultivo (0,023/h) y en la placa (0,024/h) contra 0,026/h. Luz
+   atenuada por las fotótrofas en la columna (Beer–Lambert con la absorción de la clorofila) y fagos
+   líticos con adsorción de acción de masas y mutantes resistentes. *Queda fuera (declarado en
+   `Culture::supports` y en la cabecera de `game/culture`):* conjugación, Bdellovibrio, quorum,
+   liberación de B₁₂ por las bacterias, colonias, filamentos, zoosporas y células animales.
 2. **Calibración cruzada:** `bio_bench --respuesta-funcional`, test de validación placa ↔ cultivo.
 3. **Programas** (`game/program`): rampas, pulsos y eventos periódicos, guardados como definición.
 4. **Panel Cultivos y gota de muestra:** `.plate` v3 con seres explícitos con estado; conteo de
