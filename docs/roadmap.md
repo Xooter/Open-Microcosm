@@ -170,7 +170,7 @@ humano. Orden decidido:
    inoculación y mezclas (20a), cultivo celular humano —fibroblasto, HeLa, neutrófilo— a grado
    universitario y de investigación (20b) y preparados en portaobjetos con células vegetales y
    animales —cebolla, *Elodea*, papa, raíz, estomas, mucosa bucal, sangre— con ósmosis (20c).
-3. Después: modo cultivo (Gause), P1 y lanzamiento.
+3. Después: modo cultivo (Gause), P1 (ver «Fase MVP — P1») y lanzamiento.
 
 ## Fase MVP — P0: herramienta de laboratorio
 
@@ -206,6 +206,48 @@ Lo mínimo para que un resultado de BioGame se pueda publicar o enseñar. Estado
 - **Hecho cuando:** todos los tests de `validacion` pasan con su tolerancia y fuente, una escena se
   repite bit a bit, el paquete corre en una máquina limpia de Linux y de Windows y el soak de
   varias horas no da fallas.
+
+## Fase MVP — P1: experimentos y aula
+
+Lo que hace a BioGame útil para hacer experimentos y para dar clase, después del P0. La base
+común es el **modo cultivo**: poblaciones bien mezcladas a escala de mililitros (un tubo o un
+frasco), sin cuerpos blandos y con la misma fisiología de los datos (Droop, µmax, Q10), con una
+gota de muestra que se mira con la simulación completa. Cierra la validación de Gause del P0
+(exclusión competitiva de *P. aurelia* y *P. caudatum*, depredador–presa con *Didinium*) y es la
+base de las réplicas, el quimiostato y la dilución.
+
+**P1a — Experimentos de laboratorio**
+
+1. **Réplicas y lotes** (backlog 3 y 5): N placas o cultivos con seeds distintas, sin ventana, y
+   medias con su dispersión en la exportación. Sin réplicas no hay estadística, y entre máquinas la
+   reproducibilidad prometida es estadística.
+2. **Siembra y dilución controladas** (backlog 7): inóculo con densidad conocida (células/µL) y
+   diluciones seriadas; la base de las curvas de crecimiento reales.
+3. **Quimiostato** (backlog 8): entrada y salida de medio con tasa de dilución D. Con Droop, el
+   experimento clásico de Monod y la exclusión completa de Tilman.
+4. **Reactivos con dosis-respuesta:** antibióticos, sal y metales con el gotero, la tolerancia de
+   cada especie como dato y curvas CI50 exportables.
+5. **Programas temporales** (backlog 4): rampas de temperatura y luz y ciclos de día y noche,
+   guardados en la escena.
+6. **Foto y time-lapse con barra de escala** (backlog 25 y 26), para informes.
+
+**P1b — Aula**
+
+7. **Modo aula:** el docente comparte una escena con los parámetros que invalidarían el
+   experimento bloqueados.
+8. **Lecciones guiadas** (fase 17): archivos de datos con objetivo, pasos y cuestionario. Como
+   mínimo Jennings, Tilman y Gause (ya validados) y, de la fase 20, la plasmólisis de la cebolla y
+   la fragilidad osmótica de la sangre.
+9. **Idioma inglés:** `assets/lang` está vacío; imprescindible para la difusión científica.
+10. **Glosario y notas en la ficha** (backlog 33 y 35).
+11. **Accesibilidad** (fase 16): paleta para daltonismo, tamaño de texto y escala de la interfaz
+    para proyectores y pantallas HiDPI.
+
+**Orden:** modo cultivo → réplicas → quimiostato → dilución → inglés → lecciones → lo demás.
+
+- **Hecho cuando:** un experimento de Gause se corre en el modo cultivo con réplicas y se exporta
+  con media y dispersión, un quimiostato llega al estado estacionario de Monod, y un alumno sigue
+  una lección en inglés o en español sin tocar nada fuera de su panel.
 
 ---
 
