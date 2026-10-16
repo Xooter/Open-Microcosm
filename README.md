@@ -1,6 +1,7 @@
 # bio
 
-Simulación de vida acuática microscópica en C++20 (ver `AGENTS.md` y `docs/`).
+Herramienta de investigación y de estudio que simula vida microscópica real —gotas de agua,
+cultivos celulares y preparados vegetales— en C++20 (ver `AGENTS.md` y `docs/`).
 Estado actual: **fases 1–12** (la 12, parcial). Una gota con ~25 especies reales (ciliados,
 flagelados, amebas, algas, diatomeas, colonias, filamentos, levaduras, hongos, rotíferos, Hydra,
 nauplios), bacterias, cianobacterias, fagos y química (O₂, CO₂/pH, fósforo, nitrógeno, toxinas,

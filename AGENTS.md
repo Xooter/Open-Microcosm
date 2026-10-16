@@ -4,11 +4,19 @@ Guía para agentes (y humanos) que trabajen en este repo. Leela completa antes d
 
 ## Visión
 
-BioGame es un **sandbox educativo, científico y de código abierto** que simula vida acuática
-microscópica **real**. Las células son cuerpos gelatinosos y
-semitransparentes, vistas como en un microscopio, con sus organelos visibles. Nadan, comen por
-fagocitosis, crecen, se dividen, se conjugan, mueren y se lisan, todo emergiendo de una
-simulación física de partículas y no de animaciones.
+BioGame es una **herramienta de investigación y de estudio, de código abierto**, que simula vida
+microscópica **real** como se ve en un microscopio de laboratorio: gotas de agua con sus
+microorganismos, **cultivos celulares** (células humanas y animales en placa) y **preparados
+vegetales** (tejidos con pared celular). Las células son cuerpos gelatinosos y semitransparentes,
+con sus organelos visibles. Nadan o migran, comen, crecen, se dividen, se conjugan, mueren y se
+lisan, todo emergiendo de una simulación física de partículas y no de animaciones.
+
+Dos usos con el mismo núcleo de simulación:
+- **Investigación:** simulaciones complejas, reproducibles y medibles (series, balances,
+  exportación con procedencia, réplicas), también **sin ventana** (`biosim`, `bio_bench`; a futuro,
+  bindings de Python). Lo gráfico es opcional: nada de la simulación depende del render.
+- **Enseñanza:** mostrar a alumnos lo que pasa, con la imagen del microscopio, fichas que explican
+  qué es cada cosa y por qué, y lecciones guiadas.
 
 Documentos de referencia:
 - `docs/gameplay.md`: decisiones de diseño (las opciones marcadas con `[x]` son las elegidas).
@@ -16,8 +24,8 @@ Documentos de referencia:
 
 ## Sandbox
 
-No hay partida, puntaje ni victoria: es un laboratorio. El usuario arma una gota, la observa e
-interviene.
+No hay partida, puntaje ni victoria: es un laboratorio. El usuario prepara una placa, la observa
+e interviene.
 
 - **Placa:** el programa arranca directo en el laboratorio (no hay pantalla de inicio) con una
   **placa de Petri vacía**. Se preconfigura en el panel *Placa* (`PlateSpec`: bioma + seed,
@@ -25,6 +33,11 @@ interviene.
   sedimento, poblaciones y geometría) y se crea con *Crear placa* (Ctrl+N). Ambiente y
   nutrientes se aplican **en vivo** a la placa en marcha; lo demás, al crearla. Las placas se
   guardan en `<datos>/biogame/plates/*.plate`.
+- **Placas preparadas** (en desarrollo, antes del lanzamiento): además de la gota de agua, tipos
+  de placa como en un laboratorio real —**cultivo celular** (medio de cultivo, células adheridas al
+  fondo) y **preparado vegetal** (un tejido montado)—, con **tamaño de placa** configurable y
+  **mezclas** (inocular células o microorganismos de un tipo en otro, p. ej. bacterias en un
+  cultivo celular). La inoculación es una intervención como las demás (reproducible).
 - **Paneles acoplables** (Dear ImGui, ver "Interfaz"): Placa, Catálogo (cualquier ser, con
   íconos), Ficha, Herramientas, Simulación, Preferencias (imagen, fluidez y rendimiento),
   Procesos (tasas de química, microbiología y hongos), Estadísticas (censo, totales conservados
@@ -45,17 +58,26 @@ interviene.
   (auxótrofas: *Euglena*, diatomeas), que aportan las bacterias.
 - **Genoma:** los organelos y rasgos son genes que mutan en la mitosis y se mezclan en la
   conjugación. Los organelos ocupan espacio físico dentro de la célula.
-- **Ecosistema:** protistas carnívoros (cazadores, envolvedores, emboscadores y parásitos),
-  herbívoros (algívoros y bacterívoros), algas, hongos, bacterias y fagos. No hay animales
-  (metazoos): la gota es solo de microorganismos.
-- **Rejugabilidad:** gotas procedurales por seed y biomas distintos (charco, estanque, musgo,
-  intestino de termita, fuente hidrotermal, hielo).
-- **Estilo visual:** microscopio de **campo claro** (fondo claro, células semitransparentes).
+- **Ecosistema de la gota:** protistas carnívoros (cazadores, envolvedores, emboscadores y
+  parásitos), herbívoros (algívoros y bacterívoros), algas, hongos, bacterias y fagos.
+- **Células de organismos pluricelulares:** células humanas y animales en cultivo (líneas y tipos
+  reales: fibroblastos, queratinocitos, neutrófilos…) y tejidos vegetales, con la biología de cada
+  una (adhesión al sustrato, migración, inhibición por contacto, apoptosis, pared celular). Se
+  simulan células y tejidos simples, no organismos enteros: los animales pluricelulares completos
+  (rotíferos, nematodos) solo cuando su simulación sea realista.
+- **Variedad:** gotas procedurales por seed y biomas distintos (charco, estanque, musgo,
+  intestino de termita, fuente hidrotermal, hielo); placas preparadas de cada tipo.
+- **Estilo visual:** microscopio de **campo claro** (fondo claro, células semitransparentes). Los
+  cultivos celulares se miran de verdad con **contraste de fase** (lente pendiente): hasta entonces,
+  campo claro.
 
 ## Principio rector: realismo estricto
 
 - Solo especies y mecanismos **reales**. Antes de implementar un comportamiento, verificá que
   exista en la biología; si se simplifica, dejá un comentario con lo que hace el organismo real.
+- Las células humanas y animales son **tipos o líneas celulares reales** con datos publicados
+  (tiempo de duplicación, velocidad de migración, tamaño), con su fuente en `assets/species/*.toml`
+  como el resto de la fisiología. Nada de células "genéricas" sin referencia.
 - **Tiempo:** la física (nado, agua, difusión, intercambio de gases) corre en tiempo REAL
   (`units::kTimeScale = 1`). La biología (metabolismo, crecimiento, digestión, división) se
   comprime con **una sola constante**, `units::kBioTimeScale` (60: 1 min real = 1 h biológica),

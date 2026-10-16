@@ -156,6 +156,20 @@ hilos): el cuello de botella era `World::limitApproach`, serial y en CPU aun con
   `resolvePenetrations` y `perceive`.
 - **Hecho cuando:** 60 FPS con 540+ células y la GPU activa en hardware de escritorio medio.
 
+## Cambio de visión (15/10/2026)
+
+BioGame pasa de «gota de microorganismos» a **herramienta de investigación y de estudio**: un
+microscopio de laboratorio con gotas de agua, **cultivos celulares** (células humanas y animales) y
+**preparados vegetales**, para simulación compleja e investigación (también sin ventana) y para
+mostrar a alumnos. El lanzamiento se atrasa hasta tener las placas preparadas y el cultivo celular
+humano. Orden decidido:
+
+1. AGENTS.md con la visión nueva (hecho).
+2. **Placas preparadas:** tipos de placa (gota, cultivo celular, preparado vegetal), tamaño de la
+   placa, mezclas e inoculación (a planificar).
+3. **Cultivo celular humano** como primer tipo nuevo (a planificar con `/plan`).
+4. Después: preparado vegetal, modo cultivo (Gause), P1 y lanzamiento.
+
 ## Fase MVP — P0: herramienta de laboratorio
 
 Lo mínimo para que un resultado de BioGame se pueda publicar o enseñar. Estado al 15/10/2026.
