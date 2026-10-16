@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 
 namespace {
 
@@ -24,6 +25,7 @@ constexpr std::uint64_t kStreamGrazing = rng_stream::kCulture + 2;
 constexpr std::uint64_t kStreamHunting = rng_stream::kCulture + 3;
 constexpr std::uint64_t kStreamBacteria = rng_stream::kCulture + 4;
 constexpr std::uint64_t kStreamPhage = rng_stream::kCulture + 5;
+constexpr std::uint64_t kStreamWashout = rng_stream::kCulture + 6;
 
 // Atenuación de la luz por la biomasa fotótrofa [µm² por pmol de materia seca]: absorción específica
 // de la clorofila a ~0,02 m²/mg (Kirk 2011, Light and Photosynthesis in Aquatic Ecosystems, 3.ª ed.,
@@ -57,7 +59,7 @@ double cellContent(const CultureCell& c) {
 } // namespace
 
 const char* soluteKey(Solute s) {
-    static const char* const names[] = {"O2", "CO2", "fosfato", "nitrogeno", "silice", "hierro", "b12", "organica"};
+    static const char* const names[] = {"o2", "co2", "fosfato", "nitrogeno", "silice", "hierro", "b12", "organica"};
     return names[static_cast<int>(s)];
 }
 
@@ -113,6 +115,168 @@ void Culture::setConcentration(Solute s, double micromolar) {
     const double target = std::max(0.0, micromolar) * pmolPerMicroMolar_;
     recordExternal(s, target - a, Flow::Dose);
     a = target;
+}
+
+double Culture::freshConcentration(Solute s) const {
+    const MediumParams& m = config_.medium;
+    switch (s) {
+    case Solute::Oxygen: return o2Saturation_;
+    case Solute::CO2: return co2Saturation_;
+    case Solute::Phosphate: return m.phosphate;
+    case Solute::Nitrogen: return m.nitrogen;
+    case Solute::Silicate: return m.silicate;
+    case Solute::Iron: return m.iron;
+    case Solute::Vitamin: return m.vitamin;
+    case Solute::Organic: return m.organic;
+    case Solute::Count: break;
+    }
+    return 0.0;
+}
+
+void Culture::renewMedium(double fraction) {
+    const double f = std::clamp(fraction, 0.0, 1.0);
+    if (f <= 0.0)
+        return;
+    for (int k = 0; k < kSoluteCount; ++k) {
+        const auto s = static_cast<Solute>(k);
+        double& a = amount_[k];
+        const double out = f * std::max(0.0, a), in = f * freshConcentration(s) * pmolPerMicroMolar_;
+        a += in - out;
+        recordExternal(s, -out, Flow::Washout);
+        recordExternal(s, in, Flow::Dose);
+    }
+    // Bacterias, detritos y fagos se van con el sobrenadante.
+    for (std::size_t i = 0; i < bacteria_.size(); ++i) {
+        BacterialCohort& b = bacteria_[i];
+        Rng rng(config_.seed, kStreamWashout, washouts_++, step_);
+        const double expected = f * static_cast<double>(b.count);
+        auto gone = static_cast<std::uint64_t>(expected);
+        if (rng.uniform() < expected - static_cast<double>(gone))
+            ++gone;
+        b.count -= std::min(gone, b.count);
+        // El carbono de la biomasa bacteriana no se contabiliza como cerrado (frontera abierta).
+    }
+    bacteria_.erase(std::remove_if(bacteria_.begin(), bacteria_.end(), [](const BacterialCohort& b) { return b.count == 0; }),
+                    bacteria_.end());
+    const double detritusOut = f * detritus_;
+    detritus_ -= detritusOut;
+    ledger_.add(Element::C, Flow::Washout, -kCarbonPerPmol * detritusOut);
+    ledger_.addExternal(Element::C, -kCarbonPerPmol * detritusOut);
+    phages_ *= 1.0 - f;
+}
+
+void Culture::washOut(const CultureCell& c) {
+    double p = c.meta.phosphorus, n = c.meta.nitrogen, carbon = c.meta.biomass + c.meta.reserves;
+    for (const FoodVacuole& v : c.digestion.vacuoles) {
+        p += v.phosphorus;
+        n += v.nitrogen;
+        carbon += v.contentPmol;
+    }
+    const std::pair<Element, double> out[] = {{Element::P, p}, {Element::N, n}, {Element::Si, c.meta.silicon},
+                                              {Element::Fe, c.meta.iron}, {Element::C, kCarbonPerPmol * carbon}};
+    for (const auto& [e, pmol] : out) {
+        ledger_.add(e, Flow::Washout, -pmol);
+        ledger_.addExternal(e, -pmol);
+    }
+}
+
+void Culture::dilute(double fraction) {
+    const double f = std::clamp(fraction, 0.0, 1.0);
+    if (f <= 0.0)
+        return;
+    // Cada protista se va con la probabilidad de la fracción (en el sobrenadante no hay centrifugado).
+    std::size_t kept = 0;
+    for (std::size_t i = 0; i < cells_.size(); ++i) {
+        Rng rng(config_.seed, kStreamWashout + 50, washouts_++, step_);
+        if (rng.uniform() < f) {
+            washOut(cells_[i]);
+            continue;
+        }
+        if (kept != i)
+            cells_[kept] = std::move(cells_[i]);
+        ++kept;
+    }
+    cells_.resize(kept);
+    renewMedium(f);
+}
+
+void Culture::withdraw(double fraction, double concentrate, std::vector<CultureCell>& out, std::uint64_t& bacteria) {
+    const double f = std::clamp(fraction, 0.0, 0.999);
+    const double take = std::clamp(f * std::max(1.0, concentrate), 0.0, 1.0); // células y bacterias
+    out.clear();
+    bacteria = 0;
+    std::size_t kept = 0;
+    for (std::size_t i = 0; i < cells_.size(); ++i) {
+        Rng rng(config_.seed, kStreamWashout + 60, washouts_++, step_);
+        if (rng.uniform() < take) {
+            washOut(cells_[i]);
+            out.push_back(std::move(cells_[i]));
+            continue;
+        }
+        if (kept != i)
+            cells_[kept] = std::move(cells_[i]);
+        ++kept;
+    }
+    cells_.resize(kept);
+    for (BacterialCohort& b : bacteria_) {
+        Rng rng(config_.seed, kStreamWashout + 61, washouts_++, step_);
+        const double expected = take * static_cast<double>(b.count);
+        auto gone = static_cast<std::uint64_t>(expected);
+        if (rng.uniform() < expected - static_cast<double>(gone))
+            ++gone;
+        gone = std::min(gone, b.count);
+        b.count -= gone;
+        bacteria += gone;
+    }
+    bacteria_.erase(std::remove_if(bacteria_.begin(), bacteria_.end(), [](const BacterialCohort& b) { return b.count == 0; }),
+                    bacteria_.end());
+    // El medio de la gota sale con su concentración: el volumen baja y la concentración no cambia.
+    for (int k = 0; k < kSoluteCount; ++k) {
+        const double out = f * std::max(0.0, amount_[k]);
+        amount_[k] -= out;
+        recordExternal(static_cast<Solute>(k), -out, Flow::Washout);
+    }
+    const double detritusOut = f * detritus_;
+    detritus_ -= detritusOut;
+    ledger_.add(Element::C, Flow::Washout, -kCarbonPerPmol * detritusOut);
+    ledger_.addExternal(Element::C, -kCarbonPerPmol * detritusOut);
+    phages_ *= 1.0 - f;
+    volumeUm3_ *= 1.0 - f;
+    pmolPerMicroMolar_ = volumeUm3_ * 1e-9;
+}
+
+void Culture::applyProgram(double fromHours, double toHours) {
+    for (const ProgramEntry& e : program_.entries) {
+        if (e.isAction()) {
+            const int times = programEvents(e, fromHours, toHours);
+            for (int k = 0; k < times; ++k) {
+                if (e.target == "bacterias")
+                    inoculateBacteria(static_cast<std::uint64_t>(std::max(0.0, static_cast<double>(e.amount) * volumeMl())));
+                else if (e.target == "medio")
+                    renewMedium(e.amount);
+                else if (e.target == "dilucion")
+                    dilute(e.amount);
+                else if (e.target.rfind("inocular:", 0) == 0) {
+                    if (const std::optional<SpeciesId> id = findSpecies(e.target.substr(9)))
+                        inoculate(*id, static_cast<int>(e.amount));
+                }
+            }
+            continue;
+        }
+        float v;
+        if (!programValue(e, toHours, v))
+            continue;
+        if (e.target == "temperatura")
+            medium_.temperature = v;
+        else if (e.target == "luz")
+            medium_.surfaceLight = std::max(0.0f, v);
+        else if (e.target.rfind("soluto:", 0) == 0) {
+            const std::string key = e.target.substr(7);
+            for (int k = 0; k < kSoluteCount; ++k)
+                if (key == soluteKey(static_cast<Solute>(k)))
+                    setConcentration(static_cast<Solute>(k), v);
+        }
+    }
 }
 
 bool Culture::supports(SpeciesId id, std::string* why) {
@@ -196,6 +360,32 @@ void Culture::inoculateBacteria(std::uint64_t count, std::uint8_t strain) {
     }
 }
 
+void Culture::receive(std::vector<CultureCell> cells, std::uint64_t bacteria, double volumeMl, const double* micromolar) {
+    const double added = std::max(0.0, volumeMl) * 1e12; // [µm³]
+    for (int k = 0; k < kSoluteCount; ++k) {
+        const double pmol = std::max(0.0, micromolar[k]) * added * 1e-9;
+        amount_[k] += pmol;
+        recordExternal(static_cast<Solute>(k), pmol, Flow::Spawn);
+    }
+    volumeUm3_ += added;
+    pmolPerMicroMolar_ = volumeUm3_ * 1e-9;
+    for (CultureCell& c : cells) {
+        c.id = nextId_++;
+        // Lo que trae entra al balance de este cultivo.
+        double p = c.meta.phosphorus, n = c.meta.nitrogen;
+        for (const FoodVacuole& v : c.digestion.vacuoles) {
+            p += v.phosphorus;
+            n += v.nitrogen;
+        }
+        recordExternal(Solute::Phosphate, p, Flow::Spawn);
+        recordExternal(Solute::Nitrogen, n, Flow::Spawn);
+        recordExternal(Solute::Silicate, c.meta.silicon, Flow::Spawn);
+        recordExternal(Solute::Iron, c.meta.iron, Flow::Spawn);
+        cells_.push_back(std::move(c));
+    }
+    inoculateBacteria(bacteria);
+}
+
 std::uint64_t Culture::bacteriaCount() const {
     std::uint64_t n = 0;
     for (const BacterialCohort& b : bacteria_)
@@ -258,6 +448,10 @@ MassBudget Culture::massBudget() const {
 
 void Culture::step(float dt) {
     PROFILE_SCOPE("Culture::step");
+    if (!program_.empty())
+        applyProgram(time_ / 3600.0, (time_ + dt) / 3600.0);
+    if (dilutionPerHour_ > 0.0) // el flujo del quimiostato es física: tasa real
+        dilute(1.0 - std::exp(-dilutionPerHour_ * dt / 3600.0));
     refreshMedium();
     const float bioDt = dt * q10_;
     stepGases(dt);
@@ -311,8 +505,25 @@ void Culture::stepBacteria(float bioDt) {
     const BacteriaParams& bp = bacteriaParams_;
     const float hours = bioDt / 3600.0f;
     const float maintenance = bp.maintenancePerHour * bioDt / 3600.0f;
-    const float c = static_cast<float>(std::max(0.0, concentration(Solute::Organic)));
-    // Lo que piden todas; si no alcanza, cada una toma su parte (el medio está bien mezclado).
+    // Paso implícito para el sustrato: la concentración con la que comen es la del final del paso,
+    // S = S₀ − U(S), donde U es lo que toman todas a esa concentración (Monod). Con la del principio,
+    // en un paso de un minuto se comían todo lo que había entrado y el quimiostato no llegaba a su
+    // estado estacionario (S* = K (D + m) / (µmax − D − m)) sino a ~0. U crece con S: bisección.
+    const double start = std::max(0.0, concentration(Solute::Organic));
+    auto uptake = [&](double conc) {
+        double u = 0.0;
+        for (const BacterialCohort& b : bacteria_)
+            u += static_cast<double>(b.count) * bacterialDemand(bp, static_cast<float>(conc), b.mass,
+                                                                bacterialHealth(bp, b.phage >= 0.0f, b.resistant != 0), hours);
+        return u / pmolPerMicroMolar_; // [µM]
+    };
+    double lo = 0.0, hi = start;
+    if (start > 0.0 && uptake(start) > 0.0)
+        for (int it = 0; it < 40; ++it) {
+            const double mid = 0.5 * (lo + hi);
+            (start - mid - uptake(mid) > 0.0 ? lo : hi) = mid;
+        }
+    const float c = static_cast<float>(0.5 * (lo + hi));
     double demand = 0.0;
     for (const BacterialCohort& b : bacteria_)
         demand += static_cast<double>(b.count) *

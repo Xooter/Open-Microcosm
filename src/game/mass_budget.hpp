@@ -42,6 +42,7 @@ enum class Flow : std::uint8_t {
     Fixation,    // fijación de N₂ por heterocistos (entra desde el aire)
     Dose,        // gotero y ajustes del panel Placa (entra o sale desde afuera)
     Air,         // intercambio de CO₂ con el aire
+    Washout,     // lo que sale con el medio (cambio de medio, dilución, quimiostato): va afuera
     Count
 };
 inline constexpr int kFlowCount = static_cast<int>(Flow::Count);

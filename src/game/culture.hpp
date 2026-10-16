@@ -8,6 +8,7 @@
 #include "bio/species.hpp"
 #include "game/lineage.hpp"
 #include "game/mass_budget.hpp"
+#include "game/program.hpp"
 #include "game/world.hpp"
 
 #include <cstdint>
@@ -45,7 +46,7 @@
 
 enum class Solute : std::uint8_t { Oxygen, CO2, Phosphate, Nitrogen, Silicate, Iron, Vitamin, Organic, Count };
 inline constexpr int kSoluteCount = static_cast<int>(Solute::Count);
-const char* soluteKey(Solute s); // "O2", "CO2", "fosfato"...
+const char* soluteKey(Solute s); // "o2", "co2", "fosfato"...
 
 struct CultureConfig {
     float volumeMl = 0.5f;
@@ -100,8 +101,30 @@ class Culture {
     // nutrientes (entra al balance como entrada externa). Devuelve cuántos sembró.
     int inoculate(SpeciesId id, int count);
     void inoculateBacteria(std::uint64_t count, std::uint8_t strain = 0);
+    // Recibe lo que sale de otro cultivo (un pasaje): las células con su estado, las bacterias y
+    // `volumeMl` de su medio con las concentraciones `micromolar` (una por soluto). Entra de afuera.
+    void receive(std::vector<CultureCell> cells, std::uint64_t bacteria, double volumeMl, const double* micromolar);
     // Fija la concentración de un soluto (gotero, medio nuevo); la diferencia es entrada externa.
     void setConcentration(Solute s, double micromolar);
+    // Cambio de medio (Gause: se centrifuga, se tira el sobrenadante y se agrega medio nuevo): la
+    // fracción `fraction` de lo disuelto, de las bacterias, de los detritos y de los fagos se va y
+    // entra medio nuevo (la composición de `config().medium`); los protistas se quedan.
+    void renewMedium(double fraction);
+    // Dilución: la fracción `fraction` del cultivo, con todo lo que tiene (también los protistas,
+    // sorteados), se reemplaza por medio nuevo. Base del quimiostato y de los pasajes.
+    void dilute(double fraction);
+    // Saca la fracción `fraction` del cultivo sin reponerla (una gota de muestra): las células
+    // sorteadas van a `cells`, las bacterias a `bacteria` y el volumen baja. `concentrate` > 1: las
+    // células y bacterias se concentran (centrifugado suave) y el medio que sale es el de `fraction`.
+    void withdraw(double fraction, double concentrate, std::vector<CultureCell>& cells, std::uint64_t& bacteria);
+    // Quimiostato: entra medio nuevo y sale cultivo a la tasa de dilución D [1/h] (el volumen no
+    // cambia). Cada célula y cada bacteria sale con probabilidad 1 − e^(−D·dt): el lavado (Monod 1950;
+    // Novick y Szilard 1950). 0: cultivo en lote.
+    void setDilutionRate(double perHour) { dilutionPerHour_ = std::max(0.0, perHour); }
+    double dilutionRate() const { return dilutionPerHour_; }
+    // Programa temporal (game/program): se aplica antes de cada paso, con la hora de laboratorio.
+    Program& program() { return program_; }
+    const Program& program() const { return program_; }
 
     double concentration(Solute s) const { return amount_[static_cast<int>(s)] / pmolPerMicroMolar_; } // [µM]
     double amount(Solute s) const { return amount_[static_cast<int>(s)]; }                             // [pmol]
@@ -109,6 +132,7 @@ class Culture {
     double phages() const { return phages_; }          // viriones libres
     double light() const { return light_; }            // irradiancia relativa media de la columna
     void setPhages(double virions);                    // la diferencia entra de afuera
+    double volumeMl() const { return volumeUm3_ * 1e-12; }
     double volumeUm3() const { return volumeUm3_; }
     double detritus() const { return detritus_; } // materia orgánica particulada [pmol]
     double time() const { return time_; }          // [s]
@@ -125,6 +149,7 @@ class Culture {
 
     const CultureConfig& config() const { return config_; }
     MediumParams& medium() { return medium_; }
+    const MediumParams& medium() const { return medium_; }
     MetabolismParams& metabolismParams() { return metabolismParams_; }
     FeedingParams& feedingParams() { return feedingParams_; }
     BacteriaParams& bacteriaParams() { return bacteriaParams_; }
@@ -136,6 +161,9 @@ class Culture {
 
   private:
     double exchange(Solute s, double pmol, Flow flow); // > 0 al agua; < 0 toma lo que haya
+    void applyProgram(double fromHours, double toHours);
+    double freshConcentration(Solute s) const;
+    void washOut(const CultureCell& c); // lo que se lleva el medio de una célula que sale
     void recordExternal(Solute s, double pmol, Flow flow);
     void refreshMedium();
     void stepGases(float dt);
@@ -172,6 +200,9 @@ class Culture {
     std::uint64_t step_ = 0;
     std::uint32_t nextId_ = 1;
     std::uint64_t inoculations_ = 0, phageEvents_ = 0;
+    Program program_;
+    double dilutionPerHour_ = 0.0;
+    std::uint64_t washouts_ = 0;
     std::vector<CultureCell> cells_;
     std::vector<BacterialCohort> bacteria_;
     FluxLedger ledger_;

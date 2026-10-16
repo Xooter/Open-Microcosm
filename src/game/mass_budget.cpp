@@ -40,6 +40,7 @@ const char* flowName(Flow f) {
     case Flow::Fixation: return "Fijación de N2";
     case Flow::Dose: return "Gotero y ajustes";
     case Flow::Air: return "Aire";
+    case Flow::Washout: return "Salida con el medio";
     case Flow::Count: break;
     }
     return "";
