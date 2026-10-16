@@ -1,5 +1,6 @@
 #include "game/world.hpp"
 
+#include "bio/cell_physiology.hpp"
 #include "bio/physiology.hpp"
 
 #include "core/finite.hpp"
@@ -44,9 +45,6 @@ constexpr float kPerceptionCell = 128.0f;  // [µm]
 constexpr float kPerceptionRange = 400.0f; // [µm] ~300 de alcance + el radio de las grandes
 constexpr float kLodMidMargin = 400.0f;
 
-// Osmotrofia (levaduras): captación máxima relativa a la biomasa y afinidad.
-constexpr float kOsmotrophUptakePerHour = 1.0f;
-constexpr float kOsmotrophHalfSaturation = 5.0f; // [µM]
 constexpr float kViolaceinDose = 1e-3f;           // daño por bacteria violeta ingerida
 constexpr float kMinDetritusMass = 0.0003f; // [pmol] debajo de esto se disolvió del todo
 // Sedimentación de Stokes: v = 2/9·Δρ·g·r²/µ. Un grano de cuarzo (Δρ = 1650 kg/m³) de 2 µm de
@@ -2572,13 +2570,7 @@ void World::growBacteria(float dt) {
         const float taken = std::min(bacterialDemand_[i], std::max(0.0f, c) / k);
         c -= taken * k;
         float& m = bacteria_.mass[i];
-        const float gain = taken * bp.yield / kBacteriumPmol;
-        const float full = maintenance * m;
-        // Fase estacionaria: si lo que come no cubre la mantención, baja su gasto (ver
-        // BacteriaParams::starvationMaintenance). Con comida parcial se sostiene sin crecer; sin
-        // comida adelgaza despacio. Continuo en gain = full.
-        const float cost = gain >= full ? full : std::max(gain, bp.starvationMaintenance * full);
-        m += gain - cost;
+        m += bacterialMassChange(bp, taken, m, maintenance);
         if (m < 0.5f) { // muere de hambre: su materia vuelve al agua
             c += m * kBacteriumPmol * k;
             eatenBacteria_.push_back(i);
@@ -2653,7 +2645,7 @@ void World::updateLifecycle(float dt) {
             // Levaduras: transportadores de la pared absorben lo disuelto (Monod; menos afines
             // que las bacterias, prosperan donde abunda la materia orgánica).
             const float c = std::max(0.0f, nutrients_.grid().sample(body.centroid.x, body.centroid.y));
-            const float want = kOsmotrophUptakePerHour * meta.biomass * bioDt / 3600.0f * c / (c + kOsmotrophHalfSaturation);
+            const float want = osmotrophDemand(meta.biomass, c, bioDt);
             if (want > 0.0f)
                 in.digested -= exchange(nutrients_, body.centroid, -want);
         }
@@ -2679,31 +2671,14 @@ void World::updateLifecycle(float dt) {
         const SpeciesInfo& info = speciesInfo(sid);
         Cyst* cyst = registry_.try_get<Cyst>(e);
         const Heredity* her = registry_.try_get<Heredity>(e);
-        // µmax de la especie (assets/content/base/fisiologia.toml, con su fuente) relativo al valor
-        // general del metabolismo; sin dato, el general.
-        const SpeciesPhysiology& physio = speciesPhysiology(sid);
-        in.phosphorusHalfSaturation = physio.phosphorusHalfSaturation.present ? physio.phosphorusHalfSaturation.value : 0.0f;
-        in.siliconHalfSaturation = physio.siliconHalfSaturation.present ? physio.siliconHalfSaturation.value : 0.0f;
-        const SourcedValue& mu = physio.growthMax;
-        const float speciesGrowth =
-            mu.present && metabolismParams_.growthPerHourMax > 0.0f ? mu.value / metabolismParams_.growthPerHourMax : 1.0f;
-        in.growthScale = speciesGrowth;
-        if (her) {
-            in.growthScale = her->traits.growthMax * speciesGrowth;
-            in.maintenanceScale = her->traits.maintenance;
-            in.photosynthesisScale = her->traits.photosynthesis * info.photosynthesisScale;
-            in.motilityCostScale = her->traits.motilityCost;
-        }
+        applySpeciesPhysiology(in, sid, info, her, mp);
         // Célula animal: quiescente (G0) o muriendo no crece, y ninguna pasa del doble de su masa al
         // nacer antes de dividirse (el crecimiento y el ciclo están acoplados).
         if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e);
             ac && (ac->phase == CellPhase::G0 || ac->phase == CellPhase::Apoptotic || meta.biomass >= 2.0f * meta.birthBiomass))
             in.growthScale = 0.0f;
-        if (cyst) { // metabolismo mínimo dentro de la pared del quiste
-            in.maintenanceScale *= 0.05f;
-            in.activity = 0.0f;
-            in.photosynthesisScale = 0.0f;
-        }
+        if (cyst)
+            applyCyst(in);
         const char* stressCause = applyEnvironmentStress(e, body, info, in, bioDt);
         const float phosphorusBefore = meta.phosphorus, nitrogenBefore = meta.nitrogen;
         const float siliconBefore = meta.silicon, ironBefore = meta.iron, vitaminBefore = meta.vitamin;

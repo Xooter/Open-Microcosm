@@ -68,6 +68,19 @@ struct BacteriaParams {
     float bdelloStarveHours = 10.0f;
 };
 
+// Fisiología de una bacteria, común a la placa (partículas) y al cultivo bien mezclado (fase P1).
+// Fracción de su crecimiento que conserva: las infectadas (fago o Bdellovibrio) no crecen, su
+// maquinaria trabaja para el parásito; las resistentes a los fagos pagan un costo.
+float bacterialHealth(const BacteriaParams& p, bool infected, bool resistant);
+// Materia orgánica que pide en `hours` [pmol] (Monod con la concentración `organic` [µM]); `mass`
+// relativa a una recién nacida.
+float bacterialDemand(const BacteriaParams& p, float organic, float mass, float health, float hours);
+// Cambio de su masa relativa al comer `taken` [pmol] con un gasto de mantención `maintenance`
+// [fracción de la masa en el paso]. Fase estacionaria: si lo que come no cubre la mantención, baja
+// su gasto (`starvationMaintenance`); con comida parcial se sostiene sin crecer, sin comida adelgaza
+// despacio. Continuo en lo comido = mantención.
+float bacterialMassChange(const BacteriaParams& p, float taken, float mass, float maintenance);
+
 // Bacterias como partículas simples (tier ambiental, ver AGENTS.md).
 // Nadan con "run & tumble" y hacen quimiotaxis TEMPORAL como E. coli: no miden el gradiente
 // en el espacio, comparan la concentración actual con la de hace ~1 s. Si mejora, giran menos.

@@ -63,26 +63,100 @@ void ingest(Digestion& dig, RingBody& body, BodyParticles& bp, Vec2 where, float
         target->wholeCell = forceNew;
         target->nutritionScale = nutritionScale;
     }
-    target->contentArea += area;
-    target->contentPmol += pmol;
-    target->initialPmol += pmol;
-    target->phosphorus += phosphorus;
-    target->nitrogen += nitrogen;
-    ++target->items;
+    addToVacuole(*target, dig, area, pmol, phosphorus, nitrogen);
     bp.radius[target->slot] = vacuoleRadius(target->contentArea);
+}
+
+void addToVacuole(FoodVacuole& v, Digestion& dig, float area, float pmol, float phosphorus, float nitrogen) {
+    v.contentArea += area;
+    v.contentPmol += pmol;
+    v.initialPmol += pmol;
+    v.phosphorus += phosphorus;
+    v.nitrogen += nitrogen;
+    ++v.items;
     dig.pmolIngested += pmol;
+}
+
+void ingestContents(Digestion& dig, float area, float pmol, bool forceNew, float phosphorus, float nutritionScale,
+                    float nitrogen) {
+    FoodVacuole* target = nullptr;
+    if (!forceNew) {
+        for (FoodVacuole& v : dig.vacuoles)
+            if (v.open)
+                target = &v;
+    }
+    if (!target) {
+        dig.vacuoles.push_back({});
+        target = &dig.vacuoles.back();
+        target->open = !forceNew;
+        target->wholeCell = forceNew;
+        target->nutritionScale = nutritionScale;
+    }
+    addToVacuole(*target, dig, area, pmol, phosphorus, nitrogen);
+}
+
+DigestionFractions digestionFractions(const Digestion& dig, const FeedingParams& params, float bioDt) {
+    return {1.0f - std::exp(-params.digestionRate * dig.rateScale * bioDt),
+            1.0f - std::exp(-dig.rateScale * bioDt / (params.wholeCellDigestionHours * 3600.0f))};
+}
+
+bool vacuoleCloses(const FoodVacuole& v, const FeedingParams& params) {
+    return v.open && (v.age > params.vacuoleOpenTime || v.items >= params.vacuoleCapacity);
+}
+
+float digestVacuole(FoodVacuole& v, const DigestionFractions& fr, Digestion& dig, Excreted& excreted) {
+    const float f = v.wholeCell ? fr.whole : fr.small;
+    const float d = v.contentPmol * f;
+    const float before = v.contentPmol;
+    v.contentPmol -= d;
+    dig.pmolDigested += d;
+    // El fósforo de la presa se excreta al agua a medida que se digiere.
+    const float pOut = v.phosphorus * f;
+    v.phosphorus -= pOut;
+    excreted.phosphorus += pOut;
+    const float nOut = v.nitrogen * f;
+    v.nitrogen -= nOut;
+    excreted.nitrogen += nOut;
+    v.contentArea *= before > 0.0f ? v.contentPmol / before : 0.0f;
+    return d * v.nutritionScale;
+}
+
+bool vacuoleSpent(const FoodVacuole& v) { return !v.open && v.contentPmol < 0.02f * v.initialPmol; }
+
+void expelVacuole(const FoodVacuole& v, Excreted& excreted) {
+    excreted.phosphorus += v.phosphorus; // lo que quedaba se expulsa con la vacuola
+    excreted.nitrogen += v.nitrogen;
+}
+
+float digestContents(Digestion& dig, const FeedingParams& params, float dt, float bioDt, Excreted& excreted) {
+    const DigestionFractions fr = digestionFractions(dig, params, bioDt);
+    float digested = 0.0f;
+    for (std::size_t k = 0; k < dig.vacuoles.size();) {
+        FoodVacuole& v = dig.vacuoles[k];
+        v.age += dt;
+        if (vacuoleCloses(v, params))
+            v.open = false;
+        if (!v.open)
+            digested += digestVacuole(v, fr, dig, excreted);
+        if (vacuoleSpent(v)) {
+            expelVacuole(v, excreted);
+            dig.vacuoles.erase(dig.vacuoles.begin() + static_cast<std::ptrdiff_t>(k));
+            continue;
+        }
+        ++k;
+    }
+    return digested;
 }
 
 float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingParams& params,
              float dt, float bioDt, Excreted& excreted) {
-    const float fraction = 1.0f - std::exp(-params.digestionRate * dig.rateScale * bioDt);
-    const float wholeFraction = 1.0f - std::exp(-dig.rateScale * bioDt / (params.wholeCellDigestionHours * 3600.0f));
+    const DigestionFractions fr = digestionFractions(dig, params, bioDt);
     float digested = 0.0f;
     for (std::size_t k = 0; k < dig.vacuoles.size();) {
         FoodVacuole& v = dig.vacuoles[k];
         v.age += dt;
         const std::size_t idx = interiorIndex(body, v.slot);
-        if (v.open && (v.age > params.vacuoleOpenTime || v.items >= params.vacuoleCapacity)) {
+        if (vacuoleCloses(v, params)) {
             // La vacuola se cierra y se suelta del citostoma: queda flotando en el citoplasma.
             v.open = false;
             if (idx < body.anchorRate.size()) {
@@ -90,31 +164,16 @@ float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingPar
                 body.restInterior[idx] = soft_body::toLocal(body, {bp.x[v.slot], bp.y[v.slot]});
             }
         }
-        if (!v.open) {
-            const float f = v.wholeCell ? wholeFraction : fraction;
-            const float d = v.contentPmol * f;
-            const float before = v.contentPmol;
-            v.contentPmol -= d;
-            dig.pmolDigested += d;
-            digested += d * v.nutritionScale;
-            // El fósforo de la presa se excreta al agua a medida que se digiere.
-            const float pOut = v.phosphorus * f;
-            v.phosphorus -= pOut;
-            excreted.phosphorus += pOut;
-            const float nOut = v.nitrogen * f;
-            v.nitrogen -= nOut;
-            excreted.nitrogen += nOut;
-            v.contentArea *= before > 0.0f ? v.contentPmol / before : 0.0f;
-        }
+        if (!v.open)
+            digested += digestVacuole(v, fr, dig, excreted);
         // El fagosoma se infla de a poco hasta su tamaño: si aparece de golpe, la membrana que
         // lo rodea tiene que ceder de una vez y se desgarra. Al digerirse se achica enseguida.
         const float target = vacuoleRadius(v.contentArea);
         float& radius = bp.radius[v.slot];
         radius = target > radius ? radius + (target - radius) * (1.0f - std::exp(-params.vacuoleGrowRate * dt))
                                  : target;
-        if (!v.open && v.contentPmol < 0.02f * v.initialPmol) {
-            excreted.phosphorus += v.phosphorus; // lo que quedaba se expulsa con la vacuola
-            excreted.nitrogen += v.nitrogen;
+        if (vacuoleSpent(v)) {
+            expelVacuole(v, excreted);
             if (idx < body.interior.size())
                 soft_body::removeInterior(body, idx);
             bp.release(v.slot);

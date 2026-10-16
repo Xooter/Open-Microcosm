@@ -2,16 +2,13 @@
 // toxinas (microcistina, violaceína), quorum sensing, fagos y Bdellovibrio.
 #include "game/world.hpp"
 
+#include "bio/cell_physiology.hpp"
 #include "core/profiling.hpp"
 #include "core/rng.hpp"
 
 #include <algorithm>
 #include <cmath>
 
-namespace {
-constexpr float kMicrocystinEC = 0.05f; // [µM] daño apreciable en ciliados
-constexpr float kViolaceinDetoxPerHour = 1.0f;
-} // namespace
 
 void World::stepCyanobacteria(float dt) {
     PROFILE_SCOPE("World::stepCyanobacteria");
@@ -118,41 +115,14 @@ void World::computePH() {
 
 const char* World::applyEnvironmentStress(entt::entity e, const RingBody& body, const SpeciesInfo& info,
                                           MetabolicInput& in, float bioDt) {
-    const float ph = ph_.sample(body.centroid.x, body.centroid.y);
-    in.phStress = std::max(0.0f, info.phMin - ph) + std::max(0.0f, ph - info.phMax);
-    // Fuera de su rango térmico o salino (sin vacuola contráctil que alcance) se estresa; cada
-    // 5 °C o 10 PSU de más cuenta como una unidad de pH.
-    const float t = medium_.temperature;
-    const float thermal = (std::max(0.0f, info.tMin - t) + std::max(0.0f, t - info.tMax)) / 5.0f;
-    const float saline = std::max(0.0f, medium_.salinity - info.salinityMax) / 10.0f;
-    // Anaerobias estrictas (Trichonympha): el O₂ las intoxica.
-    const float o2 = std::max(0.0f, oxygen_.grid().sample(body.centroid.x, body.centroid.y));
-    const float oxic = info.anaerobe ? o2 / 20.0f : 0.0f;
-    in.phStress += thermal + saline + oxic;
-    if (info.anaerobe)
-        in.fermentationScale = 0.5f;
-    // Microcistina: inhibe fosfatasas; daña a los consumidores (ciliados), no a las algas.
-    const float sensitivity = info.chloroplasts ? 0.05f : 1.0f;
-    const float microcystin = sensitivity * std::max(0.0f, toxin_.grid().sample(body.centroid.x, body.centroid.y)) / kMicrocystinEC;
-    float violacein = 0.0f;
-    if (Digestion* d = registry_.try_get<Digestion>(e)) {
-        violacein = d->toxin;
-        d->toxin *= std::exp(-kViolaceinDetoxPerHour * bioDt / 3600.0f);
-    }
-    in.toxin = microcystin + violacein;
-    if (microcystin > 1.0f && microcystin >= violacein)
-        return "intoxicada por microcistina";
-    if (violacein > 1.0f)
-        return "intoxicada por violaceina";
-    if (thermal > 1.0f)
-        return t > info.tMax ? "calor" : "frio";
-    if (saline > 1.0f)
-        return "estres osmotico";
-    if (oxic > 1.0f)
-        return "oxigeno (anaerobia)";
-    if (in.phStress > 1.0f)
-        return "pH extremo";
-    return nullptr;
+    CellSurroundings around;
+    around.ph = ph_.sample(body.centroid.x, body.centroid.y);
+    around.o2 = oxygen_.grid().sample(body.centroid.x, body.centroid.y);
+    around.microcystin = toxin_.grid().sample(body.centroid.x, body.centroid.y);
+    around.temperature = medium_.temperature;
+    around.salinity = medium_.salinity;
+    Digestion* d = registry_.try_get<Digestion>(e);
+    return ::applyEnvironmentStress(info, around, d ? &d->toxin : nullptr, bioDt, in);
 }
 
 void World::seedBdellovibrio(std::size_t count) {

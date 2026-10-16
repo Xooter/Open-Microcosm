@@ -69,11 +69,25 @@ void Bacteria::grow(const Grid2D& nutrients, float bioDt, std::vector<float>& de
 #pragma omp parallel for schedule(static)
     for (std::ptrdiff_t i = 0; i < n; ++i) {
         const float c = std::max(0.0f, nutrients.sample(x[i], y[i]));
-        // Infectadas (fago o Bdellovibrio) no crecen: su maquinaria trabaja para el parásito.
-        const float healthy = phage[i] < 0.0f && bdello[i] < 0.0f ? (resistant[i] ? 1.0f - params.resistanceCost : 1.0f) : 0.0f;
-        const float growth = healthy * params.growthPerHourMax * c / (c + params.halfSaturation) * mass[i] * hours;
-        demand[i] = growth / params.yield * kBacteriumPmol;
+        const float health = bacterialHealth(params, !(phage[i] < 0.0f && bdello[i] < 0.0f), resistant[i] != 0);
+        demand[i] = bacterialDemand(params, c, mass[i], health, hours);
     }
+}
+
+float bacterialHealth(const BacteriaParams& p, bool infected, bool resistant) {
+    return infected ? 0.0f : (resistant ? 1.0f - p.resistanceCost : 1.0f);
+}
+
+float bacterialDemand(const BacteriaParams& p, float organic, float mass, float health, float hours) {
+    const float growth = health * p.growthPerHourMax * organic / (organic + p.halfSaturation) * mass * hours;
+    return growth / p.yield * kBacteriumPmol;
+}
+
+float bacterialMassChange(const BacteriaParams& p, float taken, float mass, float maintenance) {
+    const float gain = taken * p.yield / kBacteriumPmol;
+    const float full = maintenance * mass;
+    const float cost = gain >= full ? full : std::max(gain, p.starvationMaintenance * full);
+    return gain - cost;
 }
 
 // E. coli responde al logaritmo de la concentración (ley de Weber): detecta gradientes

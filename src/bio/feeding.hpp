@@ -10,7 +10,8 @@ struct RingBody;
 
 // Vacuola digestiva (fagosoma): un organelo que contiene presas ingeridas.
 struct FoodVacuole {
-    std::uint32_t slot;
+    static constexpr std::uint32_t kNoSlot = ~0u; // célula sin cuerpo (cultivo bien mezclado)
+    std::uint32_t slot = kNoSlot;
     float contentArea = 0.0f;   // área 2D del contenido [µm²] (define el tamaño)
     float contentPmol = 0.0f;   // alimento [pmol equivalentes de glucosa]
     float initialPmol = 0.0f;
@@ -91,3 +92,26 @@ float digest(Digestion& dig, RingBody& body, BodyParticles& bp, const FeedingPar
              float dt, float bioDt, Excreted& excreted);
 
 float vacuoleContentArea(const Digestion& dig);
+
+// La cinética de la digestión, sin el cuerpo: la usan `digest` (placa) y el cultivo bien mezclado
+// (fase P1), que no tiene partículas. Fracción del contenido que se digiere en `bioDt`: presas
+// chicas (bacterias, detritos) y células enteras.
+struct DigestionFractions {
+    float small = 0.0f, whole = 0.0f;
+};
+DigestionFractions digestionFractions(const Digestion& dig, const FeedingParams& params, float bioDt);
+// La vacuola abierta se cierra cuando está llena o tiene `vacuoleOpenTime` (tiempo real).
+bool vacuoleCloses(const FoodVacuole& v, const FeedingParams& params);
+// Digiere una vacuola cerrada: suma a `dig` y `excreted` y devuelve lo que rinde [pmol].
+float digestVacuole(FoodVacuole& v, const DigestionFractions& f, Digestion& dig, Excreted& excreted);
+// Casi vacía: se expulsa por el citoprocto (lo que quedaba de P y N sale al agua).
+bool vacuoleSpent(const FoodVacuole& v);
+void expelVacuole(const FoodVacuole& v, Excreted& excreted);
+// Agrega una presa al contenido de la vacuola.
+void addToVacuole(FoodVacuole& v, Digestion& dig, float area, float pmol, float phosphorus, float nitrogen);
+
+// Sin cuerpo (cultivo): la presa va a la vacuola abierta o a una nueva; `digestContents` cierra,
+// digiere y expulsa igual que `digest`.
+void ingestContents(Digestion& dig, float area, float pmol, bool forceNew, float phosphorus = 0.0f,
+                    float nutritionScale = 1.0f, float nitrogen = 0.0f);
+float digestContents(Digestion& dig, const FeedingParams& params, float dt, float bioDt, Excreted& excreted);

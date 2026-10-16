@@ -252,6 +252,12 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   glucosa) o fermentación (2 ATP, 15× más glucosa) según el O₂ local; mantenimiento proporcional a
   la biomasa y a la actividad; crecimiento con rendimiento 0,6 y tasa máxima; fotosíntesis con la
   luz local. Sin reservas hay autofagia; con menos de la mitad de la biomasa de nacimiento, muere.
+- **Una sola fisiología** (`bio/cell_physiology`, `bacterialDemand`/`bacterialMassChange`,
+  `digestionFractions`/`digestVacuole`): la entrada de cada célula (µmax de los datos, rasgos,
+  estrés de pH, temperatura, sal y toxinas, quiste), el crecimiento de las bacterias y la cinética de
+  las vacuolas son funciones sin cuerpo que usan la placa y el cultivo bien mezclado (fase P1). La
+  placa solo pone de dónde sale el entorno y adónde va lo que se intercambia: no dupliques esa
+  biología en otro sistema.
 - **Tamaño:** el área de reposo es la de la biomasa más el contenido de las vacuolas.
 - **Mitosis** (componente `Dividing`): con biomasa ×2 y reservas para el costo (el del jugador es
   el más caro), se duplican núcleo y vacuola contráctil, la forma de reposo se transforma de la
