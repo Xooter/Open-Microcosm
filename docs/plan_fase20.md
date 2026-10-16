@@ -96,9 +96,16 @@ sistemas paralelos (los seres actuales se migran, no conviven con un sistema nue
    56a8a4b097813cc0 / b6e3ea17b6b61a8c; bioma 0 seed 3 fauna 1,5: f61d88a58b1b0d67 /
    e599a11607eff58e; bioma 2 seed 11 fauna 1: ba6edfcfdabc3afe / 1891c4109b5501f1). Quedan en
    código, por ahora: las mezclas de barro y de polvo (proporciones de los minerales de fábrica).
-6. **Compatibilidad:** las escenas y `.plate` guardan ids de texto; los archivos viejos (ids
+6. ✅ **Compatibilidad:** las escenas y `.plate` guardan ids de texto; los archivos viejos (ids
    numéricos) se leen con una tabla de traducción. La exportación (`runJson`) anota los paquetes
    usados con su versión y huella (reproducibilidad).
+   *Hecho:* `.plate` versión 2 (`biome=musgo`, `w.<id del ser>`, `sediment.<id del mineral>`,
+   `pack=id versión huella`); las placas de versión 1 (bioma por índice, pesos por nombre,
+   sedimento en inglés) se leen igual. Los eventos de las escenas que nombran un ser (`Spawn`,
+   `PlayerSpecies`) llevan su id y al leer manda el id. Lo que la placa o la escena nombra y no está
+   cargado (paquete, bioma, ser, mineral) se avisa al cargarla (interfaz y `bio_bench`) y se carga
+   lo demás. `game/content`: paquetes cargados con su manifiesto y huella (FNV-1a de sus archivos);
+   `runJson` los anota en la procedencia (y el id del bioma).
 7. **Compartir:** exportar e importar desde la interfaz (panel nuevo *Contenido*): un ser, un
    medio, una placa preparada, una escena o un paquete entero, a un `.biopack` o desde uno. Al
    cargar una escena que usa un paquete que falta, se avisa cuál.

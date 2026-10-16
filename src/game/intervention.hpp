@@ -21,8 +21,8 @@ enum class InterventionKind : std::uint8_t {
     Detritus,      // pos
     Erase,         // pos
     Lyse,          // pos
-    Spawn,         // pos, index = BeingKind, v[0] = SpeciesId (estables: el índice del catálogo
-                   // cambia cuando se agregan especies)
+    Spawn,         // pos, index = BeingKind, v[0] = SpeciesId, key = id de texto del ser (el
+                   // índice cambia con los paquetes cargados: al leer manda el id)
     Ink,           // pincel: active, pos, v[0] = radio
     Dropper,       // pincel: active, pos, index = soluto, v[0] = radio, v[1] = cantidad relativa
     Stir,          // estado: active, pos, v[0..1] = velocidad, v[2] = radio
@@ -32,7 +32,7 @@ enum class InterventionKind : std::uint8_t {
     GrabEnd,
     PlayerPick,    // pos, v[0] = tolerancia: controla la célula con locomoción que esté ahí
     PlayerInput,   // v = adelante, giro, batir (0/1), pseudópodo (0/1); pos = puntería
-    PlayerSpecies, // pos (respaldo), index = especie: el ser controlado pasa a ser de esa especie
+    PlayerSpecies, // pos (respaldo), index = especie, key = su id: el ser controlado pasa a ser de esa especie
     Fix,           // fijar la muestra
     Focus,         // estado: pos = centro de la vista, v[0..1] = medio ancho y alto [µm] (LOD)
     Engine,        // marca: index = 0 CPU, 1 GPU (la aplica quien reproduce, si puede)
@@ -89,4 +89,6 @@ class InterventionLog {
 
 // Texto: una intervención por línea, `event=paso tipo activo índice x y v0..v5 [clave]`.
 std::string serializeInterventions(const std::vector<Intervention>& list);
-std::vector<Intervention> parseInterventions(const std::string& text);
+// Los seres van por id de texto; un evento con un ser que no está cargado se descarta y su id va a
+// `missing` (si se pide).
+std::vector<Intervention> parseInterventions(const std::string& text, std::vector<std::string>* missing = nullptr);

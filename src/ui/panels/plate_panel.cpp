@@ -236,10 +236,14 @@ class PlatePanel : public Panel {
         for (const std::string& name : saved) {
             ImGui::PushID(name.c_str());
             if (ImGui::Selectable(name.c_str())) {
-                if (loadScene(app.platesDir + "/" + name + ".plate", p, app.plateScript)) {
+                std::vector<std::string> missing;
+                if (loadScene(app.platesDir + "/" + name + ".plate", p, app.plateScript, &missing)) {
                     app.plateName = name;
                     app.plateDirty = true;
                 }
+                // Lo que la escena nombra y no está cargado se avisa (se carga igual con lo que hay).
+                for (const std::string& m : missing)
+                    app.notify(std::string(tr("Falta contenido: ")) + m);
             }
             ImGui::PopID();
         }

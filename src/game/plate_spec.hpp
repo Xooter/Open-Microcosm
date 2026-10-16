@@ -24,10 +24,14 @@ struct PlateSpec {
     float wildlife() const;
 };
 
-// Texto clave=valor versionado (`plate_version=1`). Al leer, lo que falta queda como en el
-// bioma, así los archivos viejos siguen valiendo cuando se agregan campos.
+// Texto clave=valor versionado (`plate_version`). Al leer, lo que falta queda como en el
+// bioma, así los archivos viejos siguen valiendo cuando se agregan campos. La versión 2 nombra
+// bioma, minerales y seres por su id de texto y lista los paquetes cargados (`pack=id versión
+// huella`); la 1 (índices y nombres) se sigue leyendo.
 std::string serializePlate(const PlateSpec& spec);
-bool parsePlate(const std::string& text, PlateSpec& spec);
+// Lo que la placa nombra y no está cargado (un bioma o un ser de un paquete que falta, o el paquete
+// mismo) va a `missing`, si se pide; la placa se lee igual con lo que hay.
+bool parsePlate(const std::string& text, PlateSpec& spec, std::vector<std::string>* missing = nullptr);
 
 // Carpeta de placas del usuario: <datos>/biogame/plates.
 std::string defaultPlatesDir();

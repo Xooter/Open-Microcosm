@@ -204,6 +204,15 @@ void putFloat(std::string& out, float v) {
     out.append(buf, r.ptr);
 }
 
+// Ser al que se refiere una intervención (Spawn de un ser, PlayerSpecies), o -1.
+int speciesOf(const Intervention& iv) {
+    if (iv.kind == InterventionKind::Spawn && iv.index == static_cast<int>(BeingKind::Species))
+        return static_cast<int>(iv.v[0]);
+    if (iv.kind == InterventionKind::PlayerSpecies)
+        return iv.index;
+    return -1;
+}
+
 } // namespace
 
 std::string serializeInterventions(const std::vector<Intervention>& list) {
@@ -219,7 +228,11 @@ std::string serializeInterventions(const std::vector<Intervention>& list) {
             out += ' ';
             putFloat(out, f);
         }
-        if (!iv.key.empty()) {
+        const int sp = speciesOf(iv);
+        if (sp >= 0 && sp < speciesCount()) {
+            out += ' ';
+            out += speciesInfo(static_cast<SpeciesId>(sp)).key;
+        } else if (!iv.key.empty()) {
             out += ' ';
             out += iv.key;
         }
@@ -228,7 +241,7 @@ std::string serializeInterventions(const std::vector<Intervention>& list) {
     return out;
 }
 
-std::vector<Intervention> parseInterventions(const std::string& text) {
+std::vector<Intervention> parseInterventions(const std::string& text, std::vector<std::string>* missing) {
     std::vector<Intervention> list;
     std::istringstream in(text);
     std::string line;
@@ -258,6 +271,21 @@ std::vector<Intervention> parseInterventions(const std::string& text) {
         std::copy(f + 2, f + 8, iv.v);
         if (tok.size() > 12)
             iv.key = tok[12];
+        // El ser por su id (las escenas viejas, sin id, quedan con el índice: el orden de los de
+        // fábrica no cambió).
+        if (speciesOf(iv) >= 0 && !iv.key.empty()) {
+            const auto sp = findSpecies(iv.key);
+            if (!sp) {
+                if (missing && std::find(missing->begin(), missing->end(), "ser '" + iv.key + "'") == missing->end())
+                    missing->push_back("ser '" + iv.key + "'");
+                continue;
+            }
+            if (iv.kind == InterventionKind::Spawn)
+                iv.v[0] = static_cast<float>(*sp);
+            else
+                iv.index = static_cast<int>(*sp);
+            iv.key.clear(); // el id se vuelve a escribir desde el índice
+        }
         list.push_back(std::move(iv));
     }
     return list;

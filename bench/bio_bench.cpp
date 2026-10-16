@@ -203,10 +203,13 @@ int main(int argc, char** argv) {
 
     PlateSpec plate;
     std::vector<Intervention> events;
-    if (!a.scene.empty() && !loadScene(a.scene, plate, events)) {
+    std::vector<std::string> missing;
+    if (!a.scene.empty() && !loadScene(a.scene, plate, events, &missing)) {
         std::fprintf(stderr, "no se pudo leer la escena %s\n", a.scene.c_str());
         return 1;
     }
+    for (const std::string& m : missing)
+        std::fprintf(stderr, "la escena usa contenido que no está cargado: %s\n", m.c_str());
     World world(a.scene.empty() ? makeDrop(static_cast<BiomeId>(a.biome), a.seed) : plate.config);
     if (a.gpu)
         world.setSubstepSolver(&gpu);

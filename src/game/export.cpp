@@ -5,6 +5,7 @@
 #include "game/parameters.hpp"
 
 #include "game/biome.hpp"
+#include "game/content.hpp"
 #include "game/progress.hpp"
 #include "game/run.hpp"
 #include "game/sandbox.hpp"
@@ -337,6 +338,17 @@ std::string runJson(const World& world, const Run& run, const PlateSpec& plate, 
     j.string("huella_intervenciones", hash);
     j.string("reproducibilidad", "bit a bit con el mismo binario, maquina, motor y opciones; entre maquinas, "
                                  "estadistica (replicas)");
+    // Paquetes de contenido cargados: los datos de los seres, minerales y biomas son parte de la
+    // corrida tanto como el binario (la huella cambia con cualquier valor de sus archivos).
+    j.beginArray("paquetes");
+    for (const PackInfo& pack : loadedPacks()) {
+        j.beginObject();
+        j.string("id", pack.id);
+        j.string("version", pack.version);
+        j.string("huella", fingerprintHex(pack.fingerprint));
+        j.endObject();
+    }
+    j.endArray();
     j.endObject();
 
     // Todos los parámetros ajustables con su valor vigente (game/parameters).
@@ -346,6 +358,7 @@ std::string runJson(const World& world, const Run& run, const PlateSpec& plate, 
         j.quantity(p.key, parameterValue(mutableWorld, p), p.unit);
     j.endObject();
     j.string("bioma", biome(static_cast<BiomeId>(plate.biome)).name);
+    j.string("bioma_id", biome(static_cast<BiomeId>(plate.biome)).key);
     j.string("seed", std::to_string(plate.seed));
     j.quantity("tiempo_simulado", world.simTime(), "s");
     j.quantity("tiempo_biologico", world.simTime() * world.bioTimeScale() / 3600.0f, "h");

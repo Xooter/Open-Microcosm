@@ -1,8 +1,10 @@
 #include "game/plate_spec.hpp"
 
+#include "game/content.hpp"
 #include "game/progress.hpp"
 
 #include <algorithm>
+#include <cctype>
 #include <filesystem>
 #include <fstream>
 #include <limits>
@@ -78,11 +80,24 @@ std::optional<MineralKind> sedimentMineral(const std::string& key) {
     return findMineral(id);
 }
 
-std::string speciesKey(int i) {
+// Clave del peso de un ser en las placas de versión 1: su nombre con guiones bajos.
+std::string legacySpeciesKey(int i) {
     std::string k = "w.";
     for (const char* p = speciesInfo(static_cast<SpeciesId>(i)).name; *p; ++p)
         k += *p == ' ' ? '_' : *p;
     return k;
+}
+
+// Ser de una clave "w.<id>" (o "w.<Nombre_del_ser>" de una placa vieja).
+std::optional<SpeciesId> weightSpecies(const std::string& key) {
+    if (key.compare(0, 2, "w.") != 0)
+        return std::nullopt;
+    if (const auto id = findSpecies(std::string_view(key).substr(2)))
+        return id;
+    for (int i = 0; i < speciesCount(); ++i)
+        if (key == legacySpeciesKey(i))
+            return static_cast<SpeciesId>(i);
+    return std::nullopt;
 }
 
 } // namespace
@@ -100,11 +115,14 @@ std::string serializePlate(const PlateSpec& s) {
     // Precisión de ida y vuelta: con las 6 cifras por defecto, los valores que el bioma varía por
     // seed se redondeaban y la placa leída ya no era la misma (ni su corrida).
     out.precision(std::numeric_limits<float>::max_digits10);
-    out << "plate_version=1\n"
-        << "biome=" << s.biome << '\n'
+    // Versión 2: bioma, minerales y seres por id de texto (fase 20.0), y los paquetes cargados.
+    out << "plate_version=2\n"
+        << "biome=" << biome(static_cast<BiomeId>(s.biome)).key << '\n'
         << "seed=" << s.seed << '\n'
         << "content=" << static_cast<int>(s.content) << '\n';
     const WorldConfig& c = s.config;
+    for (const PackInfo& pack : loadedPacks())
+        out << "pack=" << pack.id << ' ' << pack.version << ' ' << fingerprintHex(pack.fingerprint) << '\n';
     out << "dish=" << c.dish << '\n' << "dish_margin=" << c.dishMargin << '\n' << "cell_size=" << c.cellSize << '\n';
     out << "bacteria=" << c.bacteria << '\n' << "detritus=" << c.detritus << '\n';
     out << "cyano_t_min=" << c.cyanoTMin << '\n' << "cyano_t_max=" << c.cyanoTMax << '\n';
@@ -120,11 +138,11 @@ std::string serializePlate(const PlateSpec& s) {
     out << "sediment.rocks=" << c.sediment.rocks << '\n';
     out << "rock_min=" << c.sediment.rockMin << '\n' << "rock_max=" << c.sediment.rockMax << '\n';
     for (int i = 0; i < speciesCount(); ++i)
-        out << speciesKey(i) << '=' << c.speciesWeight[i] << '\n';
+        out << "w." << speciesInfo(static_cast<SpeciesId>(i)).key << '=' << c.speciesWeight[i] << '\n';
     return out.str();
 }
 
-bool parsePlate(const std::string& text, PlateSpec& s) {
+bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>* missing) {
     // Primero lo que decide el bioma; después, el resto pisa los valores.
     std::vector<std::pair<std::string, std::string>> kv;
     std::istringstream in(text);
@@ -147,8 +165,24 @@ bool parsePlate(const std::string& text, PlateSpec& s) {
             return fallback;
         }
     };
+    auto lack = [&](const std::string& what) {
+        if (missing && std::find(missing->begin(), missing->end(), what) == missing->end())
+            missing->push_back(what);
+    };
     for (const auto& [k, v] : kv) {
-        if (k == "biome") p.biome = static_cast<int>(num(v, 0));
+        if (k == "biome") {
+            // Versión 2: id de texto; versión 1: el índice (los de fábrica no cambiaron de orden).
+            if (const auto id = findBiome(v))
+                p.biome = static_cast<int>(*id);
+            else if (!v.empty() && std::isdigit(static_cast<unsigned char>(v[0])))
+                p.biome = static_cast<int>(num(v, 0));
+            else
+                lack("bioma '" + v + "'");
+        } else if (k == "pack") {
+            const std::string id = v.substr(0, v.find(' '));
+            if (!findPack(id))
+                lack("paquete '" + id + "'");
+        }
         else if (k == "seed") { // entero: un double pierde precisión desde 2^53
             try {
                 p.seed = std::stoull(v);
@@ -180,8 +214,14 @@ bool parsePlate(const std::string& text, PlateSpec& s) {
             if (k == f.key) c.medium.*f.member = static_cast<float>(x);
         if (k == "sediment.rocks") c.sediment.rocks = static_cast<int>(x);
         else if (const auto mineral = sedimentMineral(k)) c.sediment[*mineral] = static_cast<int>(x);
-        for (int i = 0; i < speciesCount(); ++i)
-            if (k == speciesKey(i)) c.speciesWeight[i] = static_cast<float>(x);
+        if (k.compare(0, 2, "w.") == 0) {
+            if (const auto sp = weightSpecies(k))
+                c.speciesWeight[static_cast<int>(*sp)] = static_cast<float>(x);
+            else
+                lack("ser '" + k.substr(2) + "'");
+        } else if (k.compare(0, 9, "sediment.") == 0 && k != "sediment.rocks" && !sedimentMineral(k)) {
+            lack("mineral '" + k.substr(9) + "'");
+        }
     }
     // La grilla tiene que ser potencia de 2 (la FFT lo necesita).
     for (int* g : {&c.gridX, &c.gridY}) {

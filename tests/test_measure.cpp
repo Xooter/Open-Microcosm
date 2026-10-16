@@ -148,7 +148,8 @@ TEST_CASE("exportar: CSV con unidades y JSON con parámetros, serie y balance") 
     PlateSpec plate;
     const std::string json = runJson(world, run, plate);
     for (const char* key : {"\"parametros\"", "\"placa\"", "\"metabolismo\"", "\"serie\"", "\"columnas\"",
-                            "\"balance_de_masa\"", "\"residuo\"", "\"unidad\": \"µM\"", "\"plate_version\""})
+                            "\"balance_de_masa\"", "\"residuo\"", "\"unidad\": \"µM\"", "\"plate_version\"",
+                            "\"paquetes\"", "\"id\": \"base\"", "\"huella\"", "\"bioma_id\""})
         CHECK_MESSAGE(json.find(key) != std::string::npos, key);
     // Llaves y corchetes balanceados (JSON bien formado a grandes rasgos).
     int depth = 0;

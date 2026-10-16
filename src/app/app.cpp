@@ -553,7 +553,10 @@ void App::drawRecoveryPrompt() {
         ImGui::TextDisabled("%s", ui::tr("Puede tardar más o menos lo mismo que duró."));
         if (ImGui::Button(ui::tr("Recuperar"))) {
             std::vector<Intervention> events;
-            if (loadScene(autosavePath_, plate, events)) {
+            std::vector<std::string> missing;
+            if (loadScene(autosavePath_, plate, events, &missing)) {
+                for (const std::string& m : missing)
+                    notify(std::string(ui::tr("Falta contenido: ")) + m);
                 plateScript = std::move(events);
                 createPlate();
                 recoverTarget_ = std::max<std::uint64_t>(recoveryStep_, 1);

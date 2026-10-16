@@ -8,10 +8,11 @@ std::string serializeScene(const PlateSpec& plate, const std::vector<Interventio
     return serializePlate(plate) + serializeInterventions(events);
 }
 
-bool parseScene(const std::string& text, PlateSpec& plate, std::vector<Intervention>& events) {
-    if (!parsePlate(text, plate))
+bool parseScene(const std::string& text, PlateSpec& plate, std::vector<Intervention>& events,
+                std::vector<std::string>* missing) {
+    if (!parsePlate(text, plate, missing))
         return false;
-    events = parseInterventions(text);
+    events = parseInterventions(text, missing);
     return true;
 }
 
@@ -26,13 +27,14 @@ bool saveScene(const std::string& path, const PlateSpec& plate, const std::vecto
     return static_cast<bool>(out);
 }
 
-bool loadScene(const std::string& path, PlateSpec& plate, std::vector<Intervention>& events) {
+bool loadScene(const std::string& path, PlateSpec& plate, std::vector<Intervention>& events,
+               std::vector<std::string>* missing) {
     std::ifstream in(path);
     if (!in)
         return false;
     std::stringstream ss;
     ss << in.rdbuf();
-    return parseScene(ss.str(), plate, events);
+    return parseScene(ss.str(), plate, events, missing);
 }
 
 RunConfig plateRunConfig(const PlateSpec& plate) {

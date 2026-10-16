@@ -147,6 +147,34 @@ TEST_CASE("escena: el registro de intervenciones va y vuelve sin cambios") {
     CHECK(serializeInterventions(back) == serializeInterventions(list));
 }
 
+TEST_CASE("escena: los seres de las intervenciones van por id de texto; las escenas viejas se leen") {
+    std::vector<Intervention> list(2);
+    list[0].kind = InterventionKind::Spawn;
+    list[0].index = static_cast<int>(BeingKind::Species);
+    list[0].v[0] = static_cast<float>(SpeciesId::Stentor);
+    list[1].kind = InterventionKind::PlayerSpecies;
+    list[1].index = static_cast<int>(SpeciesId::Euglena);
+    const std::string text = serializeInterventions(list);
+    CHECK(text.find(" stentor\n") != std::string::npos);
+    CHECK(text.find(" euglena\n") != std::string::npos);
+    const std::vector<Intervention> back = parseInterventions(text);
+    REQUIRE(back.size() == 2);
+    CHECK(back[0].v[0] == static_cast<float>(SpeciesId::Stentor));
+    CHECK(back[1].index == static_cast<int>(SpeciesId::Euglena));
+    // Manda el id, no el índice: un evento con el índice de otro ser se corrige.
+    std::vector<std::string> missing;
+    const std::vector<Intervention> fixed =
+        parseInterventions("event=3 6 0 0 1 2 0 0 0 0 0 0 paramecium\n"
+                           "event=4 6 0 0 1 2 5 0 0 0 0 0\n"           // escena vieja: solo el índice
+                           "event=5 6 0 0 1 2 0 0 0 0 0 0 dodo_microscopico\n",
+                           &missing);
+    REQUIRE(fixed.size() == 2);
+    CHECK(fixed[0].v[0] == static_cast<float>(SpeciesId::Paramecium));
+    CHECK(fixed[1].v[0] == 5.0f);
+    REQUIRE(missing.size() == 1);
+    CHECK(missing[0] == "ser 'dodo_microscopico'");
+}
+
 TEST_CASE("escena: una sesión con intervenciones se repite idéntica, con 1 y 4 hilos") {
     const PlateSpec plate = smallPlate();
     std::uint64_t live = 0;

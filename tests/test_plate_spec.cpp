@@ -43,6 +43,40 @@ TEST_CASE("PlateSpec: las placas viejas guardan el sedimento con claves en ingl�
     CHECK(serializePlate(p).find("sediment.arcilla=33") != std::string::npos);
 }
 
+TEST_CASE("PlateSpec: la versión 2 nombra bioma, seres y paquetes por id; la 1 se sigue leyendo") {
+    PlateSpec a;
+    a.biome = static_cast<int>(BiomeId::Moss);
+    a.seed = 12;
+    a.rebuild();
+    a.config.speciesWeight[static_cast<int>(SpeciesId::Arcella)] = 2.5f;
+    const std::string text = serializePlate(a);
+    CHECK(text.find("plate_version=2\n") != std::string::npos);
+    CHECK(text.find("biome=musgo\n") != std::string::npos);
+    CHECK(text.find("w.arcella=2.5\n") != std::string::npos);
+    CHECK(text.find("pack=base ") != std::string::npos);
+    std::vector<std::string> missing;
+    PlateSpec b;
+    REQUIRE(parsePlate(text, b, &missing));
+    CHECK(missing.empty());
+    CHECK(b.biome == a.biome);
+    CHECK(serializePlate(b) == text);
+
+    // Versión 1: el bioma por índice y los pesos por nombre del ser.
+    PlateSpec old;
+    REQUIRE(parsePlate("plate_version=1\nbiome=2\nseed=12\ncontent=0\nw.Arcella=2.5\n", old, &missing));
+    CHECK(missing.empty());
+    CHECK(old.biome == static_cast<int>(BiomeId::Moss));
+    CHECK(old.config.speciesWeight[static_cast<int>(SpeciesId::Arcella)] == doctest::Approx(2.5f));
+
+    // Lo que no está cargado se avisa y la placa se lee igual.
+    PlateSpec other;
+    REQUIRE(parsePlate("plate_version=2\nbiome=laguna_de_marte\npack=marte 3 0123456789abcdef\nseed=1\n"
+                       "w.dodo_microscopico=1\nsediment.meteorito=4\n",
+                       other, &missing));
+    CHECK(missing.size() == 4);
+    CHECK(other.biome == 0);
+}
+
 TEST_CASE("PlateSpec: texto sin version no es una placa") {
     PlateSpec p;
     CHECK_FALSE(parsePlate("biome=1\nseed=3\n", p));
