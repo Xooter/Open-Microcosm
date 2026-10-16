@@ -35,7 +35,7 @@ e interviene.
   guardan en `<datos>/biogame/plates/*.plate`.
 - **Placas preparadas** (`game/prepared`; datos en `medios.toml`, `recipientes.toml`,
   `placas.toml`): además de la gota de agua, tipos de placa como en un laboratorio real. Hecho: el
-  **cultivo celular** (DMEM en incubadora a 37 °C y 10 % de CO₂: un campo periódico del fondo de un
+  **cultivo celular** (DMEM en incubadora a 37 °C y 10 % de CO₂: un campo circular del fondo de un
   recipiente, con la profundidad del medio del recipiente y estéril). Pendientes: las células
   humanas (fase 20b) y el **preparado vegetal**. **Mezclas:** cualquier ser del catálogo se inocula
   en cualquier placa (Catálogo > Inocular..., intervención `Inoculate`, reproducible).

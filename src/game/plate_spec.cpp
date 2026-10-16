@@ -229,7 +229,7 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
     bool seedingRead = false;
     for (const auto& [k, v] : kv) {
         const double x = num(v, 0);
-        if (k == "dish") c.dish = x != 0;
+        if (k == "dish") c.dish = true; // siempre con la pared de vidrio (las placas viejas sin vidrio ya no van)
         else if (k == "dish_margin") c.dishMargin = static_cast<float>(x);
         else if (k == "cell_size") c.cellSize = static_cast<float>(x);
         else if (k == "bacteria") c.bacteria = static_cast<std::size_t>(std::max(0.0, x));

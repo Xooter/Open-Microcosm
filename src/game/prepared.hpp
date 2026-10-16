@@ -55,6 +55,6 @@ bool loadPreparedText(const std::string& text, const std::string& source, const 
 const std::vector<std::string>& preparedLoadWarnings();
 
 // La placa que sale de una placa preparada: el medio con el ambiente de la incubadora, el campo
-// periódico (un recorte del fondo de un recipiente grande), la profundidad del medio del recipiente
+// circular con su pared de vidrio (el borde del campo simulado), la profundidad del medio del recipiente
 // y sin nada vivo ni sedimento (estéril). La siembra va en `WorldConfig::seeding`.
 WorldConfig makePrepared(const PreparedPlate& plate, std::uint64_t seed);

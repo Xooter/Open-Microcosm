@@ -160,7 +160,8 @@ sistemas paralelos (los seres actuales se migran, no conviven con un sistema nue
    química bien mezclada en la vertical, como en la validación de Tilman); el campo da la grilla.
    *Hecho:* `recipientes.toml` (áreas y volúmenes de Corning); `WorldConfig::depth` (la gota sigue
    en 200 µm); el intercambio de gases por la superficie sale de la difusión por la capa quieta
-   (D/profundidad²: ~50 min en 2,5 mm); el campo es periódico (sin vidrio: un recorte del fondo).
+   (D/profundidad²: ~50 min en 2,5 mm); el campo es un círculo del fondo con su anillo de vidrio (el
+   borde del campo simulado; antes era periódico: se cambió para que el vidrio se vea siempre).
 5. ✅ **Inoculación** (intervención `Inoculate`, reproducible): un ser del catálogo con cantidad o
    densidad (células/cm²) en toda la placa, un punto o una región dibujada. **Mezclas:** cualquier
    ser en cualquier placa (contaminación de un cultivo con bacterias o levaduras, por ejemplo).
@@ -214,6 +215,58 @@ Mecanismos nuevos (código), parametrizados por datos:
     meseta en la densidad de confluencia publicada); consumo de glucosa y producción de lactato en
     72 h; rapidez del neutrófilo en quimiotaxis.
 
+## 20c — Preparados (portaobjetos): células vegetales y animales
+
+Lo que se mira en un laboratorio de biología celular además de la gota y el cultivo: un tejido o
+unas células montadas entre portaobjetos y cubreobjetos, vivas o fijadas y teñidas. Los más comunes
+primero. Cada preparado tiene que verse como en el microscopio real a cada aumento (zoom semántico:
+de lejos el tejido como textura; de cerca, cada célula con su pared, su núcleo, sus plastos y sus
+gránulos; el LOD como en el resto del render) y lo que hace tiene que ser mecanismo real con datos.
+
+**Base común**
+
+1. **Tipo de placa «preparado»** (`PlateKind::Slide`): portaobjetos y cubreobjetos con una capa fina
+   de montaje (~10–20 µm de agua, solución salina o medio), a temperatura ambiente y con la luz de la
+   lámpara; vivo o fijado (`World::fix`). Se le puede agregar una solución en vivo (agua, NaCl,
+   sacarosa), como en clase: la gota se pone en un borde del cubreobjetos y se tira con un papel
+   del otro.
+2. **Ósmosis** (`bio/osmosis`): el volumen de una célula (el protoplasto de una vegetal, un
+   eritrocito) sigue la osmolaridad del medio con la conductividad hidráulica de su membrana y la ley
+   de Boyle–van 't Hoff (solo cambia el agua; los solutos quedan).
+3. **Pared celular vegetal** (`bio/tissue`): la pared es un anillo rígido y el protoplasto un cuerpo
+   aparte adentro; con turgencia lo aprieta, en medio hipertónico se despega (plasmólisis) y se
+   recupera en agua (deplasmólisis). Un tejido son paredes compartidas con las vecinas, empaquetadas
+   por un generador según el tejido.
+4. **Tinciones nuevas como datos:** orceína o carmín acético (cromosomas, rojo), Giemsa/Wright (núcleos
+   violeta, gránulos, eritrocitos rosados) y eosina; con las que ya hay (Lugol: almidón; azul de
+   metileno: núcleos).
+
+**Vegetales (los más comunes)**
+
+5. **Epidermis de cebolla** (*Allium cepa*): monocapa de células alargadas con pared, núcleo y vacuola
+   grande; Lugol o azul de metileno; plasmólisis con NaCl.
+6. **Hoja de *Elodea*** (*Egeria densa*): cloroplastos con ciclosis; plasmólisis.
+7. **Tubérculo de papa con Lugol:** amiloplastos (granos de almidón azul-negro, con sus capas).
+8. **Punta de raíz de cebolla aplastada y teñida** (fijada): células en todas las fases de la mitosis;
+   índice mitótico y fracción de cada fase de las duraciones publicadas; cromosomas por fase.
+9. **Epidermis de hoja con estomas:** células oclusivas y ostíolo (estructura; la apertura después).
+
+**Animales (los más comunes)**
+
+10. **Mucosa bucal con azul de metileno:** células escamosas planas y poligonales (~50–80 µm) con
+    núcleo chico y bacterias adheridas.
+11. **Frotis de sangre humana** (Giemsa/Wright): eritrocitos bicóncavos sin núcleo, neutrófilos
+    (núcleo multilobulado, los de 20b), linfocitos, monocitos y plaquetas en la fórmula leucocitaria
+    normal; en sangre viva diluida, la ósmosis da crenación (hipertónico) y hemólisis (hipotónico).
+
+**Cierre**
+
+12. **Panel Placa:** el preparado elige el tejido, vivo o fijado y la solución de montaje; el
+    Catálogo suma las categorías «Células vegetales» y «Células humanas».
+13. **Tests y validación:** volumen del eritrocito según la osmolaridad (Boyle–van 't Hoff), NaCl de
+    plasmólisis incipiente en la epidermis de cebolla, índice mitótico y fracción de cada fase en la
+    punta de raíz, tamaños de cada tipo celular con su fuente.
+
 ## Riesgos
 
 1. **Migración del contenido (20.0):** es el cambio más grande; un error cambia todas las
@@ -229,6 +282,13 @@ Mecanismos nuevos (código), parametrizados por datos:
    documenta la simplificación.
 6. **Paquetes de terceros:** pueden traer datos sin fuente o absurdos; la validación al cargar
    los rechaza o los marca, y la exportación anota qué paquetes se usaron.
+7. **El vidrio siempre visible:** el campo simulado (~2 mm) es mucho más chico que un recipiente o un
+   cubreobjetos reales; el anillo de vidrio marca el borde del campo simulado y se dice en la
+   descripción de la placa. Las células de la orilla tocan vidrio: las mediciones se hacen lejos.
+8. **Rendimiento de los preparados:** un frotis de sangre son miles de eritrocitos por mm²: necesitan
+   una representación más barata que el cuerpo blando completo (como las bacterias); un tejido de
+   cebolla son ~100–200 células grandes con pared.
+9. **Ósmosis:** física nueva; se valida contra el volumen del eritrocito y la plasmólisis de la cebolla.
 
 ## Orden y criterios de «hecho»
 
@@ -242,6 +302,10 @@ Mecanismos nuevos (código), parametrizados por datos:
 3. **20b** fibroblasto (arrastre, ciclo, inhibición por contacto, metabolismo, apoptosis) → HeLa
    → neutrófilo → render y textos → validación. Hecho cuando pasan los tests de validación de
    20b con sus fuentes y tolerancias.
+4. **20c** preparado y ósmosis → pared celular y tejidos → cebolla, *Elodea*, papa → raíz y estomas
+   → mucosa bucal y sangre → panel y validación. Hecho cuando un preparado de epidermis de cebolla
+   se plasmoliza al agregar NaCl y se recupera con agua, y en un frotis de sangre teñido con Giemsa
+   se distinguen los tipos celulares, con datos con fuente y reproducible.
 
-Después de la fase 20: preparado vegetal (Elodea con ciclosis, epidermis de cebolla), modo cultivo
+Después de la fase 20: modo cultivo
 (Gause), P1 y lanzamiento.

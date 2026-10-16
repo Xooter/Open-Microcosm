@@ -142,8 +142,8 @@ class PlatePanel : public Panel {
         const float side = static_cast<float>(p.config.gridX) * p.config.cellSize;
         readout("Campo simulado", "%.1f × %.1f mm (%.3f cm²)", static_cast<double>(side * 1e-3f),
                 static_cast<double>(side * 1e-3f), static_cast<double>(side * side * 1e-8f));
-        tooltip("Un recorte del fondo del recipiente, lejos de las paredes: los bordes son periódicos, como si el "
-                "cultivo siguiera.");
+        tooltip("Un círculo del fondo del recipiente: el anillo de vidrio marca el borde del campo simulado (la "
+                "pared del recipiente real está mucho más lejos).");
         ImGui::AlignTextToFramePadding();
         ImGui::TextUnformatted(tr("Semilla"));
         ImGui::SameLine();
@@ -257,7 +257,7 @@ class PlatePanel : public Panel {
     void drawGeometry(App& app, PlateSpec& p) {
         WorldConfig& c = p.config;
         bool ch = false;
-        ch |= checkbox("Placa circular de vidrio", &c.dish, "Sin placa, el mundo es toroidal (los bordes se envuelven).");
+        // La pared de vidrio se ve siempre: el mundo de una placa es un pocillo circular.
         ch |= slider("Margen de vidrio [µm]", &c.dishMargin, 20.0f, 300.0f, "%.0f");
         int g = c.gridX == 128 ? 0 : c.gridX == 512 ? 2 : 1;
         if (combo("Grilla (celdas)", &g, kGrids, 3, "Potencia de 2 (la FFT lo necesita). Más grande = placa más grande y más lenta.")) {

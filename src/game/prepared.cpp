@@ -269,9 +269,11 @@ WorldConfig makePrepared(const PreparedPlate& plate, std::uint64_t seed) {
     c.medium.temperature = plate.temperature;
     c.medium.co2Atmosphere = plate.co2;
     c.medium.surfaceLight = plate.light;
-    // Un campo del fondo de un recipiente grande: periódico (la monocapa sigue más allá) y sin la
-    // pared de vidrio de la gota.
-    c.dish = false;
+    // El campo simulado es un pocillo circular de vidrio. Un recipiente real es mucho más grande
+    // (la pared de una placa de 35 mm está a 17 mm): el anillo marca el borde del campo simulado y
+    // lo dice la descripción de la placa. Medir lejos del anillo (las células de la orilla tocan
+    // vidrio, como junto a la pared real).
+    c.dish = true;
     c.cellCulture = plate.kind == PlateKind::CellCulture;
     int cells = 64;
     while (cells < 1024 && static_cast<float>(cells) * c.cellSize < plate.fieldUm)

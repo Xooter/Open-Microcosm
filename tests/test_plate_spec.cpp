@@ -78,6 +78,12 @@ TEST_CASE("PlateSpec: la versión 2 nombra bioma, seres y paquetes por id; la 1 
     CHECK(other.biome == 0);
 }
 
+TEST_CASE("PlateSpec: la placa siempre tiene la pared de vidrio, aunque un archivo viejo diga que no") {
+    PlateSpec p;
+    REQUIRE(parsePlate("plate_version=1\nbiome=0\nseed=2\ncontent=2\ndish=0\n", p));
+    CHECK(p.config.dish);
+}
+
 TEST_CASE("PlateSpec: texto sin version no es una placa") {
     PlateSpec p;
     CHECK_FALSE(parsePlate("biome=1\nseed=3\n", p));
@@ -122,7 +128,7 @@ TEST_CASE("PlateSpec: un cultivo celular preparado (DMEM en incubadora) va y vue
     const WorldConfig& c = a.config;
     CHECK(a.kind() == PlateKind::CellCulture);
     CHECK(a.wildlife() == 0.0f);
-    CHECK_FALSE(c.dish); // un campo del fondo de la placa: bordes periódicos
+    CHECK(c.dish); // la pared de vidrio se ve siempre: marca el borde del campo simulado
     CHECK(c.gridX == 256);
     CHECK(c.depth == doctest::Approx(2500.0f));
     CHECK(c.medium.temperature == doctest::Approx(37.0f));
