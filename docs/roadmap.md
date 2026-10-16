@@ -165,10 +165,11 @@ mostrar a alumnos. El lanzamiento se atrasa hasta tener las placas preparadas y 
 humano. Orden decidido:
 
 1. AGENTS.md con la visión nueva (hecho).
-2. **Placas preparadas:** tipos de placa (gota, cultivo celular, preparado vegetal), tamaño de la
-   placa, mezclas e inoculación (a planificar).
-3. **Cultivo celular humano** como primer tipo nuevo (a planificar con `/plan`).
-4. Después: preparado vegetal, modo cultivo (Gause), P1 y lanzamiento.
+2. **Fase 20** (plan completo en `docs/plan_fase20.md`): contenido como datos y paquetes
+   compartibles sin recompilar (20.0), placas preparadas con medios, recipiente y campo,
+   inoculación y mezclas (20a), y cultivo celular humano —fibroblasto, HeLa, neutrófilo— a grado
+   universitario y de investigación (20b).
+3. Después: preparado vegetal, modo cultivo (Gause), P1 y lanzamiento.
 
 ## Fase MVP — P0: herramienta de laboratorio
 
