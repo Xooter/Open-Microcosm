@@ -29,11 +29,17 @@ fuente = "Applied Water Science (2013), doi:10.1007/s13201-013-0130-1: P. caudat
 estimacion = true
 
 [paramecium.aclaramiento]
-# Aclaramiento = ingestión / concentración de presas (el mismo estudio).
-valor = 106.0
-unidad = "nL/h"
-temperatura = 25.0
-fuente = "Applied Water Science (2013), doi:10.1007/s13201-013-0130-1: aclaramiento de P. caudatum ~106 nL por individuo y por hora con S. typhi. Temperatura sin verificar (se asume 25 °C)."
+# Aclaramiento con POCAS presas (la pendiente inicial de la respuesta funcional de tipo II). No hay
+# una medición directa para P. caudatum: se usa la escala general del zooplancton, ~10⁶ volúmenes
+# corporales por día, que los ciliados superan 2 a 4 veces (Hansen, Bjørnsen y Hansen 1997, Limnol.
+# Oceanogr. 42: 687-704; Kiørboe 2011, Biol. Rev. 86: 311-339): ~10⁵ por hora × 2,36·10⁵ µm³ (el
+# esferoide de seres.toml). Consistente con el estudio de la ingestión: su aclaramiento medido,
+# 106 nL/h, es a ~2,5·10⁸ bacterias/mL, donde con este valor la ingestión ya está saturada (×0,996),
+# y a ~10⁶/mL cae a la mitad, como informa el mismo estudio para las concentraciones bajas.
+valor = 23.6
+unidad = "uL/h"
+temperatura = 20.0
+fuente = "Escala de volúmenes corporales (~10^5 por hora en ciliados; Hansen et al. 1997, Limnol. Oceanogr. 42: 687-704; Kiørboe 2011, Biol. Rev. 86: 311-339) con el volumen de P. caudatum. Medido a alta densidad: 106 nL/h a ~2,5·10^8 bacterias/mL (Applied Water Science 2013, doi:10.1007/s13201-013-0130-1)."
 estimacion = true
 
 [amoeba.crecimiento_maximo]
@@ -80,6 +86,26 @@ estimacion = true
 # J. Phycol. 12: 375-383, doi 10.1111/j.1529-8817.1976.tb02860.x). SIN VERIFICAR contra las
 # tablas originales: confirmado solo que Asterionella tiene la K de P más baja (gana con P
 # limitante) y Cyclotella la de Si más baja (gana con Si limitante).
+[paramecium_aurelia.ingestion_maxima]
+# Sin medición directa: la de P. caudatum escalada por alometría con el volumen celular (la
+# ingestión específica máxima del zooplancton escala ~V^−0,23-−0,25: Hansen, Bjørnsen y Hansen
+# 1997, Limnol. Oceanogr. 42: 687-704). Volúmenes de los esferoides de seres.toml: P. aurelia
+# 1,09·10⁵ µm³ contra 2,36·10⁵ (0,46), ×0,46^0,75 = 0,56.
+valor = 14600.0
+unidad = "bacterias/h"
+temperatura = 25.0
+fuente = "Escalada por alometría (V^0,75; Hansen et al. 1997) desde P. caudatum (Applied Water Science 2013, doi:10.1007/s13201-013-0130-1)."
+estimacion = true
+
+[paramecium_aurelia.aclaramiento]
+# El de P. caudatum escalado como el aclaramiento específico máximo del zooplancton: ∝ V^−0,23
+# (Hansen et al. 1997), o sea aclaramiento ∝ V^0,77: 23,6 × 0,46^0,77 = 13,0 µL/h.
+valor = 13.0
+unidad = "uL/h"
+temperatura = 20.0
+fuente = "Escalado desde P. caudatum con el exponente del aclaramiento específico máximo del zooplancton (V^-0,23; Hansen, Bjørnsen y Hansen 1997, Limnol. Oceanogr. 42: 687-704)."
+estimacion = true
+
 [asterionella.crecimiento_maximo]
 valor = 1.1
 unidad = "1/dia"
