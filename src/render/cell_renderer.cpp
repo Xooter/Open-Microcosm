@@ -42,7 +42,6 @@ constexpr Color kTrichocyst = {90, 96, 80, 150};
 constexpr Color kArmor = {150, 112, 62, 200};   // lórica/testa con hierro y manganeso
 constexpr Color kDischarge = {80, 80, 70, 170};
 constexpr Color kCystWall = {110, 96, 70, 220};
-constexpr Color kGoldenPlastid = {176, 140, 50, 210};   // fucoxantina (diatomeas)
 constexpr Color kFrustule = {150, 128, 80, 220};
 constexpr Color kColonyCell = {80, 150, 60, 210};
 constexpr Color kChytrid = {150, 140, 110, 230};      // esporangio de quitridio (pared refringente)
@@ -318,6 +317,60 @@ void CellRenderer::composite(const Camera2D& camera) {
 }
 
 namespace {
+
+// Estilo de dibujo de cada ser: un nombre en sus datos ([ser.apariencia] estilo; ver
+// drawingStyles en bio/species). Un ser nuevo elige cualquiera sin compilar; uno nuevo es código acá.
+enum class CellStyle : std::uint8_t {
+    Ciliate, Flagellate, Amoeboid, RostrumFlagella, GirdlesProboscis, HelicalRibbon, AxialPlate,
+    StellatePlastids, ReticulatePlastid, Frustule, SphericalColony, PlateColony, PeristomeCrown,
+    MembranelleCrown, CapitateTentacles, Cirri, Neck, TwinFlagella, Yeast
+};
+
+CellStyle resolveStyle(SpeciesId sid) {
+    const SpeciesInfo& info = speciesInfo(sid);
+    const std::string_view name = info.style;
+    constexpr std::pair<const char*, CellStyle> kNames[] = {
+        {"ciliado", CellStyle::Ciliate},
+        {"flagelado", CellStyle::Flagellate},
+        {"ameboide", CellStyle::Amoeboid},
+        {"rostro_de_flagelos", CellStyle::RostrumFlagella},
+        {"cinturones_y_proboscide", CellStyle::GirdlesProboscis},
+        {"cinta_helicoidal", CellStyle::HelicalRibbon},
+        {"placa_axial", CellStyle::AxialPlate},
+        {"plastos_estrellados", CellStyle::StellatePlastids},
+        {"plasto_reticulado", CellStyle::ReticulatePlastid},
+        {"frustula", CellStyle::Frustule},
+        {"colonia_esferica", CellStyle::SphericalColony},
+        {"colonia_plana", CellStyle::PlateColony},
+        {"corona_peristomal", CellStyle::PeristomeCrown},
+        {"corona_de_membranelas", CellStyle::MembranelleCrown},
+        {"tentaculos_capitados", CellStyle::CapitateTentacles},
+        {"cirros", CellStyle::Cirri},
+        {"cuello_extensible", CellStyle::Neck},
+        {"dos_flagelos", CellStyle::TwinFlagella},
+        {"levadura", CellStyle::Yeast}};
+    for (const auto& [key, style] : kNames)
+        if (name == key)
+            return style;
+    // Sin estilo propio: el de su locomoción.
+    switch (info.locomotion) {
+    case LocomotionType::Flagellum: return CellStyle::Flagellate;
+    case LocomotionType::Pseudopod: return CellStyle::Amoeboid;
+    case LocomotionType::Cilia: break;
+    }
+    return CellStyle::Ciliate;
+}
+
+// Resuelto una vez por ser (el render es de un solo hilo; se agranda si un paquete agrega seres).
+CellStyle styleOf(SpeciesId sid) {
+    static std::vector<CellStyle> cache;
+    const auto k = static_cast<std::size_t>(sid);
+    while (cache.size() < static_cast<std::size_t>(speciesCount()))
+        cache.push_back(resolveStyle(static_cast<SpeciesId>(cache.size())));
+    return cache[k];
+}
+
+bool isColony(CellStyle s) { return s == CellStyle::SphericalColony || s == CellStyle::PlateColony; }
 
 Vec2 ringPos(const BodyParticles& bp, const RingBody& body, std::size_t i) {
     const std::uint32_t s = body.ring[i % body.ring.size()];
@@ -679,13 +732,14 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 return;
 
             const SpeciesId sid = species ? species->id : SpeciesId::Paramecium;
-            if (loco && sid == SpeciesId::Trichonympha) {
+            const CellStyle style = styleOf(sid);
+            if (loco && style == CellStyle::RostrumFlagella) {
                 drawCilia(bp, body, time, px, CiliaPattern::Rostrum, 2.4f); // miles de flagelos
                 drawCilia(bp, body, time, px, CiliaPattern::Rostrum, 1.5f);
             } else if (cyst) { // quiste: pared gruesa y sin apéndices
                 for (std::size_t i = 0; i < n; ++i)
                     fastLine(toRay(body.poly[i]), toRay(body.poly[(i + 1) % n]), std::max(2.5f, 3.0f * px), kCystWall);
-            } else if (loco && sid == SpeciesId::Didinium) {
+            } else if (loco && style == CellStyle::GirdlesProboscis) {
                 drawCilia(bp, body, time, px, CiliaPattern::Girdles);
                 // Probóscide: el cono del polo anterior con el que ataca.
                 float half = 0.0f;
@@ -695,32 +749,32 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 const Vec2 tip = body.centroid + h * half;
                 fastTriangle(toRay(tip + h * 8.0f), toRay(tip + Vec2{-h.y, h.x} * 5.0f), toRay(tip - Vec2{-h.y, h.x} * 5.0f), kMouth);
                 fastTriangle(toRay(tip + h * 8.0f), toRay(tip - Vec2{-h.y, h.x} * 5.0f), toRay(tip + Vec2{-h.y, h.x} * 5.0f), kMouth);
-            } else if (sid == SpeciesId::Spirogyra) {
+            } else if (style == CellStyle::HelicalRibbon) {
                 drawSpiralPlastid(body, time);
-            } else if (sid == SpeciesId::Mougeotia) {
+            } else if (style == CellStyle::AxialPlate) {
                 const Metabolism* mm = reg.try_get<Metabolism>(e);
                 drawPlatePlastid(body, mm ? mm->light : 0.5f);
-            } else if (sid == SpeciesId::Zygnema) {
+            } else if (style == CellStyle::StellatePlastids) {
                 drawStellatePlastids(body, time);
-            } else if (sid == SpeciesId::Oedogonium && reg.all_of<Zoospore>(e)) {
+            } else if (style == CellStyle::ReticulatePlastid && reg.all_of<Zoospore>(e)) {
                 drawCilia(bp, body, time, px, CiliaPattern::Crown, 1.6f); // corona de flagelos
-            } else if (sid == SpeciesId::Oedogonium) {
+            } else if (style == CellStyle::ReticulatePlastid) {
                 const Lineage* lin = reg.try_get<Lineage>(e);
                 drawReticulatePlastid(body, lin ? static_cast<int>(std::min<std::uint32_t>(4, lin->generation)) : 0, px);
-            } else if (sid == SpeciesId::Navicula || sid == SpeciesId::Asterionella || sid == SpeciesId::Cyclotella) {
+            } else if (style == CellStyle::Frustule) {
                 drawFrustule(body, px);
-            } else if (sid == SpeciesId::Volvox) {
+            } else if (style == CellStyle::SphericalColony) {
                 const Metabolism* vm = reg.try_get<Metabolism>(e);
                 const float growth = vm && vm->birthBiomass > 0.0f ? vm->biomass / vm->birthBiomass - 1.0f : 0.0f;
                 drawVolvox(bp, body, growth, speciesInfo(sid).colonyDaughters, time, px);
-            } else if (sid == SpeciesId::Pediastrum) {
+            } else if (style == CellStyle::PlateColony) {
                 drawPediastrum(body, px);
-            } else if (loco && sid == SpeciesId::Vorticella) {
+            } else if (loco && style == CellStyle::PeristomeCrown) {
                 drawCilia(bp, body, time, px, reg.all_of<Telotroch>(e) ? CiliaPattern::Posterior : CiliaPattern::Crown, 1.3f);
-            } else if (loco && sid == SpeciesId::Stentor) {
+            } else if (loco && style == CellStyle::MembranelleCrown) {
                 drawCilia(bp, body, time, px, CiliaPattern::Crown, 2.0f); // membranelas adorales
                 drawCilia(bp, body, time, px, CiliaPattern::All, 0.4f);
-            } else if (loco && sid == SpeciesId::Podophrya) {
+            } else if (loco && style == CellStyle::CapitateTentacles) {
                 if (reg.all_of<Telotroch>(e)) {
                     drawCilia(bp, body, time, px, CiliaPattern::Posterior); // larva nadadora
                 } else {
@@ -735,7 +789,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                         drawCircleFast(toRay(to), std::max(1.2f, 1.5f * px), kMouth, px);
                     }
                 }
-            } else if (loco && sid == SpeciesId::Euplotes) {
+            } else if (loco && style == CellStyle::Cirri) {
                 // Cirros: haces gruesos de cilios fusionados sobre los que "camina".
                 for (std::size_t i = 0; i < n; i += std::max<std::size_t>(1, n / 10)) {
                     const Vec2 b = ringPos(bp, body, i);
@@ -744,7 +798,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     const Vec2 d = rotate(o, std::cos(sw), std::sin(sw));
                     fastLine(toRay(b), toRay(b + d * 9.0f), std::max(1.2f, 1.5f * px), kCilia);
                 }
-            } else if (loco && sid == SpeciesId::Lacrymaria) {
+            } else if (loco && style == CellStyle::Neck) {
                 drawCilia(bp, body, time, px, CiliaPattern::All, 0.6f);
                 // Cuello extensible con la punta ciliada (toxicistos).
                 if (const Neck* neck = reg.try_get<Neck>(e)) {
@@ -757,22 +811,23 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     fastLine(toRay(head), toRay(tip), std::max(1.5f, 2.0f * px), kMembrane);
                     drawCircleFast(toRay(tip), std::max(2.5f, 2.0f * px), kMouth, px);
                 }
-            } else if (loco && sid == SpeciesId::Chlamydomonas) {
+            } else if (loco && style == CellStyle::TwinFlagella) {
                 drawTwinFlagella(body, *loco, time, px);
-            } else if (loco && loco->type == LocomotionType::Cilia) {
+            } else if (loco && style == CellStyle::Ciliate) {
                 drawCilia(bp, body, time, px);
                 // Citostoma: la boca al final del surco oral.
                 const Vec2 m = ringPos(bp, body, loco->mouthRing);
                 const Vec2 in = outwardAt(bp, body, loco->mouthRing) * -1.0f;
                 drawCircleFast(toRay(m + in * 2.5f), 2.5f, kMouth, px);
             }
-            if (!cyst && loco && loco->type == LocomotionType::Flagellum && sid != SpeciesId::Chlamydomonas &&
-                sid != SpeciesId::Volvox && sid != SpeciesId::Trichonympha && sid != SpeciesId::Oedogonium)
+            if (!cyst && loco && loco->type == LocomotionType::Flagellum && style == CellStyle::Flagellate)
                 drawFlagellum(bp, body, *loco, time, px);
 
             // Colonias (Volvox, Pediastrum): el interior es matriz gelatinosa, sin anatomía de una
             // sola célula.
-            const bool colony = sid == SpeciesId::Volvox || sid == SpeciesId::Pediastrum;
+            const bool colony = isColony(style);
+            const SpeciesInfo& look = speciesInfo(sid);
+            const Color plastid = look.plastidColorSet ? Color{look.plastidColor[0], look.plastidColor[1], look.plastidColor[2], kChloroplast.a} : kChloroplast;
             // Gránulos y organelos del citoplasma, por tipo.
             const bool organelles = level >= DetailLevel::Detail;
             const BodyPlan& plan = speciesPlan(sid);
@@ -816,10 +871,11 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                                      static_cast<float>(s % 180), kMitochondrion);
                     break;
                 case OrganelleTag::Chloroplast:
-                    if (sid == SpeciesId::Spirogyra || sid == SpeciesId::Mougeotia || sid == SpeciesId::Zygnema ||
-                        (sid == SpeciesId::Oedogonium && !reg.all_of<Zoospore>(e)))
+                    if (style == CellStyle::HelicalRibbon || style == CellStyle::AxialPlate ||
+                        style == CellStyle::StellatePlastids ||
+                        (style == CellStyle::ReticulatePlastid && !reg.all_of<Zoospore>(e)))
                         break; // su cloroplasto se dibuja entero (cinta, placa, estrellas o red)
-                    drawCircleFast({bp.x[s], bp.y[s]}, r, (sid == SpeciesId::Navicula || sid == SpeciesId::Asterionella || sid == SpeciesId::Cyclotella) ? kGoldenPlastid : kChloroplast, px);
+                    drawCircleFast({bp.x[s], bp.y[s]}, r, plastid, px);
                     break;
                 case OrganelleTag::Lysosome: {
                     Color fill = kLysosome; // pH ~4,7: los lisosomas son ácidos
@@ -915,7 +971,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             }
             if (const ChytridInfection* inf = reg.try_get<ChytridInfection>(e))
                 drawChytrids(body, *inf, px);
-            if (sid == SpeciesId::Candida)
+            if (speciesInfo(sid).budding) // gemación: la yema que crece en un polo
                 if (const Metabolism* ym = reg.try_get<Metabolism>(e); ym && ym->birthBiomass > 0.0f)
                     drawBud(body, ym->biomass / ym->birthBiomass - 1.0f, px);
             if (dividing && dividing->nucleus2 != ~0u) {
@@ -939,7 +995,7 @@ void CellRenderer::drawFluorescence(const World& world, const Camera2D&, Rectang
     for (const auto [e, body, anatomy] : reg.view<RingBody, CellAnatomy>().each()) {
         const Species* species = reg.try_get<Species>(e);
         const SpeciesId sid = species ? species->id : SpeciesId::Paramecium;
-        if (sid == SpeciesId::Volvox || sid == SpeciesId::Pediastrum)
+        if (isColony(styleOf(sid)))
             continue;
         const Dividing* dividing = reg.try_get<Dividing>(e);
         forEachImage(world, body, view, [&] {

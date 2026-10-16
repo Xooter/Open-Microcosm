@@ -3353,13 +3353,16 @@ entt::entity World::conjugationPartner(entt::entity cell) const {
         return entt::null;
     const Locomotion* loco = registry_.try_get<Locomotion>(cell);
     const Heredity* h = registry_.try_get<Heredity>(cell);
-    if (!loco || !h || loco->type != LocomotionType::Cilia)
+    // Solo entre células de la misma especie que se conjuga (los ciliados; en Paramecium, además,
+    // del mismo singen: el modelo no distingue singenes).
+    const SpeciesId species = speciesOfEntity(registry_, cell);
+    if (!loco || !h || !speciesInfo(species).conjugates)
         return entt::null;
     const RingBody& body = registry_.get<RingBody>(cell);
     entt::entity best = entt::null;
     float bestDist = 40.0f; // [µm] entre membranas, aproximado por las cajas
     for (auto [e, other, ol, oh] : registry_.view<RingBody, Locomotion, Heredity>().each()) {
-        if (e == cell || ol.type != LocomotionType::Cilia || registry_.any_of<Conjugating, Dividing>(e))
+        if (e == cell || speciesOfEntity(registry_, e) != species || registry_.any_of<Conjugating, Dividing>(e))
             continue;
         if (oh.genome[Gene::MatingType] == h->genome[Gene::MatingType])
             continue; // mismo tipo de apareamiento: no se reconocen como pareja

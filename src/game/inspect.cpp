@@ -322,8 +322,8 @@ Inspection inspectCell(const World& w, entt::entity e) {
         add(s, "Reproduccion", repro);
         if (info.zoosporeChance > 0.0f)
             add(s, "", "tambien libera zoosporas nadadoras que se fijan y forman filamentos nuevos");
-        if (sid == SpeciesId::Paramecium)
-            add(s, "", "ademas se conjuga con otra celula de distinto tipo de apareamiento");
+        if (info.conjugates)
+            add(s, "", "ademas se conjuga con otra celula de su especie y de distinto tipo de apareamiento");
     }
 
     // --- Metabolismo.
@@ -367,7 +367,7 @@ Inspection inspectCell(const World& w, entt::entity e) {
         add(s, "Tamano", fmt("%.0f x %.0f um (area %.0f um2)", 2.0f * half, 2.0f * width, std::abs(body.restArea)));
         if (loco)
             add(s, "Velocidad", fmt("%.0f um/s%s", std::abs(loco->speed), loco->speed < -1.0f ? " (hacia atras)" : ""));
-        if (her && sid == SpeciesId::Paramecium)
+        if (her && info.conjugates)
             add(s, "Apareamiento", her->genome[Gene::MatingType] > 0.5f ? "tipo II" : "tipo I");
     }
 

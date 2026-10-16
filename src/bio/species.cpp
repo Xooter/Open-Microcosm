@@ -4,6 +4,7 @@
 
 #include <toml++/toml.hpp>
 
+#include <algorithm>
 #include <deque>
 #include <mutex>
 
@@ -15,7 +16,7 @@ namespace {
 
 struct Entry {
     SpeciesInfo info;
-    std::string key, name, description, plan, pack;
+    std::string key, name, description, plan, style, pack;
     // Referencias sin resolver (ids o etiquetas): se resuelven contra todo lo cargado.
     std::vector<std::string> prey, mouthPrey, flee;
 };
@@ -75,11 +76,12 @@ constexpr std::pair<const char*, CellWall> kWall[] = {{"ninguna", CellWall::None
 constexpr const char* kBeingKeys[] = {
     "id", "nombre", "descripcion", "plan", "etiquetas", "locomocion", "alimentacion", "velocidad_relativa", "presas", "presas_boca",
     "huye_de", "quimiocinesis", "trampa_acida", "fototaxis", "fotosintesis_relativa", "divisiones_por_ciclo",
-    "enquista", "cantidad_inicial", "sesil", "largo_tallo", "espasmonema", "camina", "alcance_tentaculos",
+    "enquista", "conjugacion", "cantidad_inicial", "sesil", "largo_tallo", "espasmonema", "camina", "alcance_tentaculos",
     "alcance_cuello", "manipulacion_horas", "cloroplastos", "desliza_por_rafe", "auxotrofa_b12", "frustula",
     "filamento", "celulas_filamento", "fragmentacion_por_hora", "zoosporas", "colonias_hijas",
     "madre_muere_al_liberar", "masa_seca_relativa", "gemacion", "anaerobia", "boca_posterior", "ciclosis", "ph",
-    "temperatura", "salinidad_max", "reserva", "pared", "genoma", "forma"};
+    "temperatura", "salinidad_max", "reserva", "pared", "genoma", "forma", "apariencia"};
+constexpr const char* kLookKeys[] = {"estilo", "color_plastos"};
 constexpr const char* kShapeKeys[] = {"semieje_mayor", "semieje_menor", "memoria_forma", "color",
                                       "nucleo",        "cuadratura",    "afinamiento"};
 
@@ -195,6 +197,7 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
     r.num("fotosintesis_relativa", s.photosynthesisScale);
     r.num("divisiones_por_ciclo", s.fissions);
     r.flag("enquista", s.encysts);
+    r.flag("conjugacion", s.conjugates);
     r.num("cantidad_inicial", s.initialCount);
     r.flag("sesil", s.sessile);
     r.num("largo_tallo", s.stalkLength);
@@ -239,6 +242,29 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
             }
         } else {
             r.errors.push_back(r.where + ": 'genoma' tiene que ser una tabla {gen = valor}");
+        }
+    }
+    if (const toml::table* look = t.get("apariencia") ? t.get("apariencia")->as_table() : nullptr) {
+        for (const auto& [k, v] : *look)
+            if (!known(k.str(), kLookKeys))
+                warnings.push_back(r.where + ": clave desconocida en la apariencia '" + std::string(k.str()) + "'");
+        if (const toml::node* st = look->get("estilo")) {
+            e.style = st->value<std::string>().value_or("");
+            const auto& styles = drawingStyles();
+            if (std::find(styles.begin(), styles.end(), e.style) == styles.end()) {
+                warnings.push_back(r.where + ": estilo de dibujo desconocido '" + e.style + "' (se usa el de su locomoción)");
+                e.style.clear();
+            }
+        }
+        if (const toml::node* c = look->get("color_plastos")) {
+            const toml::array* a = c->as_array();
+            if (!a || a->size() != 3) {
+                r.errors.push_back(r.where + ": 'color_plastos' tiene que ser [r, g, b] (0–255)");
+            } else {
+                s.plastidColorSet = true;
+                for (std::size_t i = 0; i < 3; ++i)
+                    s.plastidColor[i] = static_cast<std::uint8_t>(std::clamp((*a)[i].value<std::int64_t>().value_or(0), std::int64_t{0}, std::int64_t{255}));
+            }
         }
     }
     const toml::table* shape = t.get("forma") ? t.get("forma")->as_table() : nullptr;
@@ -307,6 +333,7 @@ void resolve() {
         e.info.name = e.name.c_str();
         e.info.description = e.description.c_str();
         e.info.plan = e.plan.c_str();
+        e.info.style = e.style.c_str();
         e.info.prey = setOf(e, e.prey, "presas");
         e.info.mouthPrey = setOf(e, e.mouthPrey, "presas_boca");
         e.info.flee = setOf(e, e.flee, "huye_de");
@@ -352,6 +379,16 @@ void ensureBase() {
 }
 
 } // namespace
+
+const std::vector<std::string>& drawingStyles() {
+    static const std::vector<std::string> styles = {
+        "ciliado",          "flagelado",           "ameboide",          "rostro_de_flagelos",
+        "cinturones_y_proboscide", "cinta_helicoidal", "placa_axial",   "plastos_estrellados",
+        "plasto_reticulado", "frustula",           "colonia_esferica",  "colonia_plana",
+        "corona_peristomal", "corona_de_membranelas", "tentaculos_capitados", "cirros",
+        "cuello_extensible", "dos_flagelos",        "levadura"};
+    return styles;
+}
 
 bool loadSpeciesFile(const std::string& path, const std::string& pack, std::string* error) {
     std::lock_guard<std::recursive_mutex> lock(gMutex);

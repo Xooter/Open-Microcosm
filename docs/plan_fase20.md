@@ -1,8 +1,10 @@
 # Plan — Fase 20: contenido como datos, placas preparadas y cultivo celular humano
 
 Primera fase de la visión nueva (AGENTS.md, «Visión»): BioGame como herramienta de investigación y
-de estudio. Avance: ✅ hecho · 🟡 en parte (se dice qué falta) · sin marca: pendiente. Plan del 15/10/2026, aprobado en sus decisiones; se implementa en el orden de abajo,
+de estudio. Plan del 15/10/2026, aprobado en sus decisiones; se implementa en el orden de abajo,
 con commits chicos y tests básicos en cada paso. El lanzamiento espera a que esta fase esté hecha.
+
+Avance: ✅ hecho · 🟡 en parte (se dice qué falta) · sin marca: pendiente.
 
 ## Decisiones tomadas
 
@@ -67,9 +69,12 @@ sistemas paralelos (los seres actuales se migran, no conviven con un sistema nue
    textos de la ficha y la enciclopedia, y **apariencia** (colores, organelos visibles, estilo de
    dibujo por nombre). Lo que hoy es código por especie en el render pasa a estilos con nombre
    (`"cinta_helicoidal"`, `"frustula"`, `"colonia_volvox"`…) que los datos eligen.
-   *Hecho:* morfología, mecanismos, química (reserva y pared), genoma y etiquetas. Falta:
-   fisiología integrada (sigue en `fisiologia.toml`, por nombre), plan corporal, textos y
-   apariencia (siguen en código por especie).
+   *Hecho:* morfología, mecanismos, química (reserva y pared), genoma, etiquetas, descripción
+   (ficha y enciclopedia), plan corporal (`planes.toml`, un paquete puede traer planes nuevos),
+   apariencia (`[ser.apariencia]`: estilo de dibujo con nombre y color de los plastos; el render ya
+   no distingue especies, verificado con capturas) y conjugación (dato; ahora solo dentro de la
+   especie: antes cualquier ciliado podía ser pareja). Falta: integrar la fisiología (sigue en
+   `fisiologia.toml`, por nombre).
 4. ✅ **Dietas por etiquetas:** cada ser tiene etiquetas (`bacteria`, `ciliado`, `alga_verde`,
    `celula_humana`…) y las dietas y huidas son conjuntos de etiquetas, sin límite de cantidad.
 5. 🟡 **Migración de lo existente:** las 24 especies, los minerales y los biomas pasan al paquete de

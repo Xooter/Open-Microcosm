@@ -101,6 +101,7 @@ struct SpeciesInfo {
     float photosynthesisScale = 1.0f; // tasa fotosintética relativa
     int fissions = 1;               // 1: fisión binaria; 2: palintomía en 4 hijas
     bool encysts = false;           // forma quistes cuando pasa hambre
+    bool conjugates = false;        // conjugación con otra célula de la misma especie (ciliados)
     int initialCount = 0;           // individuos al empezar una gota
     // Sésiles: viven fijas al vidrio o a un detrito por un tallo (o pie).
     bool sessile = false;
@@ -144,7 +145,14 @@ struct SpeciesInfo {
     // Genes que difieren de los de su locomoción (p. ej. sin tricocistos, con testa).
     std::vector<std::pair<Gene, float>> genome;
     std::vector<std::string> tags;  // grupos (taxonómicos o funcionales): dietas, hospedadores
+    // Apariencia: estilo de dibujo con nombre (los implementa el render; "" = el de su locomoción)
+    // y color de los plastos (por omisión, el verde de la clorofila).
+    const char* style = "";
+    bool plastidColorSet = false;
+    std::uint8_t plastidColor[3] = {0, 0, 0};
 };
+// Estilos de dibujo que el render sabe hacer (para validar los datos).
+const std::vector<std::string>& drawingStyles();
 
 const SpeciesInfo& speciesInfo(SpeciesId id);
 SpeciesId playerSpecies(LocomotionType type);

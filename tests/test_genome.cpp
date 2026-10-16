@@ -198,3 +198,15 @@ TEST_CASE("conjugación: tipos de apareamiento distintos intercambian genes y qu
     CHECK((ra[Gene::Motor] == 1.8f || ra[Gene::Motor] == 0.6f));
 }
 
+
+TEST_CASE("conjugación: solo entre células de la misma especie") {
+    World world(geneWorld());
+    Genome other = speciesGenome(SpeciesId::Euplotes);
+    other[Gene::MatingType] = 1.0f; // tipo distinto: lo único que faltaría si fuera la misma especie
+    const entt::entity a = world.spawnOrganism(SpeciesId::Paramecium, {1000.0f, 470.0f}, speciesGenome(SpeciesId::Paramecium), 0);
+    world.spawnOrganism(SpeciesId::Euplotes, {1000.0f, 535.0f}, other, 0);
+    CHECK((world.conjugationPartner(a) == entt::null));
+    // Una especie que no se conjuga (alga) tampoco busca pareja.
+    const entt::entity alga = world.spawnOrganism(SpeciesId::Chlamydomonas, {400.0f, 400.0f}, speciesGenome(SpeciesId::Chlamydomonas), 0);
+    CHECK((world.conjugationPartner(alga) == entt::null));
+}
