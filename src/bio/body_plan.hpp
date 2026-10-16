@@ -4,6 +4,9 @@
 
 #include <cstdint>
 #include <span>
+#include <string>
+#include <string_view>
+#include <vector>
 
 // Plan corporal: qué estructuras tiene cada tipo de ser y de qué tamaño real son. Es la jerarquía
 // biológica que recorre el zoom semántico (placa > organismo > célula > estructura) y la ficha.
@@ -125,5 +128,13 @@ const BodyPlan& virusPlan(VirusKind kind);
 // Fago de la simulación (los fagos líticos de `World::phage_`, tipo T4).
 inline constexpr VirusKind kSimulatedPhage = VirusKind::T4Like;
 
-// Protistas, algas y levaduras.
+// Protistas, algas, levaduras y células: el plan que el ser declara (`plan` en sus datos); si no
+// existe, uno mínimo (membrana y núcleo).
 const BodyPlan& speciesPlan(SpeciesId id);
+// Planes como datos (planes.toml de cada paquete): se agregan a los cargados; los de fábrica se
+// cargan en el primer uso. Los errores quedan en `bodyPlanWarnings`.
+bool loadBodyPlansFile(const std::string& path, const std::string& pack, std::string* error = nullptr);
+bool loadBodyPlansText(const std::string& text, const std::string& source, const std::string& pack,
+                       std::string* error = nullptr);
+const BodyPlan* findBodyPlan(std::string_view id);
+const std::vector<std::string>& bodyPlanWarnings();

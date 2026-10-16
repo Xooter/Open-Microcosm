@@ -1,5 +1,6 @@
 // Contenido como datos (fase 20.0): los seres se cargan de paquetes TOML. Suite "paquetes": corre
 // en su propio proceso (cargar seres de prueba cambia el registro global que usan los demás tests).
+#include "bio/body_plan.hpp"
 #include "bio/species.hpp"
 #include "core/paths.hpp"
 
@@ -127,4 +128,45 @@ semieje_menor = 10.0
     std::string error;
     CHECK_FALSE(loadSpeciesText("[[ser]\nid = ", "roto.biopack", "roto", &error));
     CHECK_FALSE(error.empty());
+}
+
+TEST_CASE("contenido: los planes corporales son datos; un paquete puede traer el suyo" * doctest::test_suite("paquetes")) {
+    CHECK(bodyPlanWarnings().empty());
+    CHECK(std::string(speciesPlan(SpeciesId::Paramecium).name) == "ciliado");
+    CHECK(speciesPlan(SpeciesId::Paramecium).has(StructureKind::ContractileVacuole));
+    CHECK(std::string(speciesPlan(SpeciesId::Trichonympha).name) == "parabasalido");
+    CHECK(speciesPlan(SpeciesId::Trichonympha).has(StructureKind::Hydrogenosome));
+    CHECK_FALSE(speciesPlan(SpeciesId::Trichonympha).has(StructureKind::Mitochondrion));
+    REQUIRE(loadBodyPlansText(R"(
+[[plan]]
+id = "celula_con_nucleolos"
+nombre = "celula con nucleolos"
+estructuras = [
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "membrana" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "nucleo" },
+    { tipo = "nucleolo", fuente = "declarada", disposicion = "interior", largo = 2.0, ancho = 2.0, cantidad = 3, campo_claro = true, nombre = "nucleolos" },
+]
+)", "planes.biopack", "prueba"));
+    REQUIRE(loadSpeciesText(R"(
+[[ser]]
+id = "con_plan_propio"
+nombre = "Con plan propio"
+locomocion = "pseudopodo"
+plan = "celula_con_nucleolos"
+[ser.forma]
+semieje_mayor = 20.0
+semieje_menor = 15.0
+[[ser]]
+id = "plan_inexistente"
+nombre = "Plan inexistente"
+locomocion = "pseudopodo"
+plan = "no_existe"
+[ser.forma]
+semieje_mayor = 20.0
+semieje_menor = 15.0
+)", "seres.biopack", "prueba"));
+    const BodyPlan& own = speciesPlan(*findSpecies("con_plan_propio"));
+    REQUIRE(own.find(StructureKind::Nucleolus));
+    CHECK(own.find(StructureKind::Nucleolus)->count == 3);
+    CHECK(std::string(speciesPlan(*findSpecies("plan_inexistente")).name) == "eucariota"); // el mínimo
 }

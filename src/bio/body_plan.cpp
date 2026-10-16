@@ -1,5 +1,14 @@
 #include "bio/body_plan.hpp"
 
+#include "core/paths.hpp"
+
+#include <toml++/toml.hpp>
+
+#include <deque>
+#include <mutex>
+#include <optional>
+#include <utility>
+
 
 namespace {
 
@@ -75,105 +84,14 @@ constexpr StructureSpec kT4[] = {
 };
 
 // --- Eucariotas ----------------------------------------------------------------------------
-
-// Partes comunes. RE, Golgi y ribosomas libres existen en todos estos eucariotas pero no se simulan.
-// Ribosomas 80S (~25 nm): del orden de 10³–10⁴ por µm³ de citoplasma en células eucariotas en
-// crecimiento (se usa 3·10³; varía con la especie y el estado).
-#define BIO_EUK_ENDOMEMBRANES                                                                        \
-    {K::EndoplasmicReticulum, S::Declared, A::Perinuclear, 3.0f, 0.05f, 1, false, "reticulo endoplasmico rugoso"}, \
-        {K::Golgi, S::Declared, A::Perinuclear, 1.0f, 0.3f, 1, false, "aparato de Golgi (un dictiosoma)"},          \
-        {K::Ribosomes, S::Declared, A::Interior, 0.025f, 0.025f, 0, false, "ribosomas 80S", 3000.0f}
-
-constexpr StructureSpec kCiliate[] = {
-    {K::PlasmaMembrane, S::Simulated, A::Envelope, 0.0f, 0.0f, 0, true, "pelicula"},
-    {K::Nucleus, S::Simulated, A::Interior, 0.0f, 0.0f, 1, true, "macronucleo"},
-    {K::Nucleolus, S::Declared, A::Interior, 1.5f, 1.5f, 1, false, "nucleolos"},
-    {K::Mitochondrion, S::Simulated, A::Interior, 2.0f, 0.5f, 0, false, "mitocondrias"},
-    {K::Lysosome, S::Simulated, A::Interior, 0.0f, 0.0f, 0, false, "lisosomas"},
-    {K::FoodVacuole, S::Simulated, A::Interior, 0.0f, 0.0f, 0, true, "vacuolas digestivas"},
-    {K::ContractileVacuole, S::Simulated, A::Interior, 0.0f, 0.0f, 1, true, "vacuola contractil"},
-    {K::StorageGranule, S::Simulated, A::Interior, 0.0f, 0.0f, 0, true, "granulos de glucogeno"},
-    BIO_EUK_ENDOMEMBRANES,
-};
-
-constexpr StructureSpec kAmoeba[] = {
+// Los planes de protistas, algas, levaduras y células son datos (assets/content/base/planes.toml y
+// los paquetes del usuario). Si un ser pide un plan que no existe, se usa el mínimo (membrana y
+// núcleo) y se avisa.
+constexpr StructureSpec kMinimalEukaryote[] = {
     {K::PlasmaMembrane, S::Simulated, A::Envelope, 0.0f, 0.0f, 0, true, "membrana plasmatica"},
     {K::Nucleus, S::Simulated, A::Interior, 0.0f, 0.0f, 1, true, "nucleo"},
-    {K::Nucleolus, S::Declared, A::Interior, 1.5f, 1.5f, 1, false, "nucleolo"},
-    {K::Mitochondrion, S::Simulated, A::Interior, 2.0f, 0.5f, 0, false, "mitocondrias"},
-    {K::Lysosome, S::Simulated, A::Interior, 0.0f, 0.0f, 0, false, "lisosomas"},
-    {K::FoodVacuole, S::Simulated, A::Interior, 0.0f, 0.0f, 0, true, "vacuolas digestivas"},
-    {K::ContractileVacuole, S::Simulated, A::Interior, 0.0f, 0.0f, 1, true, "vacuola contractil"},
-    BIO_EUK_ENDOMEMBRANES,
 };
 
-constexpr StructureSpec kEuglena[] = {
-    {K::PlasmaMembrane, S::Simulated, A::Envelope, 0.0f, 0.0f, 0, true, "pelicula"},
-    {K::Nucleus, S::Simulated, A::Interior, 0.0f, 0.0f, 1, true, "nucleo"},
-    {K::Nucleolus, S::Declared, A::Interior, 1.5f, 1.5f, 1, false, "nucleolo"},
-    {K::Chloroplast, S::Simulated, A::Interior, 0.0f, 0.0f, 0, true, "cloroplastos"},
-    {K::Mitochondrion, S::Simulated, A::Interior, 2.0f, 0.5f, 0, false, "mitocondrias"},
-    {K::Eyespot, S::Declared, A::Anterior, 2.0f, 2.0f, 1, true, "estigma (mancha ocular)"},
-    {K::ContractileVacuole, S::Simulated, A::Interior, 0.0f, 0.0f, 1, true, "vacuola contractil"},
-    {K::StorageGranule, S::Simulated, A::Interior, 0.0f, 0.0f, 0, true, "granulos de paramilon"},
-    BIO_EUK_ENDOMEMBRANES,
-};
-
-// Chlamydomonas: un cloroplasto en copa con pirenoide, estigma y dos vacuolas contráctiles; pared
-// de glicoproteínas.
-constexpr StructureSpec kChlamydomonas[] = {
-    {K::CellWall, S::Declared, A::Envelope, 0.0f, 0.2f, 1, true, "pared de glicoproteinas"},
-    {K::PlasmaMembrane, S::Simulated, A::Envelope, 0.0f, 0.0f, 0, false, "membrana plasmatica"},
-    {K::Nucleus, S::Simulated, A::Interior, 0.0f, 0.0f, 1, true, "nucleo"},
-    {K::Chloroplast, S::Simulated, A::Interior, 0.0f, 0.0f, 1, true, "cloroplasto en copa"},
-    {K::Pyrenoid, S::Declared, A::Interior, 2.0f, 2.0f, 1, true, "pirenoide"},
-    {K::Eyespot, S::Declared, A::Interior, 1.0f, 1.0f, 1, true, "estigma"},
-    {K::Mitochondrion, S::Simulated, A::Interior, 2.0f, 0.5f, 0, false, "mitocondrias"},
-    {K::ContractileVacuole, S::Simulated, A::Interior, 0.0f, 0.0f, 2, true, "vacuolas contractiles"},
-    BIO_EUK_ENDOMEMBRANES,
-};
-
-// Algas filamentosas y colonias: pared de celulosa, cloroplastos con pirenoides, vacuola central.
-constexpr StructureSpec kGreenAlga[] = {
-    {K::CellWall, S::Declared, A::Envelope, 0.0f, 0.5f, 1, true, "pared de celulosa"},
-    {K::PlasmaMembrane, S::Simulated, A::Envelope, 0.0f, 0.0f, 0, false, "membrana plasmatica"},
-    {K::Nucleus, S::Simulated, A::Interior, 0.0f, 0.0f, 1, true, "nucleo"},
-    {K::Chloroplast, S::Simulated, A::Interior, 0.0f, 0.0f, 0, true, "cloroplasto"},
-    {K::Pyrenoid, S::Declared, A::Interior, 2.0f, 2.0f, 0, true, "pirenoides"},
-    {K::Mitochondrion, S::Simulated, A::Interior, 2.0f, 0.5f, 0, false, "mitocondrias"},
-    BIO_EUK_ENDOMEMBRANES,
-};
-
-// Diatomea: frústula de sílice, plastos dorados.
-constexpr StructureSpec kDiatom[] = {
-    {K::CellWall, S::Simulated, A::Envelope, 0.0f, 0.3f, 1, true, "frustula de silice"},
-    {K::Nucleus, S::Simulated, A::Interior, 0.0f, 0.0f, 1, true, "nucleo"},
-    {K::Chloroplast, S::Simulated, A::Interior, 0.0f, 0.0f, 0, true, "plastos dorados"},
-    {K::Mitochondrion, S::Simulated, A::Interior, 2.0f, 0.5f, 0, false, "mitocondrias"},
-    BIO_EUK_ENDOMEMBRANES,
-};
-
-// Levadura: pared de glucano y manano, vacuola grande, sin vacuola contráctil.
-constexpr StructureSpec kYeast[] = {
-    {K::CellWall, S::Declared, A::Envelope, 0.0f, 0.15f, 1, false, "pared de glucano y manano"},
-    {K::PlasmaMembrane, S::Simulated, A::Envelope, 0.0f, 0.0f, 0, false, "membrana plasmatica"},
-    {K::Nucleus, S::Simulated, A::Interior, 0.0f, 0.0f, 1, false, "nucleo"},
-    {K::Mitochondrion, S::Simulated, A::Interior, 1.0f, 0.4f, 0, false, "mitocondrias"},
-    BIO_EUK_ENDOMEMBRANES,
-};
-
-// Trichonympha (parabasálido): sin mitocondrias; su orgánulo energético es el hidrogenosoma
-// (~0,5–1 µm, sin cristas, fermenta piruvato a H₂ y acetato; Müller 1993). Las partículas que la
-// simulación etiqueta como orgánulo energético (`OrganelleTag::Mitochondrion`) se muestran así.
-constexpr StructureSpec kParabasalid[] = {
-    {K::PlasmaMembrane, S::Simulated, A::Envelope, 0.0f, 0.0f, 0, true, "membrana plasmatica"},
-    {K::Nucleus, S::Simulated, A::Interior, 0.0f, 0.0f, 1, true, "nucleo"},
-    {K::Hydrogenosome, S::Simulated, A::Interior, 0.8f, 0.8f, 0, false, "hidrogenosomas"},
-    {K::FoodVacuole, S::Simulated, A::Interior, 0.0f, 0.0f, 0, true, "vacuolas con madera"},
-    BIO_EUK_ENDOMEMBRANES,
-};
-
-#undef BIO_EUK_ENDOMEMBRANES
 
 constexpr BodyPlan kBacteriaPlans[] = {
     {"bacilo gramnegativo (tipo E. coli)", Morphology::Rod, kEcoli},
@@ -185,14 +103,7 @@ constexpr BodyPlan kVirusPlans[] = {
     {"fago tipo T4", Morphology::HeadTailPhage, kT4},
 };
 
-constexpr BodyPlan kCiliatePlan = {"ciliado", Morphology::Eukaryote, kCiliate};
-constexpr BodyPlan kAmoebaPlan = {"ameba", Morphology::Eukaryote, kAmoeba};
-constexpr BodyPlan kEuglenaPlan = {"euglenido", Morphology::Eukaryote, kEuglena};
-constexpr BodyPlan kChlamyPlan = {"clorofita flagelada", Morphology::Eukaryote, kChlamydomonas};
-constexpr BodyPlan kGreenPlan = {"alga verde", Morphology::Eukaryote, kGreenAlga};
-constexpr BodyPlan kDiatomPlan = {"diatomea", Morphology::Eukaryote, kDiatom};
-constexpr BodyPlan kYeastPlan = {"levadura", Morphology::Eukaryote, kYeast};
-constexpr BodyPlan kParabasalidPlan = {"parabasalido", Morphology::Eukaryote, kParabasalid};
+constexpr BodyPlan kMinimalPlan = {"eucariota", Morphology::Eukaryote, kMinimalEukaryote};
 
 } // namespace
 
@@ -237,32 +148,179 @@ const BodyPlan& bdellovibrioPlan() { return kBdelloPlan; }
 
 const BodyPlan& virusPlan(VirusKind kind) { return kVirusPlans[static_cast<int>(kind)]; }
 
-const BodyPlan& speciesPlan(SpeciesId id) {
-    switch (id) {
-    case SpeciesId::Paramecium:
-    case SpeciesId::ParameciumAurelia:
-    case SpeciesId::Didinium:
-    case SpeciesId::Vorticella:
-    case SpeciesId::Stentor:
-    case SpeciesId::Podophrya:
-    case SpeciesId::Euplotes:
-    case SpeciesId::Lacrymaria: return kCiliatePlan;
-    case SpeciesId::Amoeba:
-    case SpeciesId::Arcella:
-    case SpeciesId::Naegleria: return kAmoebaPlan;
-    case SpeciesId::Euglena: return kEuglenaPlan;
-    case SpeciesId::Chlamydomonas:
-    case SpeciesId::Volvox: return kChlamyPlan;
-    case SpeciesId::Spirogyra:
-    case SpeciesId::Mougeotia:
-    case SpeciesId::Zygnema:
-    case SpeciesId::Oedogonium:
-    case SpeciesId::Pediastrum: return kGreenPlan;
-    case SpeciesId::Navicula:
-    case SpeciesId::Asterionella:
-    case SpeciesId::Cyclotella: return kDiatomPlan;
-    case SpeciesId::Candida: return kYeastPlan;
-    case SpeciesId::Trichonympha: return kParabasalidPlan;
+// --- Planes como datos (fase 20.0) -----------------------------------------------------------
+
+namespace {
+
+struct PlanEntry {
+    std::string id, name, pack;
+    std::deque<std::string> names; // nombres de las estructuras (direcciones estables)
+    std::vector<StructureSpec> structures;
+    BodyPlan plan{};
+};
+
+struct PlanRegistry {
+    std::deque<PlanEntry> entries;
+    std::vector<std::string> warnings;
+    std::recursive_mutex mutex;
+    bool baseLoaded = false;
+};
+PlanRegistry& plans() {
+    static PlanRegistry r;
+    return r;
+}
+
+constexpr std::pair<const char*, StructureKind> kKinds[] = {
+    {"membrana_plasmatica", K::PlasmaMembrane}, {"membrana_externa", K::OuterMembrane},
+    {"peptidoglicano", K::Peptidoglycan},       {"pared", K::CellWall},
+    {"capsula", K::Capsule},                    {"nucleoide", K::Nucleoid},
+    {"ribosomas", K::Ribosomes},                {"flagelo", K::Flagellum},
+    {"pili", K::Pili},                          {"nucleo", K::Nucleus},
+    {"nucleolo", K::Nucleolus},                 {"mitocondria", K::Mitochondrion},
+    {"hidrogenosoma", K::Hydrogenosome},        {"cloroplasto", K::Chloroplast},
+    {"pirenoide", K::Pyrenoid},                 {"estigma", K::Eyespot},
+    {"reticulo_endoplasmico", K::EndoplasmicReticulum}, {"golgi", K::Golgi},
+    {"vacuola_contractil", K::ContractileVacuole}, {"vacuola_digestiva", K::FoodVacuole},
+    {"lisosoma", K::Lysosome},                  {"granulo_reserva", K::StorageGranule},
+    {"capside", K::Capsid},                     {"genoma_viral", K::ViralGenome},
+    {"envoltura_viral", K::ViralEnvelope},      {"cola", K::Tail},
+    {"placa_basal", K::Baseplate},              {"fibras_cola", K::TailFibers}};
+constexpr std::pair<const char*, StructureSource> kSources[] = {{"simulada", S::Simulated}, {"declarada", S::Declared}};
+constexpr std::pair<const char*, Arrangement> kArrangements[] = {
+    {"envoltura", A::Envelope},       {"interior", A::Interior},       {"polar", A::Polar},
+    {"peritrica", A::Peritrichous},   {"perinuclear", A::Perinuclear}, {"anterior", A::Anterior}};
+constexpr std::pair<const char*, Morphology> kMorphologies[] = {
+    {"bacilo", Morphology::Rod},          {"vibrio", Morphology::Vibrio},           {"eucariota", Morphology::Eukaryote},
+    {"fago_cola", Morphology::HeadTailPhage}, {"icosaedrica", Morphology::Icosahedral}, {"helicoidal", Morphology::Helical}};
+
+template <typename E, std::size_t N>
+bool pick(const toml::table& t, const char* key, const std::pair<const char*, E> (&table)[N], E& out) {
+    const auto v = t.get(key) ? t.get(key)->value<std::string>() : std::nullopt;
+    if (!v)
+        return false;
+    for (const auto& [name, value] : table)
+        if (*v == name) {
+            out = value;
+            return true;
+        }
+    return false;
+}
+
+void loadPlansDoc(const toml::table& doc, const std::string& source, const std::string& pack) {
+    PlanRegistry& r = plans();
+    const toml::array* list = doc.get("plan") ? doc.get("plan")->as_array() : nullptr;
+    if (!list)
+        return;
+    for (const toml::node& n : *list) {
+        const toml::table* t = n.as_table();
+        if (!t)
+            continue;
+        const auto id = t->get("id") ? t->get("id")->value<std::string>() : std::nullopt;
+        if (!id) {
+            r.warnings.push_back(source + ": un [[plan]] sin 'id': se saltea");
+            continue;
+        }
+        bool duplicate = false;
+        for (const PlanEntry& e : r.entries)
+            duplicate = duplicate || e.id == *id;
+        if (duplicate) {
+            r.warnings.push_back(source + ": el plan '" + *id + "' ya existe: se saltea");
+            continue;
+        }
+        PlanEntry e;
+        e.id = *id;
+        e.pack = pack;
+        e.name = t->get("nombre") ? t->get("nombre")->value<std::string>().value_or(*id) : *id;
+        Morphology morphology = Morphology::Eukaryote;
+        if (t->get("morfologia") && !pick(*t, "morfologia", kMorphologies, morphology))
+            r.warnings.push_back(source + " (" + *id + "): 'morfologia' desconocida");
+        bool ok = true;
+        if (const toml::array* structures = t->get("estructuras") ? t->get("estructuras")->as_array() : nullptr) {
+            for (const toml::node& sn : *structures) {
+                const toml::table* st = sn.as_table();
+                StructureSpec spec{K::Nucleus, S::Simulated, A::Interior, 0.0f, 0.0f, 0, false, ""};
+                if (!st || !pick(*st, "tipo", kKinds, spec.kind) || !pick(*st, "fuente", kSources, spec.source) ||
+                    !pick(*st, "disposicion", kArrangements, spec.arrangement)) {
+                    r.warnings.push_back(source + " (" + *id + "): una estructura sin tipo, fuente o disposición válidos");
+                    ok = false;
+                    continue;
+                }
+                auto num = [&](const char* key) { return static_cast<float>(st->get(key) ? st->get(key)->value<double>().value_or(0.0) : 0.0); };
+                spec.length = num("largo");
+                spec.width = num("ancho");
+                spec.perCubicMicron = num("por_um3");
+                spec.count = static_cast<int>(st->get("cantidad") ? st->get("cantidad")->value<std::int64_t>().value_or(0) : 0);
+                spec.brightfield = st->get("campo_claro") ? st->get("campo_claro")->value<bool>().value_or(false) : false;
+                e.names.push_back(st->get("nombre") ? st->get("nombre")->value<std::string>().value_or("") : "");
+                spec.name = e.names.back().c_str();
+                e.structures.push_back(spec);
+            }
+        }
+        if (!ok) {
+            r.warnings.push_back(source + " (" + *id + "): el plan no se carga");
+            continue;
+        }
+        r.entries.push_back(std::move(e));
+        PlanEntry& stored = r.entries.back();
+        stored.plan = {stored.name.c_str(), morphology, std::span<const StructureSpec>(stored.structures)};
     }
-    return kAmoebaPlan;
+}
+
+void ensurePlans() {
+    PlanRegistry& r = plans();
+    std::lock_guard<std::recursive_mutex> lock(r.mutex);
+    if (r.baseLoaded)
+        return;
+    r.baseLoaded = true;
+    std::string error;
+    if (!loadBodyPlansFile(assetPath("content/base/planes.toml"), "base", &error))
+        r.warnings.push_back("no se pudieron cargar los planes de fábrica: " + error);
+}
+
+} // namespace
+
+bool loadBodyPlansFile(const std::string& path, const std::string& pack, std::string* error) {
+    std::lock_guard<std::recursive_mutex> lock(plans().mutex);
+    if (pack != "base")
+        ensurePlans();
+    try {
+        loadPlansDoc(toml::parse_file(path), path, pack);
+    } catch (const toml::parse_error& e) {
+        if (error)
+            *error = path + ": " + std::string(e.description());
+        return false;
+    }
+    return true;
+}
+
+bool loadBodyPlansText(const std::string& text, const std::string& source, const std::string& pack, std::string* error) {
+    std::lock_guard<std::recursive_mutex> lock(plans().mutex);
+    ensurePlans();
+    try {
+        loadPlansDoc(toml::parse(text, source), source, pack);
+    } catch (const toml::parse_error& e) {
+        if (error)
+            *error = source + ": " + std::string(e.description());
+        return false;
+    }
+    return true;
+}
+
+const BodyPlan* findBodyPlan(std::string_view id) {
+    ensurePlans();
+    for (const PlanEntry& e : plans().entries)
+        if (e.id == id)
+            return &e.plan;
+    return nullptr;
+}
+
+const std::vector<std::string>& bodyPlanWarnings() {
+    ensurePlans();
+    return plans().warnings;
+}
+
+const BodyPlan& speciesPlan(SpeciesId id) {
+    if (const BodyPlan* plan = findBodyPlan(speciesInfo(id).plan))
+        return *plan;
+    return kMinimalPlan;
 }

@@ -15,7 +15,7 @@ namespace {
 
 struct Entry {
     SpeciesInfo info;
-    std::string key, name, pack;
+    std::string key, name, description, plan, pack;
     // Referencias sin resolver (ids o etiquetas): se resuelven contra todo lo cargado.
     std::vector<std::string> prey, mouthPrey, flee;
 };
@@ -73,7 +73,7 @@ constexpr std::pair<const char*, CellWall> kWall[] = {{"ninguna", CellWall::None
 // Claves conocidas de un [[ser]] y de su [ser.forma]: una clave que no esté acá es casi siempre un
 // error de tipeo, y se avisa (no se ignora en silencio).
 constexpr const char* kBeingKeys[] = {
-    "id", "nombre", "etiquetas", "locomocion", "alimentacion", "velocidad_relativa", "presas", "presas_boca",
+    "id", "nombre", "descripcion", "plan", "etiquetas", "locomocion", "alimentacion", "velocidad_relativa", "presas", "presas_boca",
     "huye_de", "quimiocinesis", "trampa_acida", "fototaxis", "fotosintesis_relativa", "divisiones_por_ciclo",
     "enquista", "cantidad_inicial", "sesil", "largo_tallo", "espasmonema", "camina", "alcance_tentaculos",
     "alcance_cuello", "manipulacion_horas", "cloroplastos", "desliza_por_rafe", "auxotrofa_b12", "frustula",
@@ -173,6 +173,10 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
     e.key = *idNode->value<std::string>();
     e.name = *nameNode->value<std::string>();
     e.pack = pack;
+    if (const toml::node* d = t.get("descripcion"))
+        e.description = d->value<std::string>().value_or("");
+    if (const toml::node* d = t.get("plan"))
+        e.plan = d->value<std::string>().value_or("");
     Reader r{t, source + " (" + e.key + ")", {}};
     for (const auto& [k, v] : t)
         if (!known(k.str(), kBeingKeys))
@@ -301,6 +305,8 @@ void resolve() {
     for (Entry& e : gEntries) {
         e.info.key = e.key.c_str();
         e.info.name = e.name.c_str();
+        e.info.description = e.description.c_str();
+        e.info.plan = e.plan.c_str();
         e.info.prey = setOf(e, e.prey, "presas");
         e.info.mouthPrey = setOf(e, e.mouthPrey, "presas_boca");
         e.info.flee = setOf(e, e.flee, "huye_de");

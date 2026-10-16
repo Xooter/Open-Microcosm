@@ -59,35 +59,7 @@ const char* otherBlurb(OtherOrganism o) {
     }
 }
 
-const char* speciesBlurb(SpeciesId id) {
-    switch (id) {
-    case SpeciesId::Paramecium: return "Ciliado de ~200 um que come bacterias por un surco oral. Retrocede al chocar (reaccion de evitacion) y se junta donde hay CO2.";
-    case SpeciesId::Euglena: return "Flagelado verde con mancha ocular: nada hacia la luz y hace fotosintesis, pero tambien absorbe comida.";
-    case SpeciesId::Amoeba: return "Ameba gigante: extiende seudopodos, envuelve a la presa con la membrana y la encierra en una vacuola.";
-    case SpeciesId::Chlamydomonas: return "Alga de dos flagelos que nada como en brazada. Dentro de la pared madre se divide en 4 hijas.";
-    case SpeciesId::Didinium: return "Cazador en barril: dispara su probosis contra un paramecio y lo traga entero. Con hambre se enquista.";
-    case SpeciesId::Vorticella: return "Campana sobre un tallo con un resorte (espasmonema): se contrae en milisegundos ante cualquier susto.";
-    case SpeciesId::Stentor: return "Trompeta azul fija por el pie; su corona de membranelas crea un remolino que trae bacterias y algas.";
-    case SpeciesId::Podophrya: return "Suctorio: esfera con tentaculos capitados que se pegan a los ciliados y les succionan el citoplasma.";
-    case SpeciesId::Euplotes: return "Ciliado aplanado que 'camina' sobre cirros (haces de cilios) con paradas bruscas.";
-    case SpeciesId::Arcella: return "Ameba que vive dentro de una testa parda en forma de cupula; asoma seudopodos por la abertura.";
-    case SpeciesId::Lacrymaria: return "'Lagrima de cisne': estira un cuello hasta 7 veces su cuerpo en segundos para atrapar presas.";
-    case SpeciesId::Spirogyra: return "Alga filamentosa con el cloroplasto en espiral. Crece a lo largo y se divide con un tabique.";
-    case SpeciesId::Navicula: return "Diatomea en una cajita de silice que se desliza por una ranura (rafe). Cada division achica a una hija. Necesita silice disuelta para cada valva nueva y vitamina B12 de las bacterias.";
-    case SpeciesId::Volvox: return "Esfera hueca de cientos de celulas que rueda hacia la luz. Las colonias hijas crecen adentro y nacen rompiendo a la madre.";
-    case SpeciesId::Pediastrum: return "Colonia plana en estrella de 16 celulas con cuernos; cada ciclo libera una colonia hija.";
-    case SpeciesId::Candida: return "Levadura: absorbe azucares disueltos, respira o fermenta sin oxigeno, y se reproduce por gemacion.";
-    case SpeciesId::Naegleria: return "Ameboflagelado de suelos y aguas termales: tolera mas de 40 grados y se enquista si se seca.";
-    case SpeciesId::Trichonympha: return "Flagelado con miles de flagelos del intestino de las termitas: digiere la madera por ellas y no tolera el oxigeno.";
-    case SpeciesId::Mougeotia: return "Alga filamentosa con un cloroplasto en placa que gira: de frente con poca luz y de canto con mucha.";
-    case SpeciesId::Zygnema: return "Alga filamentosa con dos cloroplastos en estrella por celula. Vive en charcas y sobre el suelo humedo.";
-    case SpeciesId::Oedogonium: return "Alga filamentosa: cada division deja un anillo (capuchon) en la pared, asi se cuentan las veces que se dividio.";
-    case SpeciesId::ParameciumAurelia: return "Paramecio mas chico (~130 um). En el cultivo mixto de Gause (1934) desplaza a P. caudatum: exclusion competitiva.";
-    case SpeciesId::Asterionella: return "Diatomea en aguja que en la naturaleza forma estrellas de 8 celulas. Muy eficiente con poco fosforo (Tilman 1977).";
-    case SpeciesId::Cyclotella: return "Diatomea en disco, planctonica. Muy eficiente con poca silice: gana a Asterionella cuando la silice limita (Tilman 1977).";
-    default: return "";
-    }
-}
+const char* speciesBlurb(SpeciesId id) { return speciesInfo(id).description; }
 
 std::vector<std::string> discoverVisible(Progress& progress, const World& world, Vec2 viewMin, Vec2 viewMax) {
     std::vector<std::string> fresh;

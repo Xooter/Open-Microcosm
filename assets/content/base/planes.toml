@@ -1,0 +1,151 @@
+# Planes corporales del paquete de fábrica (fase 20.0): qué estructuras tiene cada tipo de célula
+# y de qué tamaño real son. Los recorre el zoom semántico (placa > organismo > célula > estructura)
+# y la ficha. Nada se agrega porque "se vea bien": cada estructura tiene que existir en el
+# organismo real. Cada [[ser]] elige el suyo con `plan`.
+#
+# Estructura: tipo (membrana_plasmatica, membrana_externa, peptidoglicano, pared, capsula,
+#   nucleoide, ribosomas, flagelo, pili, nucleo, nucleolo, mitocondria, hidrogenosoma, cloroplasto,
+#   pirenoide, estigma, reticulo_endoplasmico, golgi, vacuola_contractil, vacuola_digestiva,
+#   lisosoma, granulo_reserva, capside, genoma_viral, envoltura_viral, cola, placa_basal,
+#   fibras_cola); fuente: simulada (tiene estado en la simulación) o declarada (existe pero no se
+#   simula: solo se dibuja en la vista de modelo, salvo campo_claro); disposicion (envoltura,
+#   interior, polar, peritrica, perinuclear, anterior); largo y ancho [µm] (0: los da la
+#   simulación); cantidad por célula; por_um3 (lo que se reparte por volumen, como los ribosomas);
+#   campo_claro: se distingue sin teñir; nombre en la ficha (ASCII).
+
+[[plan]]
+id = "ciliado"
+nombre = "ciliado"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "pelicula" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "macronucleo" },
+    { tipo = "nucleolo", fuente = "declarada", disposicion = "interior", largo = 1.5, ancho = 1.5, cantidad = 1, campo_claro = false, nombre = "nucleolos" },
+    { tipo = "mitocondria", fuente = "simulada", disposicion = "interior", largo = 2.0, ancho = 0.5, campo_claro = false, nombre = "mitocondrias" },
+    { tipo = "lisosoma", fuente = "simulada", disposicion = "interior", campo_claro = false, nombre = "lisosomas" },
+    { tipo = "vacuola_digestiva", fuente = "simulada", disposicion = "interior", campo_claro = true, nombre = "vacuolas digestivas" },
+    { tipo = "vacuola_contractil", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "vacuola contractil" },
+    { tipo = "granulo_reserva", fuente = "simulada", disposicion = "interior", campo_claro = true, nombre = "granulos de glucogeno" },
+    { tipo = "reticulo_endoplasmico", fuente = "declarada", disposicion = "perinuclear", largo = 3.0, ancho = 0.05, cantidad = 1, campo_claro = false, nombre = "reticulo endoplasmico rugoso" },
+    { tipo = "golgi", fuente = "declarada", disposicion = "perinuclear", largo = 1.0, ancho = 0.3, cantidad = 1, campo_claro = false, nombre = "aparato de Golgi (un dictiosoma)" },
+    { tipo = "ribosomas", fuente = "declarada", disposicion = "interior", largo = 0.025, ancho = 0.025, por_um3 = 3000.0, campo_claro = false, nombre = "ribosomas 80S" },
+]
+
+[[plan]]
+id = "euglenido"
+nombre = "euglenido"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "pelicula" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "nucleo" },
+    { tipo = "nucleolo", fuente = "declarada", disposicion = "interior", largo = 1.5, ancho = 1.5, cantidad = 1, campo_claro = false, nombre = "nucleolo" },
+    { tipo = "cloroplasto", fuente = "simulada", disposicion = "interior", campo_claro = true, nombre = "cloroplastos" },
+    { tipo = "mitocondria", fuente = "simulada", disposicion = "interior", largo = 2.0, ancho = 0.5, campo_claro = false, nombre = "mitocondrias" },
+    { tipo = "estigma", fuente = "declarada", disposicion = "anterior", largo = 2.0, ancho = 2.0, cantidad = 1, campo_claro = true, nombre = "estigma (mancha ocular)" },
+    { tipo = "vacuola_contractil", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "vacuola contractil" },
+    { tipo = "granulo_reserva", fuente = "simulada", disposicion = "interior", campo_claro = true, nombre = "granulos de paramilon" },
+    { tipo = "reticulo_endoplasmico", fuente = "declarada", disposicion = "perinuclear", largo = 3.0, ancho = 0.05, cantidad = 1, campo_claro = false, nombre = "reticulo endoplasmico rugoso" },
+    { tipo = "golgi", fuente = "declarada", disposicion = "perinuclear", largo = 1.0, ancho = 0.3, cantidad = 1, campo_claro = false, nombre = "aparato de Golgi (un dictiosoma)" },
+    { tipo = "ribosomas", fuente = "declarada", disposicion = "interior", largo = 0.025, ancho = 0.025, por_um3 = 3000.0, campo_claro = false, nombre = "ribosomas 80S" },
+]
+
+[[plan]]
+id = "ameba"
+nombre = "ameba"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "membrana plasmatica" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "nucleo" },
+    { tipo = "nucleolo", fuente = "declarada", disposicion = "interior", largo = 1.5, ancho = 1.5, cantidad = 1, campo_claro = false, nombre = "nucleolo" },
+    { tipo = "mitocondria", fuente = "simulada", disposicion = "interior", largo = 2.0, ancho = 0.5, campo_claro = false, nombre = "mitocondrias" },
+    { tipo = "lisosoma", fuente = "simulada", disposicion = "interior", campo_claro = false, nombre = "lisosomas" },
+    { tipo = "vacuola_digestiva", fuente = "simulada", disposicion = "interior", campo_claro = true, nombre = "vacuolas digestivas" },
+    { tipo = "vacuola_contractil", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "vacuola contractil" },
+    { tipo = "reticulo_endoplasmico", fuente = "declarada", disposicion = "perinuclear", largo = 3.0, ancho = 0.05, cantidad = 1, campo_claro = false, nombre = "reticulo endoplasmico rugoso" },
+    { tipo = "golgi", fuente = "declarada", disposicion = "perinuclear", largo = 1.0, ancho = 0.3, cantidad = 1, campo_claro = false, nombre = "aparato de Golgi (un dictiosoma)" },
+    { tipo = "ribosomas", fuente = "declarada", disposicion = "interior", largo = 0.025, ancho = 0.025, por_um3 = 3000.0, campo_claro = false, nombre = "ribosomas 80S" },
+]
+
+# Chlamydomonas: un cloroplasto en copa con pirenoide, estigma y dos vacuolas contráctiles; pared
+# de glicoproteínas.
+[[plan]]
+id = "clorofita_flagelada"
+nombre = "clorofita flagelada"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "pared", fuente = "declarada", disposicion = "envoltura", ancho = 0.2, cantidad = 1, campo_claro = true, nombre = "pared de glicoproteinas" },
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = false, nombre = "membrana plasmatica" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "nucleo" },
+    { tipo = "cloroplasto", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "cloroplasto en copa" },
+    { tipo = "pirenoide", fuente = "declarada", disposicion = "interior", largo = 2.0, ancho = 2.0, cantidad = 1, campo_claro = true, nombre = "pirenoide" },
+    { tipo = "estigma", fuente = "declarada", disposicion = "interior", largo = 1.0, ancho = 1.0, cantidad = 1, campo_claro = true, nombre = "estigma" },
+    { tipo = "mitocondria", fuente = "simulada", disposicion = "interior", largo = 2.0, ancho = 0.5, campo_claro = false, nombre = "mitocondrias" },
+    { tipo = "vacuola_contractil", fuente = "simulada", disposicion = "interior", cantidad = 2, campo_claro = true, nombre = "vacuolas contractiles" },
+    { tipo = "reticulo_endoplasmico", fuente = "declarada", disposicion = "perinuclear", largo = 3.0, ancho = 0.05, cantidad = 1, campo_claro = false, nombre = "reticulo endoplasmico rugoso" },
+    { tipo = "golgi", fuente = "declarada", disposicion = "perinuclear", largo = 1.0, ancho = 0.3, cantidad = 1, campo_claro = false, nombre = "aparato de Golgi (un dictiosoma)" },
+    { tipo = "ribosomas", fuente = "declarada", disposicion = "interior", largo = 0.025, ancho = 0.025, por_um3 = 3000.0, campo_claro = false, nombre = "ribosomas 80S" },
+]
+
+# Algas filamentosas y colonias: pared de celulosa, cloroplastos con pirenoides, vacuola central.
+[[plan]]
+id = "alga_verde"
+nombre = "alga verde"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "pared", fuente = "declarada", disposicion = "envoltura", ancho = 0.5, cantidad = 1, campo_claro = true, nombre = "pared de celulosa" },
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = false, nombre = "membrana plasmatica" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "nucleo" },
+    { tipo = "cloroplasto", fuente = "simulada", disposicion = "interior", campo_claro = true, nombre = "cloroplasto" },
+    { tipo = "pirenoide", fuente = "declarada", disposicion = "interior", largo = 2.0, ancho = 2.0, campo_claro = true, nombre = "pirenoides" },
+    { tipo = "mitocondria", fuente = "simulada", disposicion = "interior", largo = 2.0, ancho = 0.5, campo_claro = false, nombre = "mitocondrias" },
+    { tipo = "reticulo_endoplasmico", fuente = "declarada", disposicion = "perinuclear", largo = 3.0, ancho = 0.05, cantidad = 1, campo_claro = false, nombre = "reticulo endoplasmico rugoso" },
+    { tipo = "golgi", fuente = "declarada", disposicion = "perinuclear", largo = 1.0, ancho = 0.3, cantidad = 1, campo_claro = false, nombre = "aparato de Golgi (un dictiosoma)" },
+    { tipo = "ribosomas", fuente = "declarada", disposicion = "interior", largo = 0.025, ancho = 0.025, por_um3 = 3000.0, campo_claro = false, nombre = "ribosomas 80S" },
+]
+
+# Diatomea: frústula de sílice, plastos dorados.
+[[plan]]
+id = "diatomea"
+nombre = "diatomea"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "pared", fuente = "simulada", disposicion = "envoltura", ancho = 0.3, cantidad = 1, campo_claro = true, nombre = "frustula de silice" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "nucleo" },
+    { tipo = "cloroplasto", fuente = "simulada", disposicion = "interior", campo_claro = true, nombre = "plastos dorados" },
+    { tipo = "mitocondria", fuente = "simulada", disposicion = "interior", largo = 2.0, ancho = 0.5, campo_claro = false, nombre = "mitocondrias" },
+    { tipo = "reticulo_endoplasmico", fuente = "declarada", disposicion = "perinuclear", largo = 3.0, ancho = 0.05, cantidad = 1, campo_claro = false, nombre = "reticulo endoplasmico rugoso" },
+    { tipo = "golgi", fuente = "declarada", disposicion = "perinuclear", largo = 1.0, ancho = 0.3, cantidad = 1, campo_claro = false, nombre = "aparato de Golgi (un dictiosoma)" },
+    { tipo = "ribosomas", fuente = "declarada", disposicion = "interior", largo = 0.025, ancho = 0.025, por_um3 = 3000.0, campo_claro = false, nombre = "ribosomas 80S" },
+]
+
+# Levadura: pared de glucano y manano, vacuola grande, sin vacuola contráctil.
+[[plan]]
+id = "levadura"
+nombre = "levadura"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "pared", fuente = "declarada", disposicion = "envoltura", ancho = 0.15, cantidad = 1, campo_claro = false, nombre = "pared de glucano y manano" },
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = false, nombre = "membrana plasmatica" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = false, nombre = "nucleo" },
+    { tipo = "mitocondria", fuente = "simulada", disposicion = "interior", largo = 1.0, ancho = 0.4, campo_claro = false, nombre = "mitocondrias" },
+    { tipo = "reticulo_endoplasmico", fuente = "declarada", disposicion = "perinuclear", largo = 3.0, ancho = 0.05, cantidad = 1, campo_claro = false, nombre = "reticulo endoplasmico rugoso" },
+    { tipo = "golgi", fuente = "declarada", disposicion = "perinuclear", largo = 1.0, ancho = 0.3, cantidad = 1, campo_claro = false, nombre = "aparato de Golgi (un dictiosoma)" },
+    { tipo = "ribosomas", fuente = "declarada", disposicion = "interior", largo = 0.025, ancho = 0.025, por_um3 = 3000.0, campo_claro = false, nombre = "ribosomas 80S" },
+]
+
+# Trichonympha (parabasálido): sin mitocondrias; su orgánulo energético es el hidrogenosoma
+# (~0,5–1 µm, sin cristas, fermenta piruvato a H₂ y acetato; Müller 1993). Las partículas que la
+# simulación etiqueta como orgánulo energético se muestran así.
+[[plan]]
+id = "parabasalido"
+nombre = "parabasalido"
+morfologia = "eucariota"
+estructuras = [
+    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "membrana plasmatica" },
+    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "nucleo" },
+    { tipo = "hidrogenosoma", fuente = "simulada", disposicion = "interior", largo = 0.8, ancho = 0.8, campo_claro = false, nombre = "hidrogenosomas" },
+    { tipo = "vacuola_digestiva", fuente = "simulada", disposicion = "interior", campo_claro = true, nombre = "vacuolas con madera" },
+    { tipo = "reticulo_endoplasmico", fuente = "declarada", disposicion = "perinuclear", largo = 3.0, ancho = 0.05, cantidad = 1, campo_claro = false, nombre = "reticulo endoplasmico rugoso" },
+    { tipo = "golgi", fuente = "declarada", disposicion = "perinuclear", largo = 1.0, ancho = 0.3, cantidad = 1, campo_claro = false, nombre = "aparato de Golgi (un dictiosoma)" },
+    { tipo = "ribosomas", fuente = "declarada", disposicion = "interior", largo = 0.025, ancho = 0.025, por_um3 = 3000.0, campo_claro = false, nombre = "ribosomas 80S" },
+]
