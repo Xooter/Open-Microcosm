@@ -26,39 +26,46 @@ Ajustes propios a los datos originales de Gause (1934) digitalizados en gauseR (
 
 | Test | Estado | Nota |
 |---|---|---|
-| µmax de *Paramecium* en cultivo sin limitación | **PASA** | µ simulado 0,026/h contra 0,026/h publicado (a 20 °C), dos duplicaciones. Cultivo: placa de ~860 µm, 2 individuos, sin fagos ni Bdellovibrio, escala de tiempo 600. |
+| µmax de *Paramecium* en cultivo sin limitación | **PASA** | µ simulado 0,024/h contra 0,026/h publicado (a 20 °C), dos duplicaciones, con la ingestión medida de la especie (antes 0,026 con el caudal general, 4× sobrealimentado). Cultivo: placa de ~860 µm, 2 individuos, sin fagos ni Bdellovibrio, escala de tiempo 600. |
 | µmax de *Amoeba proteus* | pendiente | Su µmax publicado es con *Tetrahymena* como presa (cientos por división); una placa chica no tiene presas protistas suficientes. Hace falta un cultivo con presa ciliada abundante (o *Tetrahymena* como especie). |
 | Exclusión competitiva de Gause (*P. aurelia* vs *P. caudatum*) | sin resultado | Las dos especies existen (`ParameciumAurelia`). En la placa no da un resultado comparable: con la comida limitada (`organicInflow` 5) unos 50 paramecios agotan las bacterias y se amontonan en 0,86 mm; Gause tenía cientos por 0,5 cm³. Necesita el modo cultivo (ver «La escala de volumen»). Ajustes propios a sus datos (gauseR): *P. caudatum* r = 0,946 ± 0,109/día, K = 203; *P. aurelia* r = 0,707 ± 0,090/día, K = 222; mezcla, día 25: *aurelia* 140 contra *caudatum* 23. |
 | Depredador–presa (*Didinium*–*Paramecium*) sin refugio | pendiente | Datos de Gause fig. 32 disponibles. |
 | Tilman (*Asterionella* vs *Cyclotella*, P y Si) | **PASA** | Cultivo en lote, columna de agua de 2 cm. Con P limitante gana *Asterionella* (0,71 de la biomasa); con Si limitante, *Cyclotella* (*Asterionella* 0,22). Con el modelo de Droop (antes 0,52 y 0,47: la K de crecimiento publicada se usaba en la captación y la limitación quedaba débil). En lote no hay exclusión completa (Tilman usó cultivos semicontinuos). Constantes de Monod **sin verificar** contra Tilman & Kilham (1976). |
 | Jennings (acumulación por CO₂) | **PASA** | 20 *Paramecium* en una placa de ~1,9 mm con el gotero de CO₂ abierto en el centro (2 mM/s; ~10 mM y pH 5,3 en la fuente). Fracción a menos de 0,2 radios (4 % del área): 0,081 con CO₂ contra 0,031 sin él (el test pide > 1,5× el área y > 2× el control). La densidad crece hacia la fuente (3,4× la media en el centro). Resultado cualitativo: Jennings (1906) no publicó conteos. Con ácido más fuerte vio un anillo alrededor de la burbuja; acá no se modela la evitación del ácido fuerte. |
-| µmax de *Paramecium* en el cultivo bien mezclado (ingestión publicada) | **NO PASA** (`should_fail`) | 0,007/h contra 0,026/h: la ingestión publicada no alcanza para el µmax de Gause con el balance de energía del modelo (ver «Balance de energía de *Paramecium*»). |
+| µmax de *Paramecium* en el cultivo bien mezclado (ingestión publicada) | **PASA** | 0,023/h contra 0,026/h a 20 °C, con bacterias saturantes (~10⁹/mL) y la ingestión medida (ver «Balance de energía de *Paramecium*»). |
 | Monod: µ en función del P externo (*Asterionella*) | **PASA** (test básico) | Modelo de Droop desde el 15/10/2026: en equilibrio, µ = µmax·S/(K+S) con la K publicada, con un error menor al 3 % (`tests/test_nutrients.cpp`, sin `World`). En la placa, la célula ve menos P que la media (pozo de consumo: 0,028 contra 0,04 µM) y con ese valor local la curva coincide (0,0142 contra 0,0143 /h). |
 
 ## Balance de energía de *Paramecium* (cultivo bien mezclado, fase P1)
 
 El cultivo bien mezclado (`game/culture`) usa la ingestión y el aclaramiento publicados de
 *P. caudatum* (Applied Water Science 2013, doi:10.1007/s13201-013-0130-1: ~26·10³ bacterias por
-individuo y por hora, ~106 nL/h; temperatura sin verificar, se asumió 25 °C) en vez del caudal del
-citostoma de la placa (30 bacterias/s, sin fuente: ~108·10³/h, cuatro veces el valor medido).
+individuo y por hora a 25 °C, ~106 nL/h). Con ellos, el primer resultado no alcanzaba el µmax de
+Gause (0,007/h contra 0,026/h a 20 °C). Las causas, en orden:
 
-Con esa ingestión el balance de energía **no alcanza el µmax de Gause**: con bacterias saturantes
-(~10⁹/mL) el cultivo crece a ~0,007/h contra 0,026/h publicado a 20 °C (test
-«validación: µmax de Paramecium en el cultivo», marcado `should_fail`). La cuenta a mano: un
-paramecio de ~1000 pmol gasta ~16 pmol/h en mantenerse y nadar; crecer a 0,026/h pide ~43 pmol/h
-más (rendimiento 0,6), unas **25·10³ bacterias/h**. A 20 °C la ingestión publicada da 18·10³
-(si se midió a 25 °C) o 26·10³ (si se midió a 20 °C): el balance cierra solo en el segundo caso y
-a saturación completa. Pendiente: verificar las temperaturas de Gause y del estudio de ingestión
-(o encontrar una medición de la respuesta funcional de *P. caudatum* con su temperatura) antes de
-tocar parámetros. Mientras tanto, la placa sobrealimenta a los paramecios (su caudal máximo es 4×
-el medido): eso se va a ver en la calibración cruzada placa ↔ cultivo (paso 2 de P1).
+1. **La masa de las células alargadas estaba inflada** (CORREGIDO, 16/10/2026). Salía de la esfera
+   de la misma sección vista desde arriba (`cellMassPmol` del área 2D): un paramecio de 180 × 50 µm
+   pesaba como una esfera de 95 µm (~4,5·10⁵ µm³), casi el doble que el esferoide real
+   (~2,4·10⁵ µm³); *Asterionella*, 3,2 veces. Ahora la masa es la del esferoide de semiejes mayor,
+   menor y vertical (`espesor` en `[ser.forma]`; por defecto, el menor) por la materia seca relativa
+   (`cellMassScale`). Las células humanas, cuyo factor ya traía su volumen medido, se convirtieron
+   para conservar la misma masa.
+2. **Las células limitadas por la comida no se dividían nunca** (CORREGIDO): el metabolismo invertía
+   en biomasa todo lo que pasaba del colchón de reservas (0,1 de la biomasa) y dividirse pedía
+   reservas por 0,1 de la biomasa; la célula crecía sin límite pasado el doble. Ahora, con el tamaño
+   de división, deja de invertir y junta las reservas de la citocinesis (punto de control del ciclo).
+3. **La placa sobrealimentaba a los paramecios** (CORREGIDO): su caudal máximo era el general del
+   citostoma (30 bacterias/s, sin fuente: ~108·10³/h, cuatro veces lo medido). Ahora la placa usa la
+   ingestión medida de la especie cuando la tiene (la misma que el cultivo).
 
-**Corregido al hacerlo:** las células limitadas por la comida no se dividían nunca. El metabolismo
-invertía en biomasa todo lo que pasaba del colchón de reservas (0,1 de la biomasa) y dividirse pedía
-reservas por 0,1 de la biomasa: nunca alcanzaba, y la célula crecía sin límite pasado el doble de su
-tamaño. Ahora, con el tamaño de división, deja de invertir y junta las reservas de la citocinesis
-(punto de control del ciclo; las células animales ya lo tenían). Cambia la placa en condiciones de
-comida limitada.
+Con los tres: µ = 0,023/h en el cultivo y 0,024/h en la placa, contra 0,026/h publicado (las dos
+dentro del 25 % sin ajustar nada). La cuenta a mano: un paramecio de ~400 pmol gasta ~6 pmol/h en
+mantenerse y nadar y crecer a 0,026/h pide ~17 pmol/h más (rendimiento 0,6): ~10·10³ bacterias/h,
+que la ingestión publicada (18·10³/h a 20 °C) cubre con bacterias abundantes.
+
+**Gases con Q10** (CORREGIDO): en la placa, el O₂ que respira una célula y el CO₂ que libera se
+dividían por `bioScale` (compresión × Q10): a 30 °C la célula respiraba en el agua lo mismo que a
+20 °C. Ahora se deshace solo la compresión (`bioTimeScale`): con calor respira más rápido, como el
+cultivo.
 
 ## Problemas del modelo encontrados al validar (fase MVP)
 

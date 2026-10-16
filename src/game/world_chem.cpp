@@ -54,7 +54,7 @@ void World::stepCyanobacteria(float dt) {
         const float fixedGlucose = cyano_.params.growthPerHourMax * hours * cyano_.params.cellPmol *
                                    static_cast<float>(fil.x.size()) *
                                    std::clamp(light_.sample(fil.x[mid], fil.y[mid]), 0.0f, 1.0f);
-        exchangeCO2(wrapped({fil.x[mid], fil.y[mid]}), -6.0f * fixedGlucose / bioScale());
+        exchangeCO2(wrapped({fil.x[mid], fil.y[mid]}), -6.0f * fixedGlucose / bioTimeScale_); // tasa real (con Q10)
     }
 }
 

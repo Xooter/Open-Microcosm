@@ -225,6 +225,7 @@ void writeSpecies(Json& j, SpeciesId id) {
     j.number("colonias_hijas", s.colonyDaughters);
     j.boolean("gemacion", s.budding);
     j.number("masa_seca_relativa", s.dryMassScale);
+    j.number("espesor_um", s.thickness > 0.0f ? s.thickness : s.spec.radiusY);
     j.number("ph_min", s.phMin);
     j.number("ph_max", s.phMax);
     j.quantity("temperatura_min", s.tMin, "°C");

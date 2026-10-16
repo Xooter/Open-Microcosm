@@ -84,7 +84,7 @@ float osmotrophDemand(float biomass, float organic, float bioDt) {
 float targetBirthBiomass(SpeciesId species, float size) {
     const CellSpec base = speciesInfo(species).spec;
     return cellMassPmol(units::kPi * base.radiusX * base.radiusY) * size * size * size *
-           speciesInfo(species).dryMassScale;
+           cellMassScale(speciesInfo(species));
 }
 
 void daughterGenomes(const Heredity& mother, LocomotionType type, Rng& ra, Rng& rb, float rate, Heredity& a,

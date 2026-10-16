@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cmath>
 #include <deque>
 #include <mutex>
 
@@ -82,7 +83,7 @@ constexpr const char* kAnimalCellKeys[] = {"adherente", "radio_redondeada", "inh
                                            "apoptosis_sin_suero_h", "se_divide", "quimiotaxis_fmlp"};
 constexpr const char* kLookKeys[] = {"estilo", "color_plastos"};
 constexpr const char* kShapeKeys[] = {"semieje_mayor", "semieje_menor", "memoria_forma", "color",
-                                      "nucleo",        "cuadratura",    "afinamiento"};
+                                      "nucleo",        "cuadratura",    "afinamiento",  "espesor"};
 
 using toml_io::known;
 using toml_io::Reader;
@@ -224,6 +225,7 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         f.num("nucleo", s.spec.nucleusFraction);
         f.num("cuadratura", s.spec.squareness);
         f.num("afinamiento", s.spec.taper);
+        f.num("espesor", s.thickness);
         if (const toml::node* c = shape->get("color")) {
             const toml::array* a = c->as_array();
             if (!a || a->size() != 3)
@@ -234,7 +236,7 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
                     *rgb[i] = static_cast<std::uint8_t>(std::clamp((*a)[i].value<std::int64_t>().value_or(0), std::int64_t{0}, std::int64_t{255}));
             }
         }
-        if (s.spec.radiusX <= 0.0f || s.spec.radiusY <= 0.0f)
+        if (s.spec.radiusX <= 0.0f || s.spec.radiusY <= 0.0f || s.thickness < 0.0f)
             f.errors.push_back(f.where + ": los semiejes tienen que ser positivos");
         r.errors.insert(r.errors.end(), f.errors.begin(), f.errors.end());
     }
@@ -433,4 +435,10 @@ Genome speciesGenome(SpeciesId id) {
     for (const auto& [gene, value] : info.genome)
         g[gene] = value;
     return g;
+}
+
+float cellMassScale(const SpeciesInfo& info) {
+    // Esfera de la misma sección: 4/3·π·(a·b)^(3/2); esferoide: 4/3·π·a·b·c.
+    const float c = info.thickness > 0.0f ? info.thickness : info.spec.radiusY;
+    return info.dryMassScale * c / std::sqrt(info.spec.radiusX * info.spec.radiusY);
 }

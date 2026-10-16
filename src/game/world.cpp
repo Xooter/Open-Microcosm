@@ -1412,7 +1412,7 @@ entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& 
         soft_body::makePlastic(body, bodies_, 1.0f);
     Metabolism meta;
     meta.biomass = meta.birthBiomass =
-        cellMassPmol(seededRound ? units::kPi * spread.radiusX * spread.radiusY : body.restArea) * info.dryMassScale;
+        cellMassPmol(seededRound ? units::kPi * spread.radiusX * spread.radiusY : body.restArea) * cellMassScale(info);
     meta.reserves = 0.3f * meta.biomass;
     registry_.emplace<Species>(e, Species{species});
     registry_.emplace<Locomotion>(e, loco);
@@ -2167,7 +2167,13 @@ void World::feedAtMouth(entt::entity e, RingBody& body, const Locomotion& loco, 
     const float maxParticle = speciesInfo(speciesOfEntity(registry_, e)).mouthAtRear
                                   ? 6.0f
                                   : (ciliate ? feedingParams_.ciliateMaxParticle : feedingParams_.flagellateMaxParticle);
-    const float maxRate = ciliate ? feedingParams_.mouthMaxRate : feedingParams_.flagellateMaxRate;
+    // Caudal máximo [bacterias/s real]: el medido de la especie (fisiologia.toml, a 20 °C) o el
+    // general. La boca traga a ritmo mecánico y cada presa rinde ×bioScale: por segundo biológico,
+    // la especie come lo que come por segundo real; así el dato por hora va directo.
+    const SourcedValue& measured = speciesPhysiology(speciesOfEntity(registry_, e)).maxIngestion;
+    const float maxRate = measured.present ? measured.value / 3600.0f
+                          : ciliate        ? feedingParams_.mouthMaxRate
+                                           : feedingParams_.flagellateMaxRate;
 
     // El citostoma tiene un caudal máximo: no traga todo lo que pasa cerca.
     dig.mouthBudget = std::min(dig.mouthBudget + maxRate * dt, maxRate);
@@ -2683,11 +2689,12 @@ void World::updateLifecycle(float dt) {
         if (out.vitaminTaken > 0.0f)
             meta.vitamin = vitaminBefore - exchange(vitamin_, body.centroid, -out.vitaminTaken);
         // CO₂: lo que respira (y fermenta) sale; lo que fija entra. También a la tasa real.
-        exchangeCO2(body.centroid, (out.o2Consumed + out.co2Fermented - out.o2Produced) / bioScale());
+        exchangeCO2(body.centroid, (out.o2Consumed + out.co2Fermented - out.o2Produced) / bioTimeScale_);
         // El intercambio de gases con el agua ocurre a la tasa REAL: comprimir el tiempo
         // biológico no debe acelerar la difusión ni el intercambio con el aire (agotaría o
-        // sobresaturaría el O₂ alrededor de cada célula de forma irreal).
-        exchangeO2(body.centroid, (out.o2Produced - out.o2Consumed) / bioScale());
+        // sobresaturaría el O₂ alrededor de cada célula de forma irreal). Se deshace solo la
+        // compresión (`bioTimeScale`), no el Q10: con calor la célula respira de verdad más rápido.
+        exchangeO2(body.centroid, (out.o2Produced - out.o2Consumed) / bioTimeScale_);
         if (out.exudate > 0.0f) // bucle microbiano: las algas alimentan a las bacterias
             exchange(nutrients_, body.centroid, out.exudate);
 
@@ -2723,7 +2730,7 @@ void World::updateLifecycle(float dt) {
         }
 
         // Tamaño: biomasa + lo que hay en las vacuolas. Los organelos crecen con la célula.
-        float target = cellAreaForMass(meta.biomass / info.dryMassScale) * (her ? her->traits.volume : 1.0f) +
+        float target = cellAreaForMass(meta.biomass / cellMassScale(info)) * (her ? her->traits.volume : 1.0f) +
                        (dig ? vacuoleContentArea(*dig) : 0.0f);
         if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e)) // redondeada en mitosis y apoptosis
             target = animalTargetArea(e, *ac, target);

@@ -781,6 +781,8 @@ genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
 [ser.forma]
 semieje_mayor = 8.0
 semieje_menor = 8.0
+# Disco: el eje de la frústula (vista de cintura) mide la mitad del diámetro.
+espesor = 4.0
 memoria_forma = 40.0
 color = [204, 182, 112]
 nucleo = 0.3
@@ -793,8 +795,8 @@ color_plastos = [176, 140, 50]
 # fisiologia.toml con su fuente. [ser.celula]: mecanismos de una célula de organismo pluricelular
 # (adherente, radio_redondeada [µm], inhibicion_contacto_locomocion, inhibicion_contacto_proliferacion,
 # suero_minimo [fracción], apoptosis_sin_suero_h, se_divide, quimiotaxis_fmlp). masa_seca_relativa:
-# la célula extendida es mucho más delgada que una esfera de su área (el volumen de cada tipo, en el
-# comentario).
+# la célula extendida es mucho más delgada que el esferoide de su silueta (el volumen de cada tipo, en
+# el comentario; la masa sale del esferoide de semiejes mayor, menor y `espesor`, por este factor).
 
 # Fibroblasto dérmico humano: célula fusiforme del tejido conectivo, extendida ~130 × 30 µm sobre el
 # fondo, ~3000 µm³. Migra con un lamelipodio en el frente; se detiene al tocar a otra (inhibición por
@@ -807,7 +809,7 @@ descripcion = "Celula del tejido conectivo de la dermis, en cultivo: fusiforme, 
 plan = "celula_humana_adherida"
 locomocion = "arrastre"
 alimentacion = "ninguna"
-masa_seca_relativa = 0.024
+masa_seca_relativa = 0.0500
 ph = [6.8, 7.8]
 temperatura = [30.0, 40.0]
 salinidad_max = 16.0
@@ -840,7 +842,7 @@ descripcion = "Linea celular de cancer de cuello uterino, la primera humana inmo
 plan = "celula_humana_adherida"
 locomocion = "arrastre"
 alimentacion = "ninguna"
-masa_seca_relativa = 0.11
+masa_seca_relativa = 0.1260
 ph = [6.6, 7.9]
 temperatura = [30.0, 40.0]
 salinidad_max = 16.0
@@ -874,7 +876,7 @@ plan = "neutrofilo"
 locomocion = "arrastre"
 alimentacion = "fagocitosis"
 presas = ["levadura"]
-masa_seca_relativa = 0.06
+masa_seca_relativa = 0.0775
 ph = [6.8, 7.8]
 temperatura = [30.0, 40.0]
 salinidad_max = 16.0
@@ -963,7 +965,7 @@ plan = "celula_escamosa"
 locomocion = "ninguna"
 velocidad_relativa = 0.0
 alimentacion = "ninguna"
-masa_seca_relativa = 0.05
+masa_seca_relativa = 0.0544
 ph = [6.0, 8.0]
 temperatura = [10.0, 40.0]
 salinidad_max = 16.0
@@ -990,7 +992,7 @@ plan = "leucocito"
 locomocion = "ninguna"
 velocidad_relativa = 0.0
 alimentacion = "ninguna"
-masa_seca_relativa = 0.3
+masa_seca_relativa = 0.3078
 ph = [6.8, 7.8]
 temperatura = [10.0, 40.0]
 salinidad_max = 16.0
@@ -1015,7 +1017,7 @@ plan = "leucocito"
 locomocion = "ninguna"
 velocidad_relativa = 0.0
 alimentacion = "ninguna"
-masa_seca_relativa = 0.25
+masa_seca_relativa = 0.2588
 ph = [6.8, 7.8]
 temperatura = [10.0, 40.0]
 salinidad_max = 16.0

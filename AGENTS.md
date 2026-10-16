@@ -110,7 +110,10 @@ e interviene.
   comprime con **una sola constante**, `units::kBioTimeScale` (60: 1 min real = 1 h biológica),
   respetando las proporciones entre procesos y especies. Consecuencias que hay que mantener:
   - lo digerido rinde ×`bioTimeScale` (la alimentación es mecánica, en tiempo real);
-  - el intercambio de O₂ de cada célula con el agua se hace a la tasa real (÷`bioTimeScale`);
+  - el intercambio de O₂ y CO₂ de cada célula con el agua se hace a la tasa real (÷`bioTimeScale`,
+    no ÷`bioScale`: el Q10 sí acelera la respiración);
+  - la ingestión de bacterias de una especie con dato medido (`ingestion_maxima`) es esa, en la
+    placa y en el cultivo;
   - excepción: la **migración por arrastre** de las células animales (lamelipodio, adhesiones focales)
     es biología —polimerización de actina— y corre en tiempo biológico (un fibroblasto a 40 µm/h se
     ve a ~0,7 µm/s con kBioTimeScale 60). Nadar sigue siendo física, en tiempo real.
@@ -258,7 +261,11 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   las vacuolas son funciones sin cuerpo que usan la placa y el cultivo bien mezclado (fase P1). La
   placa solo pone de dónde sale el entorno y adónde va lo que se intercambia: no dupliques esa
   biología en otro sistema.
-- **Tamaño:** el área de reposo es la de la biomasa más el contenido de las vacuolas.
+- **Tamaño:** el área de reposo es la de la biomasa más el contenido de las vacuolas. La masa es la
+  del **esferoide** de semiejes mayor, menor y vertical (`espesor` en `[ser.forma]`; por defecto, el
+  menor) por la materia seca relativa (`cellMassScale`), no la de la esfera de la silueta 2D.
+- **Punto de control del ciclo:** con el tamaño de división la célula deja de invertir en biomasa y
+  junta las reservas de la citocinesis (si no, una célula con poca comida no se divide nunca).
 - **Mitosis** (componente `Dividing`): con biomasa ×2 y reservas para el costo (el del jugador es
   el más caro), se duplican núcleo y vacuola contráctil, la forma de reposo se transforma de la
   madre en dos hijas (`divisionRestShape`), el surco estrangula y, al cerrarse, el anillo se parte.

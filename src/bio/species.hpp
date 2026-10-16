@@ -143,9 +143,12 @@ struct SpeciesInfo {
     float zoosporeChance = 0.0f;
     int colonyDaughters = 0;        // colonias hijas que libera (Volvox, Pediastrum)
     bool motherDiesAtRelease = false; // Volvox: las hijas nacen rompiendo a la madre
-    // Materia seca relativa a una célula maciza del mismo tamaño: Volvox es una esfera hueca
+    // Materia seca relativa a una célula maciza del mismo volumen: Volvox es una esfera hueca
     // de matriz gelatinosa (~3% de células); Spirogyra tiene una gran vacuola central.
     float dryMassScale = 1.0f;
+    // Semieje vertical [µm] (lo que no se ve desde arriba); 0: el semieje menor (un cigarro, como
+    // Paramecium). Un disco (Cyclotella) o una célula extendida sobre el fondo son más delgados.
+    float thickness = 0.0f;
     bool budding = false;           // levaduras: la hija brota de la madre (gemación)
     // Rango de pH tolerado (fuera de él el mantenimiento se encarece).
     float phMin = 6.0f, phMax = 9.5f;
@@ -174,6 +177,11 @@ const std::vector<std::string>& drawingStyles();
 const SpeciesInfo& speciesInfo(SpeciesId id);
 SpeciesId playerSpecies(LocomotionType type);
 Genome speciesGenome(SpeciesId id);
+// Masa de la célula relativa a la de una esfera de la misma sección vista desde arriba
+// (`cellMassPmol`, que es lo que mide el cuerpo blando 2D): el volumen real es el del esferoide de
+// semiejes mayor, menor y vertical, por la materia seca relativa. Una célula alargada pesa mucho
+// menos que la esfera de su silueta (un paramecio, ~0,5).
+float cellMassScale(const SpeciesInfo& info);
 // Por id de los datos ("paramecium"); vacío si no está cargado.
 std::optional<SpeciesId> findSpecies(std::string_view key);
 // Los tipos de ser con una etiqueta (vacío si nadie la tiene).

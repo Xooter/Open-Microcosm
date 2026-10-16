@@ -53,9 +53,11 @@ por paso y sus tests. Avance: ✅ hecho · 🟡 en parte (se dice qué falta) ·
    depende de los hilos). *Encontrado:* las células limitadas por la comida no se dividían nunca
    (invertían todo lo que pasaba del colchón de reservas y no llegaban al costo de la división);
    corregido en el metabolismo compartido con un punto de control al tamaño de división (también
-   en la placa). *Falta:* luz atenuada por las células, fagos, conjugación y las especies que
-   `Culture::supports` rechaza. *Discrepancia abierta:* el µmax de *Paramecium* no cierra con la
-   ingestión publicada (ver `docs/validacion.md`).
+   en la placa); la masa de las células alargadas salía de la esfera de su silueta (un paramecio
+   pesaba casi el doble): ahora es la del esferoide (`espesor`); la placa usa la ingestión medida
+   de la especie (antes, 4× sobrealimentada); los gases de la placa acompañan al Q10. Con eso el
+   µmax de *Paramecium* pasa en el cultivo (0,023/h) y en la placa (0,024/h) contra 0,026/h. *Falta:*
+   luz atenuada por las células, fagos, conjugación y las especies que `Culture::supports` rechaza.
 2. **Calibración cruzada:** `bio_bench --respuesta-funcional`, test de validación placa ↔ cultivo.
 3. **Programas** (`game/program`): rampas, pulsos y eventos periódicos, guardados como definición.
 4. **Panel Cultivos y gota de muestra:** `.plate` v3 con seres explícitos con estado; conteo de

@@ -102,13 +102,7 @@ TEST_CASE("cultivo: la respuesta funcional satura en la ingestión publicada") {
     CHECK(c.bacterivory(p, dense) == doctest::Approx(physio.maxIngestion.value / 3600.0).epsilon(0.01));
 }
 
-// DISCREPANCIA CONOCIDA (docs/validacion.md, «Balance de energía de Paramecium»): con la ingestión
-// publicada (26·10³ bacterias/h, temperatura sin verificar, se asumió 25 °C → 18·10³ a 20 °C) el
-// balance de energía del modelo no alcanza el µmax de Gause (0,026/h a 20 °C): da ~0,007/h. Cierra
-// si la ingestión se midió a ~20 °C. Se marca `should_fail` para que el test avise cuando se resuelva
-// (con los datos verificados), sin ajustar parámetros para que pase.
-TEST_CASE("validación: µmax de Paramecium en el cultivo bien mezclado" * doctest::test_suite("validacion") *
-          doctest::should_fail()) {
+TEST_CASE("validación: µmax de Paramecium en el cultivo bien mezclado" * doctest::test_suite("validacion")) {
     // El mismo experimento que en la placa (test_validation.cpp): cultivo sin limitación, con
     // bacterias abundantes que se reponen con materia orgánica. Pero acá a escala de Gause.
     CultureConfig cfg = tube(26);
