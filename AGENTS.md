@@ -43,7 +43,9 @@ e interviene.
   íconos), Ficha, Herramientas, Simulación, Preferencias (imagen, fluidez y rendimiento),
   Procesos (tasas de química, microbiología y hongos), Estadísticas (censo, totales conservados
   de P, N, Si y Fe, y el ser controlado), Enciclopedia y Gráficos, Medición, Contenido (paquetes
-  cargados, avisos de los datos, importar y exportar `.biopack`) y Ayuda.
+  cargados, avisos de los datos, importar y exportar `.biopack`) y Ayuda. Arrancan abiertos Placa,
+  Catálogo, Tinciones, Ficha, Estadísticas, Herramientas, Simulación y Medición; los demás se abren
+  desde *Ver* (un panel cerrado por defecto pone `open = false` en su constructor).
 - **Herramientas** (barra izquierda o teclas 1-0, M y G): Seleccionar, Controlar, Tinta, Detrito,
   Borrar, Lisar, Apretar, Revolver, Estirar, Gotero, Medir, Región y Spawnear (al armar un ser del
   catálogo).

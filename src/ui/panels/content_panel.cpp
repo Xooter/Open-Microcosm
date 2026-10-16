@@ -26,6 +26,7 @@ ImVec4 warnColor() {
 
 class ContentPanel : public Panel {
   public:
+    ContentPanel() { open = false; } // se abre desde el menú Ver
     const char* key() const override { return "contenido"; }
     const char* title() const override { return "Contenido"; }
     Dock dock() const override { return Dock::RightLow; }

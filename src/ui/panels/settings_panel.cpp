@@ -18,6 +18,7 @@ namespace {
 
 class SettingsPanel : public Panel {
   public:
+    SettingsPanel() { open = false; } // se abre desde el menú Ver
     const char* key() const override { return "preferencias"; }
     const char* title() const override { return "Preferencias"; }
     Dock dock() const override { return Dock::RightLow; }
