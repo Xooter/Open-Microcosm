@@ -1,5 +1,6 @@
 // Cultivo bien mezclado (fase P1, paso 1): la misma fisiología que la placa, sin espacio.
 #include "bio/physiology.hpp"
+#include "game/calibration.hpp"
 #include "game/culture.hpp"
 
 #include <doctest/doctest.h>
@@ -21,6 +22,7 @@ CultureConfig tube(std::uint64_t seed = 1934) {
     c.medium.temperature = 20.0f;
     c.medium.organic = 200.0f;
     c.medium.organicInflow = 50.0f;
+    c.medium.phage = 0.0f; // como un cultivo de laboratorio (los fagos se prueban aparte)
     return c;
 }
 
@@ -166,4 +168,31 @@ TEST_CASE("cultivo: las algas se sombrean a sí mismas (Beer–Lambert en la col
     MESSAGE("luz media: " << sparse.light() << " con 10 algas, " << dense.light() << " con 10⁵");
     CHECK(sparse.light() > 0.999);
     CHECK(dense.light() < sparse.light());
+}
+
+namespace {
+
+// Calibración cruzada (paso 2 de P1): la placa (física: boca, corriente oral, altura en la
+// película) y el cultivo (respuesta funcional medida) tienen que comer lo mismo a la misma
+// densidad, dentro de un factor 2 (la placa no usa el aclaramiento publicado: lo produce).
+void checkFunctionalResponse(std::size_t bacteria) {
+    const FunctionalResponsePoint p = measureFunctionalResponse(SpeciesId::Paramecium, bacteria, 6, 20.0f);
+    MESSAGE("densidad " << p.density * 1e12 << " /mL: placa " << p.plate * 3600.0 << " bacterias/h, cultivo "
+                        << p.culture * 3600.0 << " bacterias/h (razón " << p.plate / p.culture << ")");
+    CHECK(p.plate > 0.5 * p.culture);
+    CHECK(p.plate < 2.0 * p.culture);
+}
+
+} // namespace
+
+TEST_CASE("validación: respuesta funcional de Paramecium, placa contra cultivo, ~10⁵/mL" * doctest::test_suite("validacion")) {
+    checkFunctionalResponse(100);
+}
+
+TEST_CASE("validación: respuesta funcional de Paramecium, placa contra cultivo, ~10⁶/mL" * doctest::test_suite("validacion")) {
+    checkFunctionalResponse(500);
+}
+
+TEST_CASE("validación: respuesta funcional de Paramecium, placa contra cultivo, 10⁹/mL" * doctest::test_suite("validacion")) {
+    checkFunctionalResponse(100'000);
 }

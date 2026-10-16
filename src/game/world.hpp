@@ -558,6 +558,10 @@ class World {
     Vec2 imageShift(const RingBody& of, Vec2 near) const;
     void feedAtMouth(entt::entity e, RingBody& body, const Locomotion& loco, Digestion& dig, float dt);
     void feedByContact(RingBody& body, Digestion& dig, float dt);
+    // Altura en la película [µm, 0 = fondo] de algo que la vista cenital no muestra: cada `period`
+    // segundos (lo que tarda en cruzar la película nadando) toma otra al azar. La placa es 2D, pero
+    // una bacteria que se superpone con la boca de un ciliado puede estar más arriba o más abajo.
+    float filmHeight(std::uint64_t id, float period) const;
     void removeBacteria(std::vector<std::size_t>& indices);
     void removeAmbient(std::vector<std::size_t>& indices);
     void updateLifecycle(float dt);

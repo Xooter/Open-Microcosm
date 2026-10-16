@@ -148,6 +148,7 @@ add_library(biosim STATIC
     src/game/inspect.cpp
     src/game/world_chem.cpp
     src/game/culture.cpp
+    src/game/calibration.cpp
     src/game/biome.cpp
     src/game/medium_toml.cpp
     src/game/mineral.cpp

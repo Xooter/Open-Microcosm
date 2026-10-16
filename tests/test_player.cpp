@@ -1,3 +1,4 @@
+#include "bio/physiology.hpp"
 #include "core/finite.hpp"
 #include "bio/feeding.hpp"
 #include "bio/genome.hpp"
@@ -100,8 +101,11 @@ TEST_CASE("el ciliado come bacterias por la boca respetando el caudal del citost
     }
     const Digestion& dig = world.registry().get<Digestion>(e);
     MESSAGE(dig.bacteriaEaten << " bacterias en 10 s, " << dig.vacuoles.size() << " vacuolas");
-    CHECK(dig.bacteriaEaten > 50);
-    CHECK(dig.bacteriaEaten <= static_cast<int>(10.0f * world.feedingParams().mouthMaxRate) + 31);
+    // El caudal del citostoma: la ingestión medida de la especie (fisiologia.toml) o el general.
+    const SourcedValue& measured = speciesPhysiology(playerSpecies(LocomotionType::Cilia)).maxIngestion;
+    const float maxRate = measured.present ? measured.value / 3600.0f : world.feedingParams().mouthMaxRate;
+    CHECK(dig.bacteriaEaten > static_cast<int>(0.5f * 10.0f * maxRate));
+    CHECK(dig.bacteriaEaten <= static_cast<int>(10.0f * maxRate) + 31);
     CHECK_FALSE(dig.vacuoles.empty());
 }
 

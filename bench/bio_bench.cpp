@@ -8,7 +8,10 @@
 //
 //   bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] [--warmup N] [--threads N]
 //             [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate]
-//             [--paquete ruta] [--soak N]
+//             [--paquete ruta] [--soak N] [--respuesta-funcional id_del_ser]
+//
+// Con --respuesta-funcional mide cuántas bacterias come un filtrador en la placa a varias densidades
+// y lo compara con la respuesta funcional del cultivo bien mezclado (calibración cruzada, P1).
 //
 // Con --paquete carga un paquete de contenido (carpeta o .biopack; se puede repetir) antes de la
 // escena, así una escena con seres o biomas de ese paquete se reproduce sin la interfaz.
@@ -20,6 +23,7 @@
 #include "core/profiling.hpp"
 #include "core/finite.hpp"
 #include "game/biome.hpp"
+#include "game/calibration.hpp"
 #include "game/run.hpp"
 #include "game/mass_budget.hpp"
 #include "game/content.hpp"
@@ -41,6 +45,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <memory>
+#include <optional>
 #include <string>
 
 namespace {
@@ -61,6 +66,7 @@ struct Args {
     float cellDetail = 1.0f;
     std::string scene; // escena (.plate con intervenciones) a reproducir
     std::vector<std::string> packs; // paquetes de contenido a cargar (carpeta o .biopack)
+    std::string functionalResponse; // id de un filtrador: calibración placa ↔ cultivo
     std::string shot;  // con --render: guarda el último cuadro (PNG) para comparar dibujos
     int soak = 0;      // > 0: cada `soak` pasos verifica posiciones finitas, balance y memoria
 };
@@ -121,6 +127,8 @@ bool parse(int argc, char** argv, Args& a) {
             a.zoom = static_cast<float>(std::atof(argv[++i]));
         else if (k == "--soak" && hasValue)
             a.soak = std::atoi(argv[++i]);
+        else if (k == "--respuesta-funcional" && hasValue)
+            a.functionalResponse = argv[++i];
         else if (k == "--shot" && hasValue)
             a.shot = argv[++i];
         else if (k == "--scene" && hasValue)
@@ -206,6 +214,21 @@ int main(int argc, char** argv) {
         omp_set_num_threads(a.threads);
     else if (!std::getenv("OMP_NUM_THREADS"))
         omp_set_num_threads(std::max(1, omp_get_num_procs() / 2));
+
+    if (!a.functionalResponse.empty()) {
+        const std::optional<SpeciesId> id = findSpecies(a.functionalResponse);
+        if (!id) {
+            std::fprintf(stderr, "ser desconocido: %s\n", a.functionalResponse.c_str());
+            return 1;
+        }
+        std::printf("%-14s %-16s %-16s %s\n", "bacterias/mL", "placa [1/h]", "cultivo [1/h]", "razón");
+        for (const std::size_t n : {50ul, 100ul, 200ul, 500ul, 2'000ul, 20'000ul, 100'000ul}) {
+            const FunctionalResponsePoint p = measureFunctionalResponse(*id, n, 6, 20.0f, a.seed);
+            std::printf("%-14.3g %-16.0f %-16.0f %.2f\n", p.density * 1e12, p.plate * 3600.0, p.culture * 3600.0,
+                        p.culture > 0.0 ? p.plate / p.culture : 0.0);
+        }
+        return 0;
+    }
 
     // La GPU necesita un contexto de OpenGL 4.3: una ventana que no se muestra.
     GpuSubstepSolver gpu;

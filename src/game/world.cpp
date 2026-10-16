@@ -2178,13 +2178,22 @@ void World::feedAtMouth(entt::entity e, RingBody& body, const Locomotion& loco, 
     // El citostoma tiene un caudal máximo: no traga todo lo que pasa cerca.
     dig.mouthBudget = std::min(dig.mouthBudget + maxRate * dt, maxRate);
     const Vec2 wm = {wrapCoord(m.x, width_), wrapCoord(m.y, height_)};
-    forBacteriaInBox(wm - Vec2{reach, reach}, wm + Vec2{reach, reach}, [&](std::size_t k) {
+    // La tercera dimensión: la boca está a una altura de la película y solo alcanza a las bacterias
+    // que pasan a menos de `reach` de ella (si no, en una película de 200 µm el ciliado tragaba
+    // todas las que veía superpuestas: ~30 veces el aclaramiento medido).
+    const float depth = fluid_.gapHeight;
+    const float swim = std::max(1.0f, maxSpeedOf(locomotionParams_, loco.type) * 0.6f);
+    const float mouthHeight = filmHeight(body.id * 2ull + 1, depth / swim);
+    const float bacterialCrossing = depth / std::max(1.0f, bacteria_.params.speed);
+    const float capture = feedingParams_.bacteriaCaptureRadius;
+    forBacteriaInBox(wm - Vec2{capture, capture}, wm + Vec2{capture, capture}, [&](std::size_t k) {
         // La corriente oral no despega a las de la biopelícula (refugio contra los filtradores).
         if (takenBacteria_[k] || dig.mouthBudget < 1.0f || bacteria_.attached[k])
             return;
         const float dx = minImage(bacteria_.x[k] - m.x, width_);
         const float dy = minImage(bacteria_.y[k] - m.y, height_);
-        if (dx * dx + dy * dy < reach * reach) {
+        if (dx * dx + dy * dy < capture * capture &&
+            std::abs(filmHeight(bacteria_.id[k] * 2ull, bacterialCrossing) - mouthHeight) < capture) {
             dig.mouthBudget -= 1.0f;
             takenBacteria_[k] = 1;
             eatenBacteria_.push_back(k);
@@ -2259,8 +2268,16 @@ void World::feedByContact(RingBody& body, Digestion& dig, float dt) {
     // La caja del cuerpo puede salirse del mundo: se consulta su versión envuelta.
     const Vec2 lo = body.aabbMin - Vec2{reach, reach}, hi = body.aabbMax + Vec2{reach, reach};
     const Vec2 shift = {wrapCoord(lo.x, width_) - lo.x, wrapCoord(lo.y, height_) - lo.y};
+    // La ameba se arrastra por el fondo: alcanza a las de la biopelícula y a las que nadan a la
+    // altura de su cuerpo (las que pasan más arriba en la película, no).
+    const float depth = fluid_.gapHeight;
+    const SpeciesInfo& self = speciesInfo(speciesOfEntity(registry_, static_cast<entt::entity>(body.id)));
+    const float bodyHeight = 2.0f * (self.thickness > 0.0f ? self.thickness : self.spec.radiusY) + feedingParams_.contactGap;
+    const float bacterialCrossing = depth / std::max(1.0f, bacteria_.params.speed);
     forBacteriaInBox(lo + shift, hi + shift, [&](std::size_t k) {
         if (takenBacteria_[k] || dig.mouthBudget < 1.0f)
+            return;
+        if (!bacteria_.attached[k] && filmHeight(bacteria_.id[k] * 2ull, bacterialCrossing) > bodyHeight)
             return;
         if (tryEat(bacteria_.x[k], bacteria_.y[k], k, site)) {
             dig.mouthBudget -= 1.0f;
@@ -2311,6 +2328,11 @@ void placeMouth(const RingBody& body, Locomotion& loco) {
 }
 
 } // namespace
+
+float World::filmHeight(std::uint64_t id, float period) const {
+    const auto slot = static_cast<std::uint64_t>(simTime_ / std::max(1e-3f, period));
+    return Rng(config_.seed, rng_stream::kFeeding + 9, id, slot).uniform() * fluid_.gapHeight;
+}
 
 float World::microMolarPerPmol() const {
     const double cellLiters = static_cast<double>(config_.cellSize) * config_.cellSize *

@@ -95,7 +95,9 @@ TEST_CASE("las hijas en piloto automático nadan y comen solas" * doctest::test_
     REQUIRE(world.registry().valid(sister));
     const int eaten = world.registry().get<Digestion>(sister).bacteriaEaten - before;
     MESSAGE("la hermana comió " << eaten << " bacterias en 20 s");
-    CHECK(eaten > 20);
+    // Come sola. A ~10⁸ bacterias por mL la ingestión medida de P. caudatum es de unas pocas por
+    // segundo (la boca alcanza solo a las que pasan a su altura en la película).
+    CHECK(eaten > 5);
 }
 
 TEST_CASE("el registro de la enciclopedia se guarda y se carga") {

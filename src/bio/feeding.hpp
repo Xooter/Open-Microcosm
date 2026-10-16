@@ -42,7 +42,12 @@ struct Digestion {
 struct FeedingParams {
     float digestionRate = 1.0f / 600.0f; // Paramecium: vacuolas de ~5–30 min [1/s biológico]
     float wholeCellDigestionHours = 3.0f; // Didinium digiere un paramecio en ~2–4 h
-    float mouthRadius = 6.0f;            // alcance del citostoma [µm]
+    float mouthRadius = 6.0f;            // alcance del citostoma para células y detritos [µm]
+    // Radio de captura de bacterias del citostoma [µm], horizontal y vertical: la corriente oral arrastra
+    // el agua de alrededor del cuerpo hacia el surco oral. CALIBRADO para que la placa coma lo que dice
+    // la respuesta funcional de P. caudatum (aclaramiento ~24 µL/h con pocas presas, fisiologia.toml;
+    // `bio_bench --respuesta-funcional paramecium`, tests/test_culture.cpp).
+    float bacteriaCaptureRadius = 75.0f;
     float ciliateMaxParticle = 5.0f;     // radio máximo que entra por la boca del ciliado [µm]
     float flagellateMaxParticle = 3.0f;
     float contactRate = 1.0f;            // ameba: ingestión por contacto [1/s]
