@@ -1,6 +1,7 @@
 #include "app/app.hpp"
 
 #include "app/tool_icons.hpp"
+#include "build_info.hpp"
 
 #include "bio/locomotion.hpp"
 #include "core/profiling.hpp"
@@ -11,6 +12,7 @@
 #include "game/export.hpp"
 #include "game/region.hpp"
 #include "game/scene.hpp"
+#include "render/photo.hpp"
 #include "ui/being_icons.hpp"
 #include "ui/i18n.hpp"
 #include "ui/imgui_raylib.hpp"
@@ -312,6 +314,50 @@ void App::exportData() {
     notify(ok ? std::string(ui::tr("Datos exportados: ")) + base + ".csv/.json/.plate" : ui::tr("No se pudo exportar"));
 }
 
+void App::setTimelapse(bool on) {
+    timelapse = on;
+    if (!on || !world)
+        return;
+    timelapseDir = (std::filesystem::path(photosDir) / timestampedName("timelapse")).string();
+    timelapseClock.start(world->simTime() * world->bioTimeScale() / 3600.0);
+}
+
+void App::takePhotos() {
+    if (!world)
+        return;
+    const bool frame = timelapse && timelapseClock.due(world->simTime() * world->bioTimeScale() / 3600.0);
+    if (!photoRequested_ && !frame)
+        return;
+    // El campo del centro libre del dockspace, con su zoom (sin la UI encima).
+    Camera2D cam = camera;
+    cam.target = GetScreenToWorld2D({viewport.x + 0.5f * viewport.width, viewport.y + 0.5f * viewport.height}, camera);
+    const int w = std::max(64, static_cast<int>(viewport.width)), h = std::max(64, static_cast<int>(viewport.height));
+    PhotoInfo info;
+    info.plate = !runPlate.prepared.empty() ? runPlate.prepared : biome(static_cast<BiomeId>(runPlate.biome)).key;
+    info.seed = runPlate.seed;
+    if (const StainSpec* st = activeStain())
+        info.stain = st->id;
+    info.provenance = std::string(BIO_VERSION) + " " + BIO_GIT;
+    info.lessonOrScene = protocol.empty() ? plateName : protocol;
+    std::error_code ec;
+    if (photoRequested_) {
+        photoRequested_ = false;
+        std::filesystem::create_directories(photosDir, ec);
+        const std::string path = (std::filesystem::path(photosDir) / (timestampedName(plateName) + ".png")).string();
+        const bool ok = savePhoto(*renderer, *world, cam, tools.overlay, w, h, path, info);
+        lastPhoto = ok ? path : std::string();
+        notify(ok ? std::string(ui::tr("Foto guardada: ")) + path : ui::tr("No se pudo guardar la foto"));
+    }
+    if (frame) {
+        std::filesystem::create_directories(timelapseDir, ec);
+        const std::string path = (std::filesystem::path(timelapseDir) / timelapseClock.frameName()).string();
+        if (!savePhoto(*renderer, *world, cam, tools.overlay, w, h, path, info)) {
+            timelapse = false;
+            notify(ui::tr("No se pudo guardar el time-lapse"));
+        }
+    }
+}
+
 void App::notify(const std::string& text) {
     toasts.push_back(text);
     if (toasts.size() > 5)
@@ -344,6 +390,7 @@ void App::registerCommands() {
     add("file.create", "Crear placa", "Archivo", ImGuiKey_N, true, [this] { createPlate(); });
     add("file.plate", "Editor de placa", "Archivo", ImGuiKey_None, false, [this] { panels.show("placa"); });
     add("file.export", "Exportar datos (CSV y JSON)", "Archivo", ImGuiKey_E, true, [this] { exportData(); });
+    add("file.photo", "Foto del campo (PNG y JSON)", "Archivo", ImGuiKey_F12, false, [this] { requestPhoto(); });
     add("file.quit", "Salir", "Archivo", ImGuiKey_Q, true, [this] { quit = true; });
 
     add("sim.pause", "Pausa", "Simulación", ImGuiKey_Space, false, [this] { tools.paused = !tools.paused; }, {},
@@ -1349,6 +1396,8 @@ int App::run() {
         renderer->setLodEnabled(tools.semanticZoom);
         renderer->setViewMode(tools.modelView ? ViewMode::Model : ViewMode::Microscope);
         renderer->setInspection(selection.inspection.valid && !selection.inspection.dead ? selection.picked : Picked{});
+        if (recoverTarget_ == 0)
+            takePhotos();
         BeginDrawing();
         ClearBackground({22, 24, 24, 255});
         const double r0 = GetTime();

@@ -7,6 +7,7 @@
 #include "game/plate_spec.hpp"
 #include "game/progress.hpp"
 #include "game/stain.hpp"
+#include "game/timelapse.hpp"
 #include "game/run.hpp"
 #include "game/scale_path.hpp"
 #include "game/world.hpp"
@@ -61,6 +62,16 @@ struct App {
     RunProvenance provenance() const; // motor, GPU y LOD de la placa en pantalla
     std::string exportsDir = defaultExportsDir();
     std::string lastExport; // ruta base de la última exportación ("" si falló)
+    // Foto del campo (PNG con barra de escala + JSON con los metadatos, fase P1). Se toma al final
+    // del cuadro, antes de dibujar la pantalla: el pedido queda pendiente.
+    void requestPhoto() { photoRequested_ = true; }
+    std::string photosDir = defaultPhotosDir();
+    std::string lastPhoto;
+    // Time-lapse: una foto cada tanto tiempo biológico en una carpeta nueva.
+    bool timelapse = false;
+    TimelapseClock timelapseClock;
+    std::string timelapseDir;
+    void setTimelapse(bool on);
     // Nombre con el que se guarda la placa.
     std::string plateName = "mi_placa";
     std::string platesDir = defaultPlatesDir();
@@ -144,6 +155,8 @@ struct App {
     void discover(float dt);
     void drawWorldOverlays();
     void drawMeasurements();
+    void takePhotos(); // las fotos pedidas y el cuadro del time-lapse que toque
+    bool photoRequested_ = false;
     Vec2 worldPos(const Vector2& m) const;
 
     void applyFrameCap();  // tope de FPS (y el del ahorro en segundo plano)

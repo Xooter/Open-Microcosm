@@ -37,9 +37,34 @@ class MeasurePanel : public Panel {
             if (!app.lastExport.empty())
                 readout("Última", "%s", app.lastExport.c_str());
         }
+        if (section("Foto y time-lapse", true))
+            drawPhoto(app);
     }
 
   private:
+    void drawPhoto(App& app) {
+        if (ImGui::Button(tr("Foto del campo")))
+            app.requestPhoto();
+        tooltip("Lo que se ve en el centro (sin la interfaz), con una barra de escala y el tiempo biológico, en PNG; al "
+                "lado, un JSON con el ancho del campo en µm, el tiempo, la seed, la placa, la tinción y la versión. No "
+                "hay objetivos simulados: se da el ancho real del campo, no un aumento. F12.");
+        if (!app.lastPhoto.empty())
+            readout("Última", "%s", app.lastPhoto.c_str());
+        bool on = app.timelapse;
+        if (checkbox("Time-lapse", &on, "Una foto cada tanto tiempo BIOLÓGICO de la placa (no por cuadro): la serie no "
+                                         "depende de los FPS ni de la velocidad. Cada time-lapse va a una carpeta nueva."))
+            app.setTimelapse(on);
+        float minutes = static_cast<float>(app.timelapseClock.intervalHours * 60.0);
+        if (sliderLog("Intervalo", &minutes, 1.0f, 600.0f, "%.0f min bio", "Tiempo biológico entre fotos."))
+            app.timelapseClock.intervalHours = minutes / 60.0;
+        if (app.timelapse) {
+            readout("Cuadros", "%d", app.timelapseClock.frame);
+            note(app.timelapseDir.c_str());
+        } else {
+            note(app.photosDir.c_str());
+        }
+    }
+
     void drawRuler(App& app, ToolState& t) {
         static const char* const kModes[] = {"Distancia", "Área"};
         int mode = static_cast<int>(t.measureMode);

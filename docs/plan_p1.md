@@ -127,7 +127,14 @@ por paso y sus tests. Avance: ✅ hecho · 🟡 en parte (se dice qué falta) ·
     por paso con las horas biológicas (temperatura, luz, solutos, parámetros del registro, pulsos
     `agregar:<soluto>`, inóculos); intervención `Program` para cambiarlo en vivo; editor con presets en
     el panel Simulación.
-13. **Foto y time-lapse** (por tiempo biológico, no por cuadro).
+13. ✅ **Foto y time-lapse** (por tiempo biológico, no por cuadro).
+    *Hecho:* `render/photo` (el campo del centro sin la interfaz, en PNG con barra de escala de largo
+    redondo y rótulo con el tiempo biológico y la seed; al lado un JSON con el ancho del campo en µm,
+    µm por píxel, tiempo, seed, placa, tinción, escena o lección y procedencia; sin "aumento"),
+    comando Foto (F12, Archivo) y sección *Foto y time-lapse* en Medición. `game/timelapse`
+    (`TimelapseClock`): un cuadro cada tanto tiempo biológico, sin importar los FPS ni la velocidad,
+    cada serie en su carpeta (`<datos>/biogame/fotos/timelapse_<fecha>/frame_00001.png`…);
+    `bio_bench --timelapse <min_bio> [--timelapse-dir carpeta]` lo hace sin ventana.
 14. **Glosario y notas** (las notas van en la escena, no son intervenciones).
 15. **Accesibilidad:** escala de interfaz, HiDPI y paleta Okabe–Ito.
 

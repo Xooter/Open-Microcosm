@@ -15,6 +15,7 @@
 %.0f mM	%.0f mM
 %.0f mOsm/L	%.0f mOsm/L
 %.0f mg/L	%.0f mg/L
+%.0f min bio	%.0f bio min
 %.0f nm	%.0f nm
 %.0f pmol	%.0f pmol
 %.0f s (se diluye con el tiempo)	%.0f s (diluted over time)
@@ -396,6 +397,7 @@ Ctl	Ctl
 Ctrl+	Ctrl+
 Ctrl+N: crear la placa del editor. Los paneles se arrastran y acoplan; Ver > Restablecer disposición.	Ctrl+N: create the plate from the editor. Panels can be dragged and docked; View > Reset layout.
 Ctrl+click o doble click en un deslizador: tipear el valor.	Ctrl+click or double click on a slider: type the value.
+Cuadros	Frames
 Cuando abras el gotero de CO2 en el centro, que fraccion de los paramecios va a estar a menos de 0,2 radios del centro (el 4 % del area)?	When you open the CO2 dropper in the center, what fraction of the paramecia will be less than 0.2 radii from the center (4 % of the area)?
 Cuando son muchas, el autoinductor que liberan pasa un umbral (quorum) y fabrican violaceina, un pigmento violeta toxico para quien las come.	When there are many of them, the autoinducer they release passes a threshold (quorum) and they make violacein, a purple pigment toxic to whoever eats them.
 Cuarzo (SiO₂): el mineral más común de la arena. Su índice de refracción (1,54) es mayor que el del agua (1,33): se ve por el relieve, con un borde oscuro grueso y una línea brillante de Becke por dentro.	Quartz (SiO₂): the most common mineral of sand. Its refractive index (1.54) is higher than that of water (1.33): it shows by its relief, with a thick dark edge and a bright Becke line inside.
@@ -588,7 +590,11 @@ Fosfato / N inorg.	Phosphate / inorg. N
 Fosfato [µM]	Phosphate [µM]
 Fosforo	Phosphorus
 Fosforo y N	Phosphorus and N
+Foto del campo	Field photo
+Foto del campo (PNG y JSON)	Field photo (PNG and JSON)
 Foto del momento del click: las bacterias y las partículas se reordenan en memoria y no se pueden seguir.	Snapshot of the moment of the click: bacteria and particles are reordered in memory and cannot be followed.
+Foto guardada: 	Photo saved: 
+Foto y time-lapse	Photo and time-lapse
 Fotobionte	Photobiont
 Fotoperíodo 16:8	16:8 photoperiod
 Fotosíntesis máxima	Maximum photosynthesis
@@ -692,6 +698,7 @@ Inocular...	Inoculate...
 Intensidad	Intensity
 Intercambio O2 [1/s]	O2 exchange [1/s]
 Interfaz	Interface
+Intervalo	Interval
 Intestino de termita	Termite gut
 Inóculo [µL]	Inoculum [µL]
 Irradiancia relativa de la lámpara sobre el cultivo.	Relative irradiance of the lamp over the culture.
@@ -746,6 +753,7 @@ Lisosoma	Lysosome
 Llevan la concentración media de toda la placa al valor elegido.	They bring the mean concentration of the whole plate to the chosen value.
 Lo que está fuera de la vista se resuelve con menos sub-pasos de XPBD. Cambia la trayectoria fina de esas células (no su biología).	What is out of view is solved with fewer XPBD substeps. It changes the fine trajectory of those cells (not their biology).
 Lo que se pasa: células con su estado, bacterias y medio.	What is passed: cells with their state, bacteria and medium.
+Lo que se ve en el centro (sin la interfaz), con una barra de escala y el tiempo biológico, en PNG; al lado, un JSON con el ancho del campo en µm, el tiempo, la seed, la placa, la tinción y la versión. No hay objetivos simulados: se da el ancho real del campo, no un aumento. F12.	What is seen in the center (without the interface), with a scale bar and the biological time, as PNG; next to it, a JSON with the field width in µm, the time, the seed, the plate, the stain and the version. There are no simulated objectives: the real field width is given, not a magnification. F12.
 Locomocion	Locomotion
 Logística	Logistic
 Los ejes siguen a los datos. Apagado: zoom libre con la rueda y arrastre.	The axes follow the data. Off: free zoom with the wheel and dragging.
@@ -844,6 +852,8 @@ No se mueve sola	It does not move by itself
 No se pudo exportar	Could not export
 No se pudo exportar el paquete	Could not export the pack
 No se pudo exportar.	Could not export.
+No se pudo guardar el time-lapse	Could not save the time-lapse
+No se pudo guardar la foto	Could not save the photo
 No se pudo guardar.	Could not save.
 No se pudo importar el paquete	Could not import the pack
 No vital: en la realidad fija o mata a las células.	Not vital: in reality it fixes or kills the cells.
@@ -1140,9 +1150,11 @@ Tetraciclina	Tetracycline
 Teñida	Stained
 Tiempo	Time
 Tiempo biológico (x)	Biological time (x)
+Tiempo biológico entre fotos.	Biological time between photos.
 Tiempo de duplicación	Doubling time
 Tiempo simulado	Simulated time
 Tilman: competencia por un recurso en un quimiostato	Tilman: competition for a resource in a chemostat
+Time-lapse	Time-lapse
 Tin	Sta
 Tincion de Gram	Gram stain
 Tinciones	Stains
@@ -1181,6 +1193,7 @@ Un solo archivo de texto con las definiciones elegidas, tal como se leyeron (con
 Un volumen de una suspensión de densidad conocida: la cantidad que entra es un sorteo de Poisson (una suspensión de 10 por mL rara vez deja un individuo en 1 µL).	A volume of a suspension of known density: the number that goes in is a Poisson draw (a suspension of 10 per mL rarely leaves one individual in 1 µL).
 Una colonia libera colonias hijas	A colony releases daughter colonies
 Una dosis-respuesta se mide como en el laboratorio: un lote (panel Experimento) con el factor reactivo:<id> y una serie de dosis al doble.	A dose-response is measured as in the laboratory: a batch (Experiment panel) with the factor reactivo:<id> and a twofold dose series.
+Una foto cada tanto tiempo BIOLÓGICO de la placa (no por cuadro): la serie no depende de los FPS ni de la velocidad. Cada time-lapse va a una carpeta nueva.	One photo every so much BIOLOGICAL time of the plate (not per frame): the series does not depend on FPS or speed. Each time-lapse goes to a new folder.
 Una gota de agua con su fauna (de un bioma) o una placa preparada como en el laboratorio: un cultivo celular en su medio, en la incubadora.	A drop of water with its fauna (from a biome) or a plate prepared as in the laboratory: a cell culture in its medium, in the incubator.
 Una gota de sangre extendida en capa fina, fijada con metanol y tenida con Giemsa: globulos rojos rosados sin nucleo y, cada tanto, globulos blancos (neutrofilos de nucleo lobulado, linfocitos, monocitos) y plaquetas violetas.	A drop of blood spread in a thin layer, fixed with methanol and stained with Giemsa: pink red blood cells without nucleus and, here and there, white blood cells (neutrophils with lobed nuclei, lymphocytes, monocytes) and violet platelets.
 Una hojita de Elodea (Egeria densa) montada en agua: celulas rectangulares llenas de cloroplastos que giran junto a la pared (ciclosis). Con sal se plasmolizan. Se simula un campo de 0,5 mm.	An Elodea leaflet (Egeria densa) mounted in water: rectangular cells full of chloroplasts circling along the wall (cyclosis). With salt they plasmolyze. A 0.5 mm field is simulated.

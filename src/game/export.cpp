@@ -469,6 +469,11 @@ std::string defaultExportsDir() {
     return (fs::path(defaultProgressPath()).parent_path() / "exports").string();
 }
 
+std::string defaultPhotosDir() {
+    namespace fs = std::filesystem;
+    return (fs::path(defaultProgressPath()).parent_path() / "fotos").string();
+}
+
 bool writeTextFile(const std::string& path, const std::string& text) {
     namespace fs = std::filesystem;
     std::error_code ec;

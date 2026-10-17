@@ -168,7 +168,7 @@ del usuario en la carpeta de la plataforma (`userDataDir`). `tools/ci.sh` es el 
 
 **Medir:** `bio_bench` corre una gota fija sin ventana y da ms/paso, el censo y un checksum del
 estado (`--wildlife 3` ≈ 700 células, `--gpu` usa el resolvedor de GPU como la app; con el preset
-`lite` desglosa por `PROFILE_SCOPE`; `--shot` guarda el cuadro dibujado; por defecto usa un hilo por
+`lite` desglosa por `PROFILE_SCOPE`; `--shot` guarda el cuadro dibujado; `--timelapse <min_bio>` guarda una foto cada tantos minutos biológicos; por defecto usa un hilo por
 núcleo físico, como la app: con SMT, 16 hilos son más lentos que 8). `BIO_GPU_TIMING=1` da el tiempo
 de cada kernel de la GPU con marcas de tiempo. Una optimización que no debe cambiar resultados se verifica
 comparando checksums de la versión vieja y la nueva compiladas con `-DBIO_STRICT_FP=ON`: con
@@ -409,6 +409,11 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   post-proceso. Con placa hay una sola copia del mundo (sin toro no se repite al alejar). Todo ocurre en un
   mismo plano (no hay plano focal). El campo se dibuja en una textura y pasa por
   `microscope_post.fs` (viñeta, aberración cromática, grano).
+- **Foto y time-lapse** (`render/photo`, `game/timelapse`, fase P1): la foto es el campo del centro
+  sin la interfaz, con barra de escala y un JSON con el ancho del campo en µm (no hay "aumento": no hay
+  objetivos simulados), el tiempo, la seed, la placa, la tinción y la procedencia. El time-lapse toma un
+  cuadro por intervalo de tiempo BIOLÓGICO (`TimelapseClock`), nunca por cuadro de pantalla; sin
+  ventana, `bio_bench --timelapse <min_bio>`. Las fotos van en `<datos>/biogame/fotos`.
 - **Zoom semántico** (`render/lod.hpp`, `RenderLodSettings`: toda la configuración en un lugar):
   cada ser elige su nivel (`DetailLevel`: densidad, simplificado, normal, detalle, subcelular) por
   su tamaño real proyectado en píxeles, no por el zoom. Bacterias y *Bdellovibrio*: una pasada

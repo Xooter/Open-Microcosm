@@ -9,6 +9,11 @@
 //   bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] [--warmup N] [--threads N]
 //             [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate]
 //             [--paquete ruta] [--soak N] [--respuesta-funcional id_del_ser]
+//             [--timelapse minutos_bio [--timelapse-dir carpeta]]
+//
+// Con --timelapse (implica --render) guarda una foto del campo (PNG con barra de escala + JSON con
+// los metadatos, como la de la app) cada tantos minutos BIOLÓGICOS en la carpeta (por defecto
+// "timelapse"): frame_00001.png, frame_00002.png…
 //
 // Con --respuesta-funcional mide cuántas bacterias come un filtrador en la placa a varias densidades
 // y lo compara con la respuesta funcional del cultivo bien mezclado (calibración cruzada, P1).
@@ -28,8 +33,11 @@
 #include "game/mass_budget.hpp"
 #include "game/content.hpp"
 #include "game/scene.hpp"
+#include "game/timelapse.hpp"
+#include "build_info.hpp"
 #include "game/stain.hpp"
 #include "gpu/gpu_substep_solver.hpp"
+#include "render/photo.hpp"
 #include "render/renderer.hpp"
 
 #include <raylib.h>
@@ -44,6 +52,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <filesystem>
 #include <memory>
 #include <optional>
 #include <string>
@@ -69,6 +78,8 @@ struct Args {
     std::string functionalResponse; // id de un filtrador: calibración placa ↔ cultivo
     std::string shot;  // con --render: guarda el último cuadro (PNG) para comparar dibujos
     int soak = 0;      // > 0: cada `soak` pasos verifica posiciones finitas, balance y memoria
+    double timelapseMinutes = 0.0; // > 0: una foto cada tantos minutos biológicos
+    std::string timelapseDir = "timelapse";
 };
 
 // Memoria residente [MB] (Linux; 0 si no se puede leer).
@@ -131,6 +142,11 @@ bool parse(int argc, char** argv, Args& a) {
             a.functionalResponse = argv[++i];
         else if (k == "--shot" && hasValue)
             a.shot = argv[++i];
+        else if (k == "--timelapse" && hasValue) {
+            a.timelapseMinutes = std::atof(argv[++i]);
+            a.render = true;
+        } else if (k == "--timelapse-dir" && hasValue)
+            a.timelapseDir = argv[++i];
         else if (k == "--scene" && hasValue)
             a.scene = argv[++i];
         else if (k == "--paquete" && hasValue)
@@ -151,7 +167,7 @@ bool parse(int argc, char** argv, Args& a) {
             a.threads = std::atoi(argv[++i]);
         else {
             std::fprintf(stderr, "uso: bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] "
-                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate] [--paquete ruta] [--soak N] [--shot cuadro.png]\n");
+                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate] [--paquete ruta] [--soak N] [--shot cuadro.png] [--timelapse min_bio] [--timelapse-dir carpeta]\n");
             return false;
         }
     }
@@ -317,6 +333,18 @@ int main(int argc, char** argv) {
                 if (s.id == pp->stain)
                     renderer->setStain(&s);
     }
+    TimelapseClock timelapse;
+    timelapse.intervalHours = a.timelapseMinutes / 60.0;
+    timelapse.start(world.simTime() * world.bioTimeScale() / 3600.0);
+    PhotoInfo photo;
+    photo.plate = !plate.prepared.empty() ? plate.prepared : biome(static_cast<BiomeId>(a.biome)).key;
+    photo.seed = a.seed;
+    photo.provenance = std::string(BIO_VERSION) + " " + BIO_GIT;
+    photo.lessonOrScene = a.scene;
+    if (a.timelapseMinutes > 0.0) {
+        std::error_code ec;
+        std::filesystem::create_directories(a.timelapseDir, ec);
+    }
     using Clock = std::chrono::steady_clock;
     double ms = 0.0, renderMs = 0.0;
     // Prueba larga: el balance se mide desde el comienzo de los pasos medidos.
@@ -346,6 +374,11 @@ int main(int argc, char** argv) {
             rlDrawRenderBatchActive();
             glad_glFinish();
             renderMs += std::chrono::duration<double, std::milli>(Clock::now() - r0).count();
+            if (a.timelapseMinutes > 0.0 && timelapse.due(world.simTime() * world.bioTimeScale() / 3600.0)) {
+                const std::string path = (std::filesystem::path(a.timelapseDir) / timelapse.frameName()).string();
+                if (!savePhoto(*renderer, world, camera, Overlay::None, 1600, 900, path, photo))
+                    std::fprintf(stderr, "no se pudo guardar %s\n", path.c_str());
+            }
         }
     }
 
@@ -358,6 +391,8 @@ int main(int argc, char** argv) {
                 world.nearBodies(), world.bacteria().size());
     std::printf("paso %.2f ms (%.1f pasos/s)  checksum %016llx\n", ms / a.steps, 1000.0 * a.steps / ms,
                 static_cast<unsigned long long>(checksum(world)));
+    if (a.timelapseMinutes > 0.0)
+        std::printf("time-lapse: %d cuadros en %s\n", timelapse.frame, a.timelapseDir.c_str());
     if (renderer)
         std::printf("dibujo %.2f ms por cuadro (1600 × 900, zoom %.2f)\n", renderMs / a.steps,
                     static_cast<double>(camera.zoom));
