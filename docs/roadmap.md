@@ -209,6 +209,13 @@ Lo mínimo para que un resultado de BioGame se pueda publicar o enseñar. Estado
 
 ## Fase MVP — P1: experimentos y aula
 
+**Estado (17/10/2026): completa**, con el plan y lo hecho paso por paso en `docs/plan_p1.md` (16
+pasos, uno por commit; rápidos, largos y validación pasan). Quedan abiertos: que gane *P. aurelia*
+en el Gause del cultivo (gana la que se adelanta: test `should_fail`, ver `docs/validacion.md`), el
+caso *Didinium*–*Paramecium* con inmigración, los valores con números de la ficha en inglés, reactivos
+con otros mecanismos (metales, eucariotas) y sembrar en el cultivo células animales, filamentos,
+colonias y zoosporas.
+
 Lo que hace a BioGame útil para hacer experimentos y para dar clase, después del P0. La base
 común es el **modo cultivo**: poblaciones bien mezcladas a escala de mililitros (un tubo o un
 frasco), sin cuerpos blandos y con la misma fisiología de los datos (Droop, µmax, Q10), con una

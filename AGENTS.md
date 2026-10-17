@@ -155,8 +155,9 @@ cmake --preset release && cmake --build --preset release && ./build/release/bio
 
 Hay presets `debug`, `release`, `profile` (Tracy) y `lite` (tiempos por scope sin Tracy). El código
 tiene que compilar **sin warnings** con `-Wall -Wextra -Wpedantic`, y `ctest --test-dir build/release`
-tiene que pasar (`ctest -L rapidos`: ~1 min; `ctest -L largos -j8`: ~6 min, ~25 en serie; `validacion`:
-contra resultados publicados, ~3 min con `-j4`). Largos y validación son un proceso de ctest por caso
+tiene que pasar (`ctest -L rapidos`: ~2 min; `ctest -L largos -j8`: ~16 min; `validacion`: contra
+resultados publicados, ~28 min con `-j4`, casi todo el caso de Tilman en la placa; medido el
+17/10/2026 con 16 hilos lógicos). Largos y validación son un proceso de ctest por caso
 (4 hilos cada uno): un caso que repite algo independiente varias veces (presas, especies, tipos de
 célula) va en casos separados, así corren en paralelo.
 
