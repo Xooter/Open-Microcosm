@@ -6,6 +6,8 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
+#include <algorithm>
+
 namespace ui {
 
 namespace {
@@ -20,6 +22,15 @@ void PanelHost::drawAll(App& app) {
         if (p->focusNext) {
             ImGui::SetNextWindowFocus();
             p->focusNext = false;
+        }
+        // Un panel flotante abre la primera vez en el centro, con un tamaño legible (si no, ImGui lo
+        // abre del tamaño mínimo arriba a la izquierda).
+        if (p->dock() == Dock::Float) {
+            const ImGuiViewport* vp = ImGui::GetMainViewport();
+            ImGui::SetNextWindowPos({vp->WorkPos.x + 0.5f * vp->WorkSize.x, vp->WorkPos.y + 0.5f * vp->WorkSize.y},
+                                    ImGuiCond_FirstUseEver, {0.5f, 0.5f});
+            ImGui::SetNextWindowSize({std::min(620.0f, 0.6f * vp->WorkSize.x), std::min(440.0f, 0.6f * vp->WorkSize.y)},
+                                     ImGuiCond_FirstUseEver);
         }
         // Sin botón de cerrar: los paneles se muestran u ocultan desde el menú Ver.
         if (ImGui::Begin(name.c_str())) {

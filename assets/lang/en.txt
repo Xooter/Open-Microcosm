@@ -107,6 +107,7 @@
 'Moho de agua' (oomiceto): hifas que disuelven detritos con enzimas. Sin comida, las puntas se vuelven zoosporangios.	'Water mold' (oomycete): hyphae that dissolve detritus with enzymes. Without food, the tips turn into zoosporangia.
 (estimada: todavía crece)	(estimated: still growing)
 (meseta alcanzada)	(plateau reached)
+(ya no está)	(no longer here)
 ): la simulación corre en la CPU.	): the simulation runs on the CPU.
 0 (la arrastra el agua)	0 (carried by the water)
 1/s bio	1/s bio
@@ -118,10 +119,12 @@ AHL: vida media [h]	AHL: half-life [h]
 Abri el gotero de CO2 en el centro (boton de la leccion) y espera a que la burbuja de agua acida crezca.	Open the CO2 dropper in the center (lesson button) and wait for the bubble of acidic water to grow.
 Abrir el gotero de CO2 en el centro	Open the CO2 dropper in the center
 Absorción [1/h]	Absorption [1/h]
+Aclaramiento	Clearance
 Adaptación de tubos [1/h]	Tube adaptation [1/h]
 Agregar al programa	Add to the program
 Agregar bacterias	Add bacteria
 Agregar fagos	Add phages
+Agregar nota	Add note
 Agregar regla	Add rule
 Agua	Water
 Agua (disuelto)	Water (dissolved)
@@ -143,7 +146,11 @@ Ajusta la curva de crecimiento: µmax, tiempo de duplicación, latencia (Pirt) y
 Ajustar ejes	Fit axes
 Al dia 30, que fraccion de los paramecios va a ser P. aurelia?	On day 30, what fraction of the paramecia will be P. aurelia?
 Al final, que fraccion de las diatomeas va a ser Asterionella?	At the end, what fraction of the diatoms will be Asterionella?
+Al instante	To the instant
+Al instante: solo el tiempo. Al lugar: el centro de lo que se ve. Al ser elegido: lo sigue mientras viva.	To the instant: only the time. To the place: the center of what is seen. To the chosen being: it follows it while it lives.
+Al lugar del centro de la vista	To the place at the center of the view
 Al morir	On death
+Al ser elegido	To the chosen being
 Alcalinidad [µM]	Alkalinity [µM]
 Alga colonial	Colonial alga
 Alga de dos flagelos que nada como en brazada. Dentro de la pared madre se divide en 4 hijas.	Alga with two flagella that swims as if doing breaststroke. Inside the mother wall it divides into 4 daughters.
@@ -181,6 +188,7 @@ Ampicilina	Ampicillin
 Anabaena	Anabaena
 Anabaena (filamentos)	Anabaena (filaments)
 Ancho del viraje	Turn width
+Anclar	Anchor
 Anotar	Note it
 Antialiasing (MSAA)	Antialiasing (MSAA)
 Antibióticos con su farmacodinamia medida: matan a las bacterias que crecen. La cantidad está en µg/mL (x10 por la cantidad relativa).	Antibiotics with their measured pharmacodynamics: they kill growing bacteria. The amount is in µg/mL (x10 times the relative amount).
@@ -188,6 +196,7 @@ Anóxico (sin O2 del aire)	Anoxic (no O2 from the air)
 Anóxico y oscuro, repleto de astillas de madera. Trichonympha digiere la celulosa por la termita.	Anoxic and dark, packed with wood splinters. Trichonympha digests cellulose for the termite.
 Apareamiento	Mating
 Aplicar en vivo	Apply live
+Apoptosis	Apoptosis
 Aporte orgánico [µM/h]	Organic input [µM/h]
 Apr	Apr
 Apretar	Squeeze
@@ -204,6 +213,7 @@ Arrastrá: mide la distancia en µm. En modo área, dibujá un lazo: área y per
 Arriba: Chlamydomonas, Euglena y Candida (levadura). Abajo: Navicula y Pediastrum.	Top: Chlamydomonas, Euglena and Candida (yeast). Bottom: Navicula and Pediastrum.
 Asterionella	Asterionella
 Autor	Author
+Auxotrofía	Auxotrophy
 Avance	Progress
 Avanzar un paso	Advance one step
 Avanzar un paso [.]	Advance one step [.]
@@ -253,13 +263,17 @@ Biomas	Biomes
 Biomasa	Biomass
 Biomasa viva	Living biomass
 Biopelicula	Biofilm
+Biopelícula	Biofilm
 Blanco	Target
 Bor	Era
 Borrar	Erase
 Borrar medición	Clear measurement
 Borrar región	Clear region
 Busca	Seeks
+Buscar	Search
 Buscar experimentos	Find experiments
+CI50	IC50
+CIM	MIC
 CO2 del aire [%]	Air CO2 [%]
 CO2 disuelto	Dissolved CO2
 CPU	CPU
@@ -330,8 +344,10 @@ Ciliado	Ciliate
 Ciliado aplanado que 'camina' sobre cirros (haces de cilios) con paradas bruscas.	Flattened ciliate that 'walks' on cirri (bundles of cilia) with sudden stops.
 Ciliado de ~200 um que come bacterias por un surco oral. Retrocede al chocar (reaccion de evitacion) y se junta donde hay CO2.	Ciliate of ~200 um that eats bacteria through an oral groove. It backs up when it bumps into something (avoidance reaction) and gathers where there is CO2.
 Cilios: W/S avanzar, A/D girar	Cilia: W/S forward, A/D turn
+Cinética de Monod	Monod kinetics
 Citocinesis	Cytokinesis
 Citoplasma	Cytoplasm
+Citostoma	Cytostome
 Click derecho y arrastrar: mover la cámara. Rueda: zoom.	Right click and drag: move the camera. Wheel: zoom.
 Click en una célula: la controlás. Mantené el click para moverla (cilios: W/S/A/D).	Click on a cell: you control it. Hold the click to move it (cilia: W/S/A/D).
 Click en una placa para cargarla; después, Crear placa.	Click on a plate to load it; then, Create plate.
@@ -342,6 +358,7 @@ Click: quita la célula.	Click: removes the cell.
 Click: revienta la célula (se disuelve en nutrientes y detritos).	Click: bursts the cell (it dissolves into nutrients and detritus).
 Clorofila	Chlorophyll
 Cloroplasto	Chloroplast
+Cociente entre las fuerzas de inercia y las viscosas: Re = ρ·v·L/μ. Un paramecio de 0,2 mm que nada a 1 mm/s tiene Re ≈ 0,2; una bacteria, ≈ 10⁻⁵. Con Re mucho menor que 1 no hay inercia: si deja de propulsarse se detiene al instante, y nadar con un movimiento recíproco (ida y vuelta igual) no lleva a ningún lado. Por eso en la simulación la velocidad es la respuesta instantánea a la fuerza.	Ratio of inertial to viscous forces: Re = ρ·v·L/μ. A 0.2 mm Paramecium swimming at 1 mm/s has Re ≈ 0.2; a bacterium, ≈ 10⁻⁵. With Re much smaller than 1 there is no inertia: if it stops propelling itself it stops at once, and swimming with a reciprocal motion (the same back and forth) gets it nowhere. That is why in the simulation velocity is the instantaneous response to force.
 Colonia plana en estrella de 16 celulas con cuernos; cada ciclo libera una colonia hija.	Flat star-shaped colony of 16 cells with horns; each cycle releases a daughter colony.
 Color	Color
 Color que retiene / contratinción	Retained color / counterstain
@@ -361,13 +378,16 @@ Completa	Full
 Comportamiento	Behavior
 Comportamientos observados	Observed behaviors
 Compresión de la biología: 60 = 1 min real es 1 h biológica. La física siempre va en tiempo real.	Compression of biology: 60 = 1 real min is 1 biological h. Physics always runs in real time.
+Comunidad de bacterias adheridas a una superficie, envueltas en una matriz que fabrican ellas mismas. Adheridas no nadan y los filtradores no las alcanzan; las amebas, que se arrastran por la superficie, sí.	A community of bacteria attached to a surface, wrapped in a matrix they make themselves. Attached, they do not swim and filter feeders cannot reach them; amoebae, which crawl over the surface, can.
 Con LOD, lo lejano se resuelve 1 de cada N sub-pasos con un paso más largo.	With LOD, distant things are solved 1 of every N substeps with a longer step.
 Con N:P < 16 el agua queda limitada por N: favorece a las cianobacterias fijadoras.	With N:P < 16 the water becomes N-limited: it favors nitrogen-fixing cyanobacteria.
 Con hambre o sequia el plasmodio se contrae en una masa dura y seca que puede vivir anios; con humedad y comida despierta y vuelve a explorar.	When hungry or dry, the plasmodium contracts into a hard, dry mass that can live for years; with moisture and food it wakes up and explores again.
 Con la herramienta Seleccionar (1), hacé click sobre cualquier ser, grano o partícula de la placa para ver qué es, qué hace y por qué.	With the Select tool (1), click on any being, grain or particle on the plate to see what it is, what it does and why.
 Concentración	Concentration
 Concentración [µM]	Concentration [µM]
+Concentración inhibitoria mínima: la menor concentración de un antibiótico, en una serie de diluciones al doble, sin crecimiento visible después de 16-20 h. Es una medida del laboratorio, no un parámetro: en la simulación emerge de la farmacodinámica.	Minimum inhibitory concentration: the lowest concentration of an antibiotic, in a series of twofold dilutions, with no visible growth after 16-20 h. It is a laboratory measurement, not a parameter: in the simulation it emerges from the pharmacodynamics.
 Concentrar (x)	Concentrate (x)
+Conjugación	Conjugation
 Conjugar con una pareja cercana	Conjugate with a nearby partner
 Constante de pérdida [s]	Loss constant [s]
 Consumo de nutrientes [1/s]	Nutrient consumption [1/s]
@@ -386,12 +406,14 @@ Costo de la división	Division cost
 Costo de la división (ser controlado)	Division cost (controlled being)
 Costo de nadar	Swimming cost
 Crea el mundo con esta configuración. La placa en pantalla se descarta.	Creates the world with this configuration. The plate on screen is discarded.
+Crea esa placa preparada en el centro (reemplaza la que está en pantalla).	Creates that prepared plate in the center (replaces the one on screen).
 Crear cultivo	Create culture
 Crear placa	Create plate
 Crear placa (Ctrl+N)	Create plate (Ctrl+N)
 Crece mas rapido	It grows faster
 Crecimiento	Growth
 Crecimiento máximo	Maximum growth
+Cristal violeta, Lugol, decolorante y safranina: la pared gruesa de peptidoglicano de las grampositivas retiene el violeta; las gramnegativas, de pared fina con membrana externa, lo pierden y quedan rosas. Decolorar de más vuelve rosa también a las grampositivas.	Crystal violet, Lugol, decolorizer and safranin: the thick peptidoglycan wall of Gram-positive bacteria retains the violet; Gram-negative ones, with a thin wall and an outer membrane, lose it and turn pink. Over-decolorizing turns Gram-positive ones pink too.
 Cristal violeta, yodo, alcohol y safranina. Las bacterias de pared gruesa de peptidoglicano (grampositivas) retienen el violeta; las de pared fina con membrana externa (gramnegativas) lo pierden con el alcohol y toman la safranina (rosa). Fija y mata a las células.	Crystal violet, iodine, alcohol and safranin. Bacteria with a thick peptidoglycan wall (Gram-positive) retain the violet; those with a thin wall and an outer membrane (Gram-negative) lose it with the alcohol and take up the safranin (pink). It fixes and kills the cells.
 Ctl	Ctl
 Ctrl+	Ctrl+
@@ -404,6 +426,7 @@ Cuarzo (SiO₂): el mineral más común de la arena. Su índice de refracción (
 Cuerpo	Body
 Cultivo	Culture
 Cultivo celular (DMEM, incubadora)	Cell culture (DMEM, incubator)
+Cultivo continuo: entra medio fresco y sale cultivo al mismo caudal, con una tasa de dilución D. En el estado estacionario la población crece tan rápido como se lava (μ = D) y el recurso limitante queda en S* = Ks·D/(μmax − D), sin importar cuánto entra.	Continuous culture: fresh medium enters and culture leaves at the same flow, with a dilution rate D. At steady state the population grows as fast as it is washed out (μ = D) and the limiting resource stays at S* = Ks·D/(μmax − D), no matter how much enters.
 Cultivo elegido	Chosen culture
 Cultivos	Cultures
 Cuota de B12	B12 quota
@@ -412,10 +435,13 @@ Cuota de N	N quota
 Cuota de P	P quota
 Cuota de Si	Si quota
 Cuota máxima (Droop)	Maximum quota (Droop)
+Cuánto come un depredador según la densidad de presas. En la de tipo II (Holling) sube y se satura por el tiempo de manipulación: f = a·N/(1 + a·h·N), con a el aclaramiento y h el tiempo de manipulación por presa.	How much a predator eats depending on prey density. In type II (Holling) it rises and saturates because of the handling time: f = a·N/(1 + a·h·N), with a the clearance and h the handling time per prey.
+Cuánto se acelera un proceso al subir 10 °C la temperatura: Q10 = (R₂/R₁)^(10/(T₂−T₁)). En los procesos biológicos suele estar entre 2 y 3; la simulación usa 2 en todo lo biológico (la viscosidad y los gases cambian con su física).	How much a process speeds up when the temperature rises by 10 °C: Q10 = (R₂/R₁)^(10/(T₂−T₁)). In biological processes it is usually between 2 and 3; the simulation uses 2 for everything biological (viscosity and gases change with their own physics).
 Cuánto se tiñe el fondo del campo (en fluorescencia, la oscuridad).	How much the background of the field is stained (in fluorescence, the darkness).
 Cyclotella	Cyclotella
 Cámara de microquimiostato (20 µL)	Microchemostat chamber (20 µL)
 Célula adherida: click sostenido = migra hacia el mouse (en tiempo biológico)	Attached cell: hold click = it migrates toward the mouse (in biological time)
+Célula de algunas cianobacterias filamentosas especializada en fijar N₂ del aire. Su nitrogenasa se inactiva con el O₂: el heterocisto tiene pared gruesa y no hace la parte de la fotosíntesis que libera oxígeno.	A cell of some filamentous cyanobacteria specialized in fixing N₂ from the air. Its nitrogenase is inactivated by O₂: the heterocyst has a thick wall and does not carry out the part of photosynthesis that releases oxygen.
 Células	Cells
 DAPI (núcleos)	DAPI (nuclei)
 DAPI / azul de metileno	DAPI / methylene blue
@@ -467,7 +493,9 @@ Distancia	Distance
 Distancia: arrastrá con la herramienta Medir. Área: dibujá un lazo.	Distance: drag with the Measure tool. Area: draw a lasso.
 Divisiones del ser	Divisions of the being
 División	Division
+División del núcleo en dos núcleos con el mismo material genético; la citocinesis divide después el citoplasma. En la simulación, cada hija lleva su copia del genoma, que puede mutar.	Division of the nucleus into two nuclei with the same genetic material; cytokinesis then divides the cytoplasm. In the simulation, each daughter carries its copy of the genome, which can mutate.
 Dos diatomeas compiten por el fosforo en un quimiostato. Gana la que puede crecer al ritmo de la dilucion con menos fosforo disuelto (la de menor R*), y la otra desaparece.	Two diatoms compete for phosphorus in a chemostat. The one that can grow at the dilution rate with less dissolved phosphorus (the lower R*) wins, and the other disappears.
+Dos especies que dependen del mismo recurso limitante no coexisten indefinidamente: una desplaza a la otra. Gause lo mostró con Paramecium caudatum y P. aurelia alimentados con bacterias en tubos.	Two species that depend on the same limiting resource do not coexist indefinitely: one displaces the other. Gause showed it with Paramecium caudatum and P. aurelia fed with bacteria in tubes.
 Dosis [µg/mL]	Dose [µg/mL]
 Duplicar como mía	Duplicate as mine
 Duración [h]	Duration [h]
@@ -475,6 +503,7 @@ Edad	Age
 Editor de placa	Plate editor
 Editor de tinciones	Stain editor
 Editor de tinciones...	Stain editor...
+Efecto Warburg	Warburg effect
 El Bdellovibrio entro a una presa o murio de hambre	The Bdellovibrio entered a prey or starved
 El CO2 los atrae como alimento	CO2 attracts them as food
 El CO2 los paraliza	CO2 paralyzes them
@@ -484,6 +513,7 @@ El agua sale de la vacuola hacia el medio mas concentrado y la pared rigida no l
 El alimento clasico de los experimentos con Physarum: libera azucares al agua y el plasmodio lo envuelve y lo digiere.	The classic food of Physarum experiments: it releases sugars into the water and the plasmodium engulfs and digests it.
 El control pasa a su sucesor.	Control passes to its successor.
 El copo se acabo	The flake ran out
+El crecimiento lo limita el recurso más escaso respecto de lo que se necesita, no el total de recursos (Liebig). En la simulación, cada célula crece con el factor más bajo entre P, N, Si, Fe, B₁₂, luz y energía; el mapa de limitación (tecla L) muestra cuál es.	Growth is limited by the scarcest resource relative to what is needed, not by the total of resources (Liebig). In the simulation, each cell grows with the lowest factor among P, N, Si, Fe, B₁₂, light and energy; the limitation map (L key) shows which one.
 El cultivo como se preparó, su programa y todo lo que se le hizo con su paso: cargarlo lo repite.	The culture as it was prepared, its program and everything done to it with its step: loading it repeats it.
 El esclerocio desperto	The sclerotium woke up
 El esporangio germino	The sporangium germinated
@@ -495,12 +525,17 @@ El medio de referencia para medir la concentracion inhibitoria minima (CIM) de u
 El micelio murio de hambre	The mycelium starved
 El plasmodio se endurecio en esclerocio o murio	The plasmodium hardened into a sclerotium or died
 El programa se cerró sin terminar la sesión anterior.	The program closed without ending the previous session.
+El volumen de agua que un filtrador limpia de presas por unidad de tiempo, con pocas presas (antes de saturarse). En la simulación, un Paramecium caudatum aclara unos 24 µL por hora (una estimación con la escala del zooplancton: no hay una medición directa).	The volume of water that a filter feeder clears of prey per unit time, with few prey (before saturating). In the simulation, a Paramecium caudatum clears about 24 µL per hour (an estimate from the zooplankton scaling: there is no direct measurement).
 Elegí un archivo.	Choose a file.
+Elegí un ser con la herramienta Seleccionar (1).	Choose a being with the Select tool (1).
 Elegí un ser y hacé click en la placa para ponerlo. Esc cancela.	Pick a being and click on the plate to place it. Esc cancels.
+Elegí un término. En la ficha y en las lecciones, los términos del glosario aparecen como botones debajo del texto.	Choose a term. In the card and in lessons, glossary terms appear as buttons below the text.
 Elegí una tinción para ver su vista previa y ajustarla.	Pick a stain to see its preview and adjust it.
 Eliminar	Delete
 Empezar	Start
 En el tubo hay 5 Paramecium caudatum y 5 P. aurelia. Cada dia se cambia el medio y se agrega la misma racion de bacterias (el protocolo de Gause).	The tube holds 5 Paramecium caudatum and 5 P. aurelia. Every day the medium is changed and the same ration of bacteria is added (Gause's protocol).
+En los ciliados, dos células de tipos de apareamiento distintos se unen e intercambian micronúcleos haploides; las dos salen con el mismo genotipo recombinado. Es sexo sin reproducción: no aumenta el número de células.	In ciliates, two cells of different mating types join and exchange haploid micronuclei; both come out with the same recombined genotype. It is sex without reproduction: the number of cells does not increase.
+En un medio más concentrado que su jugo celular, el protoplasto de una célula vegetal pierde agua y se despega de la pared de celulosa, que queda en su lugar. En agua pura se recupera (deplasmólisis).	In a medium more concentrated than its cell sap, the protoplast of a plant cell loses water and pulls away from the cellulose wall, which stays in place. In pure water it recovers (deplasmolysis).
 En vez de spawnear, el ícono transforma al ser controlado en esa especie (solo especies).	Instead of spawning, the icon turns the controlled being into that species (species only).
 Enciclopedia	Encyclopedia
 Energía (comida o luz)	Energy (food or light)
@@ -527,6 +562,7 @@ Esporangios de quitridio liberan zoosporas	Chytrid sporangia release zoospores
 Esporangios resistentes	Resting sporangia
 Est	Str
 Estado	State
+Estado de resistencia: la célula se redondea, arma una pared gruesa y casi detiene el metabolismo hasta que vuelven las condiciones buenas (comida, agua, temperatura).	A resistant stage: the cell rounds up, builds a thick wall and almost stops its metabolism until good conditions return (food, water, temperature).
 Estadísticas	Statistics
 Estanque	Pond
 Estirar	Stretch
@@ -539,6 +575,7 @@ Euplotes	Euplotes
 Evento	Event
 Evita la luz	Avoids light
 Evita su baba	Avoids its slime
+Exclusión competitiva	Competitive exclusion
 Excreción	Excretion
 Exoenzimas (x)	Exoenzymes (x)
 Experimento	Experiment
@@ -552,7 +589,9 @@ Exportar informe	Export report
 Externo	External
 Exudación	Exudation
 Factor	Factor
+Fago lítico	Lytic phage
 Fago que la infecta	Phage that infects it
+Fagocitosis	Phagocytosis
 Fagos	Phages
 Fagos [por mL]	Phages [per mL]
 Fagos: inactivación [1/h]	Phages: inactivation [1/h]
@@ -560,11 +599,13 @@ Falta contenido: 	Missing content:
 Fase exponencial	Exponential phase
 Fe	Fe
 Fe: media saturación	Fe: half-saturation
+Fermentación	Fermentation
 Fibroblasto dermico humano	Human dermal fibroblast
 Ficha	Card
 Fija dónde caen las células de la siembra y de cada inoculación.	Sets where the cells of the seeding and of each inoculation fall.
 Fija el volumen y la profundidad del medio (intercambio de gases y luz).	Sets the volume and depth of the medium (gas exchange and light).
 Fijación de N2	N2 fixation
+Fijación del CO₂ en azúcares con la energía de la luz, liberando O₂. Las algas y las cianobacterias la hacen en la luz local, que atenúa lo que hay encima.	Fixation of CO₂ into sugars with the energy of light, releasing O₂. Algae and cyanobacteria do it with the local light, attenuated by what lies above.
 Fijado por el protocolo: 	Fixed by the protocol: 
 Fijar concentración	Set concentration
 Fijar la dosis	Set the dose
@@ -597,7 +638,9 @@ Foto guardada: 	Photo saved:
 Foto y time-lapse	Photo and time-lapse
 Fotobionte	Photobiont
 Fotoperíodo 16:8	16:8 photoperiod
+Fotosíntesis	Photosynthesis
 Fotosíntesis máxima	Maximum photosynthesis
+Fototaxis	Phototaxis
 Fracción a diluir	Fraction to dilute
 Fracción a renovar	Fraction to renew
 Fracción de biomasa para morir	Biomass fraction to die
@@ -610,6 +653,7 @@ Frente [µm/h bio]	Front [µm/bio h]
 Frústula vacía	Empty frustule
 Frústula vacía de diatomea: la caja de sílice (ópalo) que queda cuando muere la célula. No se descompone, a diferencia del resto del organismo; el rafe y las estrías siguen intactos.	Empty diatom frustule: the silica (opal) box left when the cell dies. It does not decompose, unlike the rest of the organism; the raphe and striae remain intact.
 Fuente termal	Hot spring
+Fuente:	Source:
 Fuera de protocolo: se destrabó 	Out of protocol: unlocked 
 Física de células en la GPU	Cell physics on the GPU
 Fósforo	Phosphorus
@@ -620,6 +664,8 @@ Genoma	Genome
 Giemsa (sangre)	Giemsa (blood)
 Globulo blanco chico (~8 um) de la inmunidad adaptativa (celulas T y B): un nucleo redondo y oscuro casi lo llena, con un anillo delgado de citoplasma celeste en la tincion de Giemsa.	Small white blood cell (~8 um) of adaptive immunity (T and B cells): a round, dark nucleus almost fills it, with a thin ring of light blue cytoplasm in the Giemsa stain.
 Globulo blanco que caza bacterias: sigue el rastro quimico que ellas dejan (peptidos formilados, fMLP), las envuelve y las digiere. No se divide y vive solo horas; muere por apoptosis, sin inflamar.	White blood cell that hunts bacteria: it follows the chemical trail they leave (formylated peptides, fMLP), engulfs and digests them. It does not divide and lives only hours; it dies by apoptosis, without inflammation.
+Glosario	Glossary
+Glosario:	Glossary:
 Glucosa	Glucose
 Glucógeno	Glycogen
 Glutamina	Glutamine
@@ -659,7 +705,9 @@ Hay cambios que se aplican al crear la placa.	There are changes that apply when 
 Hay cambios sin crear (Ctrl+N)	There are uncreated changes (Ctrl+N)
 HeLa	HeLa
 Hemoglobina	Hemoglobin
+Hemólisis	Hemolysis
 Herramientas	Tools
+Heterocisto	Heterocyst
 Heterocistos	Heterocysts
 Heterocistos fijan nitrogeno del aire	Heterocysts fix nitrogen from the air
 Hidrogenosoma	Hydrogenosome
@@ -693,6 +741,8 @@ Indicador de pH: rojo en medio neutro y azul por debajo de pH 5. Las vacuolas di
 Individuos	Individuals
 Individuos por cm² del área donde se inocula (como se siembra un cultivo).	Individuals per cm² of the area where it is inoculated (as a culture is seeded).
 Individuos por mL de cultivo: la cantidad es un sorteo de Poisson (un inóculo real).	Individuals per mL of culture: the number is a Poisson draw (a real inoculum).
+Ingestión de una partícula grande (una bacteria, otra célula) envolviéndola con la membrana hasta cerrar una vacuola. La hacen las amebas para comer y los neutrófilos para defender.	Ingestion of a large particle (a bacterium, another cell) by wrapping it with the membrane until a vacuole closes. Amoebae do it to eat and neutrophils to defend.
+Inhibición por contacto	Contact inhibition
 Inocular	Inoculate
 Inocular...	Inoculate...
 Intensidad	Intensity
@@ -701,6 +751,7 @@ Interfaz	Interface
 Intervalo	Interval
 Intestino de termita	Termite gut
 Inóculo [µL]	Inoculum [µL]
+Ir	Go
 Irradiancia relativa de la lámpara sobre el cultivo.	Relative irradiance of the lamp over the culture.
 Irradiancia relativa de la lámpara.	Relative irradiance of the lamp.
 Iteraciones por subpaso	Iterations per substep
@@ -710,13 +761,19 @@ Jugo celular	Cell sap
 LOD: simplificar lo lejano	LOD: simplify what is far
 LOD: sub-pasos lejanos (1 de cada N)	LOD: distant substeps (1 of every N)
 La bacteria se dividio o murio	The bacterium divided or died
+La boca celular de los ciliados, al fondo del surco oral. Los cilios orales arman una corriente que lleva las bacterias hasta ahí, donde se forma la vacuola digestiva.	The cell mouth of ciliates, at the bottom of the oral groove. The oral cilia make a current that carries bacteria there, where the food vacuole forms.
 La celula se muere y se encoge	The cell dies and shrinks
+La concentración de un gas disuelto en equilibrio es proporcional a su presión parcial en el aire. La constante baja con la temperatura y la sal: el agua tibia o salada guarda menos O₂.	The concentration of a dissolved gas at equilibrium is proportional to its partial pressure in the air. The constant drops with temperature and salt: warm or salty water holds less O₂.
+La concentración del recurso a la que una especie crece justo lo que pierde. Con un solo recurso limitante, gana la especie con el R* más bajo: deja el recurso por debajo de lo que la otra necesita.	The resource concentration at which a species grows exactly what it loses. With a single limiting resource, the species with the lowest R* wins: it leaves the resource below what the other one needs.
+La concentración que reduce a la mitad la respuesta (el crecimiento). Sale de ajustar una curva de Hill a un experimento de dosis-respuesta: y = abajo + (arriba − abajo)/(1 + (dosis/CI50)^n).	The concentration that halves the response (growth). It comes from fitting a Hill curve to a dose-response experiment: y = bottom + (top − bottom)/(1 + (dose/IC50)^n).
 La cámara sigue al ser controlado	The camera follows the controlled being
 La epidermis del enves de una hoja: celulas de contorno ondulado (como un rompecabezas) y, entre ellas, los estomas: dos celulas oclusivas en forma de rinon, con cloroplastos, que abren y cierran el ostiolo.	The epidermis of the underside of a leaf: cells with a wavy outline (like a jigsaw puzzle) and, between them, the stomata: two kidney-shaped guard cells, with chloroplasts, that open and close the pore.
 La epidermis esta montada en agua: las celulas estan turgentes, con el protoplasto apretado contra la pared.	The epidermis is mounted in water: the cells are turgid, with the protoplast pressed against the wall.
 La epidermis interna de una escama de cebolla morada montada en agua: celulas alargadas con pared y una vacuola violeta. Agregando sal (Ambiente > Salinidad, unos 30 g/kg) el protoplasto pierde agua y se despega de la pared: plasmolisis. En agua vuelve (deplasmolisis). Se simula un campo de 1 mm: el anillo marca su borde.	The inner epidermis of a red onion scale mounted in water: elongated cells with a wall and a purple vacuole. Adding salt (Environment > Salinity, about 30 g/kg) the protoplast loses water and pulls away from the wall: plasmolysis. In water it comes back (deplasmolysis). A 1 mm field is simulated: the ring marks its edge.
 La gota es la placa del centro.	The drop is the plate in the center.
+La luz se atenúa en forma exponencial con lo que atraviesa: I = I₀·e^(−k·c·z). En la gota y en el tubo, las algas de arriba hacen sombra a las de abajo.	Light is attenuated exponentially with what it passes through: I = I₀·e^(−k·c·z). In the drop and in the tube, the algae above shade those below.
 La misma semilla y el mismo bioma dan siempre la misma gota.	The same seed and the same biome always give the same drop.
+La nota sigue al ser mientras viva; va en la escena y en la exportación. No es una intervención.	The note follows the being while it lives; it goes in the scene and in the export. It is not an intervention.
 La osmosis depende de la concentracion: la temperatura se deja fija para que solo cambie la sal.	Osmosis depends on concentration: the temperature is kept fixed so that only the salt changes.
 La particula desaparecio	The particle disappeared
 La película de agua entre las hojitas del musgo: fría, en sombra y ácida. Amebas con testa y Naegleria.	The water film between the moss leaflets: cold, shaded and acidic. Testate amoebae and Naegleria.
@@ -727,19 +784,26 @@ La que se ve sobre la placa (J pasa a la siguiente).	The one shown on the plate 
 La rapidez de nado cambia con la temperatura (viscosidad): se fija para comparar con el control.	Swimming speed changes with temperature (viscosity): it is fixed to compare with the control.
 La sal disuelve la pared	Salt dissolves the wall
 La sangre esta diluida en solucion salina al 0,9 % (isotonica): los globulos rojos son discos.	The blood is diluted in 0.9 % saline (isotonic): the red blood cells are discs.
+La tasa de crecimiento sube con la concentración del recurso y se satura: μ = μmax·S/(Ks + S). Ks es la concentración a la que se crece a la mitad del máximo. Es la misma forma que la de Michaelis–Menten de las enzimas.	The growth rate rises with the concentration of the resource and saturates: μ = μmax·S/(Ks + S). Ks is the concentration at which growth is half the maximum. It has the same form as the Michaelis–Menten kinetics of enzymes.
 La temperatura oscila ±4 °C alrededor de la actual cada 24 h biológicas.	The temperature oscillates ±4 °C around the current one every 24 biological hours.
 La zoospora infecto un alga o se enquisto	The zoospore infected an alga or encysted
 Lacrymaria	Lacrymaria
 Lado	Side
 Largo de red	Network length
 Largo total	Total length
+Las bacterias liberan una señal (autoinductor) que se acumula con la densidad; pasado un umbral, cambian de comportamiento todas juntas. Chromobacterium violaceum fabrica así la violaceína, un pigmento violeta tóxico para quien se la come.	Bacteria release a signal (autoinducer) that accumulates with density; past a threshold, they all change behavior together. Chromobacterium violaceum makes violacein this way, a violet pigment toxic to whoever eats it.
+Las células cancerosas (y muchas células que proliferan) fermentan la glucosa a lactato aunque haya O₂ (glucólisis aeróbica). El lactato acidifica el medio y consume su bicarbonato.	Cancer cells (and many proliferating cells) ferment glucose to lactate even when there is O₂ (aerobic glycolysis). Lactate acidifies the medium and consumes its bicarbonate.
 Las diatomeas la necesitan para cada valva.	Diatoms need it for each valve.
 Las dos tienen el mismo crecimiento maximo; Asterionella tiene una media saturacion del fosforo seis veces menor. En el quimiostato el fosforo baja hasta el R* de la mejor competidora y la otra no llega a reponer lo que se lava. Con silice limitante pasa al reves.	Both have the same maximum growth; Asterionella has a phosphorus half-saturation six times lower. In the chemostat phosphorus drops to the R* of the better competitor and the other cannot replace what is washed out. With limiting silica it is the other way around.
+Las notas no cambian la simulación: van en la escena (Guardar escena) y en la exportación (Ctrl+E).	Notes do not change the simulation: they go in the scene (Save scene) and in the export (Ctrl+E).
 Latencia	Lag
 Lección	Lesson
 Lección completa: exportá el informe.	Lesson complete: export the report.
 Levadura	Yeast
 Levadura: absorbe azucares disueltos, respira o fermenta sin oxigeno, y se reproduce por gemacion.	Yeast: absorbs dissolved sugars, respires or ferments without oxygen, and reproduces by budding.
+Ley de Beer–Lambert	Beer–Lambert law
+Ley de Henry	Henry's law
+Ley del mínimo	Law of the minimum
 Limita a las algas cuando florecen.	It limits algae when they bloom.
 Limita a los fotótrofos en el mar abierto.	It limits phototrophs in the open sea.
 Limo de cuarzo	Quartz silt
@@ -799,12 +863,15 @@ Micelio de %s	Mycelium of %s
 Micobionte: hongo que vive unido a un alga verde. Ella le da azucar por fotosintesis; el le devuelve fosforo y la protege de parasitos como los quitridios. Solo no puede crecer casi nada.	Mycobiont: a fungus living attached to a green alga. The alga gives it sugar through photosynthesis; the fungus returns phosphorus and protects it from parasites such as chytrids. Alone it can barely grow.
 Microbiología	Microbiology
 Micronutrientes	Micronutrients
+Microscopía con la luz que atraviesa la muestra: fondo claro y células que se ven por lo que absorben y desvían. Las células vivas sin teñir son casi transparentes: se ven por su borde.	Microscopy with light that passes through the sample: a bright background and cells seen by what they absorb and deflect. Unstained living cells are almost transparent: they are seen by their edge.
 Mineral - inerte	Mineral - inert
 Mineral - no esta vivo	Mineral - not alive
 Minerales	Minerals
 Mitocondria	Mitochondrion
+Mitosis	Mitosis
 Modo	Mode
 Moho mucilaginoso (Amoebozoa): no es un hongo	Slime mold (Amoebozoa): not a fungus
+Momento de la fase G1 del ciclo celular después del cual la célula se divide aunque le quiten el suero. Sin factores de crecimiento antes de ese punto, sale del ciclo a G0 (quiescencia).	The moment of the G1 phase of the cell cycle after which the cell divides even if the serum is removed. Without growth factors before that point, it leaves the cycle to G0 (quiescence).
 Monocito	Monocyte
 Monta la epidermis en agua con sal (boton de la leccion, o la salinidad en 30 g/kg) y espera unos minutos.	Mount the epidermis in salt water (lesson button, or salinity at 30 g/kg) and wait a few minutes.
 Montaje a medida (sal o sacarosa cambiadas en Ambiente).	Custom mounting (salt or sucrose changed in Environment).
@@ -815,7 +882,10 @@ Motor	Engine
 Motor XPBD	XPBD engine
 Mougeotia	Mougeotia
 Movimiento	Movement
+Movimiento orientado por la luz. Euglena nada hacia la luz moderada: el estigma (la mancha roja) hace sombra sobre el fotorreceptor de la base del flagelo a cada giro, y la célula corrige el rumbo hasta que la sombra desaparece.	Movement oriented by light. Euglena swims toward moderate light: the stigma (the red eyespot) shades the photoreceptor at the base of the flagellum on each turn, and the cell corrects its course until the shadow disappears.
+Movimiento orientado por un gradiente químico, hacia un atrayente o lejos de un repelente. Las bacterias la hacen alargando las carreras que van a favor del gradiente (carrera y vuelco); el neutrófilo sigue el fMLP que liberan las bacterias. La acumulación de Paramecium en el CO₂ no es una quimiotaxis verdadera: sale de la reacción de evitación.	Movement oriented by a chemical gradient, toward an attractant or away from a repellent. Bacteria do it by lengthening the runs that go up the gradient (run and tumble); the neutrophil follows the fMLP released by bacteria. The accumulation of Paramecium in CO₂ is not true chemotaxis: it comes from the avoidance reaction.
 Muerte	Death
+Muerte celular programada: la célula se encoge, condensa la cromatina y se fragmenta en cuerpos apoptóticos sin derramar su contenido (no hay lisis ni inflamación).	Programmed cell death: the cell shrinks, condenses its chromatin and fragments into apoptotic bodies without spilling its contents (no lysis or inflammation).
 Muerte y lisis	Death and lysis
 Muestra	Sample
 Muestra fijada (Ctrl+N: placa nueva)	Fixed sample (Ctrl+N: new plate)
@@ -837,12 +907,14 @@ NaCl al 0,9 %: isotonica con la sangre (~290 mOsm/L). Los globulos rojos conserv
 Nadan con 'corridas y giros' y siguen la comida comparando la concentracion de ahora con la de hace un segundo.	They swim with 'runs and tumbles' and follow food by comparing the concentration now with that of a second ago.
 Naegleria	Naegleria
 Navicula	Navicula
+Necesidad de recibir hecho un compuesto que la célula no puede fabricar. Muchas algas (Euglena, diatomeas) necesitan vitamina B₁₂, que solo hacen las bacterias.	The need to receive ready-made a compound the cell cannot make. Many algae (Euglena, diatoms) need vitamin B₁₂, which only bacteria make.
 Necesita menos fosforo disuelto para crecer al ritmo de la dilucion (menor R*)	It needs less dissolved phosphorus to grow at the dilution rate (lower R*)
 Neutrofilo	Neutrophil
 Ninguno (tasa máxima)	None (maximum rate)
 Ningún ser controlado. Con la herramienta Controlar (2), click en una célula (o P sobre ella).	No controlled being. With the Control tool (2), click on a cell (or P over it).
 Nitrógeno	Nitrogen
 Nitrógeno [µM]	Nitrogen [µM]
+No hay glosario cargado.	No glossary loaded.
 No hay lecciones cargadas.	No lessons loaded.
 No hay placa.	There is no plate.
 No hay poblaciones en la placa.	There are no populations on the plate.
@@ -858,12 +930,15 @@ No se pudo guardar.	Could not save.
 No se pudo importar el paquete	Could not import the pack
 No vital: en la realidad fija o mata a las células.	Not vital: in reality it fixes or kills the cells.
 Nombre	Name
+Nota	Note
+Notas	Notes
 Nucleo	Nucleus
 Nucleoide	Nucleoid
 Nucleoide bacteriano	Bacterial nucleoid
 Nuevo cultivo...	New culture...
 Nutrientes (en vivo)	Nutrients (live)
 Núcleo (ADN)	Nucleus (DNA)
+Número de Reynolds	Reynolds number
 O2 / luz	O2 / light
 O2 de saturación	Saturation O2
 O2 local	Local O2
@@ -872,6 +947,7 @@ OMP_NUM_THREADS	OMP_NUM_THREADS
 Objetivo	Objective
 Objetivo cumplido a las	Objective met at
 Objetivo: todavía no	Objective: not yet
+Obtención de energía sin O₂: la glucosa se parte a medias (a etanol, lactato u otros) con solo 2 ATP por glucosa.	Obtaining energy without O₂: glucose is split halfway (to ethanol, lactate or others) with only 2 ATP per glucose.
 Oedogonium	Oedogonium
 Oedogonium libera una zoospora con una corona de flagelos	Oedogonium releases a zoospore with a crown of flagella
 Opacidad del colorante sobre el blanco.	Opacity of the dye on the target.
@@ -879,6 +955,7 @@ Opcional. Cultivo: temperatura, luz, bacterias, soluto:<clave>, inocular:<id>. P
 Opciones de rendimiento e imagen...	Performance and image options...
 Orceína acética (cromosomas)	Acetic orcein (chromosomes)
 Orceína en ácido acético: fija y tiñe la cromatina de rojo vinoso intenso. Sobre una punta de raíz aplastada deja ver los cromosomas en cada fase de la mitosis; el citoplasma queda casi incoloro. Fija y mata.	Orcein in acetic acid: fixes and stains chromatin an intense wine red. On a squashed root tip it reveals the chromosomes in each phase of mitosis; the cytoplasm stays almost colorless. It fixes and kills.
+Organelo de los protistas de agua dulce que junta el agua que entra por ósmosis y la expulsa al exterior cada pocos segundos. Sin ella, la célula se hincharía hasta reventar.	Organelle of freshwater protists that collects the water entering by osmosis and expels it outside every few seconds. Without it, the cell would swell until it burst.
 Organismos	Organisms
 Origen	Source
 Oscillatoria	Oscillatoria
@@ -888,6 +965,7 @@ Osmolaridad del medio	Medium osmolarity
 Osmolitos que no cruzan la membrana (sacarosa, manitol).	Osmolytes that do not cross the membrane (sucrose, mannitol).
 Otra	Other
 Otros organismos	Other organisms
+Oxidación de la glucosa con O₂ hasta CO₂ y agua, con unos 30 ATP por glucosa. Sin O₂ las células que pueden pasan a la fermentación, que rinde 15 veces menos.	Oxidation of glucose with O₂ to CO₂ and water, with about 30 ATP per glucose. Without O₂, the cells that can switch to fermentation, which yields 15 times less.
 P disuelto	Dissolved P
 P en seres	P in beings
 P total	Total P
@@ -914,6 +992,7 @@ Pasadas de contacto	Contact passes
 Pasaje y diluciones seriadas	Passage and serial dilutions
 Pasar	Pass
 Paso	Step
+Paso de agua a través de una membrana semipermeable hacia el lado más concentrado en solutos. El volumen de una célula sigue la ley de Boyle–van 't Hoff: el agua entra o sale hasta igualar la osmolaridad de adentro con la del medio.	Flow of water across a semipermeable membrane toward the side more concentrated in solutes. The volume of a cell follows the Boyle–van 't Hoff law: water enters or leaves until the osmolarity inside equals that of the medium.
 Pasos por cuadro	Steps per frame
 Pausa	Pause
 Pausa [Espacio]	Pause [Space]
@@ -948,6 +1027,7 @@ Plasmodio	Plasmodium
 Plasmodio endurecido y dormido	Hardened, dormant plasmodium
 Plasmodios	Plasmodia
 Plasmolisis de la epidermis de cebolla	Plasmolysis of onion epidermis
+Plasmólisis	Plasmolysis
 Poblacion	Population
 Poblaciones	Populations
 Poblaciones (al crear)	Populations (on creation)
@@ -986,10 +1066,13 @@ Procesos	Processes
 Procesos que movieron el elemento desde que se creó la placa.	Processes that moved the element since the plate was created.
 Profundidad [µm]	Depth [µm]
 Programa	Program
+Proporción de Redfield	Redfield ratio
 Protocolo de Gause	Gause's protocol
 Puede tardar más o menos lo mismo que duró.	It may take about as long as it lasted.
 Pulso de fosfato diario	Daily phosphate pulse
 Punta de raiz de cebolla fijada, aplastada y tenida con orceina acetica: celulas del meristema en interfase y en cada fase de la mitosis (profase, metafase, anafase y telofase), en la proporcion de lo que dura cada una.	Onion root tip fixed, squashed and stained with acetic orcein: meristem cells in interphase and in each phase of mitosis (prophase, metaphase, anaphase and telophase), in proportion to how long each lasts.
+Punto de restricción	Restriction point
+Q10	Q10
 Q10 = 2 en todas las tasas biológicas; cambia la viscosidad y el O2 de saturación.	Q10 = 2 in all biological rates; it changes viscosity and saturation O2.
 Que dos especies que dependen del mismo recurso limitante no pueden coexistir: la que lo aprovecha mejor desplaza a la otra	That two species depending on the same limiting resource cannot coexist: the one that uses it better displaces the other
 Que fraccion de las celulas se va a plasmolizar en agua con 30 g/kg de sal?	What fraction of the cells will plasmolyze in water with 30 g/kg of salt?
@@ -1002,19 +1085,24 @@ Que las dos conviven si hay comida para todas	That both coexist if there is food
 Que muestra la deplasmolisis?	What does deplasmolysis show?
 Que predice el principio de exclusion competitiva?	What does the competitive exclusion principle predict?
 Quimica	Chemistry
+Quimiostato	Chemostat
 Quimiotaxis	Chemotaxis
+Quiste	Cyst
 Quitar regla	Remove rule
 Quitridios (grupos)	Chytrids (clusters)
 Quorum	Quorum
+Quorum sensing	Quorum sensing
 Quorum sensing: C. violaceum se vuelve violeta	Quorum sensing: C. violaceum turns purple
 Qué estructura o compuesto se tiñe.	Which structure or compound is stained.
 Química	Chemistry
 R reproducir | V conjugar | F seguir con la cámara	R reproduce | V conjugate | F follow with the camera
+R*	R*
 Radio [µm]	Radius [µm]
 Radio de revolver [µm]	Stirring radius [µm]
 Radio de tinta [µm]	Ink radius [µm]
 Ramificacion	Branching
 Rampa	Ramp
+Reacción de evitación	Avoidance reaction
 Reactivo	Reagent
 Reanudar	Resume
 Recipiente	Vessel
@@ -1028,6 +1116,8 @@ Región	Region
 Región: células	Region: cells
 Regla y escala	Ruler and scale
 Reglas de color	Color rules
+Relacionados:	Related:
+Relación media de átomos de carbono, nitrógeno y fósforo en el fitoplancton marino: C:N:P = 106:16:1. Sirve para saber qué nutriente falta: con N:P del agua muy por debajo de 16, el que limita es el nitrógeno.	The average ratio of carbon, nitrogen and phosphorus atoms in marine phytoplankton: C:N:P = 106:16:1. It tells which nutrient is missing: with the water's N:P far below 16, nitrogen is the limiting one.
 Relativa a la concentración típica del soluto.	Relative to the typical concentration of the solute.
 Rendimiento	Performance
 Rendimiento de la simulación	Simulation performance
@@ -1041,8 +1131,11 @@ Reserva sin invertir	Uninvested reserve
 Reservas	Reserves
 Resolución del campo relativa a la ventana. Menos píxeles: shaders más baratos, imagen más blanda.	Field resolution relative to the window. Fewer pixels: cheaper shaders, softer image.
 Respiracion	Respiration
+Respiración celular	Cellular respiration
 Respuesta	Response
 Respuesta al flujo (gamma)	Response to flow (gamma)
+Respuesta de Paramecium a un choque o a un estímulo nocivo: un potencial de acción de calcio invierte el batido de los cilios, la célula retrocede, gira y vuelve a avanzar en otra dirección. Repetida, explica que los paramecios queden atrapados en una zona con un poco de CO₂ (Jennings).	The response of Paramecium to a collision or a noxious stimulus: a calcium action potential reverses the beat of the cilia, the cell backs up, turns and moves forward again in another direction. Repeated, it explains why paramecia get trapped in a zone with a little CO₂ (Jennings).
+Respuesta funcional	Functional response
 Restablecer	Reset
 Restablecer disposición	Reset layout
 Retención (Gram)	Retention (Gram)
@@ -1053,6 +1146,7 @@ Rhizophydium (quitridio)	Rhizophydium (chytrid)
 Rojo Congo	Congo red
 Rojo fenol	Phenol red
 Rojo neutro	Neutral red
+Ruptura de los glóbulos rojos con salida de la hemoglobina. En un medio diluido el glóbulo se hincha hasta su volumen crítico y se rompe: la mitad se hemoliza cerca de 0,45 % de NaCl (fragilidad osmótica).	Rupture of red blood cells with release of hemoglobin. In a dilute medium the cell swells up to its critical volume and bursts: half of them hemolyze near 0.45 % NaCl (osmotic fragility).
 Réplicas	Replicates
 Sacar una gota y mirarla	Take a drop and look at it
 Sacarosa [mOsm/L]	Sucrose [mOsm/L]
@@ -1160,11 +1254,13 @@ Tincion de Gram	Gram stain
 Tinciones	Stains
 Tinción	Stain
 Tinción activa	Active stain
+Tinción de Gram	Gram stain
 Tinta	Ink
 Tinta china	India ink
 Tipo de placa	Plate type
 Todas las poblaciones, el sedimento y el polvo del bioma.	All the populations, sediment and dust of the biome.
 Todavía no hay muestras: la sesión toma una por intervalo de muestreo.	No samples yet: the session takes one per sampling interval.
+Todavía no hay notas.	No notes yet.
 Todavía no hay placas guardadas.	No saved plates yet.
 Todos	All
 Tope de FPS	FPS cap
@@ -1192,17 +1288,21 @@ Un raspado de la cara interna de la mejilla en solucion salina, tenido con azul 
 Un solo archivo de texto con las definiciones elegidas, tal como se leyeron (con su plan corporal y su fisiología). Un ser de fábrica exportado sirve de plantilla: para importarlo hay que cambiarle el id.	A single text file with the chosen definitions, as they were read (with their body plan and physiology). An exported built-in being serves as a template: to import it its id must be changed.
 Un volumen de una suspensión de densidad conocida: la cantidad que entra es un sorteo de Poisson (una suspensión de 10 por mL rara vez deja un individuo en 1 µL).	A volume of a suspension of known density: the number that goes in is a Poisson draw (a suspension of 10 per mL rarely leaves one individual in 1 µL).
 Una colonia libera colonias hijas	A colony releases daughter colonies
+Una célula animal en cultivo que choca con otra deja de avanzar en esa dirección (inhibición de la locomoción) y, con el fondo cubierto, deja de dividirse. Las células cancerosas la pierden.	An animal cell in culture that runs into another stops advancing in that direction (inhibition of locomotion) and, with the bottom covered, stops dividing. Cancer cells lose it.
 Una dosis-respuesta se mide como en el laboratorio: un lote (panel Experimento) con el factor reactivo:<id> y una serie de dosis al doble.	A dose-response is measured as in the laboratory: a batch (Experiment panel) with the factor reactivo:<id> and a twofold dose series.
 Una foto cada tanto tiempo BIOLÓGICO de la placa (no por cuadro): la serie no depende de los FPS ni de la velocidad. Cada time-lapse va a una carpeta nueva.	One photo every so much BIOLOGICAL time of the plate (not per frame): the series does not depend on FPS or speed. Each time-lapse goes to a new folder.
 Una gota de agua con su fauna (de un bioma) o una placa preparada como en el laboratorio: un cultivo celular en su medio, en la incubadora.	A drop of water with its fauna (from a biome) or a plate prepared as in the laboratory: a cell culture in its medium, in the incubator.
 Una gota de sangre extendida en capa fina, fijada con metanol y tenida con Giemsa: globulos rojos rosados sin nucleo y, cada tanto, globulos blancos (neutrofilos de nucleo lobulado, linfocitos, monocitos) y plaquetas violetas.	A drop of blood spread in a thin layer, fixed with methanol and stained with Giemsa: pink red blood cells without nucleus and, here and there, white blood cells (neutrophils with lobed nuclei, lymphocytes, monocytes) and violet platelets.
 Una hojita de Elodea (Egeria densa) montada en agua: celulas rectangulares llenas de cloroplastos que giran junto a la pared (ciclosis). Con sal se plasmolizan. Se simula un campo de 0,5 mm.	An Elodea leaflet (Egeria densa) mounted in water: rectangular cells full of chloroplasts circling along the wall (cyclosis). With salt they plasmolyze. A 0.5 mm field is simulated.
+Una observación sobre este ser	An observation about this being
 Una zoospora se fija y empieza un filamento nuevo	A zoospore settles and starts a new filament
 Unidades de pH en que cambia de un color al otro.	pH units over which it changes from one color to the other.
 Usar la herramienta Medir (M)	Use the Measure tool (M)
 Usar la herramienta Región (G)	Use the Region tool (G)
 Vaciar el programa	Clear the program
 Vacuola contractil	Contractile vacuole
+Vacuola contráctil	Contractile vacuole
+Vacuola digestiva	Food vacuole
 Vacuolas digestivas	Food vacuoles
 Valor final / alto	Final / high value
 Valor inicial / bajo	Initial / low value
@@ -1214,6 +1314,10 @@ Velocidad [h/s]	Speed [h/s]
 Ver	View
 Ver la osmosis en una celula vegetal: en un medio mas concentrado que su jugo celular, el protoplasto pierde agua y se despega de la pared (plasmolisis); en agua vuelve a llenarla.	See osmosis in a plant cell: in a medium more concentrated than its cell sap, the protoplast loses water and pulls away from the wall (plasmolysis); in water it fills it again.
 Ver una conducta que emerge de una regla simple: Paramecium entra libremente a una zona con CO2 y, al salir hacia agua menos acida, retrocede (reaccion de evitacion). El resultado es que se acumula alrededor de la fuente.	See a behavior that emerges from a simple rule: Paramecium freely enters a zone with CO2 and, when leaving toward less acidic water, backs up (avoidance reaction). The result is that it accumulates around the source.
+Verlo en la lección	See it in the lesson
+Verlo en la placa	See it on the plate
+Vesícula que se cierra alrededor de lo ingerido (en el citostoma o por fagocitosis). Se acidifica, se le fusionan los lisosomas, se digiere y lo que queda se expulsa por el citoprocto.	Vesicle that closes around what was ingested (at the cytostome or by phagocytosis). It acidifies, lysosomes fuse with it, it is digested and what remains is expelled through the cytoproct.
+Virus de bacterias que entra, se multiplica y rompe la bacteria liberando decenas a cientos de fagos nuevos. Las bacterias resistentes aparecen por mutación del receptor.	A virus of bacteria that enters, multiplies and bursts the bacterium, releasing tens to hundreds of new phages. Resistant bacteria appear by mutation of the receptor.
 Virus de bacterias: se pegan, inyectan su ADN y a la media hora la bacteria estalla liberando ~50 copias. Las resistentes sobreviven.	Viruses of bacteria: they attach, inject their DNA and after half an hour the bacterium bursts releasing ~50 copies. Resistant ones survive.
 Vista de modelo (estructuras no resolubles)	Model view (unresolvable structures)
 Vista de modelo: esquema didáctico, no imagen de microscopio	Model view: teaching diagram, not a microscope image
@@ -1241,53 +1345,89 @@ absorbe por el polo anterior (despacio)	absorbs through the anterior pole (slowl
 ademas se conjuga con otra celula de su especie y de distinto tipo de apareamiento	also conjugates with another cell of its species and of a different mating type
 adherida al fondo por adhesiones focales	attached to the bottom by focal adhesions
 adherida al vidrio: no nada y los filtradores no la alcanzan (las amebas si)	attached to the glass: it does not swim and filter feeders cannot reach it (amoebae can)
+aerobia	aerobic
+aerobio	aerobic
 al agua	to the water
 alcanzado: produce violaceina (violeta, toxica)	reached: produces violacein (purple, toxic)
 alga verde	green alga
 almidon verdadero en el cloroplasto: azul-negro	true starch in the chloroplast: blue-black
+anaerobia	anaerobic
 anaerobia estricta: el O2 la danha	strict anaerobe: O2 harms it
+anaerobio	anaerobic
+anoxia	anoxia
 aparato de Golgi	Golgi apparatus
 aparato de Golgi (cinta junto al nucleo)	Golgi apparatus (ribbon next to the nucleus)
 aparato de Golgi (un dictiosoma)	Golgi apparatus (one dictyosome)
+apoptótico	apoptotic
+apoptóticos	apoptotic
 apoyado en el vidrio: ni el agua ni las celulas lo mueven	resting on the glass: neither water nor cells move it
 arrastre sobre el fondo (lamelipodio)	crawls on the bottom (lamellipodium)
 asentada en el fondo	settled on the bottom
 asentada en el fondo: solo la mueven las celulas	settled on the bottom: only cells move it
 ataca con un cuello extensible	attacks with an extensible neck
+autoinductor	autoinducer
 autotrofa: solo fotosintesis	autotroph: photosynthesis only
+auxótrofa	auxotroph
+auxótrofas	auxotrophs
+auxótrofo	auxotroph
 bacterias y detritos	bacteria and detritus
 bacterias, detritos, 	bacteria, detritus, 
+bacteriófago	bacteriophage
+bacteriófagos	bacteriophages
+bajo número de reynolds	low reynolds number
 bdeloplasto: un Bdellovibrio crece adentro (%.1f h bio)	bdelloplast: a Bdellovibrio grows inside (%.1f bio h)
+beer-lambert	beer-lambert
+beer–lambert	beer–lambert
+bicarbonato	bicarbonate
+biofilm	biofilm
+biopelículas	biofilms
+boyle–van 't hoff	boyle–van 't hoff
 busca un alga hospedadora	seeks a host alga
+b₁₂	b₁₂
 caeria a ~%.1f um/s (ley de Stokes)%s	it would sink at ~%.1f um/s (Stokes' law)%s
 camina sobre los cirros	walks on its cirri
+carbonato	carbonate
 caza bacterias	hunts bacteria
 celula escamosa	squamous cell
 celula eucariota: toma solo la contratincion (rosa palido)	eukaryotic cell: takes only the counterstain (pale pink)
 celula humana adherida	attached human cell
 celula vegetal	plant cell
 celula vegetal con cloroplastos	plant cell with chloroplasts
+ciclo celular	cell cycle
 ciclo celular: fase %s (%.1f h en la fase)	cell cycle: phase %s (%.1f h in the phase)
+citocinesis	cytokinesis
+clorofila	chlorophyll
 clorofita flagelada	flagellated chlorophyte
 cloroplasto en copa	cup-shaped chloroplast
 cloroplastos (giran con la ciclosis)	chloroplasts (circling with cyclosis)
 compara la concentracion de ahora con la de hace ~1 s	compares the concentration now with that of ~1 s ago
 con mas de %.0f uM de materia organica	with more than %.0f uM of organic matter
+concentración inhibitoria mínima	minimum inhibitory concentration
 conductividad %.2f (radio ~%.1f um), flujo %.2f del caudal	conductivity %.2f (radius ~%.1f um), flow %.2f of the throughput
+confluencia	confluence
+confluente	confluent
+conjuga	conjugates
+conjugan	conjugate
 conjugando con otra celula (%.0f%%): intercambian material genetico	conjugating with another cell (%.0f%%): they exchange genetic material
 coraza gruesa: no se la puede fagocitar	thick armor: it cannot be phagocytosed
+corriente oral	oral current
 crisolaminarina (en una vacuola): no reacciona con el yodo	chrysolaminarin (in a vacuole): does not react with iodine
+cuerpos apoptóticos	apoptotic bodies
+cultivo continuo	continuous culture
+curva de hill	hill curve
 células	cells
 dando un giro (tumble)	tumbling
 decimación x	decimation x
 declarada; 	declared; 
 del agua	from the water
+deplasmólisis	deplasmolysis
 desconocida (solo se recuerdan las ultimas 64 muertes)	unknown (only the last 64 deaths are remembered)
 dicotomica: la punta se parte en dos hifas	dichotomous: the tip splits into two hyphae
 disparo tricocistos: el depredador retrocede	fired trichocysts: the predator backs off
 dividiendose: el surco estrangula la celula	dividing: the furrow constricts the cell
 division con tabique y fragmentacion del filamento	division by septum and fragmentation of the filament
 dormido hace %.1f h bio	dormant for %.1f bio h
+dosis-respuesta	dose-response
 duerme hace %.1f h bio	asleep for %.1f bio h
 el ADN del nucleo	the DNA of the nucleus
 el estres se paga como mantenimiento extra	stress is paid as extra maintenance
@@ -1298,28 +1438,63 @@ en corrida: nada recto	running: swims straight
 en quiste	in a cyst
 en suspension	in suspension
 en suspension: sigue el agua con browniano	in suspension: follows the water with Brownian motion
+enquistada	encysted
 enquistada: pared de resistencia y metabolismo minimo	encysted: resistant wall and minimal metabolism
+enquistado	encysted
+enquistamiento	encystment
 envolviendo una presa: la membrana avanza por los labios de la copa	engulfing a prey: the membrane advances along the lips of the cup
 espora inmovil: la lleva el agua	non-motile spore: the water carries it
+estigma	eyespot
 estigma (mancha ocular)	stigma (eyespot)
 estirando el cuello (%.0f um)	stretching its neck (%.0f um)
+evitación	avoidance
+exconjugantes	exconjugants
 extiende pseudopodos en direcciones al azar	extends pseudopods in random directions
+factor limitante	limiting factor
+fagocita	phagocytoses
 fagocita: envuelve a la presa con la membrana	phagocytoses: wraps the prey with its membrane
+fagocitada	phagocytosed
+fagocitado	phagocytosed
+fagocitan	phagocytose
+fagocitar	phagocytose
+fagos	phages
+fagos líticos	lytic phages
+fagosoma	phagosome
+fagosomas	phagosomes
 fagosomas con bacterias	phagosomes with bacteria
+fermenta	ferments
 fermenta, sin O2	ferments, without O2
+fermentan	ferment
 fija al vidrio por un tallo de %.0f um%s	attached to the glass by a %.0f um stalk%s
+fijación de nitrógeno	nitrogen fixation
+fijación de n₂	n₂ fixation
 fijado y tenido	fixed and stained
 filtra el agua por el surco oral (corriente hacia la boca)	filters the water through the oral groove (current toward the mouth)
 fision binaria	binary fission
 formando un tabique para dividirse	forming a septum to divide
+fotosintética	photosynthetic
+fotosintéticas	photosynthetic
 fototaxis: gira hacia el lado mas iluminado	phototaxis: turns toward the brighter side
+fototáctica	phototactic
+fototáctico	phototactic
+fotótrofa	phototroph
+fotótrofas	phototrophs
 fraccion	fraction
+fragilidad osmótica	osmotic fragility
 frustula de silice	silica frustule
 frustula de silice: cuesta romperla	silica frustule: hard to break
+g0	g0
+gause	gause
 gemacion: una yema crece y se separa	budding: a bud grows and separates
 glucogeno: marron rojizo	glycogen: reddish brown
+glucólisis aeróbica	aerobic glycolysis
+gram	gram
+gramnegativa	gram-negative
 gramnegativa: pared fina y membrana externa, pierde el cristal violeta y toma la safranina (rosa)	Gram-negative: thin wall and outer membrane, loses the crystal violet and takes the safranin (pink)
+gramnegativas	gram-negative
+grampositiva	gram-positive
 grampositiva: pared gruesa de peptidoglicano, retiene el cristal violeta	Gram-positive: thick peptidoglycan wall, retains the crystal violet
+grampositivas	gram-positive
 granulos de glucogeno	glycogen granules
 granulos de paramilon	paramylon granules
 granulos de queratohialina	keratohyalin granules
@@ -1327,6 +1502,12 @@ granulos primarios (azurofilos) y secundarios	primary (azurophilic) and secondar
 granulos y lisosomas	granules and lysosomes
 hacia la primera celula	toward the first cell
 hacia la ultima celula	toward the last cell
+hemolizado	hemolyzed
+hemolizados	hemolyzed
+henry	henry
+heterocistos	heterocysts
+hill	hill
+holling	holling
 huye en linea recta de un depredador	flees in a straight line from a predator
 idioma	language
 infectada por 	infected by 
@@ -1336,10 +1517,13 @@ inmovil, apoyado en el vidrio	motionless, resting on the glass
 inmovil, sostenida por el tallo	motionless, held by the stalk
 intervenciones de la escena: se repiten al crear la placa.	scene interventions: they are repeated when creating the plate.
 la controlas vos	you control it
+lactato	lactate
 lección	lesson
 libera colonias hijas	releases daughter colonies
 libera microcistina, toxica para quien la come	releases microcystin, toxic to whoever eats it
 libera nutrientes al agua (mas rapido junto a hifas de hongos)	releases nutrients into the water (faster next to fungal hyphae)
+liebig	liebig
+limitación	limitation
 mOsm/L	mOsm/L
 manipulando una presa entera (%.1f h bio)	handling a whole prey (%.1f bio h)
 materia organica disuelta (aminoacidos)	dissolved organic matter (amino acids)
@@ -1347,9 +1531,15 @@ membrana plasmatica	plasma membrane
 membrana plasmatica (lamelipodio en el frente)	plasma membrane (lamellipodium at the front)
 membrana plasmatica (pliegues de queratina)	plasma membrane (keratin folds)
 membrana plasmatica (se despega de la pared en la plasmolisis)	plasma membrane (pulls away from the wall in plasmolysis)
+michaelis-menten	michaelis-menten
+michaelis–menten	michaelis–menten
+microscopio de campo claro	brightfield microscope
 migra sobre el fondo en un paseo al azar persistente	migrates over the bottom in a persistent random walk
 mitocondrias (pocas)	mitochondria (few)
 mitocondrias (red tubular)	mitochondria (tubular network)
+mitótica	mitotic
+mitótico	mitotic
+monod	monod
 ms por cuadro	ms per frame
 nada como telotroco; se fija en %.0f s	swims as a telotroch; settles in %.0f s
 nada con giros al azar	swims with random turns
@@ -1367,6 +1557,9 @@ nucleo (contra la pared)	nucleus (against the wall)
 nucleo (tapado por los cloroplastos)	nucleus (hidden by the chloroplasts)
 nucleo chico	small nucleus
 nucleo multilobulado (3-5 lobulos)	multilobed nucleus (3-5 lobes)
+osmolaridad	osmolarity
+osmótica	osmotic
+osmótico	osmotic
 pH	pH
 pH del viraje	Transition pH
 pH medio	Mean pH
@@ -1379,9 +1572,13 @@ pared de celulosa	cellulose wall
 pared de glicoproteinas	glycoprotein wall
 pared de glucano y manano	glucan and mannan wall
 pared gruesa de levadura: se tine como grampositiva (violeta)	thick yeast wall: stains like a Gram-positive (violet)
+peptidoglicano	peptidoglycan
 persigue a una presa que detecta	chases a prey it detects
 perímetro	perimeter
 período	period
+plasmolizada	plasmolyzed
+plasmolizado	plasmolyzed
+plasmolizados	plasmolyzed
 plastos dorados	golden plastids
 pmol Fe/pmol	pmol Fe/pmol
 pmol N/pmol	pmol N/pmol
@@ -1389,17 +1586,32 @@ pmol P/pmol	pmol P/pmol
 pmol Si/pmol	pmol Si/pmol
 por choque	per collision
 por mL	per mL
+principio de gause	gause's principle
 publicado: %g %s a %.0f C%s	published: %g %s at %.0f C%s
+q10	q10
 queda quieta	stays still
+quiescencia	quiescence
 quiescente (G0)	quiescent (G0)
 quiescente (G0): rodeada de vecinas (inhibicion por contacto)	quiescent (G0): surrounded by neighbors (contact inhibition)
 quiescente (G0): sin factores de crecimiento del suero no pasa el punto de restriccion	quiescent (G0): without serum growth factors it does not pass the restriction point
+quimiostatos	chemostats
+quimiotáctica	chemotactic
+quimiotáctico	chemotactic
+quimiotácticos	chemotactic
+quistes	cysts
+r*	r*
 reaccion de evitacion: choco con algo y retrocede (mecanorrecepcion)	avoidance reaction: it bumped into something and backs up (mechanoreception)
 reaccion de evitacion: retrocede y gira ante un depredador cercano	avoidance reaction: backs up and turns away from a nearby predator
+reacción de evitación	avoidance reaction
+redfield	redfield
 resistente a los fagos	resistant to phages
+respira	respires
 respira O2	respires O2
+respiración	respiration
+respiran	respire
 reticulo endoplasmico	endoplasmic reticulum
 reticulo endoplasmico rugoso	rough endoplasmic reticulum
+reynolds	reynolds
 ribosomas 80S	80S ribosomes
 s bio/s	bio s/s
 saciada: no persigue presas	satiated: does not chase prey
@@ -1421,14 +1633,20 @@ solo en la vista de modelo	only in the model view
 sube el gradiente de materia organica	climbs the gradient of organic matter
 succiona a sus presas con tentaculos	sucks its prey with tentacles
 sujeta por los tentaculos de un suctorio, que le drena biomasa	held by the tentacles of a suctorian, which drains its biomass
+surco oral	oral groove
 t = %.1f s (%.2f h bio)	t = %.1f s (%.2f bio h)
 t bio	bio t
 tambien libera zoosporas nadadoras que se fijan y forman filamentos nuevos	also releases swimming zoospores that settle and form new filaments
+tasa de aclaramiento	clearance rate
+tasa de dilución	dilution rate
 temperatura, luz, soluto:<fosfato|nitrogeno|silice|hierro|b12|organica|co2>, o una acción: bacterias, medio, dilucion, inocular:<id del ser>.	temperatura, luz, soluto:<fosfato|nitrogeno|silice|hierro|b12|organica|co2>, or an action: bacterias, medio, dilucion, inocular:<being id>.
 tiempo [h]	time [h]
 tiempo biológico [h]	biological time [h]
+tiempo de manipulación	handling time
 tipo I	type I
 tipo II	type II
+tipo de apareamiento	mating type
+tipos de apareamiento	mating types
 toca a otras celulas en el %.0f%% de su borde%s	touches other cells along %.0f%% of its edge%s
 todavía no la viste	you have not seen it yet
 traga presas enteras por el polo anterior	swallows whole prey through the anterior pole
@@ -1442,9 +1660,13 @@ universitario	university
 vacuola contractil	contractile vacuole
 vacuolas con madera	vacuoles with wood
 vacuolas contractiles	contractile vacuoles
+vacuolas contráctiles	contractile vacuoles
 vacuolas digestivas	food vacuoles
 vacuolas digestivas y lisosomas (acidos)	food vacuoles and lysosomes (acidic)
 versión	version
+violaceína	violacein
+vitamina b₁₂	vitamin b₁₂
+warburg	warburg
 x2, /2 y 0 escalan la concentración de toda la placa. Las concentraciones se fijan en Placa.	x2, /2 and 0 scale the concentration of the whole plate. Concentrations are set in Plate.
 zoospora: nada con su corona de flagelos ~%.1f h bio y despues se fija	zoospore: swims with its crown of flagella for ~%.1f bio h and then settles
 ~%.0f por um3, 	~%.0f per um3, 
@@ -1452,7 +1674,9 @@ zoospora: nada con su corona de flagelos ~%.1f h bio y despues se fija	zoospore:
 Área	Area
 Área [1/s]	Area [1/s]
 Óptica del microscopio	Microscope optics
+Ósmosis	Osmosis
 Óxido de hierro	Iron oxide
 Óxidos de hierro: opacos y pardo rojizos, hacen sombra. Dan su color al barro y al suelo.	Iron oxides: opaque and reddish brown, they cast shade. They give mud and soil their color.
 × cuota mínima	× minimum quota
 Última	Last
+−log₁₀ de la actividad de los iones H⁺. En la gota lo fija el sistema del carbonato: el CO₂ disuelto (que respiran las células y se equilibra con el aire) y el bicarbonato. Cada especie tolera un rango de pH.	−log₁₀ of the activity of H⁺ ions. In the drop it is set by the carbonate system: dissolved CO₂ (which cells respire and which equilibrates with the air) and bicarbonate. Each species tolerates a range of pH.

@@ -135,7 +135,15 @@ por paso y sus tests. Avance: ✅ hecho · 🟡 en parte (se dice qué falta) ·
     (`TimelapseClock`): un cuadro cada tanto tiempo biológico, sin importar los FPS ni la velocidad,
     cada serie en su carpeta (`<datos>/biogame/fotos/timelapse_<fecha>/frame_00001.png`…);
     `bio_bench --timelapse <min_bio> [--timelapse-dir carpeta]` lo hace sin ventana.
-14. **Glosario y notas** (las notas van en la escena, no son intervenciones).
+14. ✅ **Glosario y notas** (las notas van en la escena, no son intervenciones).
+    *Hecho:* `game/glossary` con `glosario.toml` (42 términos con definición y fuente, formas en el
+    texto, relacionados y dónde verlos: una lección o una placa preparada; `[[termino]]` en los
+    paquetes), panel Glosario y botones con los términos que aparecen en la ficha y en los pasos de las
+    lecciones (en español y en la traducción). `game/notes`: notas ancladas a un ser (lo siguen
+    mientras vive), a un lugar o a un instante, en la escena (`nota=`), en el JSON (`notas`) y en un
+    Markdown junto a la exportación; panel Notas, sección Notas en la ficha y marcadores numerados
+    sobre la placa (al repetir una escena aparecen en su paso). La fuente de la interfaz suma griego,
+    puntuación y operadores. *Falta:* los subíndices y superíndices (O₂, 10⁻⁵) no están en Roboto: paso 15.
 15. **Accesibilidad:** escala de interfaz, HiDPI y paleta Okabe–Ito.
 
 ## Riesgos

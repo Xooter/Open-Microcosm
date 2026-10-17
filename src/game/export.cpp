@@ -415,6 +415,24 @@ std::string runJson(const World& world, const Run& run, const PlateSpec& plate, 
     j.endObject();
     j.endObject();
 
+    // Notas del usuario (no son intervenciones: no cambian la corrida).
+    j.beginArray("notas");
+    for (const Note& n : run.notes()) {
+        j.beginObject();
+        j.number("paso", static_cast<double>(n.step));
+        j.quantity("tiempo_biologico", n.hours, "h");
+        j.string("ancla", n.anchor == NoteAnchor::Being ? "ser" : n.anchor == NoteAnchor::Place ? "lugar" : "instante");
+        if (n.anchor != NoteAnchor::Instant) {
+            j.quantity("x", n.pos.x, "µm");
+            j.quantity("y", n.pos.y, "µm");
+        }
+        if (!n.being.empty())
+            j.string("ser", n.being);
+        j.string("texto", n.text);
+        j.endObject();
+    }
+    j.endArray();
+
     const TimeSeries& s = run.series();
     j.beginObject("serie");
     j.beginArray("columnas");

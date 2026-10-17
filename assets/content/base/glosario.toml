@@ -1,0 +1,342 @@
+# Glosario del paquete de fábrica (fase P1, paso 14). Cada término con su definición y una fuente;
+# los textos de la ficha y de las lecciones lo enlazan solos cuando aparece alguna de sus formas.
+#
+# [[termino]]: id, termino, definicion, fuente, alias (otras formas en el texto, en minúsculas),
+#   relacionados (ids), leccion (id de una lección donde se ve), placa (id de una placa preparada).
+
+[[termino]]
+id = "numero_reynolds"
+termino = "Número de Reynolds"
+definicion = "Cociente entre las fuerzas de inercia y las viscosas: Re = ρ·v·L/μ. Un paramecio de 0,2 mm que nada a 1 mm/s tiene Re ≈ 0,2; una bacteria, ≈ 10⁻⁵. Con Re mucho menor que 1 no hay inercia: si deja de propulsarse se detiene al instante, y nadar con un movimiento recíproco (ida y vuelta igual) no lleva a ningún lado. Por eso en la simulación la velocidad es la respuesta instantánea a la fuerza."
+fuente = "Purcell, E. M. (1977). Life at low Reynolds number. Am. J. Phys. 45: 3-11."
+alias = ["reynolds", "bajo número de reynolds"]
+relacionados = ["quimiotaxis"]
+
+[[termino]]
+id = "quimiotaxis"
+termino = "Quimiotaxis"
+definicion = "Movimiento orientado por un gradiente químico, hacia un atrayente o lejos de un repelente. Las bacterias la hacen alargando las carreras que van a favor del gradiente (carrera y vuelco); el neutrófilo sigue el fMLP que liberan las bacterias. La acumulación de Paramecium en el CO₂ no es una quimiotaxis verdadera: sale de la reacción de evitación."
+fuente = "Berg, H. C. & Brown, D. A. (1972). Chemotaxis in Escherichia coli analysed by three-dimensional tracking. Nature 239: 500-504."
+alias = ["quimiotáctico", "quimiotáctica", "quimiotácticos"]
+relacionados = ["reaccion_evitacion", "fototaxis"]
+
+[[termino]]
+id = "fototaxis"
+termino = "Fototaxis"
+definicion = "Movimiento orientado por la luz. Euglena nada hacia la luz moderada: el estigma (la mancha roja) hace sombra sobre el fotorreceptor de la base del flagelo a cada giro, y la célula corrige el rumbo hasta que la sombra desaparece."
+fuente = "Häder, D.-P. & Iseki, M. (2017). Photomovement in Euglena. Adv. Exp. Med. Biol. 979: 207-235."
+alias = ["fototáctico", "fototáctica", "estigma"]
+relacionados = ["quimiotaxis", "fotosintesis"]
+
+[[termino]]
+id = "reaccion_evitacion"
+termino = "Reacción de evitación"
+definicion = "Respuesta de Paramecium a un choque o a un estímulo nocivo: un potencial de acción de calcio invierte el batido de los cilios, la célula retrocede, gira y vuelve a avanzar en otra dirección. Repetida, explica que los paramecios queden atrapados en una zona con un poco de CO₂ (Jennings)."
+fuente = "Jennings, H. S. (1906). Behavior of the Lower Organisms. Columbia University Press. Eckert, R. (1972). Bioelectric control of ciliary activity. Science 176: 473-481."
+alias = ["reacción de evitación", "evitación"]
+relacionados = ["quimiotaxis"]
+leccion = "jennings_co2"
+
+[[termino]]
+id = "redfield"
+termino = "Proporción de Redfield"
+definicion = "Relación media de átomos de carbono, nitrógeno y fósforo en el fitoplancton marino: C:N:P = 106:16:1. Sirve para saber qué nutriente falta: con N:P del agua muy por debajo de 16, el que limita es el nitrógeno."
+fuente = "Redfield, A. C. (1958). The biological control of chemical factors in the environment. Am. Sci. 46: 205-221."
+alias = ["redfield"]
+relacionados = ["liebig", "monod"]
+
+[[termino]]
+id = "liebig"
+termino = "Ley del mínimo"
+definicion = "El crecimiento lo limita el recurso más escaso respecto de lo que se necesita, no el total de recursos (Liebig). En la simulación, cada célula crece con el factor más bajo entre P, N, Si, Fe, B₁₂, luz y energía; el mapa de limitación (tecla L) muestra cuál es."
+fuente = "de Baar, H. J. W. (1994). von Liebig's law of the minimum and plankton ecology (1899-1991). Prog. Oceanogr. 33: 347-386."
+alias = ["liebig", "factor limitante", "limitación"]
+relacionados = ["redfield", "monod"]
+
+[[termino]]
+id = "monod"
+termino = "Cinética de Monod"
+definicion = "La tasa de crecimiento sube con la concentración del recurso y se satura: μ = μmax·S/(Ks + S). Ks es la concentración a la que se crece a la mitad del máximo. Es la misma forma que la de Michaelis–Menten de las enzimas."
+fuente = "Monod, J. (1949). The growth of bacterial cultures. Annu. Rev. Microbiol. 3: 371-394."
+alias = ["monod", "michaelis–menten", "michaelis-menten"]
+relacionados = ["quimiostato", "liebig"]
+
+[[termino]]
+id = "quimiostato"
+termino = "Quimiostato"
+definicion = "Cultivo continuo: entra medio fresco y sale cultivo al mismo caudal, con una tasa de dilución D. En el estado estacionario la población crece tan rápido como se lava (μ = D) y el recurso limitante queda en S* = Ks·D/(μmax − D), sin importar cuánto entra."
+fuente = "Novick, A. & Szilard, L. (1950). Description of the chemostat. Science 112: 715-716."
+alias = ["quimiostatos", "tasa de dilución", "cultivo continuo"]
+relacionados = ["monod", "r_estrella"]
+leccion = "tilman_quimiostato"
+
+[[termino]]
+id = "r_estrella"
+termino = "R*"
+definicion = "La concentración del recurso a la que una especie crece justo lo que pierde. Con un solo recurso limitante, gana la especie con el R* más bajo: deja el recurso por debajo de lo que la otra necesita."
+fuente = "Tilman, D. (1982). Resource Competition and Community Structure. Princeton University Press."
+alias = ["r*"]
+relacionados = ["quimiostato", "exclusion_competitiva"]
+leccion = "tilman_quimiostato"
+
+[[termino]]
+id = "exclusion_competitiva"
+termino = "Exclusión competitiva"
+definicion = "Dos especies que dependen del mismo recurso limitante no coexisten indefinidamente: una desplaza a la otra. Gause lo mostró con Paramecium caudatum y P. aurelia alimentados con bacterias en tubos."
+fuente = "Gause, G. F. (1934). The Struggle for Existence. Williams & Wilkins, Baltimore."
+alias = ["principio de gause", "gause"]
+relacionados = ["r_estrella", "respuesta_funcional"]
+leccion = "gause_competencia"
+
+[[termino]]
+id = "q10"
+termino = "Q10"
+definicion = "Cuánto se acelera un proceso al subir 10 °C la temperatura: Q10 = (R₂/R₁)^(10/(T₂−T₁)). En los procesos biológicos suele estar entre 2 y 3; la simulación usa 2 en todo lo biológico (la viscosidad y los gases cambian con su física)."
+fuente = "Schmidt-Nielsen, K. (1997). Animal Physiology: Adaptation and Environment, 5.ª ed. Cambridge University Press, cap. 6."
+alias = ["q10"]
+
+[[termino]]
+id = "respuesta_funcional"
+termino = "Respuesta funcional"
+definicion = "Cuánto come un depredador según la densidad de presas. En la de tipo II (Holling) sube y se satura por el tiempo de manipulación: f = a·N/(1 + a·h·N), con a el aclaramiento y h el tiempo de manipulación por presa."
+fuente = "Holling, C. S. (1959). Some characteristics of simple types of predation and parasitism. Can. Entomol. 91: 385-398."
+alias = ["holling", "tiempo de manipulación"]
+relacionados = ["aclaramiento"]
+
+[[termino]]
+id = "aclaramiento"
+termino = "Aclaramiento"
+definicion = "El volumen de agua que un filtrador limpia de presas por unidad de tiempo, con pocas presas (antes de saturarse). En la simulación, un Paramecium caudatum aclara unos 24 µL por hora (una estimación con la escala del zooplancton: no hay una medición directa)."
+fuente = "Fenchel, T. (1980). Suspension feeding in ciliated protozoa: functional response and particle size selection. Microb. Ecol. 6: 1-11."
+alias = ["tasa de aclaramiento"]
+relacionados = ["respuesta_funcional", "citostoma"]
+
+[[termino]]
+id = "osmosis"
+termino = "Ósmosis"
+definicion = "Paso de agua a través de una membrana semipermeable hacia el lado más concentrado en solutos. El volumen de una célula sigue la ley de Boyle–van 't Hoff: el agua entra o sale hasta igualar la osmolaridad de adentro con la del medio."
+fuente = "Nobel, P. S. (2009). Physicochemical and Environmental Plant Physiology, 4.ª ed. Academic Press, cap. 2."
+alias = ["osmótico", "osmótica", "osmolaridad", "boyle–van 't hoff"]
+relacionados = ["plasmolisis", "hemolisis", "vacuola_contractil"]
+
+[[termino]]
+id = "plasmolisis"
+termino = "Plasmólisis"
+definicion = "En un medio más concentrado que su jugo celular, el protoplasto de una célula vegetal pierde agua y se despega de la pared de celulosa, que queda en su lugar. En agua pura se recupera (deplasmólisis)."
+fuente = "Oparka, K. J. (1994). Plasmolysis: new insights into an old process. New Phytol. 126: 571-591."
+alias = ["plasmolizado", "plasmolizada", "plasmolizados", "deplasmólisis"]
+relacionados = ["osmosis"]
+leccion = "plasmolisis_cebolla"
+placa = "epidermis_cebolla"
+
+[[termino]]
+id = "hemolisis"
+termino = "Hemólisis"
+definicion = "Ruptura de los glóbulos rojos con salida de la hemoglobina. En un medio diluido el glóbulo se hincha hasta su volumen crítico y se rompe: la mitad se hemoliza cerca de 0,45 % de NaCl (fragilidad osmótica)."
+fuente = "Parpart, A. K. et al. (1947). The osmotic resistance (fragility) of human red cells. J. Clin. Invest. 26: 636-640."
+alias = ["hemolizado", "hemolizados", "fragilidad osmótica"]
+relacionados = ["osmosis"]
+leccion = "fragilidad_osmotica"
+placa = "sangre_viva"
+
+[[termino]]
+id = "vacuola_contractil"
+termino = "Vacuola contráctil"
+definicion = "Organelo de los protistas de agua dulce que junta el agua que entra por ósmosis y la expulsa al exterior cada pocos segundos. Sin ella, la célula se hincharía hasta reventar."
+fuente = "Allen, R. D. (2000). The contractile vacuole and its membrane dynamics. BioEssays 22: 1035-1042."
+alias = ["vacuolas contráctiles"]
+relacionados = ["osmosis"]
+
+[[termino]]
+id = "vacuola_digestiva"
+termino = "Vacuola digestiva"
+definicion = "Vesícula que se cierra alrededor de lo ingerido (en el citostoma o por fagocitosis). Se acidifica, se le fusionan los lisosomas, se digiere y lo que queda se expulsa por el citoprocto."
+fuente = "Allen, R. D. & Fok, A. K. (2000). Membrane trafficking and processing in Paramecium. Int. Rev. Cytol. 198: 277-318."
+alias = ["vacuolas digestivas", "fagosoma", "fagosomas"]
+relacionados = ["fagocitosis", "citostoma"]
+
+[[termino]]
+id = "fagocitosis"
+termino = "Fagocitosis"
+definicion = "Ingestión de una partícula grande (una bacteria, otra célula) envolviéndola con la membrana hasta cerrar una vacuola. La hacen las amebas para comer y los neutrófilos para defender."
+fuente = "Alberts, B. et al. (2015). Molecular Biology of the Cell, 6.ª ed. Garland Science, cap. 13."
+alias = ["fagocita", "fagocitan", "fagocitar", "fagocitada", "fagocitado"]
+relacionados = ["vacuola_digestiva"]
+
+[[termino]]
+id = "citostoma"
+termino = "Citostoma"
+definicion = "La boca celular de los ciliados, al fondo del surco oral. Los cilios orales arman una corriente que lleva las bacterias hasta ahí, donde se forma la vacuola digestiva."
+fuente = "Lynn, D. H. (2008). The Ciliated Protozoa, 3.ª ed. Springer, cap. 2."
+alias = ["surco oral", "corriente oral"]
+relacionados = ["vacuola_digestiva", "aclaramiento"]
+
+[[termino]]
+id = "conjugacion"
+termino = "Conjugación"
+definicion = "En los ciliados, dos células de tipos de apareamiento distintos se unen e intercambian micronúcleos haploides; las dos salen con el mismo genotipo recombinado. Es sexo sin reproducción: no aumenta el número de células."
+fuente = "Sonneborn, T. M. (1937). Sex, sex inheritance and sex determination in Paramecium aurelia. Proc. Natl. Acad. Sci. USA 23: 378-385."
+alias = ["conjuga", "conjugan", "exconjugantes", "tipo de apareamiento", "tipos de apareamiento"]
+relacionados = ["mitosis"]
+
+[[termino]]
+id = "mitosis"
+termino = "Mitosis"
+definicion = "División del núcleo en dos núcleos con el mismo material genético; la citocinesis divide después el citoplasma. En la simulación, cada hija lleva su copia del genoma, que puede mutar."
+fuente = "Alberts, B. et al. (2015). Molecular Biology of the Cell, 6.ª ed. Garland Science, cap. 17."
+alias = ["mitótico", "mitótica", "citocinesis"]
+relacionados = ["conjugacion", "punto_restriccion"]
+placa = "raiz_cebolla"
+
+[[termino]]
+id = "quiste"
+termino = "Quiste"
+definicion = "Estado de resistencia: la célula se redondea, arma una pared gruesa y casi detiene el metabolismo hasta que vuelven las condiciones buenas (comida, agua, temperatura)."
+fuente = "Corliss, J. O. & Esser, S. C. (1974). Comments on the role of the cyst in the life cycle and survival of free-living protozoa. Trans. Am. Microsc. Soc. 93: 578-593."
+alias = ["quistes", "enquistamiento", "enquistado", "enquistada"]
+
+[[termino]]
+id = "biopelicula"
+termino = "Biopelícula"
+definicion = "Comunidad de bacterias adheridas a una superficie, envueltas en una matriz que fabrican ellas mismas. Adheridas no nadan y los filtradores no las alcanzan; las amebas, que se arrastran por la superficie, sí."
+fuente = "Costerton, J. W. et al. (1995). Microbial biofilms. Annu. Rev. Microbiol. 49: 711-745."
+alias = ["biofilm", "biopelículas"]
+
+[[termino]]
+id = "quorum"
+termino = "Quorum sensing"
+definicion = "Las bacterias liberan una señal (autoinductor) que se acumula con la densidad; pasado un umbral, cambian de comportamiento todas juntas. Chromobacterium violaceum fabrica así la violaceína, un pigmento violeta tóxico para quien se la come."
+fuente = "McClean, K. H. et al. (1997). Quorum sensing and Chromobacterium violaceum. Microbiology 143: 3703-3711."
+alias = ["autoinductor", "violaceína"]
+
+[[termino]]
+id = "fago"
+termino = "Fago lítico"
+definicion = "Virus de bacterias que entra, se multiplica y rompe la bacteria liberando decenas a cientos de fagos nuevos. Las bacterias resistentes aparecen por mutación del receptor."
+fuente = "Abedon, S. T. (2009). Phage evolution and ecology. Adv. Appl. Microbiol. 67: 1-45."
+alias = ["fagos", "bacteriófago", "bacteriófagos", "fagos líticos"]
+
+[[termino]]
+id = "cim"
+termino = "CIM"
+definicion = "Concentración inhibitoria mínima: la menor concentración de un antibiótico, en una serie de diluciones al doble, sin crecimiento visible después de 16-20 h. Es una medida del laboratorio, no un parámetro: en la simulación emerge de la farmacodinámica."
+fuente = "CLSI (2018). M07: Methods for Dilution Antimicrobial Susceptibility Tests for Bacteria That Grow Aerobically, 11.ª ed."
+alias = ["concentración inhibitoria mínima"]
+relacionados = ["ci50"]
+
+[[termino]]
+id = "ci50"
+termino = "CI50"
+definicion = "La concentración que reduce a la mitad la respuesta (el crecimiento). Sale de ajustar una curva de Hill a un experimento de dosis-respuesta: y = abajo + (arriba − abajo)/(1 + (dosis/CI50)^n)."
+fuente = "Hill, A. V. (1910). The possible effects of the aggregation of the molecules of haemoglobin on its dissociation curves. J. Physiol. 40: iv-vii."
+alias = ["dosis-respuesta", "curva de hill", "hill"]
+relacionados = ["cim"]
+
+[[termino]]
+id = "beer_lambert"
+termino = "Ley de Beer–Lambert"
+definicion = "La luz se atenúa en forma exponencial con lo que atraviesa: I = I₀·e^(−k·c·z). En la gota y en el tubo, las algas de arriba hacen sombra a las de abajo."
+fuente = "Kirk, J. T. O. (2011). Light and Photosynthesis in Aquatic Ecosystems, 3.ª ed. Cambridge University Press, cap. 1."
+alias = ["beer-lambert", "beer–lambert"]
+relacionados = ["fotosintesis"]
+
+[[termino]]
+id = "ley_henry"
+termino = "Ley de Henry"
+definicion = "La concentración de un gas disuelto en equilibrio es proporcional a su presión parcial en el aire. La constante baja con la temperatura y la sal: el agua tibia o salada guarda menos O₂."
+fuente = "Sander, R. (2015). Compilation of Henry's law constants (version 4.0) for water as solvent. Atmos. Chem. Phys. 15: 4399-4981."
+alias = ["henry"]
+relacionados = ["ph"]
+
+[[termino]]
+id = "ph"
+termino = "pH"
+definicion = "−log₁₀ de la actividad de los iones H⁺. En la gota lo fija el sistema del carbonato: el CO₂ disuelto (que respiran las células y se equilibra con el aire) y el bicarbonato. Cada especie tolera un rango de pH."
+fuente = "Stumm, W. & Morgan, J. J. (1996). Aquatic Chemistry, 3.ª ed. Wiley, cap. 4."
+alias = ["carbonato", "bicarbonato"]
+relacionados = ["ley_henry"]
+
+[[termino]]
+id = "respiracion"
+termino = "Respiración celular"
+definicion = "Oxidación de la glucosa con O₂ hasta CO₂ y agua, con unos 30 ATP por glucosa. Sin O₂ las células que pueden pasan a la fermentación, que rinde 15 veces menos."
+fuente = "Hinkle, P. C. (2005). P/O ratios of mitochondrial oxidative phosphorylation. Biochim. Biophys. Acta 1706: 1-11."
+alias = ["respiración", "respira", "respiran", "aerobio", "aerobia"]
+relacionados = ["fermentacion", "fotosintesis"]
+
+[[termino]]
+id = "fermentacion"
+termino = "Fermentación"
+definicion = "Obtención de energía sin O₂: la glucosa se parte a medias (a etanol, lactato u otros) con solo 2 ATP por glucosa."
+fuente = "Madigan, M. T. et al. (2018). Brock Biology of Microorganisms, 15.ª ed. Pearson, cap. 3."
+alias = ["fermenta", "fermentan", "anaerobio", "anaerobia", "anoxia"]
+relacionados = ["respiracion", "warburg"]
+
+[[termino]]
+id = "fotosintesis"
+termino = "Fotosíntesis"
+definicion = "Fijación del CO₂ en azúcares con la energía de la luz, liberando O₂. Las algas y las cianobacterias la hacen en la luz local, que atenúa lo que hay encima."
+fuente = "Falkowski, P. G. & Raven, J. A. (2007). Aquatic Photosynthesis, 2.ª ed. Princeton University Press."
+alias = ["fotosintética", "fotosintéticas", "fotótrofa", "fotótrofas", "clorofila"]
+relacionados = ["beer_lambert", "respiracion"]
+
+[[termino]]
+id = "heterocisto"
+termino = "Heterocisto"
+definicion = "Célula de algunas cianobacterias filamentosas especializada en fijar N₂ del aire. Su nitrogenasa se inactiva con el O₂: el heterocisto tiene pared gruesa y no hace la parte de la fotosíntesis que libera oxígeno."
+fuente = "Kumar, K., Mella-Herrera, R. A. & Golden, J. W. (2010). Cyanobacterial heterocysts. Cold Spring Harb. Perspect. Biol. 2: a000315."
+alias = ["heterocistos", "fijación de n₂", "fijación de nitrógeno"]
+relacionados = ["redfield"]
+
+[[termino]]
+id = "auxotrofia"
+termino = "Auxotrofía"
+definicion = "Necesidad de recibir hecho un compuesto que la célula no puede fabricar. Muchas algas (Euglena, diatomeas) necesitan vitamina B₁₂, que solo hacen las bacterias."
+fuente = "Croft, M. T. et al. (2005). Algae acquire vitamin B12 through a symbiotic relationship with bacteria. Nature 438: 90-93."
+alias = ["auxótrofa", "auxótrofas", "auxótrofo", "vitamina b₁₂", "b₁₂"]
+
+[[termino]]
+id = "inhibicion_contacto"
+termino = "Inhibición por contacto"
+definicion = "Una célula animal en cultivo que choca con otra deja de avanzar en esa dirección (inhibición de la locomoción) y, con el fondo cubierto, deja de dividirse. Las células cancerosas la pierden."
+fuente = "Abercrombie, M. & Heaysman, J. E. M. (1954). Observations on the social behaviour of cells in tissue culture. Exp. Cell Res. 6: 293-306."
+alias = ["confluencia", "confluente"]
+relacionados = ["punto_restriccion"]
+placa = "cultivo_dmem"
+
+[[termino]]
+id = "punto_restriccion"
+termino = "Punto de restricción"
+definicion = "Momento de la fase G1 del ciclo celular después del cual la célula se divide aunque le quiten el suero. Sin factores de crecimiento antes de ese punto, sale del ciclo a G0 (quiescencia)."
+fuente = "Pardee, A. B. (1974). A restriction point for control of normal animal cell proliferation. Proc. Natl. Acad. Sci. USA 71: 1286-1290."
+alias = ["g0", "quiescencia", "ciclo celular"]
+relacionados = ["mitosis", "inhibicion_contacto"]
+
+[[termino]]
+id = "apoptosis"
+termino = "Apoptosis"
+definicion = "Muerte celular programada: la célula se encoge, condensa la cromatina y se fragmenta en cuerpos apoptóticos sin derramar su contenido (no hay lisis ni inflamación)."
+fuente = "Kerr, J. F. R., Wyllie, A. H. & Currie, A. R. (1972). Apoptosis: a basic biological phenomenon. Br. J. Cancer 26: 239-257."
+alias = ["apoptótico", "apoptóticos", "cuerpos apoptóticos"]
+
+[[termino]]
+id = "warburg"
+termino = "Efecto Warburg"
+definicion = "Las células cancerosas (y muchas células que proliferan) fermentan la glucosa a lactato aunque haya O₂ (glucólisis aeróbica). El lactato acidifica el medio y consume su bicarbonato."
+fuente = "Warburg, O. (1956). On the origin of cancer cells. Science 123: 309-314."
+alias = ["warburg", "glucólisis aeróbica", "lactato"]
+relacionados = ["fermentacion"]
+
+[[termino]]
+id = "gram"
+termino = "Tinción de Gram"
+definicion = "Cristal violeta, Lugol, decolorante y safranina: la pared gruesa de peptidoglicano de las grampositivas retiene el violeta; las gramnegativas, de pared fina con membrana externa, lo pierden y quedan rosas. Decolorar de más vuelve rosa también a las grampositivas."
+fuente = "Gram, C. (1884). Über die isolirte Färbung der Schizomyceten in Schnitt- und Trockenpräparaten. Fortschr. Med. 2: 185-189. Beveridge, T. J. (2001). Use of the Gram stain in microbiology. Biotech. Histochem. 76: 111-118."
+alias = ["gram", "grampositiva", "grampositivas", "gramnegativa", "gramnegativas", "peptidoglicano"]
+
+[[termino]]
+id = "campo_claro"
+termino = "Campo claro"
+definicion = "Microscopía con la luz que atraviesa la muestra: fondo claro y células que se ven por lo que absorben y desvían. Las células vivas sin teñir son casi transparentes: se ven por su borde."
+fuente = "Murphy, D. B. & Davidson, M. W. (2012). Fundamentals of Light Microscopy and Electronic Imaging, 2.ª ed. Wiley-Blackwell, cap. 1."
+alias = ["microscopio de campo claro"]

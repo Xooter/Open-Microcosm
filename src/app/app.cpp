@@ -229,6 +229,7 @@ void App::createPlate() {
         intervene(engine);
     }
     session.interventions().schedule(plateScript);
+    session.notes() = plateNotes;
     // Un preparado se arma ya teñido (frotis con Giemsa, papa con Lugol…): la tinción de sus datos.
     if (const PreparedPlate* pp = plate.prepared.empty() ? nullptr : findPreparedPlate(plate.prepared); pp && !pp->stain.empty())
         for (std::size_t i = 0; i < stains.size(); ++i)
@@ -308,7 +309,9 @@ void App::exportData() {
     // corrida se puede repetir.
     const bool ok = writeTextFile(base + ".csv", seriesCsv(session.series())) &&
                     writeTextFile(base + ".json", runJson(*world, session, runPlate, provenance())) &&
-                    saveScene(base + ".plate", runPlate, session.interventions().entries()) &&
+                    saveScene(base + ".plate", runPlate, session.interventions().entries(), session.notes()) &&
+                    (session.notes().empty() || writeTextFile(base + "_notas.md", "# " + std::string(ui::tr("Notas")) + "\n\n" +
+                                                                                       notesMarkdown(session.notes()))) &&
                     writeTextFile((std::filesystem::path(exportsDir) / "especies.json").string(), speciesJson());
     lastExport = ok ? base : std::string();
     notify(ok ? std::string(ui::tr("Datos exportados: ")) + base + ".csv/.json/.plate" : ui::tr("No se pudo exportar"));
@@ -356,6 +359,35 @@ void App::takePhotos() {
             notify(ui::tr("No se pudo guardar el time-lapse"));
         }
     }
+}
+
+void App::addNote(NoteAnchor anchor, const std::string& text) {
+    if (!world || text.empty())
+        return;
+    Note n;
+    n.step = world->stepIndex();
+    n.hours = world->simTime() * world->bioTimeScale() / 3600.0;
+    n.anchor = anchor;
+    n.text = text;
+    const Vector2 mid = GetScreenToWorld2D({viewport.x + 0.5f * viewport.width, viewport.y + 0.5f * viewport.height}, camera);
+    n.pos = {mid.x, mid.y};
+    if (anchor == NoteAnchor::Being) {
+        Picked p = selection.picked;
+        Vec2 at;
+        if (!p.live() || !locatePicked(*world, p, at))
+            return;
+        n.pos = at;
+        n.pickedKind = static_cast<int>(p.kind);
+        n.ref = p.kind == Picked::Kind::Cell || p.kind == Picked::Kind::Rock ? static_cast<std::uint32_t>(p.entity) : p.id;
+        n.being = buildInspection(*world, p).title;
+    }
+    session.notes().push_back(std::move(n));
+    focusNote = static_cast<int>(session.notes().size()) - 1;
+}
+
+void App::showTerm(int index) {
+    glossaryIndex = index;
+    panels.show("glosario");
 }
 
 void App::notify(const std::string& text) {
@@ -582,7 +614,7 @@ void App::drawStatusBar() {
 void App::autosave(bool clean) {
     if (!world || autosavePath_.empty() || recoverTarget_ > 0)
         return;
-    std::string text = serializeScene(runPlate, session.interventions().entries());
+    std::string text = serializeScene(runPlate, session.interventions().entries(), session.notes());
     text += "autosave_step=" + std::to_string(world->stepIndex()) + "\n";
     text += clean ? "autosave_clean=1\n" : "autosave_clean=0\n";
     writeTextFile(autosavePath_, text);
@@ -620,7 +652,7 @@ void App::drawRecoveryPrompt() {
         if (ImGui::Button(ui::tr("Recuperar"))) {
             std::vector<Intervention> events;
             std::vector<std::string> missing;
-            if (loadScene(autosavePath_, plate, events, &missing)) {
+            if (loadScene(autosavePath_, plate, events, &missing, &plateNotes)) {
                 for (const std::string& m : missing)
                     notify(std::string(ui::tr("Falta contenido: ")) + m);
                 plateScript = std::move(events);
@@ -1065,6 +1097,7 @@ void App::unlockParameter(const std::string& key) {
 void App::openSampleDrop(const PlateSpec& drop) {
     plate = drop;
     plateScript.clear();
+    plateNotes.clear();
     createPlate();
     notify(ui::tr("Gota de muestra del cultivo: la placa del centro."));
 }
@@ -1256,6 +1289,27 @@ void App::drawMeasurements() {
                       ui::tr("bacterias"));
         const ImVec2 at = screen(top);
         worldLabel(dl, {at.x - 0.5f * ImGui::CalcTextSize(text).x, at.y - 24.0f}, text);
+    }
+    // Notas ancladas a un ser o a un lugar: un marcador numerado (al repetir una escena, aparece
+    // cuando la placa llega a su paso). Al pasar el mouse, su texto.
+    const ImVec2 mouse = ImGui::GetIO().MousePos;
+    const float* accent = ui::palette().accent;
+    const ImU32 noteColor = ImGui::ColorConvertFloat4ToU32({accent[0], accent[1], accent[2], 0.95f});
+    for (std::size_t i = 0; i < session.notes().size(); ++i) {
+        const Note& n = session.notes()[i];
+        Vec2 at;
+        if (n.step > world->stepIndex() || !notePosition(*world, n, at))
+            continue;
+        const ImVec2 c = screen(at);
+        const float r = 9.0f;
+        dl->AddCircleFilled(c, r, noteColor);
+        dl->AddCircle(c, r, IM_COL32(20, 24, 24, 220), 0, 1.5f);
+        std::snprintf(text, sizeof text, "%zu", i + 1);
+        const ImVec2 ts = ImGui::CalcTextSize(text);
+        dl->AddText({c.x - 0.5f * ts.x, c.y - 0.5f * ts.y}, IM_COL32(20, 24, 24, 255), text);
+        const float dx = mouse.x - c.x, dy = mouse.y - c.y;
+        if (!ImGui::GetIO().WantCaptureMouse && dx * dx + dy * dy < r * r)
+            ImGui::SetTooltip("%s %zu (t = %.2f h)\n%s", ui::tr("Nota"), i + 1, n.hours, n.text.c_str());
     }
     drawScaleIndicator(dl);
     if (tools.scaleBar) {

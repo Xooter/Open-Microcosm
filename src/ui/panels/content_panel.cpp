@@ -170,7 +170,7 @@ class ContentPanel : public Panel {
                     spec.biomes.push_back(static_cast<BiomeId>(i));
             if (exportScene_ && app.world)
                 spec.scenes.emplace_back(app.plateName,
-                                         serializeScene(app.runPlate, app.session.interventions().entries()));
+                                         serializeScene(app.runPlate, app.session.interventions().entries(), app.session.notes()));
             lastMessages_.clear();
             const std::string text = biopackText(spec, lastMessages_);
             namespace fs = std::filesystem;

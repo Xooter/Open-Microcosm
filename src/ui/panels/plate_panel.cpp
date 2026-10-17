@@ -333,7 +333,8 @@ class PlatePanel : public Panel {
         // parámetros), cada cosa en su paso. Al cargarla y crear la placa, se repite.
         ImGui::BeginDisabled(!ok || !app.world);
         if (ImGui::Button(tr("Guardar escena (con lo hecho)"), {-1.0f, 0.0f}))
-            saveScene(app.platesDir + "/" + app.plateName + ".plate", app.runPlate, app.session.interventions().entries());
+            saveScene(app.platesDir + "/" + app.plateName + ".plate", app.runPlate, app.session.interventions().entries(),
+                      app.session.notes());
         ImGui::EndDisabled();
         if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
             ImGui::SetTooltip("%s", tr("Guarda la placa en pantalla y cada intervención con su paso: al cargarla y crear "
@@ -348,7 +349,7 @@ class PlatePanel : public Panel {
             ImGui::PushID(name.c_str());
             if (ImGui::Selectable(name.c_str())) {
                 std::vector<std::string> missing;
-                if (loadScene(app.platesDir + "/" + name + ".plate", p, app.plateScript, &missing)) {
+                if (loadScene(app.platesDir + "/" + name + ".plate", p, app.plateScript, &missing, &app.plateNotes)) {
                     app.plateName = name;
                     app.plateDirty = true;
                 }
@@ -363,8 +364,10 @@ class PlatePanel : public Panel {
             const std::string msg = std::to_string(app.plateScript.size()) + " " +
                                     tr("intervenciones de la escena: se repiten al crear la placa.");
             note(msg.c_str());
-            if (ImGui::SmallButton(tr("Descartar las intervenciones")))
+            if (ImGui::SmallButton(tr("Descartar las intervenciones"))) {
                 app.plateScript.clear();
+                app.plateNotes.clear();
+            }
         }
     }
 };

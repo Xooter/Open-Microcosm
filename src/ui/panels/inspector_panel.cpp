@@ -4,6 +4,7 @@
 #include "ui/panels/panel_classes.hpp"
 #include "ui/theme.hpp"
 #include "ui/widgets.hpp"
+#include "ui/glossary_ui.hpp"
 #include "ui/i18n.hpp"
 
 #include <imgui.h>
@@ -69,6 +70,12 @@ class InspectorPanel : public Panel {
             note("El control pasa a su sucesor.");
         ImGui::Spacing();
         ImGui::TextWrapped("%s", tr(ins.blurb.c_str()));
+        // Los términos del glosario de toda la ficha (el texto y sus secciones).
+        std::string all = ins.subtitle + '\n' + ins.blurb;
+        for (const InspectSection& s : ins.sections)
+            for (const InspectLine& l : s.lines)
+                all += '\n' + l.label + '\n' + l.value;
+        glossaryChips(app, {all.c_str()});
         ImGui::Spacing();
         for (const InspectSection& s : ins.sections) {
             // Los textos fijos de la ficha se traducen; los valores con números quedan como se armaron.
@@ -109,6 +116,39 @@ class InspectorPanel : public Panel {
             note("Foto del momento del click: las bacterias y las partículas se reordenan en memoria y no se pueden seguir.");
         if (ins.hasGenome && !ins.dead && ImGui::CollapsingHeader(tr("Genoma"), ImGuiTreeNodeFlags_DefaultOpen))
             drawGenome(*app.world, ins.entity);
+        if (st.picked.live() && !ins.dead)
+            drawNotes(app);
+    }
+
+  private:
+    char note_[512] = "";
+
+    // Notas en la ficha: las de este ser y un campo para anotar (no cambian la simulación).
+    void drawNotes(App& app) {
+        const Picked& p = app.selection.picked;
+        const std::uint32_t ref =
+            p.kind == Picked::Kind::Cell || p.kind == Picked::Kind::Rock ? static_cast<std::uint32_t>(p.entity) : p.id;
+        if (!ImGui::CollapsingHeader(tr("Notas"), 0))
+            return;
+        int k = 0;
+        for (const Note& n : app.session.notes()) {
+            ++k;
+            if (n.anchor != NoteAnchor::Being || n.pickedKind != static_cast<int>(p.kind) || n.ref != ref)
+                continue;
+            ImGui::TextDisabled("%d. t = %.2f h", k, n.hours);
+            ImGui::PushTextWrapPos(0.0f);
+            ImGui::TextUnformatted(n.text.c_str());
+            ImGui::PopTextWrapPos();
+        }
+        ImGui::SetNextItemWidth(-1.0f);
+        ImGui::InputTextWithHint("##nota", tr("Una observación sobre este ser"), note_, sizeof note_);
+        ImGui::BeginDisabled(note_[0] == '\0');
+        if (ImGui::SmallButton(tr("Anotar"))) {
+            app.addNote(NoteAnchor::Being, note_);
+            note_[0] = '\0';
+        }
+        ImGui::EndDisabled();
+        tooltip("La nota sigue al ser mientras viva; va en la escena y en la exportación. No es una intervención.");
     }
 };
 

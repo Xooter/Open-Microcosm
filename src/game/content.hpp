@@ -11,9 +11,10 @@
 
 // Paquetes de contenido (fase 20.0). Un paquete es una carpeta con `paquete.toml` y sus archivos
 // (seres.toml, planes.toml, fisiologia.toml, minerales.toml, biomas.toml, medios.toml,
-// recipientes.toml, placas.toml), o un solo archivo `.biopack`: un TOML con `[paquete]` y todas sus
-// definiciones (`[[ser]]`, `[[plan]]`, `[[mineral]]`, `[[bioma]]`, `[fisiologia.<id del ser>]`,
-// `[[medio]]`, `[[recipiente]]`, `[[placa]]`, `[[escena]]`). Son solo datos: nada
+// recipientes.toml, placas.toml, lecciones.toml, reactivos.toml, glosario.toml), o un solo archivo
+// `.biopack`: un TOML con `[paquete]` y todas sus definiciones (`[[ser]]`, `[[plan]]`, `[[mineral]]`,
+// `[[bioma]]`, `[fisiologia.<id del ser>]`, `[[medio]]`, `[[recipiente]]`, `[[placa]]`, `[[escena]]`,
+// `[[leccion]]`, `[[reactivo]]`, `[[termino]]`). Son solo datos: nada
 // ejecutable, con tamaños y cantidades acotados. El de fábrica es "base" (assets/content/base/);
 // los del usuario viven en <datos>/biogame/paquetes/ y se cargan al empezar.
 struct PackInfo {

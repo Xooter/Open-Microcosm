@@ -32,7 +32,7 @@ SOURCES = ["src/ui/**/*.cpp", "src/app/*.cpp", "src/game/parameters.cpp", "src/g
 # Campos de texto de los paquetes que se muestran.
 TEXT_FIELDS = {"nombre", "descripcion", "titulo", "objetivo", "texto", "explicacion", "motivo", "definicion",
                "nivel", "termino"}
-LIST_FIELDS = {"opciones"}
+LIST_FIELDS = {"opciones", "alias"}
 
 
 def unescape(s):

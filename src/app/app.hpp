@@ -103,6 +103,14 @@ struct App {
     PlateSpec plate;
     PlateSpec runPlate;                    // la placa con la que se creó el mundo en pantalla
     std::vector<Intervention> plateScript; // intervenciones de la escena cargada (se repiten al crear)
+    std::vector<Note> plateNotes;          // sus notas (vuelven a la sesión al crear la placa)
+    // Nota nueva en la sesión (anclada al ser elegido, al centro de la vista o al instante).
+    void addNote(NoteAnchor anchor, const std::string& text);
+    int focusNote = -1; // nota a mostrar en el panel Notas (-1 ninguna)
+    // Glosario: el término que muestra el panel (-1 ninguno); `showTerm` lo abre ahí.
+    int glossaryIndex = -1;
+    std::string lessonRequest; // lección a elegir en el panel Lección (el glosario la pide)
+    void showTerm(int index);
     std::unique_ptr<World> world;
     Run session;
     ToolState tools;

@@ -8,6 +8,7 @@
 #include "game/intervention.hpp"
 #include "game/lesson.hpp"
 #include "game/scene.hpp"
+#include "ui/glossary_ui.hpp"
 #include "ui/i18n.hpp"
 #include "ui/panels/panel_classes.hpp"
 #include "ui/param_controls.hpp"
@@ -41,6 +42,11 @@ class LessonPanel : public Panel {
         std::vector<const char*> titles;
         for (int i = 0; i < lessonCount(); ++i)
             titles.push_back(tr(lesson(i).title.c_str()));
+        if (!app.lessonRequest.empty() && !active_)
+            for (int i = 0; i < lessonCount(); ++i)
+                if (lesson(i).key == app.lessonRequest)
+                    choice_ = i;
+        app.lessonRequest.clear();
         choice_ = std::clamp(choice_, 0, lessonCount() - 1);
         ImGui::BeginDisabled(active_);
         combo("Lección", &choice_, titles.data(), static_cast<int>(titles.size()));
@@ -50,6 +56,7 @@ class LessonPanel : public Panel {
             if (!l.level.empty())
                 ImGui::TextDisabled("%s", tr(l.level.c_str()));
             ImGui::TextWrapped("%s", tr(l.objective.c_str()));
+            glossaryChips(app, {l.objective.c_str()});
             if (ImGui::Button(tr("Empezar")))
                 start(app, l);
             return;
@@ -116,6 +123,7 @@ class LessonPanel : public Panel {
                 text += "event=" + e + "\n";
             app.plate = plate;
             app.plateScript = parseInterventions(text);
+            app.plateNotes.clear();
             app.createPlate();
             app.tools.paused = false;
         }
@@ -239,6 +247,11 @@ class LessonPanel : public Panel {
                 if (progress_.answers[i] >= 0 || !progress_.openAnswers[i].empty())
                     ImGui::TextWrapped("%s", tr(s.question.explanation.c_str()));
             }
+            if (current) // los términos del paso actual (con la explicación, si ya se respondió)
+                glossaryChips(app, {s.text.c_str(), s.prediction.text.c_str(), s.question.text.c_str(),
+                                    progress_.answers[i] >= 0 || !progress_.openAnswers[i].empty()
+                                        ? s.question.explanation.c_str()
+                                        : nullptr});
             const bool done = !s.check.present() || progress_.metAtHours[i] >= 0.0;
             if (current && done && i + 1 < l.steps.size() && ImGui::Button(tr("Siguiente paso")))
                 ++progress_.step;

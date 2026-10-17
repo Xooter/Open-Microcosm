@@ -43,8 +43,8 @@ e interviene.
   íconos), Ficha, Herramientas, Simulación, Preferencias (imagen, fluidez y rendimiento),
   Procesos (tasas de química, microbiología y hongos), Estadísticas (censo, totales conservados
   de P, N, Si y Fe, y el ser controlado), Enciclopedia y Gráficos, Medición, Contenido (paquetes
-  cargados, avisos de los datos, importar y exportar `.biopack`), Cultivos, Experimento, Lección y
-  Ayuda. Arrancan abiertos Placa,
+  cargados, avisos de los datos, importar y exportar `.biopack`), Cultivos, Experimento, Lección,
+  Glosario, Notas y Ayuda. Arrancan abiertos Placa,
   Catálogo, Tinciones, Ficha, Estadísticas, Herramientas, Simulación y Medición; los demás se abren
   desde *Ver* (un panel cerrado por defecto pone `open = false` en su constructor).
 - **Herramientas** (barra izquierda o teclas 1-0, M y G): Seleccionar, Controlar, Tinta, Detrito,
@@ -386,6 +386,16 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   destrabar, queda anotado y `runJson` marca `fuera_de_protocolo`.
 - Cada lección trae su **solución** (intervenciones u operaciones con su paso) y
   `tests/test_lessons.cpp` la recorre: si un cambio del modelo rompe una lección, se entera el test.
+
+### Glosario y notas (`game/glossary`, `game/notes`, fase P1)
+
+- El glosario son datos (`glosario.toml`, `[[termino]]`): definición con fuente, `alias` (formas en
+  el texto, en minúsculas), relacionados y dónde verlo (`leccion`, `placa`: la "animación" del término
+  es la simulación, no un dibujo aparte). `ui::glossaryChips` muestra como botones los términos que
+  aparecen en un texto (la ficha, los pasos de las lecciones), en español y en la traducción.
+- Las notas del usuario se anclan a un ser (`Picked::Kind` + entidad o id estable: la misma al
+  repetir la escena), a un lugar o a un instante. Viven en `Run::notes()`, van en la escena
+  (`nota=`) y en la exportación, y **no son intervenciones**: no cambian el mundo ni la huella.
 
 ### Ambiente, biomas y enciclopedia (`game/biome`, `game/encyclopedia`)
 

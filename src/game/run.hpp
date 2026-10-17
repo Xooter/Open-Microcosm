@@ -5,6 +5,7 @@
 #include "game/intervention.hpp"
 #include "game/lineage.hpp"
 #include "game/mass_budget.hpp"
+#include "game/notes.hpp"
 #include "game/region.hpp"
 #include "game/timeseries.hpp"
 
@@ -59,8 +60,12 @@ class Run {
     // Intervenciones del usuario de esta sesión (se aplican entre pasos y se anotan con su paso).
     InterventionLog& interventions() { return interventions_; }
     const InterventionLog& interventions() const { return interventions_; }
+    // Notas del usuario (no son intervenciones: no cambian el mundo). Van en la escena y en la exportación.
+    std::vector<Note>& notes() { return notes_; }
+    const std::vector<Note>& notes() const { return notes_; }
 
   private:
+    std::vector<Note> notes_;
     InterventionLog interventions_;
     void buildColumns();
 

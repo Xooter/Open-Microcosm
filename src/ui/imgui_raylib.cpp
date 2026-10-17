@@ -103,7 +103,11 @@ void initBackend(const char* iniPath, float fontSize) {
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
     io.IniFilename = iniPath;
     io.ConfigDragClickToInputText = true; // Ctrl+click o doble click en un slider: se tipea el valor
-    io.Fonts->AddFontFromFileTTF(assetPath("fonts/Roboto-Medium.ttf").c_str(), fontSize);
+    // Además de Latin-1, lo que usan los textos científicos: griego (ρ, μ), guiones y comillas,
+    // superíndices y subíndices (O₂, 10⁻⁵), flechas y operadores (≈, −, ≤).
+    static const ImWchar kRanges[] = {0x0020, 0x00FF, 0x0370, 0x03FF, 0x2000, 0x206F, 0x2070, 0x209F,
+                                      0x2190, 0x21FF, 0x2200, 0x22FF, 0};
+    io.Fonts->AddFontFromFileTTF(assetPath("fonts/Roboto-Medium.ttf").c_str(), fontSize, nullptr, kRanges);
     unsigned char* pixels = nullptr;
     int w = 0, h = 0;
     io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
