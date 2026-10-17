@@ -21,6 +21,8 @@ Dos usos con el mismo núcleo de simulación:
 Documentos de referencia:
 - `docs/gameplay.md`: decisiones de diseño (las opciones marcadas con `[x]` son las elegidas).
 - `docs/roadmap.md`: fases, criterios de "hecho" y decisiones tomadas.
+- `docs/candidatos.md`: seres unicelulares y experimentos clásicos candidatos, con lo que reusan
+  del motor y lo que les falta.
 
 ## Sandbox
 
