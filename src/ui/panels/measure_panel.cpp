@@ -123,7 +123,7 @@ class MeasurePanel : public Panel {
         for (int i = 0; i < static_cast<int>(Limitation::Count); ++i) {
             const Color c = limitationColor(static_cast<Limitation>(i));
             ImGui::ColorButton(("##lim" + std::to_string(i)).c_str(), {c.r / 255.0f, c.g / 255.0f, c.b / 255.0f, 1.0f},
-                               ImGuiColorEditFlags_NoTooltip | ImGuiColorEditFlags_NoBorder, {12.0f, 12.0f});
+                               ImGuiColorEditFlags_NoTooltip, {12.0f, 12.0f});
             ImGui::SameLine();
             ImGui::Text("%s: %d", tr(limitationName(static_cast<Limitation>(i))), counts[i]);
         }

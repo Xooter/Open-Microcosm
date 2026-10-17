@@ -36,6 +36,8 @@ struct Options {
     bool lod = true;          // células lejanas simplificadas
     bool gpuPhysics = true;   // XPBD y contactos en la GPU (compute shaders)
     std::string language = "es"; // idioma de la interfaz (assets/lang/<código>.txt)
+    // --- Accesibilidad (fase P1) ---
+    float uiScale = 0.0f;       // escala de la interfaz (texto y controles); 0: la del monitor (DPI)
     float bioTimeScale = 60.0f; // compresión del tiempo biológico (1 min real = 1 h)
     // --- Gráficos (fase 19) ---
     GraphicsPreset preset = GraphicsPreset::High;

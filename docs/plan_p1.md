@@ -144,7 +144,13 @@ por paso y sus tests. Avance: ✅ hecho · 🟡 en parte (se dice qué falta) ·
     Markdown junto a la exportación; panel Notas, sección Notas en la ficha y marcadores numerados
     sobre la placa (al repetir una escena aparecen en su paso). La fuente de la interfaz suma griego,
     puntuación y operadores. *Falta:* los subíndices y superíndices (O₂, 10⁻⁵) no están en Roboto: paso 15.
-15. **Accesibilidad:** escala de interfaz, HiDPI y paleta Okabe–Ito.
+15. ✅ **Accesibilidad:** escala de interfaz, HiDPI y paleta Okabe–Ito.
+    *Hecho:* escala de la interfaz en Preferencias (automática = la del monitor con
+    `GetWindowScaleDPI`, o de 75 a 300 %): la fuente se rehace entre cuadros, el estilo se escala
+    desde el de fábrica y las columnas de paneles se ensanchan en proporción. `core/palette`
+    (Okabe e Ito 2008) para el mapa de limitación, las series de los gráficos (colormap de ImPlot) y
+    los colores con significado del tema (bien, aviso, muerto); las capas de campo ya usaban viridis.
+    La fuente suma índices y subíndices derivados de las cifras de Roboto (O₂, 10⁻⁵) y la flecha →.
 
 ## Riesgos
 

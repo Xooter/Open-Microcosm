@@ -462,7 +462,12 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   series y del CSV van por id (no cambian con el idioma). La ficha traduce títulos, rótulos, nombres y
   descripciones; los valores que arma `game/inspect` con números quedan en español (pendiente).
 - **Estilo:** todos los colores y espaciados salen de `ui/theme`. La fuente trae Latin-1 (acentos,
-  ñ, µ, °): se puede escribir con acentos en la UI nueva.
+  ñ, µ, °), griego, puntuación y operadores; los índices y subíndices (O₂, 10⁻⁵) se derivan de las
+  cifras de Roboto y la flecha → se dibuja (`ui/imgui_raylib`).
+- **Accesibilidad** (fase P1): los colores que distinguen categorías salen de la paleta de Okabe–Ito
+  (`core/palette`: mapa de limitación, series de los gráficos, bien/aviso/muerto del tema); los mapas
+  continuos, de viridis. La escala de la interfaz (`Options::uiScale`, 0 = la del monitor) la usa
+  `ui::uiScale()`: un tamaño en píxeles nuevo en la UI se multiplica por ella.
 - **Opciones** (`Options` en `game/progress`, `<datos>/biogame/options.txt`): las aplica
   `App::applyOptions` (post-proceso, escala de render, detalle, VSync, hilos, LOD, GPU) y el tope
   de FPS `App::applyFrameCap`; el MSAA solo al crear la ventana. Los presets de calidad

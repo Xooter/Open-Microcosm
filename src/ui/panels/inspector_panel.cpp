@@ -16,7 +16,6 @@ namespace ui {
 
 namespace {
 
-ImVec4 col(const float (&a)[4]) { return ImVec4(a[0], a[1], a[2], a[3]); }
 
 void drawGenome(const World& world, entt::entity cell) {
     const entt::registry& reg = world.registry();
@@ -62,7 +61,7 @@ class InspectorPanel : public Panel {
             app.tools.followSelected = false;
             return;
         }
-        ImGui::TextColored(ins.dead ? ImVec4(0.9f, 0.35f, 0.3f, 1.0f) : ImVec4(1, 1, 1, 1), "%s", tr(ins.title.c_str()));
+        ImGui::TextColored(ins.dead ? col(palette().bad) : ImVec4(1, 1, 1, 1), "%s", tr(ins.title.c_str()));
         ImGui::PushStyleColor(ImGuiCol_Text, col(palette().dim));
         ImGui::TextWrapped("%s", tr(ins.subtitle.c_str()));
         ImGui::PopStyleColor();

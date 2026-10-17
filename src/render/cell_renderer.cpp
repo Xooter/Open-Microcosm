@@ -1,4 +1,6 @@
 #include "render/cell_renderer.hpp"
+
+#include "core/palette.hpp"
 #include "core/paths.hpp"
 #include "render/shapes.hpp"
 
@@ -133,15 +135,17 @@ Color limitationTint(const entt::registry& reg, entt::entity e, const CellLook& 
 } // namespace
 
 Color limitationColor(Limitation l) {
+    // Okabe–Ito (core/palette): se distinguen también con daltonismo.
+    auto c = [](Rgb8 k) { return Color{k.r, k.g, k.b, 255}; };
     switch (l) {
-    case Limitation::None: return {70, 170, 80, 255};      // verde: crece a su tasa máxima
-    case Limitation::Energy: return {230, 190, 40, 255};   // amarillo: comida o luz
-    case Limitation::Phosphorus: return {200, 50, 160, 255};
-    case Limitation::Nitrogen: return {40, 110, 220, 255};
-    case Limitation::Silicon: return {40, 190, 200, 255};
-    case Limitation::Iron: return {190, 90, 40, 255};
-    case Limitation::Vitamin: return {140, 70, 220, 255};
-    case Limitation::Starving: return {200, 40, 40, 255};  // rojo: autofagia
+    case Limitation::None: return c(okabe_ito::kBluishGreen);     // crece a su tasa máxima
+    case Limitation::Energy: return c(okabe_ito::kYellow);        // comida o luz
+    case Limitation::Phosphorus: return c(okabe_ito::kReddishPurple);
+    case Limitation::Nitrogen: return c(okabe_ito::kBlue);
+    case Limitation::Silicon: return c(okabe_ito::kSkyBlue);
+    case Limitation::Iron: return c(okabe_ito::kOrange);
+    case Limitation::Vitamin: return c(okabe_ito::kBlack);
+    case Limitation::Starving: return c(okabe_ito::kVermillion);  // autofagia
     case Limitation::Count: break;
     }
     return {128, 128, 128, 255};

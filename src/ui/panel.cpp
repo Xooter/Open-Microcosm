@@ -2,6 +2,7 @@
 
 #include "core/profiling.hpp"
 #include "ui/i18n.hpp"
+#include "ui/theme.hpp"
 
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -29,7 +30,8 @@ void PanelHost::drawAll(App& app) {
             const ImGuiViewport* vp = ImGui::GetMainViewport();
             ImGui::SetNextWindowPos({vp->WorkPos.x + 0.5f * vp->WorkSize.x, vp->WorkPos.y + 0.5f * vp->WorkSize.y},
                                     ImGuiCond_FirstUseEver, {0.5f, 0.5f});
-            ImGui::SetNextWindowSize({std::min(620.0f, 0.6f * vp->WorkSize.x), std::min(440.0f, 0.6f * vp->WorkSize.y)},
+            ImGui::SetNextWindowSize({std::min(620.0f * uiScale(), 0.6f * vp->WorkSize.x),
+                                      std::min(440.0f * uiScale(), 0.6f * vp->WorkSize.y)},
                                      ImGuiCond_FirstUseEver);
         }
         // Sin botón de cerrar: los paneles se muestran u ocultan desde el menú Ver.
@@ -88,8 +90,10 @@ void PanelHost::resetLayout(unsigned dockId, float width, float height) {
     ImGui::DockBuilderAddNode(root, ImGuiDockNodeFlags_DockSpace);
     ImGui::DockBuilderSetNodeSize(root, {width, height});
     ImGuiID center = root;
-    const ImGuiID left = ImGui::DockBuilderSplitNode(center, ImGuiDir_Left, 0.25f, nullptr, &center);
-    ImGuiID right = ImGui::DockBuilderSplitNode(center, ImGuiDir_Right, 0.25f, nullptr, &center);
+    // Columnas de un cuarto de la ventana; con la interfaz más grande, más anchas (hasta ~37 %).
+    const float side = std::clamp(0.25f * uiScale(), 0.25f, 0.37f);
+    const ImGuiID left = ImGui::DockBuilderSplitNode(center, ImGuiDir_Left, side, nullptr, &center);
+    ImGuiID right = ImGui::DockBuilderSplitNode(center, ImGuiDir_Right, side, nullptr, &center);
     const ImGuiID rightLow = ImGui::DockBuilderSplitNode(right, ImGuiDir_Down, 0.45f, nullptr, &right);
     for (auto& p : panels_) {
         if (p->dock() == Dock::Float)

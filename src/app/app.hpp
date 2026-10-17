@@ -137,6 +137,11 @@ struct App {
     void applyOptions(); // post-proceso, escala, VSync, hilos, LOD, GPU
     int autoThreads = 1;  // hilos de "automático" (OMP_NUM_THREADS o un hilo por núcleo físico)
     void saveOptions() const;
+    // Escala de la interfaz (accesibilidad): la de las opciones o la del monitor. Se aplica al
+    // empezar el cuadro siguiente (la fuente no se puede rehacer en medio de uno).
+    float effectiveUiScale() const;
+    float monitorUiScale() const;
+    void requestUiScale() { uiScaleDirty_ = true; }
     void requestLayoutReset() { layoutReset_ = true; }
     // Avisos breves (descubrimientos de la enciclopedia).
     std::vector<std::string> toasts;
@@ -165,6 +170,8 @@ struct App {
     void drawMeasurements();
     void takePhotos(); // las fotos pedidas y el cuadro del time-lapse que toque
     bool photoRequested_ = false;
+    bool uiScaleDirty_ = false;
+    float layoutScale_ = 1.0f; // cambio de escala pendiente para las columnas de paneles
     Vec2 worldPos(const Vector2& m) const;
 
     void applyFrameCap();  // tope de FPS (y el del ahorro en segundo plano)

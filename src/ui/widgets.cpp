@@ -15,7 +15,6 @@ namespace {
 
 constexpr float kLabelFraction = 0.42f;
 
-ImVec4 col(const float (&a)[4]) { return ImVec4(a[0], a[1], a[2], a[3]); }
 
 // Rótulo en la columna izquierda; deja el cursor para el control, que ocupa el resto.
 void label(const char* text) {

@@ -75,6 +75,7 @@ TEST_CASE("opciones: van y vuelven, con la vista de modelo y la herramienta") {
     o.tool = 10;
     o.lodStride = 3;
     o.renderScale = 0.75f;
+    o.uiScale = 1.5f;
     const std::string path = (std::filesystem::temp_directory_path() / "biogame_test_options.txt").string();
     REQUIRE(saveOptions(o, path));
     const Options back = loadOptions(path);
@@ -83,5 +84,7 @@ TEST_CASE("opciones: van y vuelven, con la vista de modelo y la herramienta") {
     CHECK(back.tool == 10);
     CHECK(back.lodStride == 3);
     CHECK(back.renderScale == 0.75f);
+    CHECK(back.uiScale == 1.5f);
+    CHECK(Options{}.uiScale == 0.0f); // de fábrica, la escala de la interfaz es la del monitor
     CHECK(Options{}.modelView); // de fábrica, la vista de modelo arranca activada
 }

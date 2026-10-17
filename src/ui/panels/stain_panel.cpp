@@ -140,8 +140,8 @@ class StainPanel : public Panel {
             drawPreview(app, spec);
             if (!spec.note.empty())
                 note(spec.note.c_str());
-            const ImVec4 col = spec.vital ? ImVec4(0.45f, 0.80f, 0.50f, 1.0f) : ImVec4(0.92f, 0.60f, 0.25f, 1.0f);
-            ImGui::TextColored(col, "%s", tr(spec.vital ? "Vital: no mata a la célula." : "No vital: en la realidad fija o mata a las células."));
+            const ImVec4 tint = spec.vital ? col(palette().good) : col(palette().warn);
+            ImGui::TextColored(tint, "%s", tr(spec.vital ? "Vital: no mata a la célula." : "No vital: en la realidad fija o mata a las células."));
             if (!spec.vital && app.world) {
                 // Sin fijar, la tinción solo cambia los colores; fijar mata de verdad a todo lo vivo.
                 if (app.world->fixed()) {

@@ -119,6 +119,7 @@ AHL: vida media [h]	AHL: half-life [h]
 Abri el gotero de CO2 en el centro (boton de la leccion) y espera a que la burbuja de agua acida crezca.	Open the CO2 dropper in the center (lesson button) and wait for the bubble of acidic water to grow.
 Abrir el gotero de CO2 en el centro	Open the CO2 dropper in the center
 Absorción [1/h]	Absorption [1/h]
+Accesibilidad	Accessibility
 Aclaramiento	Clearance
 Adaptación de tubos [1/h]	Tube adaptation [1/h]
 Agregar al programa	Add to the program
@@ -212,6 +213,7 @@ Armado	Armed
 Arrastrá: mide la distancia en µm. En modo área, dibujá un lazo: área y perímetro.	Drag: measures the distance in µm. In area mode, draw a lasso: area and perimeter.
 Arriba: Chlamydomonas, Euglena y Candida (levadura). Abajo: Navicula y Pediastrum.	Top: Chlamydomonas, Euglena and Candida (yeast). Bottom: Navicula and Pediastrum.
 Asterionella	Asterionella
+Automática	Automatic
 Autor	Author
 Auxotrofía	Auxotrophy
 Avance	Progress
@@ -544,6 +546,7 @@ English	English
 Entran libremente pero al salir hacia agua menos acida hacen la reaccion de evitacion y vuelven	They enter freely, but when leaving toward less acidic water they make the avoidance reaction and turn back
 Envoltura celular	Cell envelope
 Erlenmeyer de 250 mL (100 mL de medio)	250 mL Erlenmeyer flask (100 mL of medium)
+Escala de la interfaz	Interface scale
 Escala de render	Render scale
 Escala log	Log scale
 Esclerocio	Sclerotium
@@ -820,6 +823,7 @@ Lo que se pasa: células con su estado, bacterias y medio.	What is passed: cells
 Lo que se ve en el centro (sin la interfaz), con una barra de escala y el tiempo biológico, en PNG; al lado, un JSON con el ancho del campo en µm, el tiempo, la seed, la placa, la tinción y la versión. No hay objetivos simulados: se da el ancho real del campo, no un aumento. F12.	What is seen in the center (without the interface), with a scale bar and the biological time, as PNG; next to it, a JSON with the field width in µm, the time, the seed, the plate, the stain and the version. There are no simulated objectives: the real field width is given, not a magnification. F12.
 Locomocion	Locomotion
 Logística	Logistic
+Los colores que distinguen categorías (mapa de limitación, series de los gráficos) son de la paleta de Okabe e Ito, apta para daltonismo; las capas de campo usan viridis.	The colors that distinguish categories (limitation map, graph series) come from the Okabe and Ito palette, suited to color blindness; field layers use viridis.
 Los ejes siguen a los datos. Apagado: zoom libre con la rueda y arrastre.	The axes follow the data. Off: free zoom with the wheel and dragging.
 Los textos de la interfaz, de los seres y de las lecciones. Los datos exportados no cambian (las columnas van por id).	The texts of the interface, of the beings and of the lessons. Exported data do not change (columns are by id).
 Lugol	Lugol
@@ -1236,6 +1240,7 @@ Sílice (Si)	Silica (Si)
 Sílice / Hierro	Silica / Iron
 Sílice [µM]	Silica [µM]
 Tamano	Size
+Tamaño del texto y de los controles. Automática: la del monitor (HiDPI). Para proyectar en un aula, 150 % o más.	Size of the text and controls. Automatic: the monitor's (HiDPI). To project in a classroom, 150 % or more.
 Tasa a la que las bacterias de la biopelícula se sueltan y vuelven a nadar. Estimación.	Rate at which biofilm bacteria detach and swim again. Estimate.
 Temperatura	Temperature
 Temperatura [°C]	Temperature [°C]

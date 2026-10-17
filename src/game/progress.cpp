@@ -104,6 +104,7 @@ Options loadOptions(const std::string& path) {
         else if (key == "lod") value >> o.lod;
         else if (key == "gpu_physics") value >> o.gpuPhysics;
         else if (key == "language") value >> o.language;
+        else if (key == "ui_scale") value >> o.uiScale;
         else if (key == "bio_time_scale") value >> o.bioTimeScale;
         else if (key == "graphics_preset") {
             int p = 0;
@@ -125,6 +126,7 @@ Options loadOptions(const std::string& path) {
     o.bioTimeScale = std::clamp(o.bioTimeScale, 1.0f, 600.0f);
     o.fpsLimit = std::clamp(o.fpsLimit, 0, 1000);
     o.renderScale = std::clamp(o.renderScale, 0.5f, 1.0f);
+    o.uiScale = o.uiScale > 0.0f ? std::clamp(o.uiScale, 0.75f, 3.0f) : 0.0f;
     o.maxDetailed = std::clamp(o.maxDetailed, 0, 4096);
     o.cellDetail = std::clamp(o.cellDetail, 1.0f, 4.0f);
     o.threads = std::clamp(o.threads, 0, 256);
@@ -175,6 +177,7 @@ bool saveOptions(const Options& o, const std::string& path) {
         << "lod=" << o.lod << '\n'
         << "gpu_physics=" << o.gpuPhysics << '\n'
         << "language=" << o.language << '\n'
+        << "ui_scale=" << o.uiScale << '\n'
         << "bio_time_scale=" << o.bioTimeScale << '\n'
         << "graphics_preset=" << static_cast<int>(o.preset) << '\n'
         << "vsync=" << o.vsync << '\n'

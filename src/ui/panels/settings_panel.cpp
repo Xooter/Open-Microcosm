@@ -11,6 +11,8 @@
 #include <omp.h>
 
 #include <algorithm>
+#include <cmath>
+#include <cstdio>
 
 namespace ui {
 
@@ -39,6 +41,30 @@ class SettingsPanel : public Panel {
                 loadLanguage(o.language);
                 changed = true;
             }
+        }
+        if (section("Accesibilidad", true)) {
+            // Escala de la interfaz: texto, controles y espaciados (proyectores, pantallas HiDPI).
+            static const float kScales[] = {0.0f, 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f, 2.5f, 3.0f};
+            static const char* const kNames[] = {"", "75 %", "100 %", "125 %", "150 %", "175 %", "200 %", "250 %", "300 %"};
+            int idx = 0;
+            for (int i = 1; i < 9; ++i)
+                if (std::abs(o.uiScale - kScales[i]) < 1e-3f)
+                    idx = i;
+            char autoName[64];
+            std::snprintf(autoName, sizeof autoName, "%s (%.0f %%)", tr("Automática"), 100.0 * app.monitorUiScale());
+            const char* names[9];
+            names[0] = autoName;
+            for (int i = 1; i < 9; ++i)
+                names[i] = kNames[i];
+            if (combo("Escala de la interfaz", &idx, names, 9,
+                      "Tamaño del texto y de los controles. Automática: la del monitor (HiDPI). Para proyectar en un "
+                      "aula, 150 % o más.")) {
+                o.uiScale = kScales[idx];
+                app.requestUiScale();
+                changed = true;
+            }
+            note("Los colores que distinguen categorías (mapa de limitación, series de los gráficos) son de la paleta de "
+                 "Okabe e Ito, apta para daltonismo; las capas de campo usan viridis.");
         }
         if (section("Calidad de imagen", true)) {
             static const char* const kPresets[] = {"Personalizada", "Baja", "Media", "Alta"};

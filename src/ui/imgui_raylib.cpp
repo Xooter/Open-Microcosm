@@ -7,7 +7,10 @@
 #include <raylib.h>
 #include <rlgl.h>
 
+#include <algorithm>
+#include <cmath>
 #include <cstdint>
+#include <string>
 
 namespace ui {
 
@@ -95,6 +98,94 @@ void renderDrawData(const ImDrawData* data) {
 
 } // namespace
 
+namespace {
+
+// Glifos que Roboto no trae y los textos científicos usan: los índices y subíndices (O₂, NH₄⁺,
+// 10⁻⁵) salen de los caracteres de la misma fuente a 62 % (corridos hacia arriba o hacia abajo), y
+// la flecha → se dibuja. Solo se agregan si la fuente no los tiene.
+struct Derived {
+    ImWchar codepoint, base;
+    bool super;
+};
+constexpr Derived kDerived[] = {
+    {0x2070, '0', true},  {0x2074, '4', true},  {0x2075, '5', true},     {0x2076, '6', true},
+    {0x2077, '7', true},  {0x2078, '8', true},  {0x2079, '9', true},     {0x207A, '+', true},
+    {0x207B, 0x2212, true}, {0x207C, '=', true}, {0x207D, '(', true},    {0x207E, ')', true},
+    {0x207F, 'n', true},  {0x2080, '0', false}, {0x2081, '1', false},    {0x2082, '2', false},
+    {0x2083, '3', false}, {0x2084, '4', false}, {0x2085, '5', false},    {0x2086, '6', false},
+    {0x2087, '7', false}, {0x2088, '8', false}, {0x2089, '9', false},    {0x208A, '+', false},
+    {0x208B, 0x2212, false}, {0x208C, '=', false}, {0x208D, '(', false}, {0x208E, ')', false},
+};
+constexpr float kSmall = 0.62f; // tamaño de los índices respecto del texto
+
+// Flecha → en el rectángulo (w × h) del atlas: un trazo y dos diagonales, con antialias por distancia.
+void drawArrow(unsigned char* pixels, int texW, const ImFontAtlasCustomRect& r, float thickness) {
+    const float w = r.Width, h = r.Height, mid = 0.5f * h, head = 0.42f * h;
+    const float seg[3][4] = {{0.5f, mid, w - 1.0f, mid},
+                             {w - 1.0f - head, mid - head, w - 1.0f, mid},
+                             {w - 1.0f - head, mid + head, w - 1.0f, mid}};
+    for (int y = 0; y < r.Height; ++y)
+        for (int x = 0; x < r.Width; ++x) {
+            const float px = x + 0.5f, py = y + 0.5f;
+            float d = 1e9f;
+            for (const auto& sg : seg) {
+                const float dx = sg[2] - sg[0], dy = sg[3] - sg[1];
+                const float t = std::clamp(((px - sg[0]) * dx + (py - sg[1]) * dy) / (dx * dx + dy * dy), 0.0f, 1.0f);
+                d = std::min(d, std::hypot(px - (sg[0] + t * dx), py - (sg[1] + t * dy)));
+            }
+            const float a = std::clamp(0.5f * thickness + 0.5f - d, 0.0f, 1.0f);
+            unsigned char* p = pixels + 4 * ((r.Y + y) * texW + (r.X + x));
+            p[0] = p[1] = p[2] = 255;
+            p[3] = static_cast<unsigned char>(255.0f * a);
+        }
+}
+
+// Arma el atlas de la fuente a `fontSize` píxeles y lo sube a la GPU (entre cuadros).
+void buildFonts(float fontSize) {
+    ImGuiIO& io = ImGui::GetIO();
+    // Además de Latin-1: griego (ρ, μ), guiones y comillas, índices, flechas y operadores (≈, −, ≤).
+    static const ImWchar kRanges[] = {0x0020, 0x00FF, 0x0370, 0x03FF, 0x2000, 0x206F, 0x2070, 0x209F,
+                                      0x2190, 0x21FF, 0x2200, 0x22FF, 0};
+    static const ImWchar kSmallRanges[] = {0x28, 0x29, 0x2B, 0x2B, 0x30, 0x39, 0x3D, 0x3D, 0x6E, 0x6E, 0x2212, 0x2212, 0};
+    const std::string path = assetPath("fonts/Roboto-Medium.ttf");
+    ImFont* font = io.Fonts->AddFontFromFileTTF(path.c_str(), fontSize, nullptr, kRanges);
+    ImFont* small = io.Fonts->AddFontFromFileTTF(path.c_str(), kSmall * fontSize, nullptr, kSmallRanges);
+    const int arrowW = static_cast<int>(std::lround(0.85f * fontSize)), arrowH = static_cast<int>(std::lround(0.5f * fontSize));
+    const int arrow = font ? io.Fonts->AddCustomRectFontGlyph(font, 0x2192, arrowW, arrowH, arrowW + 0.2f * fontSize,
+                                                              {0.1f * fontSize, 0.0f})
+                           : -1;
+    unsigned char* pixels = nullptr;
+    int w = 0, h = 0;
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h); // arma el atlas
+    if (font && small) {
+        for (const Derived& d : kDerived) {
+            const ImFontGlyph* g = small->FindGlyphNoFallback(d.base);
+            if (!g || font->FindGlyphNoFallback(d.codepoint))
+                continue;
+            // La línea base del índice, corrida respecto de la del texto.
+            const float dy = font->Ascent + (d.super ? -0.36f : 0.14f) * fontSize - small->Ascent;
+            font->AddGlyph(nullptr, d.codepoint, g->X0, g->Y0 + dy, g->X1, g->Y1 + dy, g->U0, g->V0, g->U1, g->V1,
+                           g->AdvanceX);
+        }
+        if (arrow >= 0) {
+            drawArrow(pixels, w, *io.Fonts->GetCustomRectByIndex(arrow), std::max(1.2f, fontSize / 12.0f));
+            // A media altura de las minúsculas (la altura x de Roboto es ~0,45 del tamaño).
+            if (ImFontGlyph* g = const_cast<ImFontGlyph*>(font->FindGlyphNoFallback(0x2192))) {
+                g->Y0 = font->Ascent - 0.22f * fontSize - 0.5f * arrowH;
+                g->Y1 = g->Y0 + arrowH;
+            }
+        }
+        font->BuildLookupTable();
+    }
+    io.FontDefault = font;
+    Image img{pixels, w, h, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8};
+    gFontTexture = LoadTextureFromImage(img);
+    SetTextureFilter(gFontTexture, TEXTURE_FILTER_BILINEAR);
+    io.Fonts->SetTexID(static_cast<ImTextureID>(gFontTexture.id));
+}
+
+} // namespace
+
 void initBackend(const char* iniPath, float fontSize) {
     ImGui::CreateContext();
     ImPlot::CreateContext();
@@ -103,19 +194,16 @@ void initBackend(const char* iniPath, float fontSize) {
     io.BackendFlags |= ImGuiBackendFlags_HasMouseCursors;
     io.IniFilename = iniPath;
     io.ConfigDragClickToInputText = true; // Ctrl+click o doble click en un slider: se tipea el valor
-    // Además de Latin-1, lo que usan los textos científicos: griego (ρ, μ), guiones y comillas,
-    // superíndices y subíndices (O₂, 10⁻⁵), flechas y operadores (≈, −, ≤).
-    static const ImWchar kRanges[] = {0x0020, 0x00FF, 0x0370, 0x03FF, 0x2000, 0x206F, 0x2070, 0x209F,
-                                      0x2190, 0x21FF, 0x2200, 0x22FF, 0};
-    io.Fonts->AddFontFromFileTTF(assetPath("fonts/Roboto-Medium.ttf").c_str(), fontSize, nullptr, kRanges);
-    unsigned char* pixels = nullptr;
-    int w = 0, h = 0;
-    io.Fonts->GetTexDataAsRGBA32(&pixels, &w, &h);
-    Image img{pixels, w, h, 1, PIXELFORMAT_UNCOMPRESSED_R8G8B8A8};
-    gFontTexture = LoadTextureFromImage(img);
-    SetTextureFilter(gFontTexture, TEXTURE_FILTER_BILINEAR);
-    io.Fonts->SetTexID(static_cast<ImTextureID>(gFontTexture.id));
+    buildFonts(fontSize);
     gReady = true;
+}
+
+void rebuildFonts(float fontSize) {
+    if (!gReady)
+        return;
+    UnloadTexture(gFontTexture);
+    ImGui::GetIO().Fonts->Clear();
+    buildFonts(fontSize);
 }
 
 void shutdownBackend() {

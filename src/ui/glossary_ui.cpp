@@ -14,7 +14,6 @@ namespace ui {
 
 namespace {
 
-ImVec4 col(const float (&a)[4]) { return ImVec4(a[0], a[1], a[2], a[3]); }
 
 // Las formas traducidas de cada término (se rearman al cambiar el idioma o el glosario).
 const std::vector<std::vector<std::string>>& translatedAliases() {

@@ -50,6 +50,7 @@ constexpr float kFixedDt = 1.0f / 60.0f;
 
 constexpr float kToolbarW = 52.0f;
 constexpr float kStatusH = 28.0f;
+constexpr float kFontSize = 15.0f; // [px] con escala 1
 
 // Tamaño aproximado del ser [µm] para el fantasma bajo el cursor.
 float beingReach(Being b) {
@@ -385,6 +386,14 @@ void App::addNote(NoteAnchor anchor, const std::string& text) {
     focusNote = static_cast<int>(session.notes().size()) - 1;
 }
 
+float App::monitorUiScale() const {
+    // La del monitor (HiDPI: 1,5 o 2 en pantallas densas), redondeada a cuartos.
+    const Vector2 dpi = GetWindowScaleDPI();
+    return std::clamp(std::round(4.0f * std::max(dpi.x, dpi.y)) / 4.0f, 1.0f, 3.0f);
+}
+
+float App::effectiveUiScale() const { return options.uiScale > 0.0f ? options.uiScale : monitorUiScale(); }
+
 void App::showTerm(int index) {
     glossaryIndex = index;
     panels.show("glosario");
@@ -534,7 +543,7 @@ void App::registerCommands() {
 void App::drawToolbar() {
     constexpr int kFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
                            ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking;
-    if (ImGui::BeginViewportSideBar("##toolbar", ImGui::GetMainViewport(), ImGuiDir_Left, kToolbarW, kFlags)) {
+    if (ImGui::BeginViewportSideBar("##toolbar", ImGui::GetMainViewport(), ImGuiDir_Left, kToolbarW * ui::uiScale(), kFlags)) {
         for (int i = 0; i < static_cast<int>(Tool::Count); ++i) {
             const Tool t = static_cast<Tool>(i);
             if (t == Tool::Spawn && catalog.armed < 0)
@@ -549,12 +558,12 @@ void App::drawToolbar() {
             const bool active = tools.tool == t;
             if (active)
                 ImGui::PushStyleColor(ImGuiCol_Button, {0.20f, 0.40f, 0.29f, 1.0f});
-            if (ImGui::Button("##tool", {36.0f, 32.0f}))
+            if (ImGui::Button("##tool", {36.0f * ui::uiScale(), 32.0f * ui::uiScale()}))
                 setTool(t);
             if (active)
                 ImGui::PopStyleColor();
             const ImVec2 lo = ImGui::GetItemRectMin(), hi = ImGui::GetItemRectMax();
-            drawToolIcon(ImGui::GetWindowDrawList(), t, {0.5f * (lo.x + hi.x), 0.5f * (lo.y + hi.y)}, 20.0f,
+            drawToolIcon(ImGui::GetWindowDrawList(), t, {0.5f * (lo.x + hi.x), 0.5f * (lo.y + hi.y)}, 20.0f * ui::uiScale(),
                          ImGui::GetColorU32(active ? ImVec4(1, 1, 1, 1) : ImVec4(0.82f, 0.85f, 0.84f, 1.0f)));
             ui::tooltip(help.c_str());
             ImGui::PopID();
@@ -566,7 +575,7 @@ void App::drawToolbar() {
 void App::drawStatusBar() {
     constexpr int kFlags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
                            ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoSavedSettings | ImGuiWindowFlags_NoDocking;
-    if (ImGui::BeginViewportSideBar("##status", ImGui::GetMainViewport(), ImGuiDir_Down, kStatusH, kFlags)) {
+    if (ImGui::BeginViewportSideBar("##status", ImGui::GetMainViewport(), ImGuiDir_Down, kStatusH * ui::uiScale(), kFlags)) {
         if (ImGui::SmallButton(tools.paused ? ">" : "||"))
             tools.paused = !tools.paused;
         ui::tooltip("Pausa [Espacio]");
@@ -712,6 +721,12 @@ void App::buildUi(float) {
     if (dockId_ != 0 && lastWorkW_ > 0.0f && lastWorkH_ > 0.0f &&
         (vp->WorkSize.x != lastWorkW_ || vp->WorkSize.y != lastWorkH_))
         panels.scaleLayout(dockId_, vp->WorkSize.x / lastWorkW_, vp->WorkSize.y / lastWorkH_);
+    // Escala de la interfaz nueva: las columnas de paneles se ensanchan con el texto (sin pasar de
+    // ~40 % de la ventana cada una).
+    if (dockId_ != 0 && layoutScale_ != 1.0f) {
+        panels.scaleLayout(dockId_, std::clamp(layoutScale_, 0.5f, 1.6f), 1.0f);
+        layoutScale_ = 1.0f;
+    }
     lastWorkW_ = vp->WorkSize.x;
     lastWorkH_ = vp->WorkSize.y;
     const ImGuiID dock = ImGui::DockSpaceOverViewport(0, vp, ImGuiDockNodeFlags_PassthruCentralNode);
@@ -1301,7 +1316,7 @@ void App::drawMeasurements() {
         if (n.step > world->stepIndex() || !notePosition(*world, n, at))
             continue;
         const ImVec2 c = screen(at);
-        const float r = 9.0f;
+        const float r = 9.0f * ui::uiScale();
         dl->AddCircleFilled(c, r, noteColor);
         dl->AddCircle(c, r, IM_COL32(20, 24, 24, 220), 0, 1.5f);
         std::snprintf(text, sizeof text, "%zu", i + 1);
@@ -1373,7 +1388,8 @@ int App::run() {
         ToggleBorderlessWindowed();
 
     ui::loadLanguage(options.language);
-    ui::initBackend(layoutPath_.c_str(), 15.0f);
+    ui::setUiScale(effectiveUiScale());
+    ui::initBackend(layoutPath_.c_str(), kFontSize * ui::uiScale());
     ui::applyTheme();
     // Paquetes de contenido del usuario (<datos>/biogame/paquetes): antes del catálogo y de la
     // primera placa, así sus seres tienen ícono y las placas que los nombran se leen.
@@ -1408,6 +1424,14 @@ int App::run() {
     createPlate(); // arranca con la placa preconfigurada (vacía por defecto)
 
     while (!WindowShouldClose() && !quit) {
+        if (uiScaleDirty_) { // la fuente se rehace entre cuadros
+            uiScaleDirty_ = false;
+            const float before = ui::uiScale();
+            ui::setUiScale(effectiveUiScale());
+            layoutScale_ = ui::uiScale() / before; // las columnas de paneles, en proporción
+            ui::rebuildFonts(kFontSize * ui::uiScale());
+            ui::applyTheme();
+        }
         if (contentChanged) {
             ui::freeBeingIcons();
             ui::buildBeingIcons();

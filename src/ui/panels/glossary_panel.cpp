@@ -8,6 +8,7 @@
 #include "ui/glossary_ui.hpp"
 #include "ui/i18n.hpp"
 #include "ui/panels/panel_classes.hpp"
+#include "ui/theme.hpp"
 #include "ui/widgets.hpp"
 
 #include <imgui.h>
@@ -48,7 +49,7 @@ class GlossaryPanel : public Panel {
         std::sort(order.begin(), order.end(), [](int a, int b) {
             return foldCase(tr(glossaryTerm(a).term.c_str())) < foldCase(tr(glossaryTerm(b).term.c_str()));
         });
-        const float listW = std::min(220.0f, 0.4f * ImGui::GetContentRegionAvail().x);
+        const float listW = std::min(220.0f * uiScale(), 0.4f * ImGui::GetContentRegionAvail().x);
         ImGui::BeginChild("##terminos", {listW, 0.0f}, ImGuiChildFlags_Borders);
         for (const int i : order) {
             const bool selected = i == app.glossaryIndex;

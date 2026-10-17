@@ -1,19 +1,29 @@
 #include "ui/theme.hpp"
 
+#include "core/palette.hpp"
+
 #include <imgui.h>
+#include <implot.h>
 
 namespace ui {
 
 namespace {
+// warn: naranja; good: verde azulado aclarado para el fondo oscuro; bad: bermellón (Okabe–Ito).
 constexpr Palette kPalette = {{0.36f, 0.72f, 0.52f, 1.0f},
-                              {0.92f, 0.60f, 0.25f, 1.0f},
-                              {0.45f, 0.80f, 0.50f, 1.0f},
-                              {0.58f, 0.60f, 0.60f, 1.0f}};
-}
+                              {0.90f, 0.62f, 0.0f, 1.0f},
+                              {0.25f, 0.75f, 0.58f, 1.0f},
+                              {0.58f, 0.60f, 0.60f, 1.0f},
+                              {0.88f, 0.42f, 0.10f, 1.0f}};
+float gScale = 1.0f;
+} // namespace
 
 const Palette& palette() { return kPalette; }
+float uiScale() { return gScale; }
+void setUiScale(float scale) { gScale = scale > 0.1f ? scale : 1.0f; }
 
 void applyTheme() {
+    // Desde el estilo de fábrica: así cambiar la escala no acumula (ScaleAllSizes multiplica).
+    ImGui::GetStyle() = ImGuiStyle();
     ImGui::StyleColorsDark();
     ImGuiStyle& s = ImGui::GetStyle();
     s.WindowRounding = 3.0f;
@@ -62,6 +72,18 @@ void applyTheme() {
     c[ImGuiCol_ResizeGripHovered] = shade(0.7f, 0.6f);
     c[ImGuiCol_PlotHistogram] = shade(0.85f, 1.0f);
     c[ImGuiCol_TextSelectedBg] = shade(0.6f, 0.45f);
+    s.ScaleAllSizes(gScale);
+    // Series de los gráficos: Okabe–Ito (sin el negro, sobre el fondo oscuro).
+    static int colormap = -1;
+    if (colormap < 0) {
+        ImVec4 colors[8];
+        for (int i = 0; i < 8; ++i) {
+            const Rgb8 k = okabe_ito::kOnDark[i];
+            colors[i] = {k.r / 255.0f, k.g / 255.0f, k.b / 255.0f, 1.0f};
+        }
+        colormap = ImPlot::AddColormap("Okabe-Ito", colors, 8, true);
+    }
+    ImPlot::GetStyle().Colormap = colormap;
 }
 
 } // namespace ui

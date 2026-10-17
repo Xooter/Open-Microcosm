@@ -10,6 +10,7 @@
 #include "game/scene.hpp"
 #include "ui/glossary_ui.hpp"
 #include "ui/i18n.hpp"
+#include "ui/theme.hpp"
 #include "ui/panels/panel_classes.hpp"
 #include "ui/param_controls.hpp"
 #include "ui/widgets.hpp"
@@ -224,7 +225,7 @@ class LessonPanel : public Panel {
                         progress_.measured[i] = lessonQuantity(s.prediction.quantity, world(app), culture_);
                 }
                 if (progress_.metAtHours[i] >= 0.0)
-                    ImGui::TextColored(ImVec4(0.5f, 0.9f, 0.5f, 1), "%s %.2f h", tr("Objetivo cumplido a las"),
+                    ImGui::TextColored(col(palette().good), "%s %.2f h", tr("Objetivo cumplido a las"),
                                        progress_.metAtHours[i]);
                 else
                     ImGui::TextDisabled("%s", tr("Objetivo: todavía no"));
@@ -256,7 +257,7 @@ class LessonPanel : public Panel {
             if (current && done && i + 1 < l.steps.size() && ImGui::Button(tr("Siguiente paso")))
                 ++progress_.step;
             if (current && done && i + 1 == l.steps.size())
-                ImGui::TextColored(ImVec4(0.5f, 0.9f, 0.5f, 1), "%s", tr("Lección completa: exportá el informe."));
+                ImGui::TextColored(col(palette().good), "%s", tr("Lección completa: exportá el informe."));
             ImGui::Separator();
             ImGui::PopID();
         }
