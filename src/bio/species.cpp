@@ -335,7 +335,7 @@ const std::vector<std::string>& drawingStyles() {
         "corona_peristomal", "corona_de_membranelas", "tentaculos_capitados", "cirros",
         "cuello_extensible", "dos_flagelos",        "levadura",          "celula_adherida",
         "neutrofilo",       "protoplasto_vegetal", "hoja_elodea",      "celula_escamosa",
-        "linfocito",        "monocito"};
+        "linfocito",        "monocito",            "cocoide"};
     return styles;
 }
 

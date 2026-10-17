@@ -144,6 +144,52 @@ unidad = "µM"
 fuente = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con silicato). SIN VERIFICAR."
 estimacion = true
 
+# --- Candidatos, lote 1 (docs/candidatos.md) ------------------------------------------------------
+
+[tetrahymena.crecimiento_maximo]
+# Cultivo monoxénico en lote con Klebsiella aerogenes; en cultivo continuo (Curds & Cockburn 1971,
+# J. Gen. Microbiol. 66: 95) el µmax estimado fue el doble, 0,43/h, sin temperatura informada.
+valor = 0.22
+unidad = "1/h"
+temperatura = 25.0
+fuente = "Curds, C. R. & Cockburn, A. (1968). Studies on the growth and feeding of Tetrahymena pyriformis in axenic and monoxenic culture. J. Gen. Microbiol. 54: 343-358: tasa máxima de crecimiento 0,22/h (monoxénico, con Klebsiella aerogenes) y 0,20/h (axénico) a 25 °C."
+
+[colpidium.crecimiento_maximo]
+# Tabla 5: generaciones en 24 h según la proporción bacterias:ciliado (Moraxella sp.); el máximo a
+# 20 °C, 1,81 ± 0,10 generaciones/día con 1–2·10⁶ bacterias por ciliado, es una duplicación cada 13,3 h.
+valor = 13.3
+unidad = "h"
+temperatura = 20.0
+fuente = "Laybourn, J. E. M. (1973). The energetics of Colpidium campylum Stokes. Tesis doctoral, University of Stirling, tabla 5: 1,81 generaciones por día a 20 °C con Moraxella sp. (también Laybourn & Stewart 1974, J. Zool. 174: 277-283, doi 10.1111/j.1469-7998.1974.tb03157.x)."
+
+[saccharomyces.crecimiento_maximo]
+# Fase exponencial en YPD (rico); en medio sintético, ~140 min.
+valor = 1.5
+unidad = "h"
+temperatura = 30.0
+fuente = "Sherman, F. (2002). Getting started with yeast. Methods Enzymol. 350: 3-41: las cepas de laboratorio se duplican cada ~90 min en YPD a 30 °C (BioNumbers 108255)."
+
+[chlorella.crecimiento_maximo]
+# Fotobiorreactor de columna de 84 L con 2 % de CO2: un cultivo denso, limitado por la luz; el µmax de
+# células aisladas con luz saturante es mayor. La literatura de C. vulgaris va de ~0,5 a ~1,1/día.
+valor = 0.75
+unidad = "1/dia"
+temperatura = 25.0
+fuente = "Bamba, B. S. B. et al. (2015). Effects of temperature and other operational parameters on Chlorella vulgaris mass cultivation in a simple and low-cost column photobioreactor. Appl. Biochem. Biotechnol. 177: 389-406, doi 10.1007/s12010-015-1751-7: µ = 0,75/día a 25 °C (0,76 a 30 °C, 0,63 a 35 °C)."
+estimacion = true
+
+[raphidocelis.crecimiento_maximo]
+valor = 1.6
+unidad = "1/dia"
+temperatura = 21.0
+fuente = "OECD (2011). Test No. 201: Freshwater alga and cyanobacteria, growth inhibition test, anexo 2: tasa de crecimiento más observada 1,5-1,7/día en medio OECD a ~70 µE m⁻² s⁻¹ y 21 °C (P. subcapitata ATCC 22662)."
+
+[desmodesmus.crecimiento_maximo]
+valor = 1.35
+unidad = "1/dia"
+temperatura = 21.0
+fuente = "OECD (2011). Test No. 201: Freshwater alga and cyanobacteria, growth inhibition test, anexo 2: tasa de crecimiento más observada 1,2-1,5/día en medio OECD a ~70 µE m⁻² s⁻¹ y 21 °C (D. subspicatus SAG 86.81)."
+
 # --- Células humanas en cultivo (fase 20b) -------------------------------------------------------
 # Tiempos en "h" (también "min"), rapidez en "um/h" o "um/min", densidad en "1/cm2", flujos por
 # célula en "fmol/h" (o "amol/s"), Km en "mM" o "uM", lactato por glucosa en "mol/mol". Todos a

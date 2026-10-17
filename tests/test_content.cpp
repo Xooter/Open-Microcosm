@@ -27,21 +27,25 @@ bool warned(const std::string& fragment) {
 
 } // namespace
 
-TEST_CASE("contenido: el paquete de fábrica carga sus 32 seres en el orden de siempre, sin avisos" *
+TEST_CASE("contenido: el paquete de fábrica carga sus 40 seres en el orden de siempre, sin avisos" *
           doctest::test_suite("paquetes")) {
-    CHECK(speciesCount() == 32); // 24 de la gota, 3 de cultivo (20b) y 5 de los preparados (20c)
+    // 24 de la gota, 3 de cultivo (20b), 5 de los preparados (20c) y 8 del lote 1 de candidatos.
+    CHECK(speciesCount() == 40);
     CHECK(speciesLoadWarnings().empty());
     CHECK(std::string(speciesInfo(SpeciesId::Paramecium).key) == "paramecium");
     CHECK(std::string(speciesInfo(SpeciesId::Cyclotella).key) == "cyclotella");
     CHECK(findSpecies("amoeba") == SpeciesId::Amoeba);
     CHECK(speciesPack(SpeciesId::Amoeba) == "base");
-    // Dietas resueltas desde ids: Didinium caza a los dos Paramecium.
+    // Dietas resueltas desde ids: Didinium caza a los dos Paramecium y a Colpidium, un ser que está
+    // más abajo en el archivo.
     const SpeciesSet& prey = speciesInfo(SpeciesId::Didinium).prey;
     CHECK(prey.test(static_cast<std::size_t>(SpeciesId::Paramecium)));
     CHECK(prey.test(static_cast<std::size_t>(SpeciesId::ParameciumAurelia)));
-    CHECK(prey.count() == 2);
+    REQUIRE(findSpecies("colpidium"));
+    CHECK(prey.test(static_cast<std::size_t>(*findSpecies("colpidium"))));
+    CHECK(prey.count() == 3);
     // Etiquetas: los hospedadores de los quitridios (antes, una máscara fija en el código).
-    CHECK(speciesWithTag("hospeda_quitridios").count() == 8);
+    CHECK(speciesWithTag("hospeda_quitridios").count() == 11);
     CHECK(hasTag(SpeciesId::Pediastrum, "fotobionte"));
     CHECK(speciesGenome(SpeciesId::Arcella)[Gene::Armor] == doctest::Approx(0.9f));
 }

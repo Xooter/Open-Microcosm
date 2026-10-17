@@ -22,6 +22,8 @@ fisiología.
   `bio/fungi`, plasmodio, células animales, tejidos).
 - **Nuevo:** el mecanismo que falta. "—" = se carga solo con datos.
 - **Prioridad:** **A** (aporta mucho o es barato), **M** y **B**.
+- **Estado de los seres:** ✅ ya está en el catálogo (ver «Avance de los seres») · ⏸ investigado
+  pero bloqueado (se dice por qué).
 - **Estado de los experimentos:** ✅ hecho · 🟢 factible con lo que hay (falta armar la lección o
   el test) · 🟡 falta poco (se nombra qué) · 🔴 falta un mecanismo grande · ⛔ fuera de alcance
   (y por qué).
@@ -31,6 +33,60 @@ fisiología.
 Biomas que existen: charco, estanque, musgo húmedo, intestino de termita, fuente termal y hielo
 marino. Cuando un ser pide otro, se indica (salina, turbera, mar abierto, suelo).
 
+## Avance de los seres
+
+Cada ser cargado tiene su tamaño, su µmax (si hay uno publicado) y las fuentes en
+`assets/content/base/seres.toml` y `fisiologia.toml`, y un test que lo hace reproducirse
+(`tests/test_candidates.cpp`). µmax se lleva a 20 °C con Q10 = 2.
+
+### Lote 1 (17/10/2026)
+
+| Ser (id) | Tamaño cargado | µmax publicado | Fuente del µmax | Notas |
+|---|---|---|---|---|
+| *Tetrahymena pyriformis* (`tetrahymena`) | 50 × 28 µm | 0,22/h a 25 °C | Curds & Cockburn 1968, J. Gen. Microbiol. 54: 343 | Amicronucleada: no se conjuga. Presa de *Amoeba* y *Podophrya* |
+| *Colpidium campylum* (`colpidium`) | 54 × 24 µm | 1,81 generaciones/día a 20 °C (13,3 h) | Laybourn 1973, tesis (Stirling), tabla 5 | Presa de *Didinium*, *Amoeba* y *Podophrya* |
+| *Saccharomyces cerevisiae* (`saccharomyces`) | 6 × 5 µm (diploide) | 90 min a 30 °C (YPD) | Sherman 2002, Methods Enzymol. 350: 3 | No se siembra en las gotas: se inocula |
+| *Chlorella vulgaris* (`chlorella`) | 7 µm | 0,75/día a 25 °C (estimación) | Bamba et al. 2015, Appl. Biochem. Biotechnol. 177: 389 | 4 autosporas. Rango térmico de la compilación de 424 cepas (Sci. Total Environ. 2023) |
+| *Raphidocelis subcapitata* (`raphidocelis`) | 11 × 5 µm (real 2–3 µm de ancho; espesor ajustado al volumen medido) | 1,5–1,7/día a 21 °C | OECD 201, anexo 2 | Alga del ensayo de toxicidad |
+| *Desmodesmus subspicatus* (`desmodesmus`) | 9 × 5 µm (espesor ajustado al volumen medido) | 1,2–1,5/día a 21 °C | OECD 201, anexo 2 | Cepa de laboratorio: células sueltas |
+| *Phacus pleuronectes* (`phacus`) | 54 × 38 µm | sin dato | — | Usa el µmax general del metabolismo |
+| *Pinnularia viridis* (`pinnularia`) | 120 × 22 µm | sin dato | — | Elipse en vez de valva lineal (ver bloqueos). Usa el µmax general |
+
+Estilo de dibujo nuevo: `cocoide` (célula lisa, sin apéndices ni vacuola contráctil) para las algas
+verdes inmóviles con pared.
+
+### Bloqueados y problemas encontrados
+
+- ⏸ ***Acanthamoeba castellanii*:** la citocinesis no se completa en la placa: el surco se estanca
+  a ~6,7 µm del eje y la ameba queda dividiéndose para siempre. Le pasa también a *Naegleria*, que
+  ya estaba. *Amoeba proteus* (90 µm de radio) sí se divide. Descartado: los organelos en el plano
+  de división (solo hay gránulos ahí) y la tensión cortical (anulada, sigue igual). Sospecha: en
+  la membrana plástica la forma de reposo es un círculo, así que el eje del surco (la orientación
+  del cuerpo, `axisOf`) no está fijo y gira mientras se estrangula. Arreglo propuesto: fijar el
+  eje de división al empezar (`Dividing`) para las membranas plásticas. Datos ya investigados:
+  trofozoíto de 15–45 µm (Marciano-Cabral & Cabral 2003, Clin. Microbiol. Rev. 16: 273);
+  µ ≈ 0,04/h con *E. coli* adherida (Pickup, Pickup & Parry 2007, FEMS Microbiol. Ecol. 59: 556,
+  temperatura sin verificar); crece más rápido cerca de 32 °C y se enquista arriba de ~36 °C.
+- **Diatomeas grandes y formas de cilindro:** con `cuadratura` 4, o con más de ~80 µm de largo
+  (también *Navicula* agrandada), el surco de la división no llega a cerrarse. *Pinnularia* quedó
+  como elipse de 120 µm, que sí se divide. Además, la diatomea real se divide en un plano paralelo
+  a las valvas (las hijas quedan una sobre otra en vista valvar), no estrangulándose por la
+  cintura como hoy.
+- **Ciliados que nadan:** *Paramecium* y *P. aurelia* (y los dos ciliados nuevos) a veces tienen
+  el anillo de membrana cruzado ~20 s después de dividirse. Es anterior a este lote; falta ver si
+  es un cruce transitorio en los choques o un pliegue que queda.
+
+### Datos ya investigados para el lote 2
+
+- **Volvocales** (necesitan un estilo de colonia de pocas células grandes; `colonia_esferica`
+  dibuja las de *Volvox*): *Gonium pectorale*, 4–16 (a veces 32) células de 5–14 µm en placa,
+  colonia de 70–100 µm (Kreutz, realmicrolife); *Pandorina morum*, 8–16 células de 8–17 µm,
+  colonia de 20–60 µm; *Eudorina elegans*, 16–32 células, colonia de 50–200 µm. Sin µmax
+  publicado encontrado (Butterwick, Heaney & Talling 2005, Freshwater Biol. 50: 291, midieron
+  *Eudorina unicocca*: crece ≥ 0,4 divisiones/día a 5 °C).
+- **Velocidades:** *Tetrahymena* nada a ~500 µm/s (estudio de nado helicoidal; 200–350 µm/s en
+  otros). No se encontró la de *Colpidium* ni la de *Pinnularia*.
+
 ---
 
 ## Parte 1 — Seres
@@ -39,9 +95,9 @@ marino. Cuando un ser pide otro, se indica (salina, turbera, mar abierto, suelo)
 
 | Ser | Tamaño | Dónde | Por qué interesa | Reusa | Nuevo | Prio. |
 |---|---|---|---|---|---|---|
-| *Tetrahymena thermophila* / *T. pyriformis* | ~50 µm | charco, estanque | Presa ciliada de *Amoeba* (falta para su µmax, roadmap B). Organismo modelo con curvas de crecimiento muy publicadas | Cilia, OralGroove, conjugates | — | **A** |
+| ✅ *Tetrahymena thermophila* / *T. pyriformis* | ~50 µm | charco, estanque | Presa ciliada de *Amoeba* (falta para su µmax, roadmap B). Organismo modelo con curvas de crecimiento muy publicadas | Cilia, OralGroove, conjugates | — | **A** |
 | *Tetrahymena vorax* | 60–200 µm | charco | Polimorfismo: la forma micróstoma come bacterias y la macróstoma, otros ciliados (inducido por la presa) | Cilia, OralGroove, Raptorial | Cambio de modo de alimentación inducido | B |
-| *Colpidium campylum* / *C. striatum* | 50–80 µm | estanque | El bacterívoro de los microcosmos clásicos (Lawler y Morin, Holyoak y Lawler). Presa de *Didinium* | Cilia, OralGroove | — | **A** |
+| ✅ *Colpidium campylum* / *C. striatum* | 50–80 µm | estanque | El bacterívoro de los microcosmos clásicos (Lawler y Morin, Holyoak y Lawler). Presa de *Didinium* | Cilia, OralGroove | — | **A** |
 | *Colpoda cucullus* / *C. steinii* | 15–80 µm | musgo, suelo | El ciliado del musgo: se enquista y desenquista con la desecación. Se divide dentro de un quiste reproductivo | Cilia, OralGroove, encysts | Quiste de división (2–4 hijas) | M |
 | *Blepharisma japonicum* | 150–300 µm | charco | Pigmento rosa (blefarismina) que lo vuelve fotofóbico y fotosensible. Gigantismo caníbal | Cilia, OralGroove | Fotofobia y daño por luz; canibalismo | M |
 | *Spirostomum ambiguum* | 1–3 mm | estanque | Uno de los eucariotas unicelulares más largos. Contrae todo el cuerpo en milisegundos (mionemas, Ca²⁺) | Cilia, OralGroove | Contracción del cuerpo entero | M |
@@ -68,7 +124,7 @@ marino. Cuando un ser pide otro, se indica (salina, turbera, mar abierto, suelo)
 | Ser | Tamaño | Dónde | Por qué interesa | Reusa | Nuevo | Prio. |
 |---|---|---|---|---|---|---|
 | *Peranema trichophorum* | 20–70 µm | charco | Euglenoide fagótrofo: traga *Euglena* y levaduras con una varilla de ingestión. Se desliza con el flagelo rígido | Flagellum, Raptorial | Deslizamiento con flagelo | **A** |
-| *Phacus* | 30–100 µm | charco | Euglenoide rígido y aplanado, con grandes granos de paramilón | Flagellum, phototaxis | — | **A** |
+| ✅ *Phacus* | 30–100 µm | charco | Euglenoide rígido y aplanado, con grandes granos de paramilón | Flagellum, phototaxis | — | **A** |
 | *Trachelomonas* | 15–50 µm | charco | Lórica teñida por hierro y manganeso (pardo) | Flagellum, phototaxis, coraza | Lórica que consume Fe | M |
 | *Euglena viridis* / *E. spirogyra* | 40–150 µm | charco | Otras euglenas (metabolia, estrías) | Flagellum, phototaxis | — | B |
 | *Bodo saltans* | 5–10 µm | estanque | Cinetoplástido bacterívoro, pariente de los tripanosomas | Flagellum, Anterior | — | M |
@@ -98,7 +154,7 @@ marino. Cuando un ser pide otro, se indica (salina, turbera, mar abierto, suelo)
 
 | Ser | Tamaño | Dónde | Por qué interesa | Reusa | Nuevo | Prio. |
 |---|---|---|---|---|---|---|
-| *Acanthamoeba castellanii* | 15–35 µm | suelo, agua | Modelo de fagocitosis. Come bacterias y forma quistes muy resistentes | Pseudopod, Phagocytosis, encysts | — | **A** |
+| ⏸ *Acanthamoeba castellanii* | 15–35 µm | suelo, agua | Modelo de fagocitosis. Come bacterias y forma quistes muy resistentes | Pseudopod, Phagocytosis, encysts | — | **A** |
 | *Dictyostelium discoideum* | ~10 µm | suelo, musgo | Agregación por AMPc en ondas espirales. Se simula hasta la corriente de agregación (la babosa y el cuerpo fructífero son multicelulares) | Pseudopod, Phagocytosis | Quimiotaxis a AMPc con relevo; campo de AMPc | **A** |
 | *Vampyrella* | 30–60 µm | estanque | Perfora la pared de *Spirogyra* y sorbe el protoplasto | Pseudopod | Perforación de la pared | M |
 | *Difflugia* | 100–300 µm | estanque, musgo | Testa de granos de arena: los toma del sedimento | Pseudopod, coraza | Testa con minerales de `minerales.toml` | M |
@@ -114,9 +170,9 @@ marino. Cuando un ser pide otro, se indica (salina, turbera, mar abierto, suelo)
 
 | Ser | Tamaño | Dónde | Por qué interesa | Reusa | Nuevo | Prio. |
 |---|---|---|---|---|---|---|
-| *Chlorella vulgaris* | 2–10 µm | estanque | Alga modelo de crecimiento. Presa de *Ochromonas*, simbionte de *P. bursaria* | None | Autosporas (4–16 hijas por división) | **A** |
-| *Desmodesmus* / *Scenedesmus* | cenobios de 4–8 | estanque | Forma cenobios. Más colonial cuando lo pastorean | colonyDaughters | — | **A** |
-| *Raphidocelis subcapitata* | 8–14 µm | estanque | Alga del bioensayo estándar de toxicidad (OECD 201) | None | — | **A** |
+| ✅ *Chlorella vulgaris* | 2–10 µm | estanque | Alga modelo de crecimiento. Presa de *Ochromonas*, simbionte de *P. bursaria* | None | Autosporas (4–16 hijas por división) | **A** |
+| ✅ *Desmodesmus* / *Scenedesmus* | cenobios de 4–8 | estanque | Forma cenobios. Más colonial cuando lo pastorean | colonyDaughters | — | **A** |
+| ✅ *Raphidocelis subcapitata* | 8–14 µm | estanque | Alga del bioensayo estándar de toxicidad (OECD 201) | None | — | **A** |
 | *Closterium* | 100–500 µm | estanque | Desmidia en media luna con cristales de yeso en vacuolas terminales. Se desliza secretando mucílago | glider | — | M |
 | *Cosmarium* / *Staurastrum* | 30–100 µm | estanque, turbera | Desmidias de dos semicélulas | None | — | M |
 | *Micrasterias* | 100–300 µm | turbera ácida | Morfogénesis de la semicélula después de dividirse | None | Morfogénesis (B) | B |
@@ -130,7 +186,7 @@ marino. Cuando un ser pide otro, se indica (salina, turbera, mar abierto, suelo)
 
 | Ser | Tamaño | Dónde | Por qué interesa | Reusa | Nuevo | Prio. |
 |---|---|---|---|---|---|---|
-| *Pinnularia* | 50–200 µm | estanque | Diatomea grande con el rafe bien visible: la del deslizamiento en clase | glider, frustule | — | **A** |
+| ✅ *Pinnularia* | 50–200 µm | estanque | Diatomea grande con el rafe bien visible: la del deslizamiento en clase | glider, frustule | — | **A** |
 | *Nitzschia* | 20–150 µm | estanque, mar | Deslizamiento rápido; la palea es indicadora de contaminación orgánica | glider, frustule | — | M |
 | *Bacillaria paxillifer* | colonias | estuario | Colonia que se desliza como una regla extensible | glider, frustule, colonyDaughters | Coordinación del deslizamiento entre células | M |
 | *Fragilaria crotonensis* | cintas | lago | Colonias en cinta. Compite por Si | frustule, colonyDaughters | — | M |
@@ -205,7 +261,7 @@ Hoy son partículas con cepa (`Bacteria::strain`: un bacilo genérico, *C. viola
 
 | Ser | Tamaño | Dónde | Por qué interesa | Reusa | Nuevo | Prio. |
 |---|---|---|---|---|---|---|
-| *Saccharomyces cerevisiae* | 5–10 µm | fruta, laboratorio | La levadura modelo: gemación, fermentación y efecto Crabtree. Gause 1932 | Osmotroph, budding | Etanol como campo | **A** |
+| ✅ *Saccharomyces cerevisiae* | 5–10 µm | fruta, laboratorio | La levadura modelo: gemación, fermentación y efecto Crabtree. Gause 1932 | Osmotroph, budding | Etanol como campo | **A** |
 | *Schizosaccharomyces pombe* | 3 × 8–14 µm | fermentados | Fisión binaria medial; control de tamaño (Nurse 1975) | Osmotroph | División por fisión medial | M |
 | *Rhodotorula* | 3–8 µm | ambiente | Levadura rosa (carotenoides) | Osmotroph, budding | — | B |
 | *Rhizophydium* / *Zygorhizidium* en *Asterionella* | — | lago | Quitridios con nombre sobre su hospedador (Canter y Lund) | `ChytridInfection` | — | M |

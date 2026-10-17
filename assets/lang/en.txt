@@ -161,6 +161,9 @@ Alga filamentosa con el cloroplasto en espiral. Crece a lo largo y se divide con
 Alga filamentosa con un cloroplasto en placa que gira: de frente con poca luz y de canto con mucha.	Filamentous alga with a plate-shaped chloroplast that turns: face-on in dim light and edge-on in strong light.
 Alga filamentosa: cada division deja un anillo (capuchon) en la pared, asi se cuentan las veces que se dividio.	Filamentous alga: each division leaves a ring (cap) in the wall, so the number of divisions can be counted.
 Alga unicelular	Unicellular alga
+Alga verde en media luna de ~11 um, la del ensayo de toxicidad estandar (OECD 201). Crece rapido y es muy sensible a los contaminantes.	Crescent-shaped green alga of ~11 um, the one used in the standard toxicity test (OECD 201). It grows fast and is very sensitive to pollutants.
+Alga verde oval de ~9 um. En los estanques forma grupos de 4 celulas en fila; en cultivo vive casi siempre suelta. Se usa en ensayos de toxicidad.	Oval green alga of ~9 um. In ponds it forms groups of 4 cells in a row; in culture it almost always lives as single cells. It is used in toxicity tests.
+Alga verde redonda de ~7 um, inmovil, con un cloroplasto en copa. Se reproduce formando 4 autosporas dentro de la pared de la madre.	Round, non-motile green alga of ~7 um with a cup-shaped chloroplast. It reproduces by forming 4 autospores inside the mother cell wall.
 Algas con liquen	Algae with lichen
 Algas infectadas	Infected algae
 Alimento local	Local food
@@ -335,6 +338,7 @@ Cerrar	Close
 Cerrar el gotero	Close the dropper
 Charco	Puddle
 Chlamydomonas	Chlamydomonas
+Chlorella	Chlorella
 Chromobacterium violaceum	Chromobacterium violaceum
 Cianobacteria filamentosa	Filamentous cyanobacterium
 Cianobacterias	Cyanobacteria
@@ -344,6 +348,8 @@ Ciclo térmico día/noche	Day/night temperature cycle
 Cierre	Closure
 Ciliado	Ciliate
 Ciliado aplanado que 'camina' sobre cirros (haces de cilios) con paradas bruscas.	Flattened ciliate that 'walks' on cirri (bundles of cilia) with sudden stops.
+Ciliado arrinonado de ~55 um que come bacterias. Abunda en infusiones de hojas y es la presa de Didinium en los microcosmos de laboratorio.	Kidney-shaped ciliate of ~55 um that eats bacteria. It is abundant in leaf infusions and is Didinium's prey in laboratory microcosms.
+Ciliado chico (~50 um) en forma de pera que filtra bacterias con una boca de membranelas. Es el ciliado de laboratorio por excelencia y presa de amebas y suctorios.	Small pear-shaped ciliate (~50 um) that filters bacteria with a mouth of membranelles. It is the laboratory ciliate par excellence and prey of amoebae and suctorians.
 Ciliado de ~200 um que come bacterias por un surco oral. Retrocede al chocar (reaccion de evitacion) y se junta donde hay CO2.	Ciliate of ~200 um that eats bacteria through an oral groove. It backs up when it bumps into something (avoidance reaction) and gathers where there is CO2.
 Cilios: W/S avanzar, A/D girar	Cilia: W/S forward, A/D turn
 Cinética de Monod	Monod kinetics
@@ -369,6 +375,7 @@ Colorante activo sobre la placa (J). Solo cambia cómo se ve.	Active stain on th
 Colorante básico (catiónico): se une a los ácidos nucleicos y tiñe de azul el núcleo y las bacterias. En dosis baja es vital: las células vivas lo reducen a la forma incolora.	Basic (cationic) dye: binds nucleic acids and stains the nucleus and bacteria blue. At low doses it is vital: living cells reduce it to its colorless form.
 Colorante vital: la forma sin carga entra a la célula viva y se acumula, protonado, en los compartimentos ácidos (vacuolas digestivas, lisosomas). Es indicador: rojo en medio ácido y amarillo en alcalino (viraje a pH 6,8 a 8,0).	Vital dye: the uncharged form enters the living cell and accumulates, protonated, in acidic compartments (food vacuoles, lysosomes). It is an indicator: red in acid and yellow in alkaline medium (transition at pH 6.8 to 8.0).
 Colorear las células	Color the cells
+Colpidium	Colpidium
 Come	Eats
 Comido	Eaten
 Comio	Ate
@@ -466,6 +473,7 @@ Descomposicion	Decomposition
 Descomposición [1/h bio]	Decomposition [1/bio h]
 Desde [h]	From [h]
 Deslizamiento	Gliding
+Desmodesmus	Desmodesmus
 Despierta	Wakes up
 Destrabar	Unlock
 Det	Det
@@ -480,6 +488,7 @@ Diatomea	Diatom
 Diatomea en aguja que en la naturaleza forma estrellas de 8 celulas. Muy eficiente con poco fosforo (Tilman 1977).	Needle-shaped diatom that in nature forms 8-cell stars. Very efficient with little phosphorus (Tilman 1977).
 Diatomea en disco, planctonica. Muy eficiente con poca silice: gana a Asterionella cuando la silice limita (Tilman 1977).	Disc-shaped planktonic diatom. Very efficient with little silica: it beats Asterionella when silica is limiting (Tilman 1977).
 Diatomea en una cajita de silice que se desliza por una ranura (rafe). Cada division achica a una hija. Necesita silice disuelta para cada valva nueva y vitamina B12 de las bacterias.	Diatom in a little silica box that glides along a slit (raphe). Each division makes one daughter smaller. It needs dissolved silica for every new valve and vitamin B12 from bacteria.
+Diatomea grande (~120 um) en forma de baston con la frustula estriada y un rafe en el medio por el que secreta mucilago para deslizarse.	Large rod-shaped diatom (~120 um) with a striated frustule and a raphe down the middle through which it secretes mucilage to glide.
 Dibujo del campo	Field drawing
 Dibujá un lazo con la herramienta Región (G): se cuentan las células y se mide la química adentro, y entra en la serie de Gráficos.	Draw a lasso with the Region tool (G): cells are counted and the chemistry inside is measured, and it goes into the Graphs series.
 Dibujá un lazo: cuenta las células y mide la química adentro (panel Medición).	Draw a lasso: counts the cells and measures the chemistry inside (Measurement panel).
@@ -574,6 +583,7 @@ Estructuras celulares	Cell structures
 Estéril al crearla: se le inocula cualquier ser desde el Catálogo (Inocular...).	Sterile when created: any being can be inoculated from the Catalog (Inoculate...).
 Euglena	Euglena
 Euglena y las diatomeas no la sintetizan: la aportan las bacterias.	Euglena and diatoms do not synthesize it: bacteria supply it.
+Euglenoide verde, rigido y chato como una hoja, con una espina en la cola y dos granos grandes de paramilon. Nada hacia la luz con un flagelo.	Green euglenoid, rigid and flat like a leaf, with a tail spine and two large paramylon grains. It swims toward the light with one flagellum.
 Euplotes	Euplotes
 Evento	Event
 Evita la luz	Avoids light
@@ -776,6 +786,7 @@ La epidermis del enves de una hoja: celulas de contorno ondulado (como un rompec
 La epidermis esta montada en agua: las celulas estan turgentes, con el protoplasto apretado contra la pared.	The epidermis is mounted in water: the cells are turgid, with the protoplast pressed against the wall.
 La epidermis interna de una escama de cebolla morada montada en agua: celulas alargadas con pared y una vacuola violeta. Agregando sal (Ambiente > Salinidad, unos 30 g/kg) el protoplasto pierde agua y se despega de la pared: plasmolisis. En agua vuelve (deplasmolisis). Se simula un campo de 1 mm: el anillo marca su borde.	The inner epidermis of a red onion scale mounted in water: elongated cells with a wall and a purple vacuole. Adding salt (Environment > Salinity, about 30 g/kg) the protoplast loses water and pulls away from the wall: plasmolysis. In water it comes back (deplasmolysis). A 1 mm field is simulated: the ring marks its edge.
 La gota es la placa del centro.	The drop is the plate in the center.
+La levadura del pan y la cerveza: celulas ovaladas de ~6 um que se reproducen por gemacion. Con oxigeno respira; sin el fermenta el azucar a alcohol y CO2.	The yeast of bread and beer: oval cells of ~6 um that reproduce by budding. With oxygen it respires; without it, it ferments sugar into alcohol and CO2.
 La luz se atenúa en forma exponencial con lo que atraviesa: I = I₀·e^(−k·c·z). En la gota y en el tubo, las algas de arriba hacen sombra a las de abajo.	Light is attenuated exponentially with what it passes through: I = I₀·e^(−k·c·z). In the drop and in the tube, the algae above shade those below.
 La misma semilla y el mismo bioma dan siempre la misma gota.	The same seed and the same biome always give the same drop.
 La nota sigue al ser mientras viva; va en la escena y en la exportación. No es una intervención.	The note follows the being while it lives; it goes in the scene and in the export. It is not an intervention.
@@ -1012,12 +1023,14 @@ Personalizada	Custom
 Perímetro	Perimeter
 Período [h]	Period [h]
 Peso inicial de cada especie	Initial weight of each species
+Phacus	Phacus
 Physarum	Physarum
 Physarum (moho mucilaginoso, no es un hongo)	Physarum (slime mold, not a fungus)
 Physarum fusiona dos tubos: la red es una sola celula	Physarum fuses two tubes: the network is a single cell
 Physarum polycephalum	Physarum polycephalum
 Physarum polycephalum (moho mucilaginoso)	Physarum polycephalum (slime mold)
 Physarum se endurece en esclerocio por hambre	Physarum hardens into a sclerotium from hunger
+Pinnularia	Pinnularia
 Pinta un campo de la placa sobre el mundo (F1-F10).	Paints a field of the plate over the world (F1-F10).
 Placa	Plate
 Placa de 100 mm	100 mm dish
@@ -1108,6 +1121,7 @@ Radio de revolver [µm]	Stirring radius [µm]
 Radio de tinta [µm]	Ink radius [µm]
 Ramificacion	Branching
 Rampa	Ramp
+Raphidocelis subcapitata	Raphidocelis subcapitata
 Reacción de evitación	Avoidance reaction
 Reactivo	Reagent
 Reanudar	Resume
@@ -1156,6 +1170,7 @@ Ruptura de los glóbulos rojos con salida de la hemoglobina. En un medio diluido
 Réplicas	Replicates
 Sacar una gota y mirarla	Take a drop and look at it
 Sacarosa [mOsm/L]	Sucrose [mOsm/L]
+Saccharomyces cerevisiae	Saccharomyces cerevisiae
 Sales disueltas: con los osmolitos fijan la osmolaridad del medio (plasmólisis, hemólisis).	Dissolved salts: together with the osmolytes they set the osmolarity of the medium (plasmolysis, hemolysis).
 Salida con el medio	Outflow with the medium
 Salinidad	Salinity
@@ -1248,6 +1263,7 @@ Temperatura	Temperature
 Temperatura [°C]	Temperature [°C]
 Terminar la lección	End the lesson
 Tetraciclina	Tetracycline
+Tetrahymena	Tetrahymena
 Teñida	Stained
 Tiempo	Time
 Tiempo biológico (x)	Biological time (x)

@@ -211,13 +211,16 @@ TEST_CASE("sandbox: cada ser del catálogo cae en la categoría que le correspon
     using C = BeingCategory;
     const std::pair<C, std::vector<SpeciesId>> expected[] = {
         {C::Ciliates, {SpeciesId::Paramecium, SpeciesId::Didinium, SpeciesId::Vorticella, SpeciesId::Stentor,
-                       SpeciesId::Podophrya, SpeciesId::Euplotes, SpeciesId::Lacrymaria, SpeciesId::ParameciumAurelia}},
+                       SpeciesId::Podophrya, SpeciesId::Euplotes, SpeciesId::Lacrymaria, SpeciesId::ParameciumAurelia,
+                       *findSpecies("tetrahymena"), *findSpecies("colpidium")}},
         {C::Flagellates, {SpeciesId::Euglena, SpeciesId::Trichonympha}},
         {C::Amoebae, {SpeciesId::Amoeba, SpeciesId::Arcella, SpeciesId::Naegleria}},
         {C::Algae, {SpeciesId::Chlamydomonas, SpeciesId::Spirogyra, SpeciesId::Navicula, SpeciesId::Volvox,
                     SpeciesId::Pediastrum, SpeciesId::Mougeotia, SpeciesId::Zygnema, SpeciesId::Oedogonium,
-                    SpeciesId::Asterionella, SpeciesId::Cyclotella}},
-        {C::Fungi, {SpeciesId::Candida}},
+                    SpeciesId::Asterionella, SpeciesId::Cyclotella, *findSpecies("chlorella"),
+                    *findSpecies("raphidocelis"), *findSpecies("desmodesmus"), *findSpecies("pinnularia"),
+                    *findSpecies("phacus")}}, // euglenófita fotótrofa: no come presas
+        {C::Fungi, {SpeciesId::Candida, *findSpecies("saccharomyces")}},
         {C::HumanCells, {*findSpecies("fibroblasto_dermico_humano"), *findSpecies("hela"), *findSpecies("neutrofilo"),
                          *findSpecies("celula_escamosa_bucal"), *findSpecies("linfocito"), *findSpecies("monocito")}},
         {C::PlantCells, {*findSpecies("celula_epidermica_cebolla"), *findSpecies("celula_hoja_elodea")}},

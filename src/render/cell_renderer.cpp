@@ -334,7 +334,7 @@ enum class CellStyle : std::uint8_t {
     Ciliate, Flagellate, Amoeboid, RostrumFlagella, GirdlesProboscis, HelicalRibbon, AxialPlate,
     StellatePlastids, ReticulatePlastid, Frustule, SphericalColony, PlateColony, PeristomeCrown,
     MembranelleCrown, CapitateTentacles, Cirri, Neck, TwinFlagella, Yeast, AdherentCell, Neutrophil,
-    PlantProtoplast, ElodeaLeaf, Squamous, Lymphocyte, Monocyte
+    PlantProtoplast, ElodeaLeaf, Squamous, Lymphocyte, Monocyte, Coccoid
 };
 
 // Células de organismos pluricelulares: sin vacuola contráctil (viven en un medio isotónico o dentro
@@ -373,7 +373,8 @@ CellStyle resolveStyle(SpeciesId sid) {
         {"hoja_elodea", CellStyle::ElodeaLeaf},
         {"celula_escamosa", CellStyle::Squamous},
         {"linfocito", CellStyle::Lymphocyte},
-        {"monocito", CellStyle::Monocyte}};
+        {"monocito", CellStyle::Monocyte},
+        {"cocoide", CellStyle::Coccoid}};
     for (const auto& [key, style] : kNames)
         if (name == key)
             return style;
@@ -1119,7 +1120,9 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 } else {
                     nucleus(anatomy.nucleus);
                 }
-                if (!multicellular(style))
+                // Las algas cocoides con pared (Chlorella) no tienen vacuola contráctil: la presión
+                // de turgencia contra la pared las protege del agua que entra por ósmosis.
+                if (!multicellular(style) && style != CellStyle::Coccoid)
                     contractile(anatomy.contractileVacuole);
                 if (style == CellStyle::ElodeaLeaf) {
                     // Cloroplastos de Elodea: decenas de discos de ~5 µm junto a la pared, que la

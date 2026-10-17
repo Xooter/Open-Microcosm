@@ -26,7 +26,8 @@
 #     rostro_de_flagelos, cinturones_y_proboscide, cinta_helicoidal, placa_axial,
 #     plastos_estrellados, plasto_reticulado, frustula, colonia_esferica, colonia_plana,
 #     corona_peristomal, corona_de_membranelas, tentaculos_capitados, cirros, cuello_extensible,
-#     dos_flagelos, levadura; por omisión, el de su locomoción) y color_plastos [r, g, b].
+#     dos_flagelos, levadura, cocoide (célula lisa sin apéndices); por omisión, el de su locomoción)
+#     y color_plastos [r, g, b].
 #   [ser.forma]: semiejes [µm], memoria_forma [1/s], color RGB del citoplasma, nucleo (radio
 #     relativo), cuadratura (2 elipse, ~6 cilindro), afinamiento del polo posterior.
 # Paramecium caudatum: ~180 × 50 µm, ciliado bacterívoro.
@@ -92,7 +93,7 @@ descripcion = "Ameba gigante: extiende seudopodos, envuelve a la presa con la me
 locomocion = "pseudopodo"
 plan = "ameba"
 alimentacion = "fagocitosis"
-presas = ["paramecium", "euglena", "chlamydomonas", "euplotes", "navicula", "pediastrum", "paramecium_aurelia", "asterionella", "cyclotella"]
+presas = ["paramecium", "euglena", "chlamydomonas", "euplotes", "navicula", "pediastrum", "paramecium_aurelia", "asterionella", "cyclotella", "tetrahymena", "colpidium", "phacus", "pinnularia"]
 cantidad_inicial = 2
 manipulacion_horas = 1.5
 ph = [6.0, 9.5]
@@ -151,7 +152,7 @@ locomocion = "cilios"
 conjugacion = true
 plan = "ciliado"
 alimentacion = "raptorial"
-presas = ["paramecium", "paramecium_aurelia"]
+presas = ["paramecium", "paramecium_aurelia", "colpidium"]
 enquista = true
 cantidad_inicial = 2
 manipulacion_horas = 3.0
@@ -218,7 +219,7 @@ conjugacion = true
 plan = "ciliado"
 alimentacion = "surco_oral"
 velocidad_relativa = 0.5
-presas_boca = ["euglena", "chlamydomonas", "navicula", "asterionella", "cyclotella"]
+presas_boca = ["euglena", "chlamydomonas", "navicula", "asterionella", "cyclotella", "chlorella", "raphidocelis", "desmodesmus"]
 cantidad_inicial = 2
 sesil = true
 largo_tallo = 20.0
@@ -253,7 +254,7 @@ conjugacion = true
 plan = "ciliado"
 alimentacion = "tentaculos"
 velocidad_relativa = 0.5
-presas = ["paramecium", "vorticella", "euplotes", "paramecium_aurelia"]
+presas = ["paramecium", "vorticella", "euplotes", "paramecium_aurelia", "tetrahymena", "colpidium"]
 cantidad_inicial = 2
 sesil = true
 largo_tallo = 40.0
@@ -287,7 +288,7 @@ conjugacion = true
 plan = "ciliado"
 alimentacion = "surco_oral"
 velocidad_relativa = 0.25
-presas_boca = ["chlamydomonas", "navicula", "asterionella", "cyclotella"]
+presas_boca = ["chlamydomonas", "navicula", "asterionella", "cyclotella", "chlorella", "raphidocelis", "desmodesmus"]
 huye_de = ["didinium", "lacrymaria"]
 cantidad_inicial = 4
 camina = true
@@ -321,7 +322,7 @@ locomocion = "pseudopodo"
 plan = "ameba"
 alimentacion = "fagocitosis"
 velocidad_relativa = 0.5
-presas = ["euglena", "chlamydomonas", "navicula", "asterionella", "cyclotella"]
+presas = ["euglena", "chlamydomonas", "navicula", "asterionella", "cyclotella", "chlorella", "desmodesmus"]
 cantidad_inicial = 3
 manipulacion_horas = 1.0
 ph = [6.0, 9.5]
@@ -1031,3 +1032,247 @@ color = [218, 218, 214]
 nucleo = 0.6
 [ser.apariencia]
 estilo = "monocito"
+
+# --- Candidatos, lote 1 (docs/candidatos.md) -----------------------------------------------------
+# Tamaños y tasas con su fuente: los valores medidos van en fisiologia.toml; acá, en el comentario de
+# cada ser.
+
+# Tetrahymena pyriformis: ciliado piriforme de 40–60 × 20–30 µm (Foissner et al. 1994), el modelo de
+# laboratorio de los cultivos de ciliados y la presa con la que se mide el crecimiento de Amoeba.
+# Nada a ~500 µm/s. Es amicronucleada: no tiene micronúcleo y no se conjuga (T. thermophila sí).
+# Tiene mucocistos, no tricocistos. Crece mejor a ~27 °C (Thormar 1962).
+[[ser]]
+id = "tetrahymena"
+nombre = "Tetrahymena"
+etiquetas = ["protista", "ciliado", "bacterivoro"]
+descripcion = "Ciliado chico (~50 um) en forma de pera que filtra bacterias con una boca de membranelas. Es el ciliado de laboratorio por excelencia y presa de amebas y suctorios."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "surco_oral"
+velocidad_relativa = 0.8
+cantidad_inicial = 10
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 35.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 25.0
+semieje_menor = 14.0
+memoria_forma = 8.0
+color = [176, 182, 156]
+nucleo = 0.32
+afinamiento = 0.3
+
+# Colpidium campylum (hoy Dexiostoma campylum): ciliado arriñonado de 45–60 × 20–25 µm (NIES, The
+# World of Protozoa), bacterívoro de los microcosmos clásicos (Lawler y Morin 1993; Holyoak y Lawler
+# 1996) y presa de Didinium. Se conjuga. Sin dato de su velocidad: la de Tetrahymena, de su tamaño.
+[[ser]]
+id = "colpidium"
+nombre = "Colpidium"
+etiquetas = ["protista", "ciliado", "bacterivoro"]
+descripcion = "Ciliado arrinonado de ~55 um que come bacterias. Abunda en infusiones de hojas y es la presa de Didinium en los microcosmos de laboratorio."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "surco_oral"
+velocidad_relativa = 0.8
+conjugacion = true
+cantidad_inicial = 8
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 27.0
+semieje_menor = 12.0
+memoria_forma = 8.0
+color = [178, 180, 158]
+nucleo = 0.32
+
+# Saccharomyces cerevisiae: la levadura de la cerveza y del pan. Diploide: elipsoide de ~5 × 6 µm
+# (Sherman 2002, Methods Enzymol. 350: 3). Gemación, respiración con O₂ y fermentación alcohólica.
+# Vive en frutas y en el laboratorio, no en las gotas de agua: no se siembra sola (se inocula).
+[[ser]]
+id = "saccharomyces"
+nombre = "Saccharomyces cerevisiae"
+etiquetas = ["hongo", "levadura"]
+descripcion = "La levadura del pan y la cerveza: celulas ovaladas de ~6 um que se reproducen por gemacion. Con oxigeno respira; sin el fermenta el azucar a alcohol y CO2."
+locomocion = "cilios"
+plan = "levadura"
+alimentacion = "osmotrofia"
+velocidad_relativa = 0.0
+colonias_hijas = 1
+gemacion = true
+ph = [3.0, 8.0]
+temperatura = [5.0, 40.0]
+salinidad_max = 60.0
+reserva = "glucogeno"
+pared = "glucano_levadura"
+[ser.forma]
+semieje_mayor = 3.0
+semieje_menor = 2.5
+memoria_forma = 12.0
+color = [216, 208, 182]
+nucleo = 0.3
+
+[ser.apariencia]
+estilo = "levadura"
+
+# Chlorella vulgaris: alga verde esférica de 2–10 µm (adultas de 6–8 µm en medio líquido), con un
+# cloroplasto parietal en copa y un pirenoide; sin flagelos ni vacuola contráctil. Se reproduce por
+# autosporas: la célula madre se divide dentro de su pared en 2–4 (a veces 8 o 16) hijas que salen al
+# romperla. Temperaturas cardinales 4,4 / 28,9 / 42,1 °C (compilación de 424 cepas, Sci. Total
+# Environ. 2023).
+[[ser]]
+id = "chlorella"
+nombre = "Chlorella"
+etiquetas = ["alga", "alga_verde", "fototrofa", "hospeda_quitridios"]
+descripcion = "Alga verde redonda de ~7 um, inmovil, con un cloroplasto en copa. Se reproduce formando 4 autosporas dentro de la pared de la madre."
+locomocion = "cilios"
+plan = "alga_verde"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.5
+divisiones_por_ciclo = 2
+cantidad_inicial = 20
+cloroplastos = true
+ph = [5.5, 9.5]
+temperatura = [4.0, 42.0]
+reserva = "almidon"
+pared = "celulosa"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 3.6
+semieje_menor = 3.4
+memoria_forma = 15.0
+color = [120, 176, 96]
+nucleo = 0.3
+
+[ser.apariencia]
+estilo = "cocoide"
+
+# Raphidocelis subcapitata (Selenastrum capricornutum, Pseudokirchneriella subcapitata): célula en
+# media luna retorcida de 8–14 × 2–3 µm y 40–60 µm³, el alga del ensayo de toxicidad OECD 201. Se
+# divide en 4 autosporas. Acá la silueta es de 5 µm de ancho (una de 2,5 µm no es estable como cuerpo
+# blando) y el espesor se achica para que el volumen sea el medido (~50 µm³).
+[[ser]]
+id = "raphidocelis"
+nombre = "Raphidocelis subcapitata"
+etiquetas = ["alga", "alga_verde", "fototrofa"]
+descripcion = "Alga verde en media luna de ~11 um, la del ensayo de toxicidad estandar (OECD 201). Crece rapido y es muy sensible a los contaminantes."
+locomocion = "cilios"
+plan = "alga_verde"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.5
+divisiones_por_ciclo = 2
+cantidad_inicial = 12
+cloroplastos = true
+ph = [5.5, 9.5]
+temperatura = [5.0, 35.0]
+reserva = "almidon"
+pared = "celulosa"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 5.5
+semieje_menor = 2.5
+espesor = 0.85
+memoria_forma = 20.0
+color = [124, 178, 98]
+nucleo = 0.3
+
+[ser.apariencia]
+estilo = "cocoide"
+
+# Desmodesmus subspicatus (Scenedesmus subspicatus): la otra alga del ensayo OECD 201. En la naturaleza
+# forma cenobios de 4 células; la cepa de laboratorio crece casi siempre como células sueltas ovales de
+# 7–15 × 3–12 µm y 60–80 µm³ (OECD 201, anexo 2). Autosporas. Espesor para el volumen medido.
+[[ser]]
+id = "desmodesmus"
+nombre = "Desmodesmus"
+etiquetas = ["alga", "alga_verde", "fototrofa", "hospeda_quitridios"]
+descripcion = "Alga verde oval de ~9 um. En los estanques forma grupos de 4 celulas en fila; en cultivo vive casi siempre suelta. Se usa en ensayos de toxicidad."
+locomocion = "cilios"
+plan = "alga_verde"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.5
+divisiones_por_ciclo = 2
+cantidad_inicial = 10
+cloroplastos = true
+ph = [5.5, 9.5]
+temperatura = [5.0, 35.0]
+reserva = "almidon"
+pared = "celulosa"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 4.5
+semieje_menor = 2.5
+espesor = 1.5
+memoria_forma = 20.0
+color = [120, 174, 96]
+nucleo = 0.3
+
+[ser.apariencia]
+estilo = "cocoide"
+
+# Phacus pleuronectes: euglenoide rígido (sin metabolia), aplanado como una hoja, de 37–80 × 30–50 µm,
+# con una espina caudal, un flagelo del largo del cuerpo, estigma y dos granos grandes de paramilón
+# (diagnosis de M. Kreutz, realmicrolife.com). Fotótrofo: no fagocita.
+[[ser]]
+id = "phacus"
+nombre = "Phacus"
+etiquetas = ["protista", "flagelado", "euglenido", "fototrofa"]
+descripcion = "Euglenoide verde, rigido y chato como una hoja, con una espina en la cola y dos granos grandes de paramilon. Nada hacia la luz con un flagelo."
+locomocion = "flagelo"
+plan = "euglenido"
+fototaxis = true
+cantidad_inicial = 6
+cloroplastos = true
+ciclosis = 1.0
+ph = [5.0, 9.5]
+temperatura = [10.0, 35.0]
+reserva = "paramilon"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 27.0
+semieje_menor = 19.0
+espesor = 5.0
+memoria_forma = 30.0
+color = [118, 170, 90]
+nucleo = 0.25
+afinamiento = 0.6
+
+# Pinnularia viridis: diatomea pennada grande, lineal, de 50–170 × 10–30 µm (Patrick y Reimer 1966),
+# con el rafe bien visible; se desliza sobre el vidrio. Frecuente en charcas, turberas y musgos
+# húmedos. Sin dato de su velocidad: la de Navicula. La valva real es lineal, de lados paralelos;
+# acá es una elipse alargada (cuadratura 2): con la de un cilindro el surco de la división no se
+# cierra (la forma de las hijas sale de la elipse de la madre, divisionRestShape).
+[[ser]]
+id = "pinnularia"
+nombre = "Pinnularia"
+etiquetas = ["alga", "diatomea", "fototrofa", "hospeda_quitridios"]
+descripcion = "Diatomea grande (~120 um) en forma de baston con la frustula estriada y un rafe en el medio por el que secreta mucilago para deslizarse."
+locomocion = "cilios"
+plan = "diatomea"
+velocidad_relativa = 0.012
+fotosintesis_relativa = 1.5
+cantidad_inicial = 4
+cloroplastos = true
+desliza_por_rafe = true
+frustula = true
+ph = [5.0, 9.0]
+temperatura = [0.0, 30.0]
+reserva = "crisolaminarina"
+pared = "silice"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0, coraza = 0.3 }
+[ser.forma]
+semieje_mayor = 60.0
+semieje_menor = 11.0
+memoria_forma = 40.0
+color = [202, 184, 122]
+nucleo = 0.3
+
+[ser.apariencia]
+estilo = "frustula"
+color_plastos = [176, 140, 50]

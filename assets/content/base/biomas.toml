@@ -110,7 +110,7 @@ liquenes = 3 # los líquenes crecen sobre el musgo
 physarum = 3 # hojarasca y musgo húmedo
 manchas = 0.4
 peso_base = 0.0
-pesos = { paramecium = 0.3, euglena = 0.5, amoeba = 1.0, chlamydomonas = 0.4, vorticella = 1.0, euplotes = 1.0, arcella = 3.0, navicula = 0.5, candida = 1.0, naegleria = 3.0, zygnema = 0.5 }
+pesos = { paramecium = 0.3, euglena = 0.5, amoeba = 1.0, chlamydomonas = 0.4, vorticella = 1.0, euplotes = 1.0, arcella = 3.0, navicula = 0.5, candida = 1.0, naegleria = 3.0, zygnema = 0.5, pinnularia = 1.0 }
 [bioma.medio]
 temperatura = 12.0
 luz = 0.4
