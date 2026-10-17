@@ -61,17 +61,18 @@ class InspectorPanel : public Panel {
             app.tools.followSelected = false;
             return;
         }
-        ImGui::TextColored(ins.dead ? ImVec4(0.9f, 0.35f, 0.3f, 1.0f) : ImVec4(1, 1, 1, 1), "%s", ins.title.c_str());
+        ImGui::TextColored(ins.dead ? ImVec4(0.9f, 0.35f, 0.3f, 1.0f) : ImVec4(1, 1, 1, 1), "%s", tr(ins.title.c_str()));
         ImGui::PushStyleColor(ImGuiCol_Text, col(palette().dim));
-        ImGui::TextWrapped("%s", ins.subtitle.c_str());
+        ImGui::TextWrapped("%s", tr(ins.subtitle.c_str()));
         ImGui::PopStyleColor();
         if (ins.dead && ins.successor != entt::null)
             note("El control pasa a su sucesor.");
         ImGui::Spacing();
-        ImGui::TextWrapped("%s", ins.blurb.c_str());
+        ImGui::TextWrapped("%s", tr(ins.blurb.c_str()));
         ImGui::Spacing();
         for (const InspectSection& s : ins.sections) {
-            if (!ImGui::CollapsingHeader(s.title.c_str(), ImGuiTreeNodeFlags_DefaultOpen))
+            // Los textos fijos de la ficha se traducen; los valores con números quedan como se armaron.
+            if (!ImGui::CollapsingHeader((std::string(tr(s.title.c_str())) + "###" + s.title).c_str(), ImGuiTreeNodeFlags_DefaultOpen))
                 continue;
             // Las líneas sin rótulo van a todo el ancho: una tabla de ImGui no une columnas, así
             // que se corta la tabla ahí (antes quedaban apretadas en la columna del rótulo).
@@ -82,7 +83,7 @@ class InspectorPanel : public Panel {
                     if (table)
                         ImGui::EndTable();
                     table = false;
-                    ImGui::TextWrapped("%s", l.value.c_str());
+                    ImGui::TextWrapped("%s", tr(l.value.c_str()));
                     continue;
                 }
                 if (!table) {
@@ -96,10 +97,10 @@ class InspectorPanel : public Panel {
                 ImGui::TableNextRow();
                 ImGui::TableSetColumnIndex(0);
                 ImGui::PushStyleColor(ImGuiCol_Text, col(palette().dim));
-                ImGui::TextWrapped("%s", l.label.c_str());
+                ImGui::TextWrapped("%s", tr(l.label.c_str()));
                 ImGui::PopStyleColor();
                 ImGui::TableSetColumnIndex(1);
-                ImGui::TextWrapped("%s", l.value.c_str());
+                ImGui::TextWrapped("%s", tr(l.value.c_str()));
             }
             if (table)
                 ImGui::EndTable();

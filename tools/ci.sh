@@ -38,6 +38,9 @@ compilar() {
 paso "compilar release"
 compilar release
 
+paso "traducciones (formatos iguales en assets/lang/*.txt)"
+for f in assets/lang/*.txt; do python3 tools/claves_tr.py --check "$f"; done
+
 paso "tests rápidos"
 ctest --test-dir build/release -L rapidos --output-on-failure
 

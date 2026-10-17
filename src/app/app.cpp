@@ -103,7 +103,7 @@ App::App() {
     layoutReset_ = !std::filesystem::exists(layoutPath_);
 }
 
-App::~App() = default;
+App::~App() { ui::writeMissingKeys(); } // BIO_TR_FALTANTES: las claves sin traducir
 
 void App::setTool(Tool t) {
     tools.tool = t;

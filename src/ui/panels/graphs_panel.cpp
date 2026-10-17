@@ -13,6 +13,7 @@
 #include <cmath>
 #include <cstdint>
 #include <cstring>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -31,6 +32,14 @@ constexpr Tab kTabs[] = {
     {"Balance", "Balance"},
     {"Región", "Region"},
 };
+
+// Nombre que se muestra de una columna: las especies van por su id en la serie (el CSV no cambia con
+// el idioma); en pantalla, su nombre traducido.
+const char* columnLabel(const SeriesColumn& c) {
+    if (const std::optional<SpeciesId> id = findSpecies(c.name))
+        return tr(speciesInfo(*id).name);
+    return tr(c.name.c_str());
+}
 
 // ¿La columna tiene algún dato distinto de cero (las especies ausentes no se ofrecen)?
 bool hasData(const std::vector<float>& v) {
@@ -123,8 +132,8 @@ class GraphsPanel : public Panel {
                 continue;
             ++offered;
             bool on = shown_[c] != 0;
-            const std::string label = s.info(c).unit.empty() ? std::string(tr(s.info(c).name.c_str()))
-                                                             : std::string(tr(s.info(c).name.c_str())) + " [" + s.info(c).unit + "]";
+            const std::string label = s.info(c).unit.empty() ? std::string(columnLabel(s.info(c)))
+                                                             : std::string(columnLabel(s.info(c))) + " [" + s.info(c).unit + "]";
             if (ImGui::Checkbox(label.c_str(), &on))
                 shown_[c] = on ? 1 : 0;
         }
@@ -152,7 +161,7 @@ class GraphsPanel : public Panel {
                     continue;
                 const bool ph = chemistry && static_cast<int>(c) == phColumn;
                 ImPlot::SetAxes(ImAxis_X1, ph ? ImAxis_Y2 : ImAxis_Y1);
-                ImPlot::PlotLine(tr(s.info(c).name.c_str()), x.data(), s.column(c).data(), static_cast<int>(x.size()), spec);
+                ImPlot::PlotLine(columnLabel(s.info(c)), x.data(), s.column(c).data(), static_cast<int>(x.size()), spec);
             }
             ImPlot::EndPlot();
         }
@@ -165,7 +174,7 @@ class GraphsPanel : public Panel {
         for (std::size_t c = 0; c < s.columns(); ++c)
             if (s.info(c).group == "Poblacion" && s.info(c).unit != "pmol" && hasData(s.column(c))) {
                 cols.push_back(static_cast<int>(c));
-                names.push_back(s.info(c).name.c_str());
+                names.push_back(columnLabel(s.info(c)));
             }
         if (cols.empty()) {
             note("No hay poblaciones en la placa.");

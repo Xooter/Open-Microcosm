@@ -91,7 +91,9 @@ void readout(const char* text, const char* fmt, ...) {
     char buf[256];
     va_list args;
     va_start(args, fmt);
-    std::vsnprintf(buf, sizeof buf, fmt, args);
+    // El formato también se traduce ("%.1f h (%.2f días)"): la traducción conserva los mismos
+    // especificadores (lo verifica tools/claves_tr.py).
+    std::vsnprintf(buf, sizeof buf, tr(fmt), args);
     va_end(args);
     ImGui::TextColored(col(palette().dim), "%s", tr(text));
     ImGui::SameLine(ImGui::GetCursorStartPos().x + kLabelFraction * ImGui::GetContentRegionAvail().x);

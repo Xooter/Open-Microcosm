@@ -43,7 +43,8 @@ e interviene.
   íconos), Ficha, Herramientas, Simulación, Preferencias (imagen, fluidez y rendimiento),
   Procesos (tasas de química, microbiología y hongos), Estadísticas (censo, totales conservados
   de P, N, Si y Fe, y el ser controlado), Enciclopedia y Gráficos, Medición, Contenido (paquetes
-  cargados, avisos de los datos, importar y exportar `.biopack`) y Ayuda. Arrancan abiertos Placa,
+  cargados, avisos de los datos, importar y exportar `.biopack`), Cultivos, Experimento y
+  Ayuda. Arrancan abiertos Placa,
   Catálogo, Tinciones, Ficha, Estadísticas, Herramientas, Simulación y Medición; los demás se abren
   desde *Ver* (un panel cerrado por defecto pone `open = false` en su constructor).
 - **Herramientas** (barra izquierda o teclas 1-0, M y G): Seleccionar, Controlar, Tinta, Detrito,
@@ -410,6 +411,14 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   `bar`, `section`. Rótulo a la izquierda, ayuda al pasar el mouse y valor tipeable (Ctrl+click).
   Todo texto visible pasa por `ui::tr(clave)` (la clave es el texto en español); el ID de cada
   ventana es estable (`título###clave`) para que la disposición guardada no dependa del idioma.
+- **Idiomas** (fase P1): `assets/lang/en.txt` (inglés) y, en cada paquete de contenido, su
+  `idiomas/<código>.txt`. Los formatos de `readout` también se traducen: la traducción conserva los
+  especificadores (lo verifica `tools/claves_tr.py --check`, que corre en `tools/ci.sh`). Un texto
+  nuevo se suma con `tools/claves_tr.py --check assets/lang/en.txt --faltantes`; lo que se arma en
+  tiempo de ejecución sale con `BIO_TR_FALTANTES=archivo ./bio`. Si el español de una clave cambia, su
+  traducción deja de coincidir y se ve en español (nunca una traducción vieja). Las columnas de las
+  series y del CSV van por id (no cambian con el idioma). La ficha traduce títulos, rótulos, nombres y
+  descripciones; los valores que arma `game/inspect` con números quedan en español (pendiente).
 - **Estilo:** todos los colores y espaciados salen de `ui/theme`. La fuente trae Latin-1 (acentos,
   ñ, µ, °): se puede escribir con acentos en la UI nueva.
 - **Opciones** (`Options` en `game/progress`, `<datos>/biogame/options.txt`): las aplica

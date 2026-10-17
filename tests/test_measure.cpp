@@ -137,7 +137,7 @@ TEST_CASE("exportar: CSV con unidades y JSON con parámetros, serie y balance") 
     }
     REQUIRE(run.series().rows() >= 3);
     const std::string csv = seriesCsv(run.series());
-    CHECK(csv.find("t [s],t bio [h],Paramecium [individuos]") == 0);
+    CHECK(csv.find("t [s],t bio [h],paramecium [individuos]") == 0); // las especies van por id
     CHECK(csv.find("O2 [µM]") != std::string::npos);
     CHECK(csv.find("P total [pmol P]") != std::string::npos);
     CHECK(csv.find("Región: células [individuos]") != std::string::npos);

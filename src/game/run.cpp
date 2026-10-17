@@ -73,7 +73,8 @@ void Run::buildColumns() {
     c.push_back({"t", "s", "Tiempo"});
     c.push_back({"t bio", "h", "Tiempo"});
     for (int s = 0; s < speciesCount(); ++s)
-        c.push_back({speciesInfo(static_cast<SpeciesId>(s)).name, "individuos", "Poblacion"});
+        // Por el id estable (no por el nombre que se muestra): el CSV no cambia con el idioma.
+        c.push_back({speciesInfo(static_cast<SpeciesId>(s)).key, "individuos", "Poblacion"});
     c.push_back({"Bacterias", "individuos", "Poblacion"});
     c.push_back({"Cianobacterias", "células", "Poblacion"});
     c.push_back({"Biomasa viva", "pmol", "Poblacion"});

@@ -1,3 +1,5 @@
+10. **Protocolos y lecciones:** Jennings, Tilman, Gause, plasmólisis y fragilidad osmótica; cada
+    una con su solución que un test recorre.
 # Plan — Fase MVP P1: experimentos y aula
 
 Plan del 16/10/2026, aprobado en sus decisiones. Se implementa en el orden de abajo, con un commit
@@ -99,10 +101,23 @@ por paso y sus tests. Avance: ✅ hecho · 🟡 en parte (se dice qué falta) ·
    *Hecho:* inóculo por mL de cultivo (`inocular_densidad`) y desde una suspensión en la placa
    (Catálogo > Inocular, con los esperados); pasaje entre cultivos con las células con su estado
    (la escena del que recibe se repite); diluciones seriadas 1:10.
-9. **Inglés:** `assets/lang/en.txt`, claves faltantes registradas, traducción del contenido por
+9. ✅ **Inglés:** `assets/lang/en.txt`, claves faltantes registradas, traducción del contenido por
    paquete con huella del texto de origen.
-10. **Protocolos y lecciones:** Jennings, Tilman, Gause, plasmólisis y fragilidad osmótica; cada
+   *Hecho:* `assets/lang/en.txt` con 1330 textos (interfaz, parámetros, seres, medios, placas, biomas
+   y minerales), selector en Preferencias, `idiomas/<código>.txt` por paquete (la clave es el texto en
+   español: si cambia, la traducción deja de valer sola, sin huella aparte), `tools/claves_tr.py` y
+   `BIO_TR_FALTANTES`, formatos traducibles verificados, columnas del CSV por id. *Falta:* los valores
+   armados con números en la ficha (`game/inspect`).
+10. ✅ **Protocolos y lecciones:** Jennings, Tilman, Gause, plasmólisis y fragilidad osmótica; cada
     una con su solución que un test recorre.
+    *Hecho:* `game/lesson` (lecciones como datos en `lecciones.toml` y en los paquetes, condiciones
+    con nombre que verifica la simulación, preguntas con explicación, predicciones contra lo medido,
+    acciones con nombre), panel Lección (prepara la placa o el cultivo, muestra sus controles y
+    acciones: el alumno no necesita otro panel) e informe en Markdown. Protocolo: los parámetros
+    fijados se ven trabados con su motivo; destrabar se anota y la exportación dice
+    `fuera_de_protocolo`. Parámetros de ambiente en el registro (`ambiente.*`). Operaciones del
+    cultivo `quimiostato` y `medio_que_entra`; recipiente `microquimiostato`. Las cinco lecciones se
+    completan con su solución (`tests/test_lessons.cpp`).
 11. **Reactivos con mecanismos** y ajuste de Hill (`game/dose_fit`).
 12. **Programas en la placa.**
 13. **Foto y time-lapse** (por tiempo biológico, no por cuadro).

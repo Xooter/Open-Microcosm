@@ -28,6 +28,18 @@ class SettingsPanel : public Panel {
         bool changed = false;   // hay que aplicar y guardar
         bool custom = false;    // se tocó una opción del preset a mano
 
+        if (section("Idioma", true)) {
+            static const char* const kLanguages[] = {"Español", "English"};
+            static const char* const kCodes[] = {"es", "en"};
+            int idx = o.language == "en" ? 1 : 0;
+            if (combo("Idioma de la interfaz", &idx, kLanguages, 2,
+                      "Los textos de la interfaz, de los seres y de las lecciones. Los datos exportados no cambian "
+                      "(las columnas van por id).")) {
+                o.language = kCodes[idx];
+                loadLanguage(o.language);
+                changed = true;
+            }
+        }
         if (section("Calidad de imagen", true)) {
             static const char* const kPresets[] = {"Personalizada", "Baja", "Media", "Alta"};
             const char* presets[4];
