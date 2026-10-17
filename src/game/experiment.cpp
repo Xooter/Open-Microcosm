@@ -5,9 +5,11 @@
 #include "core/profiling.hpp"
 #include "core/rng.hpp"
 #include "game/biome.hpp"
+#include "game/dose_fit.hpp"
 #include "game/export.hpp"
 #include "game/parameters.hpp"
 #include "game/prepared.hpp"
+#include "game/reagent.hpp"
 #include "game/run.hpp"
 #include "game/scene.hpp"
 #include "game/world.hpp"
@@ -125,6 +127,8 @@ ReplicaResult runCultureReplica(const ExperimentSpec& spec, const ExperimentLeve
             extra.push_back({0, CultureOp::Bacteria, "", value});
         } else if (key.rfind("soluto:", 0) == 0) {
             extra.push_back({0, CultureOp::Concentration, key.substr(7), value});
+        } else if (key.rfind("reactivo:", 0) == 0) {
+            extra.push_back({0, CultureOp::Reagent, key.substr(9), value});
         } else if (key.rfind("inocular:", 0) == 0) {
             const std::string id = key.substr(9);
             events.erase(std::remove_if(events.begin(), events.end(),
@@ -201,6 +205,7 @@ void preloadRegistries() {
     vesselCount();
     cultureMediumCount();
     preparedPlateCount();
+    reagentCount();
     parameters();
 }
 
@@ -417,7 +422,26 @@ std::string experimentJson(const ExperimentResult& r) {
         }
         j << "]}";
     }
-    j << "\n  }\n}\n";
+    j << "\n  }";
+    // Dosis-respuesta: con un solo factor que es un reactivo, la CI50 (Hill) y la CIM de las bacterias
+    // al final, como en una dilución en caldo (crecimiento visible: ~10⁷ por mL, ESTIMACIÓN).
+    const int bact = r.column("bacterias");
+    if (r.spec.factors.size() == 1 && r.spec.factors[0].key.rfind("reactivo:", 0) == 0 && bact >= 0 && !r.times.empty()) {
+        std::vector<double> doses, finals;
+        for (std::size_t l = 0; l < r.levels.size(); ++l) {
+            doses.push_back(r.levels[l].settings.empty() ? 0.0 : r.levels[l].settings[0].second);
+            finals.push_back(summarize(r, static_cast<int>(l), bact, r.times.size() - 1).mean);
+        }
+        const DoseFit f = fitDoseResponse(doses, finals);
+        const bool culture = r.spec.kind == ExperimentSpec::Kind::Culture;
+        j << ",\n  \"dosis_respuesta\": {\"reactivo\": " << quoted(r.spec.factors[0].key.substr(9))
+          << ", \"unidad\": \"ug/mL\", \"ci50\": " << num(f.valid ? f.ic50 : 0.0) << ", \"hill\": " << num(f.hill)
+          << ", \"r2\": " << num(f.r2);
+        if (culture)
+            j << ", \"cim\": " << num(minimumInhibitory(doses, finals, 1e7));
+        j << "}";
+    }
+    j << "\n}\n";
     return j.str();
 }
 

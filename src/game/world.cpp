@@ -2,6 +2,7 @@
 
 #include "bio/cell_physiology.hpp"
 #include "bio/physiology.hpp"
+#include "game/reagent.hpp"
 
 #include "core/finite.hpp"
 #include "core/profiling.hpp"
@@ -106,6 +107,7 @@ World::World(const WorldConfig& config)
       glutamine_(config.gridX, config.gridY, config.cellSize, units::kDiffusionGlucose, config.medium.glutamine),
       lactate_(config.gridX, config.gridY, config.cellSize, units::kDiffusionSmallSolute, 0.0f),
       fmlp_(config.gridX, config.gridY, config.cellSize, units::kDiffusionSmallSolute, 0.0f),
+      reagent_(config.gridX, config.gridY, config.cellSize, units::kDiffusionSmallSolute, 0.0f),
       light_(config.gridX, config.gridY, config.cellSize, 1.0f),
       shading_(config.gridX, config.gridY, config.cellSize),
       slime_(config.gridX, config.gridY, config.cellSize),
@@ -258,6 +260,10 @@ void World::step(float dt) {
             ChemField* const culture[] = {&glutamine_, &lactate_, &fmlp_};
             ChemField::advectAll(culture, 3, fluid_, dt);
         }
+        if (reagentIndex_ >= 0) { // un reactivo, solo si se usó
+            ChemField* const r[] = {&reagent_};
+            ChemField::advectAll(r, 1, fluid_, dt);
+        }
     }
     updateChemistrySources(dt);
     updateWaterChemistry(dt);
@@ -274,6 +280,8 @@ void World::step(float dt) {
         if (cultureFields_)
             for (ChemField* f : {&glutamine_, &lactate_, &fmlp_})
                 f->diffuse(fft_, slowDiffusion_);
+        if (reagentIndex_ >= 0)
+            reagent_.diffuse(fft_, slowDiffusion_);
         slowDiffusion_ = 0.0f;
     }
     co2_.diffuse(fft_, dt);
@@ -347,6 +355,13 @@ void World::updateChemistrySources(float dt) {
     }
     if (medium_.perfusionPerHour > 0.0f)
         perfuse(dt);
+}
+
+void World::setReagent(int index) {
+    if (index == reagentIndex_)
+        return;
+    reagentIndex_ = index;
+    std::fill(reagent_.grid().v.begin(), reagent_.grid().v.end(), 0.0f);
 }
 
 void World::perfuse(float dt) {
@@ -2662,7 +2677,22 @@ void World::growBacteria(float dt) {
         const float taken = std::min(bacterialDemand_[i], std::max(0.0f, c) / k);
         c -= taken * k;
         float& m = bacteria_.mass[i];
-        m += bacterialMassChange(bp, taken, m, maintenance);
+        const float change = bacterialMassChange(bp, taken, m, maintenance);
+        // Reactivo (antibiótico): la muerte que agrega con lo que crece ahora (Regoes et al. 2004).
+        if (reagentIndex_ >= 0) {
+            const float a = reagent_.grid().sample(bacteria_.x[i], bacteria_.y[i]);
+            const double kill = a > 0.0f ? reagentKillRate(reagent(reagentIndex_), a,
+                                                           change / std::max(1e-6f, m) / std::max(1e-9f, bioDt / 3600.0f))
+                                         : 0.0;
+            if (kill > 0.0 &&
+                Rng(config_.seed, rng_stream::kBacteria + 510, bacteria_.id[i], step_).uniform() <
+                    1.0 - std::exp(-kill * bioDt / 3600.0)) {
+                c += m * kBacteriumPmol * k; // la pared revienta: lisis
+                eatenBacteria_.push_back(i);
+                continue;
+            }
+        }
+        m += change;
         if (m < 0.5f) { // muere de hambre: su materia vuelve al agua
             c += m * kBacteriumPmol * k;
             eatenBacteria_.push_back(i);

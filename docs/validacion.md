@@ -92,6 +92,20 @@ salen de los de *P. caudatum* con el exponente del zooplancton (V^0,75–0,77). 
 | Tilman en quimiostato: P limitante | **PASA** | D = 0,25/día (Tilman 1977), 60 días: *Cyclotella* se extingue (0 contra 250 *Asterionella*). |
 | Tilman en quimiostato: Si limitante | **PASA** | *Asterionella* se extingue (0 contra 1366 *Cyclotella*). Exclusión completa, como en los cultivos semicontinuos de Tilman (en lote solo se veía la tendencia). |
 
+## Antibióticos: la CIM que emerge (fase P1, paso 11)
+
+Los reactivos (`reactivos.toml`, `game/reagent`) usan la función farmacodinámica que Regoes et al.
+(2004, Antimicrob. Agents Chemother. 48: 3670-3676) ajustaron a curvas de muerte de *E. coli*
+(ψmax, ψmin, zMIC y κ), con la muerte proporcional a lo que crece la bacteria (los β-lactámicos no
+matan a las que no crecen). La CIM no entra a la simulación: sale de una dilución en caldo simulada
+(Mueller-Hinton a 35 °C, 5·10⁵ bacterias/mL, 18 h, serie al doble, crecimiento visible = 10⁷/mL,
+ESTIMACIÓN del umbral) y se compara con la que el mismo trabajo midió por dilución.
+
+| Test | Estado | Nota |
+|---|---|---|
+| CIM de la ampicilina | **PASA** | 4 µg/mL contra 8 publicada (una dilución: la reproducibilidad de la prueba es ±1). |
+| CIM de la tetraciclina | **PASA** | 1 µg/mL contra 1. |
+
 ## Calibración cruzada placa ↔ cultivo (fase P1, paso 2)
 
 `measureFunctionalResponse` (`game/calibration`, `bio_bench --respuesta-funcional paramecium`) mide

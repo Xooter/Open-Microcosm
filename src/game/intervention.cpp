@@ -2,6 +2,7 @@
 
 #include "core/profiling.hpp"
 #include "game/parameters.hpp"
+#include "game/reagent.hpp"
 #include "game/sandbox.hpp"
 #include "game/world.hpp"
 
@@ -23,6 +24,8 @@ constexpr Solute kSolutes[] = {
     // Agua cargada de CO2 (Jennings 1906): ácido débil, acidifica y atrae a Paramecium. Al final de
     // la lista: el índice queda en las escenas guardadas.
     {"CO2 disuelto", 1000.0f},
+    // Reactivo (game/reagent): cuál lo dice la clave de la intervención [µg/mL].
+    {"Reactivo", 10.0f},
 };
 constexpr int kSoluteCount = static_cast<int>(sizeof(kSolutes) / sizeof(kSolutes[0]));
 
@@ -38,6 +41,7 @@ ChemField& soluteField(World& world, int index) {
     case 3: return world.ironField();
     case 4: return world.vitaminField();
     case 6: return world.co2();
+    case 7: return world.reagentField();
     default: return world.nutrients();
     }
 }
@@ -91,8 +95,11 @@ bool applyIntervention(World& world, const Intervention& iv) {
         world.spawnBeing({static_cast<BeingKind>(iv.index), static_cast<SpeciesId>(species)}, iv.pos);
         return true;
     }
-    case InterventionKind::Ink:
     case InterventionKind::Dropper:
+        if (iv.index == 7 && !iv.key.empty()) // el gotero de un reactivo elige cuál
+            world.setReagent(findReagent(iv.key));
+        return true; // pincel: lo aplica InterventionLog::beforeStep
+    case InterventionKind::Ink:
         return true; // pinceles: los aplica InterventionLog::beforeStep
     case InterventionKind::Stir:
         if (iv.active)
@@ -167,7 +174,7 @@ void InterventionLog::recordState(World& world, const Intervention& iv) {
     const auto k = static_cast<std::size_t>(iv.kind);
     const Intervention& last = lastState_[k];
     if (hasState_[k] && last.active == iv.active && last.index == iv.index && last.pos.x == iv.pos.x &&
-        last.pos.y == iv.pos.y && std::equal(iv.v, iv.v + 6, last.v))
+        last.pos.y == iv.pos.y && std::equal(iv.v, iv.v + 6, last.v) && last.key == iv.key)
         return;
     hasState_[k] = true;
     lastState_[k] = iv;

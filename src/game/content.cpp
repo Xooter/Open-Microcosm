@@ -8,6 +8,7 @@
 #include "game/lesson.hpp"
 #include "game/plate_spec.hpp"
 #include "game/prepared.hpp"
+#include "game/reagent.hpp"
 #include "game/progress.hpp"
 
 #include <algorithm>
@@ -133,8 +134,8 @@ void loadDefinitions(const std::string& text, const std::string& source, const s
     // van a `messages`, así quien importa ve qué pasó con su paquete.
     const std::vector<std::string>* lists[] = {&bodyPlanWarnings(), &mineralLoadWarnings(), &speciesLoadWarnings(),
                                                &physiologyWarnings(), &biomeLoadWarnings(), &preparedLoadWarnings(),
-                                               &lessonLoadWarnings()};
-    constexpr int kLists = 7;
+                                               &lessonLoadWarnings(), &reagentLoadWarnings()};
+    constexpr int kLists = 8;
     std::size_t before[kLists];
     for (int i = 0; i < kLists; ++i)
         before[i] = lists[i]->size();
@@ -152,6 +153,8 @@ void loadDefinitions(const std::string& text, const std::string& source, const s
     if (!loadPreparedText(text, source, pack, &error)) // medios, recipientes y placas preparadas
         messages.push_back(error);
     if (!loadLessonsText(text, source, pack, &error)) // lecciones (nombran placas, biomas y seres)
+        messages.push_back(error);
+    if (!loadReagentsText(text, source, pack, &error)) // reactivos (antibióticos)
         messages.push_back(error);
     for (int i = 0; i < kLists; ++i)
         messages.insert(messages.end(), lists[i]->begin() + static_cast<std::ptrdiff_t>(std::min(before[i], lists[i]->size())),
@@ -243,9 +246,9 @@ void ensureBase() {
 
 constexpr const char* kDirFiles[] = {"planes.toml", "minerales.toml", "seres.toml",   "fisiologia.toml",
                                      "biomas.toml", "medios.toml",    "recipientes.toml", "placas.toml",
-                                     "lecciones.toml"};
+                                     "lecciones.toml", "reactivos.toml"};
 constexpr const char* kBiopackKeys[] = {"paquete", "ser",   "plan",       "mineral", "bioma",
-                                        "fisiologia", "medio", "recipiente", "placa",   "escena", "leccion"};
+                                        "fisiologia", "medio", "recipiente", "placa",   "escena", "leccion", "reactivo"};
 
 } // namespace
 

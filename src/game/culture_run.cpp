@@ -5,6 +5,7 @@
 #include "bio/cell_physiology.hpp"
 #include "core/units.hpp"
 #include "game/prepared.hpp"
+#include "game/reagent.hpp"
 #include "game/progress.hpp"
 
 #include <algorithm>
@@ -18,7 +19,7 @@
 namespace {
 constexpr const char* kOpKeys[] = {"inocular", "bacterias", "medio",  "dilucion",           "concentracion",
                                    "fagos",    "muestra",   "salida", "entrada", "inocular_densidad",
-                                   "quimiostato", "medio_que_entra"};
+                                   "quimiostato", "medio_que_entra", "reactivo"};
 
 std::string fnum(double v) {
     char buf[40];
@@ -256,6 +257,12 @@ bool CultureRun::apply(CultureEvent ev) {
                 c.setFreshConcentration(static_cast<Solute>(k), ev.value);
                 ok = true;
             }
+        break;
+    case CultureOp::Reagent:
+        if (const int r = findReagent(ev.key); r >= 0)
+            c.setReagent(r, ev.value);
+        else
+            ok = false;
         break;
     case CultureOp::Count: ok = false; break;
     }

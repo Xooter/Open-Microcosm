@@ -360,6 +360,16 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
 - Lo que todavía no se simula bien mezclado no se siembra (`Culture::supports`): células animales,
   filamentos, colonias y zoosporas. Tampoco hay Bdellovibrio, quorum ni conjugación.
 
+### Reactivos (`game/reagent`, `game/dose_fit`, fase P1)
+
+- Un reactivo es un dato con un **mecanismo** con nombre (hoy `farmacodinamico`: la función de
+  Regoes et al. 2004 con ψmax, ψmin, zMIC y κ medidos) y blancos reales (`bacterias`). La muerte que
+  agrega escala con lo que crece la bacteria (`depende_del_crecimiento`). La CI50 y la CIM **no son
+  datos de entrada**: salen de un lote de dosis (`reactivo:<id>`, `fitDoseResponse`,
+  `minimumInhibitory`); la `cim_publicada` solo valida.
+- En la placa, un solo campo de reactivo (`World::reagentField`) que difunde solo si se usó; lo suelta
+  el gotero (soluto 7, la clave dice cuál). En el cultivo, una concentración por reactivo.
+
 ### Lecciones y protocolos (`game/lesson`, panel Lección, fase P1)
 
 - Una lección es un protocolo con pasos, como datos (`lecciones.toml`, `[[leccion]]` en los

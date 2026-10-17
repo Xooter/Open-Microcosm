@@ -419,6 +419,11 @@ class World {
     const ChemField& glutamine() const { return glutamine_; }
     const ChemField& lactate() const { return lactate_; }
     const ChemField& fmlp() const { return fmlp_; }
+    // Reactivo de la placa (game/reagent): el gotero lo suelta; cambiar de reactivo vacía el campo.
+    void setReagent(int index);
+    int reagentIndex() const { return reagentIndex_; }
+    ChemField& reagentField() { return reagent_; }
+    const ChemField& reagentField() const { return reagent_; }
     bool cultureFields() const { return cultureFields_; }
     bool isAnimalCell(entt::entity e) const;
     float crawlSpeed(entt::entity e) const; // [µm/s reales] de su migración
@@ -664,6 +669,8 @@ class World {
     Fluid fluid_;
     ChemField oxygen_, nutrients_, phosphate_, nitrogen_, silicate_, iron_, vitamin_, co2_, toxin_, autoinducer_, phage_;
     ChemField glutamine_, lactate_, fmlp_;
+    ChemField reagent_;      // un reactivo (antibiótico) [µg/mL]; solo difunde si se usó
+    int reagentIndex_ = -1;  // cuál (game/reagent), -1 ninguno
     bool cultureFields_ = false;
     Tissue tissue_;
     Erythrocytes blood_;

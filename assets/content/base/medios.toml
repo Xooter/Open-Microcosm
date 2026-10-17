@@ -110,3 +110,23 @@ fagos = 0.0
 aporte_organico = 0.0
 detritos_entrantes = 0.0
 polvo = 0.0
+
+[[medio]]
+id = "mueller_hinton"
+nombre = "Caldo Mueller-Hinton"
+descripcion = "El medio de referencia para medir la concentracion inhibitoria minima (CIM) de un antibiotico: extracto de carne, hidrolizado de caseina y almidon."
+fuente = "CLSI M07 (dilución en caldo): caldo Mueller-Hinton, 2 g/L de extracto de carne, 17,5 g/L de hidrolizado ácido de caseína y 1,5 g/L de almidón. La materia orgánica como glucosa equivalente (~21 g/L, ~1,2·10^5 µM) es una ESTIMACIÓN."
+[medio.composicion]
+salinidad = 5.0
+alcalinidad = 2000.0
+glucosa = 117000.0
+fosfato = 1000.0
+nitrogeno = 20000.0
+silice = 0.0
+hierro = 5.0
+vitamina_b12 = 0.0
+fagos = 0.0
+aporte_organico = 0.0
+detritos_entrantes = 0.0
+polvo = 0.0
+

@@ -5,6 +5,7 @@
 #include "game/culture_run.hpp"
 #include "game/export.hpp"
 #include "game/prepared.hpp"
+#include "game/reagent.hpp"
 #include "ui/i18n.hpp"
 #include "ui/panels/panel_classes.hpp"
 #include "ui/widgets.hpp"
@@ -70,7 +71,8 @@ class CulturePanel : public Panel {
     int inoculum_ = 5;
     float bacteriaPerMl_ = 1e7f, phagesPerMl_ = 1e5f;
     float renew_ = 1.0f, dilute_ = 0.1f;
-    int solute_ = 2;
+    int solute_ = 2, reagent_ = 0;
+    float dose_ = 8.0f;
     float soluteValue_ = 10.0f;
     // Programa.
     ProgramEntry entry_;
@@ -280,6 +282,20 @@ class CulturePanel : public Panel {
         sliderLog("Concentración [µM]", &soluteValue_, 1e-4f, 1e5f, "%.3g");
         if (ImGui::Button(tr("Fijar concentración")))
             run.apply({0, CultureOp::Concentration, soluteKey(static_cast<Solute>(solute_)), soluteValue_});
+        if (reagentCount() > 0) {
+            std::vector<const char*> names;
+            for (int i = 0; i < reagentCount(); ++i)
+                names.push_back(tr(reagent(i).name.c_str()));
+            reagent_ = std::clamp(reagent_, 0, reagentCount() - 1);
+            combo("Reactivo", &reagent_, names.data(), reagentCount());
+            tooltip(tr(reagent(reagent_).description.c_str()));
+            sliderLog("Dosis [µg/mL]", &dose_, 0.01f, 1000.0f, "%.3g",
+                      "Una dosis-respuesta se mide como en el laboratorio: un lote (panel Experimento) con el factor "
+                      "reactivo:<id> y una serie de dosis al doble.");
+            ImGui::TextDisabled("%s %.3g µg/mL", tr("Ahora:"), run.culture().reagentConcentration(reagent_));
+            if (ImGui::Button(tr("Fijar la dosis")))
+                run.apply({0, CultureOp::Reagent, reagent(reagent_).key, dose_});
+        }
     }
 
     void drawProgram(CultureRun& run) {

@@ -42,6 +42,7 @@ enum class CultureOp : std::uint8_t {
     InoculateDensity, // key = id del ser, value = individuos por mL (la cantidad es un sorteo de Poisson)
     Chemostat,     // value = tasa de dilución D [1/h] (0: en lote)
     Inflow,        // key = soluto, value = µM del medio que entra (reservorio del quimiostato)
+    Reagent,       // key = id del reactivo, value = concentración [µg/mL]
     Count
 };
 const char* cultureOpKey(CultureOp op);

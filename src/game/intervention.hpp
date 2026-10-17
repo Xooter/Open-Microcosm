@@ -54,7 +54,7 @@ struct Intervention {
 };
 
 // Campo de cada soluto que se puede gotear o fijar: 0 P, 1 N, 2 Si, 3 Fe, 4 B12, 5 materia orgánica,
-// 6 CO2.
+// 6 CO2, 7 reactivo (el que nombra la clave del gotero: game/reagent).
 ChemField& soluteField(World& world, int index);
 int soluteCount();
 const char* soluteName(int index);

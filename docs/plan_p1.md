@@ -116,7 +116,12 @@ por paso y sus tests. Avance: ✅ hecho · 🟡 en parte (se dice qué falta) ·
     `fuera_de_protocolo`. Parámetros de ambiente en el registro (`ambiente.*`). Operaciones del
     cultivo `quimiostato` y `medio_que_entra`; recipiente `microquimiostato`. Las cinco lecciones se
     completan con su solución (`tests/test_lessons.cpp`).
-11. **Reactivos con mecanismos** y ajuste de Hill (`game/dose_fit`).
+11. ✅ **Reactivos con mecanismos** y ajuste de Hill (`game/dose_fit`).
+    *Hecho:* `reactivos.toml` (ampicilina y tetraciclina con la farmacodinámica medida de Regoes et
+    al. 2004), muerte de las bacterias en el cultivo (por cohorte) y en la placa (un campo de reactivo
+    que difunde solo si se usó, con el gotero), factor `reactivo:<id>` en los lotes con CI50 (Hill) y
+    CIM en el JSON, medio Mueller-Hinton. La CIM emerge de la dilución en caldo: 4 contra 8 µg/mL
+    (ampicilina) y 1 contra 1 (tetraciclina). *Falta:* metales y otros mecanismos (eucariotas).
 12. **Programas en la placa.**
 13. **Foto y time-lapse** (por tiempo biológico, no por cuadro).
 14. **Glosario y notas** (las notas van en la escena, no son intervenciones).

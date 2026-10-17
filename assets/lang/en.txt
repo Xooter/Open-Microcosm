@@ -83,6 +83,7 @@
 %s  seed %llu	%s  seed %llu
 %s  |  %d FPS	%s  |  %d FPS
 %s %.1f min	%s %.1f min
+%s %.3g µg/mL	%s %.3g µg/mL
 %s %zu	%s %zu
 %s (%.0f%% aerobico)	%s (%.0f%% aerobic)
 %s (muerta)	%s (dead)
@@ -132,6 +133,7 @@ Agua sin sales: hipotonica para cualquier celula. Una celula vegetal queda turge
 Agua y cuerpos blandos	Water and soft bodies
 Agua y cuerpos blandos (avanzado)	Water and soft bodies (advanced)
 Ahora monta la epidermis otra vez en agua sin sal y mira que pasa.	Now mount the epidermis again in water without salt and see what happens.
+Ahora:	Now:
 Ahorro en segundo plano	Background saving
 Aire	Air
 Aire libre: 0,042 %. Una incubadora de cultivo: 5-10 %, para que el bicarbonato del medio quede en pH ~7,4.	Open air: 0.042 %. A cell culture incubator: 5-10 %, so the bicarbonate of the medium stays at pH ~7.4.
@@ -174,11 +176,13 @@ Ameba que vive dentro de una testa parda en forma de cupula; asoma seudopodos po
 Ameba: click sostenido = pseudópodo; toca y envuelve	Amoeba: hold click = pseudopod; touch and engulf
 Ameboflagelado de suelos y aguas termales: tolera mas de 40 grados y se enquista si se seca.	Amoeboflagellate of soils and hot springs: tolerates more than 40 degrees and encysts if it dries out.
 Amoeba	Amoeba
+Ampicilina	Ampicillin
 Anabaena	Anabaena
 Anabaena (filamentos)	Anabaena (filaments)
 Ancho del viraje	Turn width
 Anotar	Note it
 Antialiasing (MSAA)	Antialiasing (MSAA)
+Antibióticos con su farmacodinamia medida: matan a las bacterias que crecen. La cantidad está en µg/mL (x10 por la cantidad relativa).	Antibiotics with their measured pharmacodynamics: they kill growing bacteria. The amount is in µg/mL (x10 times the relative amount).
 Anóxico (sin O2 del aire)	Anoxic (no O2 from the air)
 Anóxico y oscuro, repleto de astillas de madera. Trichonympha digiere la celulosa por la termita.	Anoxic and dark, packed with wood splinters. Trichonympha digests cellulose for the termite.
 Apareamiento	Mating
@@ -264,6 +268,7 @@ Cada célula toma el color de lo que limita su crecimiento ahora (ley del mínim
 Cada globulo rojo puede hincharse hasta un volumen critico, que depende de cuanta membrana tiene de sobra. Con la edad pierde membrana y se vuelve mas fragil: la curva de fragilidad es una distribucion, no un umbral.	Each red blood cell can swell up to a critical volume, which depends on how much spare membrane it has. With age it loses membrane and becomes more fragile: the fragility curve is a distribution, not a threshold.
 Cada regla tiñe un blanco; varias reglas sobre el mismo blanco se apilan. Los blancos salen de la bioquímica real: por ejemplo, solo las algas verdes guardan almidón y solo Bacillus tiene pared grampositiva.	Each rule stains a target; several rules on the same target stack. Targets come from real biochemistry: for example, only green algae store starch and only Bacillus has a Gram-positive wall.
 Cadenas de celulas fotosinteticas; cada ~10 una se vuelve heterocisto y fija el nitrogeno del aire. Al morir liberan microcistina.	Chains of photosynthetic cells; about one in 10 becomes a heterocyst and fixes nitrogen from the air. When they die they release microcystin.
+Caldo Mueller-Hinton	Mueller-Hinton broth
 Calidad	Quality
 Calidad de imagen	Image quality
 Cambiar bioma, semilla o contenido restablece los ajustes de abajo.	Changing biome, seed or content resets the settings below.
@@ -459,6 +464,7 @@ Distancia: arrastrá con la herramienta Medir. Área: dibujá un lazo.	Distance:
 Divisiones del ser	Divisions of the being
 División	Division
 Dos diatomeas compiten por el fosforo en un quimiostato. Gana la que puede crecer al ritmo de la dilucion con menos fosforo disuelto (la de menor R*), y la otra desaparece.	Two diatoms compete for phosphorus in a chemostat. The one that can grow at the dilution rate with less dissolved phosphorus (the lower R*) wins, and the other disappears.
+Dosis [µg/mL]	Dose [µg/mL]
 Duplicar como mía	Duplicate as mine
 Duración [h]	Duration [h]
 Edad	Age
@@ -481,6 +487,7 @@ El experimento como archivo TOML: lo corre este panel o `bio_lote` sin ventana.	
 El filamento se fragmento o murio	The filament fragmented or died
 El globulo blanco mas grande (~15 um): nucleo en forma de rinon y citoplasma gris azulado con vacuolas. En los tejidos se vuelve macrofago.	The largest white blood cell (~15 um): kidney-shaped nucleus and bluish-gray cytoplasm with vacuoles. In tissues it becomes a macrophage.
 El grano se borro	The grain was erased
+El medio de referencia para medir la concentracion inhibitoria minima (CIM) de un antibiotico: extracto de carne, hidrolizado de caseina y almidon.	The reference medium to measure the minimum inhibitory concentration (MIC) of an antibiotic: beef extract, casein hydrolysate and starch.
 El micelio murio de hambre	The mycelium starved
 El plasmodio se endurecio en esclerocio o murio	The plasmodium hardened into a sclerotium or died
 El programa se cerró sin terminar la sesión anterior.	The program closed without ending the previous session.
@@ -556,6 +563,7 @@ Fija el volumen y la profundidad del medio (intercambio de gases y luz).	Sets th
 Fijación de N2	N2 fixation
 Fijado por el protocolo: 	Fixed by the protocol: 
 Fijar concentración	Set concentration
+Fijar la dosis	Set the dose
 Fijar la muestra	Fix the sample
 Fijo	Fixed
 Fijo: siempre el mismo color. Indicador: vira con el pH. Retención: pierde el colorante con el decolorante.	Fixed: always the same color. Indicator: changes with pH. Retention: loses the dye with the decolorizer.
@@ -899,6 +907,7 @@ Pausa [Espacio]	Pause [Space]
 Pausar	Pause
 Pediastrum	Pediastrum
 Penalidad de la fermentación	Fermentation penalty
+Penicilina de amplio espectro (beta-lactamico): se une a las enzimas que arman el peptidoglicano y la pared se rompe mientras la bacteria crece. A una bacteria que no crece no la mata. Los eucariotas no tienen esa pared.	Broad-spectrum penicillin (beta-lactam): it binds the enzymes that build peptidoglycan and the wall breaks while the bacterium grows. It does not kill a bacterium that is not growing. Eukaryotes do not have that wall.
 Perfusión del medio [1/h bio]	Medium perfusion [1/bio h]
 Periplasma	Periplasm
 Personalizada	Custom
@@ -992,6 +1001,7 @@ Radio de revolver [µm]	Stirring radius [µm]
 Radio de tinta [µm]	Ink radius [µm]
 Ramificacion	Branching
 Rampa	Ramp
+Reactivo	Reagent
 Reanudar	Resume
 Recipiente	Vessel
 Recuperando la sesión anterior (re-simulando)...	Recovering the previous session (re-simulating)...
@@ -1044,6 +1054,7 @@ Se come a Cyclotella	It eats Cyclotella
 Se copia a la carpeta de paquetes del usuario y se carga ya: sus seres aparecen en el catálogo, sus biomas en la placa y sus escenas entre las placas guardadas. Queda para las próximas sesiones.	It is copied to the user packs folder and loaded right away: its beings appear in the catalog, its biomes on the plate and its scenes among the saved plates. It stays for the next sessions.
 Se puede recuperar re-simulándola hasta donde quedó:	It can be recovered by re-simulating up to where it was:
 Se saca esa fracción del cultivo con todo lo que tiene y se repone con medio nuevo.	That fraction of the culture is removed with everything it contains and replaced with fresh medium.
+Se une a la subunidad 30S del ribosoma bacteriano (70S) e impide la sintesis de proteinas. Los ribosomas 80S de los eucariotas casi no la unen.	It binds the 30S subunit of the bacterial ribosome (70S) and blocks protein synthesis. The 80S ribosomes of eukaryotes barely bind it.
 Sedimentacion	Sedimentation
 Sedimento	Sediment
 Sedimento (al crear)	Sediment (on creation)
@@ -1120,6 +1131,7 @@ Tasa a la que las bacterias de la biopelícula se sueltan y vuelven a nadar. Est
 Temperatura	Temperature
 Temperatura [°C]	Temperature [°C]
 Terminar la lección	End the lesson
+Tetraciclina	Tetracycline
 Teñida	Stained
 Tiempo	Time
 Tiempo biológico (x)	Biological time (x)
@@ -1163,6 +1175,7 @@ Un raspado de la cara interna de la mejilla en solucion salina, tenido con azul 
 Un solo archivo de texto con las definiciones elegidas, tal como se leyeron (con su plan corporal y su fisiología). Un ser de fábrica exportado sirve de plantilla: para importarlo hay que cambiarle el id.	A single text file with the chosen definitions, as they were read (with their body plan and physiology). An exported built-in being serves as a template: to import it its id must be changed.
 Un volumen de una suspensión de densidad conocida: la cantidad que entra es un sorteo de Poisson (una suspensión de 10 por mL rara vez deja un individuo en 1 µL).	A volume of a suspension of known density: the number that goes in is a Poisson draw (a suspension of 10 per mL rarely leaves one individual in 1 µL).
 Una colonia libera colonias hijas	A colony releases daughter colonies
+Una dosis-respuesta se mide como en el laboratorio: un lote (panel Experimento) con el factor reactivo:<id> y una serie de dosis al doble.	A dose-response is measured as in the laboratory: a batch (Experiment panel) with the factor reactivo:<id> and a twofold dose series.
 Una gota de agua con su fauna (de un bioma) o una placa preparada como en el laboratorio: un cultivo celular en su medio, en la incubadora.	A drop of water with its fauna (from a biome) or a plate prepared as in the laboratory: a cell culture in its medium, in the incubator.
 Una gota de sangre extendida en capa fina, fijada con metanol y tenida con Giemsa: globulos rojos rosados sin nucleo y, cada tanto, globulos blancos (neutrofilos de nucleo lobulado, linfocitos, monocitos) y plaquetas violetas.	A drop of blood spread in a thin layer, fixed with methanol and stained with Giemsa: pink red blood cells without nucleus and, here and there, white blood cells (neutrophils with lobed nuclei, lymphocytes, monocytes) and violet platelets.
 Una hojita de Elodea (Egeria densa) montada en agua: celulas rectangulares llenas de cloroplastos que giran junto a la pared (ciclosis). Con sal se plasmolizan. Se simula un campo de 0,5 mm.	An Elodea leaflet (Egeria densa) mounted in water: rectangular cells full of chloroplasts circling along the wall (cyclosis). With salt they plasmolyze. A 0.5 mm field is simulated.

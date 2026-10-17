@@ -5,6 +5,7 @@
 #include "core/profiling.hpp"
 #include "core/rng.hpp"
 #include "core/units.hpp"
+#include "game/reagent.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -135,10 +136,24 @@ double Culture::freshConcentration(Solute s) const {
     return 0.0;
 }
 
+void Culture::setReagent(int index, double ugPerMl) {
+    if (index < 0)
+        return;
+    if (static_cast<int>(reagents_.size()) <= index)
+        reagents_.resize(static_cast<std::size_t>(index) + 1, 0.0);
+    reagents_[static_cast<std::size_t>(index)] = std::max(0.0, ugPerMl);
+}
+
+double Culture::reagentConcentration(int index) const {
+    return index >= 0 && index < static_cast<int>(reagents_.size()) ? reagents_[static_cast<std::size_t>(index)] : 0.0;
+}
+
 void Culture::renewMedium(double fraction) {
     const double f = std::clamp(fraction, 0.0, 1.0);
     if (f <= 0.0)
         return;
+    for (double& r : reagents_) // el medio nuevo no trae reactivo
+        r *= 1.0 - f;
     for (int k = 0; k < kSoluteCount; ++k) {
         const auto s = static_cast<Solute>(k);
         double& a = amount_[k];
@@ -539,7 +554,26 @@ void Culture::stepBacteria(float bioDt) {
         const float each = static_cast<float>(
             share * bacterialDemand(bp, c, b.mass, bacterialHealth(bp, b.phage >= 0.0f, b.resistant != 0), hours));
         taken += static_cast<double>(b.count) * each;
-        b.mass += bacterialMassChange(bp, each, b.mass, maintenance);
+        const float change = bacterialMassChange(bp, each, b.mass, maintenance);
+        // Reactivos: la muerte que agregan con lo que crece ahora la cohorte (Regoes et al. 2004).
+        double kill = 0.0;
+        for (std::size_t r = 0; r < reagents_.size(); ++r)
+            if (reagents_[r] > 0.0 && reagent(static_cast<int>(r)).affects("bacterias"))
+                kill += reagentKillRate(reagent(static_cast<int>(r)), reagents_[r],
+                                        change / std::max(1e-6f, b.mass) / std::max(1e-9f, hours));
+        b.mass += change;
+        if (kill > 0.0 && b.count > 0) {
+            Rng rng(config_.seed, kStreamBacteria + 70, i, step_);
+            const double expected = static_cast<double>(b.count) * (1.0 - std::exp(-kill * hours));
+            auto dead = static_cast<std::uint64_t>(expected);
+            if (rng.uniform() < expected - static_cast<double>(dead))
+                ++dead;
+            dead = std::min(dead, b.count);
+            released += static_cast<double>(dead) * b.mass * kBacteriumPmol; // la pared revienta: lisis
+            b.count -= dead;
+            if (b.count == 0)
+                continue;
+        }
         if (b.mass < 0.5f) { // mueren de hambre: su materia vuelve al agua
             released += static_cast<double>(b.count) * b.mass * kBacteriumPmol;
             b.count = 0;

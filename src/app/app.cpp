@@ -843,6 +843,8 @@ void App::toolInput(float dt, const Vec2& pos) {
         Intervention drop = at(InterventionKind::Dropper);
         drop.active = tools.tool == Tool::Dropper && down;
         drop.index = tools.dropper;
+        if (drop.index == 7) // el reactivo elegido en Herramientas (game/reagent)
+            drop.key = tools.reagent;
         drop.v[0] = drop.active ? tools.dropRadius : 0.0f;
         drop.v[1] = drop.active ? tools.dropAmount : 0.0f;
         if (!drop.active)

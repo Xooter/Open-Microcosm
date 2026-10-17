@@ -1,5 +1,6 @@
 // Herramientas: parámetros de cada una (radios, gotero) y capas de visualización.
 #include "app/app.hpp"
+#include "game/reagent.hpp"
 #include "game/intervention.hpp"
 #include "ui/panels/panel_classes.hpp"
 #include "ui/widgets.hpp"
@@ -35,6 +36,20 @@ class ToolsPanel : public Panel {
                 names.push_back(soluteName(i));
             if (combo("Soluto", &d, names.data(), soluteCount()))
                 t.dropper = d;
+            if (t.dropper == 7 && reagentCount() > 0) {
+                std::vector<const char*> reagents;
+                int r = 0;
+                for (int i = 0; i < reagentCount(); ++i) {
+                    reagents.push_back(tr(reagent(i).name.c_str()));
+                    if (reagent(i).key == t.reagent)
+                        r = i;
+                }
+                if (combo("Reactivo", &r, reagents.data(), reagentCount(),
+                          "Antibióticos con su farmacodinamia medida: matan a las bacterias que crecen. La cantidad "
+                          "está en µg/mL (x10 por la cantidad relativa)."))
+                    t.reagent = reagent(r).key;
+                tooltip(tr(reagent(r).description.c_str()));
+            }
             slider("Radio [µm]", &t.dropRadius, 10.0f, 200.0f, "%.0f");
             sliderLog("Cantidad", &t.dropAmount, 0.1f, 20.0f, "x%.1f", "Relativa a la concentración típica del soluto.");
         }
