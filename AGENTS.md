@@ -419,7 +419,9 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   se dibuja con `dish_glass.fs` (vidrio, canto oscuro, línea de Becke y menisco) antes del
   post-proceso. Con placa hay una sola copia del mundo (sin toro no se repite al alejar). Todo ocurre en un
   mismo plano (no hay plano focal). El campo se dibuja en una textura y pasa por
-  `microscope_post.fs` (viñeta, aberración cromática, grano).
+  `microscope_post.fs` (viñeta, aberración cromática, grano y, con `Options::opticFlaws`, la
+  iluminación de Köhler despareja y el polvo del ocular y la cámara: están en la óptica, así que
+  quedan fijos a la pantalla, y multiplican la luz). El grano de una foto sale del tiempo simulado.
 - **Foto y time-lapse** (`render/photo`, `game/timelapse`, fase P1): la foto es el campo del centro
   sin la interfaz, con barra de escala y un JSON con el ancho del campo en µm (no hay "aumento": no hay
   objetivos simulados), el tiempo, la seed, la placa, la tinción y la procedencia. El time-lapse toma un

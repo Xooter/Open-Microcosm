@@ -150,6 +150,7 @@ void App::setFullscreen(bool on) {
 void App::applyOptions() {
     if (renderer) {
         renderer->setPostProcess(options.postProcess);
+        renderer->setOpticFlaws(options.opticFlaws);
         renderer->setRenderScale(options.renderScale);
         renderer->setMaxDetailed(options.maxDetailed);
         renderer->setCellDetailScale(options.cellDetail);

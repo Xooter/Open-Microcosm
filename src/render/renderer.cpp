@@ -66,6 +66,7 @@ Renderer::Renderer() {
     if (postOk_) {
         resolutionLoc_ = GetShaderLocation(post_, "resolution");
         timeLoc_ = GetShaderLocation(post_, "time");
+        flawsLoc_ = GetShaderLocation(post_, "flaws");
     }
     glass_ = LoadShader(nullptr, assetPath("shaders/dish_glass.fs").c_str());
     glassOk_ = glass_.id != 0 && glass_.id != rlGetShaderIdDefault();
@@ -656,9 +657,12 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                            : WHITE;
     if (postOk_ && postEnabled_ && lod_.view == ViewMode::Microscope) {
         const float res[2] = {sw, sh};
-        const float t = static_cast<float>(GetTime());
+        // El grano de una foto sale del tiempo simulado: la misma escena da la misma imagen.
+        const float t = out_ ? static_cast<float>(world.simTime()) : static_cast<float>(GetTime());
+        const float flaws = opticFlaws_ ? 1.0f : 0.0f;
         SetShaderValue(post_, resolutionLoc_, res, SHADER_UNIFORM_VEC2);
         SetShaderValue(post_, timeLoc_, &t, SHADER_UNIFORM_FLOAT);
+        SetShaderValue(post_, flawsLoc_, &flaws, SHADER_UNIFORM_FLOAT);
         BeginShaderMode(post_);
         DrawTexturePro(scene_.texture, src, dst, {0, 0}, 0.0f, tint);
         EndShaderMode();

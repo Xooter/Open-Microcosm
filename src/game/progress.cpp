@@ -101,6 +101,7 @@ Options loadOptions(const std::string& path) {
         std::istringstream value(line.substr(eq + 1));
         if (key == "fullscreen") value >> o.fullscreen;
         else if (key == "post_process") value >> o.postProcess;
+        else if (key == "optic_flaws") value >> o.opticFlaws;
         else if (key == "lod") value >> o.lod;
         else if (key == "gpu_physics") value >> o.gpuPhysics;
         else if (key == "language") value >> o.language;
@@ -142,6 +143,7 @@ void applyGraphicsPreset(Options& o, GraphicsPreset preset) {
     case GraphicsPreset::Low:
         o.renderScale = 0.67f;
         o.postProcess = false;
+        o.opticFlaws = false;
         o.maxDetailed = 64;
         o.cellDetail = 2.5f;
         o.msaa = false;
@@ -149,6 +151,7 @@ void applyGraphicsPreset(Options& o, GraphicsPreset preset) {
     case GraphicsPreset::Medium:
         o.renderScale = 0.85f;
         o.postProcess = true;
+        o.opticFlaws = true;
         o.maxDetailed = 128;
         o.cellDetail = 1.5f;
         o.msaa = false;
@@ -156,6 +159,7 @@ void applyGraphicsPreset(Options& o, GraphicsPreset preset) {
     case GraphicsPreset::High:
         o.renderScale = 1.0f;
         o.postProcess = true;
+        o.opticFlaws = true;
         o.maxDetailed = 256;
         o.cellDetail = 1.0f;
         o.msaa = true;
@@ -174,6 +178,7 @@ bool saveOptions(const Options& o, const std::string& path) {
         return false;
     out << "fullscreen=" << o.fullscreen << '\n'
         << "post_process=" << o.postProcess << '\n'
+        << "optic_flaws=" << o.opticFlaws << '\n'
         << "lod=" << o.lod << '\n'
         << "gpu_physics=" << o.gpuPhysics << '\n'
         << "language=" << o.language << '\n'

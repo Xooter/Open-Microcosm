@@ -33,6 +33,7 @@ enum class GraphicsPreset : int { Custom, Low, Medium, High };
 struct Options {
     bool fullscreen = false;
     bool postProcess = true;  // óptica del microscopio (viñeta, grano, aberración)
+    bool opticFlaws = true;   // iluminación despareja y polvo en la óptica (con postProcess)
     bool lod = true;          // células lejanas simplificadas
     bool gpuPhysics = true;   // XPBD y contactos en la GPU (compute shaders)
     std::string language = "es"; // idioma de la interfaz (assets/lang/<código>.txt)

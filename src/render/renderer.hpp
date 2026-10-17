@@ -35,6 +35,8 @@ class Renderer {
     }
     const StainSpec* stain() const { return stain_; }
     void setPostProcess(bool on) { postEnabled_ = on; }
+    // Iluminación de Köhler despareja y polvo en la óptica (con el post-proceso; solo visual).
+    void setOpticFlaws(bool on) { opticFlaws_ = on; }
     // Fase 19: el campo se dibuja a una fracción de la resolución de la ventana y se reescala
     // (menos píxeles para los shaders). La vista previa (`drawWorldTo`) va siempre a 1.
     void setRenderScale(float scale) { renderScale_ = std::clamp(scale, 0.5f, 1.0f); }
@@ -111,7 +113,7 @@ class Renderer {
     RenderTexture2D scene_{};
     Shader post_{};
     bool postOk_ = false;
-    int resolutionLoc_ = -1, timeLoc_ = -1;
+    int resolutionLoc_ = -1, timeLoc_ = -1, flawsLoc_ = -1;
     Shader glass_{};
     bool glassOk_ = false;
     struct {
@@ -122,4 +124,5 @@ class Renderer {
     RenderTexture2D* out_ = nullptr; // destino alternativo (vista previa)
     std::vector<Vector2> rockPts_; // contorno de un grano (se reusa entre frames)
     bool postEnabled_ = true;
+    bool opticFlaws_ = true;
 };

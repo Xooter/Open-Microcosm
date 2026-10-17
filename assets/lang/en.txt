@@ -737,6 +737,8 @@ II	II
 Id del paquete	Pack id
 Idioma	Language
 Idioma de la interfaz	Interface language
+Iluminación algo despareja y polvo del ocular y de la cámara, fijos en la pantalla como en un microscopio real. Solo cambia la imagen.	Slightly uneven illumination and dust on the eyepiece and the camera, fixed to the screen as in a real microscope. Only the image changes.
+Imperfecciones de la óptica	Optical imperfections
 Importar	Import
 Incluir la placa en pantalla	Include the plate on screen
 Indicador de pH	pH indicator

@@ -83,6 +83,11 @@ class SettingsPanel : public Panel {
                 custom = true;
             }
             custom |= checkbox("Óptica del microscopio", &o.postProcess, "Viñeta, aberración cromática y grano.");
+            ImGui::BeginDisabled(!o.postProcess);
+            custom |= checkbox("Imperfecciones de la óptica", &o.opticFlaws,
+                               "Iluminación algo despareja y polvo del ocular y de la cámara, fijos en la pantalla como en un "
+                               "microscopio real. Solo cambia la imagen.");
+            ImGui::EndDisabled();
             float cellPct = 100.0f / o.cellDetail;
             if (slider("Detalle de células", &cellPct, 25.0f, 100.0f, "%.0f %%",
                        "100 %: apéndices y organelos aparecen apenas la célula mide unos píxeles. Menos: hacen falta "
