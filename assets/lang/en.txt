@@ -5,6 +5,7 @@
  (mía)	 (mine)
  - ESTIMACION (sin verificar)	 - ESTIMATE (unverified)
  - FUERA DE RANGO	 - OUT OF RANGE
+ Destrabarlo es posible, pero la corrida queda fuera de protocolo (se anota en la exportación).	 Unlocking it is possible, but the run is then out of protocol (it is noted in the export).
  IC 95 %	 95 % CI
  [medio]	 [medium]
  [sedimento]	 [sediment]
@@ -82,6 +83,7 @@
 %s  seed %llu	%s  seed %llu
 %s  |  %d FPS	%s  |  %d FPS
 %s %.1f min	%s %.1f min
+%s %zu	%s %zu
 %s (%.0f%% aerobico)	%s (%.0f%% aerobic)
 %s (muerta)	%s (dead)
 %s - %s, generacion %u	%s - %s, generation %u
@@ -111,6 +113,8 @@
 : toca el vidrio en segundos	: touches the glass within seconds
 A medida	Custom
 AHL: vida media [h]	AHL: half-life [h]
+Abri el gotero de CO2 en el centro (boton de la leccion) y espera a que la burbuja de agua acida crezca.	Open the CO2 dropper in the center (lesson button) and wait for the bubble of acidic water to grow.
+Abrir el gotero de CO2 en el centro	Open the CO2 dropper in the center
 Absorción [1/h]	Absorption [1/h]
 Adaptación de tubos [1/h]	Tube adaptation [1/h]
 Agregar al programa	Add to the program
@@ -127,12 +131,15 @@ Agua quieta y templada con plantas acuáticas: Volvox, Spirogyra y Stentor.	Stil
 Agua sin sales: hipotonica para cualquier celula. Una celula vegetal queda turgente (la pared la contiene); un globulo rojo se hincha y estalla (hemolisis).	Water without salts: hypotonic for any cell. A plant cell stays turgid (the wall holds it); a red blood cell swells and bursts (hemolysis).
 Agua y cuerpos blandos	Water and soft bodies
 Agua y cuerpos blandos (avanzado)	Water and soft bodies (advanced)
+Ahora monta la epidermis otra vez en agua sin sal y mira que pasa.	Now mount the epidermis again in water without salt and see what happens.
 Ahorro en segundo plano	Background saving
 Aire	Air
 Aire libre: 0,042 %. Una incubadora de cultivo: 5-10 %, para que el bicarbonato del medio quede en pH ~7,4.	Open air: 0.042 %. A cell culture incubator: 5-10 %, so the bicarbonate of the medium stays at pH ~7.4.
 Ajusta de un toque las opciones de imagen. No cambia la simulación.	Adjusts the image options in one go. Does not change the simulation.
 Ajusta la curva de crecimiento: µmax, tiempo de duplicación, latencia (Pirt) y capacidad de carga (logística de Verhulst).	Fits the growth curve: µmax, doubling time, lag (Pirt) and carrying capacity (Verhulst logistic).
 Ajustar ejes	Fit axes
+Al dia 30, que fraccion de los paramecios va a ser P. aurelia?	On day 30, what fraction of the paramecia will be P. aurelia?
+Al final, que fraccion de las diatomeas va a ser Asterionella?	At the end, what fraction of the diatoms will be Asterionella?
 Al morir	On death
 Alcalinidad [µM]	Alkalinity [µM]
 Alga colonial	Colonial alga
@@ -170,6 +177,7 @@ Amoeba	Amoeba
 Anabaena	Anabaena
 Anabaena (filamentos)	Anabaena (filaments)
 Ancho del viraje	Turn width
+Anotar	Note it
 Antialiasing (MSAA)	Antialiasing (MSAA)
 Anóxico (sin O2 del aire)	Anoxic (no O2 from the air)
 Anóxico y oscuro, repleto de astillas de madera. Trichonympha digiere la celulosa por la termita.	Anoxic and dark, packed with wood splinters. Trichonympha digests cellulose for the termite.
@@ -219,6 +227,8 @@ Bacterias: desprendimiento [1/h]	Bacteria: detachment [1/h]
 Bacterias: gasto en ayuno (x)	Bacteria: starvation spending (x)
 Bacteriofagos	Bacteriophages
 Baja	Low
+Baja la salinidad a 3 g/kg (0,3 %).	Lower the salinity to 3 g/kg (0.3 %).
+Baja la salinidad a 4,5 g/kg (0,45 % de NaCl).	Lower the salinity to 4.5 g/kg (0.45 % NaCl).
 Balance	Balance
 Balance de masa [pmol]	Mass balance [pmol]
 Barra con un largo redondo en µm, abajo a la izquierda de la placa.	Bar with a round length in µm, at the bottom left of the plate.
@@ -230,6 +240,7 @@ Bdellovibrio bacteriovorus	Bdellovibrio bacteriovorus
 Bdellovibrio sale de un bdeloplasto con sus hijas	Bdellovibrio leaves a bdelloplast with its daughters
 Bicarbonato	Bicarbonate
 Bicarbonato: fija el pH junto con el CO2 (agua dulce ~1000; DMEM 44 000).	Bicarbonate: sets the pH together with CO2 (fresh water ~1000; DMEM 44 000).
+BioGame 	BioGame 
 BioGame es software libre: podés redistribuirlo y modificarlo bajo la Licencia Pública General de GNU, versión 3 o posterior (archivo LICENSE). Se distribuye SIN NINGUNA GARANTÍA.	BioGame is free software: you can redistribute it and modify it under the GNU General Public License, version 3 or later (LICENSE file). It is distributed WITHOUT ANY WARRANTY.
 BioGame: contenido de fábrica	BioGame: built-in content
 Bioma	Biome
@@ -250,6 +261,7 @@ CPU	CPU
 Cada 24 h se centrifuga, se cambia todo el medio y se agregan bacterias frescas (Gause 1934, cap. V).	Every 24 h the culture is centrifuged, all the medium is changed and fresh bacteria are added (Gause 1934, ch. V).
 Cada cuánto (en segundos de simulación) se toma una muestra. Con muchas muestras la serie se decima: guarda una de cada dos.	How often (in simulation seconds) a sample is taken. With many samples the series is decimated: it keeps one of every two.
 Cada célula toma el color de lo que limita su crecimiento ahora (ley del mínimo de Liebig) [L].	Each cell takes the color of what limits its growth now (Liebig's law of the minimum) [L].
+Cada globulo rojo puede hincharse hasta un volumen critico, que depende de cuanta membrana tiene de sobra. Con la edad pierde membrana y se vuelve mas fragil: la curva de fragilidad es una distribucion, no un umbral.	Each red blood cell can swell up to a critical volume, which depends on how much spare membrane it has. With age it loses membrane and becomes more fragile: the fragility curve is a distribution, not a threshold.
 Cada regla tiñe un blanco; varias reglas sobre el mismo blanco se apilan. Los blancos salen de la bioquímica real: por ejemplo, solo las algas verdes guardan almidón y solo Bacillus tiene pared grampositiva.	Each rule stains a target; several rules on the same target stack. Targets come from real biochemistry: for example, only green algae store starch and only Bacillus has a Gram-positive wall.
 Cadenas de celulas fotosinteticas; cada ~10 una se vuelve heterocisto y fija el nitrogeno del aire. Al morir liberan microcistina.	Chains of photosynthetic cells; about one in 10 becomes a heterocyst and fixes nitrogen from the air. When they die they release microcystin.
 Calidad	Quality
@@ -297,6 +309,7 @@ Celulas	Cells
 Censo	Census
 Centrifugado suave antes de sacar la gota: a baja densidad, una gota sin concentrar casi nunca trae un protista.	Gentle centrifugation before taking the drop: at low density, an unconcentrated drop almost never contains a protist.
 Cerrar	Close
+Cerrar el gotero	Close the dropper
 Charco	Puddle
 Chlamydomonas	Chlamydomonas
 Chromobacterium violaceum	Chromobacterium violaceum
@@ -368,6 +381,7 @@ Crea el mundo con esta configuración. La placa en pantalla se descarta.	Creates
 Crear cultivo	Create culture
 Crear placa	Create plate
 Crear placa (Ctrl+N)	Create plate (Ctrl+N)
+Crece mas rapido	It grows faster
 Crecimiento	Growth
 Crecimiento máximo	Maximum growth
 Cristal violeta, yodo, alcohol y safranina. Las bacterias de pared gruesa de peptidoglicano (grampositivas) retienen el violeta; las de pared fina con membrana externa (gramnegativas) lo pierden con el alcohol y toman la safranina (rosa). Fija y mata a las células.	Crystal violet, iodine, alcohol and safranin. Bacteria with a thick peptidoglycan wall (Gram-positive) retain the violet; those with a thin wall and an outer membrane (Gram-negative) lose it with the alcohol and take up the safranin (pink). It fixes and kills the cells.
@@ -375,6 +389,7 @@ Ctl	Ctl
 Ctrl+	Ctrl+
 Ctrl+N: crear la placa del editor. Los paneles se arrastran y acoplan; Ver > Restablecer disposición.	Ctrl+N: create the plate from the editor. Panels can be dragged and docked; View > Reset layout.
 Ctrl+click o doble click en un deslizador: tipear el valor.	Ctrl+click or double click on a slider: type the value.
+Cuando abras el gotero de CO2 en el centro, que fraccion de los paramecios va a estar a menos de 0,2 radios del centro (el 4 % del area)?	When you open the CO2 dropper in the center, what fraction of the paramecia will be less than 0.2 radii from the center (4 % of the area)?
 Cuando son muchas, el autoinductor que liberan pasa un umbral (quorum) y fabrican violaceina, un pigmento violeta toxico para quien las come.	When there are many of them, the autoinducer they release passes a threshold (quorum) and they make violacein, a purple pigment toxic to whoever eats them.
 Cuarzo (SiO₂): el mineral más común de la arena. Su índice de refracción (1,54) es mayor que el del agua (1,33): se ve por el relieve, con un borde oscuro grueso y una línea brillante de Becke por dentro.	Quartz (SiO₂): the most common mineral of sand. Its refractive index (1.54) is higher than that of water (1.33): it shows by its relief, with a thick dark edge and a bright Becke line inside.
 Cuerpo	Body
@@ -390,6 +405,7 @@ Cuota de Si	Si quota
 Cuota máxima (Droop)	Maximum quota (Droop)
 Cuánto se tiñe el fondo del campo (en fluorescencia, la oscuridad).	How much the background of the field is stained (in fluorescence, the darkness).
 Cyclotella	Cyclotella
+Cámara de microquimiostato (20 µL)	Microchemostat chamber (20 µL)
 Célula adherida: click sostenido = migra hacia el mouse (en tiempo biológico)	Attached cell: hold click = it migrates toward the mouse (in biological time)
 Células	Cells
 DAPI (núcleos)	DAPI (nuclei)
@@ -401,6 +417,8 @@ De qué sale cada réplica: el cultivo elegido desde que se creó (con su progra
 De una suspensión	From a suspension
 Decolorante / exposición [s]	Decolorizer / exposure [s]
 Defensa	Defense
+Deja correr el cultivo 30 dias (subi la velocidad). Mira el grafico del panel Cultivos.	Let the culture run for 30 days (raise the speed). Look at the graph in the Cultures panel.
+Deja correr el quimiostato 60 dias (subi la velocidad).	Let the chemostat run for 60 days (raise the speed).
 Del agua o del medio: la película de una gota ~200 µm; un recipiente de cultivo, 2-3 mm. Fija cuánto medio hay sobre cada punto y qué tan locales son las corrientes.	Of the water or the medium: the film of a drop ~200 µm; a culture vessel, 2-3 mm. It sets how much medium lies over each point and how local the currents are.
 Densidad	Density
 Densidad [1/cm²]	Density [1/cm²]
@@ -412,6 +430,7 @@ Descomposición [1/h bio]	Decomposition [1/bio h]
 Desde [h]	From [h]
 Deslizamiento	Gliding
 Despierta	Wakes up
+Destrabar	Unlock
 Det	Det
 Detalle	Detail
 Detalle bacteriano	Bacterial detail
@@ -439,6 +458,7 @@ Distancia	Distance
 Distancia: arrastrá con la herramienta Medir. Área: dibujá un lazo.	Distance: drag with the Measure tool. Area: draw a lasso.
 Divisiones del ser	Divisions of the being
 División	Division
+Dos diatomeas compiten por el fosforo en un quimiostato. Gana la que puede crecer al ritmo de la dilucion con menos fosforo disuelto (la de menor R*), y la otra desaparece.	Two diatoms compete for phosphorus in a chemostat. The one that can grow at the dilution rate with less dissolved phosphorus (the lower R*) wins, and the other disappears.
 Duplicar como mía	Duplicate as mine
 Duración [h]	Duration [h]
 Edad	Age
@@ -446,7 +466,11 @@ Editor de placa	Plate editor
 Editor de tinciones	Stain editor
 Editor de tinciones...	Stain editor...
 El Bdellovibrio entro a una presa o murio de hambre	The Bdellovibrio entered a prey or starved
+El CO2 los atrae como alimento	CO2 attracts them as food
+El CO2 los paraliza	CO2 paralyzes them
 El CO2 se intercambia con el aire en tiempo real y la materia orgánica entra desde afuera: el carbono no se conserva en la gota.	CO2 exchanges with the air in real time and organic matter comes in from outside: carbon is not conserved in the drop.
+El agua cruza la membrana hacia donde hay mas solutos. La vacuola pierde agua y el protoplasto se achica; la pared de celulosa es rigida y queda en su lugar. La celula sigue viva: en agua se recupera.	Water crosses the membrane toward where there are more solutes. The vacuole loses water and the protoplast shrinks; the cellulose wall is rigid and stays in place. The cell is still alive: in water it recovers.
+El agua sale de la vacuola hacia el medio mas concentrado y la pared rigida no la sigue	Water leaves the vacuole toward the more concentrated medium and the rigid wall does not follow
 El alimento clasico de los experimentos con Physarum: libera azucares al agua y el plasmodio lo envuelve y lo digiere.	The classic food of Physarum experiments: it releases sugars into the water and the plasmodium engulfs and digests it.
 El control pasa a su sucesor.	Control passes to its successor.
 El copo se acabo	The flake ran out
@@ -464,11 +488,14 @@ Elegí un archivo.	Choose a file.
 Elegí un ser y hacé click en la placa para ponerlo. Esc cancela.	Pick a being and click on the plate to place it. Esc cancels.
 Elegí una tinción para ver su vista previa y ajustarla.	Pick a stain to see its preview and adjust it.
 Eliminar	Delete
+Empezar	Start
+En el tubo hay 5 Paramecium caudatum y 5 P. aurelia. Cada dia se cambia el medio y se agrega la misma racion de bacterias (el protocolo de Gause).	The tube holds 5 Paramecium caudatum and 5 P. aurelia. Every day the medium is changed and the same ration of bacteria is added (Gause's protocol).
 En vez de spawnear, el ícono transforma al ser controlado en esa especie (solo especies).	Instead of spawning, the icon turns the controlled being into that species (species only).
 Enciclopedia	Encyclopedia
 Energía (comida o luz)	Energy (food or light)
 Energía: a las heterótrofas les falta comida; a las fotótrofas, luz. P y N limitan solo a las fotótrofas; Si, a las diatomeas; B12, a las auxótrofas.	Energy: heterotrophs lack food; phototrophs, light. P and N limit only phototrophs; Si, diatoms; B12, auxotrophs.
 English	English
+Entran libremente pero al salir hacia agua menos acida hacen la reaccion de evitacion y vuelven	They enter freely, but when leaving toward less acidic water they make the avoidance reaction and turn back
 Envoltura celular	Cell envelope
 Erlenmeyer de 250 mL (100 mL de medio)	250 mL Erlenmeyer flask (100 mL of medium)
 Escala de render	Render scale
@@ -510,6 +537,7 @@ Exportar CSV	Export CSV
 Exportar CSV/JSON	Export CSV/JSON
 Exportar datos	Export data
 Exportar datos (CSV y JSON)	Export data (CSV and JSON)
+Exportar informe	Export report
 Externo	External
 Exudación	Exudation
 Factor	Factor
@@ -526,6 +554,7 @@ Ficha	Card
 Fija dónde caen las células de la siembra y de cada inoculación.	Sets where the cells of the seeding and of each inoculation fall.
 Fija el volumen y la profundidad del medio (intercambio de gases y luz).	Sets the volume and depth of the medium (gas exchange and light).
 Fijación de N2	N2 fixation
+Fijado por el protocolo: 	Fixed by the protocol: 
 Fijar concentración	Set concentration
 Fijar la muestra	Fix the sample
 Fijo	Fixed
@@ -558,14 +587,18 @@ Fracción a renovar	Fraction to renew
 Fracción de biomasa para morir	Biomass fraction to die
 Fracción de la mantención que gasta una bacteria sin comida suficiente (fase estacionaria). E. coli la baja más de 5 veces (Schink et al. 2019).	Fraction of maintenance that a bacterium spends without enough food (stationary phase). E. coli lowers it more than 5 times (Schink et al. 2019).
 Fracción encendida	Fraction on
+Fragilidad osmotica de los globulos rojos	Osmotic fragility of red blood cells
 Frasco T-25	T-25 flask
 Frente	Front
 Frente [µm/h bio]	Front [µm/bio h]
 Frústula vacía	Empty frustule
 Frústula vacía de diatomea: la caja de sílice (ópalo) que queda cuando muere la célula. No se descompone, a diferencia del resto del organismo; el rafe y las estrías siguen intactos.	Empty diatom frustule: the silica (opal) box left when the cell dies. It does not decompose, unlike the rest of the organism; the raphe and striae remain intact.
 Fuente termal	Hot spring
+Fuera de protocolo: se destrabó 	Out of protocol: unlocked 
 Física de células en la GPU	Cell physics on the GPU
 Fósforo	Phosphorus
+Gause vio que P. aurelia excluia a P. caudatum. En el modelo, la ventaja de P. aurelia (mas comida por biomasa) es chica y la que se adelanta al principio puede ganar: corre replicas en el panel Experimento y compara la proporcion de veces que gana cada una.	Gause saw that P. aurelia excluded P. caudatum. In the model, the advantage of P. aurelia (more food per biomass) is small and the one that gets ahead early can win: run replicates in the Experiment panel and compare how often each one wins.
+Gause: competencia entre dos paramecios	Gause: competition between two paramecia
 Gemacion de levaduras	Yeast budding
 Genoma	Genome
 Giemsa (sangre)	Giemsa (blood)
@@ -630,6 +663,7 @@ Hongos	Fungi
 Hongos liquenizantes	Lichenizing fungi
 Hongos y mohos	Fungi and molds
 Horas de cultivo por segundo real (todos los cultivos). No cambia los resultados: el paso es fijo.	Culture hours per real second (all cultures). It does not change the results: the step is fixed.
+Horas de cultivo por segundo real. No cambia los resultados: el paso es fijo.	Culture hours per real second. It does not change the results: the step is fixed.
 Horas de laboratorio (biológicas en la placa).	Laboratory hours (biological on the plate).
 Huye de	Flees from
 II	II
@@ -653,27 +687,39 @@ Inóculo [µL]	Inoculum [µL]
 Irradiancia relativa de la lámpara sobre el cultivo.	Relative irradiance of the lamp over the culture.
 Irradiancia relativa de la lámpara.	Relative irradiance of the lamp.
 Iteraciones por subpaso	Iterations per substep
+Jennings vio que no nadan hacia el CO2: lo encuentran al azar, y cada vez que van a salir de la zona acida retroceden y giran. Una regla local (evitar el cambio hacia lo menos acido) produce una acumulacion global.	Jennings saw that they do not swim toward the CO2: they find it at random, and every time they are about to leave the acidic zone they back up and turn. A local rule (avoid changing toward less acid) produces a global accumulation.
+Jennings: los paramecios se juntan donde hay CO2	Jennings: paramecia gather where there is CO2
 Jugo celular	Cell sap
 LOD: simplificar lo lejano	LOD: simplify what is far
 LOD: sub-pasos lejanos (1 de cada N)	LOD: distant substeps (1 of every N)
 La bacteria se dividio o murio	The bacterium divided or died
+La celula se muere y se encoge	The cell dies and shrinks
 La cámara sigue al ser controlado	The camera follows the controlled being
 La epidermis del enves de una hoja: celulas de contorno ondulado (como un rompecabezas) y, entre ellas, los estomas: dos celulas oclusivas en forma de rinon, con cloroplastos, que abren y cierran el ostiolo.	The epidermis of the underside of a leaf: cells with a wavy outline (like a jigsaw puzzle) and, between them, the stomata: two kidney-shaped guard cells, with chloroplasts, that open and close the pore.
+La epidermis esta montada en agua: las celulas estan turgentes, con el protoplasto apretado contra la pared.	The epidermis is mounted in water: the cells are turgid, with the protoplast pressed against the wall.
 La epidermis interna de una escama de cebolla morada montada en agua: celulas alargadas con pared y una vacuola violeta. Agregando sal (Ambiente > Salinidad, unos 30 g/kg) el protoplasto pierde agua y se despega de la pared: plasmolisis. En agua vuelve (deplasmolisis). Se simula un campo de 1 mm: el anillo marca su borde.	The inner epidermis of a red onion scale mounted in water: elongated cells with a wall and a purple vacuole. Adding salt (Environment > Salinity, about 30 g/kg) the protoplast loses water and pulls away from the wall: plasmolysis. In water it comes back (deplasmolysis). A 1 mm field is simulated: the ring marks its edge.
 La gota es la placa del centro.	The drop is the plate in the center.
 La misma semilla y el mismo bioma dan siempre la misma gota.	The same seed and the same biome always give the same drop.
+La osmosis depende de la concentracion: la temperatura se deja fija para que solo cambie la sal.	Osmosis depends on concentration: the temperature is kept fixed so that only the salt changes.
 La particula desaparecio	The particle disappeared
 La película de agua entre las hojitas del musgo: fría, en sombra y ácida. Amebas con testa y Naegleria.	The water film between the moss leaflets: cold, shaded and acidic. Testate amoebae and Naegleria.
 La placa con la que se creó el mundo y las intervenciones hechas: quien la importe la encuentra entre las placas guardadas y, al crearla, repite la corrida.	The plate the world was created with and the interventions made: whoever imports it finds it among the saved plates and, when creating it, repeats the run.
 La placa mide grilla × celda.	The plate measures grid × cell.
+La prueba se hace a temperatura ambiente fija.	The test is done at a fixed room temperature.
 La que se ve sobre la placa (J pasa a la siguiente).	The one shown on the plate (J goes to the next).
+La rapidez de nado cambia con la temperatura (viscosidad): se fija para comparar con el control.	Swimming speed changes with temperature (viscosity): it is fixed to compare with the control.
+La sal disuelve la pared	Salt dissolves the wall
+La sangre esta diluida en solucion salina al 0,9 % (isotonica): los globulos rojos son discos.	The blood is diluted in 0.9 % saline (isotonic): the red blood cells are discs.
 La zoospora infecto un alga o se enquisto	The zoospore infected an alga or encysted
 Lacrymaria	Lacrymaria
 Lado	Side
 Largo de red	Network length
 Largo total	Total length
 Las diatomeas la necesitan para cada valva.	Diatoms need it for each valve.
+Las dos tienen el mismo crecimiento maximo; Asterionella tiene una media saturacion del fosforo seis veces menor. En el quimiostato el fosforo baja hasta el R* de la mejor competidora y la otra no llega a reponer lo que se lava. Con silice limitante pasa al reves.	Both have the same maximum growth; Asterionella has a phosphorus half-saturation six times lower. In the chemostat phosphorus drops to the R* of the better competitor and the other cannot replace what is washed out. With limiting silica it is the other way around.
 Latencia	Lag
+Lección	Lesson
+Lección completa: exportá el informe.	Lesson complete: export the report.
 Levadura	Yeast
 Levadura: absorbe azucares disueltos, respira o fermenta sin oxigeno, y se reproduce por gemacion.	Yeast: absorbs dissolved sugars, respires or ferments without oxygen, and reproduces by budding.
 Limita a las algas cuando florecen.	It limits algae when they bloom.
@@ -714,6 +760,7 @@ Materia orgánica [µM]	Organic matter [µM]
 Med	Mea
 Media	Mean
 Medición	Measurement
+Medido:	Measured:
 Medio	Medium
 Medio WC (Guillard y Lorenzen)	WC medium (Guillard and Lorenzen)
 Medio de Eagle modificado por Dulbecco con 4,5 g/L de glucosa, L-glutamina y rojo fenol, con 10 % de suero fetal bovino: el medio más usado para fibroblastos, HeLa y muchas otras líneas.	Dulbecco's modified Eagle medium with 4.5 g/L of glucose, L-glutamine and phenol red, with 10 % fetal bovine serum: the most used medium for fibroblasts, HeLa and many other lines.
@@ -721,9 +768,11 @@ Medio definido para algas de agua dulce y diatomeas: nitrato, fosfato, silicato,
 Medio local	Local medium
 Medir	Measure
 Medir (M): arrastrar mide µm; en modo área, un lazo da área y perímetro. Región (G): un lazo cuenta células y mide la química adentro. L: mapa de limitación. Ctrl+E: exportar datos (CSV y JSON).	Measure (M): dragging measures µm; in area mode, a lasso gives area and perimeter. Region (G): a lasso counts cells and measures the chemistry inside. L: limitation map. Ctrl+E: export data (CSV and JSON).
+Medir a que concentracion de sal se hemolizan los globulos rojos: en un medio hipotonico se hinchan y estallan cuando pasan su volumen critico. Los mas viejos son mas fragiles.	Measure at what salt concentration red blood cells hemolyze: in a hypotonic medium they swell and burst when they pass their critical volume. Older ones are more fragile.
 Memoria de forma (x)	Shape memory (x)
 Metabolismo	Metabolism
 Mezcla de azur B y azul de metileno (básicos) con eosina (ácida), sobre un frotis fijado con metanol. El ADN y los gránulos azurófilos toman violeta; el citoplasma rico en ARN, celeste; la hemoglobina, rosa anaranjado. Distingue los leucocitos: neutrófilo de núcleo lobulado, linfocito casi todo núcleo, monocito de citoplasma gris azulado; las plaquetas, violetas. Fija y mata.	Mixture of azure B and methylene blue (basic) with eosin (acidic), on a smear fixed with methanol. DNA and azurophilic granules take violet; RNA-rich cytoplasm, light blue; hemoglobin, orange pink. It distinguishes leukocytes: neutrophil with a lobed nucleus, lymphocyte almost all nucleus, monocyte with bluish-gray cytoplasm; platelets, violet. It fixes and kills.
+Mi predicción	My prediction
 Mica	Mica
 Mica: escamas hexagonales finísimas y brillantes. Por su forma plana se asientan despacio.	Mica: very thin, shiny hexagonal flakes. Because of their flat shape they settle slowly.
 Micelio	Mycelium
@@ -738,7 +787,10 @@ Mitocondria	Mitochondrion
 Modo	Mode
 Moho mucilaginoso (Amoebozoa): no es un hongo	Slime mold (Amoebozoa): not a fungus
 Monocito	Monocyte
+Monta la epidermis en agua con sal (boton de la leccion, o la salinidad en 30 g/kg) y espera unos minutos.	Mount the epidermis in salt water (lesson button, or salinity at 30 g/kg) and wait a few minutes.
 Montaje a medida (sal o sacarosa cambiadas en Ambiente).	Custom mounting (salt or sucrose changed in Environment).
+Montar en agua (sin sal)	Mount in water (no salt)
+Montar en agua con sal (30 g/kg)	Mount in salt water (30 g/kg)
 Mostrar también sin teñir	Also show unstained
 Motor	Engine
 Motor XPBD	XPBD engine
@@ -766,11 +818,13 @@ NaCl al 0,9 %: isotonica con la sangre (~290 mOsm/L). Los globulos rojos conserv
 Nadan con 'corridas y giros' y siguen la comida comparando la concentracion de ahora con la de hace un segundo.	They swim with 'runs and tumbles' and follow food by comparing the concentration now with that of a second ago.
 Naegleria	Naegleria
 Navicula	Navicula
+Necesita menos fosforo disuelto para crecer al ritmo de la dilucion (menor R*)	It needs less dissolved phosphorus to grow at the dilution rate (lower R*)
 Neutrofilo	Neutrophil
 Ninguno (tasa máxima)	None (maximum rate)
 Ningún ser controlado. Con la herramienta Controlar (2), click en una célula (o P sobre ella).	No controlled being. With the Control tool (2), click on a cell (or P over it).
 Nitrógeno	Nitrogen
 Nitrógeno [µM]	Nitrogen [µM]
+No hay lecciones cargadas.	No lessons loaded.
 No hay placa.	There is no plate.
 No hay poblaciones en la placa.	There are no populations on the plate.
 No hay un cultivo elegido (panel Cultivos).	There is no chosen culture (Cultures panel).
@@ -795,6 +849,8 @@ O2 local	Local O2
 O2: media saturación	O2: half-saturation
 OMP_NUM_THREADS	OMP_NUM_THREADS
 Objetivo	Objective
+Objetivo cumplido a las	Objective met at
+Objetivo: todavía no	Objective: not yet
 Oedogonium	Oedogonium
 Oedogonium libera una zoospora con una corona de flagelos	Oedogonium releases a zoospore with a crown of flagella
 Opacidad del colorante sobre el blanco.	Opacity of the dye on the target.
@@ -836,6 +892,7 @@ Parámetros	Parameters
 Pasadas de contacto	Contact passes
 Pasaje y diluciones seriadas	Passage and serial dilutions
 Pasar	Pass
+Paso	Step
 Pasos por cuadro	Steps per frame
 Pausa	Pause
 Pausa [Espacio]	Pause [Space]
@@ -868,6 +925,7 @@ Placas guardadas	Saved plates
 Plasmodio	Plasmodium
 Plasmodio endurecido y dormido	Hardened, dormant plasmodium
 Plasmodios	Plasmodia
+Plasmolisis de la epidermis de cebolla	Plasmolysis of onion epidermis
 Poblacion	Population
 Poblaciones	Populations
 Poblaciones (al crear)	Populations (on creation)
@@ -880,8 +938,16 @@ Polvo mineral [1/s]	Mineral dust [1/s]
 Por debajo del límite óptico (~0,24 µm): aumento vacío. Capas > Vista de modelo	Below the optical limit (~0.24 µm): empty magnification. Layers > Model view
 Por densidad	By density
 Por mL	Per mL
+Por que el protoplasto se despega de la pared?	Why does the protoplast pull away from the wall?
+Por que gana Asterionella con poco fosforo?	Why does Asterionella win with little phosphorus?
+Por que no estallan todos a la vez?	Why don't they all burst at once?
+Por que se juntan donde hay CO2?	Why do they gather where there is CO2?
+Porque algunos ya estaban muertos	Because some were already dead
+Porque cada uno tiene su volumen critico: los viejos, con menos membrana sobrante, estallan antes	Because each one has its own critical volume: old ones, with less spare membrane, burst first
+Porque la sal no llega a todos	Because the salt does not reach all of them
 Portaobjetos con cubreobjetos de 22 mm	Slide with a 22 mm coverslip
 Potencia de 2 (la FFT lo necesita). Más grande = placa más grande y más lenta.	Power of 2 (the FFT needs it). Larger = bigger and slower plate.
+Predicción:	Prediction:
 Preferencias	Preferences
 Preparado: epidermis de cebolla morada	Preparation: red onion epidermis
 Preparado: epidermis de hoja con estomas	Preparation: leaf epidermis with stomata
@@ -902,6 +968,16 @@ Protocolo de Gause	Gause's protocol
 Puede tardar más o menos lo mismo que duró.	It may take about as long as it lasted.
 Punta de raiz de cebolla fijada, aplastada y tenida con orceina acetica: celulas del meristema en interfase y en cada fase de la mitosis (profase, metafase, anafase y telofase), en la proporcion de lo que dura cada una.	Onion root tip fixed, squashed and stained with acetic orcein: meristem cells in interphase and in each phase of mitosis (prophase, metaphase, anaphase and telophase), in proportion to how long each lasts.
 Q10 = 2 en todas las tasas biológicas; cambia la viscosidad y el O2 de saturación.	Q10 = 2 in all biological rates; it changes viscosity and saturation O2.
+Que dos especies que dependen del mismo recurso limitante no pueden coexistir: la que lo aprovecha mejor desplaza a la otra	That two species depending on the same limiting resource cannot coexist: the one that uses it better displaces the other
+Que fraccion de las celulas se va a plasmolizar en agua con 30 g/kg de sal?	What fraction of the cells will plasmolyze in water with 30 g/kg of salt?
+Que fraccion se va a hemolizar en solucion salina al 0,45 %?	What fraction will hemolyze in 0.45 % saline?
+Que gana siempre la que crece mas rapido	That the faster grower always wins
+Que la pared se reparo	That the wall was repaired
+Que la plasmolisis es reversible: la celula estaba viva y su membrana sigue siendo semipermeable	That plasmolysis is reversible: the cell was alive and its membrane is still semipermeable
+Que las celulas estaban muertas	That the cells were dead
+Que las dos conviven si hay comida para todas	That both coexist if there is food for all
+Que muestra la deplasmolisis?	What does deplasmolysis show?
+Que predice el principio de exclusion competitiva?	What does the competitive exclusion principle predict?
 Quimica	Chemistry
 Quimiotaxis	Chemotaxis
 Quitar regla	Remove rule
@@ -933,6 +1009,7 @@ Rendimiento	Performance
 Rendimiento de la simulación	Simulation performance
 Rendimiento y motor	Performance and engine
 Renueva lo disuelto con el medio de la placa al crearla (cámara de perfusión); las células se quedan.	Renews the dissolved matter with the plate's medium at creation (perfusion chamber); the cells stay.
+Repetir el experimento de Gause (1934): dos especies de Paramecium que comen lo mismo, en un tubo con una racion diaria de bacterias. Con una sola comida, una de las dos termina excluyendo a la otra (exclusion competitiva).	Repeat Gause's experiment (1934): two Paramecium species that eat the same thing, in a tube with a daily ration of bacteria. With a single food, one of them ends up excluding the other (competitive exclusion).
 Reposición de O2 (y salida de CO2) por la superficie: rápida en la película de una gota; en 2-3 mm de medio quieto tarda ~1 h (difusión).	Replenishment of O2 (and release of CO2) through the surface: fast in the film of a drop; in 2-3 mm of still medium it takes ~1 h (diffusion).
 Reproduccion	Reproduction
 Reproducir al ser controlado	Reproduce the controlled being
@@ -963,6 +1040,7 @@ Salinidad [g/kg]	Salinity [g/kg]
 Salir	Quit
 Sangre diluida en solucion salina 0,9 %, sin fijar: los globulos rojos son discos bicóncavos. Bajando la salinidad (agua) se hinchan y estallan (hemolisis); subiendola se arrugan (crenacion).	Blood diluted in 0.9 % saline, unfixed: red blood cells are biconcave discs. Lowering the salinity (water) makes them swell and burst (hemolysis); raising it makes them shrivel (crenation).
 Saprolegnia	Saprolegnia
+Se come a Cyclotella	It eats Cyclotella
 Se copia a la carpeta de paquetes del usuario y se carga ya: sus seres aparecen en el catálogo, sus biomas en la placa y sus escenas entre las placas guardadas. Queda para las próximas sesiones.	It is copied to the user packs folder and loaded right away: its beings appear in the catalog, its biomes on the plate and its scenes among the saved plates. It stays for the next sessions.
 Se puede recuperar re-simulándola hasta donde quedó:	It can be recovered by re-simulating up to where it was:
 Se saca esa fracción del cultivo con todo lo que tiene y se repone con medio nuevo.	That fraction of the culture is removed with everything it contains and replaced with fresh medium.
@@ -992,6 +1070,7 @@ Si la simulación se atrasa, cuántos pasos de recuperación se hacen por cuadro
 Si no, en toda la placa.	Otherwise, over the whole plate.
 Si: diatomeas | Fe: fotosíntesis | B12: Euglena y diatomeas	Si: diatoms | Fe: photosynthesis | B12: Euglena and diatoms
 Si: media saturación	Si: half-saturation
+Siguiente paso	Next step
 Siguiente tinción	Next stain
 Silice	Silica
 Simulación	Simulation
@@ -1010,8 +1089,11 @@ Sin vida	No life
 Sincroniza los cuadros con el monitor: sin cortes en la imagen. Apagada, los cuadros salen apenas están listos.	Synchronizes frames with the monitor: no tearing. Off, frames come out as soon as they are ready.
 Sincronía vertical (VSync)	Vertical sync (VSync)
 Solo agua, química y sedimento: sin vida (agregala desde el catálogo).	Only water, chemistry and sediment: no life (add it from the catalog).
+Solo una membrana viva y semipermeable puede volver a tomar agua y llenar la pared. Una celula muerta no se plasmoliza ni se recupera.	Only a living, semipermeable membrane can take up water again and fill the wall. A dead cell neither plasmolyzes nor recovers.
 Solucion de sales sin materia organica: las bacterias que se agregan como alimento no se multiplican, asi la comida de los paramecios es la que pone el experimentador cada dia (el protocolo de Gause).	Salt solution without organic matter: the bacteria added as food do not multiply, so the paramecia's food is what the experimenter provides every day (Gause's protocol).
 Solucion salina 0,9 % (fisiologica)	0.9 % saline solution (physiological)
+Solucion salina al 0,3 % (3 g/kg)	0.3 % saline (3 g/kg)
+Solucion salina al 0,45 % (4,5 g/kg)	0.45 % saline (4.5 g/kg)
 Solucion salina de Osterhout (Gause)	Osterhout's salt solution (Gause)
 Solución de montaje	Mounting solution
 Soluto	Solute
@@ -1037,11 +1119,13 @@ Tamano	Size
 Tasa a la que las bacterias de la biopelícula se sueltan y vuelven a nadar. Estimación.	Rate at which biofilm bacteria detach and swim again. Estimate.
 Temperatura	Temperature
 Temperatura [°C]	Temperature [°C]
+Terminar la lección	End the lesson
 Teñida	Stained
 Tiempo	Time
 Tiempo biológico (x)	Biological time (x)
 Tiempo de duplicación	Doubling time
 Tiempo simulado	Simulated time
+Tilman: competencia por un recurso en un quimiostato	Tilman: competition for a resource in a chemostat
 Tin	Sta
 Tincion de Gram	Gram stain
 Tinciones	Stains
@@ -1073,6 +1157,7 @@ Un esclerocio revive cuando hay comida	A sclerotium revives when there is food
 Un esporangio de resistencia germina cuando vuelve la comida	A resting sporangium germinates when food returns
 Un hongo liquenizante se une a un alga (simbiosis)	A lichenizing fungus joins an alga (symbiosis)
 Un paso	One step
+Un quimiostato con 20 Asterionella y 20 Cyclotella. Entra medio con poco fosforo (0,25 uM) y sale cultivo a 0,25 por dia.	A chemostat with 20 Asterionella and 20 Cyclotella. Medium with little phosphorus (0.25 uM) flows in and culture flows out at 0.25 per day.
 Un quitridio infecta un alga	A chytrid infects an alga
 Un raspado de la cara interna de la mejilla en solucion salina, tenido con azul de metileno: celulas escamosas planas con un nucleo chico, y bacterias de la boca.	A scraping of the inside of the cheek in saline, stained with methylene blue: flat squamous cells with a small nucleus, and mouth bacteria.
 Un solo archivo de texto con las definiciones elegidas, tal como se leyeron (con su plan corporal y su fisiología). Un ser de fábrica exportado sirve de plantilla: para importarlo hay que cambiarle el id.	A single text file with the chosen definitions, as they were read (with their body plan and physiology). An exported built-in being serves as a template: to import it its id must be changed.
@@ -1090,10 +1175,13 @@ Vacuolas digestivas	Food vacuoles
 Valor final / alto	Final / high value
 Valor inicial / bajo	Initial / low value
 Valores	Values
+Veinte paramecios nadan en una gota sin comida. Mira como se reparten antes de tocar nada.	Twenty paramecia swim in a drop without food. Watch how they spread out before touching anything.
 Velocidad	Speed
 Velocidad (x)	Speed (x)
 Velocidad [h/s]	Speed [h/s]
 Ver	View
+Ver la osmosis en una celula vegetal: en un medio mas concentrado que su jugo celular, el protoplasto pierde agua y se despega de la pared (plasmolisis); en agua vuelve a llenarla.	See osmosis in a plant cell: in a medium more concentrated than its cell sap, the protoplast loses water and pulls away from the wall (plasmolysis); in water it fills it again.
+Ver una conducta que emerge de una regla simple: Paramecium entra libremente a una zona con CO2 y, al salir hacia agua menos acida, retrocede (reaccion de evitacion). El resultado es que se acumula alrededor de la fuente.	See a behavior that emerges from a simple rule: Paramecium freely enters a zone with CO2 and, when leaving toward less acidic water, backs up (avoidance reaction). The result is that it accumulates around the source.
 Virus de bacterias: se pegan, inyectan su ADN y a la media hora la bacteria estalla liberando ~50 copias. Las resistentes sobreviven.	Viruses of bacteria: they attach, inject their DNA and after half an hour the bacterium bursts releasing ~50 copies. Resistant ones survive.
 Vista de modelo (estructuras no resolubles)	Model view (unresolvable structures)
 Vista de modelo: esquema didáctico, no imagen de microscopio	Model view: teaching diagram, not a microscope image
@@ -1193,6 +1281,7 @@ filtra el agua por el surco oral (corriente hacia la boca)	filters the water thr
 fision binaria	binary fission
 formando un tabique para dividirse	forming a septum to divide
 fototaxis: gira hacia el lado mas iluminado	phototaxis: turns toward the brighter side
+fraccion	fraction
 frustula de silice	silica frustule
 frustula de silice: cuesta romperla	silica frustule: hard to break
 gemacion: una yema crece y se separa	budding: a bud grows and separates
@@ -1207,6 +1296,7 @@ granulos y lisosomas	granules and lysosomes
 hacia la primera celula	toward the first cell
 hacia la ultima celula	toward the last cell
 huye en linea recta de un depredador	flees in a straight line from a predator
+idioma	language
 infectada por 	infected by 
 infectada por quitridios: %zu esporangios sobre la pared (%.1f h bio)	infected by chytrids: %zu sporangia on the wall (%.1f bio h)
 infectada por un fago (%.1f h bio): estallara	infected by a phage (%.1f bio h): it will burst
@@ -1214,6 +1304,7 @@ inmovil, apoyado en el vidrio	motionless, resting on the glass
 inmovil, sostenida por el tallo	motionless, held by the stalk
 intervenciones de la escena: se repiten al crear la placa.	scene interventions: they are repeated when creating the plate.
 la controlas vos	you control it
+lección	lesson
 libera colonias hijas	releases daughter colonies
 libera microcistina, toxica para quien la come	releases microcystin, toxic to whoever eats it
 libera nutrientes al agua (mas rapido junto a hifas de hongos)	releases nutrients into the water (faster next to fungal hyphae)
@@ -1284,6 +1375,8 @@ se descompone	decomposes
 se desliza por el rafe, con inversiones de sentido	glides along the raphe, reversing direction
 se esperan	expected
 se ve al microscopio	visible under the microscope
+secundario	secondary
+secundario / universitario	secondary / university
 sigue el agua	follows the water
 sigue el agua mas un browniano (Stokes-Einstein)	follows the water plus Brownian motion (Stokes-Einstein)
 simplificacion: los gases y nutrientes disueltos lo atraviesan	simplification: dissolved gases and nutrients pass through it
@@ -1313,6 +1406,7 @@ tu linaje	your lineage
 uM	uM
 un alga: nada hacia la mas cercana (quimiotaxis)	an alga: swims toward the nearest one (chemotaxis)
 un sustrato donde germinar	a substrate where it can germinate
+universitario	university
 vacuola contractil	contractile vacuole
 vacuolas con madera	vacuoles with wood
 vacuolas contractiles	contractile vacuoles

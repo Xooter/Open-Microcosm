@@ -43,7 +43,7 @@ e interviene.
   íconos), Ficha, Herramientas, Simulación, Preferencias (imagen, fluidez y rendimiento),
   Procesos (tasas de química, microbiología y hongos), Estadísticas (censo, totales conservados
   de P, N, Si y Fe, y el ser controlado), Enciclopedia y Gráficos, Medición, Contenido (paquetes
-  cargados, avisos de los datos, importar y exportar `.biopack`), Cultivos, Experimento y
+  cargados, avisos de los datos, importar y exportar `.biopack`), Cultivos, Experimento, Lección y
   Ayuda. Arrancan abiertos Placa,
   Catálogo, Tinciones, Ficha, Estadísticas, Herramientas, Simulación y Medición; los demás se abren
   desde *Ver* (un panel cerrado por defecto pone `open = false` en su constructor).
@@ -359,6 +359,21 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   media, DE e IC 95 % y JSON con la procedencia.
 - Lo que todavía no se simula bien mezclado no se siembra (`Culture::supports`): células animales,
   filamentos, colonias y zoosporas. Tampoco hay Bdellovibrio, quorum ni conjugación.
+
+### Lecciones y protocolos (`game/lesson`, panel Lección, fase P1)
+
+- Una lección es un protocolo con pasos, como datos (`lecciones.toml`, `[[leccion]]` en los
+  paquetes): qué se prepara (placa preparada, gota de un bioma o escena de cultivo), los controles
+  que ve el alumno (claves del registro), los parámetros que fija (con su motivo), acciones con nombre
+  (una intervención o una operación del cultivo) y pasos con objetivo, pregunta o predicción.
+- Los objetivos son **condiciones con nombre** (`tiempo_h`, `poblacion`, `bacterias`,
+  `concentracion`, `ph`, `plasmolisis`, `hemolisis`, `cerca_centro`, `fraccion`): el código aporta
+  el mecanismo y los datos eligen cuál. Una condición nueva se suma en `lessonQuantity`.
+- Sin puntaje: las preguntas muestran su explicación al responder y el informe (Markdown) lo corrige
+  el docente. Un parámetro fijado se ve trabado (`App::protocolLocks`, `parameterControl`); se puede
+  destrabar, queda anotado y `runJson` marca `fuera_de_protocolo`.
+- Cada lección trae su **solución** (intervenciones u operaciones con su paso) y
+  `tests/test_lessons.cpp` la recorre: si un cambio del modelo rompe una lección, se entera el test.
 
 ### Ambiente, biomas y enciclopedia (`game/biome`, `game/encyclopedia`)
 

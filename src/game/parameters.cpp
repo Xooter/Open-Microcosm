@@ -88,6 +88,15 @@ const ParamInfo kParams[] = {
      BIO_REAL(w.plasmodia().params.pruneD)},
     {"physarum.hambre_a_esclerocio", "Hambre a esclerocio [h]", "h", G::Plasmodium, 1.0f, 40.0f, "%.0f", false, nullptr,
      BIO_REAL(w.plasmodia().params.starveHoursToSclerotium)},
+    // --- Ambiente (los cambia el panel Placa con su intervención; acá, para lecciones y programas)
+    {"ambiente.temperatura", "Temperatura [°C]", "°C", G::Environment, -2.0f, 60.0f, "%.1f", false, nullptr,
+     BIO_REAL(w.medium().temperature)},
+    {"ambiente.salinidad", "Salinidad [g/kg]", "g/kg", G::Environment, 0.0f, 100.0f, "%.1f", false,
+     "Sales disueltas: con los osmolitos fijan la osmolaridad del medio (plasmólisis, hemólisis).",
+     BIO_REAL(w.medium().salinity)},
+    {"ambiente.luz", "Luz", "", G::Environment, 0.0f, 1.0f, "%.2f", false, nullptr, BIO_REAL(w.medium().surfaceLight)},
+    {"ambiente.osmolitos", "Sacarosa [mOsm/L]", "mOsm/L", G::Environment, 0.0f, 2000.0f, "%.0f", false,
+     "Osmolitos que no cruzan la membrana (sacarosa, manitol).", BIO_REAL(w.medium().osmolytes)},
     // --- Tiempo
     {"tiempo.escala_biologica", "Tiempo biológico (x)", "s bio/s", G::Time, 1.0f, 600.0f, "%.0f", false,
      "Compresión de la biología: 60 = 1 min real es 1 h biológica. La física siempre va en tiempo real.",
@@ -186,6 +195,8 @@ void setParameterValue(World& world, const ParamInfo& p, float value) {
         *p.real(world) = value;
     else
         *p.integer(world) = static_cast<int>(std::lround(value));
+    if (p.group == ParamGroup::Environment)
+        world.refreshMedium(); // Q10, viscosidad y gases de equilibrio dependen del ambiente
 }
 
 const char* paramGroupName(ParamGroup group) {
@@ -199,6 +210,7 @@ const char* paramGroupName(ParamGroup group) {
     case ParamGroup::Time: return "Tiempo";
     case ParamGroup::Metabolism: return "Metabolismo";
     case ParamGroup::Engine: return "Motor";
+    case ParamGroup::Environment: return "Ambiente";
     }
     return "";
 }

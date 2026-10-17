@@ -40,6 +40,8 @@ enum class CultureOp : std::uint8_t {
     Receive,       // value = volumen recibido [µL]; key = lo que trae (células con su estado, bacterias
                    // y concentraciones: ver encodeTransfer), así la escena del cultivo que recibe se repite
     InoculateDensity, // key = id del ser, value = individuos por mL (la cantidad es un sorteo de Poisson)
+    Chemostat,     // value = tasa de dilución D [1/h] (0: en lote)
+    Inflow,        // key = soluto, value = µM del medio que entra (reservorio del quimiostato)
     Count
 };
 const char* cultureOpKey(CultureOp op);

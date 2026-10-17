@@ -5,6 +5,7 @@
 #include "game/timeseries.hpp"
 
 #include <string>
+#include <vector>
 
 class World;
 class Run;
@@ -23,6 +24,8 @@ struct RunProvenance {
     std::string engine = "CPU"; // resolvedor de XPBD
     std::string gpu;            // GL_RENDERER, si el motor es la GPU
     bool lod = false;           // LOD activo (lo lejano con menos sub-pasos)
+    std::string protocol;               // lección o protocolo en curso ("" ninguno)
+    std::vector<std::string> unlocked;  // parámetros del protocolo que se destrabaron
 };
 
 // Descripción de la CPU de esta máquina ("" si no se pudo leer).

@@ -20,6 +20,7 @@ void registerPanels(PanelHost& host) {
     host.add(makeContentPanel());
     host.add(makeCulturePanel());
     host.add(makeExperimentPanel());
+    host.add(makeLessonPanel());
     host.add(makeHelpPanel());
 }
 

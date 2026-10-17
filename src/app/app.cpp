@@ -245,6 +245,8 @@ RunProvenance App::provenance() const {
     if (solver)
         p.gpu = gpu.deviceName();
     p.lod = world && world->lodStride > 1;
+    p.protocol = protocol;
+    p.unlocked = unlockedParameters;
     return p;
 }
 
@@ -996,6 +998,19 @@ void App::stepCultures(float dt) {
         if (GetTime() - t0 > 0.010)
             break;
     }
+}
+
+const char* App::protocolLockReason(const char* key) const {
+    for (const auto& [k, reason] : protocolLocks)
+        if (k == key && std::find(unlockedParameters.begin(), unlockedParameters.end(), k) == unlockedParameters.end())
+            return reason.c_str();
+    return nullptr;
+}
+
+void App::unlockParameter(const std::string& key) {
+    if (std::find(unlockedParameters.begin(), unlockedParameters.end(), key) == unlockedParameters.end())
+        unlockedParameters.push_back(key);
+    notify(std::string(ui::tr("Fuera de protocolo: se destrabó ")) + key);
 }
 
 void App::openSampleDrop(const PlateSpec& drop) {

@@ -330,6 +330,15 @@ std::string runJson(const World& world, const Run& run, const PlateSpec& plate, 
     if (!provenance.gpu.empty())
         j.string("gpu", provenance.gpu);
     j.boolean("lod", provenance.lod);
+    if (!provenance.protocol.empty()) {
+        // Una corrida con un parámetro del protocolo destrabado ya no es la del protocolo.
+        j.string("protocolo", provenance.protocol);
+        j.boolean("fuera_de_protocolo", !provenance.unlocked.empty());
+        j.beginArray("destrabados");
+        for (const std::string& k : provenance.unlocked)
+            j.string(nullptr, k);
+        j.endArray();
+    }
     j.string("maquina", machineDescription());
     // Cuerpos que la red de seguridad tuvo que rearmar (posiciones no finitas): debería ser 0.
     j.number("fallas_numericas", static_cast<double>(world.numericalFaults()));

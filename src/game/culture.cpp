@@ -118,6 +118,8 @@ void Culture::setConcentration(Solute s, double micromolar) {
 }
 
 double Culture::freshConcentration(Solute s) const {
+    if (freshSet_[static_cast<int>(s)])
+        return fresh_[static_cast<int>(s)];
     const MediumParams& m = config_.medium;
     switch (s) {
     case Solute::Oxygen: return o2Saturation_;

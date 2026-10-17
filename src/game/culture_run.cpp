@@ -17,7 +17,8 @@
 
 namespace {
 constexpr const char* kOpKeys[] = {"inocular", "bacterias", "medio",  "dilucion",           "concentracion",
-                                   "fagos",    "muestra",   "salida", "entrada", "inocular_densidad"};
+                                   "fagos",    "muestra",   "salida", "entrada", "inocular_densidad",
+                                   "quimiostato", "medio_que_entra"};
 
 std::string fnum(double v) {
     char buf[40];
@@ -247,6 +248,15 @@ bool CultureRun::apply(CultureEvent ev) {
         ok = n == 0 || c.inoculate(*id, n) > 0;
         break;
     }
+    case CultureOp::Chemostat: c.setDilutionRate(ev.value); break;
+    case CultureOp::Inflow:
+        ok = false;
+        for (int k = 0; k < kSoluteCount; ++k)
+            if (ev.key == soluteKey(static_cast<Solute>(k))) {
+                c.setFreshConcentration(static_cast<Solute>(k), ev.value);
+                ok = true;
+            }
+        break;
     case CultureOp::Count: ok = false; break;
     }
     if (ok)

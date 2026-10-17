@@ -77,6 +77,13 @@ struct App {
     // La gota de muestra de un cultivo pasa a ser la placa del centro.
     void openSampleDrop(const PlateSpec& drop);
 
+    // --- Protocolo (lecciones, modo aula): parámetros que fija, con su motivo ---
+    std::string protocol;                                      // id de la lección ("" sin protocolo)
+    std::vector<std::pair<std::string, std::string>> protocolLocks; // clave, motivo
+    std::vector<std::string> unlockedParameters;               // destrabados: fuera de protocolo
+    const char* protocolLockReason(const char* key) const;     // null si no está fijado
+    void unlockParameter(const std::string& key);
+
     // --- Estado ---
     Options options;
     std::string optionsPath = defaultOptionsPath();

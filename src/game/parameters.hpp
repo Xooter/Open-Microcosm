@@ -19,6 +19,8 @@ enum class ParamGroup : std::uint8_t {
     Time,           // Simulación > Tiempo
     Metabolism,     // sin control: constantes fisiológicas que se exportan
     Engine,         // del motor; se controla desde Preferencias (LOD) y se exporta
+    Environment,    // ambiente (temperatura, salinidad, luz, osmolitos): lo usan las lecciones y los
+                    // programas; en la interfaz general está en el panel Placa
 };
 
 struct ParamInfo {

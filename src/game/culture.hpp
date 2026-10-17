@@ -121,6 +121,12 @@ class Culture {
     // cambia). Cada célula y cada bacteria sale con probabilidad 1 − e^(−D·dt): el lavado (Monod 1950;
     // Novick y Szilard 1950). 0: cultivo en lote.
     void setDilutionRate(double perHour) { dilutionPerHour_ = std::max(0.0, perHour); }
+    // Composición del medio que entra (cambio de medio, dilución, quimiostato): la del medio con que
+    // se preparó el cultivo, salvo los solutos que se fijen acá (el reservorio de un quimiostato).
+    void setFreshConcentration(Solute s, double micromolar) {
+        fresh_[static_cast<int>(s)] = std::max(0.0, micromolar);
+        freshSet_[static_cast<int>(s)] = true;
+    }
     double dilutionRate() const { return dilutionPerHour_; }
     // Programa temporal (game/program): se aplica antes de cada paso, con la hora de laboratorio.
     Program& program() { return program_; }
@@ -202,6 +208,8 @@ class Culture {
     std::uint64_t inoculations_ = 0, phageEvents_ = 0;
     Program program_;
     double dilutionPerHour_ = 0.0;
+    double fresh_[kSoluteCount] = {};
+    bool freshSet_[kSoluteCount] = {};
     std::uint64_t washouts_ = 0;
     std::vector<CultureCell> cells_;
     std::vector<BacterialCohort> bacteria_;

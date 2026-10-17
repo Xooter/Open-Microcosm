@@ -22,5 +22,6 @@ std::unique_ptr<Panel> makeHelpPanel();
 std::unique_ptr<Panel> makeContentPanel();
 std::unique_ptr<Panel> makeCulturePanel();
 std::unique_ptr<Panel> makeExperimentPanel();
+std::unique_ptr<Panel> makeLessonPanel();
 
 } // namespace ui

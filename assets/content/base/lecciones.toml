@@ -1,0 +1,169 @@
+# Lecciones del paquete de fábrica (fase P1, paso 10). Una lección es un protocolo con pasos: qué
+# se prepara, qué controles ve el alumno, qué fija el protocolo (con su motivo) y los pasos, cada uno
+# con un objetivo que verifica la simulación, una pregunta con su explicación o una predicción que
+# después se compara con lo medido. No hay puntaje: el informe exportable lo corrige el docente.
+#
+# [[leccion]]: id, titulo, nivel, objetivo, fuente; qué se prepara: placa (id de placas.toml), o
+#   bioma + seed + contenido (0 completa, 1 sin vida, 2 vacía), o cultivo (texto de una escena
+#   .cultivo); preparar = intervenciones al empezar ("paso tipo activo índice x y v0..v5 [clave]",
+#   como en una escena); controles = claves del registro de parámetros que ve el alumno;
+#   [[leccion.fijados]] clave, motivo; [[leccion.acciones]] texto, evento (una intervención de la
+#   placa o una operación del cultivo: "op valor [clave]"); [[leccion.paso]] texto, objetivo
+#   {tipo, clave, op, valor}, pregunta {texto, opciones, correcta, explicacion}, prediccion {texto,
+#   magnitud {tipo, clave}, unidad}; solucion = intervenciones u operaciones con su paso que cumplen
+#   todos los objetivos (las usa el test de las lecciones) y solucion_horas.
+
+[[leccion]]
+id = "jennings_co2"
+titulo = "Jennings: los paramecios se juntan donde hay CO2"
+nivel = "secundario / universitario"
+objetivo = "Ver una conducta que emerge de una regla simple: Paramecium entra libremente a una zona con CO2 y, al salir hacia agua menos acida, retrocede (reaccion de evitacion). El resultado es que se acumula alrededor de la fuente."
+fuente = "Jennings, H. S. (1906). Behavior of the Lower Organisms. Columbia University Press, cap. sobre Paramecium."
+bioma = "charco"
+seed = 1906
+contenido = 2
+preparar = ["0 21 0 0 1024 1024 0 20 0 0 0 0 paramecium"]
+solucion = ["0 8 1 6 1024 1024 140 2 0 0 0 0"]
+solucion_horas = 2.0
+[[leccion.fijados]]
+clave = "ambiente.temperatura"
+motivo = "La rapidez de nado cambia con la temperatura (viscosidad): se fija para comparar con el control."
+[[leccion.acciones]]
+texto = "Abrir el gotero de CO2 en el centro"
+evento = "0 8 1 6 1024 1024 140 2 0 0 0 0"
+[[leccion.acciones]]
+texto = "Cerrar el gotero"
+evento = "0 8 0 6 1024 1024 140 2 0 0 0 0"
+[[leccion.paso]]
+texto = "Veinte paramecios nadan en una gota sin comida. Mira como se reparten antes de tocar nada."
+objetivo = { tipo = "tiempo_h", op = ">=", valor = 0.25 }
+prediccion = { texto = "Cuando abras el gotero de CO2 en el centro, que fraccion de los paramecios va a estar a menos de 0,2 radios del centro (el 4 % del area)?", magnitud = { tipo = "cerca_centro", clave = "paramecium" }, unidad = "fraccion" }
+[[leccion.paso]]
+texto = "Abri el gotero de CO2 en el centro (boton de la leccion) y espera a que la burbuja de agua acida crezca."
+objetivo = { tipo = "cerca_centro", clave = "paramecium", op = ">=", valor = 0.06 }
+pregunta = { texto = "Por que se juntan donde hay CO2?", opciones = ["El CO2 los atrae como alimento", "Entran libremente pero al salir hacia agua menos acida hacen la reaccion de evitacion y vuelven", "El CO2 los paraliza"], correcta = 1, explicacion = "Jennings vio que no nadan hacia el CO2: lo encuentran al azar, y cada vez que van a salir de la zona acida retroceden y giran. Una regla local (evitar el cambio hacia lo menos acido) produce una acumulacion global." }
+
+[[leccion]]
+id = "plasmolisis_cebolla"
+titulo = "Plasmolisis de la epidermis de cebolla"
+nivel = "secundario"
+objetivo = "Ver la osmosis en una celula vegetal: en un medio mas concentrado que su jugo celular, el protoplasto pierde agua y se despega de la pared (plasmolisis); en agua vuelve a llenarla."
+fuente = "Practica clasica de laboratorio de biologia; osmosis de Boyle-van 't Hoff (bio/osmosis)."
+placa = "epidermis_cebolla"
+seed = 1
+controles = ["ambiente.salinidad"]
+solucion = ["0 0 0 0 0 0 30 0 0 0 0 0 ambiente.salinidad", "18000 0 0 0 0 0 0 0 0 0 0 0 ambiente.salinidad"]
+solucion_horas = 10.0
+[[leccion.fijados]]
+clave = "ambiente.temperatura"
+motivo = "La osmosis depende de la concentracion: la temperatura se deja fija para que solo cambie la sal."
+[[leccion.acciones]]
+texto = "Montar en agua con sal (30 g/kg)"
+evento = "0 0 0 0 0 0 30 0 0 0 0 0 ambiente.salinidad"
+[[leccion.acciones]]
+texto = "Montar en agua (sin sal)"
+evento = "0 0 0 0 0 0 0 0 0 0 0 0 ambiente.salinidad"
+[[leccion.paso]]
+texto = "La epidermis esta montada en agua: las celulas estan turgentes, con el protoplasto apretado contra la pared."
+objetivo = { tipo = "tiempo_h", op = ">=", valor = 0.1 }
+prediccion = { texto = "Que fraccion de las celulas se va a plasmolizar en agua con 30 g/kg de sal?", magnitud = { tipo = "plasmolisis" }, unidad = "fraccion" }
+[[leccion.paso]]
+texto = "Monta la epidermis en agua con sal (boton de la leccion, o la salinidad en 30 g/kg) y espera unos minutos."
+objetivo = { tipo = "plasmolisis", op = ">=", valor = 0.5 }
+pregunta = { texto = "Por que el protoplasto se despega de la pared?", opciones = ["La sal disuelve la pared", "El agua sale de la vacuola hacia el medio mas concentrado y la pared rigida no la sigue", "La celula se muere y se encoge"], correcta = 1, explicacion = "El agua cruza la membrana hacia donde hay mas solutos. La vacuola pierde agua y el protoplasto se achica; la pared de celulosa es rigida y queda en su lugar. La celula sigue viva: en agua se recupera." }
+[[leccion.paso]]
+texto = "Ahora monta la epidermis otra vez en agua sin sal y mira que pasa."
+objetivo = { tipo = "plasmolisis", op = "<=", valor = 0.1 }
+pregunta = { texto = "Que muestra la deplasmolisis?", opciones = ["Que las celulas estaban muertas", "Que la plasmolisis es reversible: la celula estaba viva y su membrana sigue siendo semipermeable", "Que la pared se reparo"], correcta = 1, explicacion = "Solo una membrana viva y semipermeable puede volver a tomar agua y llenar la pared. Una celula muerta no se plasmoliza ni se recupera." }
+
+[[leccion]]
+id = "fragilidad_osmotica"
+titulo = "Fragilidad osmotica de los globulos rojos"
+nivel = "universitario"
+objetivo = "Medir a que concentracion de sal se hemolizan los globulos rojos: en un medio hipotonico se hinchan y estallan cuando pasan su volumen critico. Los mas viejos son mas fragiles."
+fuente = "Parpart, A. K. et al. (1947). J. Clin. Invest. 26: 636-640 (prueba de fragilidad osmotica: hemolisis de la mitad a ~0,45 % de NaCl)."
+placa = "sangre_viva"
+seed = 1
+controles = ["ambiente.salinidad"]
+solucion = ["0 0 0 0 0 0 4.5 0 0 0 0 0 ambiente.salinidad", "18000 0 0 0 0 0 3 0 0 0 0 0 ambiente.salinidad"]
+solucion_horas = 10.0
+[[leccion.fijados]]
+clave = "ambiente.temperatura"
+motivo = "La prueba se hace a temperatura ambiente fija."
+[[leccion.acciones]]
+texto = "Solucion salina al 0,45 % (4,5 g/kg)"
+evento = "0 0 0 0 0 0 4.5 0 0 0 0 0 ambiente.salinidad"
+[[leccion.acciones]]
+texto = "Solucion salina al 0,3 % (3 g/kg)"
+evento = "0 0 0 0 0 0 3 0 0 0 0 0 ambiente.salinidad"
+[[leccion.paso]]
+texto = "La sangre esta diluida en solucion salina al 0,9 % (isotonica): los globulos rojos son discos."
+objetivo = { tipo = "tiempo_h", op = ">=", valor = 0.1 }
+prediccion = { texto = "Que fraccion se va a hemolizar en solucion salina al 0,45 %?", magnitud = { tipo = "hemolisis" }, unidad = "fraccion" }
+[[leccion.paso]]
+texto = "Baja la salinidad a 4,5 g/kg (0,45 % de NaCl)."
+objetivo = { tipo = "hemolisis", op = ">=", valor = 0.2 }
+pregunta = { texto = "Por que no estallan todos a la vez?", opciones = ["Porque cada uno tiene su volumen critico: los viejos, con menos membrana sobrante, estallan antes", "Porque la sal no llega a todos", "Porque algunos ya estaban muertos"], correcta = 0, explicacion = "Cada globulo rojo puede hincharse hasta un volumen critico, que depende de cuanta membrana tiene de sobra. Con la edad pierde membrana y se vuelve mas fragil: la curva de fragilidad es una distribucion, no un umbral." }
+[[leccion.paso]]
+texto = "Baja la salinidad a 3 g/kg (0,3 %)."
+objetivo = { tipo = "hemolisis", op = ">=", valor = 0.8 }
+
+[[leccion]]
+id = "gause_competencia"
+titulo = "Gause: competencia entre dos paramecios"
+nivel = "universitario"
+objetivo = "Repetir el experimento de Gause (1934): dos especies de Paramecium que comen lo mismo, en un tubo con una racion diaria de bacterias. Con una sola comida, una de las dos termina excluyendo a la otra (exclusion competitiva)."
+fuente = "Gause, G. F. (1934). The Struggle for Existence. Williams & Wilkins, cap. V; datos digitalizados en el paquete de R gauseR."
+cultivo = """
+cultivo_version=1
+nombre=gause
+recipiente=tubo_gause
+medio=osterhout_gause
+temperatura=26
+luz=0
+seed=1934
+programa=medio evento 24 inf 0 0 24 0.5 1
+programa=bacterias evento 24 inf 0 0 24 0.5 5e7
+evento=0 bacterias 5e7
+evento=0 inocular 5 paramecium
+evento=0 inocular 5 paramecium_aurelia
+"""
+solucion_horas = 720.0
+[[leccion.paso]]
+texto = "En el tubo hay 5 Paramecium caudatum y 5 P. aurelia. Cada dia se cambia el medio y se agrega la misma racion de bacterias (el protocolo de Gause)."
+objetivo = { tipo = "tiempo_h", op = ">=", valor = 24.0 }
+prediccion = { texto = "Al dia 30, que fraccion de los paramecios va a ser P. aurelia?", magnitud = { tipo = "fraccion", clave = "paramecium_aurelia,paramecium" }, unidad = "fraccion" }
+[[leccion.paso]]
+texto = "Deja correr el cultivo 30 dias (subi la velocidad). Mira el grafico del panel Cultivos."
+objetivo = { tipo = "tiempo_h", op = ">=", valor = 720.0 }
+pregunta = { texto = "Que predice el principio de exclusion competitiva?", opciones = ["Que las dos conviven si hay comida para todas", "Que dos especies que dependen del mismo recurso limitante no pueden coexistir: la que lo aprovecha mejor desplaza a la otra", "Que gana siempre la que crece mas rapido"], correcta = 1, explicacion = "Gause vio que P. aurelia excluia a P. caudatum. En el modelo, la ventaja de P. aurelia (mas comida por biomasa) es chica y la que se adelanta al principio puede ganar: corre replicas en el panel Experimento y compara la proporcion de veces que gana cada una." }
+
+[[leccion]]
+id = "tilman_quimiostato"
+titulo = "Tilman: competencia por un recurso en un quimiostato"
+nivel = "universitario"
+objetivo = "Dos diatomeas compiten por el fosforo en un quimiostato. Gana la que puede crecer al ritmo de la dilucion con menos fosforo disuelto (la de menor R*), y la otra desaparece."
+fuente = "Tilman, D. (1977). Ecology 58: 338-348 (Asterionella formosa y Cyclotella meneghiniana en cultivos semicontinuos)."
+cultivo = """
+cultivo_version=1
+nombre=tilman
+recipiente=microquimiostato
+medio=wc_guillard
+temperatura=20
+luz=1
+seed=1977
+evento=0 medio_que_entra 0.25 fosfato
+evento=0 concentracion 0.25 fosfato
+evento=0 inocular 20 asterionella
+evento=0 inocular 20 cyclotella
+evento=0 quimiostato 0.0104167
+"""
+solucion_horas = 1440.0
+[[leccion.paso]]
+texto = "Un quimiostato con 20 Asterionella y 20 Cyclotella. Entra medio con poco fosforo (0,25 uM) y sale cultivo a 0,25 por dia."
+objetivo = { tipo = "tiempo_h", op = ">=", valor = 24.0 }
+prediccion = { texto = "Al final, que fraccion de las diatomeas va a ser Asterionella?", magnitud = { tipo = "fraccion", clave = "asterionella,cyclotella" }, unidad = "fraccion" }
+[[leccion.paso]]
+texto = "Deja correr el quimiostato 60 dias (subi la velocidad)."
+objetivo = { tipo = "fraccion", clave = "asterionella,cyclotella", op = ">=", valor = 0.9 }
+pregunta = { texto = "Por que gana Asterionella con poco fosforo?", opciones = ["Crece mas rapido", "Necesita menos fosforo disuelto para crecer al ritmo de la dilucion (menor R*)", "Se come a Cyclotella"], correcta = 1, explicacion = "Las dos tienen el mismo crecimiento maximo; Asterionella tiene una media saturacion del fosforo seis veces menor. En el quimiostato el fosforo baja hasta el R* de la mejor competidora y la otra no llega a reponer lo que se lava. Con silice limitante pasa al reves." }

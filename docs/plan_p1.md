@@ -1,5 +1,3 @@
-10. **Protocolos y lecciones:** Jennings, Tilman, Gause, plasmólisis y fragilidad osmótica; cada
-    una con su solución que un test recorre.
 # Plan — Fase MVP P1: experimentos y aula
 
 Plan del 16/10/2026, aprobado en sus decisiones. Se implementa en el orden de abajo, con un commit
