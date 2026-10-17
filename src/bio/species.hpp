@@ -142,6 +142,7 @@ struct SpeciesInfo {
     // dividirse (reproducción asexual).
     float zoosporeChance = 0.0f;
     int colonyDaughters = 0;        // colonias hijas que libera (Volvox, Pediastrum)
+    int colonyCells = 0;            // células de una colonia de pocas células (Gonium: 16); solo el dibujo
     bool motherDiesAtRelease = false; // Volvox: las hijas nacen rompiendo a la madre
     // Materia seca relativa a una célula maciza del mismo volumen: Volvox es una esfera hueca
     // de matriz gelatinosa (~3% de células); Spirogyra tiene una gran vacuola central.

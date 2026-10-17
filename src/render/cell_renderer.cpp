@@ -334,7 +334,7 @@ enum class CellStyle : std::uint8_t {
     Ciliate, Flagellate, Amoeboid, RostrumFlagella, GirdlesProboscis, HelicalRibbon, AxialPlate,
     StellatePlastids, ReticulatePlastid, Frustule, SphericalColony, PlateColony, PeristomeCrown,
     MembranelleCrown, CapitateTentacles, Cirri, Neck, TwinFlagella, Yeast, AdherentCell, Neutrophil,
-    PlantProtoplast, ElodeaLeaf, Squamous, Lymphocyte, Monocyte, Coccoid
+    PlantProtoplast, ElodeaLeaf, Squamous, Lymphocyte, Monocyte, Coccoid, PlateCells, PackedCells, HollowCells
 };
 
 // Células de organismos pluricelulares: sin vacuola contráctil (viven en un medio isotónico o dentro
@@ -374,7 +374,10 @@ CellStyle resolveStyle(SpeciesId sid) {
         {"celula_escamosa", CellStyle::Squamous},
         {"linfocito", CellStyle::Lymphocyte},
         {"monocito", CellStyle::Monocyte},
-        {"cocoide", CellStyle::Coccoid}};
+        {"cocoide", CellStyle::Coccoid},
+        {"colonia_de_placa", CellStyle::PlateCells},
+        {"colonia_compacta", CellStyle::PackedCells},
+        {"colonia_hueca", CellStyle::HollowCells}};
     for (const auto& [key, style] : kNames)
         if (name == key)
             return style;
@@ -398,7 +401,10 @@ CellStyle styleOf(SpeciesId sid) {
     return cache[k];
 }
 
-bool isColony(CellStyle s) { return s == CellStyle::SphericalColony || s == CellStyle::PlateColony; }
+bool isColony(CellStyle s) {
+    return s == CellStyle::SphericalColony || s == CellStyle::PlateColony || s == CellStyle::PlateCells ||
+           s == CellStyle::PackedCells || s == CellStyle::HollowCells;
+}
 
 Vec2 ringPos(const BodyParticles& bp, const RingBody& body, std::size_t i) {
     const std::uint32_t s = body.ring[i % body.ring.size()];
@@ -621,6 +627,70 @@ void drawVolvox(const BodyParticles& bp, const RingBody& body, float growth, int
         const float r = f.half * (0.06f + 0.16f * std::clamp(growth, 0.0f, 1.0f));
         fastCircleV(toRay(c), r, Fade(kColonyCell, 0.5f));
         fastRing(toRay(c), r - std::max(0.6f, px), r, 0, 360, 32, kColonyCell);
+    }
+}
+
+// Volvocales de pocas células grandes, cada una biflagelada y con su cloroplasto en copa:
+//  - placa (Gonium): una lámina de una célula de espesor, un cuarto en el centro y el resto alrededor
+//    (16 = 4 + 12, en dos cuadrados concéntricos);
+//  - compacta (Pandorina): las células apretadas llenan la esfera; se ven un anillo y las del medio;
+//  - hueca (Eudorina): las células en la superficie de una esfera de mucílago; las de la cara de
+//    abajo se ven más tenues.
+// Antes de liberar las colonias hijas, cada célula se divide adentro (se ve más grande y cuarteada).
+void drawVolvocineColony(const RingBody& body, CellStyle style, int cells, float growth, float time, float px) {
+    const Frame f = frameOf(body);
+    const float R = f.half;
+    const int n = std::max(4, cells);
+    struct Placed {
+        Vec2 at;
+        float alpha;
+        bool rim;
+    };
+    Placed placed[64];
+    int count = 0;
+    auto ring = [&](int k, float radius, float phase, float alpha, bool rim) {
+        for (int i = 0; i < k && count < 64; ++i) {
+            const float a = phase + 6.2831853f * static_cast<float>(i) / static_cast<float>(k);
+            placed[count++] = {f.c + rotate(f.h, std::cos(a), std::sin(a)) * radius, alpha, rim};
+        }
+    };
+    float cell = 0.2f * R;
+    if (style == CellStyle::PlateCells) {
+        const int inner = n / 4;
+        ring(inner, 0.27f * R, 0.785f, 1.0f, false);
+        ring(n - inner, 0.7f * R, 0.0f, 1.0f, true);
+        cell = 0.19f * R;
+    } else if (style == CellStyle::PackedCells) {
+        const int outer = (n * 9 + 15) / 16, inner = std::max(0, n - outer - 1);
+        ring(outer, 0.64f * R, 0.0f, 1.0f, true);
+        ring(inner, 0.3f * R, 0.4f, 1.0f, false);
+        ring(1, 0.0f, 0.0f, 1.0f, false);
+        cell = 0.25f * R;
+    } else {
+        const int outer = n / 2, back = n - outer;
+        ring(back, 0.5f * R, 0.3f, 0.45f, false); // la cara de abajo, vista a través del mucílago
+        ring(outer, 0.82f * R, 0.0f, 1.0f, true);
+        cell = std::min(0.16f * R, 2.6f * R / static_cast<float>(outer));
+    }
+    const float g = std::clamp(growth, 0.0f, 1.0f);
+    const float r = cell * (1.0f + 0.25f * g);
+    for (int i = 0; i < count; ++i) {
+        const Placed& c = placed[i];
+        fastCircleV(toRay(c.at), r, Fade(kColonyCell, c.alpha));
+        fastCircleV(toRay(c.at), std::max(0.6f, 0.3f * r), Fade(kChloroplast, 0.6f * c.alpha)); // pirenoide
+        if (g > 0.6f) { // la célula ya se cuarteó en su colonia hija
+            fastLine(toRay(c.at - f.h * r), toRay(c.at + f.h * r), std::max(0.3f, 0.4f * px), Fade(kMembrane, 0.5f));
+            const Vec2 side = {-f.h.y, f.h.x};
+            fastLine(toRay(c.at - side * r), toRay(c.at + side * r), std::max(0.3f, 0.4f * px), Fade(kMembrane, 0.5f));
+        }
+        if (!c.rim)
+            continue;
+        const Vec2 o = (c.at - f.c) * (1.0f / std::max(1e-3f, length(c.at - f.c)));
+        for (float s : {-0.35f, 0.35f}) {
+            const float sw = s + 0.4f * std::sin(6.2831853f * 2.0f * time + static_cast<float>(i));
+            fastLine(toRay(c.at + o * r), toRay(c.at + o * r + rotate(o, std::cos(sw), std::sin(sw)) * (2.2f * r)),
+                     std::max(0.3f, 0.5f * px), kFlagellum);
+        }
     }
 }
 
@@ -900,6 +970,10 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 drawVolvox(bp, body, growth, speciesInfo(sid).colonyDaughters, time, px);
             } else if (style == CellStyle::PlateColony) {
                 drawPediastrum(body, px);
+            } else if (style == CellStyle::PlateCells || style == CellStyle::PackedCells || style == CellStyle::HollowCells) {
+                const Metabolism* vm = reg.try_get<Metabolism>(e);
+                const float growth = vm && vm->birthBiomass > 0.0f ? vm->biomass / vm->birthBiomass - 1.0f : 0.0f;
+                drawVolvocineColony(body, style, speciesInfo(sid).colonyCells, growth, time, px);
             } else if (loco && style == CellStyle::PeristomeCrown) {
                 drawCilia(bp, body, time, px, reg.all_of<Telotroch>(e) ? CiliaPattern::Posterior : CiliaPattern::Crown, 1.3f);
             } else if (loco && style == CellStyle::MembranelleCrown) {

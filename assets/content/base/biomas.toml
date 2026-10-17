@@ -43,7 +43,7 @@ liquenes = 1
 physarum = 1  # el moho de la hojarasca húmeda
 manchas = 0.6
 peso_base = 1.0
-pesos = { mougeotia = 0.5, zygnema = 0.5, oedogonium = 0.5 }
+pesos = { mougeotia = 0.5, zygnema = 0.5, oedogonium = 0.5, phaeodactylum = 0.0, thalassiosira = 0.0, fragilariopsis = 0.0, polarella = 0.0 }
 [bioma.medio]
 temperatura = 22.0
 aporte_organico = 300.0 # hojas y barro: una infusión natural
@@ -74,7 +74,7 @@ liquenes = 1
 physarum = 0 # no vive en agua libre
 manchas = 0.3
 peso_base = 1.0
-pesos = { stentor = 1.5, spirogyra = 1.5, volvox = 2.0, candida = 0.3, naegleria = 0.0, oedogonium = 1.5 }
+pesos = { stentor = 1.5, spirogyra = 1.5, volvox = 2.0, candida = 0.3, naegleria = 0.0, oedogonium = 1.5, phaeodactylum = 0.0, thalassiosira = 0.0, fragilariopsis = 0.0, polarella = 0.0 }
 [bioma.medio]
 temperatura = 17.0
 fosfato = 20.0
@@ -110,7 +110,7 @@ liquenes = 3 # los líquenes crecen sobre el musgo
 physarum = 3 # hojarasca y musgo húmedo
 manchas = 0.4
 peso_base = 0.0
-pesos = { paramecium = 0.3, euglena = 0.5, amoeba = 1.0, chlamydomonas = 0.4, vorticella = 1.0, euplotes = 1.0, arcella = 3.0, navicula = 0.5, candida = 1.0, naegleria = 3.0, zygnema = 0.5, pinnularia = 1.0 }
+pesos = { paramecium = 0.3, euglena = 0.5, amoeba = 1.0, chlamydomonas = 0.4, vorticella = 1.0, euplotes = 1.0, arcella = 3.0, navicula = 0.5, candida = 1.0, naegleria = 3.0, zygnema = 0.5, pinnularia = 1.0, colpoda = 3.0, euglypha = 2.0 }
 [bioma.medio]
 temperatura = 12.0
 luz = 0.4
@@ -217,7 +217,7 @@ liquenes = 0
 physarum = 0
 manchas = 0.3
 peso_base = 0.0
-pesos = { chlamydomonas = 0.6, euplotes = 2.0, navicula = 4.0, candida = 0.5 }
+pesos = { chlamydomonas = 0.6, euplotes = 2.0, navicula = 4.0, candida = 0.5, fragilariopsis = 4.0, polarella = 2.0 }
 [bioma.medio]
 temperatura = -2.0
 salinidad = 60.0

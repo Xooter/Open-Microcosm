@@ -76,14 +76,110 @@ verdes inmóviles con pared.
   el anillo de membrana cruzado ~20 s después de dividirse. Es anterior a este lote; falta ver si
   es un cruce transitorio en los choques o un pliegue que queda.
 
-### Datos ya investigados para el lote 2
+### Lote 2 (17/10/2026)
 
-- **Volvocales** (necesitan un estilo de colonia de pocas células grandes; `colonia_esferica`
-  dibuja las de *Volvox*): *Gonium pectorale*, 4–16 (a veces 32) células de 5–14 µm en placa,
-  colonia de 70–100 µm (Kreutz, realmicrolife); *Pandorina morum*, 8–16 células de 8–17 µm,
-  colonia de 20–60 µm; *Eudorina elegans*, 16–32 células, colonia de 50–200 µm. Sin µmax
-  publicado encontrado (Butterwick, Heaney & Talling 2005, Freshwater Biol. 50: 291, midieron
-  *Eudorina unicocca*: crece ≥ 0,4 divisiones/día a 5 °C).
+| Ser (id) | Tamaño cargado | µmax publicado | Fuente del µmax | Notas |
+|---|---|---|---|---|
+| *Gonium pectorale* (`gonium`) | colonia de 40 µm, 16 células | sin dato de la especie | — | Placa de una célula de espesor; nada a ~40 µm/s (de Maleprade et al. 2020, Phys. Rev. E 101: 022416) |
+| *Pandorina morum* (`pandorina`) | colonia de 50 µm, 16 células | sin dato | — | Velocidad: la de *Gonium* |
+| *Eudorina elegans* (`eudorina`) | colonia de 100 µm, 32 células | sin dato | — | Velocidad: la de *Gonium* |
+| *Stylonychia mytilus* (`stylonychia`) | 300 × 122 µm | ciclo de 12 h (~21 °C) | Shi & Ammermann 2004, Protistology 3: 219 | Ancho por la proporción de *S. harbinensis* |
+| *Frontonia leucas* (`frontonia`) | 250 × 138 µm | sin dato | — | Largo medio de Foissner (Serra et al. 2021, BMC Zool. 6: 4); ancho estimado |
+| *Tokophrya infusionum* (`tokophrya`) | 44 × 34 µm | sin dato | — | Suctorio que se cría con *Tetrahymena* (ATCC 30297) |
+| *Cryptomonas ovata* (`cryptomonas`) | 44 × 18 µm | 0,72 divisiones/día (estimación) | Cloern 1977, J. Phycol. 13: 389 (citado por Ojala 1991) | Temperatura sin verificar. Plan corporal nuevo `criptofita` |
+
+Las volvocales liberan 4 colonias hijas (en la realidad, una por célula: 16 o 32); la biomasa se
+reparte igual, así que la tasa de crecimiento no cambia. Estilos de dibujo nuevos:
+`colonia_de_placa`, `colonia_compacta` y `colonia_hueca`, con `celulas_colonia` en los datos.
+
+### Lote 3 (17/10/2026)
+
+Tamaños de los diagnósticos de M. Kreutz (realmicrolife.com) y de NIES (The World of Protozoa). µmax
+de los ciliados sin medición propia: **estimación alométrica** de Müller & Geller (1993, Arch.
+Hydrobiol. 126: 315), ln r = 1,52 ln T − 0,27 ln V − 1,44, a 20 °C con el volumen del esferoide
+cargado. Comprobada contra los que tienen dato: *Colpidium* 1,64/día estimado contra 1,25 medido;
+*P. caudatum* 1,19 contra 0,95.
+
+| Ser (id) | Especie | Tamaño cargado | µmax | Notas |
+|---|---|---|---|---|
+| `coleps` | *Coleps hirtus* | 52 × 26 µm | 1,59/día (alométrica) | Armadura de carbonato sin modelar |
+| `blepharisma` | *B. americanum* | 230 × 80 µm (ancho estimado) | 0,70/día (alométrica) | Fotofobia sin modelar |
+| `colpoda` | *C. cucullus* | 70 × 46 µm (ancho estimado) | 1,19/día (alométrica) | Se divide libre (en la realidad, en quiste reproductivo) |
+| `chilodonella` | *C. uncinata* | 45 × 29 µm (ancho estimado) | 1,97/día (alométrica) | Camina; raspa diatomeas |
+| `litonotus` | *L. lamella* | 75 × 18 µm | 2,18/día (alométrica) | Caza *Euplotes* |
+| `acineta` | *A. tuberosa* | 68 × 44 µm | sin dato | Suctorio con lórica |
+| `peranema` | *P. trichophorum* | 50 × 20 µm (ancho estimado) | sin dato | Plan nuevo `euglenido_incoloro`; traga *Euglena* y levaduras |
+| `trachelomonas` | *T. hispida* | 31 × 21 µm | sin dato | Lórica como coraza 0,8 |
+| `haematococcus` | *H. lacustris* | 34 µm | sin dato | Enquista (sin el color rojo) |
+| `ceratium` | *C. furcoides* | 200 × 35 µm | 0,3 divisiones/día (estimación) | Butterwick et al. 2005; plan nuevo `dinoflagelado`; sin cuernos |
+| `chaos` | *C. nobile* | 320 µm | sin dato | Multinucleada |
+| `euglypha` | *E. strigosa* | 72 × 48 µm | sin dato | Testa como coraza 0,9 |
+| `closterium` | *C. moniliferum* | 275 × 45 µm | sin dato | Se desliza muy despacio |
+| `cosmarium` | *C. botrytis* | 84 × 66 µm | sin dato | Semicélulas sin dibujar |
+| `micrasterias` | *M. rotata* | 300 × 230 µm | sin dato | Lóbulos sin dibujar |
+| `gomphonema` | *G. truncatum* | 44 × 12 µm | sin dato | Una célula sobre su tallo (sin la colonia) |
+| `nih_3t3` | NIH/3T3 | 70 × 20 µm | 19 h (JCRB0615) | Migración 18 µm/h (0,1–0,5 µm/min), persistencia 2,5 h (Gail & Boone 1970); confluencia y metabolismo estimados |
+| `hacat` | HaCaT | 40 × 36 µm | 28 h (Cellosaurus) | Migración 63 µm/h (PLoS ONE 2012, tabla 2, por verificar); metabolismo estimado |
+
+### Lote 4 (17/10/2026)
+
+| Ser (id) | Especie | Tamaño cargado | µmax | Notas |
+|---|---|---|---|---|
+| `halteria` | *H. grandinella* | 30 × 28 µm | 1,77/día (alométrica) | Saltos sin modelar |
+| `epistylis` | *E. plicatilis* | 104 × 38 µm | 1,07/día (alométrica) | Un zooide sobre tallo no contráctil; sin colonia |
+| `ulothrix` | *U. tenerrima* | células de 12 × 8 µm, filamento de 10 | sin dato | Cloroplasto como placa axial |
+| `phaeodactylum` | *P. tricornutum* | 30 × 5 µm | sin dato | Marina (NCMA CCMP2561, 20 °C); no está en las gotas de agua dulce |
+| `thalassiosira` | *T. pseudonana* | 5,2 µm | sin dato | Marina (NCMA CCMP1335, 4–25 °C) |
+| `fragilariopsis` | *F. cylindrus* | 7 × 5 µm (real 3–7 × 2–4; espesor ajustado al volumen) | sin dato | Hielo marino (NCMA CCMP1102, −2 a 2 °C) |
+| `polarella` | *P. glacialis* | 12 × 7 µm | sin dato | Hielo marino (NCMA CCMP1383, 0–6 °C); enquista |
+
+## Falta validar
+
+Los lotes 2, 3 y 4 se cargaron **sin correr las suites** (para probarlos todos juntos). Antes del
+commit:
+
+1. **Suites:** `ctest -L rapidos` (conteo de seres, categorías, paquetes sin avisos), `ctest -L largos`
+   (`tests/test_candidates.cpp`: un caso de reproducción por ser) y `ctest -L validacion`.
+2. **Reproducción en la placa** (riesgos ya conocidos; ver «Bloqueados»):
+   - formas largas, porque el surco puede no cerrarse: `ceratium` (200 × 35), `closterium` (275 × 45),
+     `litonotus` (75 × 18), `phaeodactylum` (30 × 5), `blepharisma` (230 × 80);
+   - amebas chicas: `euglypha` (radio 36 µm, con coraza);
+   - cuerpos muy chicos: `thalassiosira` (radio 2,6 µm), `fragilariopsis` (3,5 × 2,5 µm);
+   - sésiles nuevos: `acineta`, `epistylis` (tallo de 200 µm), `gomphonema` (diatomea sésil: combinación
+     nueva de `frustula` + `sesil`);
+   - filamento nuevo: `ulothrix` (células de 12 × 8 µm, las más chicas de un filamento hasta ahora);
+   - estilos de colonia nuevos: `gonium`, `pandorina`, `eudorina` (el lote 2 ya pasó sus casos largos).
+3. **Cultivo bien mezclado:** que `Culture::supports` acepte a los que corresponde y que los µmax
+   cargados den la tasa esperada (validación nueva por especie con dato medido: `tetrahymena`,
+   `colpidium`, `saccharomyces`, `chlorella`, `raphidocelis`, `desmodesmus`, `stylonychia`,
+   `cryptomonas`, `ceratium`).
+4. **Células animales:** `nih_3t3` y `hacat` con el ciclo, la migración y la confluencia de sus datos
+   (como `tests/test_animal_cells.cpp` hace con el fibroblasto y HeLa).
+5. **Rendimiento:** charco y estanque suman unas 25 especies nuevas con peso 1 (`peso_base`): medir
+   `bio_bench --wildlife 3` contra el commit anterior.
+6. **Datos por confirmar:** anchos estimados (*Blepharisma*, *Colpoda*, *Chilodonella*,
+   *Peranema*), temperatura de los µmax de *Stylonychia*, *Cryptomonas*, *Ceratium* y *Acanthamoeba*,
+   y la tabla de HaCaT.
+
+### Datos investigados que todavía no alcanzan
+
+- ***Gonium*:** Saito (1984, Sci. Pap. Inst. Algol. Res. Hokkaido Univ. 7: 195) midió 5,8
+  duplicaciones/día a 25 °C, pero en *G. multicoccum* y con un medio orgánico: no se usa para
+  *G. pectorale*.
+- ***Chilomonas paramecium*:** sin datos con fuente accesible (la tesis de Michigan State con su
+  crecimiento en acetato tiene acceso restringido).
+- ***Bodo saltans*:** solo datos de pastoreo (come bacterias de menos de 3 µm); falta tamaño y µmax.
+- ***Schizosaccharomyces pombe*:** 108 min de generación (Kovar, Wu & Pollard 2005, Mol. Biol. Cell
+  16: 2313), sin la temperatura; diámetro 3,74 µm y largo al dividirse ~14–16 µm (Pombe Pages de
+  Forsburg; 15,8 µm a 32 °C en un trabajo de Genetics 2012). Falta confirmar la temperatura.
+- **Investigados, sin cargar:** *Spirostomum ambiguum* (884 × 89 µm extendido, 306 × 117 contraído;
+  PMC11581044: muy largo para la división actual), *Bursaria truncatella* (300–600 µm, hasta 1,7 mm),
+  *Euglena ehrenbergii* (140–296 × 15–26 µm: muy larga), *E. sanguinea* (90–150 µm),
+  *Opercularia nutans* (50–110 × 25–40 µm, colonial), *Pelomyxa palustris* (hasta 5 mm: más grande que
+  la placa). Marinos con datos de NCMA para un bioma marino futuro.
+- **Necesitan código, no solo datos:** bacterias, cianobacterias y arqueas nuevas (las cepas están en
+  `bio/bacteria` y `bio/cyanobacteria`), hongos con hifas (`FungusInfo`) y todo lo marcado «Nuevo» en
+  las tablas.
 - **Velocidades:** *Tetrahymena* nada a ~500 µm/s (estudio de nado helicoidal; 200–350 µm/s en
   otros). No se encontró la de *Colpidium* ni la de *Pinnularia*.
 
@@ -98,24 +194,24 @@ verdes inmóviles con pared.
 | ✅ *Tetrahymena thermophila* / *T. pyriformis* | ~50 µm | charco, estanque | Presa ciliada de *Amoeba* (falta para su µmax, roadmap B). Organismo modelo con curvas de crecimiento muy publicadas | Cilia, OralGroove, conjugates | — | **A** |
 | *Tetrahymena vorax* | 60–200 µm | charco | Polimorfismo: la forma micróstoma come bacterias y la macróstoma, otros ciliados (inducido por la presa) | Cilia, OralGroove, Raptorial | Cambio de modo de alimentación inducido | B |
 | ✅ *Colpidium campylum* / *C. striatum* | 50–80 µm | estanque | El bacterívoro de los microcosmos clásicos (Lawler y Morin, Holyoak y Lawler). Presa de *Didinium* | Cilia, OralGroove | — | **A** |
-| *Colpoda cucullus* / *C. steinii* | 15–80 µm | musgo, suelo | El ciliado del musgo: se enquista y desenquista con la desecación. Se divide dentro de un quiste reproductivo | Cilia, OralGroove, encysts | Quiste de división (2–4 hijas) | M |
-| *Blepharisma japonicum* | 150–300 µm | charco | Pigmento rosa (blefarismina) que lo vuelve fotofóbico y fotosensible. Gigantismo caníbal | Cilia, OralGroove | Fotofobia y daño por luz; canibalismo | M |
+| ✅ *Colpoda cucullus* / *C. steinii* | 15–80 µm | musgo, suelo | El ciliado del musgo: se enquista y desenquista con la desecación. Se divide dentro de un quiste reproductivo | Cilia, OralGroove, encysts | Quiste de división (2–4 hijas) | M |
+| ✅ *Blepharisma japonicum* | 150–300 µm | charco | Pigmento rosa (blefarismina) que lo vuelve fotofóbico y fotosensible. Gigantismo caníbal | Cilia, OralGroove | Fotofobia y daño por luz; canibalismo | M |
 | *Spirostomum ambiguum* | 1–3 mm | estanque | Uno de los eucariotas unicelulares más largos. Contrae todo el cuerpo en milisegundos (mionemas, Ca²⁺) | Cilia, OralGroove | Contracción del cuerpo entero | M |
-| *Coleps hirtus* | 40–65 µm | estanque | Placas de carbonato en la película. Histófago: come en grupo células heridas o muertas | Cilia, Raptorial | Atracción a células dañadas | M |
+| ✅ *Coleps hirtus* | 40–65 µm | estanque | Placas de carbonato en la película. Histófago: come en grupo células heridas o muertas | Cilia, Raptorial | Atracción a células dañadas | M |
 | *Dileptus* | 250–500 µm | estanque | Probóscide con toxicistos que paraliza a la presa | Cilia, Raptorial | Toxicistos (presa inmovilizada) | M |
 | *Loxodes* | 100–200 µm | sedimento microóxico | Cuerpos de Müller (gravirreceptores). Evita el O₂ alto y respira nitrato (Fenchel y Finlay) | Cilia, OralGroove | Gravitaxis modulada por O₂ (ver ⛔ eje vertical) | B |
-| *Halteria grandinella* | 20–50 µm | estanque | Nada a saltos con cirros | Cilia, OralGroove | Saltos | B |
-| *Stylonychia mytilus* / *Oxytricha* | 100–300 µm | estanque | Hipotricos caminadores, como *Euplotes* | Cilia, walker, OralGroove | — | M |
-| *Frontonia leucas* | 150–600 µm | estanque | Come diatomeas y filamentos de algas enteros | Cilia, Raptorial | — | M |
+| ✅ *Halteria grandinella* | 20–50 µm | estanque | Nada a saltos con cirros | Cilia, OralGroove | Saltos | B |
+| ✅ *Stylonychia mytilus* / *Oxytricha* | 100–300 µm | estanque | Hipotricos caminadores, como *Euplotes* | Cilia, walker, OralGroove | — | M |
+| ✅ *Frontonia leucas* | 150–600 µm | estanque | Come diatomeas y filamentos de algas enteros | Cilia, Raptorial | — | M |
 | *Bursaria truncatella* | 0,5–1 mm | estanque | Ciliado enorme que caza otros ciliados | Cilia, Raptorial | — | B |
 | *Paramecium bursaria* | 80–150 µm | estanque | Endosimbiosis con *Chlorella* (roadmap F). Coexistencia con *P. caudatum* (Gause) | Cilia, OralGroove, conjugates, phototaxis | Endosimbionte heredable que fotosintetiza | **A** |
 | *Paramecium tetraurelia* | 100–150 µm | estanque | Modelo genético. Rasgo *killer* (bacterias *Caedibacter*) | Cilia, OralGroove, conjugates | Endosimbionte tóxico para sensibles | B |
 | *Carchesium* / *Zoothamnium* | colonias de mm | estanque | Peritricos coloniales: espasmonema común (*Zoothamnium*) o propio de cada zooide (*Carchesium*) | sessile, contractileStalk, colonyDaughters | Colonia ramificada sobre tallo | B |
-| *Epistylis* | colonias de mm | estanque | Peritrico colonial de tallo rígido (contraste con *Vorticella*) | sessile, colonyDaughters | Colonia ramificada | B |
-| *Tokophrya* / *Acineta* | 50–150 µm | estanque | Otros suctorios (comparar con *Podophrya*) | sessile, Tentacles | — | B |
-| *Litonotus* | 100–200 µm | estanque | Depredador aplanado de hipotricos | Cilia, Raptorial | — | B |
+| ✅ *Epistylis* | colonias de mm | estanque | Peritrico colonial de tallo rígido (contraste con *Vorticella*) | sessile, colonyDaughters | Colonia ramificada | B |
+| ✅ *Tokophrya* / *Acineta* | 50–150 µm | estanque | Otros suctorios (comparar con *Podophrya*) | sessile, Tentacles | — | B |
+| ✅ *Litonotus* | 100–200 µm | estanque | Depredador aplanado de hipotricos | Cilia, Raptorial | — | B |
 | *Lembadion* | 50–200 µm | estanque | Su señal química hace crecer "alas" defensivas en *Euplotes* (Kuhlmann y Heckmann 1985) | Cilia, Raptorial | Kairomona y defensa inducida | M |
-| *Chilodonella* | 50–100 µm | estanque | Raspa la biopelícula con una canasta citofaríngea | Cilia, walker | Pastoreo de la biopelícula | B |
+| ✅ *Chilodonella* | 50–100 µm | estanque | Raspa la biopelícula con una canasta citofaríngea | Cilia, walker | Pastoreo de la biopelícula | B |
 | *Mesodinium rubrum* | 20–50 µm | mar | Kleptoplastia: retiene cloroplastos y núcleo de criptofitas (roadmap F). Saltos muy rápidos | Cilia | Kleptoplastos con vida limitada | M |
 | *Tintinnopsis* (tintínidos) | 50–200 µm | mar | Lórica aglutinada, filtradores del plancton marino | Cilia, OralGroove, coraza | — | B |
 
@@ -123,32 +219,32 @@ verdes inmóviles con pared.
 
 | Ser | Tamaño | Dónde | Por qué interesa | Reusa | Nuevo | Prio. |
 |---|---|---|---|---|---|---|
-| *Peranema trichophorum* | 20–70 µm | charco | Euglenoide fagótrofo: traga *Euglena* y levaduras con una varilla de ingestión. Se desliza con el flagelo rígido | Flagellum, Raptorial | Deslizamiento con flagelo | **A** |
+| ✅ *Peranema trichophorum* | 20–70 µm | charco | Euglenoide fagótrofo: traga *Euglena* y levaduras con una varilla de ingestión. Se desliza con el flagelo rígido | Flagellum, Raptorial | Deslizamiento con flagelo | **A** |
 | ✅ *Phacus* | 30–100 µm | charco | Euglenoide rígido y aplanado, con grandes granos de paramilón | Flagellum, phototaxis | — | **A** |
-| *Trachelomonas* | 15–50 µm | charco | Lórica teñida por hierro y manganeso (pardo) | Flagellum, phototaxis, coraza | Lórica que consume Fe | M |
+| ✅ *Trachelomonas* | 15–50 µm | charco | Lórica teñida por hierro y manganeso (pardo) | Flagellum, phototaxis, coraza | Lórica que consume Fe | M |
 | *Euglena viridis* / *E. spirogyra* | 40–150 µm | charco | Otras euglenas (metabolia, estrías) | Flagellum, phototaxis | — | B |
 | *Bodo saltans* | 5–10 µm | estanque | Cinetoplástido bacterívoro, pariente de los tripanosomas | Flagellum, Anterior | — | M |
 | *Salpingoeca rosetta* / *Monosiga* | 5–10 µm | estanque, mar | Coanoflagelados: un collar filtra bacterias. Las rosetas las induce una bacteria (Alegado et al. 2012) | Flagellum | Collar filtrador; colonia inducida | M |
 | *Dinobryon* | 30–50 µm por célula | estanque oligotrófico | Colonia arborescente en lóricas. Mixótrofo: fotosintetiza y come bacterias | Flagellum, phototaxis, colonyDaughters | Mixotrofia | M |
 | *Synura* | colonias de 100–400 µm | estanque frío | Colonia esférica con escamas silíceas | Flagellum, colonyDaughters | Escamas que consumen Si | B |
 | *Ochromonas* | 5–15 µm | estanque | Mixótrofo, depredador de *Chlorella* (experimento de Boraas) | Flagellum, Phagocytosis, phototaxis | Mixotrofia | M |
-| *Cryptomonas* | 15–50 µm | estanque | Criptofita con ficoeritrina. Presa de *Mesodinium* | Flagellum, phototaxis | — | M |
+| ✅ *Cryptomonas* | 15–50 µm | estanque | Criptofita con ficoeritrina. Presa de *Mesodinium* | Flagellum, phototaxis | — | M |
 | *Chilomonas paramecium* | 20–40 µm | charco con infusión | Criptofita incolora y osmótrofa, clásica de los cultivos de laboratorio | Flagellum, Osmotroph | — | M |
-| *Haematococcus pluvialis* | 10–50 µm | charco temporal | Con estrés acumula astaxantina y forma quistes rojos | Flagellum, phototaxis, encysts | Pigmento por estrés | M |
+| ✅ *Haematococcus pluvialis* | 10–50 µm | charco temporal | Con estrés acumula astaxantina y forma quistes rojos | Flagellum, phototaxis, encysts | Pigmento por estrés | M |
 | *Dunaliella salina* | ~10 µm | salina | Sin pared. Tolera la salinidad extrema con glicerol | Flagellum, phototaxis | Ajuste osmótico por glicerol; bioma salina | M |
-| *Gonium* / *Pandorina* / *Eudorina* | 4–32 células | estanque | Serie volvocal de complejidad creciente hasta *Volvox* | Flagellum, phototaxis, colonyDaughters | — | **A** |
+| ✅ *Gonium* / *Pandorina* / *Eudorina* | 4–32 células | estanque | Serie volvocal de complejidad creciente hasta *Volvox* | Flagellum, phototaxis, colonyDaughters | — | **A** |
 
 ### 1.3 Dinoflagelados
 
 | Ser | Tamaño | Dónde | Por qué interesa | Reusa | Nuevo | Prio. |
 |---|---|---|---|---|---|---|
 | *Peridinium* | 30–70 µm | estanque | Teca de celulosa y dos flagelos, uno en el cíngulo: nado en espiral | Flagellum, phototaxis, coraza | Nado helicoidal | M |
-| *Ceratium hirundinella* | 100–400 µm | lago | Cuernos largos. Migra en la columna de agua | Flagellum, phototaxis | — | B |
+| ✅ *Ceratium hirundinella* | 100–400 µm | lago | Cuernos largos. Migra en la columna de agua | Flagellum, phototaxis | — | B |
 | *Gymnodinium* | 10–80 µm | estanque, mar | Atecado; algunas especies forman mareas rojas | Flagellum, phototaxis | — | B |
 | *Noctiluca scintillans* | 0,2–2 mm | mar | Bioluminiscencia cuando el agua se corta (estímulo mecánico) | Phagocytosis | Bioluminiscencia, flotación | B |
 | *Lingulodinium polyedra* (*Gonyaulax*) | 30–50 µm | mar | Ritmo circadiano de bioluminiscencia (Hastings y Sweeney) | Flagellum, phototaxis | Reloj circadiano | B |
 | *Oxyrrhis marina* | 10–40 µm | mar | Heterótrofo modelo, depredador de algas | Flagellum, Phagocytosis | — | B |
-| *Polarella glacialis* | ~10 µm | hielo marino | Habitante real del hielo marino (bioma que ya existe) | Flagellum, phototaxis | — | M |
+| ✅ *Polarella glacialis* | ~10 µm | hielo marino | Habitante real del hielo marino (bioma que ya existe) | Flagellum, phototaxis | — | M |
 
 ### 1.4 Amebas, heliozoos y afines
 
@@ -158,9 +254,9 @@ verdes inmóviles con pared.
 | *Dictyostelium discoideum* | ~10 µm | suelo, musgo | Agregación por AMPc en ondas espirales. Se simula hasta la corriente de agregación (la babosa y el cuerpo fructífero son multicelulares) | Pseudopod, Phagocytosis | Quimiotaxis a AMPc con relevo; campo de AMPc | **A** |
 | *Vampyrella* | 30–60 µm | estanque | Perfora la pared de *Spirogyra* y sorbe el protoplasto | Pseudopod | Perforación de la pared | M |
 | *Difflugia* | 100–300 µm | estanque, musgo | Testa de granos de arena: los toma del sedimento | Pseudopod, coraza | Testa con minerales de `minerales.toml` | M |
-| *Euglypha* / *Nebela* / *Assulina* / *Hyalosphenia* | 30–150 µm | musgo, turbera | Tecamebas indicadoras de humedad (paleoecología) | Pseudopod, coraza | Testa de placas silíceas (consume Si) | M |
+| ✅ *Euglypha* / *Nebela* / *Assulina* / *Hyalosphenia* | 30–150 µm | musgo, turbera | Tecamebas indicadoras de humedad (paleoecología) | Pseudopod, coraza | Testa de placas silíceas (consume Si) | M |
 | *Actinosphaerium* / *Actinophrys sol* | 40 µm–1 mm | estanque | Heliozoos: los axopodios atrapan ciliados al contacto. Flotan | Phagocytosis | Axopodios; fusión al comer presas grandes | M |
-| *Chaos carolinense* | 1–5 mm | estanque | Ameba gigante multinucleada | Pseudopod, Phagocytosis | — | B |
+| ✅ *Chaos carolinense* | 1–5 mm | estanque | Ameba gigante multinucleada | Pseudopod, Phagocytosis | — | B |
 | *Pelomyxa palustris* | 0,5–3 mm | sedimento anóxico | Sin mitocondrias; bacterias endosimbiontes | Pseudopod, Phagocytosis | Endosimbiontes metabólicos | B |
 | *Mayorella* / *Thecamoeba* | 50–200 µm | estanque | Otras morfologías amebianas (subpseudópodos, superficie rugosa) | Pseudopod, Phagocytosis | — | B |
 | *Entamoeba histolytica* | 15–60 µm | intestino humano | Parásito que fagocita eritrocitos (eritrofagocitosis), visible en un preparado | Pseudopod, Phagocytosis | Presa: eritrocitos (`bio/erythrocytes`) | M |
@@ -173,11 +269,11 @@ verdes inmóviles con pared.
 | ✅ *Chlorella vulgaris* | 2–10 µm | estanque | Alga modelo de crecimiento. Presa de *Ochromonas*, simbionte de *P. bursaria* | None | Autosporas (4–16 hijas por división) | **A** |
 | ✅ *Desmodesmus* / *Scenedesmus* | cenobios de 4–8 | estanque | Forma cenobios. Más colonial cuando lo pastorean | colonyDaughters | — | **A** |
 | ✅ *Raphidocelis subcapitata* | 8–14 µm | estanque | Alga del bioensayo estándar de toxicidad (OECD 201) | None | — | **A** |
-| *Closterium* | 100–500 µm | estanque | Desmidia en media luna con cristales de yeso en vacuolas terminales. Se desliza secretando mucílago | glider | — | M |
-| *Cosmarium* / *Staurastrum* | 30–100 µm | estanque, turbera | Desmidias de dos semicélulas | None | — | M |
-| *Micrasterias* | 100–300 µm | turbera ácida | Morfogénesis de la semicélula después de dividirse | None | Morfogénesis (B) | B |
+| ✅ *Closterium* | 100–500 µm | estanque | Desmidia en media luna con cristales de yeso en vacuolas terminales. Se desliza secretando mucílago | glider | — | M |
+| ✅ *Cosmarium* / *Staurastrum* | 30–100 µm | estanque, turbera | Desmidias de dos semicélulas | None | — | M |
+| ✅ *Micrasterias* | 100–300 µm | turbera ácida | Morfogénesis de la semicélula después de dividirse | None | Morfogénesis (B) | B |
 | *Cladophora* | filamentos ramificados | estanque | El alga del experimento de Engelmann | filament | Ramificación | M |
-| *Ulothrix* | filamentos | arroyo | Filamento simple con cloroplasto en banda | filament | — | B |
+| ✅ *Ulothrix* | filamentos | arroyo | Filamento simple con cloroplasto en banda | filament | — | B |
 | *Botryococcus braunii* | colonias | estanque | Colonia aceitosa (hidrocarburos) | colonyDaughters | — | B |
 | *Chlamydomonas nivalis* / *Sanguina* | 20–40 µm | nieve, hielo | Nieve roja: quistes con carotenoides | Flagellum, encysts | Pigmento por estrés | M |
 | *Acetabularia* | 2–5 cm | mar | Célula gigante uninucleada; injertos de Hämmerling | — | Morfogénesis regulada por el núcleo | B |
@@ -193,10 +289,10 @@ verdes inmóviles con pared.
 | *Melosira* / *Aulacoseira* | cadenas | lago | Céntricas en cadena, pesadas (se hunden) | filament, frustule | — | M |
 | *Ulnaria* (*Synedra*) | 100–400 µm | estanque | Diatomea en aguja | glider, frustule | — | B |
 | *Tabellaria* | colonias en zigzag | lago | Otra forma colonial | frustule, colonyDaughters | — | B |
-| *Gomphonema* | 20–80 µm | arroyo | Se fija con un tallo mucilaginoso | sessile, frustule | — | B |
-| *Phaeodactylum tricornutum* | 10–30 µm | mar | Modelo genómico. Polimórfica (oval, fusiforme, trirradiada) | frustule | — | M |
-| *Thalassiosira pseudonana* | 4–6 µm | mar | Céntrica modelo para la captación de Si | frustule | — | M |
-| *Fragilariopsis cylindrus* | 3–80 µm | hielo marino | Diatomea dominante del hielo marino (bioma que ya existe) | glider, frustule | — | M |
+| ✅ *Gomphonema* | 20–80 µm | arroyo | Se fija con un tallo mucilaginoso | sessile, frustule | — | B |
+| ✅ *Phaeodactylum tricornutum* | 10–30 µm | mar | Modelo genómico. Polimórfica (oval, fusiforme, trirradiada) | frustule | — | M |
+| ✅ *Thalassiosira pseudonana* | 4–6 µm | mar | Céntrica modelo para la captación de Si | frustule | — | M |
+| ✅ *Fragilariopsis cylindrus* | 3–80 µm | hielo marino | Diatomea dominante del hielo marino (bioma que ya existe) | glider, frustule | — | M |
 
 ### 1.7 Otros eucariotas fotótrofos
 
@@ -284,8 +380,8 @@ Hoy son partículas con cepa (`Bacteria::strain`: un bacilo genérico, *C. viola
 
 | Célula | Tamaño | Montaje | Por qué interesa | Reusa | Nuevo | Prio. |
 |---|---|---|---|---|---|---|
-| Queratinocito humano (HaCaT o primario) | 10–20 µm | celular | Islotes epiteliales (roadmap F) | Crawl, ciclo celular | Adhesión célula–célula | **A** |
-| Fibroblasto murino NIH 3T3 | 20–50 µm | celular | La línea de la inhibición por contacto (Todaro y Green 1963) | Crawl, ciclo celular | — | **A** |
+| ✅ Queratinocito humano (HaCaT o primario) | 10–20 µm | celular | Islotes epiteliales (roadmap F) | Crawl, ciclo celular | Adhesión célula–célula | **A** |
+| ✅ Fibroblasto murino NIH 3T3 | 20–50 µm | celular | La línea de la inhibición por contacto (Todaro y Green 1963) | Crawl, ciclo celular | — | **A** |
 | MDCK | 10–20 µm | celular | Epitelio en monocapa | Crawl, ciclo celular | Adhesión célula–célula | M |
 | Macrófago (RAW 264.7, o monocito diferenciado) | 10–20 µm | celular | Fagocitosis de bacterias y cuerpos apoptóticos | Crawl, Phagocytosis | Diferenciación del monocito | M |
 | Queratocito de pez | 20–40 µm | celular | Migración rápida en abanico; modelo de motilidad | Crawl | — | M |

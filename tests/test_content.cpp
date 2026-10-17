@@ -27,10 +27,10 @@ bool warned(const std::string& fragment) {
 
 } // namespace
 
-TEST_CASE("contenido: el paquete de fábrica carga sus 40 seres en el orden de siempre, sin avisos" *
+TEST_CASE("contenido: el paquete de fábrica carga sus 72 seres en el orden de siempre, sin avisos" *
           doctest::test_suite("paquetes")) {
-    // 24 de la gota, 3 de cultivo (20b), 5 de los preparados (20c) y 8 del lote 1 de candidatos.
-    CHECK(speciesCount() == 40);
+    // 24 de la gota, 3 de cultivo (20b), 5 de los preparados (20c) 8 del lote 1 de candidatos, 7 del lote 2, 18 del lote 3 y 7 del lote 4.
+    CHECK(speciesCount() == 72);
     CHECK(speciesLoadWarnings().empty());
     CHECK(std::string(speciesInfo(SpeciesId::Paramecium).key) == "paramecium");
     CHECK(std::string(speciesInfo(SpeciesId::Cyclotella).key) == "cyclotella");
@@ -45,7 +45,7 @@ TEST_CASE("contenido: el paquete de fábrica carga sus 40 seres en el orden de s
     CHECK(prey.test(static_cast<std::size_t>(*findSpecies("colpidium"))));
     CHECK(prey.count() == 3);
     // Etiquetas: los hospedadores de los quitridios (antes, una máscara fija en el código).
-    CHECK(speciesWithTag("hospeda_quitridios").count() == 11);
+    CHECK(speciesWithTag("hospeda_quitridios").count() == 15);
     CHECK(hasTag(SpeciesId::Pediastrum, "fotobionte"));
     CHECK(speciesGenome(SpeciesId::Arcella)[Gene::Armor] == doctest::Approx(0.9f));
 }

@@ -75,7 +75,7 @@ constexpr const char* kBeingKeys[] = {
     "huye_de", "quimiocinesis", "trampa_acida", "fototaxis", "fotosintesis_relativa", "divisiones_por_ciclo",
     "enquista", "conjugacion", "cantidad_inicial", "sesil", "largo_tallo", "espasmonema", "camina", "alcance_tentaculos",
     "alcance_cuello", "manipulacion_horas", "cloroplastos", "desliza_por_rafe", "auxotrofa_b12", "frustula",
-    "filamento", "celulas_filamento", "fragmentacion_por_hora", "zoosporas", "colonias_hijas",
+    "filamento", "celulas_filamento", "fragmentacion_por_hora", "zoosporas", "colonias_hijas", "celulas_colonia",
     "madre_muere_al_liberar", "masa_seca_relativa", "gemacion", "anaerobia", "boca_posterior", "ciclosis", "ph",
     "temperatura", "salinidad_max", "reserva", "pared", "genoma", "forma", "apariencia", "celula"};
 constexpr const char* kAnimalCellKeys[] = {"adherente", "radio_redondeada", "inhibicion_contacto_locomocion",
@@ -140,6 +140,7 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
     r.num("fragmentacion_por_hora", s.fragmentationPerHour);
     r.num("zoosporas", s.zoosporeChance);
     r.num("colonias_hijas", s.colonyDaughters);
+    r.num("celulas_colonia", s.colonyCells);
     r.flag("madre_muere_al_liberar", s.motherDiesAtRelease);
     r.num("masa_seca_relativa", s.dryMassScale);
     r.flag("gemacion", s.budding);
@@ -335,7 +336,8 @@ const std::vector<std::string>& drawingStyles() {
         "corona_peristomal", "corona_de_membranelas", "tentaculos_capitados", "cirros",
         "cuello_extensible", "dos_flagelos",        "levadura",          "celula_adherida",
         "neutrofilo",       "protoplasto_vegetal", "hoja_elodea",      "celula_escamosa",
-        "linfocito",        "monocito",            "cocoide"};
+        "linfocito",        "monocito",            "cocoide",          "colonia_de_placa",
+        "colonia_compacta", "colonia_hueca"};
     return styles;
 }
 

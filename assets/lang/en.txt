@@ -120,6 +120,7 @@ Abri el gotero de CO2 en el centro (boton de la leccion) y espera a que la burbu
 Abrir el gotero de CO2 en el centro	Open the CO2 dropper in the center
 Absorción [1/h]	Absorption [1/h]
 Accesibilidad	Accessibility
+Acineta	Acineta
 Aclaramiento	Clearance
 Adaptación de tubos [1/h]	Tube adaptation [1/h]
 Agregar al programa	Add to the program
@@ -161,6 +162,8 @@ Alga filamentosa con el cloroplasto en espiral. Crece a lo largo y se divide con
 Alga filamentosa con un cloroplasto en placa que gira: de frente con poca luz y de canto con mucha.	Filamentous alga with a plate-shaped chloroplast that turns: face-on in dim light and edge-on in strong light.
 Alga filamentosa: cada division deja un anillo (capuchon) en la pared, asi se cuentan las veces que se dividio.	Filamentous alga: each division leaves a ring (cap) in the wall, so the number of divisions can be counted.
 Alga unicelular	Unicellular alga
+Alga verde de ~35 um con dos flagelos dentro de una envoltura de gelatina. Cuando el charco se seca se enquista y se vuelve rojo sangre (astaxantina).	Green alga of ~35 um with two flagella inside a jelly envelope. When the puddle dries it encysts and turns blood red (astaxanthin).
+Alga verde en filamento de celulas cortas de ~8 um de ancho, cada una con un cloroplasto en banda que abraza la mitad de la pared.	Filamentous green alga of short cells ~8 um wide, each with a band-shaped chloroplast that lines half of the wall.
 Alga verde en media luna de ~11 um, la del ensayo de toxicidad estandar (OECD 201). Crece rapido y es muy sensible a los contaminantes.	Crescent-shaped green alga of ~11 um, the one used in the standard toxicity test (OECD 201). It grows fast and is very sensitive to pollutants.
 Alga verde oval de ~9 um. En los estanques forma grupos de 4 celulas en fila; en cultivo vive casi siempre suelta. Se usa en ensayos de toxicidad.	Oval green alga of ~9 um. In ponds it forms groups of 4 cells in a row; in culture it almost always lives as single cells. It is used in toxicity tests.
 Alga verde redonda de ~7 um, inmovil, con un cloroplasto en copa. Se reproduce formando 4 autosporas dentro de la pared de la madre.	Round, non-motile green alga of ~7 um with a cup-shaped chloroplast. It reproduces by forming 4 autospores inside the mother cell wall.
@@ -183,6 +186,8 @@ Ambiente de partida: química, temperatura y elenco de especies.	Starting enviro
 Ambiente y nutrientes se aplican a la placa en marcha apenas se cambian; lo demás, al crearla.	Environment and nutrients apply to the running plate as soon as they change; the rest, when it is created.
 Ambiente y poblaciones	Environment and populations
 Ameba	Amoeba
+Ameba con una testa ovalada (~70 um) de escamas de silice con espinas. Asoma seudopodos finos por la abertura. Vive en el musgo.	Amoeba with an oval test (~70 um) made of spiny silica scales. It extends fine pseudopods through the opening. It lives in moss.
+Ameba gigante (~0,3 mm, a veces casi 1 mm) con muchos nucleos. Extiende varios seudopodos a la vez y envuelve ciliados y algas.	Giant amoeba (~0.3 mm, sometimes almost 1 mm) with many nuclei. It extends several pseudopods at once and engulfs ciliates and algae.
 Ameba gigante: extiende seudopodos, envuelve a la presa con la membrana y la encierra en una vacuola.	Giant amoeba: extends pseudopods, wraps its prey with the membrane and encloses it in a vacuole.
 Ameba que vive dentro de una testa parda en forma de cupula; asoma seudopodos por la abertura.	Amoeba living inside a brown dome-shaped test; it pokes pseudopods out of the opening.
 Ameba: click sostenido = pseudópodo; toca y envuelve	Amoeba: hold click = pseudopod; touch and engulf
@@ -270,6 +275,7 @@ Biomasa viva	Living biomass
 Biopelicula	Biofilm
 Biopelícula	Biofilm
 Blanco	Target
+Blepharisma	Blepharisma
 Bor	Era
 Borrar	Erase
 Borrar medición	Clear measurement
@@ -334,9 +340,12 @@ Celula que se arrastra	Crawling cell
 Celulas	Cells
 Censo	Census
 Centrifugado suave antes de sacar la gota: a baja densidad, una gota sin concentrar casi nunca trae un protista.	Gentle centrifugation before taking the drop: at low density, an unconcentrated drop almost never contains a protist.
+Ceratium	Ceratium
 Cerrar	Close
 Cerrar el gotero	Close the dropper
+Chaos	Chaos
 Charco	Puddle
+Chilodonella	Chilodonella
 Chlamydomonas	Chlamydomonas
 Chlorella	Chlorella
 Chromobacterium violaceum	Chromobacterium violaceum
@@ -349,8 +358,17 @@ Cierre	Closure
 Ciliado	Ciliate
 Ciliado aplanado que 'camina' sobre cirros (haces de cilios) con paradas bruscas.	Flattened ciliate that 'walks' on cirri (bundles of cilia) with sudden stops.
 Ciliado arrinonado de ~55 um que come bacterias. Abunda en infusiones de hojas y es la presa de Didinium en los microcosmos de laboratorio.	Kidney-shaped ciliate of ~55 um that eats bacteria. It is abundant in leaf infusions and is Didinium's prey in laboratory microcosms.
+Ciliado arrinonado de ~70 um, el de las infusiones de heno y del musgo. Cuando el agua se seca se enquista, y al mojarse sale del quiste en minutos.	Kidney-shaped ciliate of ~70 um, the one of hay infusions and moss. When the water dries it encysts, and when wetted it leaves the cyst within minutes.
+Ciliado chato de ~45 um que se desliza sobre el vidrio y raspa diatomeas y bacterias con una canasta de varillas.	Flat ciliate of ~45 um that glides over the glass and scrapes up diatoms and bacteria with a basket of rods.
+Ciliado chato en forma de lanza (~75 um) con una boca en hendidura armada de extrusomas. Caza otros ciliados, sobre todo Euplotes.	Flat, lance-shaped ciliate (~75 um) with a slit mouth armed with extrusomes. It hunts other ciliates, especially Euplotes.
 Ciliado chico (~50 um) en forma de pera que filtra bacterias con una boca de membranelas. Es el ciliado de laboratorio por excelencia y presa de amebas y suctorios.	Small pear-shaped ciliate (~50 um) that filters bacteria with a mouth of membranelles. It is the laboratory ciliate par excellence and prey of amoebae and suctorians.
 Ciliado de ~200 um que come bacterias por un surco oral. Retrocede al chocar (reaccion de evitacion) y se junta donde hay CO2.	Ciliate of ~200 um that eats bacteria through an oral groove. It backs up when it bumps into something (avoidance reaction) and gathers where there is CO2.
+Ciliado de ~50 um en forma de barril, acorazado con placas de carbonato de calcio. Come algas y flagelados, y en grupo despedaza celulas heridas.	Barrel-shaped ciliate of ~50 um armored with calcium carbonate plates. It eats algae and flagellates, and in groups it tears apart injured cells.
+Ciliado en forma de copa (~100 um) sobre un tallo rigido y ramificado; las colonias llegan a varios milimetros. Filtra bacterias con la corona del peristoma.	Cup-shaped ciliate (~100 um) on a rigid, branched stalk; colonies reach several millimeters. It filters bacteria with its peristomial crown.
+Ciliado globoso de ~30 um con una corona de membranelas y cerdas largas con las que da saltos subitos. Come bacterias y algas chicas.	Globular ciliate of ~30 um with a crown of membranelles and long bristles with which it makes sudden jumps. It eats bacteria and small algae.
+Ciliado grande (~250 um) y ovalado que traga diatomeas y algas enteras: suele verse lleno de vacuolas pardas y verdes.	Large oval ciliate (~250 um) that swallows whole diatoms and algae: it is often seen full of brown and green vacuoles.
+Ciliado hipotrico grande (~300 um), rigido y chato, que camina y salta sobre el vidrio con sus cirros. Come algas, flagelados y diatomeas.	Large hypotrich ciliate (~300 um), rigid and flat, that walks and jumps on the glass with its cirri. It eats algae, flagellates and diatoms.
+Ciliado rosado de ~230 um. Su pigmento, la blefarismina, lo hace huir de la luz fuerte. Come bacterias, flagelados y ciliados chicos.	Pink ciliate of ~230 um. Its pigment, blepharismin, makes it flee strong light. It eats bacteria, flagellates and small ciliates.
 Cilios: W/S avanzar, A/D girar	Cilia: W/S forward, A/D turn
 Cinética de Monod	Monod kinetics
 Citocinesis	Cytokinesis
@@ -366,7 +384,10 @@ Click: quita la célula.	Click: removes the cell.
 Click: revienta la célula (se disuelve en nutrientes y detritos).	Click: bursts the cell (it dissolves into nutrients and detritus).
 Clorofila	Chlorophyll
 Cloroplasto	Chloroplast
+Closterium	Closterium
 Cociente entre las fuerzas de inercia y las viscosas: Re = ρ·v·L/μ. Un paramecio de 0,2 mm que nada a 1 mm/s tiene Re ≈ 0,2; una bacteria, ≈ 10⁻⁵. Con Re mucho menor que 1 no hay inercia: si deja de propulsarse se detiene al instante, y nadar con un movimiento recíproco (ida y vuelta igual) no lleva a ningún lado. Por eso en la simulación la velocidad es la respuesta instantánea a la fuerza.	Ratio of inertial to viscous forces: Re = ρ·v·L/μ. A 0.2 mm Paramecium swimming at 1 mm/s has Re ≈ 0.2; a bacterium, ≈ 10⁻⁵. With Re much smaller than 1 there is no inertia: if it stops propelling itself it stops at once, and swimming with a reciprocal motion (the same back and forth) gets it nowhere. That is why in the simulation velocity is the instantaneous response to force.
+Coleps	Coleps
+Colonia esferica de 16 celulas verdes apretadas, cada una con dos flagelos hacia afuera. Rueda nadando hacia la luz.	Spherical colony of 16 tightly packed green cells, each with two flagella pointing outward. It rolls as it swims toward the light.
 Colonia plana en estrella de 16 celulas con cuernos; cada ciclo libera una colonia hija.	Flat star-shaped colony of 16 cells with horns; each cycle releases a daughter colony.
 Color	Color
 Color que retiene / contratinción	Retained color / counterstain
@@ -376,6 +397,7 @@ Colorante básico (catiónico): se une a los ácidos nucleicos y tiñe de azul e
 Colorante vital: la forma sin carga entra a la célula viva y se acumula, protonado, en los compartimentos ácidos (vacuolas digestivas, lisosomas). Es indicador: rojo en medio ácido y amarillo en alcalino (viraje a pH 6,8 a 8,0).	Vital dye: the uncharged form enters the living cell and accumulates, protonated, in acidic compartments (food vacuoles, lysosomes). It is an indicator: red in acid and yellow in alkaline medium (transition at pH 6.8 to 8.0).
 Colorear las células	Color the cells
 Colpidium	Colpidium
+Colpoda	Colpoda
 Come	Eats
 Comido	Eaten
 Comio	Ate
@@ -411,6 +433,7 @@ Copo de avena	Oat flake
 Copos / esclerocios	Flakes / sclerotia
 Correr	Run
 Corridas por nivel, cada una con su seed.	Runs per level, each with its own seed.
+Cosmarium	Cosmarium
 Costo de la división	Division cost
 Costo de la división (ser controlado)	Division cost (controlled being)
 Costo de nadar	Swimming cost
@@ -424,6 +447,7 @@ Crecimiento	Growth
 Crecimiento máximo	Maximum growth
 Cristal violeta, Lugol, decolorante y safranina: la pared gruesa de peptidoglicano de las grampositivas retiene el violeta; las gramnegativas, de pared fina con membrana externa, lo pierden y quedan rosas. Decolorar de más vuelve rosa también a las grampositivas.	Crystal violet, Lugol, decolorizer and safranin: the thick peptidoglycan wall of Gram-positive bacteria retains the violet; Gram-negative ones, with a thin wall and an outer membrane, lose it and turn pink. Over-decolorizing turns Gram-positive ones pink too.
 Cristal violeta, yodo, alcohol y safranina. Las bacterias de pared gruesa de peptidoglicano (grampositivas) retienen el violeta; las de pared fina con membrana externa (gramnegativas) lo pierden con el alcohol y toman la safranina (rosa). Fija y mata a las células.	Crystal violet, iodine, alcohol and safranin. Bacteria with a thick peptidoglycan wall (Gram-positive) retain the violet; those with a thin wall and an outer membrane (Gram-negative) lose it with the alcohol and take up the safranin (pink). It fixes and kills the cells.
+Cryptomonas	Cryptomonas
 Ctl	Ctl
 Ctrl+	Ctrl+
 Ctrl+N: crear la placa del editor. Los paneles se arrastran y acoplan; Ver > Restablecer disposición.	Ctrl+N: create the plate from the editor. Panels can be dragged and docked; View > Reset layout.
@@ -473,6 +497,9 @@ Descomposicion	Decomposition
 Descomposición [1/h bio]	Decomposition [1/bio h]
 Desde [h]	From [h]
 Deslizamiento	Gliding
+Desmidia de ~85 um hecha de dos mitades simetricas unidas por un istmo. Al dividirse, cada hija se queda con una mitad y fabrica la otra.	Desmid of ~85 um made of two symmetrical halves joined by an isthmus. When it divides, each daughter keeps one half and builds the other.
+Desmidia grande (~0,3 mm) en forma de estrella plana con lobulos recortados, de los pantanos acidos. Una de las celulas mas bellas del microscopio.	Large desmid (~0.3 mm) shaped like a flat star with cut lobes, from acid bogs. One of the most beautiful cells under the microscope.
+Desmidia verde en media luna de ~0,3 mm con dos cloroplastos y una vacuola con cristales que bailan en cada punta. Avanza muy despacio soltando mucilago.	Crescent-shaped green desmid of ~0.3 mm with two chloroplasts and a vacuole of dancing crystals at each tip. It moves very slowly by releasing mucilage.
 Desmodesmus	Desmodesmus
 Despierta	Wakes up
 Destrabar	Unlock
@@ -485,10 +512,14 @@ Detrito	Detritus
 Detritos	Detritus
 Detritos que llegan [1/s]	Incoming detritus [1/s]
 Diatomea	Diatom
+Diatomea diminuta (~5 um) que domina el hielo marino polar: crece en los canales de salmuera a menos de cero grados.	Tiny diatom (~5 um) that dominates polar sea ice: it grows in brine channels below zero degrees.
 Diatomea en aguja que en la naturaleza forma estrellas de 8 celulas. Muy eficiente con poco fosforo (Tilman 1977).	Needle-shaped diatom that in nature forms 8-cell stars. Very efficient with little phosphorus (Tilman 1977).
 Diatomea en disco, planctonica. Muy eficiente con poca silice: gana a Asterionella cuando la silice limita (Tilman 1977).	Disc-shaped planktonic diatom. Very efficient with little silica: it beats Asterionella when silica is limiting (Tilman 1977).
+Diatomea en forma de maza (~45 um) que vive fija en la punta de un tallo de mucilago, sobre plantas acuaticas.	Club-shaped diatom (~45 um) that lives attached to the tip of a mucilage stalk on aquatic plants.
 Diatomea en una cajita de silice que se desliza por una ranura (rafe). Cada division achica a una hija. Necesita silice disuelta para cada valva nueva y vitamina B12 de las bacterias.	Diatom in a little silica box that glides along a slit (raphe). Each division makes one daughter smaller. It needs dissolved silica for every new valve and vitamin B12 from bacteria.
 Diatomea grande (~120 um) en forma de baston con la frustula estriada y un rafe en el medio por el que secreta mucilago para deslizarse.	Large rod-shaped diatom (~120 um) with a striated frustule and a raphe down the middle through which it secretes mucilage to glide.
+Diatomea marina diminuta (~5 um) en forma de caja redonda. Fue la primera diatomea con el genoma secuenciado.	Tiny marine diatom (~5 um) shaped like a round box. It was the first diatom with a sequenced genome.
+Diatomea marina fusiforme de ~30 um, el organismo modelo de las diatomeas: su genoma fue de los primeros secuenciados.	Spindle-shaped marine diatom of ~30 um, the model organism of diatoms: its genome was among the first sequenced.
 Dibujo del campo	Field drawing
 Dibujá un lazo con la herramienta Región (G): se cuentan las células y se mide la química adentro, y entra en la serie de Gráficos.	Draw a lasso with the Region tool (G): cells are counted and the chemistry inside is measured, and it goes into the Graphs series.
 Dibujá un lazo: cuenta las células y mide la química adentro (panel Medición).	Draw a lasso: counts the cells and measures the chemistry inside (Measurement panel).
@@ -498,6 +529,8 @@ Difusion	Diffusion
 Diluciones 1:10	1:10 dilutions
 Dilución seriada	Serial dilution
 Diluir	Dilute
+Dinoflagelado de ~200 um con una armadura de placas de celulosa y cuernos largos. Nada girando con un flagelo en un surco que le rodea la cintura.	Dinoflagellate of ~200 um with an armor of cellulose plates and long horns. It swims spinning with a flagellum in a groove around its waist.
+Dinoflagelado diminuto (~12 um) del hielo marino polar. Nada con dos flagelos en los canales de salmuera y forma quistes cuando el hielo se cierra.	Tiny dinoflagellate (~12 um) of polar sea ice. It swims with two flagella in brine channels and forms cysts when the ice closes.
 Disolución	Dissolution
 Disolución de frústulas [1/h]	Frustule dissolution [1/h]
 Distancia	Distance
@@ -554,12 +587,14 @@ Energía: a las heterótrofas les falta comida; a las fotótrofas, luz. P y N li
 English	English
 Entran libremente pero al salir hacia agua menos acida hacen la reaccion de evitacion y vuelven	They enter freely, but when leaving toward less acidic water they make the avoidance reaction and turn back
 Envoltura celular	Cell envelope
+Epistylis	Epistylis
 Erlenmeyer de 250 mL (100 mL de medio)	250 mL Erlenmeyer flask (100 mL of medium)
 Escala de la interfaz	Interface scale
 Escala de render	Render scale
 Escala log	Log scale
 Esclerocio	Sclerotium
 Esclerocio de Physarum	Physarum sclerotium
+Esfera de mucilago con 32 celulas verdes separadas en la superficie, un paso entre Pandorina y Volvox.	Sphere of mucilage with 32 separate green cells on its surface, a step between Pandorina and Volvox.
 Esfera hueca de cientos de celulas que rueda hacia la luz. Las colonias hijas crecen adentro y nacen rompiendo a la madre.	Hollow sphere of hundreds of cells that rolls toward the light. Daughter colonies grow inside and are born by breaking the mother.
 Espacio: pausa. . : un paso. - / = : velocidad. F1-F10: capas de campo. J: tinción. F: seguir con la cámara.	Space: pause. . : one step. - / = : speed. F1-F10: field layers. J: stain. F: follow with the camera.
 Español	Español
@@ -581,9 +616,13 @@ Estirar	Stretch
 Estructuras	Structures
 Estructuras celulares	Cell structures
 Estéril al crearla: se le inocula cualquier ser desde el Catálogo (Inocular...).	Sterile when created: any being can be inoculated from the Catalog (Inoculate...).
+Eudorina	Eudorina
 Euglena	Euglena
 Euglena y las diatomeas no la sintetizan: la aportan las bacterias.	Euglena and diatoms do not synthesize it: bacteria supply it.
+Euglenoide incoloro de ~50 um que avanza deslizandose con un flagelo grueso y traga presas enteras, como Euglena y levaduras, con dos varillas de su aparato de ingestion.	Colorless euglenoid of ~50 um that glides forward with a thick flagellum and swallows whole prey, such as Euglena and yeasts, with the two rods of its ingestion apparatus.
+Euglenoide verde encerrado en una lorica parda de ~30 um, endurecida con hierro y manganeso, por la que asoma un flagelo.	Green euglenoid enclosed in a brown lorica of ~30 um, hardened with iron and manganese, through which a flagellum emerges.
 Euglenoide verde, rigido y chato como una hoja, con una espina en la cola y dos granos grandes de paramilon. Nada hacia la luz con un flagelo.	Green euglenoid, rigid and flat like a leaf, with a tail spine and two large paramylon grains. It swims toward the light with one flagellum.
+Euglypha	Euglypha
 Euplotes	Euplotes
 Evento	Event
 Evita la luz	Avoids light
@@ -613,6 +652,7 @@ Fase exponencial	Exponential phase
 Fe	Fe
 Fe: media saturación	Fe: half-saturation
 Fermentación	Fermentation
+Fibroblasto NIH/3T3 (raton)	NIH/3T3 fibroblast (mouse)
 Fibroblasto dermico humano	Human dermal fibroblast
 Ficha	Card
 Fija dónde caen las células de la siembra y de cada inoculación.	Sets where the cells of the seeding and of each inoculation fall.
@@ -629,6 +669,7 @@ Filamento	Filament
 Fisiologia y fuentes	Physiology and sources
 Flagelado	Flagellate
 Flagelado con miles de flagelos del intestino de las termitas: digiere la madera por ellas y no tolera el oxigeno.	Flagellate with thousands of flagella from the termite gut: it digests wood for them and does not tolerate oxygen.
+Flagelado pardo-oliva de ~45 um con dos flagelos y dos cloroplastos. Al molestarlo dispara sus eyectosomas y sale despedido.	Olive-brown flagellate of ~45 um with two flagella and two chloroplasts. When disturbed it fires its ejectosomes and shoots away.
 Flagelado verde con mancha ocular: nada hacia la luz y hace fotosintesis, pero tambien absorbe comida.	Green flagellate with an eyespot: swims toward the light and photosynthesizes, but also absorbs food.
 Flagelo: W o click sostenido, gira hacia el mouse	Flagellum: W or hold click, turns toward the mouse
 Flexión [1/s]	Bending [1/s]
@@ -659,10 +700,12 @@ Fracción a renovar	Fraction to renew
 Fracción de biomasa para morir	Biomass fraction to die
 Fracción de la mantención que gasta una bacteria sin comida suficiente (fase estacionaria). E. coli la baja más de 5 veces (Schink et al. 2019).	Fraction of maintenance that a bacterium spends without enough food (stationary phase). E. coli lowers it more than 5 times (Schink et al. 2019).
 Fracción encendida	Fraction on
+Fragilariopsis cylindrus	Fragilariopsis cylindrus
 Fragilidad osmotica de los globulos rojos	Osmotic fragility of red blood cells
 Frasco T-25	T-25 flask
 Frente	Front
 Frente [µm/h bio]	Front [µm/bio h]
+Frontonia	Frontonia
 Frústula vacía	Empty frustule
 Frústula vacía de diatomea: la caja de sílice (ópalo) que queda cuando muere la célula. No se descompone, a diferencia del resto del organismo; el rafe y las estrías siguen intactos.	Empty diatom frustule: the silica (opal) box left when the cell dies. It does not decompose, unlike the rest of the organism; the raphe and striae remain intact.
 Fuente termal	Hot spring
@@ -683,6 +726,8 @@ Glucosa	Glucose
 Glucógeno	Glycogen
 Glutamina	Glutamine
 Glóbulos de azufre elemental: se forman donde hay sulfuros (fuentes termales). Muy refringentes: borde negro y centro brillante.	Globules of elemental sulfur: they form where there are sulfides (hot springs). Highly refractile: black edge and bright center.
+Gomphonema	Gomphonema
+Gonium	Gonium
 Got	Dro
 Gota	Drop
 Gota (de un bioma)	Drop (from a biome)
@@ -711,6 +756,8 @@ Guardar y cargar	Save and load
 Guardar y duplicar	Save and duplicate
 Guardar y exportar	Save and export
 Hace	Does
+Haematococcus	Haematococcus
+Halteria	Halteria
 Hambre	Hunger
 Hambre a esclerocio [h]	Hunger to sclerotium [h]
 Hambre a esporas [h]	Hunger to spores [h]
@@ -824,12 +871,15 @@ Limita a las algas cuando florecen.	It limits algae when they bloom.
 Limita a los fotótrofos en el mar abierto.	It limits phototrophs in the open sea.
 Limo de cuarzo	Quartz silt
 Linea celular de cancer de cuello uterino, la primera humana inmortal (1951). Epitelial y poligonal; no deja de dividirse al llenarse la placa y consume mucha glucosa que convierte en lactato (efecto Warburg), que acidifica el medio.	Cervical cancer cell line, the first immortal human line (1951). Epithelial and polygonal; it does not stop dividing when the plate fills up and consumes a lot of glucose, which it turns into lactate (Warburg effect), acidifying the medium.
+Linea de fibroblastos de embrion de raton (3T3, 1962). Fusiformes y pegados al fondo, se frenan al tocarse y dejan de dividirse al llenar la placa: el ejemplo clasico de inhibicion por contacto.	Mouse embryo fibroblast line (3T3, 1962). Spindle-shaped and stuck to the bottom, they stop when they touch and stop dividing when the dish is full: the classic example of contact inhibition.
+Linea de queratinocitos humanos (las celulas de la epidermis). Poligonales, crecen en islotes que se unen hasta cubrir la placa; se usan para estudiar el cierre de heridas.	Human keratinocyte line (the cells of the epidermis). Polygonal, they grow in islands that merge until they cover the dish; they are used to study wound closure.
 Linfocito	Lymphocyte
 Liquen: azúcar [1/h]	Lichen: sugar [1/h]
 Liquen: fósforo [1/h]	Lichen: phosphorus [1/h]
 Lis	Lys
 Lisar	Lyse
 Lisosoma	Lysosome
+Litonotus	Litonotus
 Llevan la concentración media de toda la placa al valor elegido.	They bring the mean concentration of the whole plate to the chosen value.
 Lo que está fuera de la vista se resuelve con menos sub-pasos de XPBD. Cambia la trayectoria fina de esas células (no su biología).	What is out of view is solved with fewer XPBD substeps. It changes the fine trajectory of those cells (not their biology).
 Lo que se pasa: células con su estado, bacterias y medio.	What is passed: cells with their state, bacteria and medium.
@@ -878,6 +928,7 @@ Mica: escamas hexagonales finísimas y brillantes. Por su forma plana se asienta
 Micelio	Mycelium
 Micelio de %s	Mycelium of %s
 Micobionte: hongo que vive unido a un alga verde. Ella le da azucar por fotosintesis; el le devuelve fosforo y la protege de parasitos como los quitridios. Solo no puede crecer casi nada.	Mycobiont: a fungus living attached to a green alga. The alga gives it sugar through photosynthesis; the fungus returns phosphorus and protects it from parasites such as chytrids. Alone it can barely grow.
+Micrasterias	Micrasterias
 Microbiología	Microbiology
 Micronutrientes	Micronutrients
 Microscopía con la luz que atraviesa la muestra: fondo claro y células que se ven por lo que absorben y desvían. Las células vivas sin teñir son casi transparentes: se ven por su borde.	Microscopy with light that passes through the sample: a bright background and cells seen by what they absorb and deflect. Unstained living cells are almost transparent: they are seen by their edge.
@@ -987,6 +1038,7 @@ P disuelto	Dissolved P
 P en seres	P in beings
 P total	Total P
 P: media saturación	P: half-saturation
+Pandorina	Pandorina
 Pantalla completa	Fullscreen
 Paquete exportado: 	Pack exported: 
 Paquete importado: 	Pack imported: 
@@ -1017,6 +1069,7 @@ Pausar	Pause
 Pediastrum	Pediastrum
 Penalidad de la fermentación	Fermentation penalty
 Penicilina de amplio espectro (beta-lactamico): se une a las enzimas que arman el peptidoglicano y la pared se rompe mientras la bacteria crece. A una bacteria que no crece no la mata. Los eucariotas no tienen esa pared.	Broad-spectrum penicillin (beta-lactam): it binds the enzymes that build peptidoglycan and the wall breaks while the bacterium grows. It does not kill a bacterium that is not growing. Eukaryotes do not have that wall.
+Peranema	Peranema
 Perfusión del medio [1/h bio]	Medium perfusion [1/bio h]
 Periplasma	Periplasm
 Personalizada	Custom
@@ -1024,6 +1077,7 @@ Perímetro	Perimeter
 Período [h]	Period [h]
 Peso inicial de cada especie	Initial weight of each species
 Phacus	Phacus
+Phaeodactylum tricornutum	Phaeodactylum tricornutum
 Physarum	Physarum
 Physarum (moho mucilaginoso, no es un hongo)	Physarum (slime mold, not a fungus)
 Physarum fusiona dos tubos: la red es una sola celula	Physarum fuses two tubes: the network is a single cell
@@ -1034,6 +1088,7 @@ Pinnularia	Pinnularia
 Pinta un campo de la placa sobre el mundo (F1-F10).	Paints a field of the plate over the world (F1-F10).
 Placa	Plate
 Placa de 100 mm	100 mm dish
+Placa de 16 celulas verdes de dos flagelos cada una (4 en el centro y 12 alrededor). Nada girando como una rueda hacia la luz.	Plate of 16 green cells with two flagella each (4 in the center and 12 around them). It swims toward the light spinning like a wheel.
 Placa de 35 mm	35 mm dish
 Placa de 35 mm con 2 mL de DMEM alta glucosa y 10 % de suero, en una incubadora a 37 °C y 10 % de CO2 (pH 7,4). Se simula un campo de 2 mm: el anillo de vidrio marca su borde (la pared de la placa real está a 17 mm). Estéril: se le inocula lo que se quiera desde el Catálogo.	35 mm dish with 2 mL of high-glucose DMEM and 10 % serum, in an incubator at 37 °C and 10 % CO2 (pH 7.4). A 2 mm field is simulated: the glass ring marks its edge (the wall of the real dish is 17 mm away). Sterile: anything can be inoculated from the Catalog.
 Placa de 60 mm	60 mm dish
@@ -1055,6 +1110,7 @@ Pocillo de placa de 24	24-well plate well
 Pocillo de placa de 6	6-well plate well
 Pocillo de placa de 96	96-well plate well
 Podophrya	Podophrya
+Polarella glacialis	Polarella glacialis
 Polvo mineral [1/s]	Mineral dust [1/s]
 Por debajo del límite óptico (~0,24 µm): aumento vacío. Capas > Vista de modelo	Below the optical limit (~0.24 µm): empty magnification. Layers > Model view
 Por densidad	By density
@@ -1103,6 +1159,7 @@ Que las celulas estaban muertas	That the cells were dead
 Que las dos conviven si hay comida para todas	That both coexist if there is food for all
 Que muestra la deplasmolisis?	What does deplasmolysis show?
 Que predice el principio de exclusion competitiva?	What does the competitive exclusion principle predict?
+Queratinocito HaCaT	HaCaT keratinocyte
 Quimica	Chemistry
 Quimiostato	Chemostat
 Quimiotaxis	Chemotaxis
@@ -1245,10 +1302,13 @@ Spirogyra	Spirogyra
 Spirogyra se divide dentro del filamento	Spirogyra divides inside the filament
 Spw	Spw
 Stentor	Stentor
+Stylonychia	Stylonychia
 Suaviza los bordes de la interfaz (el campo no lo usa). Se aplica al reiniciar el programa.	Smooths the edges of the interface (the field does not use it). Applied when the program restarts.
 Sub-pasos lejanos	Distant substeps
 Subcelular	Subcellular
 Subpasos XPBD	XPBD substeps
+Suctorio de ~40 um fijo a un tallo, con dos haces de tentaculos que atrapan ciliados y les succionan el citoplasma. Sus crias nacen adentro y salen nadando.	Suctorian of ~40 um attached to a stalk, with two bundles of tentacles that catch ciliates and suck out their cytoplasm. Its young are born inside and swim away.
+Suctorio dentro de una lorica triangular sobre un tallo, con dos haces de tentaculos largos que atrapan ciliados al pasar.	Suctorian inside a triangular lorica on a stalk, with two bundles of long tentacles that catch passing ciliates.
 Suctorio: esfera con tentaculos capitados que se pegan a los ciliados y les succionan el citoplasma.	Suctorian: a sphere with capitate tentacles that stick to ciliates and suck out their cytoplasm.
 Suero	Serum
 Suspensión [por mL]	Suspension [per mL]
@@ -1265,6 +1325,7 @@ Terminar la lección	End the lesson
 Tetraciclina	Tetracycline
 Tetrahymena	Tetrahymena
 Teñida	Stained
+Thalassiosira pseudonana	Thalassiosira pseudonana
 Tiempo	Time
 Tiempo biológico (x)	Biological time (x)
 Tiempo biológico entre fotos.	Biological time between photos.
@@ -1286,10 +1347,12 @@ Todavía no hay muestras: la sesión toma una por intervalo de muestreo.	No samp
 Todavía no hay notas.	No notes yet.
 Todavía no hay placas guardadas.	No saved plates yet.
 Todos	All
+Tokophrya	Tokophrya
 Tope de FPS	FPS cap
 Tope por cuadro de bacterias dibujadas con envoltura, nucleoide y flagelos (las más cercanas al centro).	Per-frame cap of bacteria drawn with envelope, nucleoid and flagella (those closest to the center).
 Total	Total
 Toxinas: degradación [1/h]	Toxins: degradation [1/h]
+Trachelomonas	Trachelomonas
 Transformar al ser controlado	Transform the controlled being
 Trichonympha	Trichonympha
 Tricoma sin heterocistos (no fija nitrogeno): se desliza rotando sobre su eje, asi que la punta que avanza oscila de lado a lado.	Trichome without heterocysts (does not fix nitrogen): it glides rotating on its axis, so the leading tip swings from side to side.
@@ -1298,6 +1361,7 @@ Tubo de Gause (0,5 mL)	Gause tube (0.5 mL)
 Tubo de ensayo (10 mL)	Test tube (10 mL)
 Tubo elegido	Chosen tube
 Tubos nuevos con el mismo medio: cada uno recibe la novena parte de su volumen del anterior (1:10).	New tubes with the same medium: each one receives a ninth of its volume from the previous one (1:10).
+Ulothrix	Ulothrix
 Un corte fino de tuberculo de papa tenido con Lugol: celulas grandes del parenquima llenas de amiloplastos, granos de almidon con capas concentricas que el yodo tine de azul negro.	A thin section of potato tuber stained with Lugol: large parenchyma cells full of amyloplasts, starch grains with concentric layers that iodine stains blue-black.
 Un cultivo es un tubo o un frasco de mililitros bien mezclado (como los de Gause o Tilman): las poblaciones no caben en la placa y se simulan sin espacio, con la misma fisiología. Para mirarlo, se saca una gota.	A culture is a well-mixed tube or flask of milliliters (like Gause's or Tilman's): the populations do not fit on the plate and are simulated without space, with the same physiology. To look at it, a drop is taken.
 Un círculo del fondo del recipiente: el anillo de vidrio marca el borde del campo simulado (la pared del recipiente real está mucho más lejos).	A circle of the bottom of the vessel: the glass ring marks the edge of the simulated field (the wall of the real vessel is much farther away).
@@ -1423,6 +1487,7 @@ clorofila	chlorophyll
 clorofita flagelada	flagellated chlorophyte
 cloroplasto en copa	cup-shaped chloroplast
 cloroplastos (giran con la ciclosis)	chloroplasts (circling with cyclosis)
+cloroplastos pardo-amarillos	yellow-brown chloroplasts
 compara la concentracion de ahora con la de hace ~1 s	compares the concentration now with that of ~1 s ago
 con mas de %.0f uM de materia organica	with more than %.0f uM of organic matter
 concentración inhibitoria mínima	minimum inhibitory concentration
@@ -1446,10 +1511,12 @@ del agua	from the water
 deplasmólisis	deplasmolysis
 desconocida (solo se recuerdan las ultimas 64 muertes)	unknown (only the last 64 deaths are remembered)
 dicotomica: la punta se parte en dos hifas	dichotomous: the tip splits into two hyphae
+dinocarion (cromosomas condensados)	dinokaryon (condensed chromosomes)
 disparo tricocistos: el depredador retrocede	fired trichocysts: the predator backs off
 dividiendose: el surco estrangula la celula	dividing: the furrow constricts the cell
 division con tabique y fragmentacion del filamento	division by septum and fragmentation of the filament
 dormido hace %.1f h bio	dormant for %.1f bio h
+dos cloroplastos pardo-oliva	two olive-brown chloroplasts
 dosis-respuesta	dose-response
 duerme hace %.1f h bio	asleep for %.1f bio h
 el ADN del nucleo	the DNA of the nucleus
@@ -1470,6 +1537,7 @@ espora inmovil: la lleva el agua	non-motile spore: the water carries it
 estigma	eyespot
 estigma (mancha ocular)	stigma (eyespot)
 estirando el cuello (%.0f um)	stretching its neck (%.0f um)
+euglenido incoloro	colorless euglenid
 evitación	avoidance
 exconjugantes	exconjugants
 extiende pseudopodos en direcciones al azar	extends pseudopods in random directions
@@ -1518,6 +1586,7 @@ gramnegativas	gram-negative
 grampositiva	gram-positive
 grampositiva: pared gruesa de peptidoglicano, retiene el cristal violeta	Gram-positive: thick peptidoglycan wall, retains the crystal violet
 grampositivas	gram-positive
+granulos de almidon	starch granules
 granulos de glucogeno	glycogen granules
 granulos de paramilon	paramylon granules
 granulos de queratohialina	keratohyalin granules
@@ -1595,10 +1664,12 @@ pared de celulosa	cellulose wall
 pared de glicoproteinas	glycoprotein wall
 pared de glucano y manano	glucan and mannan wall
 pared gruesa de levadura: se tine como grampositiva (violeta)	thick yeast wall: stains like a Gram-positive (violet)
+pelicula estriada	striated pellicle
 peptidoglicano	peptidoglycan
 persigue a una presa que detecta	chases a prey it detects
 perímetro	perimeter
 período	period
+pirenoides con almidon	pyrenoids with starch
 plasmolizada	plasmolyzed
 plasmolizado	plasmolyzed
 plasmolizados	plasmolyzed
@@ -1662,6 +1733,7 @@ t bio	bio t
 tambien libera zoosporas nadadoras que se fijan y forman filamentos nuevos	also releases swimming zoospores that settle and form new filaments
 tasa de aclaramiento	clearance rate
 tasa de dilución	dilution rate
+teca de placas de celulosa	theca of cellulose plates
 temperatura, luz, soluto:<fosfato|nitrogeno|silice|hierro|b12|organica|co2>, o una acción: bacterias, medio, dilucion, inocular:<id del ser>.	temperatura, luz, soluto:<fosfato|nitrogeno|silice|hierro|b12|organica|co2>, or an action: bacterias, medio, dilucion, inocular:<being id>.
 tiempo [h]	time [h]
 tiempo biológico [h]	biological time [h]

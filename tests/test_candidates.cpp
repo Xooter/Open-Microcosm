@@ -81,3 +81,33 @@ TEST_CASE("candidatos: Raphidocelis forma autosporas" * doctest::test_suite("lar
 TEST_CASE("candidatos: Desmodesmus forma autosporas" * doctest::test_suite("largos")) { reproduces("desmodesmus"); }
 TEST_CASE("candidatos: Phacus se divide" * doctest::test_suite("largos")) { reproduces("phacus"); }
 TEST_CASE("candidatos: Pinnularia se divide" * doctest::test_suite("largos")) { reproduces("pinnularia"); }
+TEST_CASE("candidatos: Gonium libera colonias hijas" * doctest::test_suite("largos")) { reproduces("gonium"); }
+TEST_CASE("candidatos: Pandorina libera colonias hijas" * doctest::test_suite("largos")) { reproduces("pandorina"); }
+TEST_CASE("candidatos: Eudorina libera colonias hijas" * doctest::test_suite("largos")) { reproduces("eudorina"); }
+TEST_CASE("candidatos: Stylonychia se divide" * doctest::test_suite("largos")) { reproduces("stylonychia"); }
+TEST_CASE("candidatos: Frontonia se divide" * doctest::test_suite("largos")) { reproduces("frontonia"); }
+TEST_CASE("candidatos: Tokophrya se reproduce" * doctest::test_suite("largos")) { reproduces("tokophrya"); }
+TEST_CASE("candidatos: Cryptomonas se divide" * doctest::test_suite("largos")) { reproduces("cryptomonas"); }
+TEST_CASE("candidatos: Coleps se divide" * doctest::test_suite("largos")) { reproduces("coleps"); }
+TEST_CASE("candidatos: Blepharisma se divide" * doctest::test_suite("largos")) { reproduces("blepharisma"); }
+TEST_CASE("candidatos: Colpoda se divide" * doctest::test_suite("largos")) { reproduces("colpoda"); }
+TEST_CASE("candidatos: Chilodonella se divide" * doctest::test_suite("largos")) { reproduces("chilodonella"); }
+TEST_CASE("candidatos: Litonotus se divide" * doctest::test_suite("largos")) { reproduces("litonotus"); }
+TEST_CASE("candidatos: Acineta se reproduce" * doctest::test_suite("largos")) { reproduces("acineta"); }
+TEST_CASE("candidatos: Peranema se divide" * doctest::test_suite("largos")) { reproduces("peranema"); }
+TEST_CASE("candidatos: Trachelomonas se divide" * doctest::test_suite("largos")) { reproduces("trachelomonas"); }
+TEST_CASE("candidatos: Haematococcus se divide" * doctest::test_suite("largos")) { reproduces("haematococcus"); }
+TEST_CASE("candidatos: Ceratium se divide" * doctest::test_suite("largos")) { reproduces("ceratium"); }
+TEST_CASE("candidatos: Chaos se divide" * doctest::test_suite("largos")) { reproduces("chaos"); }
+TEST_CASE("candidatos: Euglypha se divide" * doctest::test_suite("largos")) { reproduces("euglypha"); }
+TEST_CASE("candidatos: Closterium se divide" * doctest::test_suite("largos")) { reproduces("closterium"); }
+TEST_CASE("candidatos: Cosmarium se divide" * doctest::test_suite("largos")) { reproduces("cosmarium"); }
+TEST_CASE("candidatos: Micrasterias se divide" * doctest::test_suite("largos")) { reproduces("micrasterias"); }
+TEST_CASE("candidatos: Gomphonema se divide" * doctest::test_suite("largos")) { reproduces("gomphonema"); }
+TEST_CASE("candidatos: Halteria se divide" * doctest::test_suite("largos")) { reproduces("halteria"); }
+TEST_CASE("candidatos: Epistylis se divide" * doctest::test_suite("largos")) { reproduces("epistylis"); }
+TEST_CASE("candidatos: Ulothrix crece en filamento" * doctest::test_suite("largos")) { reproduces("ulothrix"); }
+TEST_CASE("candidatos: Phaeodactylum se divide" * doctest::test_suite("largos")) { reproduces("phaeodactylum"); }
+TEST_CASE("candidatos: Thalassiosira se divide" * doctest::test_suite("largos")) { reproduces("thalassiosira"); }
+TEST_CASE("candidatos: Fragilariopsis se divide" * doctest::test_suite("largos")) { reproduces("fragilariopsis"); }
+TEST_CASE("candidatos: Polarella se divide" * doctest::test_suite("largos")) { reproduces("polarella"); }

@@ -223,6 +223,7 @@ void writeSpecies(Json& j, SpeciesId id) {
     j.quantity("largo_del_tallo", s.stalkLength, "µm");
     j.boolean("filamento", s.filament);
     j.number("colonias_hijas", s.colonyDaughters);
+    j.number("celulas_colonia", s.colonyCells);
     j.boolean("gemacion", s.budding);
     j.number("masa_seca_relativa", s.dryMassScale);
     j.number("espesor_um", s.thickness > 0.0f ? s.thickness : s.spec.radiusY);

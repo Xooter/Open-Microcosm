@@ -190,6 +190,282 @@ unidad = "1/dia"
 temperatura = 21.0
 fuente = "OECD (2011). Test No. 201: Freshwater alga and cyanobacteria, growth inhibition test, anexo 2: tasa de crecimiento más observada 1,2-1,5/día en medio OECD a ~70 µE m⁻² s⁻¹ y 21 °C (D. subspicatus SAG 86.81)."
 
+# --- Candidatos, lote 2 (docs/candidatos.md) ------------------------------------------------------
+
+[stylonychia.crecimiento_maximo]
+# Ciclo celular de S. mytilus y S. lemnae en el laboratorio; la especie nueva del trabajo se divide cada
+# 9 h a temperatura ambiente (21 °C), y el texto da las 12 h de S. mytilus para comparar (se asume la
+# misma temperatura).
+valor = 12.0
+unidad = "h"
+temperatura = 21.0
+fuente = "Shi, X. & Ammermann, D. (2004). Stylonychia harbinensis sp. n., a new oxytrichid ciliate (Ciliophora, Hypotrichia) from the Heilongjiang Province, China. Protistology 3: 219-222: el ciclo celular de S. mytilus y S. lemnae dura 12 h. Temperatura sin verificar (la del trabajo, 21 °C)."
+estimacion = true
+
+[cryptomonas.crecimiento_maximo]
+# Tasa observada más alta en cultivo en lote (0,72 divisiones/día: una duplicación cada 1,39 días); el
+# máximo potencial del ajuste de Cloern a luz y temperatura es 1,15 divisiones/día. Citado por Ojala
+# (1991), tesis, Loughborough University, cap. 2.
+valor = 1.39
+unidad = "dia"
+temperatura = 20.0
+fuente = "Cloern, J. E. (1977). Effects of light intensity and temperature on Cryptomonas ovata (Cryptophyceae) growth and nutrient uptake rates. J. Phycol. 13: 389-395: 0,72 divisiones/día observadas (citado en Ojala 1991, tesis, Loughborough Univ.). Temperatura sin verificar (se asume 20 °C)."
+estimacion = true
+
+# --- Candidatos, lote 3 (docs/candidatos.md) ------------------------------------------------------
+
+[coleps.crecimiento_maximo]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de seres.toml (semiejes 26, 13 y 13 µm: 18406 µm³).
+valor = 1.59
+unidad = "1/dia"
+temperatura = 20.0
+fuente = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 18406 µm³). No es una medición de la especie."
+estimacion = true
+
+[blepharisma.crecimiento_maximo]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de seres.toml (semiejes 115, 40 y 20 µm: 385369 µm³).
+valor = 0.7
+unidad = "1/dia"
+temperatura = 20.0
+fuente = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 385369 µm³). No es una medición de la especie."
+estimacion = true
+
+[colpoda.crecimiento_maximo]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de seres.toml (semiejes 35, 23 y 16 µm: 53952 µm³).
+valor = 1.19
+unidad = "1/dia"
+temperatura = 20.0
+fuente = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 53952 µm³). No es una medición de la especie."
+estimacion = true
+
+[chilodonella.crecimiento_maximo]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de seres.toml (semiejes 22,5, 14,5 y 6 µm: 8200 µm³).
+valor = 1.97
+unidad = "1/dia"
+temperatura = 20.0
+fuente = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 8200 µm³). No es una medición de la especie."
+estimacion = true
+
+[litonotus.crecimiento_maximo]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de seres.toml (semiejes 37,5, 9 y 4 µm: 5655 µm³).
+valor = 2.18
+unidad = "1/dia"
+temperatura = 20.0
+fuente = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 5655 µm³). No es una medición de la especie."
+estimacion = true
+
+[ceratium.crecimiento_maximo]
+# Tasa a la temperatura óptima de C. furcoides en cultivo (0,3 divisiones/día: una duplicación cada 3,3
+# días), la más lenta de las especies del estudio. La temperatura del óptimo no figura en el resumen.
+valor = 3.3
+unidad = "dia"
+temperatura = 20.0
+fuente = "Butterwick, C., Heaney, S. I. & Talling, J. F. (2005). Diversity in the influence of temperature on the growth rates of freshwater algae, and its ecological relevance. Freshwater Biol. 50: 291-300: ~0,3 divisiones/día a la temperatura óptima. Temperatura sin verificar (se asume 20 °C)."
+estimacion = true
+
+[nih_3t3.crecimiento_maximo]
+valor = 19.0
+unidad = "h"
+temperatura = 37.0
+fuente = "JCRB Cell Bank, JCRB0615 (NIH/3T3 clon 5611): tiempo de duplicación ~19 h. Otras fuentes dan 20-24 h."
+estimacion = true
+
+[nih_3t3.fase_g1]
+valor = 6.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Completa la duplicación de ~19 h con S, G2 y M de la célula de mamífero típica (Alberts et al., MBoC 6ª ed., fig. 17-4: S 8 h, G2 4 h, M 1 h)."
+estimacion = true
+
+[nih_3t3.fase_s]
+valor = 8.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4 (célula de mamífero típica en cultivo)."
+estimacion = true
+
+[nih_3t3.fase_g2]
+valor = 4.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4."
+estimacion = true
+
+[nih_3t3.fase_m]
+valor = 1.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4."
+estimacion = true
+
+[nih_3t3.rapidez_migracion]
+valor = 18.0
+unidad = "um/h"
+temperatura = 37.0
+fuente = "Células 3T3 sobre sustrato 2D: ~80 % con rapidez de 0,1-0,5 µm/min (arXiv:0806.4518, motilidad de células normales y cancerosas según la rigidez del sustrato); valor central 0,3 µm/min."
+estimacion = true
+
+[nih_3t3.persistencia]
+valor = 2.5
+unidad = "h"
+temperatura = 37.0
+fuente = "Gail, M. H. & Boone, C. W. (1970). The locomotion of mouse fibroblasts in tissue culture. Biophys. J. 10: 980-993: la dirección persiste de un intervalo de 2,5 h al siguiente y es aleatoria a las 5 h."
+estimacion = true
+
+[nih_3t3.confluencia]
+valor = 40000.0
+unidad = "1/cm2"
+fuente = "Sin dato medido de la línea: el de los fibroblastos humanos (~3-5·10⁴ células/cm²). Todaro & Green (1963) describen la detención por contacto de 3T3 en monocapa."
+estimacion = true
+
+[nih_3t3.glucosa_vmax]
+valor = 60.0
+unidad = "fmol/h"
+temperatura = 37.0
+fuente = "Sin dato de la línea: el de los fibroblastos en cultivo (~1-2 µmol por 10⁶ células por día)."
+estimacion = true
+
+[nih_3t3.glucosa_km]
+valor = 3.0
+unidad = "mM"
+temperatura = 37.0
+fuente = "Km de GLUT1: ~1-3 mM (Carruthers 1990, Physiol. Rev. 70:1135)."
+
+[nih_3t3.glutamina_vmax]
+valor = 12.0
+unidad = "fmol/h"
+temperatura = 37.0
+fuente = "Sin dato de la línea: ~20 % del consumo de glucosa, como en células no tumorales."
+estimacion = true
+
+[nih_3t3.glutamina_km]
+valor = 0.1
+unidad = "mM"
+temperatura = 37.0
+fuente = "Km de los transportadores de glutamina (ASCT2/SLC1A5) del orden de 0,1 mM."
+estimacion = true
+
+[nih_3t3.lactato_por_glucosa]
+valor = 1.0
+unidad = "mol/mol"
+temperatura = 37.0
+fuente = "Sin dato de la línea: ~1 lactato por glucosa en células no tumorales en cultivo."
+estimacion = true
+
+[hacat.crecimiento_maximo]
+valor = 28.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Cellosaurus CVCL_0038 (HaCaT): tiempo de duplicación 28 h."
+estimacion = true
+
+[hacat.fase_g1]
+valor = 15.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Completa la duplicación de ~28 h con S, G2 y M de la célula humana típica (Alberts et al., MBoC 6ª ed., fig. 17-4)."
+estimacion = true
+
+[hacat.fase_s]
+valor = 8.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4."
+estimacion = true
+
+[hacat.fase_g2]
+valor = 4.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4."
+estimacion = true
+
+[hacat.fase_m]
+valor = 1.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4."
+estimacion = true
+
+[hacat.rapidez_migracion]
+valor = 63.0
+unidad = "um/h"
+temperatura = 37.0
+fuente = "HaCaT aisladas en 2D: 63 ± 15 µm/h (46 en grupos y 32 confluentes; PLoS ONE 2012, doi 10.1371/journal.pone.0031711, tabla 2). La asignación de los valores a cada patrón está por verificar."
+estimacion = true
+
+[hacat.persistencia]
+valor = 1.0
+unidad = "h"
+temperatura = 37.0
+fuente = "Sin dato de la línea: persistencia de células epiteliales en 2D del orden de 1 h."
+estimacion = true
+
+[hacat.confluencia]
+valor = 100000.0
+unidad = "1/cm2"
+fuente = "Sin dato medido: los queratinocitos forman monocapas densas (~10⁵ células/cm²) y en la confluencia empiezan a diferenciarse."
+estimacion = true
+
+[hacat.glucosa_vmax]
+valor = 60.0
+unidad = "fmol/h"
+temperatura = 37.0
+fuente = "Sin dato de la línea: el de las células humanas no tumorales en cultivo."
+estimacion = true
+
+[hacat.glucosa_km]
+valor = 3.0
+unidad = "mM"
+temperatura = 37.0
+fuente = "Km de GLUT1: ~1-3 mM (Carruthers 1990, Physiol. Rev. 70:1135)."
+
+[hacat.glutamina_vmax]
+valor = 12.0
+unidad = "fmol/h"
+temperatura = 37.0
+fuente = "Sin dato de la línea: ~20 % del consumo de glucosa."
+estimacion = true
+
+[hacat.glutamina_km]
+valor = 0.1
+unidad = "mM"
+temperatura = 37.0
+fuente = "Km de ASCT2 (SLC1A5) del orden de 0,1 mM."
+estimacion = true
+
+[hacat.lactato_por_glucosa]
+valor = 1.0
+unidad = "mol/mol"
+temperatura = 37.0
+fuente = "Sin dato de la línea: ~1 lactato por glucosa en células no tumorales en cultivo."
+estimacion = true
+
+# --- Candidatos, lote 4 (docs/candidatos.md) ------------------------------------------------------
+
+[halteria.crecimiento_maximo]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de seres.toml (semiejes 15, 14 y 14 µm: 12315 µm³).
+valor = 1.77
+unidad = "1/dia"
+temperatura = 20.0
+fuente = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 12315 µm³). No es una medición de la especie."
+estimacion = true
+
+[epistylis.crecimiento_maximo]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de seres.toml (semiejes 52, 19 y 19 µm: 78632 µm³).
+valor = 1.07
+unidad = "1/dia"
+temperatura = 20.0
+fuente = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 78632 µm³). No es una medición de la especie."
+estimacion = true
+
 # --- Células humanas en cultivo (fase 20b) -------------------------------------------------------
 # Tiempos en "h" (también "min"), rapidez en "um/h" o "um/min", densidad en "1/cm2", flujos por
 # célula en "fmol/h" (o "amol/s"), Km en "mM" o "uM", lactato por glucosa en "mol/mol". Todos a

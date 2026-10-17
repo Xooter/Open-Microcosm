@@ -219,7 +219,7 @@ conjugacion = true
 plan = "ciliado"
 alimentacion = "surco_oral"
 velocidad_relativa = 0.5
-presas_boca = ["euglena", "chlamydomonas", "navicula", "asterionella", "cyclotella", "chlorella", "raphidocelis", "desmodesmus"]
+presas_boca = ["euglena", "chlamydomonas", "navicula", "asterionella", "cyclotella", "chlorella", "raphidocelis", "desmodesmus", "cryptomonas"]
 cantidad_inicial = 2
 sesil = true
 largo_tallo = 20.0
@@ -288,7 +288,7 @@ conjugacion = true
 plan = "ciliado"
 alimentacion = "surco_oral"
 velocidad_relativa = 0.25
-presas_boca = ["chlamydomonas", "navicula", "asterionella", "cyclotella", "chlorella", "raphidocelis", "desmodesmus"]
+presas_boca = ["chlamydomonas", "navicula", "asterionella", "cyclotella", "chlorella", "raphidocelis", "desmodesmus", "cryptomonas"]
 huye_de = ["didinium", "lacrymaria"]
 cantidad_inicial = 4
 camina = true
@@ -1276,3 +1276,997 @@ nucleo = 0.3
 [ser.apariencia]
 estilo = "frustula"
 color_plastos = [176, 140, 50]
+
+# --- Candidatos, lote 2 (docs/candidatos.md) -----------------------------------------------------
+# Volvocales de pocas células: la serie de complejidad de Chlamydomonas a Volvox. En la naturaleza
+# cada célula de la colonia se divide 4–5 veces y forma una colonia hija entera (autocolonia); acá la
+# colonia libera 4 hijas (como Volvox), que reparten la biomasa igual: la tasa de crecimiento no cambia,
+# solo el número de colonias por evento. `celulas_colonia` es solo el dibujo.
+
+# Gonium pectorale: placa de 16 (a veces 4, 8 o 32) células biflageladas de 5–14 µm en dos cuadrados
+# concéntricos (4 + 12), de una célula de espesor; colonia de ~40 µm (radio típico 20 µm) que nada
+# rotando a ~40 µm/s (de Maleprade et al. 2020, Phys. Rev. E 101: 022416).
+[[ser]]
+id = "gonium"
+nombre = "Gonium"
+etiquetas = ["alga", "alga_verde", "colonia", "fototrofa", "flagelado"]
+descripcion = "Placa de 16 celulas verdes de dos flagelos cada una (4 en el centro y 12 alrededor). Nada girando como una rueda hacia la luz."
+locomocion = "flagelo"
+plan = "clorofita_flagelada"
+velocidad_relativa = 0.5
+fototaxis = true
+cantidad_inicial = 4
+cloroplastos = true
+colonias_hijas = 4
+celulas_colonia = 16
+madre_muere_al_liberar = true
+masa_seca_relativa = 0.7
+ph = [6.0, 9.5]
+temperatura = [5.0, 35.0]
+reserva = "almidon"
+pared = "celulosa"
+[ser.forma]
+semieje_mayor = 20.0
+semieje_menor = 20.0
+# Una placa de una célula de espesor (~9 µm).
+espesor = 4.5
+memoria_forma = 20.0
+color = [160, 198, 130]
+nucleo = 0.12
+
+[ser.apariencia]
+estilo = "colonia_de_placa"
+
+# Pandorina morum: 8–16 células de 8–17 µm apretadas en una esfera de 20–60 µm de mucílago (Kreutz,
+# realmicrolife). Sin dato de su velocidad: la de Gonium.
+[[ser]]
+id = "pandorina"
+nombre = "Pandorina"
+etiquetas = ["alga", "alga_verde", "colonia", "fototrofa", "flagelado"]
+descripcion = "Colonia esferica de 16 celulas verdes apretadas, cada una con dos flagelos hacia afuera. Rueda nadando hacia la luz."
+locomocion = "flagelo"
+plan = "clorofita_flagelada"
+velocidad_relativa = 0.5
+fototaxis = true
+cantidad_inicial = 4
+cloroplastos = true
+colonias_hijas = 4
+celulas_colonia = 16
+madre_muere_al_liberar = true
+masa_seca_relativa = 0.22
+ph = [6.0, 9.5]
+temperatura = [5.0, 35.0]
+reserva = "almidon"
+pared = "celulosa"
+[ser.forma]
+semieje_mayor = 25.0
+semieje_menor = 25.0
+memoria_forma = 20.0
+color = [158, 196, 128]
+nucleo = 0.12
+
+[ser.apariencia]
+estilo = "colonia_compacta"
+
+# Eudorina elegans: 16–32 células (~13 µm) separadas en la superficie de una esfera de mucílago de
+# 50–200 µm. Butterwick, Heaney & Talling (2005, Freshwater Biol. 50: 291) midieron otra especie,
+# E. unicocca: crece ≥ 0,4 divisiones/día aun a 5 °C. Sin dato de su velocidad: la de Gonium.
+[[ser]]
+id = "eudorina"
+nombre = "Eudorina"
+etiquetas = ["alga", "alga_verde", "colonia", "fototrofa", "flagelado"]
+descripcion = "Esfera de mucilago con 32 celulas verdes separadas en la superficie, un paso entre Pandorina y Volvox."
+locomocion = "flagelo"
+plan = "clorofita_flagelada"
+velocidad_relativa = 0.5
+fototaxis = true
+cantidad_inicial = 2
+cloroplastos = true
+colonias_hijas = 4
+celulas_colonia = 32
+madre_muere_al_liberar = true
+masa_seca_relativa = 0.055
+ph = [6.0, 9.5]
+temperatura = [2.0, 32.0]
+reserva = "almidon"
+pared = "celulosa"
+[ser.forma]
+semieje_mayor = 50.0
+semieje_menor = 50.0
+memoria_forma = 20.0
+color = [154, 196, 124]
+nucleo = 0.12
+
+[ser.apariencia]
+estilo = "colonia_hueca"
+
+# Stylonychia mytilus: hipotrico grande y rígido, ~300 µm (en ayunas; Shi & Ammermann 2004,
+# Protistology 3: 219), que camina con sus cirros y come algas, flagelados y diatomeas con un
+# peristoma de la mitad de su largo. Ancho: la proporción de S. harbinensis del mismo trabajo
+# (142 × 58 µm). Aplanado dorsoventralmente (espesor estimado).
+[[ser]]
+id = "stylonychia"
+nombre = "Stylonychia"
+etiquetas = ["protista", "ciliado"]
+descripcion = "Ciliado hipotrico grande (~300 um), rigido y chato, que camina y salta sobre el vidrio con sus cirros. Come algas, flagelados y diatomeas."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "surco_oral"
+velocidad_relativa = 0.25
+presas_boca = ["chlamydomonas", "chlorella", "cryptomonas", "navicula", "raphidocelis", "desmodesmus", "euglena"]
+conjugacion = true
+cantidad_inicial = 3
+camina = true
+manipulacion_horas = 1.0
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 150.0
+semieje_menor = 61.0
+espesor = 20.0
+memoria_forma = 10.0
+color = [180, 178, 160]
+nucleo = 0.25
+
+[ser.apariencia]
+estilo = "cirros"
+
+# Frontonia leucas: ciliado ovalado de ~250 µm (Foissner; 173–335 µm según la población, Serra et al.
+# 2021, BMC Zool. 6: 4) con tricocistos, que traga diatomeas, flagelados y trozos de algas enteros.
+# Ancho estimado (~55 % del largo, por las figuras).
+[[ser]]
+id = "frontonia"
+nombre = "Frontonia"
+etiquetas = ["protista", "ciliado"]
+descripcion = "Ciliado grande (~250 um) y ovalado que traga diatomeas y algas enteras: suele verse lleno de vacuolas pardas y verdes."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "raptorial"
+velocidad_relativa = 0.5
+presas = ["navicula", "pinnularia", "asterionella", "cyclotella", "chlamydomonas", "euglena", "phacus", "cryptomonas", "chlorella"]
+conjugacion = true
+cantidad_inicial = 2
+manipulacion_horas = 1.0
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 125.0
+semieje_menor = 69.0
+memoria_forma = 8.0
+color = [172, 176, 150]
+nucleo = 0.25
+
+# Tokophrya infusionum: suctorio piriforme de 17–50 µm sobre un tallo corto, con dos haces de
+# tentáculos capitados (Rudzinska; ficha ATCC 30297). En el laboratorio se cría con Tetrahymena. Se
+# reproduce por gemación interna: una cría ciliada sale nadando (telotroco) y la madre sigue fija.
+[[ser]]
+id = "tokophrya"
+nombre = "Tokophrya"
+etiquetas = ["protista", "ciliado", "suctorio"]
+descripcion = "Suctorio de ~40 um fijo a un tallo, con dos haces de tentaculos que atrapan ciliados y les succionan el citoplasma. Sus crias nacen adentro y salen nadando."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "tentaculos"
+velocidad_relativa = 0.5
+presas = ["tetrahymena", "colpidium", "paramecium", "paramecium_aurelia"]
+conjugacion = true
+cantidad_inicial = 2
+sesil = true
+largo_tallo = 25.0
+alcance_tentaculos = 40.0
+manipulacion_horas = 4.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 22.0
+semieje_menor = 17.0
+memoria_forma = 10.0
+color = [178, 180, 168]
+nucleo = 0.3
+
+[ser.apariencia]
+estilo = "tentaculos_capitados"
+
+# Cryptomonas ovata (sinónimo de C. curvata): criptofita de 32–61 µm, ovalada con un rostro, dos
+# flagelos desiguales, dos cloroplastos pardo-oliva con pirenoides y almidón, y una garganta con
+# eyectosomas (Kreutz, realmicrolife). Ancho estimado (~40 % del largo). Presa de ciliados.
+[[ser]]
+id = "cryptomonas"
+nombre = "Cryptomonas"
+etiquetas = ["protista", "flagelado", "alga", "fototrofa"]
+descripcion = "Flagelado pardo-oliva de ~45 um con dos flagelos y dos cloroplastos. Al molestarlo dispara sus eyectosomas y sale despedido."
+locomocion = "flagelo"
+plan = "criptofita"
+fototaxis = true
+cantidad_inicial = 15
+cloroplastos = true
+ph = [5.5, 9.0]
+temperatura = [1.0, 28.0]
+reserva = "almidon"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 22.0
+semieje_menor = 9.0
+memoria_forma = 10.0
+color = [168, 162, 112]
+nucleo = 0.3
+
+[ser.apariencia]
+color_plastos = [140, 130, 60]
+
+# --- Candidatos, lote 3 (docs/candidatos.md) -----------------------------------------------------
+# Tamaños de los diagnósticos de M. Kreutz (realmicrolife.com) y de NIES (The World of Protozoa). Donde
+# el diagnóstico da solo el largo, el ancho es una estimación por la forma descrita (se dice en cada uno).
+# Sin probar todavía: ver «Falta validar» en docs/candidatos.md.
+
+# Coleps hirtus: ciliado en barril de 40–65 × 18–35 µm (NIES, ref. 4613) con una armadura de placas de
+# carbonato de calcio amorfo, boca apical y tres espinas posteriores. Omnívoro e histófago: come algas,
+# flagelados y en grupo, células heridas o muertas. Acá caza flagelados y algas chicas (la armadura no
+# se modela: el gen de coraza es solo de flagelados y amebas).
+[[ser]]
+id = "coleps"
+nombre = "Coleps"
+etiquetas = ["protista", "ciliado"]
+descripcion = "Ciliado de ~50 um en forma de barril, acorazado con placas de carbonato de calcio. Come algas y flagelados, y en grupo despedaza celulas heridas."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "raptorial"
+velocidad_relativa = 0.6
+presas = ["chlamydomonas", "cryptomonas", "chlorella", "desmodesmus", "raphidocelis", "euglena"]
+conjugacion = true
+cantidad_inicial = 6
+manipulacion_horas = 0.5
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [2.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 26.0
+semieje_menor = 13.0
+memoria_forma = 20.0
+color = [190, 186, 160]
+nucleo = 0.3
+cuadratura = 3.0
+
+# Blepharisma americanum: heterótrico rosa de 180–280 µm, aplanado lateralmente, con pigmento
+# (blefarismina) en bandas y un macronúcleo moniliforme (Kreutz). Ancho estimado (~35 % del largo) y
+# espesor la mitad del ancho. Come bacterias, flagelados y ciliados chicos. La blefarismina lo hace
+# huir de la luz fuerte (fotofobia) y la luz intensa lo daña: no está modelado.
+[[ser]]
+id = "blepharisma"
+nombre = "Blepharisma"
+etiquetas = ["protista", "ciliado", "bacterivoro"]
+descripcion = "Ciliado rosado de ~230 um. Su pigmento, la blefarismina, lo hace huir de la luz fuerte. Come bacterias, flagelados y ciliados chicos."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "surco_oral"
+velocidad_relativa = 0.4
+presas_boca = ["chlamydomonas", "cryptomonas", "chlorella", "tetrahymena", "colpoda"]
+conjugacion = true
+cantidad_inicial = 2
+manipulacion_horas = 1.0
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 115.0
+semieje_menor = 40.0
+espesor = 20.0
+memoria_forma = 6.0
+color = [214, 156, 170]
+nucleo = 0.25
+
+# Colpoda cucullus: ciliado arriñonado de 40–120 µm (usualmente 60–80; Kreutz), el típico de las
+# infusiones de heno y del musgo mojado: se enquista cuando se seca y se divide dentro de un quiste
+# reproductivo en 2–4 hijas (acá se divide libre). Casi nunca se conjuga. Ancho estimado (~65 % del
+# largo, "anchamente reniforme").
+[[ser]]
+id = "colpoda"
+nombre = "Colpoda"
+etiquetas = ["protista", "ciliado", "bacterivoro"]
+descripcion = "Ciliado arrinonado de ~70 um, el de las infusiones de heno y del musgo. Cuando el agua se seca se enquista, y al mojarse sale del quiste en minutos."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "surco_oral"
+velocidad_relativa = 0.7
+enquista = true
+cantidad_inicial = 8
+ciclosis = 2.0
+ph = [5.0, 9.5]
+temperatura = [2.0, 32.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 35.0
+semieje_menor = 23.0
+espesor = 16.0
+memoria_forma = 8.0
+color = [182, 180, 158]
+nucleo = 0.3
+
+# Chilodonella uncinata: cirtofórido aplanado de 25–70 µm (casi siempre ~45; Kreutz) que se desliza
+# sobre el fondo y raspa diatomeas y bacterias con una canasta de varillas. Ancho estimado (~65 %).
+[[ser]]
+id = "chilodonella"
+nombre = "Chilodonella"
+etiquetas = ["protista", "ciliado", "bacterivoro"]
+descripcion = "Ciliado chato de ~45 um que se desliza sobre el vidrio y raspa diatomeas y bacterias con una canasta de varillas."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "surco_oral"
+velocidad_relativa = 0.2
+presas_boca = ["navicula", "chlorella", "raphidocelis"]
+conjugacion = true
+cantidad_inicial = 5
+camina = true
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [2.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 22.5
+semieje_menor = 14.5
+espesor = 6.0
+memoria_forma = 10.0
+color = [184, 182, 162]
+nucleo = 0.3
+
+# Litonotus lamella: haptórido en lanza de 50–100 × 10–25 µm (Kreutz), aplanado, con extrusomas en la
+# hendidura oral: caza ciliados, sobre todo hipotricos como Euplotes (la pareja Litonotus–Euplotes es
+# un sistema depredador–presa de laboratorio).
+[[ser]]
+id = "litonotus"
+nombre = "Litonotus"
+etiquetas = ["protista", "ciliado"]
+descripcion = "Ciliado chato en forma de lanza (~75 um) con una boca en hendidura armada de extrusomas. Caza otros ciliados, sobre todo Euplotes."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "raptorial"
+velocidad_relativa = 0.5
+presas = ["euplotes", "tetrahymena", "colpidium", "colpoda", "chilodonella"]
+conjugacion = true
+cantidad_inicial = 2
+manipulacion_horas = 2.0
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 37.5
+semieje_menor = 9.0
+espesor = 4.0
+memoria_forma = 6.0
+color = [186, 188, 170]
+nucleo = 0.3
+afinamiento = 0.5
+
+# Acineta tuberosa: suctorio en una lórica de 25–200 × 25–80 µm sobre un tallo, con dos haces de
+# 10–20 tentáculos de hasta 80 µm (Kreutz). Su cría (enjambre) mide 30–35 µm y nada con cilios.
+[[ser]]
+id = "acineta"
+nombre = "Acineta"
+etiquetas = ["protista", "ciliado", "suctorio"]
+descripcion = "Suctorio dentro de una lorica triangular sobre un tallo, con dos haces de tentaculos largos que atrapan ciliados al pasar."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "tentaculos"
+velocidad_relativa = 0.5
+presas = ["tetrahymena", "colpidium", "colpoda", "paramecium", "paramecium_aurelia", "euplotes"]
+conjugacion = true
+cantidad_inicial = 1
+sesil = true
+largo_tallo = 60.0
+alcance_tentaculos = 70.0
+manipulacion_horas = 4.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 28.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 34.0
+semieje_menor = 22.0
+memoria_forma = 15.0
+color = [180, 178, 160]
+nucleo = 0.3
+
+[ser.apariencia]
+estilo = "tentaculos_capitados"
+
+# Peranema trichophorum: euglenoide incoloro y fagótrofo de 22–81 µm (metabólico; Kreutz), con un
+# flagelo grueso hacia adelante del que solo bate la punta (se desliza) y un aparato de ingestión de
+# dos varillas con el que traga Euglena, levaduras y algas enteras. Ancho estimado (~40 %).
+[[ser]]
+id = "peranema"
+nombre = "Peranema"
+etiquetas = ["protista", "flagelado", "euglenido"]
+descripcion = "Euglenoide incoloro de ~50 um que avanza deslizandose con un flagelo grueso y traga presas enteras, como Euglena y levaduras, con dos varillas de su aparato de ingestion."
+locomocion = "flagelo"
+plan = "euglenido_incoloro"
+alimentacion = "raptorial"
+velocidad_relativa = 0.4
+presas = ["euglena", "chlamydomonas", "cryptomonas", "candida", "saccharomyces", "chlorella"]
+cantidad_inicial = 4
+manipulacion_horas = 1.0
+ciclosis = 1.0
+ph = [5.0, 9.5]
+temperatura = [5.0, 32.0]
+reserva = "paramilon"
+pared = "ninguna"
+genoma = { cloroplastos = 0.0 }
+[ser.forma]
+semieje_mayor = 25.0
+semieje_menor = 10.0
+memoria_forma = 2.0
+color = [200, 198, 184]
+nucleo = 0.3
+afinamiento = 0.4
+
+# Trachelomonas hispida: euglenoide dentro de una lórica elipsoidal de 20–42 × 15–26 µm cubierta de
+# espinas cortas, parda o anaranjada por el hierro y el manganeso; 8–10 cloroplastos y un estigma grande
+# (Kreutz).
+[[ser]]
+id = "trachelomonas"
+nombre = "Trachelomonas"
+etiquetas = ["protista", "flagelado", "euglenido", "fototrofa"]
+descripcion = "Euglenoide verde encerrado en una lorica parda de ~30 um, endurecida con hierro y manganeso, por la que asoma un flagelo."
+locomocion = "flagelo"
+plan = "euglenido"
+fototaxis = true
+cantidad_inicial = 6
+cloroplastos = true
+ciclosis = 1.0
+ph = [5.0, 9.5]
+temperatura = [5.0, 32.0]
+reserva = "paramilon"
+pared = "ninguna"
+genoma = { coraza = 0.8 }
+[ser.forma]
+semieje_mayor = 15.5
+semieje_menor = 10.5
+memoria_forma = 30.0
+color = [186, 150, 96]
+nucleo = 0.3
+
+# Haematococcus lacustris (H. pluvialis): volvocal de 10–50 µm (la célula) dentro de una envoltura
+# esférica grande, con dos flagelos que la atraviesan, estigma y gránulos rojos de astaxantina; vive en
+# charcos de piedra y bebederos (Kreutz). Con estrés se enquista y se vuelve roja (aplanosporas).
+[[ser]]
+id = "haematococcus"
+nombre = "Haematococcus"
+etiquetas = ["alga", "alga_verde", "flagelado", "fototrofa"]
+descripcion = "Alga verde de ~35 um con dos flagelos dentro de una envoltura de gelatina. Cuando el charco se seca se enquista y se vuelve rojo sangre (astaxantina)."
+locomocion = "flagelo"
+plan = "clorofita_flagelada"
+fototaxis = true
+enquista = true
+cantidad_inicial = 4
+cloroplastos = true
+ph = [5.5, 9.5]
+temperatura = [2.0, 32.0]
+reserva = "almidon"
+pared = "celulosa"
+[ser.forma]
+semieje_mayor = 17.0
+semieje_menor = 16.0
+memoria_forma = 12.0
+color = [150, 168, 96]
+nucleo = 0.3
+
+[ser.apariencia]
+estilo = "dos_flagelos"
+color_plastos = [110, 150, 60]
+
+# Ceratium furcoides: dinoflagelado tecado de 123–300 × 28–42 µm con un cuerno apical largo y dos
+# cuernos posteriores; cloroplastos pardo-amarillos, flagelo transversal y longitudinal (Kreutz).
+# Planctónico de lagos. La silueta es un huso (los cuernos no se dibujan).
+[[ser]]
+id = "ceratium"
+nombre = "Ceratium"
+etiquetas = ["protista", "flagelado", "dinoflagelado", "fototrofa"]
+descripcion = "Dinoflagelado de ~200 um con una armadura de placas de celulosa y cuernos largos. Nada girando con un flagelo en un surco que le rodea la cintura."
+locomocion = "flagelo"
+plan = "dinoflagelado"
+velocidad_relativa = 1.0
+fototaxis = true
+cantidad_inicial = 2
+cloroplastos = true
+ph = [6.0, 9.5]
+temperatura = [4.0, 28.0]
+reserva = "almidon"
+pared = "celulosa"
+[ser.forma]
+semieje_mayor = 100.0
+semieje_menor = 17.5
+memoria_forma = 30.0
+color = [196, 176, 120]
+nucleo = 0.2
+afinamiento = 0.7
+
+[ser.apariencia]
+color_plastos = [168, 130, 50]
+
+# Chaos nobile: ameba gigante polipodial de 240–820 µm con 6–49 núcleos y cristales bipiramidales;
+# se parece a Amoeba proteus pero con seudópodos más finos y muchos núcleos (Kreutz).
+[[ser]]
+id = "chaos"
+nombre = "Chaos"
+etiquetas = ["protista", "ameba"]
+descripcion = "Ameba gigante (~0,3 mm, a veces casi 1 mm) con muchos nucleos. Extiende varios seudopodos a la vez y envuelve ciliados y algas."
+locomocion = "pseudopodo"
+plan = "ameba"
+alimentacion = "fagocitosis"
+presas = ["paramecium", "paramecium_aurelia", "euglena", "chlamydomonas", "tetrahymena", "colpidium", "colpoda", "phacus", "cryptomonas", "navicula", "pinnularia"]
+cantidad_inicial = 1
+manipulacion_horas = 1.5
+ph = [6.0, 9.5]
+temperatura = [10.0, 28.0]
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 160.0
+semieje_menor = 160.0
+memoria_forma = 0.0
+color = [190, 180, 164]
+nucleo = 0.08
+
+# Euglypha strigosa: tecameba de testa ovoide de 45–100 µm, hecha de escamas ovales de sílice con
+# espinas, en el musgo y en las turberas (Kreutz). Al dividirse, la hija arma su testa con escamas que
+# la madre tiene en reserva (acá se divide como una ameba con coraza).
+[[ser]]
+id = "euglypha"
+nombre = "Euglypha"
+etiquetas = ["protista", "ameba", "tecameba"]
+descripcion = "Ameba con una testa ovalada (~70 um) de escamas de silice con espinas. Asoma seudopodos finos por la abertura. Vive en el musgo."
+locomocion = "pseudopodo"
+plan = "ameba"
+alimentacion = "fagocitosis"
+velocidad_relativa = 0.4
+presas = ["chlorella", "navicula", "chlamydomonas", "desmodesmus"]
+cantidad_inicial = 3
+manipulacion_horas = 1.0
+ph = [4.5, 8.5]
+temperatura = [0.0, 28.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { coraza = 0.9 }
+[ser.forma]
+semieje_mayor = 36.0
+semieje_menor = 24.0
+memoria_forma = 0.0
+color = [200, 198, 186]
+nucleo = 0.25
+
+# Closterium moniliferum: desmidia en media luna de 200–350 × 35–55 µm, con dos cloroplastos de
+# crestas longitudinales y una vacuola de cristales (yeso) en cada punta; se desplaza despacio
+# secretando mucílago por los poros de las puntas (Kreutz).
+[[ser]]
+id = "closterium"
+nombre = "Closterium"
+etiquetas = ["alga", "alga_verde", "desmidia", "fototrofa", "hospeda_quitridios"]
+descripcion = "Desmidia verde en media luna de ~0,3 mm con dos cloroplastos y una vacuola con cristales que bailan en cada punta. Avanza muy despacio soltando mucilago."
+locomocion = "cilios"
+plan = "alga_verde"
+velocidad_relativa = 0.003
+fotosintesis_relativa = 1.3
+cantidad_inicial = 2
+cloroplastos = true
+desliza_por_rafe = true
+ph = [5.0, 9.0]
+temperatura = [2.0, 30.0]
+reserva = "almidon"
+pared = "celulosa"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 137.0
+semieje_menor = 22.0
+memoria_forma = 30.0
+color = [140, 184, 116]
+nucleo = 0.15
+afinamiento = 0.4
+
+[ser.apariencia]
+estilo = "cocoide"
+
+# Cosmarium botrytis: desmidia de dos semicélulas de 56–111 × 48–85 µm con verrugas, unidas por un
+# istmo, con dos pirenoides por semicélula (Kreutz).
+[[ser]]
+id = "cosmarium"
+nombre = "Cosmarium"
+etiquetas = ["alga", "alga_verde", "desmidia", "fototrofa", "hospeda_quitridios"]
+descripcion = "Desmidia de ~85 um hecha de dos mitades simetricas unidas por un istmo. Al dividirse, cada hija se queda con una mitad y fabrica la otra."
+locomocion = "cilios"
+plan = "alga_verde"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.3
+cantidad_inicial = 3
+cloroplastos = true
+ph = [5.0, 9.0]
+temperatura = [2.0, 30.0]
+reserva = "almidon"
+pared = "celulosa"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 42.0
+semieje_menor = 33.0
+memoria_forma = 30.0
+color = [138, 182, 112]
+nucleo = 0.15
+
+[ser.apariencia]
+estilo = "cocoide"
+
+# Micrasterias rotata: desmidia en disco de 200–400 × 190–270 µm, con dos semicélulas de cinco lóbulos
+# muy recortados; de turberas y pantanos (Kreutz). Los lóbulos no se dibujan.
+[[ser]]
+id = "micrasterias"
+nombre = "Micrasterias"
+etiquetas = ["alga", "alga_verde", "desmidia", "fototrofa"]
+descripcion = "Desmidia grande (~0,3 mm) en forma de estrella plana con lobulos recortados, de los pantanos acidos. Una de las celulas mas bellas del microscopio."
+locomocion = "cilios"
+plan = "alga_verde"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.2
+cantidad_inicial = 1
+cloroplastos = true
+ph = [4.0, 8.0]
+temperatura = [2.0, 28.0]
+reserva = "almidon"
+pared = "celulosa"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 150.0
+semieje_menor = 115.0
+espesor = 30.0
+memoria_forma = 30.0
+color = [136, 180, 110]
+nucleo = 0.1
+
+[ser.apariencia]
+estilo = "cocoide"
+
+# Gomphonema truncatum: diatomea en forma de cuña (vista valvar en maza) de 13–75 × 7–17 µm que vive
+# fija en colonias sobre tallos gelatinosos ramificados (Kreutz). Acá, una célula sobre su tallo.
+[[ser]]
+id = "gomphonema"
+nombre = "Gomphonema"
+etiquetas = ["alga", "diatomea", "fototrofa", "hospeda_quitridios"]
+descripcion = "Diatomea en forma de maza (~45 um) que vive fija en la punta de un tallo de mucilago, sobre plantas acuaticas."
+locomocion = "cilios"
+plan = "diatomea"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.5
+cantidad_inicial = 4
+cloroplastos = true
+frustula = true
+sesil = true
+largo_tallo = 40.0
+ph = [6.0, 9.5]
+temperatura = [2.0, 30.0]
+reserva = "crisolaminarina"
+pared = "silice"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0, coraza = 0.3 }
+[ser.forma]
+semieje_mayor = 22.0
+semieje_menor = 6.0
+memoria_forma = 40.0
+color = [204, 184, 120]
+nucleo = 0.3
+afinamiento = 0.5
+
+[ser.apariencia]
+estilo = "frustula"
+color_plastos = [176, 140, 50]
+
+# NIH/3T3: fibroblastos de embrión de ratón (Todaro y Green, 1962-63), la línea de la inhibición por
+# contacto. Fusiforme, ~70 × 20 µm extendida; volumen estimado ~1800 µm³ (sin dato medido: la masa seca
+# relativa sale de ahí). Valores medidos con fuente en fisiologia.toml.
+[[ser]]
+id = "nih_3t3"
+nombre = "Fibroblasto NIH/3T3 (raton)"
+etiquetas = ["celula_animal", "fibroblasto"]
+descripcion = "Linea de fibroblastos de embrion de raton (3T3, 1962). Fusiformes y pegados al fondo, se frenan al tocarse y dejan de dividirse al llenar la placa: el ejemplo clasico de inhibicion por contacto."
+plan = "celula_humana_adherida"
+locomocion = "arrastre"
+alimentacion = "ninguna"
+masa_seca_relativa = 0.12
+ph = [6.8, 7.8]
+temperatura = [30.0, 40.0]
+salinidad_max = 16.0
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 35.0
+semieje_menor = 10.0
+memoria_forma = 2.0
+color = [214, 210, 198]
+nucleo = 0.45
+cuadratura = 1.4
+[ser.celula]
+adherente = true
+radio_redondeada = 8.0
+inhibicion_contacto_locomocion = true
+inhibicion_contacto_proliferacion = true
+suero_minimo = 0.01
+[ser.apariencia]
+estilo = "celula_adherida"
+
+# HaCaT: queratinocitos humanos inmortalizados espontáneamente (Boukamp et al. 1988, J. Cell Biol.
+# 106: 761). Epiteliales, poligonales, de 20–25 µm redondeados (hoja de datos de Cytion); acá extendidos
+# a ~40 µm. Crecen en islotes y se diferencian en la confluencia.
+[[ser]]
+id = "hacat"
+nombre = "Queratinocito HaCaT"
+etiquetas = ["celula_humana", "celula_animal", "queratinocito"]
+descripcion = "Linea de queratinocitos humanos (las celulas de la epidermis). Poligonales, crecen en islotes que se unen hasta cubrir la placa; se usan para estudiar el cierre de heridas."
+plan = "celula_humana_adherida"
+locomocion = "arrastre"
+alimentacion = "ninguna"
+masa_seca_relativa = 0.205
+ph = [6.8, 7.8]
+temperatura = [30.0, 40.0]
+salinidad_max = 16.0
+reserva = "glucogeno"
+pared = "ninguna"
+[ser.forma]
+semieje_mayor = 20.0
+semieje_menor = 18.0
+memoria_forma = 2.0
+color = [214, 208, 196]
+nucleo = 0.5
+cuadratura = 3.0
+[ser.celula]
+adherente = true
+radio_redondeada = 11.0
+inhibicion_contacto_locomocion = true
+inhibicion_contacto_proliferacion = true
+suero_minimo = 0.01
+[ser.apariencia]
+estilo = "celula_adherida"
+
+# --- Candidatos, lote 4 (docs/candidatos.md) -----------------------------------------------------
+# Sin probar todavía: ver «Falta validar» en docs/candidatos.md.
+
+# Halteria grandinella: oligotrico globoso de 20–40 µm (~30 µm de ancho; Kreutz), uno de los ciliados
+# más comunes del plancton; come bacterias, algas y flagelados chicos. Avanza a saltos con hileras de
+# cerdas saltadoras: los saltos no se modelan (nada con cilios).
+[[ser]]
+id = "halteria"
+nombre = "Halteria"
+etiquetas = ["protista", "ciliado", "bacterivoro"]
+descripcion = "Ciliado globoso de ~30 um con una corona de membranelas y cerdas largas con las que da saltos subitos. Come bacterias y algas chicas."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "surco_oral"
+velocidad_relativa = 0.6
+presas_boca = ["chlorella", "raphidocelis", "cryptomonas"]
+conjugacion = true
+cantidad_inicial = 8
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [2.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 15.0
+semieje_menor = 14.0
+memoria_forma = 10.0
+color = [184, 184, 166]
+nucleo = 0.3
+
+[ser.apariencia]
+estilo = "corona_de_membranelas"
+
+# Epistylis plicatilis: peritrico de zooides de 90–120 × 25–50 µm sobre un tallo NO contráctil y
+# ramificado que forma colonias de hasta 4 mm (Kreutz). Acá un zooide sobre su tallo: la colonia no se
+# modela. A diferencia de Vorticella, el tallo no tiene espasmonema.
+[[ser]]
+id = "epistylis"
+nombre = "Epistylis"
+etiquetas = ["protista", "ciliado", "bacterivoro"]
+descripcion = "Ciliado en forma de copa (~100 um) sobre un tallo rigido y ramificado; las colonias llegan a varios milimetros. Filtra bacterias con la corona del peristoma."
+locomocion = "cilios"
+plan = "ciliado"
+alimentacion = "surco_oral"
+velocidad_relativa = 0.4
+conjugacion = true
+cantidad_inicial = 3
+sesil = true
+largo_tallo = 200.0
+ciclosis = 2.0
+ph = [6.0, 9.5]
+temperatura = [5.0, 30.0]
+reserva = "glucogeno"
+pared = "ninguna"
+genoma = { tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 52.0
+semieje_menor = 19.0
+memoria_forma = 10.0
+color = [182, 186, 168]
+nucleo = 0.3
+
+[ser.apariencia]
+estilo = "corona_peristomal"
+
+# Ulothrix tenerrima: filamento sin ramificar de células cilíndricas de 5–10 µm de ancho y 0,5–3 veces
+# más largas que anchas, con un cloroplasto parietal en placa que cubre media pared y un pirenoide
+# (Kreutz).
+[[ser]]
+id = "ulothrix"
+nombre = "Ulothrix"
+etiquetas = ["alga", "alga_verde", "filamentosa", "fototrofa", "hospeda_quitridios"]
+descripcion = "Alga verde en filamento de celulas cortas de ~8 um de ancho, cada una con un cloroplasto en banda que abraza la mitad de la pared."
+locomocion = "cilios"
+plan = "alga_verde"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.4
+cantidad_inicial = 2
+cloroplastos = true
+filamento = true
+celulas_filamento = 10
+fragmentacion_por_hora = 0.02
+masa_seca_relativa = 0.35
+ph = [6.0, 9.5]
+temperatura = [0.0, 25.0]
+reserva = "almidon"
+pared = "celulosa"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 6.0
+semieje_menor = 4.0
+memoria_forma = 15.0
+color = [140, 184, 118]
+nucleo = 0.3
+cuadratura = 6.0
+
+[ser.apariencia]
+estilo = "placa_axial"
+
+# Phaeodactylum tricornutum: diatomea marina modelo (genoma secuenciado), fusiforme, de 27–32 × 4–6 µm;
+# cultivo a 20 °C (18–22 °C) (NCMA CCMP2561). Casi sin sílice en la forma fusiforme. Marina: no está en
+# las gotas de agua dulce.
+[[ser]]
+id = "phaeodactylum"
+nombre = "Phaeodactylum tricornutum"
+etiquetas = ["alga", "diatomea", "fototrofa", "marina"]
+descripcion = "Diatomea marina fusiforme de ~30 um, el organismo modelo de las diatomeas: su genoma fue de los primeros secuenciados."
+locomocion = "cilios"
+plan = "diatomea"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.5
+cantidad_inicial = 10
+cloroplastos = true
+frustula = true
+ph = [7.0, 9.5]
+temperatura = [5.0, 28.0]
+salinidad_max = 60.0
+reserva = "crisolaminarina"
+pared = "silice"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 15.0
+semieje_menor = 2.5
+memoria_forma = 30.0
+color = [204, 184, 120]
+nucleo = 0.3
+afinamiento = 0.6
+
+[ser.apariencia]
+estilo = "frustula"
+color_plastos = [176, 140, 50]
+
+# Thalassiosira pseudonana: diatomea céntrica marina de 4–6 µm; cultivo a 14 °C, crece entre 4 y 25 °C
+# (NCMA CCMP1335). Primer genoma de diatomea secuenciado (Armbrust et al. 2004). Marina.
+[[ser]]
+id = "thalassiosira"
+nombre = "Thalassiosira pseudonana"
+etiquetas = ["alga", "diatomea", "fototrofa", "marina"]
+descripcion = "Diatomea marina diminuta (~5 um) en forma de caja redonda. Fue la primera diatomea con el genoma secuenciado."
+locomocion = "cilios"
+plan = "diatomea"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.5
+cantidad_inicial = 20
+cloroplastos = true
+frustula = true
+ph = [7.0, 9.5]
+temperatura = [4.0, 25.0]
+salinidad_max = 60.0
+reserva = "crisolaminarina"
+pared = "silice"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 2.6
+semieje_menor = 2.6
+espesor = 2.0
+memoria_forma = 40.0
+color = [204, 182, 112]
+nucleo = 0.3
+
+[ser.apariencia]
+estilo = "frustula"
+color_plastos = [176, 140, 50]
+
+# Fragilariopsis cylindrus: diatomea pennada del hielo marino polar, de 3–7 × 2–4 µm; cultivo a 2 °C
+# (−2 a 2 °C) (NCMA CCMP1102). Acá la silueta es de 7 × 5 µm (una más chica no es estable como cuerpo
+# blando) y el espesor se achica para conservar el volumen (~30 µm³).
+[[ser]]
+id = "fragilariopsis"
+nombre = "Fragilariopsis cylindrus"
+etiquetas = ["alga", "diatomea", "fototrofa", "marina"]
+descripcion = "Diatomea diminuta (~5 um) que domina el hielo marino polar: crece en los canales de salmuera a menos de cero grados."
+locomocion = "cilios"
+plan = "diatomea"
+velocidad_relativa = 0.0
+fotosintesis_relativa = 1.5
+cantidad_inicial = 20
+cloroplastos = true
+frustula = true
+ph = [7.0, 9.5]
+temperatura = [-2.0, 6.0]
+salinidad_max = 100.0
+reserva = "crisolaminarina"
+pared = "silice"
+genoma = { cloroplastos = 1.0, tricocistos = 0.0 }
+[ser.forma]
+semieje_mayor = 3.5
+semieje_menor = 2.5
+espesor = 0.8
+memoria_forma = 40.0
+color = [206, 186, 118]
+nucleo = 0.3
+
+[ser.apariencia]
+estilo = "frustula"
+color_plastos = [176, 140, 50]
+
+# Polarella glacialis: dinoflagelado chico del hielo marino polar, de 10–15 × 4–8 µm; cultivo a 2 °C
+# (0–6 °C) (NCMA CCMP1383). Forma quistes en el hielo.
+[[ser]]
+id = "polarella"
+nombre = "Polarella glacialis"
+etiquetas = ["protista", "flagelado", "dinoflagelado", "fototrofa", "marina"]
+descripcion = "Dinoflagelado diminuto (~12 um) del hielo marino polar. Nada con dos flagelos en los canales de salmuera y forma quistes cuando el hielo se cierra."
+locomocion = "flagelo"
+plan = "dinoflagelado"
+velocidad_relativa = 0.6
+fototaxis = true
+enquista = true
+cantidad_inicial = 10
+cloroplastos = true
+ph = [7.0, 9.5]
+temperatura = [-2.0, 8.0]
+salinidad_max = 100.0
+reserva = "almidon"
+pared = "celulosa"
+[ser.forma]
+semieje_mayor = 6.2
+semieje_menor = 3.5
+memoria_forma = 20.0
+color = [196, 176, 120]
+nucleo = 0.3
+
+[ser.apariencia]
+color_plastos = [168, 130, 50]
