@@ -1,273 +1,225 @@
-# BioGame — Roadmap
+# BioGame — Roadmap nuevo
 
-BioGame es un **sandbox educativo, científico y de código abierto** (ver `AGENTS.md`). Este
-roadmap sale de las elecciones de `docs/gameplay.md` (qué vida y qué mecanismos simula) y de las
-ideas marcadas con `[x]` en `docs/ideas.md` (qué herramientas de laboratorio tiene). Las ideas sin
-marcar quedan en el *Backlog*.
+Estado al 17/10/2026. Junta en un solo lugar lo que estaba repartido entre `roadmap.md`,
+`plan_fase20.md`, `plan_p1.md`, `validacion.md`, `ideas.md`, `gameplay.md` y
+`propuesta_laboratorio.md`. Lo hecho se resume (el detalle de diseño está en `AGENTS.md` y en los
+planes de cada fase); lo pendiente se ordena en fases nuevas.
 
-Cada fase tiene un **entregable visible** y un criterio de "hecho". Todo respeta el realismo
-estricto: solo organismos y mecanismos reales, con la biología comprimida por `kBioTimeScale`.
-
-## Base hecha ✅
-
-Lo que ya existe y se mantiene; el detalle de diseño está en `AGENTS.md`.
-
-- **Medio:** placa de Petri circular; agua Stokes–Brinkman con FFT (sin inercia); química por
-  difusión + advección (O₂, CO₂/pH, P, N, Si, Fe, B₁₂, toxinas, autoinductor, fagos); luz con
-  Beer–Lambert; temperatura, salinidad, anoxia y alcalinidad (`MediumParams`).
-- **Células:** soft-bodies XPBD sin inercia, membrana plástica de ameba, contactos, LOD de tres
-  niveles, cuerpos compuestos (colonias y filamentos) y partículas ambientales
-  (bacterias con run & tumble, detritos, tinta).
-- **Ciclo de vida:** metabolismo real (respiración, fermentación, fotosíntesis, Liebig con P, N,
-  Si, Fe y B₁₂), mitosis física, conjugación, quistes, lisis; genoma con organelos físicos.
-- **Ecosistema:** cazadores, envolvedores, sésiles y suctorios, filtradores, raspadores,
-  mixótrofos, algas (móviles, diatomeas, coloniales, filamentosas), cianobacterias con fijación
-  de N₂ y microcistina, quitridios, levaduras, *Saprolegnia*, *Allomyces*, hongo liquenizante,
-  *Physarum*, fagos, *Bdellovibrio* y quorum sensing. Sin animales (se quitaron los metazoos y
-  *Zoophagus*, que solo cazaba rotíferos). Registro de muertes y comportamientos.
-- **Laboratorio:** ImGui con paneles acoplables, editor de placa (`PlateSpec`, placas guardables,
-  placa vacía), catálogo, ficha, enciclopedia, herramientas (Seleccionar, Controlar, Tinta,
-  Detrito, Borrar, Lisar, Apretar, Revolver, Estirar, Gotero, Spawnear), control de un ser con
-  su locomoción real, `tr()` con idiomas en `assets/lang`.
-- **Óptica:** campo claro con post-proceso de microscopio; motor de tinciones por reglas (Gram,
-  Lugol, DAPI, rojo neutro, azul de metileno, rojo Congo) con vista previa.
-- **Técnica:** tests doctest (invariantes, determinismo con 1 y 4 hilos), Tracy, render
-  instanciado de bacterias.
-
-**Pendientes heredados:**
-- Rendimiento: ver la fase 19 (medición, lo hecho y lo que queda).
-- Vista previa gráfica de la placa antes de crearla; íconos vectoriales en la barra de
-  herramientas; paleta de comandos.
-- Tinciones: hifas, cianobacterias y copos de avena sin respuesta a Lugol/Gram; vista dividida
-  sobre la placa real; exposición con tiempo real.
-- La posición de los organelos (flagelo anterior o posterior) no está modelada.
+Leyenda: ✅ hecho · 🟡 en parte (se dice qué falta) · ⬜ por hacer · ❌ descartado.
 
 ---
 
-## Fase 13 — Medición: ver los números ✅
+## 1. Lo hecho
 
-Es la base de todo lo científico: sin datos no hay experimento. Va primero.
+### Núcleo de simulación ✅
 
-- **Gráficos en vivo** (idea 11): población por especie, nutrientes, O₂ y pH, con zoom. Panel
-  nuevo; la serie temporal se muestrea en `Run`, no en `World`.
-- **Exportar datos abiertos** (20): CSV/JSON de series y de la ficha de cada especie, con
-  unidades y parámetros usados.
-- **Regla y escala** (13): medir distancias y áreas en µm sobre la imagen (herramienta nueva).
-- **Cuantificación por región** (15): contar células y medir concentraciones en un área dibujada.
-- **Curva de crecimiento automática** (16): tiempo de duplicación, latencia y capacidad de carga.
-- **Balance de masa visible** (12): flujos de P, N, Si, Fe y C entre agua, células, detritos y
-  sedimento, que cierren al 100 % (extiende los totales conservados de Estadísticas).
-- **Mapa de limitación** (17): colorear cada célula por el nutriente que la limita (P, N, Si, Fe,
-  B₁₂, luz); lee `Metabolism`, solo render.
-- **Hecho cuando:** una gota corrida 1 h biológica exporta CSV con unidades y el balance de P
-  cierra dentro de la tolerancia del test de conservación.
-- **Hecho:** panel Gráficos (ImPlot) con poblaciones, química, balance, región y curva de
-  crecimiento; exportación CSV/JSON (Ctrl+E); herramientas Medir (distancia, área y barra de
-  escala) y Región; balance de masa por compartimento y por proceso en Estadísticas; mapa de
-  limitación (L). Test de "hecho" en `tests/test_budget.cpp`.
+- **Medio:** placa de Petri circular (o mundo toroidal); agua Stokes–Brinkman exacta con FFT, sin
+  inercia; química por difusión espectral + advección (O₂, CO₂/pH con carbonato y Henry, P, N, Si,
+  Fe, B₁₂, materia orgánica, toxinas, autoinductor, fagos, reactivo; glutamina, lactato y fMLP solo
+  con células animales); luz con Beer–Lambert; temperatura con Q10, salinidad, anoxia, alcalinidad,
+  CO₂ del aire variable, osmolitos.
+- **Cuerpos blandos:** XPBD sin inercia con tasas [1/s], membrana plástica de ameba, contactos
+  intercalados, LOD de tres niveles, cuerpos compuestos (colonias y filamentos con uniones rígidas a
+  la flexión), `reshapeRestEven` para cambios grandes de forma.
+- **Ciclo de vida:** una sola fisiología para placa y cultivo (`bio/cell_physiology`); respiración,
+  fermentación y fotosíntesis; Droop con Liebig (P, N, Si, Fe, B₁₂); masa por esferoide; punto de
+  control al tamaño de división; mitosis física, conjugación, quistes, gemación, lisis; genoma con
+  organelos físicos.
+- **Ecosistema de la gota:** cazadores, envolvedores, sésiles, suctorios, filtradores, raspadores,
+  mixótrofos; algas móviles, diatomeas, coloniales y filamentosas; cianobacterias con heterocistos
+  y microcistina; quitridios, levaduras, *Saprolegnia*, *Allomyces*, liquen, *Physarum*; fagos con
+  mutantes resistentes, *Bdellovibrio*, quorum sensing, biopelícula como refugio. 32 seres en el
+  paquete de fábrica.
+- **Tiempo:** física en tiempo real, biología ×`kBioTimeScale` (60), migración por arrastre en
+  tiempo biológico.
 
-## Fase 14 — Reactivos y escenas
+### Contenido como datos (fase 20.0) ✅
 
-- **Reactivos con dosis-respuesta** (6): antibióticos, sal, ácidos y toxinas con el gotero;
-  tolerancias por especie como datos (`SpeciesInfo`), no código por especie.
-- **Escenas guardables** (1): exportar e importar una gota con seres puestos a mano (extiende
-  `PlateSpec`/`.plate` con la lista de seres; texto clave=valor versionado).
-- **Línea de tiempo con replays** (2): grabar seed y eventos del usuario; rebobinar re-simulando
-  desde el último punto de control (aprovecha el determinismo).
-- **Modo aula** (32): gota con seed fija y parámetros bloqueados que el docente comparte.
-- **Hecho cuando:** una escena guardada se reproduce idéntica con 1 y 4 hilos y un replay llega
-  al mismo estado final.
+Registro con ids de texto; seres, planes corporales, fisiología con fuentes, minerales, biomas,
+medios, recipientes, placas preparadas, lecciones, glosario y reactivos en TOML; dietas por
+etiquetas; paquetes del usuario y `.biopack` con validación y topes; panel Contenido; compatibilidad
+con placas y escenas viejas; huellas de los paquetes en la procedencia.
 
-## Fase 15 — Química ampliada
+### Placas preparadas, cultivo celular y preparados (fase 20a–c) ✅
 
-- **Ciclo del silicio completo** (41): disolución según pH y temperatura; sedimentación de
-  frústulas fuera del campo de visión.
-- **Quelación del hierro** (42): sideróforos que compiten por Fe; precipitación a óxido a pH alto.
-- **Más micronutrientes** (43): B₁, B₇, Zn, Co, Mo y Mn con auxotrofías reales por especie.
-- **Carbono inorgánico** (44): CO₂ limitante, mecanismos concentradores de carbono y efecto en pH.
-- **Biofilms y matriz extracelular** (46): tapetes que cambian el flujo y retienen nutrientes.
-- **Suelo y agua de verdad** (48): cargar una muestra con T, pH, conductividad y nutrientes
-  medidos (`PlateSpec`) y ver qué comunidad sostiene.
-- **Hecho cuando:** cada nutriente nuevo tiene un test de conservación y una especie que se
-  limita por él (Liebig) de forma observable.
+- Cultivo celular en DMEM con incubadora (37 °C, 10 % CO₂), recipiente y campo separados,
+  inoculación reproducible y mezclas.
+- Células humanas: fibroblasto dérmico, HeLa y neutrófilo; arrastre con paseo persistente, ciclo
+  G1/S/G2/M con punto de restricción y G0, inhibición por contacto, Michaelis–Menten de glucosa y
+  glutamina, Warburg, apoptosis, quimiotaxis a fMLP y fagocitosis. Validadas (duplicación, MSD de
+  Fürth, meseta de confluencia, lactato/glucosa, rapidez del neutrófilo).
+- Preparados en portaobjetos: cebolla, *Elodea*, papa con Lugol, punta de raíz, estomas, mucosa
+  bucal, frotis con Giemsa y sangre diluida; ósmosis de Boyle–van 't Hoff, plasmólisis y hemólisis
+  validadas (Parpart).
 
-## Fase 16 — Lentes y fluorescencia
+### Herramienta de laboratorio (P0) ✅
 
-- **Lentes intercambiables** (21): campo claro, contraste de fase, campo oscuro y fluorescencia,
-  cada uno con la información que muestra el real (shaders en `render/`).
-- **Fluorescencia de clorofila** (23): las algas brillan en rojo bajo luz azul y el brillo baja
-  con la falta de hierro.
-- **Tinciones restantes** (22): tinta china para cápsulas, sumada al motor de reglas de `stain`.
-- **Modo accesible** (40): paleta para daltonismo, texto grande y subtítulos de eventos.
-- **Hecho cuando:** la misma placa se ve en las cuatro lentes y cada una muestra algo que las
-  otras no.
+- **Reproducibilidad:** registro único de parámetros, intervenciones por paso, escenas que se
+  repiten bit a bit con 1 y 4 hilos, procedencia completa en la exportación.
+- **Medición (fase 13):** gráficos en vivo, CSV/JSON, regla y área, región, curva de crecimiento,
+  balance de masa por compartimento y por proceso, mapa de limitación.
+- **Distribución:** presets `dist` y `windows`, CPack, GPL-3.0-or-later con licencias.
+- **Estabilidad:** autoguardado con recuperación, soak, `fallas_numericas`, CI local.
+- **Rendimiento (fase 19):** XPBD y contactos en GPU deterministas, `limitApproach` 8,5× más
+  rápido, render por lotes propios: 551 células en 16,1 ms por cuadro.
 
-## Fase 17 — Enseñanza
+### Experimentos y aula (P1) ✅
 
-- **Lecciones guiadas** (31): recorridos cortos con un objetivo observable y cuestionario (datos
-  en `assets/`, sin código por lección).
-- **Casos reales** (38): Gause (*Paramecium*), Tilman (diatomeas y sílice) y Jennings (CO₂),
-  como escenas de la fase 14 con su gráfico de la fase 13.
-- **Hecho cuando:** un alumno reproduce el resultado de Gause siguiendo la lección, sin tocar
-  nada fuera del panel.
+Cultivo bien mezclado por individuos con calibración cruzada placa ↔ cultivo; programas (rampas,
+ciclos, eventos) en cultivo y placa; panel Cultivos con gota de muestra; Gause (mesetas, exclusión,
+*Didinium*); réplicas y lotes (`bio_lote`, panel Experimento, IC 95 %); quimiostato (Monod y Tilman
+con exclusión completa) y perfusión; siembra por densidad, pasajes y diluciones seriadas; inglés;
+lecciones como protocolos con solución testeada (Jennings, Tilman, Gause, plasmólisis, fragilidad
+osmótica); reactivos con farmacodinámica y CIM que emerge; foto y time-lapse por tiempo biológico;
+glosario y notas ancladas; accesibilidad (escala de interfaz, HiDPI, Okabe–Ito).
 
-## Fase 18 — Núcleo sin ventana y bindings
+### Óptica ✅ / 🟡
 
-- **`biosim` como librería** (50) con una interfaz mínima (C o Python) para correr gotas sin
-  ventana y leer series, usando la exportación de la fase 13.
-- Habilita los experimentos por lote del backlog (idea 3). Requiere proponer y aprobar la
-  librería de bindings antes de agregarla (ver *Librerías* en `AGENTS.md`).
-- **Hecho cuando:** un cuaderno barre un parámetro en N gotas y grafica el resultado.
+- ✅ Campo claro con post-proceso (viñeta, aberración, grano), vidrio de la placa, zoom semántico
+  por tamaño proyectado, plan corporal y vista de modelo.
+- ✅ Tinciones por reglas: Gram, Lugol, DAPI, rojo neutro, azul de metileno, rojo Congo, Giemsa,
+  orceína; fijar la muestra; vista previa.
+- ✅ Óptica fase A: iluminación de Köhler despareja y polvo del ocular y la cámara.
 
-## Fase 19 — Escala
+### Validación científica 🟡
 
-XPBD y contactos ya corren en la GPU (fase 14). Medido con `bio_bench` (Estanque, seed 7, 8
-hilos): el cuello de botella era `World::limitApproach`, serial y en CPU aun con GPU.
-
-- ✅ **Medición reproducible:** `bio_bench` (ms/paso, desglose por scope con el preset `lite`,
-  checksum del estado, `--gpu` como la app) y `BIO_STRICT_FP` para comparar checksums bit a bit.
-- ✅ **`limitApproach` exacto y 8,5× más rápido** (718 células: 79 → 9 ms; mismo checksum en IEEE
-  estricto): cotas de distancia útil por par, aristas candidatas por tramos de puntos y cota
-  superior por vértices. Paso completo en CPU: 111 → 37 ms (718 células), 35 → 19 ms (261).
-- ✅ **Preferencias:** calidad (Baja/Media/Alta, solo imagen), escala de render, VSync, tope de
-  FPS, ahorro en segundo plano, MSAA, detalle bacteriano, hilos, LOD, pasos por cuadro y
-  medición por cuadro con gráfico.
-- ✅ **Vulkan descartado:** raylib 5.5 no tiene backend Vulkan, migrar exige reescribir render,
-  backend de ImGui y compute shaders con librerías nuevas, y el cuadro está limitado por la CPU,
-  no por el driver. OpenGL 4.6 en Mesa es una ruta de primera. (Prueba sin código:
-  `MESA_LOADER_DRIVER_OVERRIDE=zink`.)
-- ✅ **GPU determinista y sin contactos perdidos:** la grilla de contactos es por conteo con suma
-  prefija (como la de la CPU; antes, cubetas de 48 que con ~700 células se llenaban y perdían
-  contactos en silencio); las correcciones de contacto se suman en punto fijo (2⁻²² µm: el orden
-  de los hilos no cambia el resultado) y las uniones leen el extremo ajeno de una instantánea
-  (antes, carrera entre grupos de trabajo). Mismo checksum entre corridas y con cualquier número de
-  hilos. Con GPU: 261 células 16 → 12,5 ms/paso; 718 células 33 → 29,6 ms.
-- ✅ **Render medido en la GPU real** (`bio_bench --render`, callgrind): con la placa entera y 718
-  células el dibujo costaba más que la simulación (32,5 ms) y es CPU: el modo inmediato de raylib
-  (~170 instrucciones por vértice). Círculos con los segmentos justos (≤ 0,25 px de error,
-  cuadrado de igual área por debajo de 1 px), contornos diezmados por debajo de 3 px, abanico
-  exacto para células estrelladas y la opción *Detalle de células*: 32,5 → 19 ms (placa entera),
-  10,4 → 8,5 ms (zoom 2).
-- ✅ **Render:** gránulos, membranas y apéndices en un lote de triángulos propio
-  (`render/triangle_batch`), en el mismo orden y sentido de giro que raylib.
-- **Pendiente:** con 718 células lo que queda es `limitApproach` (~8 ms, serial por naturaleza:
-  ~30 % de los pares empujan y forman cadenas de cientos de niveles), la espera de la GPU
-  (`collect` ~6 ms; `pairs` es el kernel más caro), química + FFT (~6 ms), `applyMotion`,
-  `resolvePenetrations` y `perceive`.
-- **Hecho cuando:** 60 FPS con 540+ células y la GPU activa en hardware de escritorio medio.
-
-## Cambio de visión (15/10/2026)
-
-BioGame pasa de «gota de microorganismos» a **herramienta de investigación y de estudio**: un
-microscopio de laboratorio con gotas de agua, **cultivos celulares** (células humanas y animales) y
-**preparados vegetales**, para simulación compleja e investigación (también sin ventana) y para
-mostrar a alumnos. El lanzamiento se atrasa hasta tener las placas preparadas y el cultivo celular
-humano. Orden decidido:
-
-1. AGENTS.md con la visión nueva (hecho).
-2. ✅ **Fase 20** (plan completo en `docs/plan_fase20.md`): contenido como datos y paquetes
-   compartibles sin recompilar (20.0), placas preparadas con medios, recipiente y campo,
-   inoculación y mezclas (20a), cultivo celular humano —fibroblasto, HeLa, neutrófilo— a grado
-   universitario y de investigación (20b) y preparados en portaobjetos con células vegetales y
-   animales —cebolla, *Elodea*, papa, raíz, estomas, mucosa bucal, sangre— con ósmosis (20c).
-3. Después: modo cultivo (Gause), P1 (ver «Fase MVP — P1») y lanzamiento.
-
-## Fase MVP — P0: herramienta de laboratorio
-
-Lo mínimo para que un resultado de BioGame se pueda publicar o enseñar. Estado al 15/10/2026.
-
-- ✅ **Reproducibilidad:** registro único de parámetros (`game/parameters`), procedencia en la
-  exportación (versión, commit, flags, motor, GPU, CPU, huella de intervenciones), intervenciones
-  por paso (`game/intervention`; el gotero ya no depende de los FPS), escenas `.plate` + eventos que
-  se repiten bit a bit con 1 y 4 hilos (`tests/test_scene.cpp`), `bio_bench --scene`. Nivel
-  prometido: bit a bit con el mismo binario y máquina; estadístico entre máquinas.
-- ✅ **Distribución:** assets junto al ejecutable (`core/paths`), presets `dist` y `windows`
-  (MinGW, probado con Wine), CPack TGZ/ZIP, `tools/paquete-linux.sh` (Ubuntu 22.04 en Docker),
-  licencia GPL-3.0-or-later con las licencias de las dependencias en `licencias/`.
-  *Preferencias* dice por qué no hay GPU. Pendiente: probar el paquete de Linux en otra
-  distribución.
-- ✅ **Estabilidad:** autoguardado con recuperación por re-simulación, `bio_bench --soak` (finitud,
-  balance, memoria), `fallas_numericas` en la exportación, tests `rapidos`/`largos`/`validacion`,
-  `tools/ci.sh`; corregido el cruce de la membrana de la ameba al fagocitar. Pendiente: el test de
-  30 min sin jugador falla (las bacterias colapsan por fagos y pastoreo: `docs/validacion.md`).
-- 🟡 **Validación científica** (`docs/validacion.md`): fisiología por especie con fuente en
-  `assets/species/fisiologia.toml` (toml++), visible en la ficha y exportada en `speciesJson`;
-  pasan µmax de *Paramecium*, Tilman y Jennings (gotero de CO₂). Monod pasa (la K publicada
-  era de crecimiento y se usaba en la captación: ahora el modelo es de Droop y la reproduce). Pendiente:
-  depredador–presa y exclusión de Gause (necesitan un modo cultivo: la placa tiene ~10 000× menos
-  volumen) y verificar las estimaciones. Las uniones de filamentos ya son rígidas a la flexión.
-- ✅ **Rendimiento** (15/10/2026): `bio_bench --gpu --render --zoom 2` (hilos como la app: uno por
-  núcleo físico) con 551 células: paso 12,7 + dibujo 3,4 = **16,1 ms** (antes 42); con 601,
-  16,5 ms. Sin cambiar resultados: checksums iguales en IEEE estricto con CPU y GPU en tres
-  escenas. Lo que más rindió: `glFlush` tras el envío a la GPU (el driver retenía los despachos
-  hasta la lectura), FFT por bloques de columnas, advección conjunta de los 11 campos, la
-  geometría de `limitApproach` en paralelo, la percepción de los pilotos en paralelo y un lote de
-  triángulos propio para el dibujo de las células.
-- **Hecho cuando:** todos los tests de `validacion` pasan con su tolerancia y fuente, una escena se
-  repite bit a bit, el paquete corre en una máquina limpia de Linux y de Windows y el soak de
-  varias horas no da fallas.
-
-## Fase MVP — P1: experimentos y aula
-
-**Estado (17/10/2026): completa**, con el plan y lo hecho paso por paso en `docs/plan_p1.md` (16
-pasos, uno por commit; rápidos, largos y validación pasan). Quedan abiertos: que gane *P. aurelia*
-en el Gause del cultivo (gana la que se adelanta: test `should_fail`, ver `docs/validacion.md`), el
-caso *Didinium*–*Paramecium* con inmigración, los valores con números de la ficha en inglés, reactivos
-con otros mecanismos (metales, eucariotas) y sembrar en el cultivo células animales, filamentos,
-colonias y zoosporas.
-
-Lo que hace a BioGame útil para hacer experimentos y para dar clase, después del P0. La base
-común es el **modo cultivo**: poblaciones bien mezcladas a escala de mililitros (un tubo o un
-frasco), sin cuerpos blandos y con la misma fisiología de los datos (Droop, µmax, Q10), con una
-gota de muestra que se mira con la simulación completa. Cierra la validación de Gause del P0
-(exclusión competitiva de *P. aurelia* y *P. caudatum*, depredador–presa con *Didinium*) y es la
-base de las réplicas, el quimiostato y la dilución.
-
-**P1a — Experimentos de laboratorio**
-
-1. **Réplicas y lotes** (backlog 3 y 5): N placas o cultivos con seeds distintas, sin ventana, y
-   medias con su dispersión en la exportación. Sin réplicas no hay estadística, y entre máquinas la
-   reproducibilidad prometida es estadística.
-2. **Siembra y dilución controladas** (backlog 7): inóculo con densidad conocida (células/µL) y
-   diluciones seriadas; la base de las curvas de crecimiento reales.
-3. **Quimiostato** (backlog 8): entrada y salida de medio con tasa de dilución D. Con Droop, el
-   experimento clásico de Monod y la exclusión completa de Tilman.
-4. **Reactivos con dosis-respuesta:** antibióticos, sal y metales con el gotero, la tolerancia de
-   cada especie como dato y curvas CI50 exportables.
-5. **Programas temporales** (backlog 4): rampas de temperatura y luz y ciclos de día y noche,
-   guardados en la escena.
-6. **Foto y time-lapse con barra de escala** (backlog 25 y 26), para informes.
-
-**P1b — Aula**
-
-7. **Modo aula:** el docente comparte una escena con los parámetros que invalidarían el
-   experimento bloqueados.
-8. **Lecciones guiadas** (fase 17): archivos de datos con objetivo, pasos y cuestionario. Como
-   mínimo Jennings, Tilman y Gause (ya validados) y, de la fase 20, la plasmólisis de la cebolla y
-   la fragilidad osmótica de la sangre.
-9. **Idioma inglés:** `assets/lang` está vacío; imprescindible para la difusión científica.
-10. **Glosario y notas en la ficha** (backlog 33 y 35).
-11. **Accesibilidad** (fase 16): paleta para daltonismo, tamaño de texto y escala de la interfaz
-    para proyectores y pantallas HiDPI.
-
-**Orden:** modo cultivo → réplicas → quimiostato → dilución → inglés → lecciones → lo demás.
-
-- **Hecho cuando:** un experimento de Gause se corre en el modo cultivo con réplicas y se exporta
-  con media y dispersión, un quimiostato llega al estado estacionario de Monod, y un alumno sigue
-  una lección en inglés o en español sin tocar nada fuera de su panel.
+Pasan: µmax de *Paramecium* (placa y cultivo), Tilman (lote y quimiostato), Jennings, Monod/Droop,
+Monod en quimiostato, calibración de la respuesta funcional, CIM de ampicilina y tetraciclina,
+células humanas y ósmosis. Lo que falta está en la fase A de abajo.
 
 ---
 
-## Backlog (ideas sin marcar de `docs/ideas.md`)
+## 2. Por hacer
 
-- **Experimentos:** lotes (3), rampas y programas (4), réplicas lado a lado (5), dilución y
-  siembra (7), quimiostato (8), pinzas ópticas (9), micropipeta (10).
-- **Análisis:** trayectorias y MSD (14), cuotas celulares (18), árbol de linaje (19).
-- **Óptica:** objetivos 10×/40×/100× (24), foto con barra de escala (25), time-lapse (26), campo
-  oscuro de Tyndall (27), polarización (28), lupa (29), halo de nutrientes (30).
-- **Educación:** notas en la ficha (33), referencias por ficha (34), glosario (35), hipótesis y
-  predicción (36), escenarios históricos (37).
-- **Biología:** endosimbiosis y kleptoplastia como experimento (45), epidemias y resistencia (47).
-- **Comunidad:** especies como datos TOML (49; requiere aprobar toml++).
-- **De gameplay, descartado o sin elegir:** contraste de fase, fluorescencia como modo único,
-  plano focal (descartado: todo en un plano), modo arcade, biología especulativa.
+### Fase A — Limpieza y deuda abierta
+
+Lo chico o ya decidido, antes de sumar cosas.
+
+- ⬜ **Quitar la enciclopedia** (decidido el 17/10/2026): panel, `game/encyclopedia`, «la
+  enciclopedia se llena con lo que la cámara ve», su parte de `Progress` y sus textos y claves de
+  traducción. Decidir si `deathTally()` y `observations()` quedan (las usan Estadísticas o la
+  exportación) o se van con ella. Actualizar `AGENTS.md`.
+- ⬜ Valores con números de la ficha (`game/inspect`) en inglés.
+- ⬜ Inoculación en una región dibujada (la intervención no lleva el polígono).
+- ⬜ Tinciones: hifas, cianobacterias y copos de avena sin respuesta a Lugol/Gram.
+- ⬜ Posición de los organelos (flagelo anterior o posterior) sin modelar.
+- ⬜ Archivar los documentos superados (`gameplay.md` describe el juego anterior; `roadmap.md`,
+  `propuesta_laboratorio.md` e `ideas.md` quedan absorbidos por este).
+
+### Fase B — Cerrar la validación y el lanzamiento
+
+El criterio de «hecho» del P0 que quedó abierto.
+
+- ⬜ **Gause:** que gane *P. aurelia* (hoy gana la que se adelanta; test `should_fail`). Buscar el
+  mecanismo real (sensibilidad de *P. caudatum* a los desechos), no ajustar parámetros.
+- ⬜ *Didinium*–*Paramecium* con inmigración (oscilaciones).
+- ⬜ µmax de *Amoeba proteus* (cultivo con *Tetrahymena* como presa).
+- ⬜ Cargar µmax con fuente para las especies que usan el valor general (0,15/h).
+- ⬜ Verificar contra las publicaciones las temperaturas de Gause y las constantes de Tilman y
+  Kilham (1976); revisar L = 1,5 de Droop para el P.
+- ⬜ Respuesta funcional de *P. caudatum* medida a varias densidades.
+- ⬜ **Gota sostenible:** resistencia fenotípica a *Bdellovibrio* (Shemesh y Jurkevitch 2004),
+  densidades iniciales realistas para el volumen; reactivar el test de 30 min.
+- ⬜ Revisar la materia orgánica de cientos de mM tras una lisis en volumen chico.
+- ⬜ **Paquetes:** probar el de Linux en otra distribución y el de Windows en una máquina limpia;
+  soak de varias horas sin fallas.
+- **Hecho cuando:** pasan todos los tests de `validacion` sin `should_fail` ni `skip` y los dos
+  paquetes corren en máquinas limpias. Después: **lanzamiento**.
+
+### Fase C — Lentes
+
+Lo que hace falta para mirar de verdad los cultivos celulares (AGENTS.md: «contraste de fase,
+lente pendiente»).
+
+- ⬜ **Contraste de fase:** grises con halo; la lente por defecto del cultivo celular.
+- ⬜ **Campo oscuro** (incluido el de Tyndall: partículas diminutas brillantes).
+- ⬜ **Fluorescencia** con la de clorofila (roja bajo luz azul, baja con la falta de hierro).
+- ⬜ Tinta china para cápsulas (regla nueva del motor de tinciones).
+- ⬜ Tinciones sobre la placa real con vista dividida y exposición en tiempo real.
+- ⬜ Después: objetivos 10×/40×/100× (cambian el campo y lo que se resuelve; la foto suma el
+  aumento), polarización (frústulas, almidón).
+- **Hecho cuando:** la misma placa se ve en las cuatro lentes y cada una muestra algo que las otras
+  no.
+
+### Fase D — Química ampliada (fase 15 vieja)
+
+- ⬜ Ciclo del silicio completo (disolución con pH y temperatura, sedimentación de frústulas).
+- ⬜ Quelación del hierro (sideróforos, óxido a pH alto).
+- ⬜ Más micronutrientes (B₁, B₇, Zn, Co, Mo, Mn) con auxotrofías reales.
+- ⬜ Carbono inorgánico limitante y mecanismos concentradores.
+- ⬜ Biofilms con matriz (cambian el flujo, retienen nutrientes, gradientes internos, corte).
+- ⬜ Muestras reales: cargar T, pH, conductividad y nutrientes medidos.
+- ⬜ Temperatura, pH base y salinidad como campos (hoy globales; costo: `bioScale()` deja de ser un
+  escalar).
+- **Hecho cuando:** cada nutriente nuevo tiene un test de conservación y una especie limitada por él
+  de forma observable.
+
+### Fase E — Cultivo bien mezclado completo
+
+Lo que `Culture::supports` todavía rechaza.
+
+- ⬜ Células animales, filamentos, colonias y zoosporas en el cultivo.
+- ⬜ Conjugación, *Bdellovibrio*, quorum y liberación de B₁₂ por las bacterias.
+- ⬜ Reactivos con otros mecanismos: metales, sal y blancos eucariotas.
+- **Hecho cuando:** toda placa preparada tiene un equivalente bien mezclado con la misma fisiología.
+
+### Fase F — Más biología celular
+
+- ⬜ Más tipos celulares reales con datos publicados (queratinocito, otras líneas).
+- ⬜ Apertura y cierre de estomas.
+- ⬜ Endosimbiosis y kleptoplastia como experimento (*P. bursaria* con *Chlorella*).
+- ⬜ Resistencia antimicrobiana con costo y transferencia horizontal (plásmidos, transducción).
+- ⬜ Lisogenia de los fagos.
+
+### Fase G — Análisis
+
+- ⬜ Trayectorias, velocidad media y desplazamiento cuadrático medio de cualquier ser.
+- ⬜ Panel de cuotas celulares (cuántas veces Q₀ tiene la célula elegida).
+- ⬜ Árbol de linaje con mutaciones por rama.
+- ⬜ Dos placas lado a lado con la misma seed y una variable distinta.
+- ⬜ Línea de tiempo: rebobinar re-simulando desde un punto de control.
+- ⬜ Comparar con el modelo analítico (Monod, Lotka–Volterra) en el mismo gráfico.
+- ⬜ Unidades de laboratorio en la interfaz (mg/L, mmol/L).
+
+### Fase H — Núcleo sin ventana y bindings (resto de la fase 18)
+
+- ✅ `biosim` sin raylib, `bio_bench`, `bio_lote`.
+- ⬜ Interfaz mínima de C o Python (proponer la librería de bindings antes de agregarla).
+- **Hecho cuando:** un cuaderno barre un parámetro en N corridas y grafica el resultado.
+
+### Fase I — Rendimiento (resto de la fase 19)
+
+- ⬜ `limitApproach` (~8 ms, serial), espera de la GPU (`collect`, kernel `pairs`), química + FFT,
+  `applyMotion`, `resolvePenetrations`, `perceive`.
+- **Hecho cuando:** 60 FPS con 540+ células y GPU en hardware de escritorio medio, con checksums
+  iguales.
+
+### Fase J — Interfaz y enseñanza
+
+- ⬜ Vista previa gráfica de la placa antes de crearla.
+- ⬜ Íconos vectoriales en la barra de herramientas; paleta de comandos.
+- ⬜ Modo estudiante / modo científico (misma simulación, otra interfaz).
+- ⬜ Hipótesis y predicción fuera de las lecciones.
+- ⬜ Escenarios históricos (eutrofización, floración de cianobacterias).
+- ⬜ Fidelidad declarada por proceso (conceptual, cuantitativo, experimental) en la ficha.
+
+---
+
+## 3. Descartado ❌
+
+- Partida, puntaje, victoria, roguelite y herencia entre partidas (visión del 15/10/2026: es un
+  laboratorio).
+- Enciclopedia y descubrimiento (17/10/2026).
+- Animales pluricelulares (rotíferos, *Hydra*) y *Zoophagus*, hasta que su simulación sea realista.
+- Plano focal: todo ocurre en un plano.
+- Vulkan: raylib 5.5 no lo tiene y el cuadro está limitado por la CPU.
+- Modo arcade, biología especulativa, realismo exagerado.
+
+## 4. Orden propuesto
+
+1. **A** (limpieza: enciclopedia y deuda chica).
+2. **B** (validación y paquetes) → **lanzamiento**.
+3. **C** (lentes: contraste de fase primero, para los cultivos).
+4. **H** (bindings) y **G** (análisis), que aprovechan lo que ya hay.
+5. **D**, **E** y **F** (biología y química nuevas), en el orden que pidan las lecciones.
+6. **I** y **J** cuando haga falta.
