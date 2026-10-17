@@ -27,7 +27,8 @@ struct ProgramEntry {
     // organica, co2), "parametro:<clave del registro>", o una acción: "bacterias" (bacterias por mL que
     // se agregan), "medio" (fracción del medio que se renueva: el protocolo de Gause centrifuga y
     // cambia el medio; los protistas se quedan), "dilucion" (fracción del cultivo que se reemplaza
-    // por medio nuevo, con todo lo que tiene) o "inocular:<id del ser>" (individuos).
+    // por medio nuevo, con todo lo que tiene), "agregar:<soluto>" (µM que se suman) o
+    // "inocular:<id del ser>" (individuos). En la placa no hay "medio" ni "dilucion" (está la perfusión).
     std::string target;
     ProgramShape shape = ProgramShape::Cycle;
     double start = 0.0;                                      // [h]

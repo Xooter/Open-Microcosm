@@ -86,6 +86,19 @@ bool applyIntervention(World& world, const Intervention& iv) {
         world.setMeanConcentration(soluteField(world, iv.index), iv.v[0]); // entra al balance como externo
         return true;
     case InterventionKind::Detritus: world.dropDetritus(iv.pos); return true;
+    case InterventionKind::Program: {
+        if (iv.index == 1) {
+            world.program().entries.clear();
+            return true;
+        }
+        std::string text = iv.key;
+        std::replace(text.begin(), text.end(), ',', ' ');
+        ProgramEntry e;
+        if (!parseProgramEntry(text, e))
+            return false;
+        world.program().entries.push_back(e);
+        return true;
+    }
     case InterventionKind::Erase: world.removeCellAt(iv.pos); return true;
     case InterventionKind::Lyse: world.lyseAt(iv.pos); return true;
     case InterventionKind::Spawn: {

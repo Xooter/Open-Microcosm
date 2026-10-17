@@ -154,6 +154,7 @@ World::World(const WorldConfig& config)
         f->setMask(&dishMask_);
     // Un medio de cultivo trae glutamina: sus campos difunden desde el principio.
     cultureFields_ = config.medium.glutamine > 0.0f;
+    program_ = config.program;
     fluid_.gapHeight = config.depth;
     if (config.tissue.enabled) // preparado: las paredes del tejido y sus protoplastos
         buildTissue(config.tissue);
@@ -228,6 +229,8 @@ void World::step(float dt) {
     // tampoco hay corrientes ni movimiento browniano (en un preparado fijado y cubierto casi no hay).
     if (fixed_)
         return;
+    if (!program_.empty())
+        applyProgram(dt);
     // Orden de AGENTS.md: fluido → química → partículas → organismos.
     fluid_.clearForces();
     applyStir();

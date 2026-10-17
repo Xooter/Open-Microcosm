@@ -273,7 +273,11 @@ void Culture::applyProgram(double fromHours, double toHours) {
                     renewMedium(e.amount);
                 else if (e.target == "dilucion")
                     dilute(e.amount);
-                else if (e.target.rfind("inocular:", 0) == 0) {
+                else if (e.target.rfind("agregar:", 0) == 0) {
+                    for (int s = 0; s < kSoluteCount; ++s)
+                        if (e.target.substr(8) == soluteKey(static_cast<Solute>(s)))
+                            setConcentration(static_cast<Solute>(s), concentration(static_cast<Solute>(s)) + e.amount);
+                } else if (e.target.rfind("inocular:", 0) == 0) {
                     if (const std::optional<SpeciesId> id = findSpecies(e.target.substr(9)))
                         inoculate(*id, static_cast<int>(e.amount));
                 }

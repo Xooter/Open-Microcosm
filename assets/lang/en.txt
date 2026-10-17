@@ -262,6 +262,7 @@ Buscar experimentos	Find experiments
 CO2 del aire [%]	Air CO2 [%]
 CO2 disuelto	Dissolved CO2
 CPU	CPU
+Cada 24 h biológicas se agregan 10 µM de fosfato (un aporte de nutrientes).	Every 24 biological hours 10 µM of phosphate are added (a nutrient input).
 Cada 24 h se centrifuga, se cambia todo el medio y se agregan bacterias frescas (Gause 1934, cap. V).	Every 24 h the culture is centrifuged, all the medium is changed and fresh bacteria are added (Gause 1934, ch. V).
 Cada cuánto (en segundos de simulación) se toma una muestra. Con muchas muestras la serie se decima: guarda una de cada dos.	How often (in simulation seconds) a sample is taken. With many samples the series is decimated: it keeps one of every two.
 Cada célula toma el color de lo que limita su crecimiento ahora (ley del mínimo de Liebig) [L].	Each cell takes the color of what limits its growth now (Liebig's law of the minimum) [L].
@@ -322,6 +323,7 @@ Cianobacteria filamentosa	Filamentous cyanobacterium
 Cianobacterias	Cyanobacteria
 Cianobacterias filamentosas	Filamentous cyanobacteria
 Ciclo	Cycle
+Ciclo térmico día/noche	Day/night temperature cycle
 Cierre	Closure
 Ciliado	Ciliate
 Ciliado aplanado que 'camina' sobre cirros (haces de cilios) con paradas bruscas.	Flattened ciliate that 'walks' on cirri (bundles of cilia) with sudden stops.
@@ -718,6 +720,7 @@ La que se ve sobre la placa (J pasa a la siguiente).	The one shown on the plate 
 La rapidez de nado cambia con la temperatura (viscosidad): se fija para comparar con el control.	Swimming speed changes with temperature (viscosity): it is fixed to compare with the control.
 La sal disuelve la pared	Salt dissolves the wall
 La sangre esta diluida en solucion salina al 0,9 % (isotonica): los globulos rojos son discos.	The blood is diluted in 0.9 % saline (isotonic): the red blood cells are discs.
+La temperatura oscila ±4 °C alrededor de la actual cada 24 h biológicas.	The temperature oscillates ±4 °C around the current one every 24 biological hours.
 La zoospora infecto un alga o se enquisto	The zoospore infected an alga or encysted
 Lacrymaria	Lacrymaria
 Lado	Side
@@ -975,6 +978,7 @@ Profundidad [µm]	Depth [µm]
 Programa	Program
 Protocolo de Gause	Gause's protocol
 Puede tardar más o menos lo mismo que duró.	It may take about as long as it lasted.
+Pulso de fosfato diario	Daily phosphate pulse
 Punta de raiz de cebolla fijada, aplastada y tenida con orceina acetica: celulas del meristema en interfase y en cada fase de la mitosis (profase, metafase, anafase y telofase), en la proporcion de lo que dura cada una.	Onion root tip fixed, squashed and stained with acetic orcein: meristem cells in interphase and in each phase of mitosis (prophase, metaphase, anaphase and telophase), in proportion to how long each lasts.
 Q10 = 2 en todas las tasas biológicas; cambia la viscosidad y el O2 de saturación.	Q10 = 2 in all biological rates; it changes viscosity and saturation O2.
 Que dos especies que dependen del mismo recurso limitante no pueden coexistir: la que lo aprovecha mejor desplaza a la otra	That two species depending on the same limiting resource cannot coexist: the one that uses it better displaces the other
@@ -1092,6 +1096,7 @@ Sin fijar, la tinción solo cambia los colores y la placa sigue viva.	Unfixed, t
 Sin foco, a lo sumo 30 FPS; minimizada, 20. La simulación sigue en tiempo real.	Without focus, at most 30 FPS; minimized, 20. The simulation continues in real time.
 Sin física en la GPU (	No physics on the GPU (
 Sin muestras todavía.	No samples yet.
+Sin programa: el ambiente queda como se fija a mano.	No program: the environment stays as set by hand.
 Sin rotular	Unlabeled
 Sin teñir	Unstained
 Sin tinción	No stain
@@ -1183,6 +1188,7 @@ Una zoospora se fija y empieza un filamento nuevo	A zoospore settles and starts 
 Unidades de pH en que cambia de un color al otro.	pH units over which it changes from one color to the other.
 Usar la herramienta Medir (M)	Use the Measure tool (M)
 Usar la herramienta Región (G)	Use the Region tool (G)
+Vaciar el programa	Clear the program
 Vacuola contractil	Contractile vacuole
 Vacuolas digestivas	Food vacuoles
 Valor final / alto	Final / high value

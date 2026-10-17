@@ -350,7 +350,9 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   `receive`); lo que sale va al balance como `Flow::Washout`. Las bacterias toman el sustrato con un
   paso implícito (la concentración del final del paso), si no el quimiostato no llega a S*.
 - **Programas** (`game/program`): rampas, ciclos, senos y eventos con la hora de laboratorio, guardados
-  como definición (`programa=` en las escenas); se aplican una vez por paso.
+  como definición (`programa=` en las escenas); se aplican una vez por paso. En la placa
+  (`WorldConfig::program`, `World::applyProgram`) la hora de laboratorio son las horas biológicas y
+  los cambios en vivo son la intervención `Program`.
 - **Sesión de cultivo** (`game/culture_run`): como `Run` para la placa: toda operación pasa por
   `CultureRun::apply`, queda anotada con su paso y la escena `.cultivo` la repite. La gota de muestra
   (`sampleDrop`) arma un `PlateSpec` v3 con las células con su estado (`WorldConfig::sampled`).

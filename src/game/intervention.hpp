@@ -40,6 +40,8 @@ enum class InterventionKind : std::uint8_t {
                    // v[2] = osmolitos agregados [mOsm/L] (sacarosa)
     Inoculate,     // index = BeingKind, v[0] = SpeciesId, key = su id, v[1] = cantidad, v[2] = radio
                    // [µm] alrededor de pos (0: toda la placa)
+    Program,       // index 0: agrega la entrada `key` (texto de game/program con comas en vez de
+                   // espacios: la clave es una sola palabra) al programa de la placa; 1: lo vacía
     Count
 };
 

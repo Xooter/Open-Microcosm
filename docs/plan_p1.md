@@ -122,7 +122,11 @@ por paso y sus tests. Avance: ✅ hecho · 🟡 en parte (se dice qué falta) ·
     que difunde solo si se usó, con el gotero), factor `reactivo:<id>` en los lotes con CI50 (Hill) y
     CIM en el JSON, medio Mueller-Hinton. La CIM emerge de la dilución en caldo: 4 contra 8 µg/mL
     (ampicilina) y 1 contra 1 (tetraciclina). *Falta:* metales y otros mecanismos (eucariotas).
-12. **Programas en la placa.**
+12. ✅ **Programas en la placa.**
+    *Hecho:* `WorldConfig::program` (en el `.plate` como `programa=`), aplicado por `World` una vez
+    por paso con las horas biológicas (temperatura, luz, solutos, parámetros del registro, pulsos
+    `agregar:<soluto>`, inóculos); intervención `Program` para cambiarlo en vivo; editor con presets en
+    el panel Simulación.
 13. **Foto y time-lapse** (por tiempo biológico, no por cuadro).
 14. **Glosario y notas** (las notas van en la escena, no son intervenciones).
 15. **Accesibilidad:** escala de interfaz, HiDPI y paleta Okabe–Ito.

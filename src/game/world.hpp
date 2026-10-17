@@ -21,6 +21,7 @@
 #include "game/lineage.hpp"
 #include "game/mass_budget.hpp"
 #include "game/mineral.hpp"
+#include "game/program.hpp"
 #include "game/sandbox.hpp"
 #include "core/rng.hpp"
 #include "core/units.hpp"
@@ -181,6 +182,9 @@ struct WorldConfig {
     std::vector<std::pair<SpeciesId, int>> seeding;
     // Células con su estado (gota de muestra de un cultivo); las ubica Run::start.
     std::vector<SampledCell> sampled;
+    // Programa temporal de la placa (game/program): fotoperíodo, rampas, pulsos; se aplica una vez
+    // por paso con las horas biológicas (la hora de laboratorio de la placa).
+    Program program;
     // Hongos al empezar: micelios de Saprolegnia y grupos de zoosporas de quitridios (10 cada uno).
     int saprolegnia = 4, chytridClusters = 6;
     // Más hongos: Allomyces, hongos liquenizantes (junto a algas verdes) y plasmodios de Physarum.
@@ -421,6 +425,9 @@ class World {
     const ChemField& fmlp() const { return fmlp_; }
     // Reactivo de la placa (game/reagent): el gotero lo suelta; cambiar de reactivo vacía el campo.
     void setReagent(int index);
+    // Programa en marcha (empieza como el de la configuración; las intervenciones lo cambian).
+    Program& program() { return program_; }
+    const Program& program() const { return program_; }
     int reagentIndex() const { return reagentIndex_; }
     ChemField& reagentField() { return reagent_; }
     const ChemField& reagentField() const { return reagent_; }
@@ -670,6 +677,9 @@ class World {
     ChemField oxygen_, nutrients_, phosphate_, nitrogen_, silicate_, iron_, vitamin_, co2_, toxin_, autoinducer_, phage_;
     ChemField glutamine_, lactate_, fmlp_;
     ChemField reagent_;      // un reactivo (antibiótico) [µg/mL]; solo difunde si se usó
+    Program program_;
+    void applyProgram(float dt);
+    ChemField* soluteByKey(const std::string& key); // "fosfato", "nitrogeno"... (game/program)
     int reagentIndex_ = -1;  // cuál (game/reagent), -1 ninguno
     bool cultureFields_ = false;
     Tissue tissue_;

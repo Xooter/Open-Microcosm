@@ -153,6 +153,7 @@ std::string serializePlate(const PlateSpec& s) {
         << "erythrocytes_cm2=" << c.erythrocytesPerCm2 << '\n' << "platelets_cm2=" << c.plateletsPerCm2 << '\n';
     for (const auto& [sp, count] : c.seeding)
         out << "seeding=" << speciesInfo(sp).key << ' ' << count << '\n';
+    out << serializeProgram(c.program); // programa temporal (fase P1)
     // Versión 3: células con su estado (gota de muestra de un cultivo, fase P1).
     for (const SampledCell& sc : c.sampled) {
         const Metabolism& m = sc.meta;
@@ -240,7 +241,7 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
     }
     p.rebuild();
     WorldConfig& c = p.config;
-    bool seedingRead = false, sampledRead = false;
+    bool seedingRead = false, sampledRead = false, programRead = false;
     for (const auto& [k, v] : kv) {
         const double x = num(v, 0);
         if (k == "dish") c.dish = true; // siempre con la pared de vidrio (las placas viejas sin vidrio ya no van)
@@ -272,6 +273,14 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
                 lack("ser '" + id + "'");
         }
         else if (k == "rock_max") c.sediment.rockMax = static_cast<float>(x);
+        else if (k == "programa") {
+            if (!programRead)
+                c.program.entries.clear();
+            programRead = true;
+            ProgramEntry e;
+            if (parseProgramEntry(v, e))
+                c.program.entries.push_back(e);
+        }
         else if (k == "sampled") {
             if (!sampledRead)
                 c.sampled.clear();
