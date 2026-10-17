@@ -51,7 +51,7 @@ TEST_CASE("PlateSpec: la versión 2 nombra bioma, seres y paquetes por id; la 1 
     a.rebuild();
     a.config.speciesWeight[static_cast<int>(SpeciesId::Arcella)] = 2.5f;
     const std::string text = serializePlate(a);
-    CHECK(text.find("plate_version=2\n") != std::string::npos);
+    CHECK(text.find("plate_version=3\n") != std::string::npos);
     CHECK(text.find("biome=musgo\n") != std::string::npos);
     CHECK(text.find("w.arcella=2.5\n") != std::string::npos);
     CHECK(text.find("pack=base ") != std::string::npos);
