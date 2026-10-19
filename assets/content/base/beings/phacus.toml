@@ -24,3 +24,14 @@ shape_memory = 30.0
 color = [118, 170, 90]
 nucleus = 0.25
 taper = 0.6
+
+# Espina caudal bien marcada, oblicua y algo curvada (Kreutz); largo estimado por las figuras (el
+# ejemplar de 77 µm la incluye).
+[[being.process]]
+kind = "spine"
+at = 180.0
+length = 10.0
+base_width = 4.0
+tip_width = 0.5
+curve = -20.0
+

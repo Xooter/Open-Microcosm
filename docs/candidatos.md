@@ -133,6 +133,33 @@ cargado. Comprobada contra los que tienen dato: *Colpidium* 1,64/día estimado c
 | `fragilariopsis` | *F. cylindrus* | 7 × 5 µm (real 3–7 × 2–4; espesor ajustado al volumen) | sin dato | Hielo marino (NCMA CCMP1102, −2 a 2 °C) |
 | `polarella` | *P. glacialis* | 12 × 7 µm | sin dato | Hielo marino (NCMA CCMP1383, 0–6 °C); enquista |
 
+### Prolongaciones rígidas, fase 1 (19/10/2026)
+
+Mecanismo genérico `[[being.process]]` (`ProcessSpec`, ver `docs/contenido.md`): cuernos, espinas,
+brazos y setas de la pared, la teca, la lórica o la testa, como datos de cada ser. Se dibujan con el
+mismo borde óptico que la célula, rígidos en el marco del cuerpo (las espinas de una coraza salen de
+su borde), y la ficha los nombra. Usan el mecanismo:
+
+| Ser | Prolongaciones | Fuente |
+|---|---|---|
+| *Ceratium furcoides* | cuerno apical (~90 µm) y dos antapicales (~40 y ~20 µm); el cuerpo es ahora el de la célula sin cuernos (~60 × 35 µm) | Kreutz (forma); largos estimados por las figuras |
+| *Staurastrum anatinum* (nuevo, `staurastrum`) | tres brazos de ~34 µm a 120° (vista apical) | Kreutz: 48–125 µm de ancho con los brazos |
+| *Phacus pleuronectes* | espina caudal oblicua (~10 µm) | Kreutz; largo estimado |
+| *Coleps hirtus* | tres espinas posteriores (~4 µm) | Kreutz; largo estimado |
+| *Trachelomonas hispida* | espinas cortas en toda la lórica (~2 µm) | Kreutz; largo estimado |
+| *Euglypha strigosa* | espinas en los bordes de la testa (~6 µm) | Kreutz; largo y cantidad estimados |
+
+**Fase 2 (pendiente):**
+- Colisión: las prolongaciones atraviesan hoy otras células y la pared de la placa (un brazo de
+  *Staurastrum* puede asomar del vidrio). Colisionadores rígidos en `sim/contacts`, también en GPU.
+- Límite para los depredadores: los cuernos protegen del pastoreo, pero la simulación no tiene un
+  tamaño de boca por depredador (los raptoriales tragan presas de cualquier tamaño, y *Didinium* traga
+  *Paramecium* más grandes que él). Hace falta el dato de apertura bucal de cada depredador antes de
+  modelarlo.
+- División: las hijas nacen con todas las prolongaciones (en *Ceratium* cada hija regenera las que le
+  faltan de la teca de la madre).
+- *Pediastrum* puede pasar a este mecanismo (hoy sus cuernos son parte de su estilo de dibujo).
+
 ## Validación de los lotes 2 a 4 (19/10/2026)
 
 Pasan las tres suites (`rapidos`, `largos` con un caso de reproducción por ser, y `validacion`).

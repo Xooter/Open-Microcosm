@@ -499,6 +499,7 @@ Desde [h]	From [h]
 Deslizamiento	Gliding
 Desmidia de ~85 um hecha de dos mitades simetricas unidas por un istmo. Al dividirse, cada hija se queda con una mitad y fabrica la otra.	Desmid of ~85 um made of two symmetrical halves joined by an isthmus. When it divides, each daughter keeps one half and builds the other.
 Desmidia grande (~0,3 mm) en forma de estrella plana con lobulos recortados, de los pantanos acidos. Una de las celulas mas bellas del microscopio.	Large desmid (~0.3 mm) shaped like a flat star with cut lobes, from acid bogs. One of the most beautiful cells under the microscope.
+Desmidia planctonica que, vista desde un polo, es una estrella de tres brazos largos (~95 um de punta a punta). Los brazos la frenan al hundirse en el agua.	Planktonic desmid that, seen from a pole, is a star with three long arms (~95 um from tip to tip). The arms slow it down as it sinks in the water.
 Desmidia verde en media luna de ~0,3 mm con dos cloroplastos y una vacuola con cristales que bailan en cada punta. Avanza muy despacio soltando mucilago.	Crescent-shaped green desmid of ~0.3 mm with two chloroplasts and a vacuole of dancing crystals at each tip. It moves very slowly by releasing mucilage.
 Desmodesmus	Desmodesmus
 Despierta	Wakes up
@@ -1141,6 +1142,7 @@ Procesos	Processes
 Procesos que movieron el elemento desde que se creó la placa.	Processes that moved the element since the plate was created.
 Profundidad [µm]	Depth [µm]
 Programa	Program
+Prolongaciones	Processes
 Proporción de Redfield	Redfield ratio
 Protocolo de Gause	Gause's protocol
 Puede tardar más o menos lo mismo que duró.	It may take about as long as it lasted.
@@ -1301,6 +1303,7 @@ Spawnear	Spawn
 Spirogyra	Spirogyra
 Spirogyra se divide dentro del filamento	Spirogyra divides inside the filament
 Spw	Spw
+Staurastrum	Staurastrum
 Stentor	Stentor
 Stylonychia	Stylonychia
 Suaviza los bordes de la interfaz (el campo no lo usa). Se aplica al reiniciar el programa.	Smooths the edges of the interface (the field does not use it). Applied when the program restarts.

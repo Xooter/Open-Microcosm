@@ -59,6 +59,67 @@ constexpr Color kBleb = {224, 221, 210, 210};           // burbujas de membrana 
 constexpr float kRimMicrometers = 5.0f;
 constexpr float kPi = 3.14159265f;
 
+// Prolongaciones rígidas (ProcessSpec de bio/species): cada copia sale del contorno en su dirección y
+// es rígida en el marco del cuerpo (es pared o lórica, no membrana). Llama a emit(left, right, n) con
+// los dos bordes, de la base (metida medio ancho en la célula, para que no quede una muesca) a la punta.
+// `shell` es lo que la lórica o la testa sobresale de la membrana [µm]: las espinas salen de su borde.
+// Lo que la coraza (lórica o testa) sobresale de la membrana en su dibujo [µm]: el mismo
+// cálculo que el trazo de la coraza en drawDetails (t = 1 + 4·coraza, centrado a 0,5·t + 1 µm).
+float shellOffset(const entt::registry& reg, entt::entity e) {
+    const Heredity* her = reg.try_get<Heredity>(e);
+    if (!her || her->traits.armor <= 0.05f)
+        return 0.0f;
+    const float t = 1.0f + 4.0f * her->traits.armor;
+    return t + 1.0f;
+}
+
+constexpr int kProcessSegments = 8;
+template <typename F> void forEachProcess(const RingBody& body, const SpeciesInfo& info, float shell, F&& emit) {
+    const int n = static_cast<int>(body.poly.size());
+    if (info.processes.empty() || n < 3)
+        return;
+    float half = 0.0f;
+    for (const Vec2& q : body.restRing)
+        half = std::max(half, std::abs(q.x));
+    const float scale = info.spec.radiusX > 0.0f ? half / info.spec.radiusX : 1.0f;
+    const Vec2 h = bodyHeading(body);
+    Vec2 left[kProcessSegments + 1], right[kProcessSegments + 1];
+    for (const ProcessSpec& p : info.processes) {
+        for (int k = 0; k < p.count; ++k) {
+            const float a = processAngle(p, k);
+            const Vec2 dir = rotate(h, std::cos(a), std::sin(a));
+            // La base: donde el rayo desde el centro en esa dirección corta el contorno (el corte más
+            // lejano, por si el contorno no es convexo).
+            float reach = 0.0f;
+            for (int i = 0; i < n; ++i) {
+                const Vec2 e0 = body.poly[i] - body.centroid, e1 = body.poly[(i + 1) % n] - body.centroid;
+                const Vec2 e = e1 - e0;
+                const float den = cross(dir, e);
+                if (std::abs(den) < 1e-6f)
+                    continue;
+                const float t = cross(e0, e) / den, u = cross(e0, dir) / den;
+                if (t > 0.0f && u >= 0.0f && u <= 1.0f)
+                    reach = std::max(reach, t);
+            }
+            if (reach <= 0.0f)
+                continue;
+            const Vec2 side = {-dir.y, dir.x};
+            const Vec2 base = body.centroid + dir * (reach + shell - 0.5f * p.baseWidth * scale);
+            for (int i = 0; i <= kProcessSegments; ++i) {
+                const float s = static_cast<float>(i) / kProcessSegments;
+                const Vec2 ax = processAxisPoint(p, s, scale);
+                const Vec2 c = base + dir * (ax.x + 0.5f * p.baseWidth * scale * (1.0f - s)) + side * ax.y;
+                const Vec2 t = rotate(dir, std::cos(p.curve * s), std::sin(p.curve * s));
+                const Vec2 nrm = {-t.y, t.x};
+                const float w = 0.5f * processWidth(p, s, scale);
+                left[i] = c + nrm * w;
+                right[i] = c - nrm * w;
+            }
+            emit(left, right, kProcessSegments + 1);
+        }
+    }
+}
+
 Vector2 toRay(Vec2 v) { return {v.x, v.y}; }
 
 Color dyeColor(Rgba c, float alpha) {
@@ -294,7 +355,18 @@ void CellRenderer::renderCoverage(const World& world, const Camera2D& camera, Re
     setActiveBatch(&batch_);
     for (const auto [e, body, look] : world.registry().view<RingBody, CellLook>().each()) {
         const Color tint = limitationMap_ ? limitationTint(world.registry(), e, look) : cellTint(stain_, world.registry(), e, look);
-        forEachImage(world, body, view, [&] { fillCell(body, tint, camera.zoom); });
+        const Species* species = world.registry().try_get<Species>(e);
+        const SpeciesInfo* info = species ? &speciesInfo(species->id) : nullptr;
+        forEachImage(world, body, view, [&] {
+            fillCell(body, tint, camera.zoom);
+            if (info) // cuernos, brazos y espinas: misma cobertura que la célula (mismo borde óptico)
+                forEachProcess(body, *info, shellOffset(world.registry(), e), [&](const Vec2* l, const Vec2* r, int m) {
+                    for (int i = 0; i + 1 < m; ++i) {
+                        fastTriangle(toRay(l[i]), toRay(r[i]), toRay(r[i + 1]), tint);
+                        fastTriangle(toRay(l[i]), toRay(r[i + 1]), toRay(l[i + 1]), tint);
+                    }
+                });
+        });
     }
     // raylib dibuja en lotes: hay que vaciar el lote ANTES de reactivar el culling, o los
     // triángulos se descartan al dibujarse más tarde (el nuestro también).
@@ -929,6 +1001,20 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     for (int i = 0; i < m; ++i)
                         drawCircleFast(toRay(ring[i]), 0.5f * membraneWidth, kMembrane, px);
             }
+            if (species) // prolongaciones rígidas: su borde (lo fino, de menos de un píxel, como una línea)
+                forEachProcess(body, speciesInfo(species->id), shellOffset(reg, e), [&](const Vec2* l, const Vec2* r, int m) {
+                    if (length(l[0] - r[0]) < 1.5f * px) {
+                        for (int i = 0; i + 1 < m; ++i)
+                            fastLine(toRay((l[i] + r[i]) * 0.5f), toRay((l[i + 1] + r[i + 1]) * 0.5f), membraneWidth,
+                                     kMembrane);
+                        return;
+                    }
+                    for (int i = 0; i + 1 < m; ++i) {
+                        fastLine(toRay(l[i]), toRay(l[i + 1]), membraneWidth, kMembrane);
+                        fastLine(toRay(r[i]), toRay(r[i + 1]), membraneWidth, kMembrane);
+                    }
+                    fastLine(toRay(l[m - 1]), toRay(r[m - 1]), membraneWidth, kMembrane);
+                });
             if (level < DetailLevel::Normal)
                 return;
 

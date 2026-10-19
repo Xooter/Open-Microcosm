@@ -31,10 +31,10 @@ bool warned(const std::string& fragment) {
 
 } // namespace
 
-TEST_CASE("contenido: el paquete de fábrica carga sus 72 seres en el orden de siempre, sin avisos" *
+TEST_CASE("contenido: el paquete de fábrica carga sus 73 seres en el orden de siempre, sin avisos" *
           doctest::test_suite("paquetes")) {
-    // 24 de la gota, 3 de cultivo (20b), 5 de los preparados (20c) 8 del lote 1 de candidatos, 7 del lote 2, 18 del lote 3 y 7 del lote 4.
-    CHECK(speciesCount() == 72);
+    // 24 de la gota, 3 de cultivo (20b), 5 de los preparados (20c) 8 del lote 1 de candidatos, 7 del lote 2, 18 del lote 3, 7 del lote 4 y Staurastrum.
+    CHECK(speciesCount() == 73);
     CHECK(speciesLoadWarnings().empty());
     // Ningún registro avisa nada con el paquete de fábrica (una clave mal escrita se avisa).
     for (const auto* list : {&bodyPlanWarnings(), &physiologyWarnings(), &mineralLoadWarnings(), &biomeLoadWarnings(),
@@ -55,7 +55,7 @@ TEST_CASE("contenido: el paquete de fábrica carga sus 72 seres en el orden de s
     CHECK(prey.test(static_cast<std::size_t>(*findSpecies("colpidium"))));
     CHECK(prey.count() == 3);
     // Etiquetas: los hospedadores de los quitridios (antes, una máscara fija en el código).
-    CHECK(speciesWithTag("chytrid_host").count() == 15);
+    CHECK(speciesWithTag("chytrid_host").count() == 16);
     CHECK(hasTag(SpeciesId::Pediastrum, "photobiont"));
     CHECK(speciesGenome(SpeciesId::Arcella)[Gene::Armor] == doctest::Approx(0.9f));
 }
@@ -625,4 +625,43 @@ TEST_CASE("contenido: cada archivo de fábrica es una definición con el nombre 
     CHECK(findSpecies("neutrofilo") == findSpecies("neutrophil"));
     CHECK(findBiome("charco") == BiomeId::Puddle);
     CHECK(findMineral("arcilla") == MineralKind::Clay);
+}
+
+TEST_CASE("contenido: prolongaciones rígidas (cuernos de Ceratium, brazos de Staurastrum)" * doctest::test_suite("paquetes")) {
+    const auto ceratium = findSpecies("ceratium");
+    REQUIRE(ceratium);
+    const std::vector<ProcessSpec>& horns = speciesInfo(*ceratium).processes;
+    REQUIRE(horns.size() == 3);
+    CHECK(horns[0].kind == ProcessKind::Horn);
+    CHECK(horns[0].at == doctest::Approx(0.0f));
+    CHECK(horns[0].length == doctest::Approx(90.0f));
+    CHECK(horns[1].at == doctest::Approx(172.0f * 3.14159265f / 180.0f));
+    // El cuerno apical es más largo que todo el cuerpo (60 µm): por eso no puede ser membrana.
+    CHECK(horns[0].length > 2.0f * speciesInfo(*ceratium).spec.radiusX);
+
+    // Tres brazos a 120°: la simetría radial reparte las copias en toda la vuelta.
+    const auto staurastrum = findSpecies("staurastrum");
+    REQUIRE(staurastrum);
+    const ProcessSpec& arms = speciesInfo(*staurastrum).processes.at(0);
+    CHECK(arms.count == 3);
+    CHECK(processAngle(arms, 1) - processAngle(arms, 0) == doctest::Approx(2.0f * 3.14159265f / 3.0f));
+
+    // Un abanico centrado: tres espinas en 90° quedan a −30°, 0° y +30° de la dirección.
+    ProcessSpec fan;
+    fan.at = 3.14159265f;
+    fan.count = 3;
+    fan.spread = 3.14159265f / 2.0f;
+    CHECK(processAngle(fan, 0) == doctest::Approx(3.14159265f - 3.14159265f / 6.0f));
+    CHECK(processAngle(fan, 1) == doctest::Approx(3.14159265f));
+
+    // La curvatura es un arco: la punta queda a la distancia de la cuerda y el largo se conserva
+    // escalado con la célula.
+    ProcessSpec bent;
+    bent.length = 20.0f;
+    bent.curve = 3.14159265f / 2.0f;
+    const Vec2 tip = processAxisPoint(bent, 1.0f, 1.0f);
+    const float radius = 20.0f / bent.curve;
+    CHECK(length(tip) == doctest::Approx(radius * std::sqrt(2.0f)).epsilon(1e-3));
+    CHECK(processAxisPoint(bent, 1.0f, 2.0f).x == doctest::Approx(2.0f * tip.x));
+    CHECK(processWidth(bent, 0.0f, 1.0f) == doctest::Approx(bent.baseWidth));
 }

@@ -306,6 +306,11 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   *Paramecium* además se acumula donde hay CO₂ (`acidTrap`, Jennings): los enjambres emergen.
 - Depredación: `handlingHours` (tiempo de manipulación entre presas enteras, `Digestion::handling`)
   y saciedad por volumen ingerido (`satiated`, `World::isSatiated`).
+- **Prolongaciones rígidas** (`ProcessSpec`, `[[being.process]]`: cuernos de *Ceratium*, brazos de
+  *Staurastrum*, espinas de lóricas y testas): son pared, no membrana, así que no entran en el anillo
+  (un cuerno de 2 µm de punta sería más fino que una partícula). El render las dibuja en el marco del
+  cuerpo (`forEachProcess`) y la ficha las nombra; la colisión y el límite para los depredadores están
+  pendientes (fase 2 en `docs/candidatos.md`).
 - Algas: filamentos (`filament`: crecen a lo largo con `setRestAreaAxial` y se dividen por tabique),
   colonias (`colonyDaughters`), diatomeas (`glider`, `frustule`), `dryMassScale` para cuerpos
   huecos o vacuolados. Fotótrofas cuentan P y N (`Metabolism::phosphorus/nitrogen`), conservados:

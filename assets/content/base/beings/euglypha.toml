@@ -27,3 +27,15 @@ semi_minor_axis = 24.0
 shape_memory = 0.0
 color = [200, 198, 186]
 nucleus = 0.25
+
+# Espinas cortas pegadas a la testa con un cemento orgánico, sobre todo en los bordes del caparazón
+# aplanado y no junto a la abertura (Kreutz). Largo y cantidad estimados por las figuras.
+[[being.process]]
+kind = "spine"
+at = 180.0
+length = 6.0
+base_width = 1.0
+tip_width = 0.3
+count = 14
+spread = 260.0
+

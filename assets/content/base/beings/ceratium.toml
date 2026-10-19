@@ -1,6 +1,9 @@
 # Ceratium furcoides: dinoflagelado tecado de 123–300 × 28–42 µm con un cuerno apical largo y dos
-# cuernos posteriores; cloroplastos pardo-amarillos, flagelo transversal y longitudinal (Kreutz).
-# Planctónico de lagos. La silueta es un huso simétrico (los cuernos no se dibujan ni se simulan).
+# cuernos posteriores de largo distinto, el más largo casi recto hacia atrás (a veces un tercero
+# rudimentario); cloroplastos pardo-amarillos, flagelo transversal y longitudinal (Kreutz). Planctónico
+# de lagos. El cuerpo es el de la célula sin cuernos (~60 × 35 µm); los cuernos de la teca son
+# prolongaciones rígidas. Proporciones estimadas por las figuras: cuerno apical de ~90 µm y antapicales
+# de ~40 y ~20 µm (en total, ~190 µm, dentro de los 123–300 µm del diagnóstico).
 [[being]]
 id = "ceratium"
 name = "Ceratium"
@@ -17,11 +20,36 @@ temperature = [4.0, 28.0]
 storage = "starch"
 wall = "cellulose"
 [being.shape]
-semi_major_axis = 100.0
+semi_major_axis = 30.0
 semi_minor_axis = 17.5
 shape_memory = 30.0
 color = [196, 176, 120]
 nucleus = 0.2
+
+# Cuerno apical de la epiteca, recto y largo.
+[[being.process]]
+kind = "horn"
+at = 0.0
+length = 90.0
+base_width = 10.0
+tip_width = 2.0
+
+# Cuerno antapical largo, casi recto hacia atrás.
+[[being.process]]
+kind = "horn"
+at = 172.0
+length = 40.0
+base_width = 9.0
+tip_width = 2.0
+
+# Cuerno antapical corto, abierto hacia el costado.
+[[being.process]]
+kind = "horn"
+at = 205.0
+length = 20.0
+base_width = 7.0
+tip_width = 2.0
+curve = 10.0
 
 [being.appearance]
 plastid_color = [168, 130, 50]

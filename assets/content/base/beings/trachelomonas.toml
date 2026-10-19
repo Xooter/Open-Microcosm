@@ -23,3 +23,14 @@ semi_minor_axis = 10.5
 shape_memory = 30.0
 color = [186, 150, 96]
 nucleus = 0.3
+
+# La lórica está cubierta de espinas cortas y agudas, repartidas por toda la superficie (Kreutz): en la
+# vista se ven las del contorno. Largo estimado por las figuras. Algunas poblaciones no las tienen.
+[[being.process]]
+kind = "spine"
+at = 0.0
+length = 2.0
+base_width = 0.8
+tip_width = 0.2
+count = 36
+

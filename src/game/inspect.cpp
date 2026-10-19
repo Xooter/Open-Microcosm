@@ -341,6 +341,28 @@ Inspection inspectCell(const World& w, entt::entity e) {
             add(s, "Defensa", "coraza gruesa: no se la puede fagocitar");
         else if (info.frustule)
             add(s, "Defensa", "frustula de silice: cuesta romperla");
+        if (!info.processes.empty()) {
+            // Cuántas de cada tipo y la más larga (prolongaciones rígidas de la pared o la lórica).
+            constexpr const char* kOne[] = {"cuerno", "espina", "brazo", "seta"};
+            constexpr const char* kMany[] = {"cuernos", "espinas", "brazos", "setas"};
+            int count[4] = {0, 0, 0, 0};
+            float longest[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+            for (const ProcessSpec& p : info.processes) {
+                const int k = static_cast<int>(p.kind);
+                count[k] += p.count;
+                longest[k] = std::max(longest[k], p.length);
+            }
+            std::string text;
+            for (int k = 0; k < 4; ++k) {
+                if (count[k] == 0)
+                    continue;
+                if (!text.empty())
+                    text += ", ";
+                text += std::to_string(count[k]) + " " + (count[k] == 1 ? kOne[k] : kMany[k]) + " de hasta " +
+                        std::to_string(static_cast<int>(std::lround(longest[k]))) + " um";
+            }
+            add(s, "Prolongaciones", text + " (rigidas, de la pared)");
+        }
         const char* repro = info.budding                ? "gemacion: una yema crece y se separa"
                             : info.colonyDaughters > 0  ? "libera colonias hijas"
                             : info.filament             ? "division con tabique y fragmentacion del filamento"

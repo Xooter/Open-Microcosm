@@ -225,6 +225,22 @@ void writeSpecies(Json& j, SpeciesId id) {
     j.boolean("filamento", s.filament);
     j.number("colonias_hijas", s.colonyDaughters);
     j.number("celulas_colonia", s.colonyCells);
+    // Prolongaciones rígidas (cuernos, espinas, brazos) para el tamaño típico.
+    j.beginArray("prolongaciones");
+    for (const ProcessSpec& p : s.processes) {
+        constexpr const char* kKind[] = {"cuerno", "espina", "brazo", "seta"};
+        j.beginObject();
+        j.string("tipo", kKind[static_cast<int>(p.kind)]);
+        j.number("direccion_grados", p.at * 180.0 / units::kPi);
+        j.quantity("largo", p.length, "µm");
+        j.quantity("ancho_base", p.baseWidth, "µm");
+        j.quantity("ancho_punta", p.tipWidth, "µm");
+        j.number("curvatura_grados", p.curve * 180.0 / units::kPi);
+        j.number("copias", p.count);
+        j.number("abanico_grados", p.spread * 180.0 / units::kPi);
+        j.endObject();
+    }
+    j.endArray();
     j.boolean("gemacion", s.budding);
     j.number("masa_seca_relativa", s.dryMassScale);
     j.number("espesor_um", s.thickness > 0.0f ? s.thickness : s.spec.radiusY);

@@ -87,6 +87,32 @@ enum class FeedingMode : std::uint8_t {
 // Célula de un organismo pluricelular en cultivo (fase 20b): qué mecanismos tiene, por nombre en
 // los datos ([being.cell]). Los valores medidos (rapidez, persistencia, fases del ciclo…) van con
 // su fuente en [physiology.<id>.*].
+// Prolongación rígida de la superficie: el cuerno de la teca de Ceratium, el brazo de una desmidia, la
+// espina de una lórica o de una testa. Es pared (celulosa, sílice, lórica), no membrana: no se deforma
+// con el cuerpo blando ni entra en su anillo (uno de 2 µm de punta sería más fino que una partícula de
+// membrana). Hoy se dibuja y se nombra en la ficha; la colisión con otros cuerpos y el límite que pone
+// a los depredadores quedan para después (ver docs/candidatos.md).
+enum class ProcessKind : std::uint8_t { Horn, Spine, Arm, Seta };
+struct ProcessSpec {
+    ProcessKind kind = ProcessKind::Spine;
+    float at = 0.0f;        // dirección desde el polo anterior [rad], en el plano de la vista
+    float length = 10.0f;   // desde la superficie [µm], para la célula del tamaño típico
+    float baseWidth = 2.0f; // [µm]
+    float tipWidth = 0.5f;  // [µm]
+    float curve = 0.0f;     // giro total a lo largo [rad] (positivo: hacia la izquierda del eje)
+    int count = 1;          // copias: repartidas en `spread`, o en toda la vuelta si spread = 0
+    float spread = 0.0f;    // abanico que cubren las copias [rad]
+};
+// Dirección [rad desde el polo anterior] de la copia k de una prolongación.
+float processAngle(const ProcessSpec& p, int k);
+// Punto del eje a la fracción s ∈ [0, 1] del largo, en el marco de la prolongación (base en el origen,
+// sale por +x), con su curvatura; `scale` es el tamaño de la célula respecto del típico.
+Vec2 processAxisPoint(const ProcessSpec& p, float s, float scale);
+// Ancho a la fracción s del largo [µm].
+inline float processWidth(const ProcessSpec& p, float s, float scale) {
+    return scale * (p.baseWidth + (p.tipWidth - p.baseWidth) * s);
+}
+
 struct AnimalCellInfo {
     bool present = false;
     bool adherent = true;              // adherida al fondo por adhesiones focales: el agua no la lleva
@@ -171,6 +197,7 @@ struct SpeciesInfo {
     bool plastidColorSet = false;
     std::uint8_t plastidColor[3] = {0, 0, 0};
     AnimalCellInfo animalCell;
+    std::vector<ProcessSpec> processes; // [[being.process]]
 };
 // Estilos de dibujo que el render sabe hacer (para validar los datos).
 const std::vector<std::string>& drawingStyles();

@@ -3,6 +3,7 @@
 #include "core/ids.hpp"
 #include "core/pack_files.hpp"
 #include "core/toml_reader.hpp"
+#include "core/units.hpp"
 
 #include <toml++/toml.hpp>
 
@@ -80,7 +81,10 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell"};
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process"};
+constexpr const char* kProcessKeys[] = {"kind", "at", "length", "base_width", "tip_width", "curve", "count", "spread"};
+constexpr std::pair<const char*, ProcessKind> kProcessKind[] = {
+    {"horn", ProcessKind::Horn}, {"spine", ProcessKind::Spine}, {"arm", ProcessKind::Arm}, {"seta", ProcessKind::Seta}};
 constexpr const char* kAnimalCellKeys[] = {"adherent", "rounded_radius", "contact_inhibition_locomotion",
                                            "contact_inhibition_proliferation", "min_serum",
                                            "apoptosis_without_serum_h", "divides", "fmlp_chemotaxis"};
@@ -190,6 +194,39 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         if (a.roundRadius <= 0.0f)
             cr.errors.push_back(cr.where + ": 'rounded_radius' tiene que ser positivo");
         r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
+    if (const toml::node* pn = t.get("process")) {
+        const toml::array* arr = pn->as_array();
+        if (!arr) {
+            r.errors.push_back(r.where + ": 'process' tiene que ser una lista ([[being.process]])");
+        } else {
+            for (const toml::node& item : *arr) {
+                const toml::table* pt = item.as_table();
+                if (!pt) {
+                    r.errors.push_back(r.where + ": cada [[being.process]] tiene que ser una tabla");
+                    continue;
+                }
+                toml_io::warnUnknown(*pt, kProcessKeys, r.where + " [process]", warnings);
+                Reader pr{*pt, r.where + " [process]", {}};
+                ProcessSpec p;
+                float atDeg = 0.0f, curveDeg = 0.0f, spreadDeg = 0.0f;
+                pr.choice("kind", kProcessKind, p.kind, true);
+                pr.num("at", atDeg);
+                pr.count("length", p.length);
+                pr.count("base_width", p.baseWidth);
+                pr.count("tip_width", p.tipWidth);
+                pr.num("curve", curveDeg);
+                pr.count("count", p.count);
+                pr.count("spread", spreadDeg);
+                if (p.length <= 0.0f || p.baseWidth <= 0.0f || p.count < 1)
+                    pr.errors.push_back(pr.where + ": 'length' y 'base_width' tienen que ser positivos y 'count' al menos 1");
+                p.at = atDeg * units::kPi / 180.0f;
+                p.curve = curveDeg * units::kPi / 180.0f;
+                p.spread = spreadDeg * units::kPi / 180.0f;
+                r.errors.insert(r.errors.end(), pr.errors.begin(), pr.errors.end());
+                s.processes.push_back(p);
+            }
+        }
     }
     if (const toml::table* look = t.get("appearance") ? t.get("appearance")->as_table() : nullptr) {
         for (const auto& [k, v] : *look)
@@ -337,6 +374,25 @@ void ensureBase() {
 }
 
 } // namespace
+
+float processAngle(const ProcessSpec& p, int k) {
+    const float n = static_cast<float>(std::max(1, p.count));
+    if (p.count <= 1)
+        return p.at;
+    if (p.spread > 0.0f) // abanico centrado en `at`
+        return p.at - 0.5f * p.spread + p.spread * (static_cast<float>(k) + 0.5f) / n;
+    return p.at + 2.0f * units::kPi * static_cast<float>(k) / n; // simetría radial (brazos)
+}
+
+Vec2 processAxisPoint(const ProcessSpec& p, float s, float scale) {
+    // Arco de curvatura constante: la dirección gira de 0 a `curve` a lo largo del largo.
+    const float len = p.length * scale;
+    if (std::abs(p.curve) < 1e-4f)
+        return {len * s, 0.0f};
+    const float radius = len / p.curve;
+    const float a = p.curve * s;
+    return {radius * std::sin(a), radius * (1.0f - std::cos(a))};
+}
 
 const std::vector<std::string>& drawingStyles() {
     static const std::vector<std::string> styles = {

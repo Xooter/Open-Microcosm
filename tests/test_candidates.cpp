@@ -111,3 +111,4 @@ TEST_CASE("candidatos: Phaeodactylum se divide" * doctest::test_suite("largos"))
 TEST_CASE("candidatos: Thalassiosira se divide" * doctest::test_suite("largos")) { reproduces("thalassiosira"); }
 TEST_CASE("candidatos: Fragilariopsis se divide" * doctest::test_suite("largos")) { reproduces("fragilariopsis"); }
 TEST_CASE("candidatos: Polarella se divide" * doctest::test_suite("largos")) { reproduces("polarella"); }
+TEST_CASE("candidatos: Staurastrum se divide" * doctest::test_suite("largos")) { reproduces("staurastrum"); }

@@ -86,6 +86,15 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   [µm], `contact_inhibition_locomotion`, `contact_inhibition_proliferation`, `min_serum`
   [fracción], `apoptosis_without_serum_h`, `divides`, `fmlp_chemotaxis`. `relative_dry_mass`: la
   célula extendida es mucho más delgada que el esferoide de su silueta.
+- `[[being.process]]` (una por prolongación): **prolongaciones rígidas** de la pared, la teca, la lórica
+  o la testa (el cuerno de *Ceratium*, los brazos de *Staurastrum*, las espinas de *Trachelomonas*).
+  `kind`: `horn` | `spine` | `arm` | `seta`; `at`: dirección desde el polo anterior [°]; `length`
+  desde la superficie, `base_width` y `tip_width` [µm], para el tamaño típico (escalan con la
+  célula); `curve`: giro total a lo largo [°, positivo hacia la izquierda]; `count`: copias, repartidas
+  en `spread` [°] alrededor de `at` o, sin `spread`, en toda la vuelta (simetría radial). No son
+  membrana: no entran en el anillo del cuerpo blando. Hoy se dibujan (con el mismo borde óptico que la
+  célula; las espinas de una coraza salen de su borde) y se nombran en la ficha; no chocan ni limitan a
+  los depredadores todavía.
 
 ### Fisiología medida: `[physiology.<id>.<parámetro>]`
 

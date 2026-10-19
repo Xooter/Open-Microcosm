@@ -33,6 +33,15 @@ color = [190, 186, 160]
 nucleus = 0.3
 squareness = 3.0
 
+# Tres espinas posteriores de la armadura (Kreutz); largo estimado por las figuras.
+[[being.process]]
+kind = "spine"
+at = 180.0
+length = 4.0
+base_width = 1.5
+tip_width = 0.3
+count = 3
+spread = 50.0
 
 [physiology.coleps.max_growth]
 # Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
