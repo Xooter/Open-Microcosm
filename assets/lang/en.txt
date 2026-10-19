@@ -980,6 +980,7 @@ Necesidad de recibir hecho un compuesto que la célula no puede fabricar. Muchas
 Necesita menos fosforo disuelto para crecer al ritmo de la dilucion (menor R*)	It needs less dissolved phosphorus to grow at the dilution rate (lower R*)
 Neutrofilo	Neutrophil
 Ninguno (tasa máxima)	None (maximum rate)
+Ningún ser coincide con la búsqueda.	No being matches the search.
 Ningún ser controlado. Con la herramienta Controlar (2), click en una célula (o P sobre ella).	No controlled being. With the Control tool (2), click on a cell (or P over it).
 Nitrógeno	Nitrogen
 Nitrógeno [µM]	Nitrogen [µM]

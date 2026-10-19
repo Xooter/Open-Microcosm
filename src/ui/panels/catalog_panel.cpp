@@ -1,5 +1,6 @@
 // Catálogo: todos los seres y el sedimento. Un click arma el spawn (herramienta Spawnear).
 #include "app/app.hpp"
+#include "game/glossary.hpp"
 #include "ui/being_icons.hpp"
 #include "ui/panels/panel_classes.hpp"
 #include "ui/widgets.hpp"
@@ -11,6 +12,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <string>
+#include <vector>
 
 namespace ui {
 
@@ -32,6 +35,45 @@ const std::vector<int>& categoryItems(int category) {
         }
     }
     return table[static_cast<std::size_t>(category)];
+}
+
+// Para buscar: minúsculas y sin tildes (Latin-1 en UTF-8), así "celula" encuentra "Célula".
+std::string searchKey(std::string_view text) {
+    std::string folded = foldCase(text);
+    std::string out;
+    out.reserve(folded.size());
+    for (std::size_t i = 0; i < folded.size(); ++i) {
+        const auto c = static_cast<unsigned char>(folded[i]);
+        if (c != 0xC3 || i + 1 >= folded.size()) {
+            out += folded[i];
+            continue;
+        }
+        const auto d = static_cast<unsigned char>(folded[i + 1]);
+        char plain = 0;
+        if (d >= 0xA0 && d <= 0xA5) plain = 'a';
+        else if (d == 0xA7) plain = 'c';
+        else if (d >= 0xA8 && d <= 0xAB) plain = 'e';
+        else if (d >= 0xAC && d <= 0xAF) plain = 'i';
+        else if (d == 0xB1) plain = 'n';
+        else if (d >= 0xB2 && d <= 0xB6) plain = 'o';
+        else if (d >= 0xB9 && d <= 0xBC) plain = 'u';
+        if (plain != 0) {
+            out += plain;
+            ++i;
+        } else
+            out += folded[i];
+    }
+    return out;
+}
+
+// ¿El ser coincide con la búsqueda? Por su nombre en español, en el idioma de la interfaz o por su
+// id de los datos ("paramecium").
+bool matchesSearch(Being b, const std::string& wanted) {
+    const char* name = beingName(b);
+    if (searchKey(name).find(wanted) != std::string::npos ||
+        searchKey(tr(name)).find(wanted) != std::string::npos)
+        return true;
+    return b.kind == BeingKind::Species && searchKey(speciesInfo(b.species).key).find(wanted) != std::string::npos;
 }
 
 // La rueda del mouse sobre la barra desplaza las pestañas (ImGui solo trae flechas).
@@ -115,6 +157,22 @@ class CatalogPanel : public Panel {
             drawInoculate(app, st);
         } else
             note("Elegí un ser y hacé click en la placa para ponerlo. Esc cancela.");
+        ImGui::SetNextItemWidth(-1.0f);
+        ImGui::InputTextWithHint("##buscar", tr("Buscar"), filter_, sizeof filter_);
+        const std::string wanted = searchKey(filter_);
+        // Con una búsqueda, los resultados de todas las categorías en vez de las pestañas.
+        if (!wanted.empty()) {
+            found_.clear();
+            for (int i : categoryItems(kAllTab))
+                if (matchesSearch(beingAt(i), wanted))
+                    found_.push_back(i);
+            if (found_.empty())
+                note("Ningún ser coincide con la búsqueda.");
+            if (ImGui::BeginChild("##icons"))
+                drawIcons(app, found_);
+            ImGui::EndChild();
+            return;
+        }
         if (!ImGui::BeginTabBar("##cats", ImGuiTabBarFlags_FittingPolicyScroll))
             return;
         scrollTabBarWithWheel();
@@ -127,7 +185,7 @@ class CatalogPanel : public Panel {
             st.category = c;
             // Los íconos van en una región propia: se desplazan sin llevarse las pestañas.
             if (ImGui::BeginChild("##icons"))
-                drawIcons(app, c);
+                drawIcons(app, categoryItems(c));
             ImGui::EndChild();
             ImGui::EndTabItem();
         }
@@ -135,12 +193,15 @@ class CatalogPanel : public Panel {
     }
 
   private:
-    void drawIcons(App& app, int category) {
+    char filter_[64] = "";
+    std::vector<int> found_; // resultados de la búsqueda (se reusa entre cuadros)
+
+    void drawIcons(App& app, const std::vector<int>& items) {
         CatalogState& st = app.catalog;
         constexpr float kSize = 48.0f;
         const float width = ImGui::GetContentRegionAvail().x;
         float x = 0.0f;
-        for (int i : categoryItems(category)) {
+        for (int i : items) {
             const Being b = beingAt(i);
             const bool usable = !st.reshape || b.kind == BeingKind::Species;
             if (x + kSize > width && x > 0.0f)
