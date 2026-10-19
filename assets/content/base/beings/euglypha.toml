@@ -1,6 +1,7 @@
 # Euglypha strigosa: tecameba de testa ovoide de 45–100 µm, hecha de escamas ovales de sílice con
-# espinas, en el musgo y en las turberas (Kreutz). Al dividirse, la hija arma su testa con escamas que
-# la madre tiene en reserva (acá se divide como una ameba con coraza).
+# espinas, en el musgo y en las turberas (Kreutz). No se estrangula como una ameba desnuda: el
+# citoplasma de la hija sale por la abertura, arma su testa con las escamas que la madre tiene en
+# reserva y se separa. Acá es la gemación (una yema que crece en un polo y se suelta).
 [[being]]
 id = "euglypha"
 name = "Euglypha"
@@ -12,6 +13,8 @@ feeding = "phagocytosis"
 relative_speed = 0.4
 prey = ["chlorella", "navicula", "chlamydomonas", "desmodesmus"]
 initial_count = 3
+daughter_colonies = 1
+budding = true
 handling_hours = 1.0
 ph = [4.5, 8.5]
 temperature = [0.0, 28.0]

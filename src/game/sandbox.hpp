@@ -89,7 +89,10 @@ inline BeingCategory categoryOf(Being b) {
             return BeingCategory::PlantCells;
         if (s.budding && s.feeding == FeedingMode::Osmotroph)
             return BeingCategory::Fungi;
-        if (s.filament || s.glider || s.colonyDaughters > 0 || (s.feeding == FeedingMode::None && s.chloroplasts))
+        // Liberar hijas (colonias o yemas) cuenta como alga solo con cloroplastos: las tecamebas como
+        // Euglypha también brotan.
+        if (s.filament || s.glider || (s.colonyDaughters > 0 && s.chloroplasts) ||
+            (s.feeding == FeedingMode::None && s.chloroplasts))
             return BeingCategory::Algae;
         if (s.locomotion == LocomotionType::Pseudopod)
             return BeingCategory::Amoebae;

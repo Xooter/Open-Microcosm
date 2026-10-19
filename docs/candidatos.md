@@ -133,33 +133,39 @@ cargado. Comprobada contra los que tienen dato: *Colpidium* 1,64/día estimado c
 | `fragilariopsis` | *F. cylindrus* | 7 × 5 µm (real 3–7 × 2–4; espesor ajustado al volumen) | sin dato | Hielo marino (NCMA CCMP1102, −2 a 2 °C) |
 | `polarella` | *P. glacialis* | 12 × 7 µm | sin dato | Hielo marino (NCMA CCMP1383, 0–6 °C); enquista |
 
-## Falta validar
+## Validación de los lotes 2 a 4 (19/10/2026)
 
-Los lotes 2, 3 y 4 se cargaron **sin correr las suites** (para probarlos todos juntos). Antes del
-commit:
+Pasan las tres suites (`rapidos`, `largos` con un caso de reproducción por ser, y `validacion`).
+Lo que hubo que arreglar:
 
-1. **Suites:** `ctest -L rapidos` (conteo de seres, categorías, paquetes sin avisos), `ctest -L largos`
-   (`tests/test_candidates.cpp`: un caso de reproducción por ser) y `ctest -L validacion`.
-2. **Reproducción en la placa** (riesgos ya conocidos; ver «Bloqueados»):
-   - formas largas, porque el surco puede no cerrarse: `ceratium` (200 × 35), `closterium` (275 × 45),
-     `litonotus` (75 × 18), `phaeodactylum` (30 × 5), `blepharisma` (230 × 80);
-   - amebas chicas: `euglypha` (radio 36 µm, con coraza);
-   - cuerpos muy chicos: `thalassiosira` (radio 2,6 µm), `fragilariopsis` (3,5 × 2,5 µm);
-   - sésiles nuevos: `acineta`, `epistylis` (tallo de 200 µm), `gomphonema` (diatomea sésil: combinación
-     nueva de `frustula` + `sesil`);
-   - filamento nuevo: `ulothrix` (células de 12 × 8 µm, las más chicas de un filamento hasta ahora);
-   - estilos de colonia nuevos: `gonium`, `pandorina`, `eudorina` (el lote 2 ya pasó sus casos largos).
-3. **Cultivo bien mezclado:** que `Culture::supports` acepte a los que corresponde y que los µmax
-   cargados den la tasa esperada (validación nueva por especie con dato medido: `tetrahymena`,
-   `colpidium`, `saccharomyces`, `chlorella`, `raphidocelis`, `desmodesmus`, `stylonychia`,
-   `cryptomonas`, `ceratium`).
-4. **Células animales:** `nih_3t3` y `hacat` con el ciclo, la migración y la confluencia de sus datos
-   (como `tests/test_animal_cells.cpp` hace con el fibroblasto y HeLa).
-5. **Rendimiento:** charco y estanque suman unas 25 especies nuevas con peso 1 (`peso_base`): medir
-   `bio_bench --wildlife 3` contra el commit anterior.
-6. **Datos por confirmar:** anchos estimados (*Blepharisma*, *Colpoda*, *Chilodonella*,
-   *Peranema*), temperatura de los µmax de *Stylonychia*, *Cryptomonas*, *Ceratium* y *Acanthamoeba*,
-   y la tabla de HaCaT.
+- **Umbral de cierre del surco** (`furrowClosed`, `bio/division.cpp`): de 2,5 a 3 radios de membrana.
+  El contacto de la membrana consigo misma deja las dos caras del surco a ~2,6 radios entre vértices,
+  así que las células casi redondas (*Cosmarium*, *Micrasterias*) quedaban con el surco cerrado sin
+  partirse. Cambia el instante de la división de todos los seres (las suites pasan igual).
+- ***Euglypha*** se reproduce por **gemación**: la tecameba real no se estrangula; la hija sale por la
+  abertura y arma su testa. (Así también evita el problema de las amebas plásticas chicas.)
+- ***Closterium*** y ***Ceratium***: sin `taper`, que afina solo el polo posterior y cruzaba el anillo al
+  dividirse; los dos son simétricos en la silueta que se simula.
+- **Catálogo:** liberar hijas cuenta como alga solo con cloroplastos (*Euglypha* brota y es ameba).
+
+**Rendimiento** (`bio_bench --wildlife 3`, 300 pasos, contra 52ca0f0): charco 31,7 → 43,1 ms/paso
+(+36 %, 848 → 875 células), estanque 40,6 → 46,7 ms/paso (+15 %, 882 → 927 células). Casi las mismas
+células pero más caras: los seres grandes nuevos (*Chaos*, *Micrasterias*, *Stylonychia*, *Frontonia*,
+*Closterium*, *Blepharisma*) tienen anillos de membrana largos. **Pendiente decidir** si bajan sus pesos
+en las gotas por omisión.
+
+**Sigue pendiente:**
+
+- *Acanthamoeba* y *Naegleria*: la división de las amebas plásticas chicas no cierra (el surco se
+  estanca lejos del umbral; no es el contacto ni el eje del cuerpo, que se mantiene estable).
+- Cultivo bien mezclado: que los µmax cargados den la tasa esperada (validación por especie con dato
+  medido: `tetrahymena`, `colpidium`, `saccharomyces`, `chlorella`, `raphidocelis`, `desmodesmus`,
+  `stylonychia`, `cryptomonas`, `ceratium`).
+- Células animales: `nih_3t3` y `hacat` con su ciclo, migración y confluencia (como
+  `tests/test_animal_cells.cpp` con el fibroblasto y HeLa).
+- Datos por confirmar: anchos estimados (*Blepharisma*, *Colpoda*, *Chilodonella*, *Peranema*),
+  temperatura de los µmax de *Stylonychia*, *Cryptomonas*, *Ceratium* y *Acanthamoeba*, y la tabla de
+  HaCaT.
 
 ### Datos investigados que todavía no alcanzan
 

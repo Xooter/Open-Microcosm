@@ -1,6 +1,6 @@
 # Ceratium furcoides: dinoflagelado tecado de 123–300 × 28–42 µm con un cuerno apical largo y dos
 # cuernos posteriores; cloroplastos pardo-amarillos, flagelo transversal y longitudinal (Kreutz).
-# Planctónico de lagos. La silueta es un huso (los cuernos no se dibujan).
+# Planctónico de lagos. La silueta es un huso simétrico (los cuernos no se dibujan ni se simulan).
 [[being]]
 id = "ceratium"
 name = "Ceratium"
@@ -22,7 +22,6 @@ semi_minor_axis = 17.5
 shape_memory = 30.0
 color = [196, 176, 120]
 nucleus = 0.2
-taper = 0.7
 
 [being.appearance]
 plastid_color = [168, 130, 50]

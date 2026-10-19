@@ -78,7 +78,10 @@ bool furrowClosed(const RingBody& body, const BodyParticles& bp, std::size_t& ti
     furrowTips(body, bp, a, tipA, tipB, da, db);
     if (da == std::numeric_limits<float>::max() || db == std::numeric_limits<float>::max())
         return false;
-    const float touch = 2.5f * bp.radius[body.ring[0]];
+    // El contacto de la membrana consigo misma deja las dos caras del surco a 2 radios (de punto a
+    // arista), ~2,6 entre vértices: con 2,5 radios las células casi redondas (Cosmarium) y las de
+    // radio de membrana grande quedaban con el surco cerrado sin partirse nunca.
+    const float touch = 3.0f * bp.radius[body.ring[0]];
     return length(pos(bp, body.ring[tipA]) - pos(bp, body.ring[tipB])) < touch;
 }
 
