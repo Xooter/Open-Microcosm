@@ -53,14 +53,14 @@ double emergentMic(const char* key) {
 } // namespace
 
 TEST_CASE("reactivo: la función farmacodinámica de Regoes") {
-    const Reagent& amp = byKey("ampicilina");
+    const Reagent& amp = byKey("ampicillin");
     CHECK(reagentNetGrowth(amp, 0.0) == doctest::Approx(amp.psiMax));
     CHECK(reagentNetGrowth(amp, amp.zMic) == doctest::Approx(0.0).epsilon(1e-9)); // zMIC: crecimiento neto 0
     CHECK(reagentNetGrowth(amp, 1e6) == doctest::Approx(amp.psiMin).epsilon(0.01));
     // Beta-lactámico: a una bacteria que no crece no la mata.
     CHECK(reagentKillRate(amp, 100.0, 0.0) == 0.0);
     CHECK(reagentKillRate(amp, 100.0, amp.psiMax) > 3.0);
-    CHECK(amp.affects("bacterias"));
+    CHECK(amp.affects("bacteria"));
     CHECK_FALSE(amp.affects("protistas"));
     CHECK(reagentLoadWarnings().empty());
 }
@@ -100,7 +100,7 @@ TEST_CASE("reactivo en la placa: el gotero de ampicilina mata a las bacterias qu
         c.medium.temperature = 30.0f;
         World w(c);
         if (drug) {
-            w.setReagent(findReagent("ampicilina"));
+            w.setReagent(findReagent("ampicillin"));
             w.setMeanConcentration(w.reagentField(), 50.0f); // ~15 zMIC
         }
         for (int s = 0; s < 1800; ++s) // 30 s = 30 min biológicos
@@ -116,15 +116,15 @@ TEST_CASE("validación: la CIM de la ampicilina emerge de la dilución en caldo"
     // La simulación usa la farmacodinámica de las curvas de muerte (Regoes et al. 2004), no la CIM.
     // La CIM medida por dilución al doble para la misma cepa es 8 µg/mL: la que emerge tiene que
     // caer a una dilución de distancia (la reproducibilidad de la prueba es ±1 dilución).
-    const double mic = emergentMic("ampicilina");
-    MESSAGE("CIM simulada " << mic << " ug/mL, publicada " << byKey("ampicilina").publishedMic);
-    CHECK(mic >= byKey("ampicilina").publishedMic / 2.0);
-    CHECK(mic <= byKey("ampicilina").publishedMic * 2.0);
+    const double mic = emergentMic("ampicillin");
+    MESSAGE("CIM simulada " << mic << " ug/mL, publicada " << byKey("ampicillin").publishedMic);
+    CHECK(mic >= byKey("ampicillin").publishedMic / 2.0);
+    CHECK(mic <= byKey("ampicillin").publishedMic * 2.0);
 }
 
 TEST_CASE("validación: la CIM de la tetraciclina emerge de la dilución en caldo" * doctest::test_suite("validacion")) {
-    const double mic = emergentMic("tetraciclina");
-    MESSAGE("CIM simulada " << mic << " ug/mL, publicada " << byKey("tetraciclina").publishedMic);
-    CHECK(mic >= byKey("tetraciclina").publishedMic / 2.0);
-    CHECK(mic <= byKey("tetraciclina").publishedMic * 2.0);
+    const double mic = emergentMic("tetracycline");
+    MESSAGE("CIM simulada " << mic << " ug/mL, publicada " << byKey("tetracycline").publishedMic);
+    CHECK(mic >= byKey("tetracycline").publishedMic / 2.0);
+    CHECK(mic <= byKey("tetracycline").publishedMic * 2.0);
 }

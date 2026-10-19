@@ -1,0 +1,7 @@
+[[vessel]]
+id = "dish_100mm"
+legacy_ids = ["placa_100mm"]
+name = "Placa de 100 mm"
+area_cm2 = 55.0
+volume_ml = 10.0
+source = "Corning, \"Surface Areas and Recommended Medium Volumes for Corning Cell Culture Vessels\" (CLS-AN-209)."

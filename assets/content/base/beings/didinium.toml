@@ -1,0 +1,39 @@
+# Didinium nasutum: ~110 × 80 µm, en barril; caza paramecios con su probóscide y los traga
+# enteros. Cuando pasa hambre se enquista.
+
+[[being]]
+id = "didinium"
+name = "Didinium"
+tags = ["protist", "ciliate"]
+description = "Cazador en barril: dispara su probosis contra un paramecio y lo traga entero. Con hambre se enquista."
+locomotion = "cilia"
+conjugation = true
+body_plan = "ciliate"
+feeding = "raptorial"
+prey = ["paramecium", "paramecium_aurelia", "colpidium"]
+encysts = true
+initial_count = 2
+handling_hours = 3.0
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [10.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 55.0
+semi_minor_axis = 40.0
+shape_memory = 8.0
+color = [176, 168, 140]
+nucleus = 0.32
+
+[being.appearance]
+style = "girdles_and_proboscis"
+
+[physiology.didinium.max_growth]
+# Aumento de los depredadores con presa abundante en la fig. 32 (días 4 a 6: de 4,8 a 31): ln(31/4,8)/2.
+value = 0.93
+unit = "1/day"
+temperature = 26.0
+source = "Gause, G. F. (1934). The Struggle for Existence, fig. 32 (Didinium nasutum con P. caudatum; datos en gauseR). Temperatura sin verificar."
+estimate = true

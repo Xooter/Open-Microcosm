@@ -1,0 +1,18 @@
+[[reagent]]
+id = "ampicillin"
+legacy_ids = ["ampicilina"]
+name = "Ampicilina"
+description = "Penicilina de amplio espectro (beta-lactamico): se une a las enzimas que arman el peptidoglicano y la pared se rompe mientras la bacteria crece. A una bacteria que no crece no la mata. Los eucariotas no tienen esa pared."
+mechanism = "pharmacodynamic"
+targets = ["bacteria"]
+growth_dependent = true
+diffusion = 600.0
+[reagent.pharmacodynamics]
+psi_max = 0.75
+psi_min = -4.0
+zmic = 3.4
+kappa = 0.75
+source = "Regoes, R. R. et al. (2004). Antimicrob. Agents Chemother. 48: 3670-3676, tabla 1 (E. coli O18:K1:H7, curvas de muerte): psi_max 0,75/h, psi_min -4,0/h, kappa 0,75, zMIC 3,4 ug/mL."
+[reagent.published_mic]
+value = 8.0
+source = "Regoes et al. (2004), tabla 1: CIM 8 ug/mL por dilución al doble (la misma cepa)."

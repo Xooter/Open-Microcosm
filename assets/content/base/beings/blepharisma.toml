@@ -1,0 +1,39 @@
+# Blepharisma americanum: heterótrico rosa de 180–280 µm, aplanado lateralmente, con pigmento
+# (blefarismina) en bandas y un macronúcleo moniliforme (Kreutz). Ancho estimado (~35 % del largo) y
+# espesor la mitad del ancho. Come bacterias, flagelados y ciliados chicos. La blefarismina lo hace
+# huir de la luz fuerte (fotofobia) y la luz intensa lo daña: no está modelado.
+[[being]]
+id = "blepharisma"
+name = "Blepharisma"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Ciliado rosado de ~230 um. Su pigmento, la blefarismina, lo hace huir de la luz fuerte. Come bacterias, flagelados y ciliados chicos."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "oral_groove"
+relative_speed = 0.4
+mouth_prey = ["chlamydomonas", "cryptomonas", "chlorella", "tetrahymena", "colpoda"]
+conjugation = true
+initial_count = 2
+handling_hours = 1.0
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 115.0
+semi_minor_axis = 40.0
+thickness = 20.0
+shape_memory = 6.0
+color = [214, 156, 170]
+nucleus = 0.25
+
+[physiology.blepharisma.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 115, 40 y 20 µm: 385369 µm³).
+value = 0.7
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 385369 µm³). No es una medición de la especie."
+estimate = true

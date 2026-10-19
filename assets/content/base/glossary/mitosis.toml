@@ -1,0 +1,8 @@
+[[term]]
+id = "mitosis"
+term = "Mitosis"
+definition = "División del núcleo en dos núcleos con el mismo material genético; la citocinesis divide después el citoplasma. En la simulación, cada hija lleva su copia del genoma, que puede mutar."
+source = "Alberts, B. et al. (2015). Molecular Biology of the Cell, 6.ª ed. Garland Science, cap. 17."
+alias = ["mitótico", "mitótica", "citocinesis"]
+related = ["conjugation", "restriction_point"]
+plate = "onion_root_tip"

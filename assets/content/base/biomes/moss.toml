@@ -1,0 +1,37 @@
+# Película de agua fría, en sombra y ácida (pH ~5,5). Amebas tecadas, Naegleria y Nostoc.
+[[biome]]
+id = "moss"
+legacy_ids = ["musgo"]
+name = "Musgo húmedo"
+description = "La película de agua entre las hojitas del musgo: fría, en sombra y ácida. Amebas con testa y Naegleria."
+bacteria = 30000
+detritus = 60
+nitrogen_fixing_filaments = 8 # Nostoc
+oscillatoria_filaments = 4
+cyanobacteria_temperature = [0.0, 35.0]
+saprolegnia = 4
+chytrid_clusters = 2
+allomyces = 1
+lichens = 3 # los líquenes crecen sobre el musgo
+physarum = 3 # hojarasca y musgo húmedo
+patchiness = 0.4
+base_weight = 0.0
+weights = { paramecium = 0.3, euglena = 0.5, amoeba = 1.0, chlamydomonas = 0.4, vorticella = 1.0, euplotes = 1.0, arcella = 3.0, navicula = 0.5, candida = 1.0, naegleria = 3.0, zygnema = 0.5, pinnularia = 1.0, colpoda = 3.0, euglypha = 2.0 }
+[biome.medium]
+temperature = 12.0
+light = 0.4
+alkalinity = 80.0 # agua blanda: el CO₂ del aire la acidifica
+phosphate = 10.0
+nitrogen = 100.0
+silicate = 60.0 # aguas ácidas y blandas: poca sílice
+iron = 1.5  # el hierro es más soluble a pH bajo
+organic_inflow = 40.0 # el musgo y el suelo liberan ácidos húmicos y azúcares
+dust = 0.02
+[biome.sediment]
+# Suelo entre las hojitas: partículas minerales y humus ferruginoso.
+clay = 250
+quartz = 90
+mica = 12
+iron_oxide = 60
+frustule = 5
+grains = 3

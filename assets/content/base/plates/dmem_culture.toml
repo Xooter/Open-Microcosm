@@ -1,0 +1,13 @@
+[[plate]]
+id = "dmem_culture"
+legacy_ids = ["cultivo_dmem"]
+name = "Cultivo celular (DMEM, incubadora)"
+description = "Placa de 35 mm con 2 mL de DMEM alta glucosa y 10 % de suero, en una incubadora a 37 °C y 10 % de CO2 (pH 7,4). Se simula un campo de 2 mm: el anillo de vidrio marca su borde (la pared de la placa real está a 17 mm). Estéril: se le inocula lo que se quiera desde el Catálogo."
+kind = "cell_culture"
+medium = "dmem_high_glucose"
+vessel = "dish_35mm"
+field_um = 2048.0
+[plate.environment]
+temperature = 37.0
+co2 = 0.10
+light = 0.0

@@ -10,7 +10,7 @@ namespace ui {
 // Devuelve un puntero estable (vive tanto como la tabla o la clave).
 const char* tr(const char* key);
 // Carga el idioma `code` ("es" = el base): assets/lang/<code>.txt y, de cada paquete de contenido
-// cargado que sea una carpeta, su idiomas/<code>.txt (los textos de sus seres, medios y lecciones).
+// cargado que sea una carpeta, su lang/<code>.txt (los textos de sus seres, medios y lecciones).
 // Si un texto en español cambia, su traducción deja de coincidir y se muestra en español (así una
 // traducción vieja nunca dice otra cosa). Devuelve false si no hay archivo.
 bool loadLanguage(const std::string& code);

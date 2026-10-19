@@ -1,0 +1,7 @@
+[[vessel]]
+id = "test_tube_10"
+legacy_ids = ["tubo_ensayo_10"]
+name = "Tubo de ensayo (10 mL)"
+area_cm2 = 2.0
+volume_ml = 10.0
+source = "Tubo de ensayo de 16 mm con 10 mL de medio."

@@ -52,7 +52,7 @@ bool hasData(const std::vector<float>& v) {
 class GraphsPanel : public Panel {
   public:
     GraphsPanel() { open = false; } // se abre desde el menú Ver
-    const char* key() const override { return "graficos"; }
+    const char* key() const override { return "graphs"; }
     const char* title() const override { return "Gráficos"; }
     Dock dock() const override { return Dock::RightLow; }
 

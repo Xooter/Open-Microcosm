@@ -1,0 +1,34 @@
+# Colpidium campylum (hoy Dexiostoma campylum): ciliado arriñonado de 45–60 × 20–25 µm (NIES, The
+# World of Protozoa), bacterívoro de los microcosmos clásicos (Lawler y Morin 1993; Holyoak y Lawler
+# 1996) y presa de Didinium. Se conjuga. Sin dato de su velocidad: la de Tetrahymena, de su tamaño.
+[[being]]
+id = "colpidium"
+name = "Colpidium"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Ciliado arrinonado de ~55 um que come bacterias. Abunda en infusiones de hojas y es la presa de Didinium en los microcosmos de laboratorio."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "oral_groove"
+relative_speed = 0.8
+conjugation = true
+initial_count = 8
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 27.0
+semi_minor_axis = 12.0
+shape_memory = 8.0
+color = [178, 180, 158]
+nucleus = 0.32
+
+[physiology.colpidium.max_growth]
+# Tabla 5: generaciones en 24 h según la proporción bacterias:ciliado (Moraxella sp.); el máximo a
+# 20 °C, 1,81 ± 0,10 generaciones/día con 1–2·10⁶ bacterias por ciliado, es una duplicación cada 13,3 h.
+value = 13.3
+unit = "h"
+temperature = 20.0
+source = "Laybourn, J. E. M. (1973). The energetics of Colpidium campylum Stokes. Tesis doctoral, University of Stirling, tabla 5: 1,81 generaciones por día a 20 °C con Moraxella sp. (también Laybourn & Stewart 1974, J. Zool. 174: 277-283, doi 10.1111/j.1469-7998.1974.tb03157.x)."

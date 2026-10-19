@@ -1,0 +1,32 @@
+# Phaeodactylum tricornutum: diatomea marina modelo (genoma secuenciado), fusiforme, de 27–32 × 4–6 µm;
+# cultivo a 20 °C (18–22 °C) (NCMA CCMP2561). Casi sin sílice en la forma fusiforme. Marina: no está en
+# las gotas de agua dulce.
+[[being]]
+id = "phaeodactylum"
+name = "Phaeodactylum tricornutum"
+tags = ["alga", "diatom", "phototroph", "marine"]
+description = "Diatomea marina fusiforme de ~30 um, el organismo modelo de las diatomeas: su genoma fue de los primeros secuenciados."
+locomotion = "cilia"
+body_plan = "diatom"
+relative_speed = 0.0
+relative_photosynthesis = 1.5
+initial_count = 10
+chloroplasts = true
+frustule = true
+ph = [7.0, 9.5]
+temperature = [5.0, 28.0]
+max_salinity = 60.0
+storage = "chrysolaminarin"
+wall = "silica"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 15.0
+semi_minor_axis = 2.5
+shape_memory = 30.0
+color = [204, 184, 120]
+nucleus = 0.3
+taper = 0.6
+
+[being.appearance]
+style = "frustule"
+plastid_color = [176, 140, 50]

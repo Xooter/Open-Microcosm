@@ -153,7 +153,7 @@ inline std::string snippet(const char* arrayKey, const toml::table& t) {
     return out.str();
 }
 
-// Lo mismo para una tabla con nombre dentro de otra (`[fisiologia.paramecium]`).
+// Lo mismo para una tabla con nombre dentro de otra (`[physiology.paramecium]`).
 inline std::string tableSnippet(const char* parent, std::string_view key, const toml::table& t) {
     toml::table inner;
     inner.insert(key, t);

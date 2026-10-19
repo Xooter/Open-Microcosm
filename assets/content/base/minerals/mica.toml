@@ -1,0 +1,8 @@
+[[mineral]]
+id = "mica"
+name = "Mica"
+description = "Mica: escamas hexagonales finísimas y brillantes. Por su forma plana se asientan despacio."
+radius = [3.0, 10.0]
+density_difference = 1800.0
+opacity = 0.1
+style = "flake"

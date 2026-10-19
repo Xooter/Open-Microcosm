@@ -1,0 +1,8 @@
+[[term]]
+id = "competitive_exclusion"
+term = "Exclusión competitiva"
+definition = "Dos especies que dependen del mismo recurso limitante no coexisten indefinidamente: una desplaza a la otra. Gause lo mostró con Paramecium caudatum y P. aurelia alimentados con bacterias en tubos."
+source = "Gause, G. F. (1934). The Struggle for Existence. Williams & Wilkins, Baltimore."
+alias = ["principio de gause", "gause"]
+related = ["r_star", "functional_response"]
+lesson = "gause_competition"

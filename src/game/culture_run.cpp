@@ -1,9 +1,11 @@
 #include "game/culture_run.hpp"
 
+#include "core/paths.hpp"
 #include "core/profiling.hpp"
 #include "core/rng.hpp"
 #include "bio/cell_physiology.hpp"
 #include "core/units.hpp"
+#include "game/legacy_names.hpp"
 #include "game/prepared.hpp"
 #include "game/reagent.hpp"
 #include "game/progress.hpp"
@@ -17,9 +19,18 @@
 #include <sstream>
 
 namespace {
-constexpr const char* kOpKeys[] = {"inocular", "bacterias", "medio",  "dilucion",           "concentracion",
-                                   "fagos",    "muestra",   "salida", "entrada", "inocular_densidad",
-                                   "quimiostato", "medio_que_entra", "reactivo"};
+constexpr const char* kOpKeys[] = {"inoculate", "bacteria", "medium",  "dilution",           "concentration",
+                                   "phages",    "sample",   "withdraw", "receive", "inoculate_density",
+                                   "chemostat", "inflow_medium", "reagent"};
+
+std::string currentVesselId(const std::string& id) {
+    const Vessel* v = findVessel(id);
+    return v ? v->key : id;
+}
+std::string currentMediumId(const std::string& id) {
+    const CultureMedium* m = findCultureMedium(id);
+    return m ? m->key : id;
+}
 
 std::string fnum(double v) {
     char buf[40];
@@ -137,12 +148,12 @@ void CultureRun::buildColumns() {
     c.push_back({"t", "h", "Tiempo"});
     for (int s = 0; s < speciesCount(); ++s)
         c.push_back({speciesInfo(static_cast<SpeciesId>(s)).key, "individuos/mL", "Poblacion"});
-    c.push_back({"bacterias", "bacterias/mL", "Poblacion"});
-    c.push_back({"fagos", "viriones/mL", "Poblacion"});
+    c.push_back({"bacteria", "bacterias/mL", "Poblacion"});
+    c.push_back({"phages", "viriones/mL", "Poblacion"});
     for (int k = 0; k < kSoluteCount; ++k)
         c.push_back({soluteKey(static_cast<Solute>(k)), "µM", "Quimica"});
     c.push_back({"pH", "", "Quimica"});
-    c.push_back({"luz", "", "Quimica"});
+    c.push_back({"light", "", "Quimica"});
     c.push_back({"volumen", "mL", "Quimica"});
     row_.assign(c.size(), 0.0f);
     series_.setColumns(std::move(c));
@@ -351,16 +362,16 @@ void CultureRun::transferTo(CultureRun& dest, double volumeMl) {
 std::string serializeCultureScene(const CultureSpec& s, const std::vector<CultureEvent>& events) {
     std::ostringstream out;
     out.precision(std::numeric_limits<double>::max_digits10);
-    out << "cultivo_version=1\n"
-        << "nombre=" << s.name << '\n'
-        << "recipiente=" << s.vessel << '\n'
-        << "medio=" << s.medium << '\n'
-        << "temperatura=" << s.temperature << '\n'
-        << "luz=" << s.light << '\n'
+    out << "culture_version=1\n"
+        << "name=" << s.name << '\n'
+        << "vessel=" << s.vessel << '\n'
+        << "medium=" << s.medium << '\n'
+        << "temperature=" << s.temperature << '\n'
+        << "light=" << s.light << '\n'
         << "seed=" << s.seed << '\n';
     out << serializeProgram(s.program);
     for (const CultureEvent& e : events)
-        out << "evento=" << e.step << ' ' << cultureOpKey(e.op) << ' ' << e.value << (e.key.empty() ? "" : " ") << e.key
+        out << "event=" << e.step << ' ' << cultureOpKey(e.op) << ' ' << e.value << (e.key.empty() ? "" : " ") << e.key
             << '\n';
     return out.str();
 }
@@ -375,35 +386,47 @@ bool parseCultureScene(const std::string& text, CultureSpec& s, std::vector<Cult
         const std::size_t eq = line.find('=');
         if (line.empty() || line[0] == '#' || eq == std::string::npos)
             continue;
-        const std::string k = line.substr(0, eq), v = line.substr(eq + 1);
-        if (k == "cultivo_version")
+        // Las escenas viejas tienen las claves, operaciones y solutos en español.
+        const std::string k(currentName(line.substr(0, eq)));
+        const std::string v = line.substr(eq + 1);
+        if (k == "culture_version")
             versioned = true;
-        else if (k == "nombre")
+        else if (k == "name")
             s.name = v;
-        else if (k == "recipiente")
-            s.vessel = v;
-        else if (k == "medio")
-            s.medium = v;
-        else if (k == "temperatura")
+        else if (k == "vessel")
+            s.vessel = currentVesselId(v);
+        else if (k == "medium")
+            s.medium = currentMediumId(v);
+        else if (k == "temperature")
             s.temperature = std::stof(v);
-        else if (k == "luz")
+        else if (k == "light")
             s.light = std::stof(v);
         else if (k == "seed")
             std::from_chars(v.data(), v.data() + v.size(), s.seed);
-        else if (k == "programa") {
+        else if (k == "program") {
             ProgramEntry e;
             if (parseProgramEntry(v, e))
                 s.program.entries.push_back(e);
-        } else if (k == "evento") {
+        } else if (k == "event") {
             std::istringstream f(v);
             CultureEvent e;
             std::string op;
             if (!(f >> e.step >> op >> e.value))
                 continue;
             f >> e.key;
+            op = currentName(op);
+            e.key = currentName(e.key);
             for (int i = 0; i < static_cast<int>(CultureOp::Count); ++i)
                 if (op == kOpKeys[i]) {
                     e.op = static_cast<CultureOp>(i);
+                    // Un id viejo se reescribe con el actual.
+                    if (e.op == CultureOp::Inoculate || e.op == CultureOp::InoculateDensity) {
+                        if (const auto sp = findSpecies(e.key))
+                            e.key = speciesInfo(*sp).key;
+                    } else if (e.op == CultureOp::Reagent) {
+                        if (const int r = findReagent(e.key); r >= 0)
+                            e.key = reagent(r).key;
+                    }
                     events.push_back(e);
                 }
         }
@@ -411,6 +434,4 @@ bool parseCultureScene(const std::string& text, CultureSpec& s, std::vector<Cult
     return versioned;
 }
 
-std::string defaultCulturesDir() {
-    return (std::filesystem::path(defaultProgressPath()).parent_path() / "cultivos").string();
-}
+std::string defaultCulturesDir() { return userDataSubdir("cultures", "cultivos"); }

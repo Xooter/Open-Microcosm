@@ -1,0 +1,27 @@
+# Hoja de Elodea (Egeria densa): dos capas de células rectangulares (~40–80 × 15–25 µm) con
+# decenas de cloroplastos que giran junto a la pared (ciclosis).
+[[being]]
+id = "elodea_leaf_cell"
+legacy_ids = ["celula_hoja_elodea"]
+name = "Celula de hoja de Elodea"
+tags = ["plant_cell", "phototroph"]
+description = "Celula de la hoja de Elodea (Egeria densa), una planta de acuario: llena de cloroplastos que giran junto a la pared llevados por la corriente citoplasmatica (ciclosis). En agua salada se plasmoliza."
+body_plan = "plant_cell_chloroplasts"
+locomotion = "none"
+relative_speed = 0.0
+feeding = "none"
+chloroplasts = true
+cyclosis = 3.0
+ph = [5.0, 9.0]
+temperature = [2.0, 32.0]
+max_salinity = 40.0
+storage = "starch"
+wall = "cellulose"
+[being.shape]
+semi_major_axis = 30.0
+semi_minor_axis = 10.0
+shape_memory = 2.0
+color = [206, 222, 190]
+nucleus = 0.35
+[being.appearance]
+style = "elodea_leaf"

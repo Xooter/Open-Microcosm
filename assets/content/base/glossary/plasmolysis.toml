@@ -1,0 +1,9 @@
+[[term]]
+id = "plasmolysis"
+term = "Plasmólisis"
+definition = "En un medio más concentrado que su jugo celular, el protoplasto de una célula vegetal pierde agua y se despega de la pared de celulosa, que queda en su lugar. En agua pura se recupera (deplasmólisis)."
+source = "Oparka, K. J. (1994). Plasmolysis: new insights into an old process. New Phytol. 126: 571-591."
+alias = ["plasmolizado", "plasmolizada", "plasmolizados", "deplasmólisis"]
+related = ["osmosis"]
+lesson = "onion_plasmolysis"
+plate = "onion_epidermis"

@@ -35,8 +35,8 @@ e interviene.
   sedimento, poblaciones y geometría) y se crea con *Crear placa* (Ctrl+N). Ambiente y
   nutrientes se aplican **en vivo** a la placa en marcha; lo demás, al crearla. Las placas se
   guardan en `<datos>/biogame/plates/*.plate`.
-- **Placas preparadas** (`game/prepared`; datos en `medios.toml`, `recipientes.toml`,
-  `placas.toml`): además de la gota de agua, tipos de placa como en un laboratorio real: el
+- **Placas preparadas** (`game/prepared`; datos en `media/`, `vessels/` y
+  `plates/`): además de la gota de agua, tipos de placa como en un laboratorio real: el
   **cultivo celular** (DMEM en incubadora a 37 °C y 10 % de CO₂: un campo circular del fondo de un
   recipiente, con la profundidad del medio del recipiente y estéril) y los **preparados** en
   portaobjetos (`PlateKind::Slide`, ver abajo). **Mezclas:** cualquier ser del catálogo se inocula
@@ -68,7 +68,7 @@ e interviene.
 - **Ecosistema de la gota:** protistas carnívoros (cazadores, envolvedores, emboscadores y
   parásitos), herbívoros (algívoros y bacterívoros), algas, hongos, bacterias y fagos.
 - **Células humanas en cultivo** (`bio/animal_cell`, `game/world_animal.cpp`): fibroblasto dérmico,
-  HeLa y neutrófilo (`[ser.celula]` en los datos, valores medidos con fuente en `fisiologia.toml`).
+  HeLa y neutrófilo (`[being.cell]` en los datos, valores medidos con fuente en `[physiology.<id>.*]`).
   Adheridas al fondo (`Adherent`: el agua no las arrastra), migran por arrastre (`LocomotionType::Crawl`)
   en un paseo aleatorio persistente (rapidez y persistencia de los datos), con inhibición por
   contacto de la locomoción (Abercrombie) y de la proliferación; ciclo por fases G1/S/G2/M con punto
@@ -80,16 +80,16 @@ e interviene.
 - **Preparados** (`bio/osmosis`, `bio/tissue`, `bio/erythrocytes`, `game/world_tissue.cpp`,
   `render/tissue_renderer`): epidermis de cebolla, hoja de *Elodea*, papa con Lugol, punta de raíz
   con mitosis, epidermis de hoja con estomas, mucosa bucal, frotis de sangre con Giemsa y sangre
-  diluida. Un tejido (`[placa.tejido]`) son paredes de celulosa generadas por disposición
+  diluida. Un tejido (`[plate.tissue]`) son paredes de celulosa generadas por disposición
   (hileras, poligonal, filas, rompecabezas) y un protoplasto vivo (cuerpo blando, componente
   `Protoplast`) en cada célula, encerrado por su pared (`confineProtoplasts`; los protoplastos no
   chocan entre sí) con los gránulos en la capa cortical. **Ósmosis** (Boyle–van 't Hoff, en tiempo
   real): la osmolaridad del medio sale de la sal y de `MediumParams::osmolytes` (sacarosa); el
   protoplasto se plasmoliza en un medio más concentrado que su jugo celular y se recupera en agua;
   los glóbulos rojos (partículas, miles por campo) se arrugan o se hinchan y se hemolizan al pasar
-  su volumen crítico (fragilidad osmótica de Parpart). Fijado (`fijado`), el preparado no se mueve
+  su volumen crítico (fragilidad osmótica de Parpart). Fijado (`fixed`), el preparado no se mueve
   y el frotis aplasta los leucocitos contra el vidrio (`World::flattenSmear`). Las células que no se
-  mueven solas usan `LocomotionType::None` (`locomocion = "ninguna"`).
+  mueven solas usan `LocomotionType::None` (`locomotion = "none"`).
 - **Células de organismos pluricelulares:** células humanas y animales en cultivo (líneas y tipos
   reales: fibroblastos, queratinocitos, neutrófilos…) y tejidos vegetales, con la biología de cada
   una (adhesión al sustrato, migración, inhibición por contacto, apoptosis, pared celular). Se
@@ -106,7 +106,7 @@ e interviene.
 - Solo especies y mecanismos **reales**. Antes de implementar un comportamiento, verificá que
   exista en la biología; si se simplifica, dejá un comentario con lo que hace el organismo real.
 - Las células humanas y animales son **tipos o líneas celulares reales** con datos publicados
-  (tiempo de duplicación, velocidad de migración, tamaño), con su fuente en `assets/species/*.toml`
+  (tiempo de duplicación, velocidad de migración, tamaño), con su fuente en `[physiology.<id>.*]` (en el archivo del ser)
   como el resto de la fisiología. Nada de células "genéricas" sin referencia.
 - **Tiempo:** la física (nado, agua, difusión, intercambio de gases) corre en tiempo REAL
   (`units::kTimeScale = 1`). La biología (metabolismo, crecimiento, digestión, división) se
@@ -115,7 +115,7 @@ e interviene.
   - lo digerido rinde ×`bioTimeScale` (la alimentación es mecánica, en tiempo real);
   - el intercambio de O₂ y CO₂ de cada célula con el agua se hace a la tasa real (÷`bioTimeScale`,
     no ÷`bioScale`: el Q10 sí acelera la respiración);
-  - la ingestión de bacterias de una especie con dato medido (`ingestion_maxima`) es esa, en la
+  - la ingestión de bacterias de una especie con dato medido (`max_ingestion`) es esa, en la
     placa y en el cultivo;
   - excepción: la **migración por arrastre** de las células animales (lamelipodio, adhesiones focales)
     es biología —polimerización de actina— y corre en tiempo biológico (un fibroblasto a 40 µm/h se
@@ -142,7 +142,7 @@ licencia compatible con la GPLv3 (MIT, BSD, zlib, Apache 2.0 sí; GPLv2-only o n
 | Tracy | 0.11 | Profiling (preset `profile`) |
 
 | doctest | 2.4.11 | Tests de invariantes físicos (`tests/`, target `bio_tests`) |
-| toml++ | 3.4.0 | Datos de las especies con sus fuentes (`assets/species/*.toml`) |
+| toml++ | 3.4.0 | Contenido como datos, con sus fuentes (`assets/content/`, `docs/contenido.md`) |
 
 Candidata aprobable cuando su fase lo requiera: **FastNoiseLite** (generación procedural).
 
@@ -266,7 +266,7 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   placa solo pone de dónde sale el entorno y adónde va lo que se intercambia: no dupliques esa
   biología en otro sistema.
 - **Tamaño:** el área de reposo es la de la biomasa más el contenido de las vacuolas. La masa es la
-  del **esferoide** de semiejes mayor, menor y vertical (`espesor` en `[ser.forma]`; por defecto, el
+  del **esferoide** de semiejes mayor, menor y vertical (`thickness` en `[being.shape]`; por defecto, el
   menor) por la materia seca relativa (`cellMassScale`), no la de la esfera de la silueta 2D.
 - **Punto de control del ciclo:** con el tamaño de división la célula deja de invertir en biomasa y
   junta las reservas de la citocinesis (si no, una célula con poca comida no se divide nunca).
@@ -341,7 +341,7 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   individuo (`CultureCell`: `Metabolism`, `Heredity`, `Digestion`, `Lineage`); las bacterias,
   cohortes (`BacterialCohort`, superindividuos: exacto hasta `maxBacterialCohorts`).
 - Los encuentros salen de la teoría física: filtradores con respuesta funcional de tipo II
-  (`ingestion_maxima` y `aclaramiento` en `fisiologia.toml`; sin dato, la corriente oral y el
+  (`max_ingestion` y `clearance` en `[physiology.<id>.*]`; sin dato, la corriente oral y el
   citostoma de la placa) y cazadores con el núcleo de Gerritsen y Strickler (1977).
 - No hay `bioTimeScale`: `step(dt)` avanza `dt` segundos y la biología `dt · Q10`; los gases se
   intercambian con el aire a su tasa real (D / profundidad²). El balance (`massBudget`, `FluxLedger`)
@@ -353,11 +353,11 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   `receive`); lo que sale va al balance como `Flow::Washout`. Las bacterias toman el sustrato con un
   paso implícito (la concentración del final del paso), si no el quimiostato no llega a S*.
 - **Programas** (`game/program`): rampas, ciclos, senos y eventos con la hora de laboratorio, guardados
-  como definición (`programa=` en las escenas); se aplican una vez por paso. En la placa
+  como definición (`program=` en las escenas); se aplican una vez por paso. En la placa
   (`WorldConfig::program`, `World::applyProgram`) la hora de laboratorio son las horas biológicas y
   los cambios en vivo son la intervención `Program`.
 - **Sesión de cultivo** (`game/culture_run`): como `Run` para la placa: toda operación pasa por
-  `CultureRun::apply`, queda anotada con su paso y la escena `.cultivo` la repite. La gota de muestra
+  `CultureRun::apply`, queda anotada con su paso y la escena `.culture` la repite. La gota de muestra
   (`sampleDrop`) arma un `PlateSpec` v3 con las células con su estado (`WorldConfig::sampled`).
 - **Experimentos por lote** (`game/experiment`, `bio_lote`, panel Experimento): TOML con réplicas y
   factores; una corrida por hilo (OpenMP en 1, registros precargados); formato largo, resumen con
@@ -377,7 +377,7 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
 
 ### Lecciones y protocolos (`game/lesson`, panel Lección, fase P1)
 
-- Una lección es un protocolo con pasos, como datos (`lecciones.toml`, `[[leccion]]` en los
+- Una lección es un protocolo con pasos, como datos (`lessons/<id>.toml`, `[[lesson]]` en los
   paquetes): qué se prepara (placa preparada, gota de un bioma o escena de cultivo), los controles
   que ve el alumno (claves del registro), los parámetros que fija (con su motivo), acciones con nombre
   (una intervención o una operación del cultivo) y pasos con objetivo, pregunta o predicción.
@@ -392,8 +392,8 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
 
 ### Glosario y notas (`game/glossary`, `game/notes`, fase P1)
 
-- El glosario son datos (`glosario.toml`, `[[termino]]`): definición con fuente, `alias` (formas en
-  el texto, en minúsculas), relacionados y dónde verlo (`leccion`, `placa`: la "animación" del término
+- El glosario son datos (`glossary/<id>.toml`, `[[term]]`): definición con fuente, `alias` (formas en
+  el texto, en minúsculas), relacionados y dónde verlo (`lesson`, `plate`: la "animación" del término
   es la simulación, no un dibujo aparte). `ui::glossaryChips` muestra como botones los términos que
   aparecen en un texto (la ficha, los pasos de las lecciones), en español y en la traducción.
 - Las notas del usuario se anclan a un ser (`Picked::Kind` + entidad o id estable: la misma al
@@ -407,11 +407,11 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   Las tolerancias son datos de la especie y se pagan como mantenimiento extra (estrés).
 - `makeDrop(bioma, seed)` arma la gota: química, pesos de población por especie
   (`WorldConfig::speciesWeight`), hongos, cianobacterias (rango térmico) y manchas iniciales.
-- Biomas y minerales son datos del paquete (`assets/content/base/biomas.toml`, `minerales.toml`;
-  registros `game/biome` y `game/mineral`, como los seres): el medio se lee con claves en español
-  (`game/medium_toml`, el mismo lector servirá para los medios de cultivo), el sedimento es un
+- Biomas y minerales son datos del paquete (`biomes/`, `minerals/`; registros `game/biome` y
+  `game/mineral`, como los seres): el medio se lee con `game/medium_toml` (el mismo lector que el de
+  los medios de cultivo), el sedimento es un
   conteo por mineral y los pesos van por id de ser. Un simbionte obligado (etiqueta
-  `simbionte_obligado`) solo aparece donde el bioma lo nombra. Los lectores de los paquetes usan
+  `obligate_symbiont`) solo aparece donde el bioma lo nombra. Los lectores de los paquetes usan
   `core/toml_reader` (errores con lugar, claves desconocidas avisadas).
 - La enciclopedia se llena con lo que la cámara ve y con `deathTally`/`observations`.
 
@@ -428,7 +428,7 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   sin la interfaz, con barra de escala y un JSON con el ancho del campo en µm (no hay "aumento": no hay
   objetivos simulados), el tiempo, la seed, la placa, la tinción y la procedencia. El time-lapse toma un
   cuadro por intervalo de tiempo BIOLÓGICO (`TimelapseClock`), nunca por cuadro de pantalla; sin
-  ventana, `bio_bench --timelapse <min_bio>`. Las fotos van en `<datos>/biogame/fotos`.
+  ventana, `bio_bench --timelapse <min_bio>`. Las fotos van en `<datos>/biogame/photos`.
 - **Zoom semántico** (`render/lod.hpp`, `RenderLodSettings`: toda la configuración en un lugar):
   cada ser elige su nivel (`DetailLevel`: densidad, simplificado, normal, detalle, subcelular) por
   su tamaño real proyectado en píxeles, no por el zoom. Bacterias y *Bdellovibrio*: una pasada
@@ -459,7 +459,7 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   Todo texto visible pasa por `ui::tr(clave)` (la clave es el texto en español); el ID de cada
   ventana es estable (`título###clave`) para que la disposición guardada no dependa del idioma.
 - **Idiomas** (fase P1): `assets/lang/en.txt` (inglés) y, en cada paquete de contenido, su
-  `idiomas/<código>.txt`. Los formatos de `readout` también se traducen: la traducción conserva los
+  `lang/<código>.txt`. Los formatos de `readout` también se traducen: la traducción conserva los
   especificadores (lo verifica `tools/claves_tr.py --check`, que corre en `tools/ci.sh`). Un texto
   nuevo se suma con `tools/claves_tr.py --check assets/lang/en.txt --faltantes`; lo que se arma en
   tiempo de ejecución sale con `BIO_TR_FALTANTES=archivo ./bio`. Si el español de una clave cambia, su
@@ -599,13 +599,18 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   celda), así que las referencias entre sistemas usan IDs estables con tabla de indirección,
   nunca índices crudos guardados entre frames.
 - **Paquetes de contenido** (`game/content`): el de fábrica (`assets/content/base/`) y los del
-  usuario (`<datos>/biogame/paquetes/`, carpeta o un solo `.biopack`), cargados al arrancar; se
+  usuario (`<datos>/biogame/packs/`, carpeta o un solo `.biopack`), cargados al arrancar; se
   importan y exportan desde el panel Contenido y `bio_bench --paquete` los carga sin ventana. Son
   solo datos, acotados (8 MB, ids `[a-z0-9_]`); cada registro guarda el TOML de origen de cada
   definición para exportarla tal cual. Las placas y escenas nombran todo por id de texto y listan
   los paquetes (`pack=`), y `runJson` anota sus huellas.
-- **Contenido como datos** (`assets/content/base/`: seres, planes corporales, fisiología,
-  minerales y biomas): los parámetros de cada especie (tamaño, velocidad, dieta, reproducción,
+- **Contenido como datos** (`assets/content/base/`, formato en `docs/contenido.md`): un archivo
+  por definición en la carpeta de su tipo (`beings/paramecium.toml`, con su fisiología medida;
+  `biomes/`, `minerals/`, `body_plans/`…), con el orden de carga en `pack.toml`. Los nombres de
+  máquina (archivos, claves, ids, valores con nombre) van en **inglés**; el texto que se lee (`name`,
+  `description`, `source`, comentarios), en español. Un id renombrado deja el viejo en `legacy_ids` y
+  lo guardado con nombres viejos se lee con `game/legacy_names`. Seres, planes corporales,
+  fisiología, minerales y biomas: los parámetros de cada especie (tamaño, velocidad, dieta, reproducción,
   comportamiento, apariencia) viven en datos, no en código. Los enums (`SpeciesId`, `MineralKind`,
   `BiomeId`) son índices en el registro con alias para los de fábrica; no agregues casos por
   especie o por mineral en el código: sumá un mecanismo o un estilo con nombre que los datos elijan.

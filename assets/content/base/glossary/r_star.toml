@@ -1,0 +1,8 @@
+[[term]]
+id = "r_star"
+term = "R*"
+definition = "La concentración del recurso a la que una especie crece justo lo que pierde. Con un solo recurso limitante, gana la especie con el R* más bajo: deja el recurso por debajo de lo que la otra necesita."
+source = "Tilman, D. (1982). Resource Competition and Community Structure. Princeton University Press."
+alias = ["r*"]
+related = ["chemostat", "competitive_exclusion"]
+lesson = "tilman_chemostat"

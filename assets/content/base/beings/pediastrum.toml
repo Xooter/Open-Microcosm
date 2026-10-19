@@ -1,0 +1,29 @@
+# Pediastrum: colonia plana (cenobio) de 16 células en estrella, inmóvil; cada ciclo libera
+# una colonia hija formada por zoosporas. Es una placa de una célula de espesor (~10 µm).
+
+[[being]]
+id = "pediastrum"
+name = "Pediastrum"
+tags = ["alga", "green_alga", "colonial", "phototroph", "chytrid_host", "photobiont"]
+description = "Colonia plana en estrella de 16 celulas con cuernos; cada ciclo libera una colonia hija."
+locomotion = "cilia"
+body_plan = "green_alga"
+relative_speed = 0.0
+initial_count = 6
+chloroplasts = true
+daughter_colonies = 1
+relative_dry_mass = 0.25
+ph = [6.0, 9.5]
+temperature = [5.0, 35.0]
+storage = "starch"
+wall = "cellulose"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 30.0
+semi_minor_axis = 30.0
+shape_memory = 30.0
+color = [150, 190, 110]
+nucleus = 0.15
+
+[being.appearance]
+style = "flat_colony"

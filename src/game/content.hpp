@@ -9,14 +9,15 @@
 #include <utility>
 #include <vector>
 
-// Paquetes de contenido (fase 20.0). Un paquete es una carpeta con `paquete.toml` y sus archivos
-// (seres.toml, planes.toml, fisiologia.toml, minerales.toml, biomas.toml, medios.toml,
-// recipientes.toml, placas.toml, lecciones.toml, reactivos.toml, glosario.toml), o un solo archivo
-// `.biopack`: un TOML con `[paquete]` y todas sus definiciones (`[[ser]]`, `[[plan]]`, `[[mineral]]`,
-// `[[bioma]]`, `[fisiologia.<id del ser>]`, `[[medio]]`, `[[recipiente]]`, `[[placa]]`, `[[escena]]`,
-// `[[leccion]]`, `[[reactivo]]`, `[[termino]]`). Son solo datos: nada
-// ejecutable, con tamaños y cantidades acotados. El de fábrica es "base" (assets/content/base/);
-// los del usuario viven en <datos>/biogame/paquetes/ y se cargan al empezar.
+// Paquetes de contenido (fase 20.0; formato en docs/contenido.md). Un paquete es una carpeta con
+// `pack.toml` y una carpeta por tipo con un archivo por definición (core/pack_files:
+// beings/paramecium.toml, con la fisiología del ser en el mismo archivo; biomes/, minerals/,
+// body_plans/, media/, vessels/, plates/, lessons/, reagents/, glossary/), o un solo archivo
+// `.biopack`: un TOML con `[pack]` y todas sus definiciones (`[[being]]`, `[[body_plan]]`,
+// `[[mineral]]`, `[[biome]]`, `[physiology.<id del ser>]`, `[[medium]]`, `[[vessel]]`, `[[plate]]`,
+// `[[scene]]`, `[[lesson]]`, `[[reagent]]`, `[[term]]`). Son solo datos: nada ejecutable, con
+// tamaños y cantidades acotados. El de fábrica es "base" (assets/content/base/); los del usuario
+// viven en <datos>/biogame/packs/ y se cargan al empezar.
 struct PackInfo {
     std::string id, name, version, author, license;
     std::string path;              // carpeta o archivo de donde se cargó
@@ -58,3 +59,4 @@ std::vector<std::string> contentWarnings();
 // Límites de un paquete (seguridad: un archivo compartido no puede colgar el programa).
 inline constexpr std::size_t kMaxPackBytes = 8u << 20; // 8 MB
 inline constexpr std::size_t kMaxPackIdLength = 64;
+inline constexpr std::size_t kMaxPackFiles = 4096;

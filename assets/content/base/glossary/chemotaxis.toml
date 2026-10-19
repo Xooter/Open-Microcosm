@@ -1,0 +1,7 @@
+[[term]]
+id = "chemotaxis"
+term = "Quimiotaxis"
+definition = "Movimiento orientado por un gradiente químico, hacia un atrayente o lejos de un repelente. Las bacterias la hacen alargando las carreras que van a favor del gradiente (carrera y vuelco); el neutrófilo sigue el fMLP que liberan las bacterias. La acumulación de Paramecium en el CO₂ no es una quimiotaxis verdadera: sale de la reacción de evitación."
+source = "Berg, H. C. & Brown, D. A. (1972). Chemotaxis in Escherichia coli analysed by three-dimensional tracking. Nature 239: 500-504."
+alias = ["quimiotáctico", "quimiotáctica", "quimiotácticos"]
+related = ["avoidance_reaction", "phototaxis"]

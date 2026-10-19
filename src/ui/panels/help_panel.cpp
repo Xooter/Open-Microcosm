@@ -13,7 +13,7 @@ namespace {
 class HelpPanel : public Panel {
   public:
     HelpPanel() { open = false; }
-    const char* key() const override { return "ayuda"; }
+    const char* key() const override { return "help"; }
     const char* title() const override { return "Ayuda"; }
     Dock dock() const override { return Dock::Float; }
 

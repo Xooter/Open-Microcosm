@@ -200,7 +200,7 @@ struct WorldConfig {
         // solo lo pone un bioma que lo nombra.
         const int n = speciesCount();
         for (int k = 0; k < kMaxSpecies; ++k)
-            speciesWeight[k] = k < n && hasTag(static_cast<SpeciesId>(k), "simbionte_obligado") ? 0.0f : 1.0f;
+            speciesWeight[k] = k < n && hasTag(static_cast<SpeciesId>(k), "obligate_symbiont") ? 0.0f : 1.0f;
     }
 };
 
@@ -679,7 +679,7 @@ class World {
     ChemField reagent_;      // un reactivo (antibiótico) [µg/mL]; solo difunde si se usó
     Program program_;
     void applyProgram(float dt);
-    ChemField* soluteByKey(const std::string& key); // "fosfato", "nitrogeno"... (game/program)
+    ChemField* soluteByKey(const std::string& key); // "phosphate", "nitrogen"... (game/program)
     int reagentIndex_ = -1;  // cuál (game/reagent), -1 ninguno
     bool cultureFields_ = false;
     Tissue tissue_;

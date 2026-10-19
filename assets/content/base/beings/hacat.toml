@@ -1,0 +1,121 @@
+# HaCaT: queratinocitos humanos inmortalizados espontáneamente (Boukamp et al. 1988, J. Cell Biol.
+# 106: 761). Epiteliales, poligonales, de 20–25 µm redondeados (hoja de datos de Cytion); acá extendidos
+# a ~40 µm. Crecen en islotes y se diferencian en la confluencia.
+[[being]]
+id = "hacat"
+name = "Queratinocito HaCaT"
+tags = ["human_cell", "animal_cell", "keratinocyte"]
+description = "Linea de queratinocitos humanos (las celulas de la epidermis). Poligonales, crecen en islotes que se unen hasta cubrir la placa; se usan para estudiar el cierre de heridas."
+body_plan = "adherent_human_cell"
+locomotion = "crawl"
+feeding = "none"
+relative_dry_mass = 0.205
+ph = [6.8, 7.8]
+temperature = [30.0, 40.0]
+max_salinity = 16.0
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 20.0
+semi_minor_axis = 18.0
+shape_memory = 2.0
+color = [214, 208, 196]
+nucleus = 0.5
+squareness = 3.0
+[being.cell]
+adherent = true
+rounded_radius = 11.0
+contact_inhibition_locomotion = true
+contact_inhibition_proliferation = true
+min_serum = 0.01
+[being.appearance]
+style = "adherent_cell"
+
+[physiology.hacat.max_growth]
+value = 28.0
+unit = "h"
+temperature = 37.0
+source = "Cellosaurus CVCL_0038 (HaCaT): tiempo de duplicación 28 h."
+estimate = true
+
+[physiology.hacat.phase_g1]
+value = 15.0
+unit = "h"
+temperature = 37.0
+source = "Completa la duplicación de ~28 h con S, G2 y M de la célula humana típica (Alberts et al., MBoC 6ª ed., fig. 17-4)."
+estimate = true
+
+[physiology.hacat.phase_s]
+value = 8.0
+unit = "h"
+temperature = 37.0
+source = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4."
+estimate = true
+
+[physiology.hacat.phase_g2]
+value = 4.0
+unit = "h"
+temperature = 37.0
+source = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4."
+estimate = true
+
+[physiology.hacat.phase_m]
+value = 1.0
+unit = "h"
+temperature = 37.0
+source = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4."
+estimate = true
+
+[physiology.hacat.migration_speed]
+value = 63.0
+unit = "um/h"
+temperature = 37.0
+source = "HaCaT aisladas en 2D: 63 ± 15 µm/h (46 en grupos y 32 confluentes; PLoS ONE 2012, doi 10.1371/journal.pone.0031711, tabla 2). La asignación de los valores a cada patrón está por verificar."
+estimate = true
+
+[physiology.hacat.persistence]
+value = 1.0
+unit = "h"
+temperature = 37.0
+source = "Sin dato de la línea: persistencia de células epiteliales en 2D del orden de 1 h."
+estimate = true
+
+[physiology.hacat.confluence]
+value = 100000.0
+unit = "1/cm2"
+source = "Sin dato medido: los queratinocitos forman monocapas densas (~10⁵ células/cm²) y en la confluencia empiezan a diferenciarse."
+estimate = true
+
+[physiology.hacat.glucose_vmax]
+value = 60.0
+unit = "fmol/h"
+temperature = 37.0
+source = "Sin dato de la línea: el de las células humanas no tumorales en cultivo."
+estimate = true
+
+[physiology.hacat.glucose_km]
+value = 3.0
+unit = "mM"
+temperature = 37.0
+source = "Km de GLUT1: ~1-3 mM (Carruthers 1990, Physiol. Rev. 70:1135)."
+
+[physiology.hacat.glutamine_vmax]
+value = 12.0
+unit = "fmol/h"
+temperature = 37.0
+source = "Sin dato de la línea: ~20 % del consumo de glucosa."
+estimate = true
+
+[physiology.hacat.glutamine_km]
+value = 0.1
+unit = "mM"
+temperature = 37.0
+source = "Km de ASCT2 (SLC1A5) del orden de 0,1 mM."
+estimate = true
+
+[physiology.hacat.lactate_per_glucose]
+value = 1.0
+unit = "mol/mol"
+temperature = 37.0
+source = "Sin dato de la línea: ~1 lactato por glucosa en células no tumorales en cultivo."
+estimate = true

@@ -26,7 +26,7 @@ constexpr const char* kGrids[] = {"128", "256", "512"};
 
 class PlatePanel : public Panel {
   public:
-    const char* key() const override { return "placa"; }
+    const char* key() const override { return "plate"; }
     const char* title() const override { return "Placa"; }
     Dock dock() const override { return Dock::Left; }
 
@@ -68,7 +68,7 @@ class PlatePanel : public Panel {
     void drawBase(App& app, PlateSpec& p) {
         if (!section("Base", true))
             return;
-        // Tipo de placa: la gota de un bioma o una placa preparada (placas.toml).
+        // Tipo de placa: la gota de un bioma o una placa preparada (plates/).
         std::vector<const char*> kinds = {tr("Gota (de un bioma)")};
         int kind = 0;
         for (int i = 0; i < preparedPlateCount(); ++i) {

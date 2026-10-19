@@ -9,10 +9,10 @@
 #include <string>
 #include <vector>
 
-// Lee las claves presentes de una tabla [medio] sobre `m` (lo que falta queda como estaba) y
+// Lee las claves presentes de una tabla [medium] sobre `m` (lo que falta queda como estaba) y
 // avisa de las desconocidas (en `warnings`); los valores inválidos van a `errors`.
 void readMedium(const toml::table& t, const std::string& where, MediumParams& m, std::vector<std::string>& errors,
                 std::vector<std::string>& warnings);
-// Lo mismo para una tabla [sedimento].
+// Lo mismo para una tabla [sediment].
 void readSediment(const toml::table& t, const std::string& where, Sediment& s, std::vector<std::string>& errors,
                   std::vector<std::string>& warnings);

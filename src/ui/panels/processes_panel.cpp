@@ -37,7 +37,7 @@ void soluteRow(World& world, const char* name, ChemField& field, float shown, co
 class ProcessesPanel : public Panel {
   public:
     ProcessesPanel() { open = false; } // se abre desde el menú Ver
-    const char* key() const override { return "procesos"; }
+    const char* key() const override { return "processes"; }
     const char* title() const override { return "Procesos"; }
     Dock dock() const override { return Dock::RightLow; }
 

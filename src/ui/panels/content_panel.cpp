@@ -27,7 +27,7 @@ ImVec4 warnColor() {
 class ContentPanel : public Panel {
   public:
     ContentPanel() { open = false; } // se abre desde el menú Ver
-    const char* key() const override { return "contenido"; }
+    const char* key() const override { return "content"; }
     const char* title() const override { return "Contenido"; }
     Dock dock() const override { return Dock::RightLow; }
 
@@ -36,7 +36,7 @@ class ContentPanel : public Panel {
             drawPacks();
         const std::vector<std::string> warnings = contentWarnings();
         const std::string warningsTitle = std::string(tr("Avisos de los datos")) + " (" + std::to_string(warnings.size()) +
-                                          ")###avisos";
+                                          ")###warnings";
         if (section(warningsTitle.c_str(), !warnings.empty()))
             drawWarnings(warnings);
         if (section("Importar", true))

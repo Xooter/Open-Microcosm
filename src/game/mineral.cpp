@@ -1,6 +1,7 @@
 #include "game/mineral.hpp"
 
-#include "core/paths.hpp"
+#include "core/pack_files.hpp"
+#include "core/ids.hpp"
 #include "core/toml_reader.hpp"
 
 #include <algorithm>
@@ -23,42 +24,43 @@ Registry& registry() {
     return r;
 }
 
-constexpr const char* kMineralKeys[] = {"id",      "nombre",  "nombre_grano", "descripcion", "radio",
-                                        "diferencia_densidad", "opacidad", "flocula", "estilo"};
+constexpr const char* kMineralKeys[] = {"id", "legacy_ids",      "name",  "grain_name", "description", "radius",
+                                        "density_difference", "opacity", "flocculates", "style"};
 
 bool readMineral(const toml::table& t, const std::string& source, const std::string& pack, MineralInfo& m,
                  std::vector<std::string>& warnings) {
     toml_io::Reader r{t, source, {}};
     r.text("id", m.key);
-    r.text("nombre", m.name);
+    r.text("name", m.name);
     if (m.key.empty() || m.name.empty()) {
-        warnings.push_back(source + ": un [[mineral]] sin 'id' o sin 'nombre': se saltea");
+        warnings.push_back(source + ": un [[mineral]] sin 'id' o sin 'name': se saltea");
         return false;
     }
     r.where = source + " (" + m.key + ")";
     m.pack = pack;
+    r.strings("legacy_ids", m.legacyIds);
     toml_io::warnUnknown(t, kMineralKeys, r.where, warnings);
-    r.text("nombre_grano", m.grainName);
+    r.text("grain_name", m.grainName);
     if (m.grainName.empty())
         m.grainName = "Grano de " + m.name;
-    r.text("descripcion", m.description);
-    if (!t.get("radio"))
-        r.errors.push_back(r.where + ": falta 'radio' [mínimo, máximo] en µm");
-    r.range("radio", m.radiusMin, m.radiusMax);
+    r.text("description", m.description);
+    if (!t.get("radius"))
+        r.errors.push_back(r.where + ": falta 'radius' [mínimo, máximo] en µm");
+    r.range("radius", m.radiusMin, m.radiusMax);
     if (m.radiusMin <= 0.0f)
-        r.errors.push_back(r.where + ": 'radio' tiene que ser positivo");
-    r.num("diferencia_densidad", m.densityGap);
-    r.count("opacidad", m.opacity);
+        r.errors.push_back(r.where + ": 'radius' tiene que ser positivo");
+    r.num("density_difference", m.densityGap);
+    r.count("opacity", m.opacity);
     if (m.opacity > 1.0f)
-        r.errors.push_back(r.where + ": 'opacidad' va de 0 a 1");
-    r.flag("flocula", m.flocculates);
-    r.text("estilo", m.style);
+        r.errors.push_back(r.where + ": 'opacity' va de 0 a 1");
+    r.flag("flocculates", m.flocculates);
+    r.text("style", m.style);
     const auto& styles = mineralStyles();
     if (std::find(styles.begin(), styles.end(), m.style) == styles.end()) {
         std::string options;
         for (const std::string& s : styles)
             options += (options.empty() ? "" : ", ") + s;
-        r.errors.push_back(r.where + ": 'estilo' tiene que ser uno de: " + options);
+        r.errors.push_back(r.where + ": 'style' tiene que ser uno de: " + options);
     }
     if (!r.errors.empty()) {
         warnings.insert(warnings.end(), r.errors.begin(), r.errors.end());
@@ -104,17 +106,19 @@ void ensureBase() {
     if (reg.baseLoaded)
         return;
     reg.baseLoaded = true;
-    std::string error;
-    if (!loadMineralsFile(assetPath("content/base/minerales.toml"), "base", &error))
-        reg.warnings.push_back("no se pudieron cargar los minerales de fábrica: " + error);
+    for (const auto& path : packFolderFiles(basePackDir(), "minerals")) {
+        std::string error;
+        if (!loadMineralsFile(path.string(), "base", &error))
+            reg.warnings.push_back("no se pudieron cargar los minerales de fábrica: " + error);
+    }
     reg.ready.store(true, std::memory_order_release);
 }
 
 } // namespace
 
 const std::vector<std::string>& mineralStyles() {
-    static const std::vector<std::string> styles = {"floculo", "grano_anguloso", "escama", "grano_opaco",
-                                                    "globulo_refringente", "frustula"};
+    static const std::vector<std::string> styles = {"floc", "angular_grain", "flake", "opaque_grain",
+                                                    "refractile_globule", "frustule"};
     return styles;
 }
 
@@ -162,9 +166,9 @@ const MineralInfo& mineralInfo(MineralKind kind) {
     if (entries.empty()) {
         static const MineralInfo clay = [] {
             MineralInfo m;
-            m.key = "arcilla";
+            m.key = "clay";
             m.name = m.grainName = "Arcilla";
-            m.style = "floculo";
+            m.style = "floc";
             return m;
         }();
         return clay;
@@ -177,9 +181,8 @@ const char* mineralName(MineralKind kind) { return mineralInfo(kind).name.c_str(
 
 std::optional<MineralKind> findMineral(std::string_view key) {
     ensureBase();
-    const auto& entries = registry().entries;
-    for (std::size_t i = 0; i < entries.size(); ++i)
-        if (entries[i].key == key)
-            return static_cast<MineralKind>(i);
-    return std::nullopt;
+    const std::ptrdiff_t i = indexOfId(registry().entries, key);
+    if (i < 0)
+        return std::nullopt;
+    return static_cast<MineralKind>(i);
 }

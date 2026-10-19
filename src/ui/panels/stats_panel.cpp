@@ -163,7 +163,7 @@ void drawBudget(App& app) {
 
 class StatsPanel : public Panel {
   public:
-    const char* key() const override { return "estadisticas"; }
+    const char* key() const override { return "stats"; }
     const char* title() const override { return "Estadísticas"; }
     Dock dock() const override { return Dock::Right; }
 

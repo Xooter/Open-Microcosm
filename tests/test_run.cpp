@@ -232,10 +232,10 @@ TEST_CASE("sandbox: cada ser del catálogo cae en la categoría que le correspon
                     *findSpecies("phaeodactylum"), *findSpecies("thalassiosira"), *findSpecies("fragilariopsis"),
                     *findSpecies("polarella")}},
         {C::Fungi, {SpeciesId::Candida, *findSpecies("saccharomyces")}},
-        {C::HumanCells, {*findSpecies("fibroblasto_dermico_humano"), *findSpecies("hela"), *findSpecies("neutrofilo"),
-                         *findSpecies("celula_escamosa_bucal"), *findSpecies("linfocito"), *findSpecies("monocito"),
+        {C::HumanCells, {*findSpecies("human_dermal_fibroblast"), *findSpecies("hela"), *findSpecies("neutrophil"),
+                         *findSpecies("buccal_squamous_cell"), *findSpecies("lymphocyte"), *findSpecies("monocyte"),
                          *findSpecies("nih_3t3"), *findSpecies("hacat")}},
-        {C::PlantCells, {*findSpecies("celula_epidermica_cebolla"), *findSpecies("celula_hoja_elodea")}},
+        {C::PlantCells, {*findSpecies("onion_epidermal_cell"), *findSpecies("elodea_leaf_cell")}},
     };
     int listed = 0;
     for (const auto& [category, species] : expected)

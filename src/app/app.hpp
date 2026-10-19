@@ -153,6 +153,7 @@ struct App {
     bool gpuOk = false;
 
   private:
+    static void migrateLayout(const std::string& path);
     void registerCommands();
     void buildUi(float dt);
     void drawToolbar();

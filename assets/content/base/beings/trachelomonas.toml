@@ -1,0 +1,25 @@
+# Trachelomonas hispida: euglenoide dentro de una lórica elipsoidal de 20–42 × 15–26 µm cubierta de
+# espinas cortas, parda o anaranjada por el hierro y el manganeso; 8–10 cloroplastos y un estigma grande
+# (Kreutz).
+[[being]]
+id = "trachelomonas"
+name = "Trachelomonas"
+tags = ["protist", "flagellate", "euglenid", "phototroph"]
+description = "Euglenoide verde encerrado en una lorica parda de ~30 um, endurecida con hierro y manganeso, por la que asoma un flagelo."
+locomotion = "flagellum"
+body_plan = "euglenid"
+phototaxis = true
+initial_count = 6
+chloroplasts = true
+cyclosis = 1.0
+ph = [5.0, 9.5]
+temperature = [5.0, 32.0]
+storage = "paramylon"
+wall = "none"
+genome = { armor = 0.8 }
+[being.shape]
+semi_major_axis = 15.5
+semi_minor_axis = 10.5
+shape_memory = 30.0
+color = [186, 150, 96]
+nucleus = 0.3

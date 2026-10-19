@@ -1,0 +1,75 @@
+# Neutrófilo: el leucocito más abundante de la sangre (~8 µm redondo, ~330 µm³; ~15 × 8 µm al
+# migrar). No se divide; vive horas y muere por apoptosis. Sigue los péptidos formilados de las
+# bacterias (fMLP) y las fagocita.
+[[being]]
+id = "neutrophil"
+legacy_ids = ["neutrofilo"]
+name = "Neutrofilo"
+tags = ["human_cell", "animal_cell", "leukocyte", "phagocyte"]
+description = "Globulo blanco que caza bacterias: sigue el rastro quimico que ellas dejan (peptidos formilados, fMLP), las envuelve y las digiere. No se divide y vive solo horas; muere por apoptosis, sin inflamar."
+body_plan = "neutrophil"
+locomotion = "crawl"
+feeding = "phagocytosis"
+prey = ["yeast"]
+relative_dry_mass = 0.0775
+ph = [6.8, 7.8]
+temperature = [30.0, 40.0]
+max_salinity = 16.0
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 7.5
+semi_minor_axis = 4.5
+shape_memory = 1.0
+color = [218, 214, 206]
+nucleus = 0.55
+[being.cell]
+adherent = true
+rounded_radius = 4.2
+contact_inhibition_locomotion = false
+contact_inhibition_proliferation = false
+divides = false
+fmlp_chemotaxis = true
+[being.appearance]
+style = "neutrophil"
+
+[physiology.neutrophil.migration_speed]
+value = 15.0
+unit = "um/min"
+temperature = 37.0
+source = "Neutrófilos humanos que migran en un gradiente de fMLP: ~10–20 µm/min (Zigmond 1977, J. Cell Biol. 75:606)."
+estimate = true
+
+[physiology.neutrophil.persistence]
+value = 5.0
+unit = "min"
+temperature = 37.0
+source = "Sin gradiente, los neutrófilos cambian de dirección cada pocos minutos."
+estimate = true
+
+[physiology.neutrophil.lifespan]
+value = 20.0
+unit = "h"
+temperature = 37.0
+source = "En cultivo, la mayoría de los neutrófilos aislados entra en apoptosis espontánea en ~1 día (en la sangre circulan ~6–8 h)."
+estimate = true
+
+[physiology.neutrophil.glucose_vmax]
+value = 20.0
+unit = "fmol/h"
+temperature = 37.0
+source = "El neutrófilo obtiene casi toda su energía de la glucólisis (pocas mitocondrias funcionales)."
+estimate = true
+
+[physiology.neutrophil.glucose_km]
+value = 3.0
+unit = "mM"
+temperature = 37.0
+source = "Km de GLUT1: ~1–3 mM (Carruthers 1990, Physiol. Rev. 70:1135)."
+
+[physiology.neutrophil.lactate_per_glucose]
+value = 1.8
+unit = "mol/mol"
+temperature = 37.0
+source = "Metabolismo casi totalmente glucolítico: la mayor parte de la glucosa sale como lactato."
+estimate = true

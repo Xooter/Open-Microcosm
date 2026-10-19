@@ -1,0 +1,20 @@
+[[plate]]
+id = "buccal_mucosa"
+legacy_ids = ["mucosa_bucal"]
+name = "Preparado: mucosa bucal con azul de metileno"
+description = "Un raspado de la cara interna de la mejilla en solucion salina, tenido con azul de metileno: celulas escamosas planas con un nucleo chico, y bacterias de la boca."
+kind = "slide"
+medium = "saline_0_9"
+vessel = "slide"
+field_um = 1024.0
+fixed = true
+stain = "methylene_blue"
+# Bacterias de la boca (estreptococos y otras): decenas sobre cada célula escamosa y sueltas.
+bacteria_cm2 = 300000.0
+[plate.environment]
+temperature = 22.0
+co2 = 0.00042
+light = 1.0
+[[plate.seeding]]
+being = "buccal_squamous_cell"
+density_cm2 = 4000.0

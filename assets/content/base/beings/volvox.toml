@@ -1,0 +1,30 @@
+# Volvox: colonia esférica de ~250 µm con cientos de células biflageladas en su superficie;
+# rueda nadando hacia la luz. Las colonias hijas crecen adentro y nacen rompiendo a la madre.
+
+[[being]]
+id = "volvox"
+name = "Volvox"
+tags = ["alga", "green_alga", "colonial", "phototroph"]
+description = "Esfera hueca de cientos de celulas que rueda hacia la luz. Las colonias hijas crecen adentro y nacen rompiendo a la madre."
+locomotion = "flagellum"
+body_plan = "flagellate_chlorophyte"
+relative_speed = 1.5
+phototaxis = true
+initial_count = 2
+chloroplasts = true
+daughter_colonies = 4
+mother_dies_at_release = true
+relative_dry_mass = 0.03
+ph = [6.0, 9.5]
+temperature = [10.0, 32.0]
+storage = "starch"
+wall = "cellulose"
+[being.shape]
+semi_major_axis = 120.0
+semi_minor_axis = 120.0
+shape_memory = 20.0
+color = [150, 196, 120]
+nucleus = 0.12
+
+[being.appearance]
+style = "spherical_colony"

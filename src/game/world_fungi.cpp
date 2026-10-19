@@ -45,7 +45,7 @@ void World::seedFungi() {
         Vec2 at = randomPoint(rng, 20.0f);
         std::size_t seen = 0;
         for (auto [e, body] : registry_.view<RingBody>().each())
-            if (hostOf(registry_, e, "fotobionte") && rng.uniform() * static_cast<float>(++seen) < 1.0f)
+            if (hostOf(registry_, e, "photobiont") && rng.uniform() * static_cast<float>(++seen) < 1.0f)
                 at = dish_.clampInside(body.centroid + Vec2{20.0f, 0.0f}, 20.0f);
         spawnFungus(FungusKind::Mycobiont, at, rng.uniform(0.0f, 2.0f * units::kPi), 300 + k);
     }
@@ -84,9 +84,9 @@ void World::stepFungi(float dt) {
     photoPoints_.clear();
     for (auto [e, body] : registry_.view<RingBody>().each()) {
         // Los líquenes protegen a su alga con metabolitos secundarios: no la infectan.
-        if (hostOf(registry_, e, "hospeda_quitridios") && !registry_.any_of<Cyst, Lichenized>(e))
+        if (hostOf(registry_, e, "chytrid_host") && !registry_.any_of<Cyst, Lichenized>(e))
             hostCells_.push_back(e);
-        if (hostOf(registry_, e, "fotobionte") && !registry_.any_of<Cyst, Lichenized>(e)) {
+        if (hostOf(registry_, e, "photobiont") && !registry_.any_of<Cyst, Lichenized>(e)) {
             photoCells_.push_back(e);
             photoPoints_.push_back(body.centroid);
         }

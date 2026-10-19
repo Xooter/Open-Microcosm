@@ -1,0 +1,34 @@
+# Zygnema: células de ~40 × 28 µm con dos cloroplastos estrellados (cada uno con un
+# pirenoide) y el núcleo entre ambos. Vive en charcas y sobre suelo y musgo húmedos.
+
+[[being]]
+id = "zygnema"
+name = "Zygnema"
+tags = ["alga", "green_alga", "filamentous", "phototroph", "chytrid_host"]
+description = "Alga filamentosa con dos cloroplastos en estrella por celula. Vive en charcas y sobre el suelo humedo."
+locomotion = "cilia"
+body_plan = "green_alga"
+relative_speed = 0.0
+relative_photosynthesis = 1.4
+initial_count = 2
+chloroplasts = true
+filament = true
+filament_cells = 8
+fragmentation_per_hour = 0.02
+relative_dry_mass = 0.35
+cyclosis = 1.5
+ph = [6.0, 9.5]
+temperature = [0.0, 30.0]
+storage = "starch"
+wall = "cellulose"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 20.0
+semi_minor_axis = 14.0
+shape_memory = 15.0
+color = [146, 186, 120]
+nucleus = 0.25
+squareness = 6.0
+
+[being.appearance]
+style = "stellate_plastids"

@@ -9,7 +9,7 @@
 
 TEST_CASE("programa: fotoperíodo, rampa, seno y eventos") {
     ProgramEntry light;
-    light.target = "luz";
+    light.target = "light";
     light.shape = ProgramShape::Cycle;
     light.period = 24.0f;
     light.duty = 16.0f / 24.0f; // 16:8
@@ -24,7 +24,7 @@ TEST_CASE("programa: fotoperíodo, rampa, seno y eventos") {
     CHECK(v == 1.0f);
 
     ProgramEntry ramp;
-    ramp.target = "temperatura";
+    ramp.target = "temperature";
     ramp.shape = ProgramShape::Ramp;
     ramp.start = 10.0;
     ramp.end = 20.0;
@@ -37,7 +37,7 @@ TEST_CASE("programa: fotoperíodo, rampa, seno y eventos") {
     CHECK(v == doctest::Approx(25.0f)); // después de la rampa, el valor final
 
     ProgramEntry sine;
-    sine.target = "temperatura";
+    sine.target = "temperature";
     sine.shape = ProgramShape::Sine;
     sine.from = 20.0f;
     sine.to = 5.0f;
@@ -46,7 +46,7 @@ TEST_CASE("programa: fotoperíodo, rampa, seno y eventos") {
     CHECK(v == doctest::Approx(25.0f));
 
     ProgramEntry feed;
-    feed.target = "bacterias";
+    feed.target = "bacteria";
     feed.shape = ProgramShape::Event;
     feed.start = 0.0;
     feed.period = 24.0f;
@@ -64,12 +64,12 @@ TEST_CASE("programa: fotoperíodo, rampa, seno y eventos") {
 TEST_CASE("programa: se guarda y se lee igual (ida y vuelta)") {
     Program p;
     ProgramEntry a;
-    a.target = "luz";
+    a.target = "light";
     a.shape = ProgramShape::Cycle;
     a.duty = 2.0f / 3.0f;
     a.to = 0.7f;
     ProgramEntry b;
-    b.target = "inocular:paramecium";
+    b.target = "inoculate:paramecium";
     b.shape = ProgramShape::Event;
     b.start = 1.0 / 3.0;
     b.end = 100.0;
@@ -83,8 +83,8 @@ TEST_CASE("programa: se guarda y se lee igual (ida y vuelta)") {
         const std::size_t nl = text.find('\n', pos);
         const std::string line = text.substr(pos, nl - pos);
         ProgramEntry e;
-        REQUIRE(line.rfind("programa=", 0) == 0);
-        REQUIRE(parseProgramEntry(line.substr(9), e));
+        REQUIRE(line.rfind("program=", 0) == 0);
+        REQUIRE(parseProgramEntry(line.substr(8), e));
         q.entries.push_back(e);
         pos = nl + 1;
     }
@@ -110,13 +110,13 @@ TEST_CASE("cultivo: cambio de medio y dilución conservan el balance con sus ent
     c.inoculate(SpeciesId::Chlamydomonas, 200);
     // Protocolo de Gause: cada 24 h se cambia el medio y se agregan bacterias frescas.
     ProgramEntry renew;
-    renew.target = "medio";
+    renew.target = "medium";
     renew.shape = ProgramShape::Event;
     renew.start = 24.0;
     renew.period = 24.0f;
     renew.amount = 1.0f;
     ProgramEntry feed = renew;
-    feed.target = "bacterias";
+    feed.target = "bacteria";
     feed.amount = 2e6f; // por mL
     c.program().entries = {renew, feed};
     const MassBudget start = c.massBudget();
@@ -146,7 +146,7 @@ TEST_CASE("cultivo: un fotoperíodo apaga y prende la luz") {
     cfg.medium.phage = 0.0f;
     Culture c(cfg);
     ProgramEntry light;
-    light.target = "luz";
+    light.target = "light";
     light.shape = ProgramShape::Cycle;
     light.period = 24.0f;
     light.duty = 16.0f / 24.0f;

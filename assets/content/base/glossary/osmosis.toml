@@ -1,0 +1,7 @@
+[[term]]
+id = "osmosis"
+term = "Ósmosis"
+definition = "Paso de agua a través de una membrana semipermeable hacia el lado más concentrado en solutos. El volumen de una célula sigue la ley de Boyle–van 't Hoff: el agua entra o sale hasta igualar la osmolaridad de adentro con la del medio."
+source = "Nobel, P. S. (2009). Physicochemical and Environmental Plant Physiology, 4.ª ed. Academic Press, cap. 2."
+alias = ["osmótico", "osmótica", "osmolaridad", "boyle–van 't hoff"]
+related = ["plasmolysis", "hemolysis", "contractile_vacuole"]

@@ -1,0 +1,33 @@
+# Podophrya fixa (suctorio): esfera de ~35 µm sobre un tallo; sin cilios de adulto. Sus
+# tentáculos capitados se adhieren a los ciliados que pasan y les succionan el citoplasma.
+
+[[being]]
+id = "podophrya"
+name = "Podophrya"
+tags = ["protist", "ciliate", "suctorian"]
+description = "Suctorio: esfera con tentaculos capitados que se pegan a los ciliados y les succionan el citoplasma."
+locomotion = "cilia"
+conjugation = true
+body_plan = "ciliate"
+feeding = "tentacles"
+relative_speed = 0.5
+prey = ["paramecium", "vorticella", "euplotes", "paramecium_aurelia", "tetrahymena", "colpidium"]
+initial_count = 2
+sessile = true
+stalk_length = 40.0
+tentacle_reach = 45.0
+handling_hours = 4.0
+ph = [6.0, 9.5]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 18.0
+semi_minor_axis = 17.0
+shape_memory = 10.0
+color = [176, 180, 170]
+nucleus = 0.32
+
+[being.appearance]
+style = "capitate_tentacles"

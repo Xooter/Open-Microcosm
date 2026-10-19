@@ -1,0 +1,7 @@
+[[term]]
+id = "phototaxis"
+term = "Fototaxis"
+definition = "Movimiento orientado por la luz. Euglena nada hacia la luz moderada: el estigma (la mancha roja) hace sombra sobre el fotorreceptor de la base del flagelo a cada giro, y la célula corrige el rumbo hasta que la sombra desaparece."
+source = "Häder, D.-P. & Iseki, M. (2017). Photomovement in Euglena. Adv. Exp. Med. Biol. 979: 207-235."
+alias = ["fototáctico", "fototáctica", "estigma"]
+related = ["chemotaxis", "photosynthesis"]

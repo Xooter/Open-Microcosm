@@ -1,0 +1,38 @@
+# Volvocales de pocas células: la serie de complejidad de Chlamydomonas a Volvox. En la naturaleza
+# cada célula de la colonia se divide 4–5 veces y forma una colonia hija entera (autocolonia); acá la
+# colonia libera 4 hijas (como Volvox), que reparten la biomasa igual: la tasa de crecimiento no cambia,
+# solo el número de colonias por evento. `colony_cells` es solo el dibujo.
+
+# Gonium pectorale: placa de 16 (a veces 4, 8 o 32) células biflageladas de 5–14 µm en dos cuadrados
+# concéntricos (4 + 12), de una célula de espesor; colonia de ~40 µm (radio típico 20 µm) que nada
+# rotando a ~40 µm/s (de Maleprade et al. 2020, Phys. Rev. E 101: 022416).
+[[being]]
+id = "gonium"
+name = "Gonium"
+tags = ["alga", "green_alga", "colonial", "phototroph", "flagellate"]
+description = "Placa de 16 celulas verdes de dos flagelos cada una (4 en el centro y 12 alrededor). Nada girando como una rueda hacia la luz."
+locomotion = "flagellum"
+body_plan = "flagellate_chlorophyte"
+relative_speed = 0.5
+phototaxis = true
+initial_count = 4
+chloroplasts = true
+daughter_colonies = 4
+colony_cells = 16
+mother_dies_at_release = true
+relative_dry_mass = 0.7
+ph = [6.0, 9.5]
+temperature = [5.0, 35.0]
+storage = "starch"
+wall = "cellulose"
+[being.shape]
+semi_major_axis = 20.0
+semi_minor_axis = 20.0
+# Una placa de una célula de espesor (~9 µm).
+thickness = 4.5
+shape_memory = 20.0
+color = [160, 198, 130]
+nucleus = 0.12
+
+[being.appearance]
+style = "plate_colony"

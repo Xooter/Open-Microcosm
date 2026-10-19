@@ -1,0 +1,10 @@
+[[mineral]]
+id = "clay"
+legacy_ids = ["arcilla"]
+name = "Arcilla"
+description = "Arcilla: láminas de silicato de menos de 4 µm. Tan chicas que el movimiento browniano supera a la sedimentación: quedan en suspensión y enturbian el agua."
+radius = [0.3, 1.2]
+density_difference = 1650.0
+opacity = 0.5
+flocculates = true
+style = "floc"

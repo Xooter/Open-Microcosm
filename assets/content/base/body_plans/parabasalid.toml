@@ -1,0 +1,16 @@
+# Trichonympha (parabasálido): sin mitocondrias; su orgánulo energético es el hidrogenosoma
+# (~0,5–1 µm, sin cristas, fermenta piruvato a H₂ y acetato; Müller 1993). Las partículas que la
+# simulación etiqueta como orgánulo energético se muestran así.
+[[body_plan]]
+id = "parabasalid"
+name = "parabasalido"
+morphology = "eukaryote"
+structures = [
+    { kind = "plasma_membrane", source = "simulated", arrangement = "envelope", brightfield = true, name = "membrana plasmatica" },
+    { kind = "nucleus", source = "simulated", arrangement = "interior", count = 1, brightfield = true, name = "nucleo" },
+    { kind = "hydrogenosome", source = "simulated", arrangement = "interior", length = 0.8, width = 0.8, brightfield = false, name = "hidrogenosomas" },
+    { kind = "food_vacuole", source = "simulated", arrangement = "interior", brightfield = true, name = "vacuolas con madera" },
+    { kind = "endoplasmic_reticulum", source = "declared", arrangement = "perinuclear", length = 3.0, width = 0.05, count = 1, brightfield = false, name = "reticulo endoplasmico rugoso" },
+    { kind = "golgi", source = "declared", arrangement = "perinuclear", length = 1.0, width = 0.3, count = 1, brightfield = false, name = "aparato de Golgi (un dictiosoma)" },
+    { kind = "ribosomes", source = "declared", arrangement = "interior", length = 0.025, width = 0.025, per_um3 = 3000.0, brightfield = false, name = "ribosomas 80S" },
+]

@@ -1,0 +1,34 @@
+# Oscuro, sin oxígeno, lleno de astillas de madera y de bacterias.
+[[biome]]
+id = "termite_gut"
+legacy_ids = ["intestino_termita"]
+name = "Intestino de termita"
+description = "Anóxico y oscuro, repleto de astillas de madera. Trichonympha digiere la celulosa por la termita."
+bacteria = 80000
+detritus = 400
+nitrogen_fixing_filaments = 0
+oscillatoria_filaments = 0
+saprolegnia = 0
+chytrid_clusters = 0
+allomyces = 0
+lichens = 0
+physarum = 0
+patchiness = 0.8
+base_weight = 0.0
+weights = { candida = 0.5, trichonympha = 1.0 }
+[biome.medium]
+temperature = 28.0
+light = 0.0
+o2_exchange = 0.0
+anoxic = true
+phosphate = 50.0
+nitrogen = 200.0 # la madera es pobre en N: lo fijan las bacterias del intestino
+silicate = 20.0
+iron = 2.0
+vitamin_b12 = 0.005 # la microbiota intestinal sintetiza mucha B12
+organic_inflow = 300.0
+detritus_inflow = 3.0 # la termita sigue comiendo madera
+[biome.sediment]
+# Algo de suelo que la termita traga junto con la madera; sin granos ni polvo del aire.
+clay = 60
+quartz = 10

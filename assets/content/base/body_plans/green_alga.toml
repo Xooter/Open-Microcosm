@@ -1,0 +1,16 @@
+# Algas filamentosas y colonias: pared de celulosa, cloroplastos con pirenoides, vacuola central.
+[[body_plan]]
+id = "green_alga"
+name = "alga verde"
+morphology = "eukaryote"
+structures = [
+    { kind = "cell_wall", source = "declared", arrangement = "envelope", width = 0.5, count = 1, brightfield = true, name = "pared de celulosa" },
+    { kind = "plasma_membrane", source = "simulated", arrangement = "envelope", brightfield = false, name = "membrana plasmatica" },
+    { kind = "nucleus", source = "simulated", arrangement = "interior", count = 1, brightfield = true, name = "nucleo" },
+    { kind = "chloroplast", source = "simulated", arrangement = "interior", brightfield = true, name = "cloroplasto" },
+    { kind = "pyrenoid", source = "declared", arrangement = "interior", length = 2.0, width = 2.0, brightfield = true, name = "pirenoides" },
+    { kind = "mitochondrion", source = "simulated", arrangement = "interior", length = 2.0, width = 0.5, brightfield = false, name = "mitocondrias" },
+    { kind = "endoplasmic_reticulum", source = "declared", arrangement = "perinuclear", length = 3.0, width = 0.05, count = 1, brightfield = false, name = "reticulo endoplasmico rugoso" },
+    { kind = "golgi", source = "declared", arrangement = "perinuclear", length = 1.0, width = 0.3, count = 1, brightfield = false, name = "aparato de Golgi (un dictiosoma)" },
+    { kind = "ribosomes", source = "declared", arrangement = "interior", length = 0.025, width = 0.025, per_um3 = 3000.0, brightfield = false, name = "ribosomas 80S" },
+]

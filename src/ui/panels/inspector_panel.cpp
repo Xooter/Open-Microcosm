@@ -40,7 +40,7 @@ void drawGenome(const World& world, entt::entity cell) {
 
 class InspectorPanel : public Panel {
   public:
-    const char* key() const override { return "ficha"; }
+    const char* key() const override { return "inspector"; }
     const char* title() const override { return "Ficha"; }
     Dock dock() const override { return Dock::Right; }
 

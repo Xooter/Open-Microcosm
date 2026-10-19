@@ -1,0 +1,6 @@
+[[term]]
+id = "brightfield"
+term = "Campo claro"
+definition = "Microscopía con la luz que atraviesa la muestra: fondo claro y células que se ven por lo que absorben y desvían. Las células vivas sin teñir son casi transparentes: se ven por su borde."
+source = "Murphy, D. B. & Davidson, M. W. (2012). Fundamentals of Light Microscopy and Electronic Imaging, 2.ª ed. Wiley-Blackwell, cap. 1."
+alias = ["microscopio de campo claro"]

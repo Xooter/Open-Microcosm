@@ -1,0 +1,26 @@
+# Linfocito: el leucocito chico de la sangre (~7–10 µm), casi todo núcleo redondo y denso con un
+# anillo delgado de citoplasma.
+[[being]]
+id = "lymphocyte"
+legacy_ids = ["linfocito"]
+name = "Linfocito"
+tags = ["human_cell", "animal_cell", "leukocyte"]
+description = "Globulo blanco chico (~8 um) de la inmunidad adaptativa (celulas T y B): un nucleo redondo y oscuro casi lo llena, con un anillo delgado de citoplasma celeste en la tincion de Giemsa."
+body_plan = "leukocyte"
+locomotion = "none"
+relative_speed = 0.0
+feeding = "none"
+relative_dry_mass = 0.3078
+ph = [6.8, 7.8]
+temperature = [10.0, 40.0]
+max_salinity = 16.0
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 4.0
+semi_minor_axis = 3.8
+shape_memory = 4.0
+color = [222, 220, 214]
+nucleus = 0.85
+[being.appearance]
+style = "lymphocyte"

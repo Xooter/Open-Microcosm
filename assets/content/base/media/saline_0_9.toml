@@ -1,0 +1,18 @@
+[[medium]]
+id = "saline_0_9"
+legacy_ids = ["solucion_salina_09"]
+name = "Solucion salina 0,9 % (fisiologica)"
+description = "NaCl al 0,9 %: isotonica con la sangre (~290 mOsm/L). Los globulos rojos conservan su forma de disco."
+source = "Solución fisiológica: 9 g/L de NaCl, 308 mOsm/L nominales (~286 medidos por el coeficiente osmótico del NaCl)."
+[medium.composition]
+salinity = 9.0
+alkalinity = 50.0
+phosphate = 0.0
+nitrogen = 0.0
+silicate = 0.0
+iron = 0.0
+vitamin_b12 = 0.0
+phages = 0.0
+organic_inflow = 0.0
+detritus_inflow = 0.0
+dust = 0.0

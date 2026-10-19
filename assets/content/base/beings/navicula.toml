@@ -1,0 +1,33 @@
+# Navicula: diatomea pennada de ~50 × 14 µm en frústula de sílice; se desliza por el rafe
+# a unos µm/s con inversiones. Cloroplastos dorados (fucoxantina).
+
+[[being]]
+id = "navicula"
+name = "Navicula"
+tags = ["alga", "diatom", "phototroph", "chytrid_host"]
+description = "Diatomea en una cajita de silice que se desliza por una ranura (rafe). Cada division achica a una hija. Necesita silice disuelta para cada valva nueva y vitamina B12 de las bacterias."
+locomotion = "cilia"
+body_plan = "diatom"
+relative_speed = 0.012
+relative_photosynthesis = 1.5
+initial_count = 20
+chloroplasts = true
+raphe_glider = true
+b12_auxotroph = true
+frustule = true
+ph = [6.5, 9.5]
+temperature = [-2.0, 35.0]
+max_salinity = 70.0
+storage = "chrysolaminarin"
+wall = "silica"
+genome = { chloroplasts = 1.0, trichocysts = 0.0, armor = 0.3 }
+[being.shape]
+semi_major_axis = 25.0
+semi_minor_axis = 7.0
+shape_memory = 40.0
+color = [200, 182, 120]
+nucleus = 0.32
+
+[being.appearance]
+style = "frustule"
+plastid_color = [176, 140, 50]

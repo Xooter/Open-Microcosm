@@ -40,6 +40,13 @@ medios, recipientes, placas preparadas, lecciones, glosario y reactivos en TOML;
 etiquetas; paquetes del usuario y `.biopack` con validación y topes; panel Contenido; compatibilidad
 con placas y escenas viejas; huellas de los paquetes en la procedencia.
 
+Un archivo por definición en la carpeta de su tipo (`beings/paramecium.toml`, con su fisiología;
+`docs/contenido.md`) y todos los nombres de máquina en inglés (contenido, escenas de cultivo,
+programas, experimentos, claves de parámetros, carpetas de datos). Decidido: el texto que se lee
+(nombres, descripciones, fuentes, comentarios) sigue en español y lo traduce `assets/lang`; lo
+guardado con los nombres viejos se sigue leyendo (`legacy_ids`, `game/legacy_names`) y los paquetes
+viejos se migran con `tools/migrate_content.py`.
+
 ### Placas preparadas, cultivo celular y preparados (fase 20a–c) ✅
 
 - Cultivo celular en DMEM con incubadora (37 °C, 10 % CO₂), recipiente y campo separados,

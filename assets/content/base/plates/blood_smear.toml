@@ -1,0 +1,30 @@
+[[plate]]
+id = "blood_smear"
+legacy_ids = ["frotis_sangre"]
+name = "Preparado: frotis de sangre con Giemsa"
+description = "Una gota de sangre extendida en capa fina, fijada con metanol y tenida con Giemsa: globulos rojos rosados sin nucleo y, cada tanto, globulos blancos (neutrofilos de nucleo lobulado, linfocitos, monocitos) y plaquetas violetas."
+kind = "slide"
+medium = "saline_0_9"
+vessel = "slide"
+field_um = 1024.0
+cell_um = 4.0
+fixed = true
+stain = "giemsa"
+# Frotis fino: ~1,1·10⁶ glóbulos rojos/cm² en una sola capa; leucocitos ~1 cada 700 (sangre normal:
+# 4,5–5,5·10⁶ glóbulos rojos y 4–11·10³ leucocitos por µL) en la fórmula normal (neutrófilos
+# 55–70 %, linfocitos 20–40 %, monocitos 2–8 %) y plaquetas ~1 cada 15 (150–400·10³/µL).
+erythrocytes_cm2 = 1100000.0
+platelets_cm2 = 70000.0
+[plate.environment]
+temperature = 22.0
+co2 = 0.00042
+light = 1.0
+[[plate.seeding]]
+being = "neutrophil"
+density_cm2 = 950.0
+[[plate.seeding]]
+being = "lymphocyte"
+density_cm2 = 500.0
+[[plate.seeding]]
+being = "monocyte"
+density_cm2 = 120.0

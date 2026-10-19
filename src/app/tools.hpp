@@ -53,7 +53,7 @@ struct ToolState {
     // Gotero: suelta un soluto en el punto del cursor. `dropAmount` es relativo a una
     // concentración típica del soluto.
     int dropper = 0;
-    std::string reagent = "ampicilina"; // reactivo del gotero (soluto 7)
+    std::string reagent = "ampicillin"; // reactivo del gotero (soluto 7)
     float dropRadius = 40.0f;     // [µm]
     float dropAmount = 1.0f;
     // Medición (fase 13). Los trazos están en µm del mundo.

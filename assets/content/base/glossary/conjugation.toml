@@ -1,0 +1,7 @@
+[[term]]
+id = "conjugation"
+term = "Conjugación"
+definition = "En los ciliados, dos células de tipos de apareamiento distintos se unen e intercambian micronúcleos haploides; las dos salen con el mismo genotipo recombinado. Es sexo sin reproducción: no aumenta el número de células."
+source = "Sonneborn, T. M. (1937). Sex, sex inheritance and sex determination in Paramecium aurelia. Proc. Natl. Acad. Sci. USA 23: 378-385."
+alias = ["conjuga", "conjugan", "exconjugantes", "tipo de apareamiento", "tipos de apareamiento"]
+related = ["mitosis"]

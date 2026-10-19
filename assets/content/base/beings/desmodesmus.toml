@@ -1,0 +1,36 @@
+# Desmodesmus subspicatus (Scenedesmus subspicatus): la otra alga del ensayo OECD 201. En la naturaleza
+# forma cenobios de 4 células; la cepa de laboratorio crece casi siempre como células sueltas ovales de
+# 7–15 × 3–12 µm y 60–80 µm³ (OECD 201, anexo 2). Autosporas. Espesor para el volumen medido.
+[[being]]
+id = "desmodesmus"
+name = "Desmodesmus"
+tags = ["alga", "green_alga", "phototroph", "chytrid_host"]
+description = "Alga verde oval de ~9 um. En los estanques forma grupos de 4 celulas en fila; en cultivo vive casi siempre suelta. Se usa en ensayos de toxicidad."
+locomotion = "cilia"
+body_plan = "green_alga"
+relative_speed = 0.0
+relative_photosynthesis = 1.5
+fissions_per_cycle = 2
+initial_count = 10
+chloroplasts = true
+ph = [5.5, 9.5]
+temperature = [5.0, 35.0]
+storage = "starch"
+wall = "cellulose"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 4.5
+semi_minor_axis = 2.5
+thickness = 1.5
+shape_memory = 20.0
+color = [120, 174, 96]
+nucleus = 0.3
+
+[being.appearance]
+style = "coccoid"
+
+[physiology.desmodesmus.max_growth]
+value = 1.35
+unit = "1/day"
+temperature = 21.0
+source = "OECD (2011). Test No. 201: Freshwater alga and cyanobacteria, growth inhibition test, anexo 2: tasa de crecimiento más observada 1,2-1,5/día en medio OECD a ~70 µE m⁻² s⁻¹ y 21 °C (D. subspicatus SAG 86.81)."

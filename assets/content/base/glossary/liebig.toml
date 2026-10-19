@@ -1,0 +1,7 @@
+[[term]]
+id = "liebig"
+term = "Ley del mínimo"
+definition = "El crecimiento lo limita el recurso más escaso respecto de lo que se necesita, no el total de recursos (Liebig). En la simulación, cada célula crece con el factor más bajo entre P, N, Si, Fe, B₁₂, luz y energía; el mapa de limitación (tecla L) muestra cuál es."
+source = "de Baar, H. J. W. (1994). von Liebig's law of the minimum and plankton ecology (1899-1991). Prog. Oceanogr. 33: 347-386."
+alias = ["liebig", "factor limitante", "limitación"]
+related = ["redfield", "monod"]

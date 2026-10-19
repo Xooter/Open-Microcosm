@@ -1,0 +1,30 @@
+# Pandorina morum: 8–16 células de 8–17 µm apretadas en una esfera de 20–60 µm de mucílago (Kreutz,
+# realmicrolife). Sin dato de su velocidad: la de Gonium.
+[[being]]
+id = "pandorina"
+name = "Pandorina"
+tags = ["alga", "green_alga", "colonial", "phototroph", "flagellate"]
+description = "Colonia esferica de 16 celulas verdes apretadas, cada una con dos flagelos hacia afuera. Rueda nadando hacia la luz."
+locomotion = "flagellum"
+body_plan = "flagellate_chlorophyte"
+relative_speed = 0.5
+phototaxis = true
+initial_count = 4
+chloroplasts = true
+daughter_colonies = 4
+colony_cells = 16
+mother_dies_at_release = true
+relative_dry_mass = 0.22
+ph = [6.0, 9.5]
+temperature = [5.0, 35.0]
+storage = "starch"
+wall = "cellulose"
+[being.shape]
+semi_major_axis = 25.0
+semi_minor_axis = 25.0
+shape_memory = 20.0
+color = [158, 196, 128]
+nucleus = 0.12
+
+[being.appearance]
+style = "compact_colony"

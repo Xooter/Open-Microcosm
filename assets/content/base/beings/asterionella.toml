@@ -1,0 +1,51 @@
+# Asterionella formosa: diatomea pennada planctónica, células de ~60 × 3 µm (sin rafe: no se
+# desliza). En la naturaleza forma colonias en estrella de ~8 células; acá células sueltas, y
+# algo más anchas (6 µm) para que el cuerpo blando sea estable. Tilman (1977).
+
+[[being]]
+id = "asterionella"
+name = "Asterionella"
+tags = ["alga", "diatom", "phototroph", "chytrid_host"]
+description = "Diatomea en aguja que en la naturaleza forma estrellas de 8 celulas. Muy eficiente con poco fosforo (Tilman 1977)."
+locomotion = "cilia"
+body_plan = "diatom"
+relative_speed = 0.0
+relative_photosynthesis = 1.5
+initial_count = 20
+chloroplasts = true
+frustule = true
+ph = [6.0, 9.5]
+temperature = [2.0, 30.0]
+storage = "chrysolaminarin"
+wall = "silica"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 32.0
+semi_minor_axis = 3.0
+shape_memory = 40.0
+color = [206, 186, 118]
+nucleus = 0.3
+squareness = 1.0
+
+[being.appearance]
+style = "frustule"
+plastid_color = [176, 140, 50]
+
+[physiology.asterionella.max_growth]
+value = 1.1
+unit = "1/day"
+temperature = 24.0
+source = "Tilman & Kilham (1976), J. Phycol. 12: 375-383. SIN VERIFICAR."
+estimate = true
+
+[physiology.asterionella.p_half_saturation]
+value = 0.04
+unit = "µM"
+source = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con fosfato). SIN VERIFICAR."
+estimate = true
+
+[physiology.asterionella.si_half_saturation]
+value = 3.9
+unit = "µM"
+source = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con silicato). SIN VERIFICAR."
+estimate = true

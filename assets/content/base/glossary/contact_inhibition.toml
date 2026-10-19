@@ -1,0 +1,8 @@
+[[term]]
+id = "contact_inhibition"
+term = "Inhibición por contacto"
+definition = "Una célula animal en cultivo que choca con otra deja de avanzar en esa dirección (inhibición de la locomoción) y, con el fondo cubierto, deja de dividirse. Las células cancerosas la pierden."
+source = "Abercrombie, M. & Heaysman, J. E. M. (1954). Observations on the social behaviour of cells in tissue culture. Exp. Cell Res. 6: 293-306."
+alias = ["confluencia", "confluente"]
+related = ["restriction_point"]
+plate = "dmem_culture"

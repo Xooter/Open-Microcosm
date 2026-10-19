@@ -1,0 +1,36 @@
+# Canales de salmuera a −2 °C, muy salados y con poca luz. Diatomeas, Chlamydomonas de hielo y
+# Euplotes.
+[[biome]]
+id = "sea_ice"
+legacy_ids = ["hielo_marino"]
+name = "Hielo marino"
+description = "Canales de salmuera dentro del hielo: -2 grados y el doble de sal que el mar. Diatomeas."
+bacteria = 20000
+detritus = 60
+nitrogen_fixing_filaments = 0
+oscillatoria_filaments = 0
+saprolegnia = 0
+chytrid_clusters = 3 # quitridios marinos de diatomeas
+allomyces = 0
+lichens = 0
+physarum = 0
+patchiness = 0.3
+base_weight = 0.0
+weights = { chlamydomonas = 0.6, euplotes = 2.0, navicula = 4.0, candida = 0.5, fragilariopsis = 4.0, polarella = 2.0 }
+[biome.medium]
+temperature = -2.0
+salinity = 60.0
+light = 0.3
+alkalinity = 2300.0 # agua de mar
+phosphate = 5.0
+nitrogen = 60.0
+silicate = 100.0
+iron = 0.2 # hierro escaso, como en el mar polar
+vitamin_b12 = 5e-4
+organic_inflow = 10.0
+dust = 0.005
+[biome.sediment]
+# Canales de salmuera: poco sedimento, frústulas de diatomeas del hielo.
+clay = 30
+quartz = 8
+frustule = 25

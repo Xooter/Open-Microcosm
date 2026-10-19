@@ -1,0 +1,19 @@
+# Criptofita (Cryptomonas): sin pared; un periplasto de placas proteicas bajo la membrana, dos
+# cloroplastos pardo-oliva con pirenoides cubiertos de almidón y una garganta con eyectosomas (no hay
+# tipo de estructura para ellos: se nombran en la ficha). La vacuola contráctil está bajo el rostro.
+[[body_plan]]
+id = "cryptophyte"
+name = "criptofita"
+morphology = "eukaryote"
+structures = [
+    { kind = "plasma_membrane", source = "simulated", arrangement = "envelope", brightfield = true, name = "periplasto" },
+    { kind = "nucleus", source = "simulated", arrangement = "interior", count = 1, brightfield = false, name = "nucleo" },
+    { kind = "chloroplast", source = "simulated", arrangement = "interior", brightfield = true, name = "dos cloroplastos pardo-oliva" },
+    { kind = "pyrenoid", source = "declared", arrangement = "interior", length = 2.0, width = 2.0, brightfield = true, name = "pirenoides con almidon" },
+    { kind = "mitochondrion", source = "simulated", arrangement = "interior", length = 2.0, width = 0.5, brightfield = false, name = "mitocondrias" },
+    { kind = "contractile_vacuole", source = "simulated", arrangement = "interior", count = 1, brightfield = true, name = "vacuola contractil" },
+    { kind = "storage_granule", source = "simulated", arrangement = "interior", brightfield = true, name = "granulos de almidon" },
+    { kind = "endoplasmic_reticulum", source = "declared", arrangement = "perinuclear", length = 3.0, width = 0.05, count = 1, brightfield = false, name = "reticulo endoplasmico rugoso" },
+    { kind = "golgi", source = "declared", arrangement = "perinuclear", length = 1.0, width = 0.3, count = 1, brightfield = false, name = "aparato de Golgi (un dictiosoma)" },
+    { kind = "ribosomes", source = "declared", arrangement = "interior", length = 0.025, width = 0.025, per_um3 = 3000.0, brightfield = false, name = "ribosomas 80S" },
+]

@@ -83,9 +83,9 @@ inline BeingCategory categoryOf(Being b) {
     switch (b.kind) {
     case BeingKind::Species: {
         const SpeciesInfo& s = speciesInfo(b.species);
-        if (s.animalCell.present || hasTag(b.species, "celula_humana"))
+        if (s.animalCell.present || hasTag(b.species, "human_cell"))
             return BeingCategory::HumanCells;
-        if (hasTag(b.species, "celula_vegetal"))
+        if (hasTag(b.species, "plant_cell"))
             return BeingCategory::PlantCells;
         if (s.budding && s.feeding == FeedingMode::Osmotroph)
             return BeingCategory::Fungi;

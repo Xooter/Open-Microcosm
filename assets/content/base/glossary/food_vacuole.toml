@@ -1,0 +1,7 @@
+[[term]]
+id = "food_vacuole"
+term = "Vacuola digestiva"
+definition = "Vesícula que se cierra alrededor de lo ingerido (en el citostoma o por fagocitosis). Se acidifica, se le fusionan los lisosomas, se digiere y lo que queda se expulsa por el citoprocto."
+source = "Allen, R. D. & Fok, A. K. (2000). Membrane trafficking and processing in Paramecium. Int. Rev. Cytol. 198: 277-318."
+alias = ["vacuolas digestivas", "fagosoma", "fagosomas"]
+related = ["phagocytosis", "cytostome"]

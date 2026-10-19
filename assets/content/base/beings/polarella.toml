@@ -1,0 +1,28 @@
+# Polarella glacialis: dinoflagelado chico del hielo marino polar, de 10–15 × 4–8 µm; cultivo a 2 °C
+# (0–6 °C) (NCMA CCMP1383). Forma quistes en el hielo.
+[[being]]
+id = "polarella"
+name = "Polarella glacialis"
+tags = ["protist", "flagellate", "dinoflagellate", "phototroph", "marine"]
+description = "Dinoflagelado diminuto (~12 um) del hielo marino polar. Nada con dos flagelos en los canales de salmuera y forma quistes cuando el hielo se cierra."
+locomotion = "flagellum"
+body_plan = "dinoflagellate"
+relative_speed = 0.6
+phototaxis = true
+encysts = true
+initial_count = 10
+chloroplasts = true
+ph = [7.0, 9.5]
+temperature = [-2.0, 8.0]
+max_salinity = 100.0
+storage = "starch"
+wall = "cellulose"
+[being.shape]
+semi_major_axis = 6.2
+semi_minor_axis = 3.5
+shape_memory = 20.0
+color = [196, 176, 120]
+nucleus = 0.3
+
+[being.appearance]
+plastid_color = [168, 130, 50]

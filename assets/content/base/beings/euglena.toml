@@ -1,0 +1,34 @@
+# Euglena gracilis: ~50 × 14 µm, mixótrofa con cloroplastos y estigma.
+
+[[being]]
+id = "euglena"
+name = "Euglena"
+tags = ["protist", "flagellate", "euglenid", "phototroph"]
+description = "Flagelado verde con mancha ocular: nada hacia la luz y hace fotosintesis, pero tambien absorbe comida."
+locomotion = "flagellum"
+body_plan = "euglenid"
+feeding = "anterior_pole"
+flees_from = ["lacrymaria"]
+phototaxis = true
+initial_count = 20
+chloroplasts = true
+b12_auxotroph = true
+cyclosis = 1.0
+ph = [3.0, 9.5]
+temperature = [10.0, 35.0]
+storage = "paramylon"
+wall = "none"
+[being.shape]
+semi_major_axis = 25.0
+semi_minor_axis = 7.0
+shape_memory = 4.0
+color = [120, 172, 92]
+nucleus = 0.32
+
+[physiology.euglena.max_growth]
+# Medio con digerido de fermentación metánica al 10 % (no es un medio estándar).
+value = 0.047
+unit = "1/h"
+temperature = 30.0
+source = "Cultivo de E. gracilis en digerido de fermentación metánica (10 %), 150 µmol m⁻² s⁻¹: µmax 0,047/h a 30 °C."
+estimate = true

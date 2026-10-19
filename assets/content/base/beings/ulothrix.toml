@@ -1,0 +1,33 @@
+# Ulothrix tenerrima: filamento sin ramificar de células cilíndricas de 5–10 µm de ancho y 0,5–3 veces
+# más largas que anchas, con un cloroplasto parietal en placa que cubre media pared y un pirenoide
+# (Kreutz).
+[[being]]
+id = "ulothrix"
+name = "Ulothrix"
+tags = ["alga", "green_alga", "filamentous", "phototroph", "chytrid_host"]
+description = "Alga verde en filamento de celulas cortas de ~8 um de ancho, cada una con un cloroplasto en banda que abraza la mitad de la pared."
+locomotion = "cilia"
+body_plan = "green_alga"
+relative_speed = 0.0
+relative_photosynthesis = 1.4
+initial_count = 2
+chloroplasts = true
+filament = true
+filament_cells = 10
+fragmentation_per_hour = 0.02
+relative_dry_mass = 0.35
+ph = [6.0, 9.5]
+temperature = [0.0, 25.0]
+storage = "starch"
+wall = "cellulose"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 6.0
+semi_minor_axis = 4.0
+shape_memory = 15.0
+color = [140, 184, 118]
+nucleus = 0.3
+squareness = 6.0
+
+[being.appearance]
+style = "axial_plate"

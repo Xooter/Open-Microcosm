@@ -1,0 +1,7 @@
+[[term]]
+id = "functional_response"
+term = "Respuesta funcional"
+definition = "Cuánto come un depredador según la densidad de presas. En la de tipo II (Holling) sube y se satura por el tiempo de manipulación: f = a·N/(1 + a·h·N), con a el aclaramiento y h el tiempo de manipulación por presa."
+source = "Holling, C. S. (1959). Some characteristics of simple types of predation and parasitism. Can. Entomol. 91: 385-398."
+alias = ["holling", "tiempo de manipulación"]
+related = ["clearance"]

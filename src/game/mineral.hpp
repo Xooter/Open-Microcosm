@@ -8,10 +8,11 @@
 #include <vector>
 
 // Minerales del sedimento como datos (fase 20.0): los de fábrica vienen de
-// assets/content/base/minerales.toml; un paquete puede sumar los suyos. MineralKind es el índice
+// assets/content/base/minerals/; un paquete puede sumar los suyos. MineralKind es el índice
 // en el registro (los nombres del enum son alias de los de fábrica, en su orden).
 struct MineralInfo {
     std::string key, name, grainName, description, style, pack;
+    std::vector<std::string> legacyIds; // ids viejos (core/ids)
     std::string source; // el [[mineral]] como se leyó (para exportarlo)
     float radiusMin = 1.0f, radiusMax = 1.0f; // [µm]
     float densityGap = 1650.0f;               // densidad menos la del agua [kg/m³] (ley de Stokes)

@@ -2265,7 +2265,7 @@ void World::feedAtMouth(entt::entity e, RingBody& body, const Locomotion& loco, 
     const float maxParticle = speciesInfo(speciesOfEntity(registry_, e)).mouthAtRear
                                   ? 6.0f
                                   : (ciliate ? feedingParams_.ciliateMaxParticle : feedingParams_.flagellateMaxParticle);
-    // Caudal máximo [bacterias/s real]: el medido de la especie (fisiologia.toml, a 20 °C) o el
+    // Caudal máximo [bacterias/s real]: el medido de la especie ([physiology.<id>.*], a 20 °C) o el
     // general. La boca traga a ritmo mecánico y cada presa rinde ×bioScale: por segundo biológico,
     // la especie come lo que come por segundo real; así el dato por hora va directo.
     const SourcedValue& measured = speciesPhysiology(speciesOfEntity(registry_, e)).maxIngestion;

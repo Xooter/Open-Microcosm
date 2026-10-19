@@ -1,0 +1,35 @@
+# Mougeotia: filamento de células largas y finas (~80 × 16 µm) con un único cloroplasto en
+# placa axial que GIRA según la luz (fitocromo): con luz débil se pone de frente, con luz
+# fuerte de canto. Es el ejemplo clásico de movimiento de cloroplastos.
+
+[[being]]
+id = "mougeotia"
+name = "Mougeotia"
+tags = ["alga", "green_alga", "filamentous", "phototroph", "chytrid_host"]
+description = "Alga filamentosa con un cloroplasto en placa que gira: de frente con poca luz y de canto con mucha."
+locomotion = "cilia"
+body_plan = "green_alga"
+relative_speed = 0.0
+relative_photosynthesis = 1.3
+initial_count = 2
+chloroplasts = true
+filament = true
+filament_cells = 6
+fragmentation_per_hour = 0.03
+relative_dry_mass = 0.3
+cyclosis = 1.5
+ph = [6.0, 9.5]
+temperature = [2.0, 32.0]
+storage = "starch"
+wall = "cellulose"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 40.0
+semi_minor_axis = 8.0
+shape_memory = 15.0
+color = [150, 190, 128]
+nucleus = 0.3
+squareness = 6.0
+
+[being.appearance]
+style = "axial_plate"

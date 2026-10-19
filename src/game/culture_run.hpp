@@ -12,15 +12,15 @@
 
 // Sesión de un cultivo bien mezclado (fase P1): el cultivo, su serie temporal y el registro de lo
 // que se le hizo. Como `Run` para la placa: toda operación pasa por `apply`, se anota con su paso y
-// una escena de cultivo (`.cultivo`) la repite en el mismo lugar de la trayectoria.
+// una escena de cultivo (`.culture`) la repite en el mismo lugar de la trayectoria.
 
 inline constexpr float kCultureStep = 60.0f; // [s] paso del cultivo
 
 // Lo que se preconfigura (como `PlateSpec` para la placa).
 struct CultureSpec {
     std::string name = "cultivo";
-    std::string vessel = "tubo_gause"; // recipientes.toml
-    std::string medium = "osterhout_gause"; // medios.toml
+    std::string vessel = "gause_tube"; // vessels/
+    std::string medium = "osterhout_gause"; // media/
     float temperature = 26.0f;  // [°C] (Gause cultivaba a 26 °C)
     float light = 0.0f;         // irradiancia relativa de la lámpara
     std::uint64_t seed = 1;
@@ -107,4 +107,4 @@ class CultureRun {
 // (`programa=`) y las operaciones (`evento=paso op valor [clave]`).
 std::string serializeCultureScene(const CultureSpec& spec, const std::vector<CultureEvent>& events);
 bool parseCultureScene(const std::string& text, CultureSpec& spec, std::vector<CultureEvent>& events);
-std::string defaultCulturesDir(); // <datos>/biogame/cultivos
+std::string defaultCulturesDir(); // <datos>/biogame/cultures

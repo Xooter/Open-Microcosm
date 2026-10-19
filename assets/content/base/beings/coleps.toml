@@ -1,0 +1,44 @@
+# Tamaños de los diagnósticos de M. Kreutz (realmicrolife.com) y de NIES (The World of Protozoa). Donde
+# el diagnóstico da solo el largo, el ancho es una estimación por la forma descrita (se dice en cada uno).
+# Sin probar todavía: ver «Falta validar» en docs/candidatos.md.
+
+# Coleps hirtus: ciliado en barril de 40–65 × 18–35 µm (NIES, ref. 4613) con una armadura de placas de
+# carbonato de calcio amorfo, boca apical y tres espinas posteriores. Omnívoro e histófago: come algas,
+# flagelados y en grupo, células heridas o muertas. Acá caza flagelados y algas chicas (la armadura no
+# se modela: el gen de coraza es solo de flagelados y amebas).
+[[being]]
+id = "coleps"
+name = "Coleps"
+tags = ["protist", "ciliate"]
+description = "Ciliado de ~50 um en forma de barril, acorazado con placas de carbonato de calcio. Come algas y flagelados, y en grupo despedaza celulas heridas."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "raptorial"
+relative_speed = 0.6
+prey = ["chlamydomonas", "cryptomonas", "chlorella", "desmodesmus", "raphidocelis", "euglena"]
+conjugation = true
+initial_count = 6
+handling_hours = 0.5
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [2.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 26.0
+semi_minor_axis = 13.0
+shape_memory = 20.0
+color = [190, 186, 160]
+nucleus = 0.3
+squareness = 3.0
+
+
+[physiology.coleps.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 26, 13 y 13 µm: 18406 µm³).
+value = 1.59
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 18406 µm³). No es una medición de la especie."
+estimate = true

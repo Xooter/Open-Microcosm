@@ -1,0 +1,10 @@
+[[body_plan]]
+id = "leukocyte"
+name = "leucocito"
+morphology = "eukaryote"
+structures = [
+    { kind = "plasma_membrane", source = "simulated", arrangement = "envelope", brightfield = true, name = "membrana plasmatica" },
+    { kind = "nucleus", source = "simulated", arrangement = "interior", count = 1, brightfield = true, name = "nucleo" },
+    { kind = "lysosome", source = "simulated", arrangement = "interior", brightfield = false, name = "granulos y lisosomas" },
+    { kind = "mitochondrion", source = "simulated", arrangement = "interior", length = 1.0, width = 0.3, brightfield = false, name = "mitocondrias" },
+]

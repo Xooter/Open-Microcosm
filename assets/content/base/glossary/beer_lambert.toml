@@ -1,0 +1,7 @@
+[[term]]
+id = "beer_lambert"
+term = "Ley de Beer–Lambert"
+definition = "La luz se atenúa en forma exponencial con lo que atraviesa: I = I₀·e^(−k·c·z). En la gota y en el tubo, las algas de arriba hacen sombra a las de abajo."
+source = "Kirk, J. T. O. (2011). Light and Photosynthesis in Aquatic Ecosystems, 3.ª ed. Cambridge University Press, cap. 1."
+alias = ["beer-lambert", "beer–lambert"]
+related = ["photosynthesis"]

@@ -1,0 +1,17 @@
+[[plate]]
+id = "live_blood"
+legacy_ids = ["sangre_viva"]
+name = "Preparado: sangre diluida en solucion salina"
+description = "Sangre diluida en solucion salina 0,9 %, sin fijar: los globulos rojos son discos bicóncavos. Bajando la salinidad (agua) se hinchan y estallan (hemolisis); subiendola se arrugan (crenacion)."
+kind = "slide"
+medium = "saline_0_9"
+vessel = "slide"
+field_um = 512.0
+cell_um = 4.0
+# Diluida ~1:5 en solución salina: glóbulos rojos separados, que se ven de a uno.
+erythrocytes_cm2 = 200000.0
+platelets_cm2 = 12000.0
+[plate.environment]
+temperature = 22.0
+co2 = 0.00042
+light = 1.0

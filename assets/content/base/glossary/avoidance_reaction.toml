@@ -1,0 +1,8 @@
+[[term]]
+id = "avoidance_reaction"
+term = "Reacción de evitación"
+definition = "Respuesta de Paramecium a un choque o a un estímulo nocivo: un potencial de acción de calcio invierte el batido de los cilios, la célula retrocede, gira y vuelve a avanzar en otra dirección. Repetida, explica que los paramecios queden atrapados en una zona con un poco de CO₂ (Jennings)."
+source = "Jennings, H. S. (1906). Behavior of the Lower Organisms. Columbia University Press. Eckert, R. (1972). Bioelectric control of ciliary activity. Science 176: 473-481."
+alias = ["reacción de evitación", "evitación"]
+related = ["chemotaxis"]
+lesson = "jennings_co2"

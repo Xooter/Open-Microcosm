@@ -1,0 +1,7 @@
+[[term]]
+id = "reynolds_number"
+term = "Número de Reynolds"
+definition = "Cociente entre las fuerzas de inercia y las viscosas: Re = ρ·v·L/μ. Un paramecio de 0,2 mm que nada a 1 mm/s tiene Re ≈ 0,2; una bacteria, ≈ 10⁻⁵. Con Re mucho menor que 1 no hay inercia: si deja de propulsarse se detiene al instante, y nadar con un movimiento recíproco (ida y vuelta igual) no lleva a ningún lado. Por eso en la simulación la velocidad es la respuesta instantánea a la fuerza."
+source = "Purcell, E. M. (1977). Life at low Reynolds number. Am. J. Phys. 45: 3-11."
+alias = ["reynolds", "bajo número de reynolds"]
+related = ["chemotaxis"]

@@ -1,0 +1,37 @@
+# Ceratium furcoides: dinoflagelado tecado de 123–300 × 28–42 µm con un cuerno apical largo y dos
+# cuernos posteriores; cloroplastos pardo-amarillos, flagelo transversal y longitudinal (Kreutz).
+# Planctónico de lagos. La silueta es un huso (los cuernos no se dibujan).
+[[being]]
+id = "ceratium"
+name = "Ceratium"
+tags = ["protist", "flagellate", "dinoflagellate", "phototroph"]
+description = "Dinoflagelado de ~200 um con una armadura de placas de celulosa y cuernos largos. Nada girando con un flagelo en un surco que le rodea la cintura."
+locomotion = "flagellum"
+body_plan = "dinoflagellate"
+relative_speed = 1.0
+phototaxis = true
+initial_count = 2
+chloroplasts = true
+ph = [6.0, 9.5]
+temperature = [4.0, 28.0]
+storage = "starch"
+wall = "cellulose"
+[being.shape]
+semi_major_axis = 100.0
+semi_minor_axis = 17.5
+shape_memory = 30.0
+color = [196, 176, 120]
+nucleus = 0.2
+taper = 0.7
+
+[being.appearance]
+plastid_color = [168, 130, 50]
+
+[physiology.ceratium.max_growth]
+# Tasa a la temperatura óptima de C. furcoides en cultivo (0,3 divisiones/día: una duplicación cada 3,3
+# días), la más lenta de las especies del estudio. La temperatura del óptimo no figura en el resumen.
+value = 3.3
+unit = "day"
+temperature = 20.0
+source = "Butterwick, C., Heaney, S. I. & Talling, J. F. (2005). Diversity in the influence of temperature on the growth rates of freshwater algae, and its ecological relevance. Freshwater Biol. 50: 291-300: ~0,3 divisiones/día a la temperatura óptima. Temperatura sin verificar (se asume 20 °C)."
+estimate = true

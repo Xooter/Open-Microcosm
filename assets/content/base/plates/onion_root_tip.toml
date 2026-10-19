@@ -1,0 +1,24 @@
+[[plate]]
+id = "onion_root_tip"
+legacy_ids = ["raiz_cebolla"]
+name = "Preparado: punta de raiz de cebolla (mitosis)"
+description = "Punta de raiz de cebolla fijada, aplastada y tenida con orceina acetica: celulas del meristema en interfase y en cada fase de la mitosis (profase, metafase, anafase y telofase), en la proporcion de lo que dura cada una."
+kind = "slide"
+medium = "distilled_water"
+vessel = "slide"
+field_um = 512.0
+fixed = true
+stain = "acetic_orcein"
+[plate.environment]
+temperature = 22.0
+co2 = 0.00042
+light = 1.0
+[plate.tissue]
+arrangement = "files"
+content = "mitosis"
+length_um = 18.0
+width_um = 18.0
+wall_um = 0.8
+# Allium cepa a ~20 °C: ciclo de ~20 h con la mitosis en ~1,5–2 h; índice mitótico ~8–10 %, la
+# profase la fase más larga (~60 % de la mitosis), después telofase, metafase y anafase.
+mitotic_phases = [0.05, 0.012, 0.008, 0.02]

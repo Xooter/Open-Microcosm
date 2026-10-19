@@ -131,12 +131,12 @@ inline constexpr VirusKind kSimulatedPhage = VirusKind::T4Like;
 // Protistas, algas, levaduras y células: el plan que el ser declara (`plan` en sus datos); si no
 // existe, uno mínimo (membrana y núcleo).
 const BodyPlan& speciesPlan(SpeciesId id);
-// Planes como datos (planes.toml de cada paquete): se agregan a los cargados; los de fábrica se
+// Planes como datos (body_plans/ de cada paquete): se agregan a los cargados; los de fábrica se
 // cargan en el primer uso. Los errores quedan en `bodyPlanWarnings`.
 bool loadBodyPlansFile(const std::string& path, const std::string& pack, std::string* error = nullptr);
 bool loadBodyPlansText(const std::string& text, const std::string& source, const std::string& pack,
                        std::string* error = nullptr);
 const BodyPlan* findBodyPlan(std::string_view id);
 const std::vector<std::string>& bodyPlanWarnings();
-// El [[plan]] como se leyó, en TOML ("" si no existe), y su paquete.
+// El [[body_plan]] como se leyó, en TOML ("" si no existe), y su paquete.
 std::string bodyPlanSource(std::string_view id, std::string* pack = nullptr);

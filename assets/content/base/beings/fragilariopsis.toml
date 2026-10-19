@@ -1,0 +1,32 @@
+# Fragilariopsis cylindrus: diatomea pennada del hielo marino polar, de 3–7 × 2–4 µm; cultivo a 2 °C
+# (−2 a 2 °C) (NCMA CCMP1102). Acá la silueta es de 7 × 5 µm (una más chica no es estable como cuerpo
+# blando) y el espesor se achica para conservar el volumen (~30 µm³).
+[[being]]
+id = "fragilariopsis"
+name = "Fragilariopsis cylindrus"
+tags = ["alga", "diatom", "phototroph", "marine"]
+description = "Diatomea diminuta (~5 um) que domina el hielo marino polar: crece en los canales de salmuera a menos de cero grados."
+locomotion = "cilia"
+body_plan = "diatom"
+relative_speed = 0.0
+relative_photosynthesis = 1.5
+initial_count = 20
+chloroplasts = true
+frustule = true
+ph = [7.0, 9.5]
+temperature = [-2.0, 6.0]
+max_salinity = 100.0
+storage = "chrysolaminarin"
+wall = "silica"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 3.5
+semi_minor_axis = 2.5
+thickness = 0.8
+shape_memory = 40.0
+color = [206, 186, 118]
+nucleus = 0.3
+
+[being.appearance]
+style = "frustule"
+plastid_color = [176, 140, 50]

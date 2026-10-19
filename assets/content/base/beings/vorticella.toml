@@ -1,0 +1,33 @@
+# Vorticella campanula: campana de ~80 µm sobre un tallo de ~150 µm con espasmonema (se
+# contrae en ~10 ms, el movimiento más rápido conocido en una célula). Filtra bacterias con
+# la corona ciliar del peristoma. Al dividirse, una hija nada como telotroco y se fija.
+
+[[being]]
+id = "vorticella"
+name = "Vorticella"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Campana sobre un tallo con un resorte (espasmonema): se contrae en milisegundos ante cualquier susto."
+locomotion = "cilia"
+conjugation = true
+body_plan = "ciliate"
+feeding = "oral_groove"
+relative_speed = 0.4
+initial_count = 8
+sessile = true
+stalk_length = 150.0
+spasmoneme = true
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 32.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 40.0
+semi_minor_axis = 30.0
+shape_memory = 10.0
+color = [182, 186, 168]
+nucleus = 0.32
+
+[being.appearance]
+style = "peristomal_crown"

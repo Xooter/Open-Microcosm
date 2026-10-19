@@ -1,0 +1,6 @@
+[[term]]
+id = "gram"
+term = "Tinción de Gram"
+definition = "Cristal violeta, Lugol, decolorante y safranina: la pared gruesa de peptidoglicano de las grampositivas retiene el violeta; las gramnegativas, de pared fina con membrana externa, lo pierden y quedan rosas. Decolorar de más vuelve rosa también a las grampositivas."
+source = "Gram, C. (1884). Über die isolirte Färbung der Schizomyceten in Schnitt- und Trockenpräparaten. Fortschr. Med. 2: 185-189. Beveridge, T. J. (2001). Use of the Gram stain in microbiology. Biotech. Histochem. 76: 111-118."
+alias = ["gram", "grampositiva", "grampositivas", "gramnegativa", "gramnegativas", "peptidoglicano"]

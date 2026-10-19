@@ -1,0 +1,15 @@
+# Célula vegetal (protoplasto dentro de su pared): vacuola central enorme, citoplasma periférico.
+[[body_plan]]
+id = "plant_cell"
+name = "celula vegetal"
+morphology = "eukaryote"
+structures = [
+    { kind = "cell_wall", source = "simulated", arrangement = "envelope", brightfield = true, name = "pared de celulosa" },
+    { kind = "plasma_membrane", source = "simulated", arrangement = "envelope", brightfield = true, name = "membrana plasmatica (se despega de la pared en la plasmolisis)" },
+    { kind = "nucleus", source = "simulated", arrangement = "interior", count = 1, brightfield = true, name = "nucleo (contra la pared)" },
+    { kind = "nucleolus", source = "declared", arrangement = "interior", length = 3.0, width = 3.0, count = 2, brightfield = false, name = "nucleolos" },
+    { kind = "mitochondrion", source = "declared", arrangement = "interior", length = 1.5, width = 0.5, count = 200, brightfield = false, name = "mitocondrias" },
+    { kind = "endoplasmic_reticulum", source = "declared", arrangement = "perinuclear", length = 6.0, width = 0.05, count = 1, brightfield = false, name = "reticulo endoplasmico" },
+    { kind = "golgi", source = "declared", arrangement = "perinuclear", length = 1.0, width = 0.3, count = 10, brightfield = false, name = "dictiosomas" },
+    { kind = "ribosomes", source = "declared", arrangement = "interior", length = 0.025, width = 0.025, per_um3 = 1000.0, brightfield = false, name = "ribosomas 80S" },
+]

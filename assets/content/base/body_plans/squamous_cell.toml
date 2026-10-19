@@ -1,0 +1,9 @@
+[[body_plan]]
+id = "squamous_cell"
+name = "celula escamosa"
+morphology = "eukaryote"
+structures = [
+    { kind = "plasma_membrane", source = "simulated", arrangement = "envelope", brightfield = true, name = "membrana plasmatica (pliegues de queratina)" },
+    { kind = "nucleus", source = "simulated", arrangement = "interior", count = 1, brightfield = true, name = "nucleo chico" },
+    { kind = "storage_granule", source = "simulated", arrangement = "interior", brightfield = false, name = "granulos de queratohialina" },
+]

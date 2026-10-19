@@ -1,0 +1,36 @@
+# Cryptomonas ovata (sinónimo de C. curvata): criptofita de 32–61 µm, ovalada con un rostro, dos
+# flagelos desiguales, dos cloroplastos pardo-oliva con pirenoides y almidón, y una garganta con
+# eyectosomas (Kreutz, realmicrolife). Ancho estimado (~40 % del largo). Presa de ciliados.
+[[being]]
+id = "cryptomonas"
+name = "Cryptomonas"
+tags = ["protist", "flagellate", "alga", "phototroph"]
+description = "Flagelado pardo-oliva de ~45 um con dos flagelos y dos cloroplastos. Al molestarlo dispara sus eyectosomas y sale despedido."
+locomotion = "flagellum"
+body_plan = "cryptophyte"
+phototaxis = true
+initial_count = 15
+chloroplasts = true
+ph = [5.5, 9.0]
+temperature = [1.0, 28.0]
+storage = "starch"
+wall = "none"
+[being.shape]
+semi_major_axis = 22.0
+semi_minor_axis = 9.0
+shape_memory = 10.0
+color = [168, 162, 112]
+nucleus = 0.3
+
+[being.appearance]
+plastid_color = [140, 130, 60]
+
+[physiology.cryptomonas.max_growth]
+# Tasa observada más alta en cultivo en lote (0,72 divisiones/día: una duplicación cada 1,39 días); el
+# máximo potencial del ajuste de Cloern a luz y temperatura es 1,15 divisiones/día. Citado por Ojala
+# (1991), tesis, Loughborough University, cap. 2.
+value = 1.39
+unit = "day"
+temperature = 20.0
+source = "Cloern, J. E. (1977). Effects of light intensity and temperature on Cryptomonas ovata (Cryptophyceae) growth and nutrient uptake rates. J. Phycol. 13: 389-395: 0,72 divisiones/día observadas (citado en Ojala 1991, tesis, Loughborough Univ.). Temperatura sin verificar (se asume 20 °C)."
+estimate = true

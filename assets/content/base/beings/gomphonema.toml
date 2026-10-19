@@ -1,0 +1,32 @@
+# Gomphonema truncatum: diatomea en forma de cuña (vista valvar en maza) de 13–75 × 7–17 µm que vive
+# fija en colonias sobre tallos gelatinosos ramificados (Kreutz). Acá, una célula sobre su tallo.
+[[being]]
+id = "gomphonema"
+name = "Gomphonema"
+tags = ["alga", "diatom", "phototroph", "chytrid_host"]
+description = "Diatomea en forma de maza (~45 um) que vive fija en la punta de un tallo de mucilago, sobre plantas acuaticas."
+locomotion = "cilia"
+body_plan = "diatom"
+relative_speed = 0.0
+relative_photosynthesis = 1.5
+initial_count = 4
+chloroplasts = true
+frustule = true
+sessile = true
+stalk_length = 40.0
+ph = [6.0, 9.5]
+temperature = [2.0, 30.0]
+storage = "chrysolaminarin"
+wall = "silica"
+genome = { chloroplasts = 1.0, trichocysts = 0.0, armor = 0.3 }
+[being.shape]
+semi_major_axis = 22.0
+semi_minor_axis = 6.0
+shape_memory = 40.0
+color = [204, 184, 120]
+nucleus = 0.3
+taper = 0.5
+
+[being.appearance]
+style = "frustule"
+plastid_color = [176, 140, 50]

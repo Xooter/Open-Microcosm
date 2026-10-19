@@ -1,0 +1,36 @@
+# 42 °C y alcalina. Tapetes de Mastigocladus y la ameba Naegleria.
+[[biome]]
+id = "hot_spring"
+legacy_ids = ["fuente_termal"]
+name = "Fuente termal"
+description = "Agua a 42 grados: casi ningún eucariota la soporta. Cianobacterias termófilas y Naegleria."
+bacteria = 60000
+detritus = 60
+nitrogen_fixing_filaments = 35 # Mastigocladus laminosus
+oscillatoria_filaments = 15 # tapetes de Oscillatoria/Phormidium termófilas
+cyanobacteria_temperature = [30.0, 57.0]
+saprolegnia = 0
+chytrid_clusters = 0
+allomyces = 0 # 42 °C es demasiado para los hongos y mohos
+lichens = 0
+physarum = 0
+patchiness = 0.2
+base_weight = 0.0
+weights = { candida = 0.5, naegleria = 4.0 }
+[biome.medium]
+temperature = 42.0
+alkalinity = 3000.0
+phosphate = 30.0
+nitrogen = 50.0 # pobre en N: domina la fijadora
+silicate = 600.0 # el agua caliente disuelve la sílice de la roca
+iron = 3.0
+vitamin_b12 = 0.001
+organic_inflow = 20.0 # exudados de los tapetes microbianos
+dust = 0.01
+[biome.sediment]
+# Sínter silíceo, glóbulos de azufre y precipitados de hierro.
+clay = 40
+quartz = 60
+iron_oxide = 70
+sulfur = 140
+grains = 3

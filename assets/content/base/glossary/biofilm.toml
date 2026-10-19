@@ -1,0 +1,6 @@
+[[term]]
+id = "biofilm"
+term = "Biopelícula"
+definition = "Comunidad de bacterias adheridas a una superficie, envueltas en una matriz que fabrican ellas mismas. Adheridas no nadan y los filtradores no las alcanzan; las amebas, que se arrastran por la superficie, sí."
+source = "Costerton, J. W. et al. (1995). Microbial biofilms. Annu. Rev. Microbiol. 49: 711-745."
+alias = ["biofilm", "biopelículas"]

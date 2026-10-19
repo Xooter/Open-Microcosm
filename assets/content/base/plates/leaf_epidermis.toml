@@ -1,0 +1,20 @@
+[[plate]]
+id = "leaf_epidermis"
+legacy_ids = ["epidermis_hoja"]
+name = "Preparado: epidermis de hoja con estomas"
+description = "La epidermis del enves de una hoja: celulas de contorno ondulado (como un rompecabezas) y, entre ellas, los estomas: dos celulas oclusivas en forma de rinon, con cloroplastos, que abren y cierran el ostiolo."
+kind = "slide"
+medium = "distilled_water"
+vessel = "slide"
+field_um = 512.0
+fixed = true
+[plate.environment]
+temperature = 22.0
+co2 = 0.00042
+light = 1.0
+[plate.tissue]
+arrangement = "jigsaw"
+content = "stomata"
+length_um = 45.0
+width_um = 45.0
+wall_um = 1.0

@@ -1,0 +1,7 @@
+[[term]]
+id = "clearance"
+term = "Aclaramiento"
+definition = "El volumen de agua que un filtrador limpia de presas por unidad de tiempo, con pocas presas (antes de saturarse). En la simulación, un Paramecium caudatum aclara unos 24 µL por hora (una estimación con la escala del zooplancton: no hay una medición directa)."
+source = "Fenchel, T. (1980). Suspension feeding in ciliated protozoa: functional response and particle size selection. Microb. Ecol. 6: 1-11."
+alias = ["tasa de aclaramiento"]
+related = ["functional_response", "cytostome"]

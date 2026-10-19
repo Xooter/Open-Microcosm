@@ -1,0 +1,120 @@
+# HeLa: línea de adenocarcinoma de cuello uterino (1951, Henrietta Lacks). Epitelial, poligonal, ~40 µm
+# extendida, ~2600 µm³. Sin inhibición por contacto de la proliferación (se apila) y con glucólisis
+# aeróbica alta (efecto Warburg).
+[[being]]
+id = "hela"
+name = "HeLa"
+tags = ["human_cell", "animal_cell", "tumor_line"]
+description = "Linea celular de cancer de cuello uterino, la primera humana inmortal (1951). Epitelial y poligonal; no deja de dividirse al llenarse la placa y consume mucha glucosa que convierte en lactato (efecto Warburg), que acidifica el medio."
+body_plan = "adherent_human_cell"
+locomotion = "crawl"
+feeding = "none"
+relative_dry_mass = 0.1260
+ph = [6.6, 7.9]
+temperature = [30.0, 40.0]
+max_salinity = 16.0
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 21.0
+semi_minor_axis = 16.0
+shape_memory = 2.0
+color = [212, 206, 196]
+nucleus = 0.55
+squareness = 3.0
+[being.cell]
+adherent = true
+rounded_radius = 10.5
+contact_inhibition_locomotion = false
+contact_inhibition_proliferation = false
+min_serum = 0.001
+[being.appearance]
+style = "adherent_cell"
+
+[physiology.hela.max_growth]
+value = 22.0
+unit = "h"
+temperature = 37.0
+source = "Puck, Marcus & Cieciura (1956), J. Exp. Med. 103:273: tiempo de generación de HeLa S3 de ~20 h a 37 °C; las líneas HeLa de laboratorio duplican en ~20–24 h."
+
+[physiology.hela.phase_g1]
+value = 9.0
+unit = "h"
+temperature = 37.0
+source = "Completa la duplicación de ~22 h con S, G2 y M de la célula humana típica (Alberts et al., MBoC 6ª ed., fig. 17-4); HeLa tiene una G1 algo más corta."
+estimate = true
+
+[physiology.hela.phase_s]
+value = 8.0
+unit = "h"
+temperature = 37.0
+source = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4."
+estimate = true
+
+[physiology.hela.phase_g2]
+value = 4.0
+unit = "h"
+temperature = 37.0
+source = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4."
+estimate = true
+
+[physiology.hela.phase_m]
+value = 1.0
+unit = "h"
+temperature = 37.0
+source = "La mitosis de HeLa dura ~1 h de la ruptura de la envoltura nuclear a la citocinesis (videomicroscopía)."
+estimate = true
+
+[physiology.hela.migration_speed]
+value = 15.0
+unit = "um/h"
+temperature = 37.0
+source = "HeLa migra poco en 2D: ~0,2–0,3 µm/min."
+estimate = true
+
+[physiology.hela.persistence]
+value = 0.5
+unit = "h"
+temperature = 37.0
+source = "Persistencia corta de células epiteliales en 2D."
+estimate = true
+
+[physiology.hela.confluence]
+value = 150000.0
+unit = "1/cm2"
+source = "Sin inhibición por contacto de la proliferación: HeLa llega a ~1–2·10⁵ células/cm² y se apila."
+estimate = true
+
+[physiology.hela.glucose_vmax]
+value = 200.0
+unit = "fmol/h"
+temperature = 37.0
+source = "Líneas tumorales en cultivo: ~100–400 nmol de glucosa por 10⁶ células por hora (Jain et al. 2012, Science 336:1040, perfiles de consumo de las NCI-60)."
+estimate = true
+
+[physiology.hela.glucose_km]
+value = 3.0
+unit = "mM"
+temperature = 37.0
+source = "Km de GLUT1: ~1–3 mM (Carruthers 1990, Physiol. Rev. 70:1135)."
+
+[physiology.hela.glutamine_vmax]
+value = 40.0
+unit = "fmol/h"
+temperature = 37.0
+source = "Las líneas tumorales consumen glutamina a ~20 % de su consumo de glucosa (Jain et al. 2012, Science 336:1040)."
+estimate = true
+
+[physiology.hela.glutamine_km]
+value = 0.1
+unit = "mM"
+temperature = 37.0
+source = "Km de ASCT2 (SLC1A5) del orden de 0,1 mM."
+estimate = true
+
+[physiology.hela.lactate_per_glucose]
+value = 1.7
+unit = "mol/mol"
+temperature = 37.0
+source = "Glucólisis aeróbica (efecto Warburg): las líneas tumorales secretan ~1,5–2 lactatos por glucosa consumida (Jain et al. 2012, Science 336:1040)."
+estimate = true

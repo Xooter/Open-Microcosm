@@ -1,0 +1,31 @@
+# Thalassiosira pseudonana: diatomea céntrica marina de 4–6 µm; cultivo a 14 °C, crece entre 4 y 25 °C
+# (NCMA CCMP1335). Primer genoma de diatomea secuenciado (Armbrust et al. 2004). Marina.
+[[being]]
+id = "thalassiosira"
+name = "Thalassiosira pseudonana"
+tags = ["alga", "diatom", "phototroph", "marine"]
+description = "Diatomea marina diminuta (~5 um) en forma de caja redonda. Fue la primera diatomea con el genoma secuenciado."
+locomotion = "cilia"
+body_plan = "diatom"
+relative_speed = 0.0
+relative_photosynthesis = 1.5
+initial_count = 20
+chloroplasts = true
+frustule = true
+ph = [7.0, 9.5]
+temperature = [4.0, 25.0]
+max_salinity = 60.0
+storage = "chrysolaminarin"
+wall = "silica"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 2.6
+semi_minor_axis = 2.6
+thickness = 2.0
+shape_memory = 40.0
+color = [204, 182, 112]
+nucleus = 0.3
+
+[being.appearance]
+style = "frustule"
+plastid_color = [176, 140, 50]

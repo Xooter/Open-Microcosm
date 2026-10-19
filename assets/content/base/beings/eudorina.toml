@@ -1,0 +1,31 @@
+# Eudorina elegans: 16–32 células (~13 µm) separadas en la superficie de una esfera de mucílago de
+# 50–200 µm. Butterwick, Heaney & Talling (2005, Freshwater Biol. 50: 291) midieron otra especie,
+# E. unicocca: crece ≥ 0,4 divisiones/día aun a 5 °C. Sin dato de su velocidad: la de Gonium.
+[[being]]
+id = "eudorina"
+name = "Eudorina"
+tags = ["alga", "green_alga", "colonial", "phototroph", "flagellate"]
+description = "Esfera de mucilago con 32 celulas verdes separadas en la superficie, un paso entre Pandorina y Volvox."
+locomotion = "flagellum"
+body_plan = "flagellate_chlorophyte"
+relative_speed = 0.5
+phototaxis = true
+initial_count = 2
+chloroplasts = true
+daughter_colonies = 4
+colony_cells = 32
+mother_dies_at_release = true
+relative_dry_mass = 0.055
+ph = [6.0, 9.5]
+temperature = [2.0, 32.0]
+storage = "starch"
+wall = "cellulose"
+[being.shape]
+semi_major_axis = 50.0
+semi_minor_axis = 50.0
+shape_memory = 20.0
+color = [154, 196, 124]
+nucleus = 0.12
+
+[being.appearance]
+style = "hollow_colony"

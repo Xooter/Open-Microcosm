@@ -1,0 +1,27 @@
+# Célula escamosa de la mucosa bucal: plana y poligonal (~50–80 µm), con un núcleo chico (~8 µm);
+# las que se raspan de la mejilla son las superficiales, que se descaman.
+[[being]]
+id = "buccal_squamous_cell"
+legacy_ids = ["celula_escamosa_bucal"]
+name = "Celula escamosa de la mucosa bucal"
+tags = ["human_cell", "animal_cell", "epithelium"]
+description = "Celula del epitelio plano estratificado de la cara interna de la mejilla: grande, plana y poligonal, con un nucleo chico en el centro. Se descama sola; en el raspado suelen tener bacterias de la boca pegadas."
+body_plan = "squamous_cell"
+locomotion = "none"
+relative_speed = 0.0
+feeding = "none"
+relative_dry_mass = 0.0544
+ph = [6.0, 8.0]
+temperature = [10.0, 40.0]
+max_salinity = 16.0
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 32.0
+semi_minor_axis = 27.0
+shape_memory = 4.0
+color = [226, 222, 212]
+nucleus = 0.15
+squareness = 3.0
+[being.appearance]
+style = "squamous_cell"

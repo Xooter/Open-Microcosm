@@ -1,0 +1,6 @@
+[[term]]
+id = "quorum"
+term = "Quorum sensing"
+definition = "Las bacterias liberan una señal (autoinductor) que se acumula con la densidad; pasado un umbral, cambian de comportamiento todas juntas. Chromobacterium violaceum fabrica así la violaceína, un pigmento violeta tóxico para quien se la come."
+source = "McClean, K. H. et al. (1997). Quorum sensing and Chromobacterium violaceum. Microbiology 143: 3703-3711."
+alias = ["autoinductor", "violaceína"]

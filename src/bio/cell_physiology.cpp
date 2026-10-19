@@ -17,7 +17,7 @@ constexpr float kOsmotrophHalfSaturation = 5.0f; // [µM]
 
 void applySpeciesPhysiology(MetabolicInput& in, SpeciesId id, const SpeciesInfo& info, const Heredity* heredity,
                             const MetabolismParams& params) {
-    // µmax de la especie (fisiologia.toml, con su fuente) relativo al valor general del
+    // µmax de la especie ([physiology.<id>.*], con su fuente) relativo al valor general del
     // metabolismo; sin dato, el general.
     const SpeciesPhysiology& physio = speciesPhysiology(id);
     in.phosphorusHalfSaturation = physio.phosphorusHalfSaturation.present ? physio.phosphorusHalfSaturation.value : 0.0f;

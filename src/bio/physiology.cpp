@@ -1,6 +1,6 @@
 #include "bio/physiology.hpp"
 
-#include "core/paths.hpp"
+#include "core/pack_files.hpp"
 #include "core/toml_reader.hpp"
 
 #include <toml++/toml.hpp>
@@ -25,11 +25,11 @@ constexpr float kQ10 = 2.0f;
 bool toPerHour(float v, const std::string& unit, float& out) {
     if (unit == "1/h")
         out = v;
-    else if (unit == "1/dia")
+    else if (unit == "1/day")
         out = v / 24.0f;
     else if (unit == "h") // tiempo de duplicación
         out = v > 0.0f ? std::log(2.0f) / v : 0.0f;
-    else if (unit == "dia")
+    else if (unit == "day")
         out = v > 0.0f ? std::log(2.0f) / (24.0f * v) : 0.0f;
     else
         return false;
@@ -41,17 +41,17 @@ SourcedValue readRate(const toml::table& t, const std::string& species, const ch
     const toml::table* e = t[key].as_table();
     if (!e)
         return s;
-    const auto v = (*e)["valor"].value<double>();
-    const auto unit = (*e)["unidad"].value<std::string>();
+    const auto v = (*e)["value"].value<double>();
+    const auto unit = (*e)["unit"].value<std::string>();
     if (!v || !unit) {
         gWarnings.push_back(species + "." + key + ": falta valor o unidad");
         return s;
     }
     s.published = static_cast<float>(*v);
     s.unit = *unit;
-    s.temperature = static_cast<float>((*e)["temperatura"].value_or(static_cast<double>(kReferenceTemperature)));
-    s.source = (*e)["fuente"].value_or(std::string());
-    s.estimate = (*e)["estimacion"].value_or(false);
+    s.temperature = static_cast<float>((*e)["temperature"].value_or(static_cast<double>(kReferenceTemperature)));
+    s.source = (*e)["source"].value_or(std::string());
+    s.estimate = (*e)["estimate"].value_or(false);
     float perHour = 0.0f;
     if (!toPerHour(s.published, s.unit, perHour)) {
         gWarnings.push_back(species + "." + key + ": unidad desconocida '" + s.unit + "'");
@@ -74,28 +74,28 @@ SourcedValue readScaled(const toml::table& t, const std::string& species, const 
     const toml::table* e = t[key].as_table();
     if (!e)
         return s;
-    const auto v = (*e)["valor"].value<double>();
-    const auto unit = (*e)["unidad"].value<std::string>();
+    const auto v = (*e)["value"].value<double>();
+    const auto unit = (*e)["unit"].value<std::string>();
     if (!v || !unit) {
         gWarnings.push_back(species + "." + key + ": falta valor o unidad");
         return s;
     }
     s.published = static_cast<float>(*v);
     s.unit = *unit;
-    s.temperature = static_cast<float>((*e)["temperatura"].value_or(static_cast<double>(kReferenceTemperature)));
-    s.source = (*e)["fuente"].value_or(std::string());
-    s.estimate = (*e)["estimacion"].value_or(false);
+    s.temperature = static_cast<float>((*e)["temperature"].value_or(static_cast<double>(kReferenceTemperature)));
+    s.source = (*e)["source"].value_or(std::string());
+    s.estimate = (*e)["estimate"].value_or(false);
     float factor = 0.0f;
     if (kind == Kind::Speed)
         factor = s.unit == "um/h" ? 1.0f : s.unit == "um/min" ? 60.0f : 0.0f;
     else if (kind == Kind::Time)
-        factor = s.unit == "h" ? 1.0f : s.unit == "min" ? 1.0f / 60.0f : s.unit == "dia" ? 24.0f : 0.0f;
+        factor = s.unit == "h" ? 1.0f : s.unit == "min" ? 1.0f / 60.0f : s.unit == "day" ? 24.0f : 0.0f;
     else if (kind == Kind::Density)
         factor = s.unit == "1/cm2" ? 1.0f : 0.0f;
     else if (kind == Kind::Flux) // por célula → fmol/h (1 amol/s = 3,6 fmol/h)
         factor = s.unit == "fmol/h" ? 1.0f : s.unit == "amol/s" ? 3.6f : s.unit == "pmol/h" ? 1000.0f : 0.0f;
     else if (kind == Kind::Ingestion) // presas por hora
-        factor = s.unit == "bacterias/h" ? 1.0f : s.unit == "bacterias/min" ? 60.0f : 0.0f;
+        factor = s.unit == "bacteria/h" ? 1.0f : s.unit == "bacteria/min" ? 60.0f : 0.0f;
     else if (kind == Kind::Clearance) // → µm³/h
         factor = s.unit == "nL/h" ? 1e6f : s.unit == "uL/h" || s.unit == "µL/h" ? 1e9f : s.unit == "mL/h" ? 1e12f : 0.0f;
     else if (kind == Kind::Concentration)
@@ -127,58 +127,58 @@ SourcedValue readConcentration(const toml::table& t, const std::string& species,
     const toml::table* e = t[key].as_table();
     if (!e)
         return s;
-    const auto v = (*e)["valor"].value<double>();
-    const auto unit = (*e)["unidad"].value<std::string>();
+    const auto v = (*e)["value"].value<double>();
+    const auto unit = (*e)["unit"].value<std::string>();
     if (!v || !unit || *unit != "µM") {
         gWarnings.push_back(species + "." + key + ": falta valor o la unidad no es µM");
         return s;
     }
     s.published = s.value = static_cast<float>(*v);
     s.unit = *unit;
-    s.temperature = static_cast<float>((*e)["temperatura"].value_or(20.0));
-    s.source = (*e)["fuente"].value_or(std::string());
-    s.estimate = (*e)["estimacion"].value_or(false);
+    s.temperature = static_cast<float>((*e)["temperature"].value_or(20.0));
+    s.source = (*e)["source"].value_or(std::string());
+    s.estimate = (*e)["estimate"].value_or(false);
     s.present = s.value > 0.0f;
     if (s.source.empty())
         gWarnings.push_back(species + "." + key + ": sin fuente");
     return s;
 }
 
-// Las tablas [id_del_ser.parametro] de un documento (o de la tabla [fisiologia] de un .biopack).
+// Las tablas [id_del_ser.parametro] de un documento (o de la tabla [physiology] de un .biopack).
 void loadTables(const toml::table& doc) {
     for (const auto& [name, node] : doc) {
         const toml::table* t = node.as_table();
         if (!t)
             continue; // "version" y otras claves sueltas
-        // Por el id del ser (seres.toml de algún paquete cargado).
+        // Por el id del ser (beings/<id>.toml de algún paquete cargado).
         const std::optional<SpeciesId> found = findSpecies(name.str());
         const int id = found ? static_cast<int>(*found) : -1;
         if (id < 0) {
             gWarnings.push_back("especie desconocida: " + std::string(name.str()));
             continue;
         }
-        gTable[id].growthMax = readRate(*t, std::string(name.str()), "crecimiento_maximo");
-        gTable[id].phosphorusHalfSaturation = readConcentration(*t, std::string(name.str()), "p_media_saturacion");
-        gTable[id].siliconHalfSaturation = readConcentration(*t, std::string(name.str()), "si_media_saturacion");
+        gTable[id].growthMax = readRate(*t, std::string(name.str()), "max_growth");
+        gTable[id].phosphorusHalfSaturation = readConcentration(*t, std::string(name.str()), "p_half_saturation");
+        gTable[id].siliconHalfSaturation = readConcentration(*t, std::string(name.str()), "si_half_saturation");
         const std::string sp(name.str());
         SpeciesPhysiology& ph = gTable[id];
-        ph.migrationSpeed = readScaled(*t, sp, "rapidez_migracion", Kind::Speed);
-        ph.persistence = readScaled(*t, sp, "persistencia", Kind::Time);
-        ph.phaseG1 = readScaled(*t, sp, "fase_g1", Kind::Time);
-        ph.phaseS = readScaled(*t, sp, "fase_s", Kind::Time);
-        ph.phaseG2 = readScaled(*t, sp, "fase_g2", Kind::Time);
-        ph.phaseM = readScaled(*t, sp, "fase_m", Kind::Time);
-        ph.lifespan = readScaled(*t, sp, "vida", Kind::Time);
-        ph.confluence = readScaled(*t, sp, "confluencia", Kind::Density);
-        ph.glucoseVmax = readScaled(*t, sp, "glucosa_vmax", Kind::Flux);
-        ph.glucoseKm = readScaled(*t, sp, "glucosa_km", Kind::Concentration);
-        ph.glutamineVmax = readScaled(*t, sp, "glutamina_vmax", Kind::Flux);
-        ph.glutamineKm = readScaled(*t, sp, "glutamina_km", Kind::Concentration);
-        ph.lactatePerGlucose = readScaled(*t, sp, "lactato_por_glucosa", Kind::Ratio);
-        ph.oxygenUptake = readScaled(*t, sp, "o2_consumo", Kind::Flux);
-        ph.maxIngestion = readScaled(*t, sp, "ingestion_maxima", Kind::Ingestion);
-        ph.clearance = readScaled(*t, sp, "aclaramiento", Kind::Clearance);
-        gSource[id] = toml_io::tableSnippet("fisiologia", name.str(), *t);
+        ph.migrationSpeed = readScaled(*t, sp, "migration_speed", Kind::Speed);
+        ph.persistence = readScaled(*t, sp, "persistence", Kind::Time);
+        ph.phaseG1 = readScaled(*t, sp, "phase_g1", Kind::Time);
+        ph.phaseS = readScaled(*t, sp, "phase_s", Kind::Time);
+        ph.phaseG2 = readScaled(*t, sp, "phase_g2", Kind::Time);
+        ph.phaseM = readScaled(*t, sp, "phase_m", Kind::Time);
+        ph.lifespan = readScaled(*t, sp, "lifespan", Kind::Time);
+        ph.confluence = readScaled(*t, sp, "confluence", Kind::Density);
+        ph.glucoseVmax = readScaled(*t, sp, "glucose_vmax", Kind::Flux);
+        ph.glucoseKm = readScaled(*t, sp, "glucose_km", Kind::Concentration);
+        ph.glutamineVmax = readScaled(*t, sp, "glutamine_vmax", Kind::Flux);
+        ph.glutamineKm = readScaled(*t, sp, "glutamine_km", Kind::Concentration);
+        ph.lactatePerGlucose = readScaled(*t, sp, "lactate_per_glucose", Kind::Ratio);
+        ph.oxygenUptake = readScaled(*t, sp, "o2_uptake", Kind::Flux);
+        ph.maxIngestion = readScaled(*t, sp, "max_ingestion", Kind::Ingestion);
+        ph.clearance = readScaled(*t, sp, "clearance", Kind::Clearance);
+        gSource[id] = toml_io::tableSnippet("physiology", name.str(), *t);
     }
 }
 
@@ -201,9 +201,28 @@ bool loadLocked(const std::string& path, std::string* error, bool reset = true) 
         gLoaded.store(true, std::memory_order_release);
         return false;
     }
-    loadTables(doc);
+    // Un archivo de un ser trae sus tablas en [physiology.<id>.<clave>]; uno suelto, en
+    // [<id>.<clave>].
+    if (const toml::table* root = doc["physiology"].as_table())
+        loadTables(*root);
+    else if (!doc.contains("being"))
+        loadTables(doc);
     gLoaded.store(true, std::memory_order_release);
     return true;
+}
+
+// La de fábrica: la de cada ser está en su archivo (beings/<id>.toml).
+bool loadBaseLocked(std::string* error) {
+    bool ok = true;
+    for (SpeciesPhysiology& p : gTable)
+        p = SpeciesPhysiology{};
+    for (std::string& src : gSource)
+        src.clear();
+    gWarnings.clear();
+    for (const auto& path : packFolderFiles(basePackDir(), "beings"))
+        ok = loadLocked(path.string(), error, false) && ok;
+    gLoaded.store(true, std::memory_order_release);
+    return ok;
 }
 
 } // namespace
@@ -213,10 +232,15 @@ bool loadSpeciesPhysiology(const std::string& path, std::string* error) {
     return loadLocked(path, error);
 }
 
+bool loadBasePhysiology(std::string* error) {
+    std::lock_guard<std::mutex> lock(gLoadMutex);
+    return loadBaseLocked(error);
+}
+
 bool addSpeciesPhysiology(const std::string& path, std::string* error) {
     std::lock_guard<std::mutex> lock(gLoadMutex);
     if (!gLoaded.load(std::memory_order_relaxed))
-        loadLocked(assetPath("content/base/fisiologia.toml"), nullptr);
+        loadBaseLocked(nullptr);
     return loadLocked(path, error, false);
 }
 
@@ -225,7 +249,7 @@ const SpeciesPhysiology& speciesPhysiology(SpeciesId id) {
         // La primera consulta carga la tabla de fábrica (los loops paralelos esperan acá).
         std::lock_guard<std::mutex> lock(gLoadMutex);
         if (!gLoaded.load(std::memory_order_relaxed))
-            loadLocked(assetPath("content/base/fisiologia.toml"), nullptr);
+            loadBaseLocked(nullptr);
     }
     return gTable[static_cast<int>(id)];
 }
@@ -233,7 +257,7 @@ const SpeciesPhysiology& speciesPhysiology(SpeciesId id) {
 bool addSpeciesPhysiologyText(const std::string& text, const std::string& source, std::string* error) {
     std::lock_guard<std::mutex> lock(gLoadMutex);
     if (!gLoaded.load(std::memory_order_relaxed))
-        loadLocked(assetPath("content/base/fisiologia.toml"), nullptr);
+        loadBaseLocked(nullptr);
     toml::table doc;
     try {
         doc = toml::parse(text, source);
@@ -242,7 +266,7 @@ bool addSpeciesPhysiologyText(const std::string& text, const std::string& source
             *error = source + ": " + std::string(e.description());
         return false;
     }
-    const toml::table* root = doc.get("fisiologia") ? doc.get("fisiologia")->as_table() : nullptr;
+    const toml::table* root = doc.get("physiology") ? doc.get("physiology")->as_table() : nullptr;
     loadTables(root ? *root : doc);
     return true;
 }
@@ -258,25 +282,25 @@ const std::vector<std::string>& physiologyWarnings() { return gWarnings; }
 const std::vector<PhysiologyKey>& physiologyKeys() {
     using P = SpeciesPhysiology;
     static const std::vector<PhysiologyKey> keys = {
-        {"crecimiento_maximo", &P::growthMax, "1/h", "Crecimiento maximo"},
-        {"p_media_saturacion", &P::phosphorusHalfSaturation, "uM", "Media saturacion de P"},
-        {"si_media_saturacion", &P::siliconHalfSaturation, "uM", "Media saturacion de Si"},
-        {"rapidez_migracion", &P::migrationSpeed, "um/h", "Rapidez de migracion"},
-        {"persistencia", &P::persistence, "h", "Persistencia de la direccion"},
-        {"fase_g1", &P::phaseG1, "h", "Fase G1"},
-        {"fase_s", &P::phaseS, "h", "Fase S"},
-        {"fase_g2", &P::phaseG2, "h", "Fase G2"},
-        {"fase_m", &P::phaseM, "h", "Mitosis"},
-        {"vida", &P::lifespan, "h", "Vida media"},
-        {"confluencia", &P::confluence, "1/cm2", "Densidad de confluencia"},
-        {"glucosa_vmax", &P::glucoseVmax, "fmol/h", "Captacion maxima de glucosa"},
-        {"glucosa_km", &P::glucoseKm, "uM", "Km de la glucosa"},
-        {"glutamina_vmax", &P::glutamineVmax, "fmol/h", "Captacion maxima de glutamina"},
-        {"glutamina_km", &P::glutamineKm, "uM", "Km de la glutamina"},
-        {"lactato_por_glucosa", &P::lactatePerGlucose, "mol/mol", "Lactato por glucosa (Warburg)"},
-        {"o2_consumo", &P::oxygenUptake, "fmol/h", "Consumo de O2"},
-        {"ingestion_maxima", &P::maxIngestion, "bacterias/h", "Ingestion maxima de bacterias"},
-        {"aclaramiento", &P::clearance, "um3/h", "Aclaramiento (agua filtrada)"},
+        {"max_growth", &P::growthMax, "1/h", "Crecimiento maximo"},
+        {"p_half_saturation", &P::phosphorusHalfSaturation, "uM", "Media saturacion de P"},
+        {"si_half_saturation", &P::siliconHalfSaturation, "uM", "Media saturacion de Si"},
+        {"migration_speed", &P::migrationSpeed, "um/h", "Rapidez de migracion"},
+        {"persistence", &P::persistence, "h", "Persistencia de la direccion"},
+        {"phase_g1", &P::phaseG1, "h", "Fase G1"},
+        {"phase_s", &P::phaseS, "h", "Fase S"},
+        {"phase_g2", &P::phaseG2, "h", "Fase G2"},
+        {"phase_m", &P::phaseM, "h", "Mitosis"},
+        {"lifespan", &P::lifespan, "h", "Vida media"},
+        {"confluence", &P::confluence, "1/cm2", "Densidad de confluencia"},
+        {"glucose_vmax", &P::glucoseVmax, "fmol/h", "Captacion maxima de glucosa"},
+        {"glucose_km", &P::glucoseKm, "uM", "Km de la glucosa"},
+        {"glutamine_vmax", &P::glutamineVmax, "fmol/h", "Captacion maxima de glutamina"},
+        {"glutamine_km", &P::glutamineKm, "uM", "Km de la glutamina"},
+        {"lactate_per_glucose", &P::lactatePerGlucose, "mol/mol", "Lactato por glucosa (Warburg)"},
+        {"o2_uptake", &P::oxygenUptake, "fmol/h", "Consumo de O2"},
+        {"max_ingestion", &P::maxIngestion, "bacteria/h", "Ingestion maxima de bacterias"},
+        {"clearance", &P::clearance, "um3/h", "Aclaramiento (agua filtrada)"},
     };
     return keys;
 }

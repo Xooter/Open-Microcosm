@@ -1,0 +1,23 @@
+[[plate]]
+id = "elodea_leaf"
+legacy_ids = ["hoja_elodea"]
+name = "Preparado: hoja de Elodea"
+description = "Una hojita de Elodea (Egeria densa) montada en agua: celulas rectangulares llenas de cloroplastos que giran junto a la pared (ciclosis). Con sal se plasmolizan. Se simula un campo de 0,5 mm."
+kind = "slide"
+medium = "distilled_water"
+vessel = "slide"
+field_um = 512.0
+[plate.environment]
+temperature = 22.0
+co2 = 0.00042
+light = 1.0
+[plate.tissue]
+arrangement = "rows"
+content = "protoplast"
+being = "elodea_leaf_cell"
+length_um = 60.0
+width_um = 20.0
+wall_um = 1.0
+sap_osmolarity = 300.0
+inactive = 0.1
+equilibration_s = 60.0

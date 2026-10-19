@@ -102,7 +102,7 @@ class CatalogPanel : public Panel {
     }
 
   public:
-    const char* key() const override { return "catalogo"; }
+    const char* key() const override { return "catalog"; }
     const char* title() const override { return "Catálogo"; }
     Dock dock() const override { return Dock::Left; }
 

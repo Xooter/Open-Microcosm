@@ -1,6 +1,7 @@
 #include "game/prepared.hpp"
 
-#include "core/paths.hpp"
+#include "core/ids.hpp"
+#include "core/pack_files.hpp"
 #include "core/toml_reader.hpp"
 #include "core/units.hpp"
 #include "game/medium_toml.hpp"
@@ -36,33 +37,34 @@ template <typename T> bool duplicate(const std::deque<T>& list, const std::strin
     return false;
 }
 
-constexpr const char* kMediumKeys[] = {"id", "nombre", "descripcion", "fuente", "composicion"};
-constexpr const char* kVesselKeys[] = {"id", "nombre", "area_cm2", "volumen_ml", "fuente"};
-constexpr const char* kPlateKeys[] = {"id",         "nombre",   "descripcion", "tipo",   "medio",  "recipiente",
-                                      "campo_um",   "ambiente", "siembra",     "tejido", "fijado", "tincion",
-                                      "celda_um",   "eritrocitos_cm2", "plaquetas_cm2", "bacterias_cm2"};
-constexpr const char* kTissueKeys[] = {"disposicion", "contenido", "ser", "largo_um", "ancho_um", "pared_um",
-                                       "osmolaridad_jugo", "inactivo", "equilibrio_s", "fases_mitosis"};
-constexpr std::pair<const char*, TissueLayout> kLayouts[] = {{"hileras", TissueLayout::Rows},
-                                                             {"poligonal", TissueLayout::Polygonal},
-                                                             {"filas", TissueLayout::Files},
-                                                             {"rompecabezas", TissueLayout::Jigsaw}};
-constexpr std::pair<const char*, TissueContent> kContents[] = {{"protoplasto", TissueContent::Protoplast},
-                                                               {"almidon", TissueContent::Starch},
+constexpr const char* kMediumKeys[] = {"id", "legacy_ids", "name", "description", "source", "composition"};
+constexpr const char* kVesselKeys[] = {"id", "legacy_ids", "name", "area_cm2", "volume_ml", "source"};
+constexpr const char* kPlateKeys[] = {"id", "legacy_ids",         "name",   "description", "kind",   "medium",  "vessel",
+                                      "field_um",   "environment", "seeding",     "tissue", "fixed", "stain",
+                                      "cell_um",   "erythrocytes_cm2", "platelets_cm2", "bacteria_cm2"};
+constexpr const char* kTissueKeys[] = {"arrangement", "content", "being", "length_um", "width_um", "wall_um",
+                                       "sap_osmolarity", "inactive", "equilibration_s", "mitotic_phases"};
+constexpr std::pair<const char*, TissueLayout> kLayouts[] = {{"rows", TissueLayout::Rows},
+                                                             {"polygonal", TissueLayout::Polygonal},
+                                                             {"files", TissueLayout::Files},
+                                                             {"jigsaw", TissueLayout::Jigsaw}};
+constexpr std::pair<const char*, TissueContent> kContents[] = {{"protoplast", TissueContent::Protoplast},
+                                                               {"starch", TissueContent::Starch},
                                                                {"mitosis", TissueContent::Mitosis},
-                                                               {"estomas", TissueContent::Stomata}};
-constexpr const char* kAmbientKeys[] = {"temperatura", "co2", "luz"};
-constexpr const char* kSeedKeys[] = {"ser", "densidad_cm2"};
-constexpr std::pair<const char*, PlateKind> kKinds[] = {{"cultivo", PlateKind::CellCulture},
-                                                        {"preparado", PlateKind::Slide}};
+                                                               {"stomata", TissueContent::Stomata}};
+constexpr const char* kAmbientKeys[] = {"temperature", "co2", "light"};
+constexpr const char* kSeedKeys[] = {"being", "density_cm2"};
+constexpr std::pair<const char*, PlateKind> kKinds[] = {{"cell_culture", PlateKind::CellCulture},
+                                                        {"slide", PlateKind::Slide}};
 
 // Id y nombre obligatorios; el resto, con los errores en el lector.
 bool head(toml_io::Reader& r, const std::string& source, const char* what, std::string& key, std::string& name,
-          std::vector<std::string>& warnings) {
+          std::vector<std::string>& legacyIds, std::vector<std::string>& warnings) {
     r.text("id", key);
-    r.text("nombre", name);
+    r.strings("legacy_ids", legacyIds);
+    r.text("name", name);
     if (key.empty() || name.empty()) {
-        warnings.push_back(source + ": un [[" + what + "]] sin 'id' o sin 'nombre': se saltea");
+        warnings.push_back(source + ": un [[" + what + "]] sin 'id' o sin 'name': se saltea");
         return false;
     }
     r.where = source + " (" + key + ")";
@@ -87,18 +89,18 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
             if (const toml::table* t = n.as_table())
                 fn(*t);
     };
-    each("medio", [&](const toml::table& t) {
+    each("medium", [&](const toml::table& t) {
         CultureMedium m;
         toml_io::Reader r{t, source, {}};
-        if (!head(r, source, "medio", m.key, m.name, reg.warnings))
+        if (!head(r, source, "medium", m.key, m.name, m.legacyIds, reg.warnings))
             return;
         toml_io::warnUnknown(t, kMediumKeys, r.where, reg.warnings);
-        r.text("descripcion", m.description);
-        r.text("fuente", m.reference);
+        r.text("description", m.description);
+        r.text("source", m.reference);
         if (m.reference.empty())
-            r.errors.push_back(r.where + ": un medio necesita su 'fuente' (la composición publicada)");
-        if (const toml::table* c = r.table("composicion"))
-            readMedium(*c, r.where + " [composicion]", m.composition, r.errors, reg.warnings);
+            r.errors.push_back(r.where + ": un medio necesita su 'source' (la composición publicada)");
+        if (const toml::table* c = r.table("composition"))
+            readMedium(*c, r.where + " [composition]", m.composition, r.errors, reg.warnings);
         m.pack = pack;
         if (!finish(r, reg.warnings, "el medio"))
             return;
@@ -106,19 +108,19 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
             reg.warnings.push_back(source + ": el medio '" + m.key + "' ya existe: se saltea");
             return;
         }
-        m.source = toml_io::snippet("medio", t);
+        m.source = toml_io::snippet("medium", t);
         reg.media.push_back(std::move(m));
     });
-    each("recipiente", [&](const toml::table& t) {
+    each("vessel", [&](const toml::table& t) {
         Vessel v;
         toml_io::Reader r{t, source, {}};
-        if (!head(r, source, "recipiente", v.key, v.name, reg.warnings))
+        if (!head(r, source, "vessel", v.key, v.name, v.legacyIds, reg.warnings))
             return;
         toml_io::warnUnknown(t, kVesselKeys, r.where, reg.warnings);
         r.count("area_cm2", v.areaCm2);
-        r.count("volumen_ml", v.volumeMl);
+        r.count("volume_ml", v.volumeMl);
         if (v.areaCm2 <= 0.0f || v.volumeMl <= 0.0f)
-            r.errors.push_back(r.where + ": 'area_cm2' y 'volumen_ml' tienen que ser positivos");
+            r.errors.push_back(r.where + ": 'area_cm2' y 'volume_ml' tienen que ser positivos");
         v.pack = pack;
         if (!finish(r, reg.warnings, "el recipiente"))
             return;
@@ -126,90 +128,90 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
             reg.warnings.push_back(source + ": el recipiente '" + v.key + "' ya existe: se saltea");
             return;
         }
-        v.source = toml_io::snippet("recipiente", t);
+        v.source = toml_io::snippet("vessel", t);
         reg.vessels.push_back(std::move(v));
     });
-    each("placa", [&](const toml::table& t) {
+    each("plate", [&](const toml::table& t) {
         PreparedPlate p;
         toml_io::Reader r{t, source, {}};
-        if (!head(r, source, "placa", p.key, p.name, reg.warnings))
+        if (!head(r, source, "plate", p.key, p.name, p.legacyIds, reg.warnings))
             return;
         toml_io::warnUnknown(t, kPlateKeys, r.where, reg.warnings);
-        r.text("descripcion", p.description);
-        r.choice("tipo", kKinds, p.kind, true);
-        r.text("medio", p.medium);
-        r.text("recipiente", p.vessel);
+        r.text("description", p.description);
+        r.choice("kind", kKinds, p.kind, true);
+        r.text("medium", p.medium);
+        r.text("vessel", p.vessel);
         // Las referencias, contra lo ya cargado (los paquetes cargan medios y recipientes antes).
         if (!findCultureMedium(p.medium))
-            r.errors.push_back(r.where + ": 'medio' tiene que ser el id de un medio cargado ('" + p.medium + "')");
+            r.errors.push_back(r.where + ": 'medium' tiene que ser el id de un medio cargado ('" + p.medium + "')");
         if (!findVessel(p.vessel))
-            r.errors.push_back(r.where + ": 'recipiente' tiene que ser el id de un recipiente cargado ('" + p.vessel + "')");
-        r.count("campo_um", p.fieldUm);
+            r.errors.push_back(r.where + ": 'vessel' tiene que ser el id de un recipiente cargado ('" + p.vessel + "')");
+        r.count("field_um", p.fieldUm);
         if (p.fieldUm < 256.0f || p.fieldUm > 8192.0f)
-            r.errors.push_back(r.where + ": 'campo_um' va de 256 a 8192 µm");
-        if (const toml::table* a = r.table("ambiente")) {
-            toml_io::warnUnknown(*a, kAmbientKeys, r.where + " [ambiente]", reg.warnings);
-            toml_io::Reader ar{*a, r.where + " [ambiente]", {}};
-            ar.num("temperatura", p.temperature);
+            r.errors.push_back(r.where + ": 'field_um' va de 256 a 8192 µm");
+        if (const toml::table* a = r.table("environment")) {
+            toml_io::warnUnknown(*a, kAmbientKeys, r.where + " [environment]", reg.warnings);
+            toml_io::Reader ar{*a, r.where + " [environment]", {}};
+            ar.num("temperature", p.temperature);
             ar.count("co2", p.co2);
-            ar.count("luz", p.light);
+            ar.count("light", p.light);
             if (p.co2 > 1.0f || p.light > 1.0f)
-                ar.errors.push_back(ar.where + ": 'co2' y 'luz' van de 0 a 1");
+                ar.errors.push_back(ar.where + ": 'co2' y 'light' van de 0 a 1");
             r.errors.insert(r.errors.end(), ar.errors.begin(), ar.errors.end());
         }
-        if (const toml::node* s = t.get("siembra")) {
+        if (const toml::node* s = t.get("seeding")) {
             const toml::array* list = s->as_array();
             if (!list)
-                r.errors.push_back(r.where + ": 'siembra' tiene que ser una lista de [[placa.siembra]]");
+                r.errors.push_back(r.where + ": 'seeding' tiene que ser una lista de [[plate.seeding]]");
             for (std::size_t i = 0; list && i < list->size(); ++i) {
                 const toml::table* e = (*list)[i].as_table();
                 if (!e)
                     continue;
-                toml_io::warnUnknown(*e, kSeedKeys, r.where + " [siembra]", reg.warnings);
-                toml_io::Reader sr{*e, r.where + " [siembra]", {}};
+                toml_io::warnUnknown(*e, kSeedKeys, r.where + " [seeding]", reg.warnings);
+                toml_io::Reader sr{*e, r.where + " [seeding]", {}};
                 std::string being;
                 float density = 0.0f;
-                sr.text("ser", being);
-                sr.count("densidad_cm2", density);
+                sr.text("being", being);
+                sr.count("density_cm2", density);
                 if (being.empty())
-                    sr.errors.push_back(sr.where + ": falta 'ser'");
+                    sr.errors.push_back(sr.where + ": falta 'being'");
                 r.errors.insert(r.errors.end(), sr.errors.begin(), sr.errors.end());
                 p.seeding.emplace_back(being, density);
             }
         }
-        r.flag("fijado", p.fixed);
-        r.text("tincion", p.stain);
-        r.count("celda_um", p.cellSize);
-        r.count("eritrocitos_cm2", p.erythrocytesPerCm2);
-        r.count("plaquetas_cm2", p.plateletsPerCm2);
-        r.count("bacterias_cm2", p.bacteriaPerCm2);
+        r.flag("fixed", p.fixed);
+        r.text("stain", p.stain);
+        r.count("cell_um", p.cellSize);
+        r.count("erythrocytes_cm2", p.erythrocytesPerCm2);
+        r.count("platelets_cm2", p.plateletsPerCm2);
+        r.count("bacteria_cm2", p.bacteriaPerCm2);
         if (p.cellSize < 2.0f || p.cellSize > 16.0f)
-            r.errors.push_back(r.where + ": 'celda_um' va de 2 a 16 µm");
-        if (const toml::table* t2 = r.table("tejido")) {
+            r.errors.push_back(r.where + ": 'cell_um' va de 2 a 16 µm");
+        if (const toml::table* t2 = r.table("tissue")) {
             Tissue& ts = p.tissue;
             ts.enabled = true;
-            toml_io::warnUnknown(*t2, kTissueKeys, r.where + " [tejido]", reg.warnings);
-            toml_io::Reader tr{*t2, r.where + " [tejido]", {}};
-            tr.choice("disposicion", kLayouts, ts.layout, true);
-            tr.choice("contenido", kContents, ts.content, true);
-            tr.text("ser", ts.species);
-            tr.count("largo_um", ts.cellLength);
-            tr.count("ancho_um", ts.cellWidth);
-            tr.count("pared_um", ts.wallThickness);
-            tr.count("osmolaridad_jugo", ts.sapOsmolarity);
-            tr.count("inactivo", ts.inactive);
-            tr.count("equilibrio_s", ts.osmoticSeconds);
-            if (const toml::node* f = t2->get("fases_mitosis")) {
+            toml_io::warnUnknown(*t2, kTissueKeys, r.where + " [tissue]", reg.warnings);
+            toml_io::Reader tr{*t2, r.where + " [tissue]", {}};
+            tr.choice("arrangement", kLayouts, ts.layout, true);
+            tr.choice("content", kContents, ts.content, true);
+            tr.text("being", ts.species);
+            tr.count("length_um", ts.cellLength);
+            tr.count("width_um", ts.cellWidth);
+            tr.count("wall_um", ts.wallThickness);
+            tr.count("sap_osmolarity", ts.sapOsmolarity);
+            tr.count("inactive", ts.inactive);
+            tr.count("equilibration_s", ts.osmoticSeconds);
+            if (const toml::node* f = t2->get("mitotic_phases")) {
                 const toml::array* a = f->as_array();
                 if (!a || a->size() != 4)
-                    tr.errors.push_back(tr.where + ": 'fases_mitosis' es [profase, metafase, anafase, telofase] (fracciones)");
+                    tr.errors.push_back(tr.where + ": 'mitotic_phases' es [profase, metafase, anafase, telofase] (fracciones)");
                 for (std::size_t i = 0; a && i < 4 && i < a->size(); ++i)
                     ts.mitoticFractions[i] = static_cast<float>((*a)[i].value<double>().value_or(0.0));
             }
             if (ts.cellLength <= 0.0f || ts.cellWidth <= 0.0f)
-                tr.errors.push_back(tr.where + ": 'largo_um' y 'ancho_um' tienen que ser positivos");
+                tr.errors.push_back(tr.where + ": 'length_um' y 'width_um' tienen que ser positivos");
             if (ts.content == TissueContent::Protoplast && !findSpecies(ts.species))
-                tr.errors.push_back(tr.where + ": 'ser' tiene que ser el id de un ser cargado ('" + ts.species + "')");
+                tr.errors.push_back(tr.where + ": 'being' tiene que ser el id de un ser cargado ('" + ts.species + "')");
             r.errors.insert(r.errors.end(), tr.errors.begin(), tr.errors.end());
         }
         p.pack = pack;
@@ -219,7 +221,7 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
             reg.warnings.push_back(source + ": la placa '" + p.key + "' ya existe: se saltea");
             return;
         }
-        p.source = toml_io::snippet("placa", t);
+        p.source = toml_io::snippet("plate", t);
         reg.plates.push_back(std::move(p));
     });
 }
@@ -233,22 +235,21 @@ void ensureBase() {
         return;
     reg.baseLoaded = true;
     // En orden de dependencias: las placas nombran medios y recipientes.
-    for (const char* file : {"medios.toml", "recipientes.toml", "placas.toml"}) {
-        const std::string path = assetPath(std::string("content/base/") + file);
-        try {
-            loadParsed(toml::parse_file(path), path, "base");
-        } catch (const toml::parse_error& e) {
-            reg.warnings.push_back("no se pudo cargar " + path + ": " + std::string(e.description()));
+    for (const char* folder : {"media", "vessels", "plates"})
+        for (const auto& file : packFolderFiles(basePackDir(), folder)) {
+            const std::string path = file.string();
+            try {
+                loadParsed(toml::parse_file(path), path, "base");
+            } catch (const toml::parse_error& e) {
+                reg.warnings.push_back("no se pudo cargar " + path + ": " + std::string(e.description()));
+            }
         }
-    }
     reg.ready.store(true, std::memory_order_release);
 }
 
 template <typename T> const T* find(const std::deque<T>& list, std::string_view key) {
-    for (const T& e : list)
-        if (e.key == key)
-            return &e;
-    return nullptr;
+    const std::ptrdiff_t i = indexOfId(list, key);
+    return i < 0 ? nullptr : &list[static_cast<std::size_t>(i)];
 }
 
 } // namespace

@@ -1,0 +1,18 @@
+# Célula humana adherida en cultivo (fibroblasto, HeLa): núcleo ovalado con 1–4 nucléolos,
+# mitocondrias tubulares, retículo y Golgi junto al núcleo, lisosomas; sin vacuola contráctil (en un
+# medio isotónico no la necesita).
+[[body_plan]]
+id = "adherent_human_cell"
+name = "celula humana adherida"
+morphology = "eukaryote"
+structures = [
+    { kind = "plasma_membrane", source = "simulated", arrangement = "envelope", brightfield = true, name = "membrana plasmatica (lamelipodio en el frente)" },
+    { kind = "nucleus", source = "simulated", arrangement = "interior", count = 1, brightfield = true, name = "nucleo" },
+    { kind = "nucleolus", source = "declared", arrangement = "interior", length = 2.0, width = 2.0, count = 3, brightfield = true, name = "nucleolos" },
+    { kind = "mitochondrion", source = "simulated", arrangement = "interior", length = 3.0, width = 0.5, brightfield = false, name = "mitocondrias (red tubular)" },
+    { kind = "lysosome", source = "simulated", arrangement = "interior", brightfield = false, name = "lisosomas" },
+    { kind = "storage_granule", source = "simulated", arrangement = "interior", brightfield = false, name = "granulos de glucogeno" },
+    { kind = "endoplasmic_reticulum", source = "declared", arrangement = "perinuclear", length = 8.0, width = 0.05, count = 1, brightfield = false, name = "reticulo endoplasmico rugoso" },
+    { kind = "golgi", source = "declared", arrangement = "perinuclear", length = 3.0, width = 0.5, count = 1, brightfield = false, name = "aparato de Golgi (cinta junto al nucleo)" },
+    { kind = "ribosomes", source = "declared", arrangement = "interior", length = 0.025, width = 0.025, per_um3 = 3000.0, brightfield = false, name = "ribosomas 80S" },
+]

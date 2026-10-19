@@ -80,7 +80,7 @@ std::vector<Intervention> liveSession(const PlateSpec& plate, std::uint64_t& has
             log.recordState(world, off);
             Intervention p;
             p.kind = InterventionKind::Parameter;
-            p.key = "medio.alcalinidad";
+            p.key = "medium.alkalinity";
             p.v[0] = 2500.0f;
             log.record(world, p);
         }
@@ -129,7 +129,7 @@ TEST_CASE("escena: el registro de intervenciones va y vuelve sin cambios") {
     std::vector<Intervention> list(2);
     list[0].step = 7;
     list[0].kind = InterventionKind::Parameter;
-    list[0].key = "xpbd.flexion";
+    list[0].key = "xpbd.bending";
     list[0].v[0] = 0.1f + 1e-7f;
     list[1].step = 123456789012ull;
     list[1].kind = InterventionKind::Stir;
@@ -139,7 +139,7 @@ TEST_CASE("escena: el registro de intervenciones va y vuelve sin cambios") {
     const std::vector<Intervention> back = parseInterventions(serializeInterventions(list));
     REQUIRE(back.size() == 2);
     CHECK(back[0].step == 7);
-    CHECK(back[0].key == "xpbd.flexion");
+    CHECK(back[0].key == "xpbd.bending");
     CHECK(back[0].v[0] == list[0].v[0]);
     CHECK(back[1].step == list[1].step);
     CHECK(back[1].active);
@@ -232,7 +232,7 @@ std::vector<Intervention> cultureSession(const PlateSpec& plate, std::uint64_t& 
 
 TEST_CASE("escena: un cultivo de DMEM con una levadura inoculada se repite bit a bit, con 1 y 4 hilos") {
     PlateSpec plate;
-    plate.prepared = "cultivo_dmem";
+    plate.prepared = "dmem_culture";
     plate.seed = 2024;
     plate.rebuild();
     REQUIRE(plate.kind() == PlateKind::CellCulture);
@@ -242,7 +242,7 @@ TEST_CASE("escena: un cultivo de DMEM con una levadura inoculada se repite bit a
     const std::vector<Intervention> events = cultureSession(plate, live, yeasts);
     CHECK(yeasts == 12);
     const std::string text = serializeScene(plate, events);
-    CHECK(text.find("prepared=cultivo_dmem") != std::string::npos);
+    CHECK(text.find("prepared=dmem_culture") != std::string::npos);
     CHECK(text.find(" candida\n") != std::string::npos);
     const int threads = omp_get_max_threads();
     omp_set_num_threads(1);

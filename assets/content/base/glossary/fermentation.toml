@@ -1,0 +1,7 @@
+[[term]]
+id = "fermentation"
+term = "Fermentación"
+definition = "Obtención de energía sin O₂: la glucosa se parte a medias (a etanol, lactato u otros) con solo 2 ATP por glucosa."
+source = "Madigan, M. T. et al. (2018). Brock Biology of Microorganisms, 15.ª ed. Pearson, cap. 3."
+alias = ["fermenta", "fermentan", "anaerobio", "anaerobia", "anoxia"]
+related = ["respiration", "warburg"]

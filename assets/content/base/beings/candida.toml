@@ -1,0 +1,30 @@
+# Candida (levadura de agua dulce): célula oval de ~6 × 5 µm con pared de quitina, inmóvil.
+# Absorbe azúcares y aminoácidos disueltos; respira con O₂ y fermenta sin él. Se reproduce
+# por gemación: la yema crece en un polo y se separa (cicatriz de gemación).
+
+[[being]]
+id = "candida"
+name = "Candida"
+tags = ["fungus", "yeast"]
+description = "Levadura: absorbe azucares disueltos, respira o fermenta sin oxigeno, y se reproduce por gemacion."
+locomotion = "cilia"
+body_plan = "yeast"
+feeding = "osmotrophy"
+relative_speed = 0.0
+initial_count = 12
+daughter_colonies = 1
+budding = true
+ph = [3.0, 8.5]
+temperature = [0.0, 40.0]
+max_salinity = 60.0
+storage = "glycogen"
+wall = "yeast_glucan"
+[being.shape]
+semi_major_axis = 3.2
+semi_minor_axis = 2.6
+shape_memory = 12.0
+color = [214, 206, 176]
+nucleus = 0.3
+
+[being.appearance]
+style = "yeast"

@@ -1,6 +1,6 @@
 // Validación contra resultados publicados (MVP). Suite "validacion": ctest -L validacion.
 //
-// Cada test reproduce un experimento real y compara con la fuente (assets/content/base/fisiologia.toml,
+// Cada test reproduce un experimento real y compara con la fuente ([physiology.<id>.*] de cada ser,
 // docs/validacion.md). Son largos: la biología se acelera con la escala de tiempo biológico (600),
 // que no cambia las proporciones entre procesos.
 #include "bio/physiology.hpp"
@@ -147,7 +147,7 @@ double tilmanAsterionellaShare(bool siLimited) {
 } // namespace
 
 // Resultado cualitativo confirmado de Tilman (1977, Ecology 58: 338-348): con P limitante gana
-// Asterionella y con Si limitante, Cyclotella. Las constantes de fisiologia.toml están SIN
+// Asterionella y con Si limitante, Cyclotella. Las constantes de [physiology.<id>.*] están SIN
 // VERIFICAR contra Tilman & Kilham (1976). Dos casos: corren en paralelo con ctest -j.
 TEST_CASE("validación: Tilman — con P limitante gana Asterionella" * doctest::test_suite("validacion")) {
     const double share = tilmanAsterionellaShare(false);

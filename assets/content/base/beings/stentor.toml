@@ -1,0 +1,34 @@
+# Stentor coeruleus: trompeta azul (pigmento stentorina), extendida hasta ~1 mm; aquí una
+# contraída de ~200 µm. Se fija por el pie; su corriente oral trae bacterias y algas chicas.
+
+[[being]]
+id = "stentor"
+name = "Stentor"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Trompeta azul fija por el pie; su corona de membranelas crea un remolino que trae bacterias y algas."
+locomotion = "cilia"
+conjugation = true
+body_plan = "ciliate"
+feeding = "oral_groove"
+relative_speed = 0.5
+mouth_prey = ["euglena", "chlamydomonas", "navicula", "asterionella", "cyclotella", "chlorella", "raphidocelis", "desmodesmus", "cryptomonas"]
+initial_count = 2
+sessile = true
+stalk_length = 20.0
+handling_hours = 0.5
+cyclosis = 3.0
+ph = [6.0, 9.5]
+temperature = [5.0, 28.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 100.0
+semi_minor_axis = 55.0
+shape_memory = 6.0
+color = [120, 150, 200]
+nucleus = 0.32
+taper = 0.8
+
+[being.appearance]
+style = "membranelle_crown"

@@ -1,6 +1,6 @@
 #include "bio/body_plan.hpp"
 
-#include "core/paths.hpp"
+#include "core/pack_files.hpp"
 #include "core/toml_reader.hpp"
 
 #include <toml++/toml.hpp>
@@ -86,7 +86,7 @@ constexpr StructureSpec kT4[] = {
 };
 
 // --- Eucariotas ----------------------------------------------------------------------------
-// Los planes de protistas, algas, levaduras y células son datos (assets/content/base/planes.toml y
+// Los planes de protistas, algas, levaduras y células son datos (assets/content/base/body_plans/ y
 // los paquetes del usuario). Si un ser pide un plan que no existe, se usa el mínimo (membrana y
 // núcleo) y se avisa.
 constexpr StructureSpec kMinimalEukaryote[] = {
@@ -156,7 +156,7 @@ namespace {
 
 struct PlanEntry {
     std::string id, name, pack;
-    std::string source; // el [[plan]] como se leyó (para exportarlo)
+    std::string source; // el [[body_plan]] como se leyó (para exportarlo)
     std::deque<std::string> names; // nombres de las estructuras (direcciones estables)
     std::vector<StructureSpec> structures;
     BodyPlan plan{};
@@ -176,27 +176,27 @@ PlanRegistry& plans() {
 }
 
 constexpr std::pair<const char*, StructureKind> kKinds[] = {
-    {"membrana_plasmatica", K::PlasmaMembrane}, {"membrana_externa", K::OuterMembrane},
-    {"peptidoglicano", K::Peptidoglycan},       {"pared", K::CellWall},
-    {"capsula", K::Capsule},                    {"nucleoide", K::Nucleoid},
-    {"ribosomas", K::Ribosomes},                {"flagelo", K::Flagellum},
-    {"pili", K::Pili},                          {"nucleo", K::Nucleus},
-    {"nucleolo", K::Nucleolus},                 {"mitocondria", K::Mitochondrion},
-    {"hidrogenosoma", K::Hydrogenosome},        {"cloroplasto", K::Chloroplast},
-    {"pirenoide", K::Pyrenoid},                 {"estigma", K::Eyespot},
-    {"reticulo_endoplasmico", K::EndoplasmicReticulum}, {"golgi", K::Golgi},
-    {"vacuola_contractil", K::ContractileVacuole}, {"vacuola_digestiva", K::FoodVacuole},
-    {"lisosoma", K::Lysosome},                  {"granulo_reserva", K::StorageGranule},
-    {"capside", K::Capsid},                     {"genoma_viral", K::ViralGenome},
-    {"envoltura_viral", K::ViralEnvelope},      {"cola", K::Tail},
-    {"placa_basal", K::Baseplate},              {"fibras_cola", K::TailFibers}};
-constexpr std::pair<const char*, StructureSource> kSources[] = {{"simulada", S::Simulated}, {"declarada", S::Declared}};
+    {"plasma_membrane", K::PlasmaMembrane}, {"outer_membrane", K::OuterMembrane},
+    {"peptidoglycan", K::Peptidoglycan},       {"cell_wall", K::CellWall},
+    {"capsule", K::Capsule},                    {"nucleoid", K::Nucleoid},
+    {"ribosomes", K::Ribosomes},                {"flagellum", K::Flagellum},
+    {"pili", K::Pili},                          {"nucleus", K::Nucleus},
+    {"nucleolus", K::Nucleolus},                 {"mitochondrion", K::Mitochondrion},
+    {"hydrogenosome", K::Hydrogenosome},        {"chloroplast", K::Chloroplast},
+    {"pyrenoid", K::Pyrenoid},                 {"eyespot", K::Eyespot},
+    {"endoplasmic_reticulum", K::EndoplasmicReticulum}, {"golgi", K::Golgi},
+    {"contractile_vacuole", K::ContractileVacuole}, {"food_vacuole", K::FoodVacuole},
+    {"lysosome", K::Lysosome},                  {"storage_granule", K::StorageGranule},
+    {"capsid", K::Capsid},                     {"viral_genome", K::ViralGenome},
+    {"viral_envelope", K::ViralEnvelope},      {"tail", K::Tail},
+    {"baseplate", K::Baseplate},              {"tail_fibers", K::TailFibers}};
+constexpr std::pair<const char*, StructureSource> kSources[] = {{"simulated", S::Simulated}, {"declared", S::Declared}};
 constexpr std::pair<const char*, Arrangement> kArrangements[] = {
-    {"envoltura", A::Envelope},       {"interior", A::Interior},       {"polar", A::Polar},
-    {"peritrica", A::Peritrichous},   {"perinuclear", A::Perinuclear}, {"anterior", A::Anterior}};
+    {"envelope", A::Envelope},       {"interior", A::Interior},       {"polar", A::Polar},
+    {"peritrichous", A::Peritrichous},   {"perinuclear", A::Perinuclear}, {"anterior", A::Anterior}};
 constexpr std::pair<const char*, Morphology> kMorphologies[] = {
-    {"bacilo", Morphology::Rod},          {"vibrio", Morphology::Vibrio},           {"eucariota", Morphology::Eukaryote},
-    {"fago_cola", Morphology::HeadTailPhage}, {"icosaedrica", Morphology::Icosahedral}, {"helicoidal", Morphology::Helical}};
+    {"rod", Morphology::Rod},          {"vibrio", Morphology::Vibrio},           {"eukaryote", Morphology::Eukaryote},
+    {"tailed_phage", Morphology::HeadTailPhage}, {"icosahedral", Morphology::Icosahedral}, {"helical", Morphology::Helical}};
 
 template <typename E, std::size_t N>
 bool pick(const toml::table& t, const char* key, const std::pair<const char*, E> (&table)[N], E& out) {
@@ -213,7 +213,7 @@ bool pick(const toml::table& t, const char* key, const std::pair<const char*, E>
 
 void loadPlansDoc(const toml::table& doc, const std::string& source, const std::string& pack) {
     PlanRegistry& r = plans();
-    const toml::array* list = doc.get("plan") ? doc.get("plan")->as_array() : nullptr;
+    const toml::array* list = doc.get("body_plan") ? doc.get("body_plan")->as_array() : nullptr;
     if (!list)
         return;
     for (const toml::node& n : *list) {
@@ -222,7 +222,7 @@ void loadPlansDoc(const toml::table& doc, const std::string& source, const std::
             continue;
         const auto id = t->get("id") ? t->get("id")->value<std::string>() : std::nullopt;
         if (!id) {
-            r.warnings.push_back(source + ": un [[plan]] sin 'id': se saltea");
+            r.warnings.push_back(source + ": un [[body_plan]] sin 'id': se saltea");
             continue;
         }
         bool duplicate = false;
@@ -235,29 +235,29 @@ void loadPlansDoc(const toml::table& doc, const std::string& source, const std::
         PlanEntry e;
         e.id = *id;
         e.pack = pack;
-        e.source = toml_io::snippet("plan", *t);
-        e.name = t->get("nombre") ? t->get("nombre")->value<std::string>().value_or(*id) : *id;
+        e.source = toml_io::snippet("body_plan", *t);
+        e.name = t->get("name") ? t->get("name")->value<std::string>().value_or(*id) : *id;
         Morphology morphology = Morphology::Eukaryote;
-        if (t->get("morfologia") && !pick(*t, "morfologia", kMorphologies, morphology))
-            r.warnings.push_back(source + " (" + *id + "): 'morfologia' desconocida");
+        if (t->get("morphology") && !pick(*t, "morphology", kMorphologies, morphology))
+            r.warnings.push_back(source + " (" + *id + "): 'morphology' desconocida");
         bool ok = true;
-        if (const toml::array* structures = t->get("estructuras") ? t->get("estructuras")->as_array() : nullptr) {
+        if (const toml::array* structures = t->get("structures") ? t->get("structures")->as_array() : nullptr) {
             for (const toml::node& sn : *structures) {
                 const toml::table* st = sn.as_table();
                 StructureSpec spec{K::Nucleus, S::Simulated, A::Interior, 0.0f, 0.0f, 0, false, ""};
-                if (!st || !pick(*st, "tipo", kKinds, spec.kind) || !pick(*st, "fuente", kSources, spec.source) ||
-                    !pick(*st, "disposicion", kArrangements, spec.arrangement)) {
+                if (!st || !pick(*st, "kind", kKinds, spec.kind) || !pick(*st, "source", kSources, spec.source) ||
+                    !pick(*st, "arrangement", kArrangements, spec.arrangement)) {
                     r.warnings.push_back(source + " (" + *id + "): una estructura sin tipo, fuente o disposición válidos");
                     ok = false;
                     continue;
                 }
                 auto num = [&](const char* key) { return static_cast<float>(st->get(key) ? st->get(key)->value<double>().value_or(0.0) : 0.0); };
-                spec.length = num("largo");
-                spec.width = num("ancho");
-                spec.perCubicMicron = num("por_um3");
-                spec.count = static_cast<int>(st->get("cantidad") ? st->get("cantidad")->value<std::int64_t>().value_or(0) : 0);
-                spec.brightfield = st->get("campo_claro") ? st->get("campo_claro")->value<bool>().value_or(false) : false;
-                e.names.push_back(st->get("nombre") ? st->get("nombre")->value<std::string>().value_or("") : "");
+                spec.length = num("length");
+                spec.width = num("width");
+                spec.perCubicMicron = num("per_um3");
+                spec.count = static_cast<int>(st->get("count") ? st->get("count")->value<std::int64_t>().value_or(0) : 0);
+                spec.brightfield = st->get("brightfield") ? st->get("brightfield")->value<bool>().value_or(false) : false;
+                e.names.push_back(st->get("name") ? st->get("name")->value<std::string>().value_or("") : "");
                 spec.name = e.names.back().c_str();
                 e.structures.push_back(spec);
             }
@@ -280,9 +280,11 @@ void ensurePlans() {
     if (r.baseLoaded)
         return;
     r.baseLoaded = true;
-    std::string error;
-    if (!loadBodyPlansFile(assetPath("content/base/planes.toml"), "base", &error))
-        r.warnings.push_back("no se pudieron cargar los planes de fábrica: " + error);
+    for (const auto& path : packFolderFiles(basePackDir(), "body_plans")) {
+        std::string error;
+        if (!loadBodyPlansFile(path.string(), "base", &error))
+            r.warnings.push_back("no se pudieron cargar los planes de fábrica: " + error);
+    }
     r.ready.store(true, std::memory_order_release);
 }
 

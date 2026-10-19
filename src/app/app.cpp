@@ -32,6 +32,9 @@
 #include <filesystem>
 #include <fstream>
 #include <random>
+#include <sstream>
+#include <string_view>
+#include <utility>
 
 namespace {
 
@@ -104,6 +107,55 @@ App::App() {
     reloadStains();
     layoutPath_ = (std::filesystem::path(optionsPath).parent_path() / "layout.ini").string();
     layoutReset_ = !std::filesystem::exists(layoutPath_);
+    migrateLayout(layoutPath_);
+}
+
+// La disposición guardada nombra cada ventana por su id (título###clave). Las claves de los paneles
+// estaban en español: se renombran en el archivo para no perder la disposición.
+void App::migrateLayout(const std::string& path) {
+    static constexpr std::pair<const char*, const char*> kOldKeys[] = {
+        {"###ayuda]", "###help]"},
+        {"###catalogo]", "###catalog]"},
+        {"###contenido]", "###content]"},
+        {"###cultivos]", "###cultures]"},
+        {"###enciclopedia]", "###encyclopedia]"},
+        {"###estadisticas]", "###stats]"},
+        {"###experimento]", "###experiment]"},
+        {"###ficha]", "###inspector]"},
+        {"###glosario]", "###glossary]"},
+        {"###graficos]", "###graphs]"},
+        {"###herramientas]", "###tools]"},
+        {"###leccion]", "###lesson]"},
+        {"###medicion]", "###measurement]"},
+        {"###notas]", "###notes]"},
+        {"###placa]", "###plate]"},
+        {"###preferencias]", "###preferences]"},
+        {"###procesos]", "###processes]"},
+        {"###simulacion]", "###simulation]"},
+        {"###tinciones]", "###stains]"},
+        {"###recuperar]", "###recover]"},
+        {"###avisos]", "###warnings]"},
+    };
+    std::ifstream in(path, std::ios::binary);
+    if (!in)
+        return;
+    std::stringstream ss;
+    ss << in.rdbuf();
+    std::string text = ss.str();
+    bool changed = false;
+    // "###clave]" es la ventana; "###clave/" , las ventanas hijas (menús emergentes del panel).
+    for (const auto& [old, now] : kOldKeys)
+        for (const char end : {']', '/'}) {
+            std::string from(old), to(now);
+            from.back() = to.back() = end;
+            for (std::size_t at = text.find(from); at != std::string::npos; at = text.find(from, at)) {
+                text.replace(at, from.size(), to);
+                changed = true;
+            }
+        }
+    in.close();
+    if (changed)
+        std::ofstream(path, std::ios::binary) << text;
 }
 
 App::~App() { ui::writeMissingKeys(); } // BIO_TR_FALTANTES: las claves sin traducir
@@ -167,7 +219,7 @@ void App::applyOptions() {
         // LOD y motor cambian la trayectoria: pasan por el registro de la sesión.
         const int stride = options.lod ? options.lodStride : 1;
         if (world->lodStride != stride)
-            setParameter(*findParameter("lod.cada"), static_cast<float>(stride));
+            setParameter(*findParameter("lod.stride"), static_cast<float>(stride));
         SubstepSolver* solver = options.gpuPhysics && gpuOk ? &gpu : nullptr;
         if (world->substepSolver() != solver) {
             world->setSubstepSolver(solver);
@@ -221,8 +273,8 @@ void App::createPlate() {
     runPlate = plate;
     // Paso 0: lo que no está en la placa pero cambia la trayectoria (escala de tiempo, LOD y
     // motor) queda en el registro, y después el guion de la escena cargada, si hay.
-    setParameter(*findParameter("tiempo.escala_biologica"), options.bioTimeScale);
-    setParameter(*findParameter("lod.cada"), static_cast<float>(options.lod ? options.lodStride : 1));
+    setParameter(*findParameter("time.bio_scale"), options.bioTimeScale);
+    setParameter(*findParameter("lod.stride"), static_cast<float>(options.lod ? options.lodStride : 1));
     applyOptions(); // anota el motor si pasa a la GPU
     if (!world->substepSolver()) {
         Intervention engine;
@@ -263,7 +315,7 @@ void App::setParameter(const ParamInfo& p, float value) {
     iv.key = p.key;
     iv.v[0] = value;
     intervene(iv);
-    if (&p == findParameter("tiempo.escala_biologica"))
+    if (&p == findParameter("time.bio_scale"))
         options.bioTimeScale = value; // la preferencia de la próxima placa
 }
 
@@ -397,7 +449,7 @@ float App::effectiveUiScale() const { return options.uiScale > 0.0f ? options.ui
 
 void App::showTerm(int index) {
     glossaryIndex = index;
-    panels.show("glosario");
+    panels.show("glossary");
 }
 
 void App::notify(const std::string& text) {
@@ -430,7 +482,7 @@ void App::registerCommands() {
     };
 
     add("file.create", "Crear placa", "Archivo", ImGuiKey_N, true, [this] { createPlate(); });
-    add("file.plate", "Editor de placa", "Archivo", ImGuiKey_None, false, [this] { panels.show("placa"); });
+    add("file.plate", "Editor de placa", "Archivo", ImGuiKey_None, false, [this] { panels.show("plate"); });
     add("file.export", "Exportar datos (CSV y JSON)", "Archivo", ImGuiKey_E, true, [this] { exportData(); });
     add("file.photo", "Foto del campo (PNG y JSON)", "Archivo", ImGuiKey_F12, false, [this] { requestPhoto(); });
     add("file.quit", "Salir", "Archivo", ImGuiKey_Q, true, [this] { quit = true; });
@@ -498,7 +550,7 @@ void App::registerCommands() {
         {}, [this] { return tools.scaleBar; });
     add("view.stain", "Siguiente tinción", "Capas", ImGuiKey_J, false,
         [this] { setStainIndex((stainIndex + 1) % static_cast<int>(stains.size())); });
-    add("view.stain_editor", "Editor de tinciones", "Capas", ImGuiKey_None, false, [this] { panels.show("tinciones"); });
+    add("view.stain_editor", "Editor de tinciones", "Capas", ImGuiKey_None, false, [this] { panels.show("stains"); });
 
     add("view.fullscreen", "Pantalla completa", "Ver", ImGuiKey_F11, false,
         [this] {
@@ -652,8 +704,8 @@ void App::drawRecoveryPrompt() {
     }
     if (!recoveryPrompt_)
         return;
-    ImGui::OpenPopup("###recuperar");
-    if (ImGui::BeginPopupModal((std::string(ui::tr("Sesión anterior")) + "###recuperar").c_str(), nullptr,
+    ImGui::OpenPopup("###recover");
+    if (ImGui::BeginPopupModal((std::string(ui::tr("Sesión anterior")) + "###recover").c_str(), nullptr,
                                ImGuiWindowFlags_AlwaysAutoResize)) {
         ImGui::TextUnformatted(ui::tr("El programa se cerró sin terminar la sesión anterior."));
         ImGui::Text("%s %.1f min", ui::tr("Se puede recuperar re-simulándola hasta donde quedó:"),
@@ -872,7 +924,7 @@ void App::selectionInput(float dt, const Vector2&, const Vec2& pos) {
             st.inspection = buildInspection(*world, hit);
             st.refresh = 0.1f;
             st.pickedAge = 0.0f;
-            panels.show("ficha");
+            panels.show("inspector");
         }
     }
 
@@ -996,7 +1048,7 @@ void App::toolInput(float dt, const Vec2& pos) {
             }
         } else if (tools.measuring) {
             tools.measuring = false;
-            panels.show("medicion");
+            panels.show("measurement");
         }
         break;
     case Tool::Region:
@@ -1009,7 +1061,7 @@ void App::toolInput(float dt, const Vec2& pos) {
             tools.drawingRegion = false;
             if (tools.lassoPath.size() >= 3 && polygonArea(tools.lassoPath) > 1.0f) {
                 session.setRegion(*world, tools.lassoPath);
-                panels.show("medicion");
+                panels.show("measurement");
             }
             tools.lassoPath.clear();
         }
@@ -1030,7 +1082,7 @@ void App::controlInput(bool mouseFree, const Vec2& pos) {
         pick.v[0] = pickTolerance(camera.zoom);
         if (intervene(pick)) {
             tools.follow = true;
-            panels.show("estadisticas");
+            panels.show("stats");
         }
     }
     PlayerInput input;
@@ -1392,7 +1444,7 @@ int App::run() {
     ui::setUiScale(effectiveUiScale());
     ui::initBackend(layoutPath_.c_str(), kFontSize * ui::uiScale());
     ui::applyTheme();
-    // Paquetes de contenido del usuario (<datos>/biogame/paquetes): antes del catálogo y de la
+    // Paquetes de contenido del usuario (<datos>/biogame/packs): antes del catálogo y de la
     // primera placa, así sus seres tienen ícono y las placas que los nombran se leen.
     {
         std::vector<std::string> messages;
@@ -1410,7 +1462,14 @@ int App::run() {
     camera.offset = {kScreenW * 0.5f, kScreenH * 0.5f};
     applyOptions();
     // ¿Quedó una sesión sin cerrar bien? (se ofrece recuperarla)
-    autosavePath_ = (std::filesystem::path(optionsPath).parent_path() / "autoguardado.plate").string();
+    autosavePath_ = (std::filesystem::path(optionsPath).parent_path() / "autosave.plate").string();
+    {
+        // El autoguardado de antes de que los archivos pasaran al inglés.
+        std::error_code ec;
+        const auto old = std::filesystem::path(optionsPath).parent_path() / "autoguardado.plate";
+        if (!std::filesystem::exists(autosavePath_, ec) && std::filesystem::exists(old, ec))
+            std::filesystem::rename(old, autosavePath_, ec);
+    }
     if (std::ifstream in(autosavePath_); in) {
         std::string line;
         bool clean = true;

@@ -25,7 +25,7 @@
 //
 // Lo que en la placa emerge del espacio acá sale de la teoría física de encuentros:
 //  - filtradores: respuesta funcional de tipo II con el aclaramiento y la ingestión máxima
-//    (fisiologia.toml, con su fuente; sin dato, los de la corriente oral y el citostoma de la placa);
+//    ([physiology.<id>.*], con su fuente; sin dato, los de la corriente oral y el citostoma de la placa);
 //  - cazadores: núcleo de encuentro de Gerritsen y Strickler (1977, J. Fish. Res. Board Can. 34:
 //    73-82) con las velocidades de nado y los radios de los datos.
 // El medio está bien mezclado: la concentración es la misma en todo el volumen.
@@ -46,7 +46,8 @@
 
 enum class Solute : std::uint8_t { Oxygen, CO2, Phosphate, Nitrogen, Silicate, Iron, Vitamin, Organic, Count };
 inline constexpr int kSoluteCount = static_cast<int>(Solute::Count);
-const char* soluteKey(Solute s); // "o2", "co2", "fosfato"...
+const char* soluteKey(Solute s);   // en los archivos: "o2", "co2", "phosphate"...
+const char* soluteLabel(Solute s); // en la interfaz (clave de traducción): "fosfato"...
 
 struct CultureConfig {
     float volumeMl = 0.5f;

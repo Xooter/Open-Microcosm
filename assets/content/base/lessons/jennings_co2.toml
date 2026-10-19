@@ -1,0 +1,29 @@
+[[lesson]]
+id = "jennings_co2"
+title = "Jennings: los paramecios se juntan donde hay CO2"
+level = "secundario / universitario"
+goal = "Ver una conducta que emerge de una regla simple: Paramecium entra libremente a una zona con CO2 y, al salir hacia agua menos acida, retrocede (reaccion de evitacion). El resultado es que se acumula alrededor de la fuente."
+source = "Jennings, H. S. (1906). Behavior of the Lower Organisms. Columbia University Press, cap. sobre Paramecium."
+biome = "puddle"
+seed = 1906
+content = 2
+setup = ["0 21 0 0 1024 1024 0 20 0 0 0 0 paramecium"]
+solution = ["0 8 1 6 1024 1024 140 2 0 0 0 0"]
+solution_hours = 2.0
+[[lesson.locked]]
+key = "environment.temperature"
+reason = "La rapidez de nado cambia con la temperatura (viscosidad): se fija para comparar con el control."
+[[lesson.actions]]
+text = "Abrir el gotero de CO2 en el centro"
+event = "0 8 1 6 1024 1024 140 2 0 0 0 0"
+[[lesson.actions]]
+text = "Cerrar el gotero"
+event = "0 8 0 6 1024 1024 140 2 0 0 0 0"
+[[lesson.step]]
+text = "Veinte paramecios nadan en una gota sin comida. Mira como se reparten antes de tocar nada."
+goal = { kind = "time_h", op = ">=", value = 0.25 }
+prediction = { text = "Cuando abras el gotero de CO2 en el centro, que fraccion de los paramecios va a estar a menos de 0,2 radios del centro (el 4 % del area)?", quantity = { kind = "near_center", key = "paramecium" }, unit = "fraction" }
+[[lesson.step]]
+text = "Abri el gotero de CO2 en el centro (boton de la leccion) y espera a que la burbuja de agua acida crezca."
+goal = { kind = "near_center", key = "paramecium", op = ">=", value = 0.06 }
+question = { text = "Por que se juntan donde hay CO2?", options = ["El CO2 los atrae como alimento", "Entran libremente pero al salir hacia agua menos acida hacen la reaccion de evitacion y vuelven", "El CO2 los paraliza"], correct = 1, explanation = "Jennings vio que no nadan hacia el CO2: lo encuentran al azar, y cada vez que van a salir de la zona acida retroceden y giran. Una regla local (evitar el cambio hacia lo menos acido) produce una acumulacion global." }

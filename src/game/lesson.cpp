@@ -1,6 +1,7 @@
 #include "game/lesson.hpp"
 
-#include "core/paths.hpp"
+#include "core/ids.hpp"
+#include "core/pack_files.hpp"
 #include "core/toml_reader.hpp"
 #include "game/culture_run.hpp"
 #include "game/world.hpp"
@@ -26,23 +27,23 @@ Registry& registry() {
     return r;
 }
 
-constexpr const char* kLessonKeys[] = {"id",       "titulo",   "nivel",     "objetivo", "fuente",  "placa",
-                                       "bioma",    "seed",     "contenido", "cultivo",  "preparar", "controles",
-                                       "fijados",  "paso",     "solucion",  "solucion_horas", "acciones"};
-constexpr const char* kStepKeys[] = {"texto", "objetivo", "pregunta", "prediccion"};
-constexpr const char* kCheckKeys[] = {"tipo", "clave", "op", "valor"};
-constexpr const char* kQuestionKeys[] = {"texto", "opciones", "correcta", "explicacion"};
-constexpr const char* kPredictionKeys[] = {"texto", "magnitud", "unidad"};
-constexpr const char* kCheckKinds[] = {"tiempo_h", "poblacion",   "bacterias",    "concentracion", "ph",
-                                       "plasmolisis", "hemolisis", "cerca_centro", "fraccion"};
+constexpr const char* kLessonKeys[] = {"id", "legacy_ids",       "title",   "level",     "goal", "source",  "plate",
+                                       "biome",    "seed",     "content", "culture",  "setup", "controls",
+                                       "locked",  "step",     "solution",  "solution_hours", "actions"};
+constexpr const char* kStepKeys[] = {"text", "goal", "question", "prediction"};
+constexpr const char* kCheckKeys[] = {"kind", "key", "op", "value"};
+constexpr const char* kQuestionKeys[] = {"text", "options", "correct", "explanation"};
+constexpr const char* kPredictionKeys[] = {"text", "quantity", "unit"};
+constexpr const char* kCheckKinds[] = {"time_h", "population",   "bacteria",    "concentration", "ph",
+                                       "plasmolysis", "hemolysis", "near_center", "fraction"};
 
 void readCheck(const toml::table& t, const std::string& where, LessonCheck& c, std::vector<std::string>& warnings) {
     toml_io::warnUnknown(t, kCheckKeys, where, warnings);
     toml_io::Reader r{t, where, {}};
-    r.text("tipo", c.kind);
-    r.text("clave", c.key);
+    r.text("kind", c.kind);
+    r.text("key", c.key);
     r.text("op", c.op);
-    r.num("valor", c.value);
+    r.num("value", c.value);
     if (!c.kind.empty() && !toml_io::known(c.kind, kCheckKinds))
         warnings.push_back(where + ": condición desconocida '" + c.kind + "'");
     if (c.op != ">=" && c.op != "<=" && c.op != ">" && c.op != "<")
@@ -61,7 +62,7 @@ std::vector<std::string> strings(const toml::table& t, const char* key) {
 
 void loadParsed(const toml::table& doc, const std::string& source, const std::string& pack) {
     Registry& reg = registry();
-    const toml::array* list = doc["leccion"].as_array();
+    const toml::array* list = doc["lesson"].as_array();
     if (!list)
         return;
     for (const toml::node& node : *list) {
@@ -70,42 +71,43 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
             continue;
         Lesson l;
         l.pack = pack;
-        toml_io::Reader r{*t, source + " [[leccion]]", {}};
+        toml_io::Reader r{*t, source + " [[lesson]]", {}};
         r.text("id", l.key);
         const std::string where = source + " leccion '" + l.key + "'";
         toml_io::warnUnknown(*t, kLessonKeys, where, reg.warnings);
-        r.text("titulo", l.title);
-        r.text("nivel", l.level);
-        r.text("objetivo", l.objective);
-        r.text("fuente", l.source);
-        r.text("placa", l.plate);
-        r.text("bioma", l.biome);
-        r.text("cultivo", l.culture);
+        r.strings("legacy_ids", l.legacyIds);
+        r.text("title", l.title);
+        r.text("level", l.level);
+        r.text("goal", l.objective);
+        r.text("source", l.source);
+        r.text("plate", l.plate);
+        r.text("biome", l.biome);
+        r.text("culture", l.culture);
         r.num("seed", l.seed);
-        r.num("contenido", l.content);
-        r.num("solucion_horas", l.solutionHours);
-        l.setup = strings(*t, "preparar");
-        l.exposed = strings(*t, "controles");
-        l.solution = strings(*t, "solucion");
-        if (const toml::array* acts = (*t)["acciones"].as_array())
+        r.num("content", l.content);
+        r.num("solution_hours", l.solutionHours);
+        l.setup = strings(*t, "setup");
+        l.exposed = strings(*t, "controls");
+        l.solution = strings(*t, "solution");
+        if (const toml::array* acts = (*t)["actions"].as_array())
             for (const toml::node& n : *acts)
                 if (const toml::table* at = n.as_table()) {
                     Lesson::Action a;
-                    a.label = (*at)["texto"].value_or(std::string());
-                    a.event = (*at)["evento"].value_or(std::string());
+                    a.label = (*at)["text"].value_or(std::string());
+                    a.event = (*at)["event"].value_or(std::string());
                     if (!a.label.empty() && !a.event.empty())
                         l.actions.push_back(a);
                 }
-        if (const toml::array* locks = (*t)["fijados"].as_array())
+        if (const toml::array* locks = (*t)["locked"].as_array())
             for (const toml::node& n : *locks)
                 if (const toml::table* lt = n.as_table()) {
                     Lesson::Lock lock;
-                    lock.key = (*lt)["clave"].value_or(std::string());
-                    lock.reason = (*lt)["motivo"].value_or(std::string());
+                    lock.key = (*lt)["key"].value_or(std::string());
+                    lock.reason = (*lt)["reason"].value_or(std::string());
                     if (!lock.key.empty())
                         l.locked.push_back(lock);
                 }
-        if (const toml::array* steps = (*t)["paso"].as_array())
+        if (const toml::array* steps = (*t)["step"].as_array())
             for (const toml::node& n : *steps) {
                 const toml::table* st = n.as_table();
                 if (!st)
@@ -113,28 +115,28 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
                 LessonStep s;
                 const std::string sw = where + " paso " + std::to_string(l.steps.size() + 1);
                 toml_io::warnUnknown(*st, kStepKeys, sw, reg.warnings);
-                s.text = (*st)["texto"].value_or(std::string());
-                if (const toml::table* c = (*st)["objetivo"].as_table())
+                s.text = (*st)["text"].value_or(std::string());
+                if (const toml::table* c = (*st)["goal"].as_table())
                     readCheck(*c, sw + " objetivo", s.check, reg.warnings);
-                if (const toml::table* q = (*st)["pregunta"].as_table()) {
+                if (const toml::table* q = (*st)["question"].as_table()) {
                     toml_io::warnUnknown(*q, kQuestionKeys, sw + " pregunta", reg.warnings);
-                    s.question.text = (*q)["texto"].value_or(std::string());
-                    s.question.options = strings(*q, "opciones");
-                    s.question.correct = static_cast<int>((*q)["correcta"].value_or(std::int64_t{-1}));
-                    s.question.explanation = (*q)["explicacion"].value_or(std::string());
+                    s.question.text = (*q)["text"].value_or(std::string());
+                    s.question.options = strings(*q, "options");
+                    s.question.correct = static_cast<int>((*q)["correct"].value_or(std::int64_t{-1}));
+                    s.question.explanation = (*q)["explanation"].value_or(std::string());
                 }
-                if (const toml::table* p = (*st)["prediccion"].as_table()) {
+                if (const toml::table* p = (*st)["prediction"].as_table()) {
                     toml_io::warnUnknown(*p, kPredictionKeys, sw + " prediccion", reg.warnings);
-                    s.prediction.text = (*p)["texto"].value_or(std::string());
-                    s.prediction.unit = (*p)["unidad"].value_or(std::string());
-                    if (const toml::table* m = (*p)["magnitud"].as_table())
+                    s.prediction.text = (*p)["text"].value_or(std::string());
+                    s.prediction.unit = (*p)["unit"].value_or(std::string());
+                    if (const toml::table* m = (*p)["quantity"].as_table())
                         readCheck(*m, sw + " prediccion", s.prediction.quantity, reg.warnings);
                 }
                 l.steps.push_back(std::move(s));
             }
         reg.warnings.insert(reg.warnings.end(), r.errors.begin(), r.errors.end());
         if (l.key.empty() || l.title.empty()) {
-            reg.warnings.push_back(source + ": una [[leccion]] sin 'id' o sin 'titulo': se saltea");
+            reg.warnings.push_back(source + ": una [[lesson]] sin 'id' o sin 'title': se saltea");
             continue;
         }
         if (std::any_of(reg.lessons.begin(), reg.lessons.end(), [&](const Lesson& o) { return o.key == l.key; })) {
@@ -153,11 +155,13 @@ void ensureBase() {
     if (reg.baseLoaded)
         return;
     reg.baseLoaded = true;
-    const std::string path = assetPath("content/base/lecciones.toml");
-    try {
-        loadParsed(toml::parse_file(path), path, "base");
-    } catch (const toml::parse_error& e) {
-        reg.warnings.push_back("no se pudo cargar " + path + ": " + std::string(e.description()));
+    for (const auto& file : packFolderFiles(basePackDir(), "lessons")) {
+        const std::string path = file.string();
+        try {
+            loadParsed(toml::parse_file(path), path, "base");
+        } catch (const toml::parse_error& e) {
+            reg.warnings.push_back("no se pudo cargar " + path + ": " + std::string(e.description()));
+        }
     }
     reg.ready.store(true, std::memory_order_release);
 }
@@ -175,12 +179,12 @@ bool compare(double v, const std::string& op, double target) {
 double plateSolute(const Census& c, const std::string& key) {
     if (key == "o2") return c.meanOxygen;
     if (key == "co2") return c.meanCO2;
-    if (key == "fosfato") return c.meanPhosphate;
-    if (key == "nitrogeno") return c.meanNitrogen;
-    if (key == "silice") return c.meanSilicate;
-    if (key == "hierro") return c.meanIron;
+    if (key == "phosphate") return c.meanPhosphate;
+    if (key == "nitrogen") return c.meanNitrogen;
+    if (key == "silicate") return c.meanSilicate;
+    if (key == "iron") return c.meanIron;
     if (key == "b12") return c.meanVitamin;
-    if (key == "organica") return c.meanOrganic;
+    if (key == "organic") return c.meanOrganic;
     return 0.0;
 }
 
@@ -196,10 +200,8 @@ const Lesson& lesson(int index) {
 }
 const Lesson* findLesson(std::string_view key) {
     ensureBase();
-    for (const Lesson& l : registry().lessons)
-        if (l.key == key)
-            return &l;
-    return nullptr;
+    const std::ptrdiff_t i = indexOfId(registry().lessons, key);
+    return i < 0 ? nullptr : &registry().lessons[static_cast<std::size_t>(i)];
 }
 bool loadLessonsText(const std::string& text, const std::string& source, const std::string& pack, std::string* error) {
     std::lock_guard<std::recursive_mutex> lock(registry().mutex);
@@ -225,24 +227,24 @@ double labHours(const World* world, const CultureRun* culture) {
 }
 
 double lessonQuantity(const LessonCheck& c, const World* world, const CultureRun* culture) {
-    if (c.kind == "tiempo_h")
+    if (c.kind == "time_h")
         return labHours(world, culture);
     if (culture) {
         const Culture& cu = culture->culture();
         const double ml = std::max(1e-12, cu.volumeMl());
-        if (c.kind == "poblacion") {
+        if (c.kind == "population") {
             const std::optional<SpeciesId> id = findSpecies(c.key);
             return id ? cu.count(*id) / ml : 0.0;
         }
-        if (c.kind == "bacterias")
+        if (c.kind == "bacteria")
             return static_cast<double>(cu.bacteriaCount()) / ml;
         if (c.kind == "ph")
             return cu.ph();
-        if (c.kind == "concentracion")
+        if (c.kind == "concentration")
             for (int k = 0; k < kSoluteCount; ++k)
                 if (c.key == soluteKey(static_cast<Solute>(k)))
                     return cu.concentration(static_cast<Solute>(k));
-        if (c.kind == "fraccion") {
+        if (c.kind == "fraction") {
             const std::size_t comma = c.key.find(',');
             const std::optional<SpeciesId> a = findSpecies(c.key.substr(0, comma));
             double total = 0.0;
@@ -260,16 +262,16 @@ double lessonQuantity(const LessonCheck& c, const World* world, const CultureRun
     if (!world)
         return 0.0;
     const World& w = *world;
-    if (c.kind == "poblacion" || c.kind == "fraccion" || c.kind == "bacterias" || c.kind == "concentracion" ||
+    if (c.kind == "population" || c.kind == "fraction" || c.kind == "bacteria" || c.kind == "concentration" ||
         c.kind == "ph") {
         const Census census = w.census();
-        if (c.kind == "bacterias")
+        if (c.kind == "bacteria")
             return census.bacteria;
         if (c.kind == "ph")
             return census.meanPH;
-        if (c.kind == "concentracion")
+        if (c.kind == "concentration")
             return plateSolute(census, c.key);
-        if (c.kind == "poblacion") {
+        if (c.kind == "population") {
             const std::optional<SpeciesId> id = findSpecies(c.key);
             return id ? census.species[static_cast<int>(*id)] : 0.0;
         }
@@ -283,7 +285,7 @@ double lessonQuantity(const LessonCheck& c, const World* world, const CultureRun
                 total += census.species[static_cast<int>(*id)];
         return a && total > 0.0 ? census.species[static_cast<int>(*a)] / total : 0.0;
     }
-    if (c.kind == "plasmolisis") {
+    if (c.kind == "plasmolysis") {
         int cells = 0, shrunk = 0;
         for (const TissueCell& t : w.tissue().cells)
             if (t.protoplast != ~0u) {
@@ -292,7 +294,7 @@ double lessonQuantity(const LessonCheck& c, const World* world, const CultureRun
             }
         return cells ? static_cast<double>(shrunk) / cells : 0.0;
     }
-    if (c.kind == "hemolisis") {
+    if (c.kind == "hemolysis") {
         const Erythrocytes& b = w.erythrocytes();
         int red = 0, lysed = 0;
         for (std::size_t i = 0; i < b.size(); ++i)
@@ -302,7 +304,7 @@ double lessonQuantity(const LessonCheck& c, const World* world, const CultureRun
             }
         return red ? static_cast<double>(lysed) / red : 0.0;
     }
-    if (c.kind == "cerca_centro") {
+    if (c.kind == "near_center") {
         const std::optional<SpeciesId> id = findSpecies(c.key);
         if (!id)
             return 0.0;

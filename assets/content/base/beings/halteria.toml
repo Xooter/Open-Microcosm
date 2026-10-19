@@ -1,0 +1,42 @@
+# Sin probar todavía: ver «Falta validar» en docs/candidatos.md.
+
+# Halteria grandinella: oligotrico globoso de 20–40 µm (~30 µm de ancho; Kreutz), uno de los ciliados
+# más comunes del plancton; come bacterias, algas y flagelados chicos. Avanza a saltos con hileras de
+# cerdas saltadoras: los saltos no se modelan (nada con cilios).
+[[being]]
+id = "halteria"
+name = "Halteria"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Ciliado globoso de ~30 um con una corona de membranelas y cerdas largas con las que da saltos subitos. Come bacterias y algas chicas."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "oral_groove"
+relative_speed = 0.6
+mouth_prey = ["chlorella", "raphidocelis", "cryptomonas"]
+conjugation = true
+initial_count = 8
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [2.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 15.0
+semi_minor_axis = 14.0
+shape_memory = 10.0
+color = [184, 184, 166]
+nucleus = 0.3
+
+[being.appearance]
+style = "membranelle_crown"
+
+
+[physiology.halteria.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 15, 14 y 14 µm: 12315 µm³).
+value = 1.77
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 12315 µm³). No es una medición de la especie."
+estimate = true

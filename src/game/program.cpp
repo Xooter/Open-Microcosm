@@ -1,5 +1,8 @@
 #include "game/program.hpp"
 
+#include "bio/species.hpp"
+#include "game/legacy_names.hpp"
+
 #include <algorithm>
 #include <charconv>
 #include <cmath>
@@ -31,12 +34,12 @@ bool ProgramEntry::isAction() const { return shape == ProgramShape::Event; }
 
 const char* programShapeKey(ProgramShape s) {
     switch (s) {
-    case ProgramShape::Ramp: return "rampa";
-    case ProgramShape::Cycle: return "ciclo";
-    case ProgramShape::Sine: return "seno";
-    case ProgramShape::Event: return "evento";
+    case ProgramShape::Ramp: return "ramp";
+    case ProgramShape::Cycle: return "cycle";
+    case ProgramShape::Sine: return "sine";
+    case ProgramShape::Event: return "event";
     }
-    return "ciclo";
+    return "cycle";
 }
 
 bool programValue(const ProgramEntry& e, double hours, float& value) {
@@ -82,7 +85,7 @@ int programEvents(const ProgramEntry& e, double from, double to) {
 std::string serializeProgram(const Program& p) {
     std::ostringstream out;
     for (const ProgramEntry& e : p.entries)
-        out << "programa=" << e.target << ' ' << programShapeKey(e.shape) << ' ' << number(e.start) << ' '
+        out << "program=" << e.target << ' ' << programShapeKey(e.shape) << ' ' << number(e.start) << ' '
             << number(e.end) << ' ' << number(e.from) << ' ' << number(e.to) << ' ' << number(e.period) << ' '
             << number(e.duty) << ' ' << number(e.amount) << '\n';
     return out.str();
@@ -96,13 +99,19 @@ bool parseProgramEntry(const std::string& text, ProgramEntry& e) {
     for (std::string& t : tok)
         if (!(in >> t))
             return false;
-    if (shape == "rampa")
+    // Los programas viejos tienen los destinos y las formas en español.
+    e.target = currentTarget(e.target);
+    if (e.target.rfind("inoculate:", 0) == 0)
+        if (const auto sp = findSpecies(e.target.substr(10)))
+            e.target = std::string("inoculate:") + speciesInfo(*sp).key;
+    shape = currentName(shape);
+    if (shape == "ramp")
         e.shape = ProgramShape::Ramp;
-    else if (shape == "ciclo")
+    else if (shape == "cycle")
         e.shape = ProgramShape::Cycle;
-    else if (shape == "seno")
+    else if (shape == "sine")
         e.shape = ProgramShape::Sine;
-    else if (shape == "evento")
+    else if (shape == "event")
         e.shape = ProgramShape::Event;
     else
         return false;

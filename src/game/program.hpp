@@ -56,4 +56,4 @@ int programEvents(const ProgramEntry& e, double from, double to);
 std::string serializeProgram(const Program& p);
 // Lee una línea (lo que va después de "programa="). false si está mal formada.
 bool parseProgramEntry(const std::string& text, ProgramEntry& out);
-const char* programShapeKey(ProgramShape s); // "rampa", "ciclo", "seno", "evento"
+const char* programShapeKey(ProgramShape s); // "ramp", "cycle", "sine", "event"

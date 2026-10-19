@@ -1,0 +1,23 @@
+[[plate]]
+id = "onion_epidermis"
+legacy_ids = ["epidermis_cebolla"]
+name = "Preparado: epidermis de cebolla morada"
+description = "La epidermis interna de una escama de cebolla morada montada en agua: celulas alargadas con pared y una vacuola violeta. Agregando sal (Ambiente > Salinidad, unos 30 g/kg) el protoplasto pierde agua y se despega de la pared: plasmolisis. En agua vuelve (deplasmolisis). Se simula un campo de 1 mm: el anillo marca su borde."
+kind = "slide"
+medium = "distilled_water"
+vessel = "slide"
+field_um = 1024.0
+[plate.environment]
+temperature = 22.0
+co2 = 0.00042
+light = 1.0
+[plate.tissue]
+arrangement = "rows"
+content = "protoplast"
+being = "onion_epidermal_cell"
+length_um = 250.0
+width_um = 55.0
+wall_um = 2.0
+sap_osmolarity = 450.0
+inactive = 0.1
+equilibration_s = 120.0

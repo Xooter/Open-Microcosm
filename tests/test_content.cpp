@@ -6,6 +6,10 @@
 #include "bio/physiology.hpp"
 #include "game/biome.hpp"
 #include "game/content.hpp"
+#include "game/glossary.hpp"
+#include "game/lesson.hpp"
+#include "game/prepared.hpp"
+#include "game/reagent.hpp"
 #include "game/world.hpp"
 #include "game/mineral.hpp"
 #include "game/plate_spec.hpp"
@@ -32,6 +36,12 @@ TEST_CASE("contenido: el paquete de fábrica carga sus 72 seres en el orden de s
     // 24 de la gota, 3 de cultivo (20b), 5 de los preparados (20c) 8 del lote 1 de candidatos, 7 del lote 2, 18 del lote 3 y 7 del lote 4.
     CHECK(speciesCount() == 72);
     CHECK(speciesLoadWarnings().empty());
+    // Ningún registro avisa nada con el paquete de fábrica (una clave mal escrita se avisa).
+    for (const auto* list : {&bodyPlanWarnings(), &physiologyWarnings(), &mineralLoadWarnings(), &biomeLoadWarnings(),
+                             &preparedLoadWarnings(), &lessonLoadWarnings(), &reagentLoadWarnings(),
+                             &glossaryLoadWarnings()})
+        for (const std::string& w : *list)
+            FAIL_CHECK(w);
     CHECK(std::string(speciesInfo(SpeciesId::Paramecium).key) == "paramecium");
     CHECK(std::string(speciesInfo(SpeciesId::Cyclotella).key) == "cyclotella");
     CHECK(findSpecies("amoeba") == SpeciesId::Amoeba);
@@ -45,8 +55,8 @@ TEST_CASE("contenido: el paquete de fábrica carga sus 72 seres en el orden de s
     CHECK(prey.test(static_cast<std::size_t>(*findSpecies("colpidium"))));
     CHECK(prey.count() == 3);
     // Etiquetas: los hospedadores de los quitridios (antes, una máscara fija en el código).
-    CHECK(speciesWithTag("hospeda_quitridios").count() == 15);
-    CHECK(hasTag(SpeciesId::Pediastrum, "fotobionte"));
+    CHECK(speciesWithTag("chytrid_host").count() == 15);
+    CHECK(hasTag(SpeciesId::Pediastrum, "photobiont"));
     CHECK(speciesGenome(SpeciesId::Arcella)[Gene::Armor] == doctest::Approx(0.9f));
 }
 
@@ -54,31 +64,31 @@ TEST_CASE("contenido: un paquete agrega un ser sin compilar; las etiquetas resue
           doctest::test_suite("paquetes")) {
     const int before = speciesCount();
     const std::string pack = R"(
-[[ser]]
+[[being]]
 id = "colpidium_colpoda"
-nombre = "Colpidium colpoda"
-etiquetas = ["protista", "ciliado", "bacterivoro"]
-locomocion = "cilios"
-alimentacion = "surco_oral"
-huye_de = ["didinium"]
+name = "Colpidium colpoda"
+tags = ["protist", "ciliate", "bacterivore"]
+locomotion = "cilia"
+feeding = "oral_groove"
+flees_from = ["didinium"]
 ph = [6.0, 9.0]
-temperatura = [5.0, 30.0]
-reserva = "glucogeno"
-[ser.forma]
-semieje_mayor = 45.0
-semieje_menor = 20.0
-memoria_forma = 8.0
+temperature = [5.0, 30.0]
+storage = "glycogen"
+[being.shape]
+semi_major_axis = 45.0
+semi_minor_axis = 20.0
+shape_memory = 8.0
 color = [170, 176, 150]
 
-[[ser]]
+[[being]]
 id = "depredador_de_ciliados"
-nombre = "Depredador de ciliados"
-locomocion = "pseudopodo"
-alimentacion = "fagocitosis"
-presas = ["ciliado"]
-[ser.forma]
-semieje_mayor = 60.0
-semieje_menor = 60.0
+name = "Depredador de ciliados"
+locomotion = "pseudopod"
+feeding = "phagocytosis"
+prey = ["ciliate"]
+[being.shape]
+semi_major_axis = 60.0
+semi_minor_axis = 60.0
 )";
     std::string error;
     REQUIRE(loadSpeciesText(pack, "prueba.biopack", "prueba", &error));
@@ -88,7 +98,7 @@ semieje_menor = 60.0
     CHECK(speciesPack(*colpidium) == "prueba");
     CHECK(speciesInfo(*colpidium).flee.test(static_cast<std::size_t>(SpeciesId::Didinium)));
     CHECK(speciesInfo(*colpidium).initialCount == 0); // no aparece solo en las gotas
-    // "ciliado" es una etiqueta: incluye a los de fábrica y al nuevo.
+    // "ciliate" es una etiqueta: incluye a los de fábrica y al nuevo.
     const SpeciesSet& prey = speciesInfo(*findSpecies("depredador_de_ciliados")).prey;
     CHECK(prey.test(static_cast<std::size_t>(*colpidium)));
     CHECK(prey.test(static_cast<std::size_t>(SpeciesId::Paramecium)));
@@ -98,47 +108,47 @@ semieje_menor = 60.0
 TEST_CASE("contenido: los errores de un paquete se avisan y no tumban el programa" * doctest::test_suite("paquetes")) {
     const int before = speciesCount();
     const std::string pack = R"(
-[[ser]]
+[[being]]
 id = "sin_forma"
-nombre = "Sin forma"
-locomocion = "cilios"
+name = "Sin forma"
+locomotion = "cilia"
 
-[[ser]]
+[[being]]
 id = "locomocion_rara"
-nombre = "Locomoción rara"
-locomocion = "patas"
-[ser.forma]
-semieje_mayor = 10.0
-semieje_menor = 10.0
+name = "Locomoción rara"
+locomotion = "patas"
+[being.shape]
+semi_major_axis = 10.0
+semi_minor_axis = 10.0
 
-[[ser]]
+[[being]]
 id = "paramecium"
-nombre = "Otro Paramecium"
-locomocion = "cilios"
-[ser.forma]
-semieje_mayor = 10.0
-semieje_menor = 10.0
+name = "Otro Paramecium"
+locomotion = "cilia"
+[being.shape]
+semi_major_axis = 10.0
+semi_minor_axis = 10.0
 
-[[ser]]
+[[being]]
 id = "con_tipeo"
-nombre = "Con tipeo"
-locomocion = "cilios"
-presas = ["no_existe"]
+name = "Con tipeo"
+locomotion = "cilia"
+prey = ["no_existe"]
 velocidad_relativo = 2.0
-[ser.forma]
-semieje_mayor = 10.0
-semieje_menor = 10.0
+[being.shape]
+semi_major_axis = 10.0
+semi_minor_axis = 10.0
 )";
     REQUIRE(loadSpeciesText(pack, "errores.biopack", "errores"));
     CHECK(speciesCount() == before + 1); // solo "con_tipeo" (los avisos no impiden cargarlo)
-    CHECK(warned("falta [ser.forma]"));
-    CHECK(warned("'locomocion' tiene que ser uno de"));
+    CHECK(warned("falta [being.shape]"));
+    CHECK(warned("'locomotion' tiene que ser uno de"));
     CHECK(warned("el ser 'paramecium' ya existe"));
     CHECK(warned("clave desconocida 'velocidad_relativo'"));
-    CHECK(warned("'no_existe' en presas"));
+    CHECK(warned("'no_existe' en prey"));
     CHECK(std::string(speciesInfo(SpeciesId::Paramecium).name) == "Paramecium");
     std::string error;
-    CHECK_FALSE(loadSpeciesText("[[ser]\nid = ", "roto.biopack", "roto", &error));
+    CHECK_FALSE(loadSpeciesText("[[being]\nid = ", "roto.biopack", "roto", &error));
     CHECK_FALSE(error.empty());
 }
 
@@ -150,32 +160,32 @@ TEST_CASE("contenido: los planes corporales son datos; un paquete puede traer el
     CHECK(speciesPlan(SpeciesId::Trichonympha).has(StructureKind::Hydrogenosome));
     CHECK_FALSE(speciesPlan(SpeciesId::Trichonympha).has(StructureKind::Mitochondrion));
     REQUIRE(loadBodyPlansText(R"(
-[[plan]]
+[[body_plan]]
 id = "celula_con_nucleolos"
-nombre = "celula con nucleolos"
-estructuras = [
-    { tipo = "membrana_plasmatica", fuente = "simulada", disposicion = "envoltura", campo_claro = true, nombre = "membrana" },
-    { tipo = "nucleo", fuente = "simulada", disposicion = "interior", cantidad = 1, campo_claro = true, nombre = "nucleo" },
-    { tipo = "nucleolo", fuente = "declarada", disposicion = "interior", largo = 2.0, ancho = 2.0, cantidad = 3, campo_claro = true, nombre = "nucleolos" },
+name = "celula con nucleolos"
+structures = [
+    { kind = "plasma_membrane", source = "simulated", arrangement = "envelope", brightfield = true, name = "membrana" },
+    { kind = "nucleus", source = "simulated", arrangement = "interior", count = 1, brightfield = true, name = "nucleus" },
+    { kind = "nucleolus", source = "declared", arrangement = "interior", length = 2.0, width = 2.0, count = 3, brightfield = true, name = "nucleolos" },
 ]
 )", "planes.biopack", "prueba"));
     REQUIRE(loadSpeciesText(R"(
-[[ser]]
+[[being]]
 id = "con_plan_propio"
-nombre = "Con plan propio"
-locomocion = "pseudopodo"
-plan = "celula_con_nucleolos"
-[ser.forma]
-semieje_mayor = 20.0
-semieje_menor = 15.0
-[[ser]]
+name = "Con plan propio"
+locomotion = "pseudopod"
+body_plan = "celula_con_nucleolos"
+[being.shape]
+semi_major_axis = 20.0
+semi_minor_axis = 15.0
+[[being]]
 id = "plan_inexistente"
-nombre = "Plan inexistente"
-locomocion = "pseudopodo"
-plan = "no_existe"
-[ser.forma]
-semieje_mayor = 20.0
-semieje_menor = 15.0
+name = "Plan inexistente"
+locomotion = "pseudopod"
+body_plan = "no_existe"
+[being.shape]
+semi_major_axis = 20.0
+semi_minor_axis = 15.0
 )", "seres.biopack", "prueba"));
     const BodyPlan& own = speciesPlan(*findSpecies("con_plan_propio"));
     REQUIRE(own.find(StructureKind::Nucleolus));
@@ -197,9 +207,9 @@ bool biomeWarned(const std::string& fragment) {
 TEST_CASE("contenido: los biomas de fábrica son datos, en el orden de siempre" * doctest::test_suite("paquetes")) {
     CHECK(biomeCount() == 6);
     CHECK(biomeLoadWarnings().empty());
-    CHECK(biome(BiomeId::Puddle).key == "charco");
-    CHECK(biome(BiomeId::SeaIce).key == "hielo_marino");
-    CHECK(findBiome("intestino_termita") == BiomeId::TermiteGut);
+    CHECK(biome(BiomeId::Puddle).key == "puddle");
+    CHECK(biome(BiomeId::SeaIce).key == "sea_ice");
+    CHECK(findBiome("termite_gut") == BiomeId::TermiteGut);
     CHECK_FALSE(findBiome("marte").has_value());
     const Biome& gut = biome(BiomeId::TermiteGut);
     CHECK(gut.medium.anoxic);
@@ -219,18 +229,18 @@ TEST_CASE("contenido: un paquete agrega un bioma; sus pesos nombran seres de cua
           doctest::test_suite("paquetes")) {
     // El bioma nombra un ser que todavía no está cargado: los pesos se buscan por id al armar la gota.
     const std::string biomes = R"(
-[[bioma]]
+[[biome]]
 id = "charca_de_prueba"
-nombre = "Charca de prueba"
-bacterias = 10000
-peso_base = 0.0
-pesos = { paramecium = 2.0, halteria_grandinella = 1.5 }
-[bioma.medio]
-temperatura = 15.0
-fosfato = 3.0
-[bioma.sedimento]
-arcilla = 20
-grano_radio = [30.0, 60.0]
+name = "Charca de prueba"
+bacteria = 10000
+base_weight = 0.0
+weights = { paramecium = 2.0, halteria_grandinella = 1.5 }
+[biome.medium]
+temperature = 15.0
+phosphate = 3.0
+[biome.sediment]
+clay = 20
+grain_radius = [30.0, 60.0]
 )";
     std::string error;
     REQUIRE(loadBiomesText(biomes, "prueba.toml", "prueba", &error));
@@ -241,13 +251,13 @@ grano_radio = [30.0, 60.0]
     CHECK(b.weight(SpeciesId::Paramecium) == doctest::Approx(2.0f));
     CHECK(b.weight(SpeciesId::Amoeba) == 0.0f);
     REQUIRE(loadSpeciesText(R"(
-[[ser]]
+[[being]]
 id = "halteria_grandinella"
-nombre = "Halteria grandinella"
-locomocion = "cilios"
-[ser.forma]
-semieje_mayor = 15.0
-semieje_menor = 13.0
+name = "Halteria grandinella"
+locomotion = "cilia"
+[being.shape]
+semi_major_axis = 15.0
+semi_minor_axis = 13.0
 )",
                             "halteria.toml", "prueba", &error));
     const auto halteria = findSpecies("halteria_grandinella");
@@ -263,17 +273,17 @@ semieje_menor = 13.0
 TEST_CASE("contenido: un bioma con errores se avisa y no se carga" * doctest::test_suite("paquetes")) {
     const int before = biomeCount();
     const std::string bad = R"(
-[[bioma]]
+[[biome]]
 id = "bioma_roto"
-nombre = "Bioma roto"
+name = "Bioma roto"
 humedad = 3
-[bioma.medio]
-fosfato = -5.0
-luz = 2.0
+[biome.medium]
+phosphate = -5.0
+light = 2.0
 presion = 1.0
-[[bioma]]
-id = "charco"
-nombre = "Otro charco"
+[[biome]]
+id = "puddle"
+name = "Otro charco"
 )";
     std::string error;
     CHECK(loadBiomesText(bad, "roto.toml", "roto", &error));
@@ -281,12 +291,12 @@ nombre = "Otro charco"
     CHECK_FALSE(findBiome("bioma_roto").has_value());
     CHECK(biomeWarned("clave desconocida 'humedad'"));
     CHECK(biomeWarned("clave desconocida 'presion'"));
-    CHECK(biomeWarned("'fosfato' no puede ser negativo"));
-    CHECK(biomeWarned("'luz' es relativa"));
-    CHECK(biomeWarned("el bioma 'charco' ya existe"));
+    CHECK(biomeWarned("'phosphate' no puede ser negativo"));
+    CHECK(biomeWarned("'light' es relativa"));
+    CHECK(biomeWarned("el bioma 'puddle' ya existe"));
     CHECK(biome(BiomeId::Puddle).name == "Charco");
     // Un TOML mal formado: false con el motivo, sin tocar el registro.
-    CHECK_FALSE(loadBiomesText("[[bioma]\nid = ", "mal.toml", "mal", &error));
+    CHECK_FALSE(loadBiomesText("[[biome]\nid = ", "mal.toml", "mal", &error));
     CHECK(error.find("mal.toml") != std::string::npos);
 }
 
@@ -304,9 +314,9 @@ bool mineralWarned(const std::string& fragment) {
 TEST_CASE("contenido: los minerales de fábrica son datos, en el orden de siempre" * doctest::test_suite("paquetes")) {
     CHECK(mineralCount() == 6);
     CHECK(mineralLoadWarnings().empty());
-    CHECK(mineralInfo(MineralKind::Clay).key == "arcilla");
+    CHECK(mineralInfo(MineralKind::Clay).key == "clay");
     CHECK(mineralInfo(MineralKind::Clay).flocculates);
-    CHECK(findMineral("frustula") == MineralKind::Frustule);
+    CHECK(findMineral("frustule") == MineralKind::Frustule);
     CHECK(mineralInfo(MineralKind::IronOxide).opacity == doctest::Approx(1.0f));
     CHECK(mineralInfo(MineralKind::Quartz).radiusMax == doctest::Approx(15.0f));
     CHECK(mineralInfo(MineralKind::Quartz).grainName == "Grano de arena (cuarzo)");
@@ -318,23 +328,23 @@ TEST_CASE("contenido: un paquete suma un mineral y un bioma lo usa en su sedimen
     REQUIRE(loadMineralsText(R"(
 [[mineral]]
 id = "calcita"
-nombre = "Calcita"
-descripcion = "Carbonato de calcio: romboedros transparentes con mucho relieve."
-radio = [2.0, 8.0]
-diferencia_densidad = 1710.0
-opacidad = 0.1
-estilo = "grano_anguloso"
+name = "Calcita"
+description = "Carbonato de calcio: romboedros transparentes con mucho relieve."
+radius = [2.0, 8.0]
+density_difference = 1710.0
+opacity = 0.1
+style = "angular_grain"
 )",
                              "calcita.toml", "rocas", &error));
     const auto calcite = findMineral("calcita");
     REQUIRE(calcite.has_value());
     CHECK(mineralInfo(*calcite).pack == "rocas");
     REQUIRE(loadBiomesText(R"(
-[[bioma]]
+[[biome]]
 id = "laguna_calcarea"
-nombre = "Laguna calcárea"
-peso_base = 0.0
-[bioma.sedimento]
+name = "Laguna calcárea"
+base_weight = 0.0
+[biome.sediment]
 calcita = 50
 basalto = 3
 )",
@@ -363,15 +373,15 @@ TEST_CASE("contenido: un mineral con errores se avisa y no se carga" * doctest::
     CHECK(loadMineralsText(R"(
 [[mineral]]
 id = "piedra_rara"
-nombre = "Piedra rara"
-estilo = "brillante"
-opacidad = 3.0
+name = "Piedra rara"
+style = "brillante"
+opacity = 3.0
 )",
                            "rara.toml", "raro", &error));
     CHECK(mineralCount() == before);
-    CHECK(mineralWarned("falta 'radio'"));
-    CHECK(mineralWarned("'estilo' tiene que ser uno de"));
-    CHECK(mineralWarned("'opacidad' va de 0 a 1"));
+    CHECK(mineralWarned("falta 'radius'"));
+    CHECK(mineralWarned("'style' tiene que ser uno de"));
+    CHECK(mineralWarned("'opacity' va de 0 a 1"));
 }
 
 namespace {
@@ -379,49 +389,49 @@ namespace {
 // Un ser que solo existe en este .biopack (Colpoda cucullus: ciliado bacterívoro de las infusiones
 // de heno, ~50–100 µm, en forma de riñón). La fisiología es un dato de prueba.
 const char* const kColpodaPack = R"(
-[paquete]
+[pack]
 id = "infusiones"
-nombre = "Ciliados de infusiones"
+name = "Ciliados de infusiones"
 version = "1"
-autor = "pruebas"
-licencia = "GPL-3.0-or-later"
+author = "pruebas"
+license = "GPL-3.0-or-later"
 
-[[ser]]
+[[being]]
 id = "colpoda_cucullus"
-nombre = "Colpoda cucullus"
-etiquetas = ["protista", "ciliado", "bacterivoro"]
-descripcion = "Ciliado en forma de rinon de las infusiones de heno: come bacterias y se enquista al secarse."
-locomocion = "cilios"
-plan = "ciliado"
-alimentacion = "surco_oral"
-enquista = true
-temperatura = [5.0, 30.0]
-reserva = "glucogeno"
-[ser.forma]
-semieje_mayor = 35.0
-semieje_menor = 22.0
-memoria_forma = 8.0
+name = "Colpoda cucullus"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Ciliado en forma de rinon de las infusiones de heno: come bacterias y se enquista al secarse."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "oral_groove"
+encysts = true
+temperature = [5.0, 30.0]
+storage = "glycogen"
+[being.shape]
+semi_major_axis = 35.0
+semi_minor_axis = 22.0
+shape_memory = 8.0
 color = [168, 170, 140]
 
-[fisiologia.colpoda_cucullus.crecimiento_maximo]
-valor = 4.0
-unidad = "h"
-temperatura = 20.0
-fuente = "Dato de prueba (no publicado)."
-estimacion = true
+[physiology.colpoda_cucullus.max_growth]
+value = 4.0
+unit = "h"
+temperature = 20.0
+source = "Dato de prueba (no publicado)."
+estimate = true
 
-[[bioma]]
+[[biome]]
 id = "infusion_de_heno"
-nombre = "Infusion de heno"
-peso_base = 0.0
-pesos = { colpoda_cucullus = 1.0, paramecium = 1.0 }
-bacterias = 40000
-[bioma.medio]
-aporte_organico = 200.0
+name = "Infusion de heno"
+base_weight = 0.0
+weights = { colpoda_cucullus = 1.0, paramecium = 1.0 }
+bacteria = 40000
+[biome.medium]
+organic_inflow = 200.0
 )";
 
 std::string writeTemp(const std::string& name, const std::string& text) {
-    const auto dir = std::filesystem::temp_directory_path() / "biogame_tests_paquetes";
+    const auto dir = std::filesystem::temp_directory_path() / "biogame_tests_packs";
     std::filesystem::create_directories(dir);
     const auto path = dir / name;
     std::ofstream(path, std::ios::binary) << text;
@@ -479,10 +489,10 @@ TEST_CASE("contenido: un ser que solo está en un .biopack vive, se exporta y se
     messages.clear();
     std::string text = biopackText(spec, messages);
     REQUIRE_FALSE(text.empty());
-    CHECK(text.find("[[ser]]") != std::string::npos);
-    CHECK(text.find("crecimiento_maximo") != std::string::npos);
-    CHECK(text.find("[[escena]]") != std::string::npos);
-    CHECK(text.find("programa_minimo") != std::string::npos);
+    CHECK(text.find("[[being]]") != std::string::npos);
+    CHECK(text.find("max_growth") != std::string::npos);
+    CHECK(text.find("[[scene]]") != std::string::npos);
+    CHECK(text.find("min_program") != std::string::npos);
     for (const auto& [from, to] : {std::pair<std::string, std::string>{"colpoda_cucullus", "colpoda_inflata"},
                                    {"infusion_de_heno", "infusion_de_lechuga"}})
         for (std::size_t at = text.find(from); at != std::string::npos; at = text.find(from, at + to.size()))
@@ -490,7 +500,7 @@ TEST_CASE("contenido: un ser que solo está en un .biopack vive, se exporta y se
     spec.scenes.clear();
     messages.clear();
     // Sin la escena (instalarla escribiría en la carpeta de placas del usuario).
-    const std::size_t scene = text.find("[[escena]]");
+    const std::size_t scene = text.find("[[scene]]");
     REQUIRE(loadPack(writeTemp("copia.biopack", text.substr(0, scene)), messages));
     const auto copy = findSpecies("colpoda_inflata");
     REQUIRE(copy.has_value());
@@ -502,15 +512,15 @@ TEST_CASE("contenido: un ser que solo está en un .biopack vive, se exporta y se
 TEST_CASE("contenido: los paquetes inválidos se rechazan sin cerrar el programa" * doctest::test_suite("paquetes")) {
     std::vector<std::string> messages;
     // El mismo id que uno cargado.
-    CHECK_FALSE(loadPack(writeTemp("base.biopack", "[paquete]\nid = \"base\"\nversion = \"9\"\n"), messages));
+    CHECK_FALSE(loadPack(writeTemp("base.biopack", "[pack]\nid = \"base\"\nversion = \"9\"\n"), messages));
     // Id con caracteres que no van (podría usarse para armar rutas).
-    CHECK_FALSE(loadPack(writeTemp("ruta.biopack", "[paquete]\nid = \"../x\"\nversion = \"1\"\n"), messages));
+    CHECK_FALSE(loadPack(writeTemp("ruta.biopack", "[pack]\nid = \"../x\"\nversion = \"1\"\n"), messages));
     // Para un programa más nuevo.
     CHECK_FALSE(loadPack(writeTemp("futuro.biopack",
-                                   "[paquete]\nid = \"futuro\"\nversion = \"1\"\nprograma_minimo = \"999.0\"\n"),
+                                   "[pack]\nid = \"futuro\"\nversion = \"1\"\nmin_program = \"999.0\"\n"),
                          messages));
     // Sin manifiesto, o TOML roto.
-    CHECK_FALSE(loadPack(writeTemp("suelto.biopack", "[[ser]]\nid = \"x\"\n"), messages));
+    CHECK_FALSE(loadPack(writeTemp("suelto.biopack", "[[being]]\nid = \"x\"\n"), messages));
     CHECK_FALSE(loadPack(writeTemp("roto.biopack", "[paquete\nid ="), messages));
     // Demasiado grande.
     CHECK_FALSE(loadPack(writeTemp("enorme.biopack", std::string(kMaxPackBytes + 1, '#')), messages));
@@ -521,11 +531,98 @@ TEST_CASE("contenido: los paquetes inválidos se rechazan sin cerrar el programa
     CHECK(tooBig);
     // Una clave de primer nivel desconocida se avisa (el resto se carga).
     messages.clear();
-    CHECK(loadPack(writeTemp("raro.biopack", "[paquete]\nid = \"raro\"\nversion = \"1\"\nlicencia = \"MIT\"\n"
+    CHECK(loadPack(writeTemp("raro.biopack", "[pack]\nid = \"raro\"\nversion = \"1\"\nlicense = \"MIT\"\n"
                                              "[[criatura]]\nid = \"x\"\n"),
                    messages));
     bool unknown = false;
     for (const std::string& m : messages)
         unknown = unknown || m.find("clave desconocida 'criatura'") != std::string::npos;
     CHECK(unknown);
+}
+
+TEST_CASE("contenido: un paquete en carpetas trae un archivo por definición" * doctest::test_suite("paquetes")) {
+    namespace fs = std::filesystem;
+    const fs::path dir = fs::temp_directory_path() / "biogame_tests_packs" / "charca";
+    fs::remove_all(dir);
+    auto write = [&](const std::string& rel, const std::string& text) {
+        fs::create_directories((dir / rel).parent_path());
+        std::ofstream(dir / rel, std::ios::binary) << text;
+    };
+    write("pack.toml", "[pack]\nid = \"charca\"\nversion = \"1\"\nlicense = \"MIT\"\n"
+                       "[pack.order]\nbeings = [\"cazador_de_charca\"]\n");
+    // El cazador va primero y nombra como presa a un ser de un archivo que todavía no se leyó: la
+    // referencia se resuelve con la carpeta entera, sin avisos.
+    write("beings/cazador_de_charca.toml", R"([[being]]
+id = "cazador_de_charca"
+name = "Cazador de charca"
+locomotion = "pseudopod"
+feeding = "phagocytosis"
+prey = ["presa_de_charca"]
+[being.shape]
+semi_major_axis = 60.0
+semi_minor_axis = 60.0
+)");
+    write("beings/presa_de_charca.toml", R"([[being]]
+id = "presa_de_charca"
+name = "Presa de charca"
+locomotion = "cilia"
+[being.shape]
+semi_major_axis = 30.0
+semi_minor_axis = 12.0
+
+[physiology.presa_de_charca.max_growth]
+value = 8.0
+unit = "h"
+source = "Dato de prueba."
+)");
+    // Mal nombrado: se carga, pero se avisa.
+    write("biomes/otro_nombre.toml", "[[biome]]\nid = \"charca\"\nname = \"Charca\"\nbacteria = 100\n");
+    write("cosas/nada.toml", "");
+    write("lang/en.txt", "");
+    std::vector<std::string> messages;
+    REQUIRE(loadPack(dir.string(), messages));
+    auto said = [&](const std::string& fragment) {
+        for (const std::string& m : messages)
+            if (m.find(fragment) != std::string::npos)
+                return true;
+        return false;
+    };
+    CHECK_FALSE(said("no es un ser ni una etiqueta"));
+    CHECK(said("tiene que llamarse como su id ('charca.toml')"));
+    CHECK(said("carpeta desconocida 'cosas'"));
+    CHECK_FALSE(said("'lang'"));
+    const auto hunter = findSpecies("cazador_de_charca");
+    const auto prey = findSpecies("presa_de_charca");
+    REQUIRE(hunter);
+    REQUIRE(prey);
+    CHECK(*hunter < *prey); // el orden de [pack.order]
+    CHECK(speciesInfo(*hunter).prey.test(static_cast<std::size_t>(*prey)));
+    CHECK(speciesPhysiology(*prey).growthMax.present); // la fisiología, en el archivo del ser
+    CHECK(findBiome("charca"));
+    const PackInfo* info = findPack("charca");
+    REQUIRE(info);
+    CHECK(info->fingerprint != 0);
+}
+
+TEST_CASE("contenido: cada archivo de fábrica es una definición con el nombre de su id" *
+          doctest::test_suite("paquetes")) {
+    namespace fs = std::filesystem;
+    const fs::path base = assetPath("content/base");
+    int files = 0;
+    for (const auto& folder : fs::directory_iterator(base)) {
+        if (!folder.is_directory())
+            continue;
+        for (const auto& f : fs::directory_iterator(folder.path())) {
+            std::ifstream in(f.path());
+            const std::string text((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+            CHECK_MESSAGE(text.find("id = \"" + f.path().stem().string() + "\"") != std::string::npos,
+                          f.path().string());
+            ++files;
+        }
+    }
+    CHECK(files > 150);
+    // Los ids viejos (en español) siguen valiendo: los nombran las placas y escenas guardadas.
+    CHECK(findSpecies("neutrofilo") == findSpecies("neutrophil"));
+    CHECK(findBiome("charco") == BiomeId::Puddle);
+    CHECK(findMineral("arcilla") == MineralKind::Clay);
 }

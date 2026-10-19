@@ -1,0 +1,7 @@
+[[term]]
+id = "restriction_point"
+term = "Punto de restricción"
+definition = "Momento de la fase G1 del ciclo celular después del cual la célula se divide aunque le quiten el suero. Sin factores de crecimiento antes de ese punto, sale del ciclo a G0 (quiescencia)."
+source = "Pardee, A. B. (1974). A restriction point for control of normal animal cell proliferation. Proc. Natl. Acad. Sci. USA 71: 1286-1290."
+alias = ["g0", "quiescencia", "ciclo celular"]
+related = ["mitosis", "contact_inhibition"]

@@ -1,0 +1,12 @@
+[[body_plan]]
+id = "plant_cell_chloroplasts"
+name = "celula vegetal con cloroplastos"
+morphology = "eukaryote"
+structures = [
+    { kind = "cell_wall", source = "simulated", arrangement = "envelope", brightfield = true, name = "pared de celulosa" },
+    { kind = "plasma_membrane", source = "simulated", arrangement = "envelope", brightfield = true, name = "membrana plasmatica" },
+    { kind = "chloroplast", source = "declared", arrangement = "envelope", length = 5.0, width = 2.5, count = 60, brightfield = true, name = "cloroplastos (giran con la ciclosis)" },
+    { kind = "nucleus", source = "simulated", arrangement = "interior", count = 1, brightfield = false, name = "nucleo (tapado por los cloroplastos)" },
+    { kind = "mitochondrion", source = "declared", arrangement = "interior", length = 1.5, width = 0.5, count = 100, brightfield = false, name = "mitocondrias" },
+    { kind = "ribosomes", source = "declared", arrangement = "interior", length = 0.025, width = 0.025, per_um3 = 1000.0, brightfield = false, name = "ribosomas 80S" },
+]

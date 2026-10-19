@@ -10,18 +10,20 @@
 #include <vector>
 
 // Placas preparadas (fase 20a): además de la gota de un bioma, placas como en un laboratorio. Son
-// datos de los paquetes (medios.toml, recipientes.toml, placas.toml), con el mismo esquema de
+// datos de los paquetes (media/, vessels/, plates/), con el mismo esquema de
 // registro que los seres y los biomas.
 
 // Medio de cultivo: una composición publicada (las mismas claves que el medio de un bioma).
 struct CultureMedium {
     std::string key, name, description, reference, pack, source;
+    std::vector<std::string> legacyIds; // ids viejos (core/ids)
     MediumParams composition; // lo que el medio no dice queda como en MediumParams{}
 };
 
 // Recipiente: área de cultivo y volumen de medio de trabajo.
 struct Vessel {
     std::string key, name, pack, source;
+    std::vector<std::string> legacyIds;
     float areaCm2 = 8.0f, volumeMl = 2.0f;
     // Profundidad del medio [µm] = volumen / área.
     float depthUm() const { return volumeMl / areaCm2 * 1e4f; }
@@ -31,6 +33,7 @@ enum class PlateKind : std::uint8_t { Drop, CellCulture, Slide };
 
 struct PreparedPlate {
     std::string key, name, description, pack, source;
+    std::vector<std::string> legacyIds;
     PlateKind kind = PlateKind::CellCulture;
     std::string medium, vessel; // ids
     float fieldUm = 2048.0f;    // lado del campo simulado
@@ -54,7 +57,7 @@ int preparedPlateCount();
 const PreparedPlate* findPreparedPlate(std::string_view key);
 const PreparedPlate& preparedPlate(int index);
 
-// Carga [[medio]], [[recipiente]] y [[placa]] de un texto TOML de un paquete. Los que tienen
+// Carga [[medium]], [[vessel]] y [[plate]] de un texto TOML de un paquete. Los que tienen
 // errores se saltean y quedan en `preparedLoadWarnings`.
 bool loadPreparedText(const std::string& text, const std::string& source, const std::string& pack,
                       std::string* error = nullptr);

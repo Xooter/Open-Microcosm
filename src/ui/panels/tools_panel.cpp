@@ -14,7 +14,7 @@ namespace {
 
 class ToolsPanel : public Panel {
   public:
-    const char* key() const override { return "herramientas"; }
+    const char* key() const override { return "tools"; }
     const char* title() const override { return "Herramientas"; }
     Dock dock() const override { return Dock::RightLow; }
 
@@ -68,7 +68,7 @@ class ToolsPanel : public Panel {
             if (combo("Tinción", &si, stainNames.data(), static_cast<int>(stainNames.size()), "Colorante activo sobre la placa (J). Solo cambia cómo se ve."))
                 app.setStainIndex(si);
             if (ImGui::SmallButton(tr("Editor de tinciones...")))
-                app.panels.show("tinciones");
+                app.panels.show("stains");
             checkbox("La cámara sigue al ser controlado", &t.follow);
         }
     }

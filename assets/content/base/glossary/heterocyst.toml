@@ -1,0 +1,7 @@
+[[term]]
+id = "heterocyst"
+term = "Heterocisto"
+definition = "Célula de algunas cianobacterias filamentosas especializada en fijar N₂ del aire. Su nitrogenasa se inactiva con el O₂: el heterocisto tiene pared gruesa y no hace la parte de la fotosíntesis que libera oxígeno."
+source = "Kumar, K., Mella-Herrera, R. A. & Golden, J. W. (2010). Cyanobacterial heterocysts. Cold Spring Harb. Perspect. Biol. 2: a000315."
+alias = ["heterocistos", "fijación de n₂", "fijación de nitrógeno"]
+related = ["redfield"]

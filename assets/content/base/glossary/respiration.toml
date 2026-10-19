@@ -1,0 +1,7 @@
+[[term]]
+id = "respiration"
+term = "Respiración celular"
+definition = "Oxidación de la glucosa con O₂ hasta CO₂ y agua, con unos 30 ATP por glucosa. Sin O₂ las células que pueden pasan a la fermentación, que rinde 15 veces menos."
+source = "Hinkle, P. C. (2005). P/O ratios of mitochondrial oxidative phosphorylation. Biochim. Biophys. Acta 1706: 1-11."
+alias = ["respiración", "respira", "respiran", "aerobio", "aerobia"]
+related = ["fermentation", "photosynthesis"]

@@ -1,0 +1,58 @@
+# Paramecium caudatum: ~180 × 50 µm, ciliado bacterívoro.
+[[being]]
+id = "paramecium"
+name = "Paramecium"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Ciliado de ~200 um que come bacterias por un surco oral. Retrocede al chocar (reaccion de evitacion) y se junta donde hay CO2."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "oral_groove"
+flees_from = ["didinium", "lacrymaria"]
+conjugation = true
+chemokinesis = true
+acid_trap = true
+initial_count = 20
+cyclosis = 4.0
+ph = [6.0, 9.5]
+temperature = [5.0, 35.0]
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 90.0
+semi_minor_axis = 25.0
+shape_memory = 8.0
+color = [160, 176, 138]
+nucleus = 0.32
+
+[physiology.paramecium.max_growth]
+# Ajuste logístico (r) al monocultivo de P. caudatum de la fig. 22 (datos digitalizados en el paquete
+# de R gauseR, Clark et al.): r = 0,946 ± 0,109 /día, K = 203 (volumen relativo). La figura mide
+# volumen, no individuos.
+value = 0.946
+unit = "1/day"
+temperature = 26.0
+source = "Gause, G. F. (1934). The Struggle for Existence. Williams & Wilkins, fig. 22 (P. caudatum en monocultivo). Temperatura del cultivo sin verificar (se asume 26 °C)."
+estimate = true
+
+[physiology.paramecium.max_ingestion]
+# Ingestión de bacterias en suspensión pura (Salmonella, de tamaño parecido a E. coli), por
+# individuo. Un solo estudio en microcosmos; temperatura sin verificar (se asume la del laboratorio).
+value = 26000.0
+unit = "bacteria/h"
+temperature = 25.0
+source = "Applied Water Science (2013), doi:10.1007/s13201-013-0130-1: P. caudatum ingiere ~26 x 10^3 bacterias por individuo y por hora en suspensión pura. Temperatura sin verificar (se asume 25 °C)."
+estimate = true
+
+[physiology.paramecium.clearance]
+# Aclaramiento con POCAS presas (la pendiente inicial de la respuesta funcional de tipo II). No hay
+# una medición directa para P. caudatum: se usa la escala general del zooplancton, ~10⁶ volúmenes
+# corporales por día, que los ciliados superan 2 a 4 veces (Hansen, Bjørnsen y Hansen 1997, Limnol.
+# Oceanogr. 42: 687-704; Kiørboe 2011, Biol. Rev. 86: 311-339): ~10⁵ por hora × 2,36·10⁵ µm³ (el
+# esferoide de [being.shape]). Consistente con el estudio de la ingestión: su aclaramiento medido,
+# 106 nL/h, es a ~2,5·10⁸ bacterias/mL, donde con este valor la ingestión ya está saturada (×0,996),
+# y a ~10⁶/mL cae a la mitad, como informa el mismo estudio para las concentraciones bajas.
+value = 23.6
+unit = "uL/h"
+temperature = 20.0
+source = "Escala de volúmenes corporales (~10^5 por hora en ciliados; Hansen et al. 1997, Limnol. Oceanogr. 42: 687-704; Kiørboe 2011, Biol. Rev. 86: 311-339) con el volumen de P. caudatum. Medido a alta densidad: 106 nL/h a ~2,5·10^8 bacterias/mL (Applied Water Science 2013, doi:10.1007/s13201-013-0130-1)."
+estimate = true

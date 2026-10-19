@@ -7,8 +7,8 @@
  - FUERA DE RANGO	 - OUT OF RANGE
  Destrabarlo es posible, pero la corrida queda fuera de protocolo (se anota en la exportación).	 Unlocking it is possible, but the run is then out of protocol (it is noted in the export).
  IC 95 %	 95 % CI
- [medio]	 [medium]
- [sedimento]	 [sediment]
+ [medium]	 [medium]
+ [sediment]	 [sediment]
  | AYUNO	 | STARVING
 %.0f /cm²	%.0f /cm²
 %.0f C (tolera %.0f a %.0f)%s	%.0f C (tolerates %.0f to %.0f)%s
@@ -1019,7 +1019,7 @@ Obtención de energía sin O₂: la glucosa se parte a medias (a etanol, lactato
 Oedogonium	Oedogonium
 Oedogonium libera una zoospora con una corona de flagelos	Oedogonium releases a zoospore with a crown of flagella
 Opacidad del colorante sobre el blanco.	Opacity of the dye on the target.
-Opcional. Cultivo: temperatura, luz, bacterias, soluto:<clave>, inocular:<id>. Placa: temperatura, soluto:<clave> o una clave del registro de parámetros.	Optional. Culture: temperatura, luz, bacterias, soluto:<key>, inocular:<id>. Plate: temperatura, soluto:<key> or a key of the parameter registry.
+Opcional. Cultivo: temperature, light, bacteria, solute:<clave>, inoculate:<id>. Placa: temperature, solute:<clave> o una clave del registro de parámetros.	Optional. Culture: temperature, light, bacteria, solute:<key>, inoculate:<id>. Plate: temperature, solute:<key> or a key of the parameter registry.
 Opciones de rendimiento e imagen...	Performance and image options...
 Orceína acética (cromosomas)	Acetic orcein (chromosomes)
 Orceína en ácido acético: fija y tiñe la cromatina de rojo vinoso intenso. Sobre una punta de raíz aplastada deja ver los cromosomas en cada fase de la mitosis; el citoplasma queda casi incoloro. Fija y mata.	Orcein in acetic acid: fixes and stains chromatin an intense wine red. On a squashed root tip it reveals the chromosomes in each phase of mitosis; the cytoplasm stays almost colorless. It fixes and kills.
@@ -1376,7 +1376,7 @@ Un solo archivo de texto con las definiciones elegidas, tal como se leyeron (con
 Un volumen de una suspensión de densidad conocida: la cantidad que entra es un sorteo de Poisson (una suspensión de 10 por mL rara vez deja un individuo en 1 µL).	A volume of a suspension of known density: the number that goes in is a Poisson draw (a suspension of 10 per mL rarely leaves one individual in 1 µL).
 Una colonia libera colonias hijas	A colony releases daughter colonies
 Una célula animal en cultivo que choca con otra deja de avanzar en esa dirección (inhibición de la locomoción) y, con el fondo cubierto, deja de dividirse. Las células cancerosas la pierden.	An animal cell in culture that runs into another stops advancing in that direction (inhibition of locomotion) and, with the bottom covered, stops dividing. Cancer cells lose it.
-Una dosis-respuesta se mide como en el laboratorio: un lote (panel Experimento) con el factor reactivo:<id> y una serie de dosis al doble.	A dose-response is measured as in the laboratory: a batch (Experiment panel) with the factor reactivo:<id> and a twofold dose series.
+Una dosis-respuesta se mide como en el laboratorio: un lote (panel Experimento) con el factor reagent:<id> y una serie de dosis al doble.	A dose-response is measured as in the laboratory: a batch (Experiment panel) with the factor reagent:<id> and a twofold dose series.
 Una foto cada tanto tiempo BIOLÓGICO de la placa (no por cuadro): la serie no depende de los FPS ni de la velocidad. Cada time-lapse va a una carpeta nueva.	One photo every so much BIOLOGICAL time of the plate (not per frame): the series does not depend on FPS or speed. Each time-lapse goes to a new folder.
 Una gota de agua con su fauna (de un bioma) o una placa preparada como en el laboratorio: un cultivo celular en su medio, en la incubadora.	A drop of water with its fauna (from a biome) or a plate prepared as in the laboratory: a cell culture in its medium, in the incubator.
 Una gota de sangre extendida en capa fina, fijada con metanol y tenida con Giemsa: globulos rojos rosados sin nucleo y, cada tanto, globulos blancos (neutrofilos de nucleo lobulado, linfocitos, monocitos) y plaquetas violetas.	A drop of blood spread in a thin layer, fixed with methanol and stained with Giemsa: pink red blood cells without nucleus and, here and there, white blood cells (neutrophils with lobed nuclei, lymphocytes, monocytes) and violet platelets.
@@ -1734,7 +1734,7 @@ tambien libera zoosporas nadadoras que se fijan y forman filamentos nuevos	also 
 tasa de aclaramiento	clearance rate
 tasa de dilución	dilution rate
 teca de placas de celulosa	theca of cellulose plates
-temperatura, luz, soluto:<fosfato|nitrogeno|silice|hierro|b12|organica|co2>, o una acción: bacterias, medio, dilucion, inocular:<id del ser>.	temperatura, luz, soluto:<fosfato|nitrogeno|silice|hierro|b12|organica|co2>, or an action: bacterias, medio, dilucion, inocular:<being id>.
+temperature, light, solute:<phosphate|nitrogen|silicate|iron|b12|organic|co2>, o una acción: bacteria, medium, dilution, inoculate:<id del ser>.	temperature, light, solute:<phosphate|nitrogen|silicate|iron|b12|organic|co2>, or an action: bacteria, medium, dilution, inoculate:<being id>.
 tiempo [h]	time [h]
 tiempo biológico [h]	biological time [h]
 tiempo de manipulación	handling time

@@ -70,11 +70,9 @@ constexpr IntField kConfigInts[] = {
     {"physarum", &WorldConfig::physarum},
 };
 
-// Placas guardadas antes de que los minerales fueran datos: sus claves de sedimento en inglés.
-constexpr std::pair<const char*, const char*> kLegacySediment[] = {
-    {"clay", "arcilla"},      {"quartz", "cuarzo"}, {"mica", "mica"},
-    {"iron_oxide", "oxido_hierro"}, {"sulfur", "azufre"}, {"frustules", "frustula"},
-};
+// Placas guardadas antes de que los minerales fueran datos (versión 1): llamaban "frustules" al
+// mineral de las frústulas. Los ids en español de después los resuelve el registro (`legacy_ids`).
+constexpr std::pair<const char*, const char*> kLegacySediment[] = {{"frustules", "frustule"}};
 
 // Mineral de una clave "sediment.<id>" (o de una clave vieja); vacío si no es de un mineral.
 std::optional<MineralKind> sedimentMineral(const std::string& key) {
@@ -232,8 +230,8 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
             }
         }
         else if (k == "prepared") {
-            if (findPreparedPlate(v))
-                p.prepared = v;
+            if (const PreparedPlate* pp = findPreparedPlate(v))
+                p.prepared = pp->key; // un id viejo se reescribe con el actual
             else
                 lack("placa preparada '" + v + "'");
         }
@@ -273,7 +271,7 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
                 lack("ser '" + id + "'");
         }
         else if (k == "rock_max") c.sediment.rockMax = static_cast<float>(x);
-        else if (k == "programa") {
+        else if (k == "program" || k == "programa") { // "programa": placas de antes del contenido en inglés
             if (!programRead)
                 c.program.entries.clear();
             programRead = true;

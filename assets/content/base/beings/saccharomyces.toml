@@ -1,0 +1,35 @@
+# Saccharomyces cerevisiae: la levadura de la cerveza y del pan. Diploide: elipsoide de ~5 × 6 µm
+# (Sherman 2002, Methods Enzymol. 350: 3). Gemación, respiración con O₂ y fermentación alcohólica.
+# Vive en frutas y en el laboratorio, no en las gotas de agua: no se siembra sola (se inocula).
+[[being]]
+id = "saccharomyces"
+name = "Saccharomyces cerevisiae"
+tags = ["fungus", "yeast"]
+description = "La levadura del pan y la cerveza: celulas ovaladas de ~6 um que se reproducen por gemacion. Con oxigeno respira; sin el fermenta el azucar a alcohol y CO2."
+locomotion = "cilia"
+body_plan = "yeast"
+feeding = "osmotrophy"
+relative_speed = 0.0
+daughter_colonies = 1
+budding = true
+ph = [3.0, 8.0]
+temperature = [5.0, 40.0]
+max_salinity = 60.0
+storage = "glycogen"
+wall = "yeast_glucan"
+[being.shape]
+semi_major_axis = 3.0
+semi_minor_axis = 2.5
+shape_memory = 12.0
+color = [216, 208, 182]
+nucleus = 0.3
+
+[being.appearance]
+style = "yeast"
+
+[physiology.saccharomyces.max_growth]
+# Fase exponencial en YPD (rico); en medio sintético, ~140 min.
+value = 1.5
+unit = "h"
+temperature = 30.0
+source = "Sherman, F. (2002). Getting started with yeast. Methods Enzymol. 350: 3-41: las cepas de laboratorio se duplican cada ~90 min en YPD a 30 °C (BioNumbers 108255)."

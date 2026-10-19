@@ -1,0 +1,7 @@
+[[term]]
+id = "mic"
+term = "CIM"
+definition = "Concentración inhibitoria mínima: la menor concentración de un antibiótico, en una serie de diluciones al doble, sin crecimiento visible después de 16-20 h. Es una medida del laboratorio, no un parámetro: en la simulación emerge de la farmacodinámica."
+source = "CLSI (2018). M07: Methods for Dilution Antimicrobial Susceptibility Tests for Bacteria That Grow Aerobically, 11.ª ed."
+alias = ["concentración inhibitoria mínima"]
+related = ["ic50"]

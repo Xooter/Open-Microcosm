@@ -1,0 +1,19 @@
+
+[[medium]]
+id = "distilled_water"
+legacy_ids = ["agua_destilada"]
+name = "Agua destilada"
+description = "Agua sin sales: hipotonica para cualquier celula. Una celula vegetal queda turgente (la pared la contiene); un globulo rojo se hincha y estalla (hemolisis)."
+source = "Agua sin solutos (osmolaridad ~0)."
+[medium.composition]
+salinity = 0.0
+alkalinity = 50.0
+phosphate = 0.0
+nitrogen = 0.0
+silicate = 0.0
+iron = 0.0
+vitamin_b12 = 0.0
+phages = 0.0
+organic_inflow = 0.0
+detritus_inflow = 0.0
+dust = 0.0

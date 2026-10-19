@@ -1,4 +1,4 @@
-// Glosario (fase P1, paso 14): los términos de los paquetes (glosario.toml) con su definición, su
+// Glosario (fase P1, paso 14): los términos de los paquetes (glossary/) con su definición, su
 // fuente, los relacionados y dónde verlos en la simulación (una lección o una placa preparada): la
 // "animación" del término es la placa misma.
 #include "app/app.hpp"
@@ -24,7 +24,7 @@ namespace {
 class GlossaryPanel : public Panel {
   public:
     GlossaryPanel() { open = false; } // se abre desde Ver o con un término de la ficha
-    const char* key() const override { return "glosario"; }
+    const char* key() const override { return "glossary"; }
     const char* title() const override { return "Glosario"; }
     Dock dock() const override { return Dock::Float; }
 
@@ -106,7 +106,7 @@ class GlossaryPanel : public Panel {
         if (const Lesson* l = g.lesson.empty() ? nullptr : findLesson(g.lesson)) {
             if (ImGui::Button((std::string(tr("Verlo en la lección")) + ": " + tr(l->title.c_str())).c_str())) {
                 app.lessonRequest = l->key;
-                app.panels.show("leccion");
+                app.panels.show("lesson");
             }
         }
         if (const PreparedPlate* pp = g.plate.empty() ? nullptr : findPreparedPlate(g.plate)) {

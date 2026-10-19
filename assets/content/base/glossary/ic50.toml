@@ -1,0 +1,7 @@
+[[term]]
+id = "ic50"
+term = "CI50"
+definition = "La concentración que reduce a la mitad la respuesta (el crecimiento). Sale de ajustar una curva de Hill a un experimento de dosis-respuesta: y = abajo + (arriba − abajo)/(1 + (dosis/CI50)^n)."
+source = "Hill, A. V. (1910). The possible effects of the aggregation of the molecules of haemoglobin on its dissociation curves. J. Physiol. 40: iv-vii."
+alias = ["dosis-respuesta", "curva de hill", "hill"]
+related = ["mic"]

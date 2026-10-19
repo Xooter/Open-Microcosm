@@ -113,6 +113,7 @@ check_ipo_supported(RESULT ipo_ok OUTPUT ipo_msg)
 # ---------------------------------------------------------------------------
 add_library(biosim STATIC
     src/core/paths.cpp
+    src/core/pack_files.cpp
     src/sim/fft.cpp
     src/sim/fluid.cpp
     src/sim/chem_field.cpp
@@ -162,6 +163,7 @@ add_library(biosim STATIC
     src/game/medium_toml.cpp
     src/game/mineral.cpp
     src/game/content.cpp
+    src/game/legacy_names.cpp
     src/game/prepared.cpp
     src/game/plate_spec.cpp
     src/game/parameters.cpp
@@ -296,12 +298,12 @@ install(TARGETS bio RUNTIME DESTINATION .)
 install(DIRECTORY assets DESTINATION .)
 install(FILES README.md LICENSE DESTINATION . OPTIONAL)
 # Las licencias de lo que va enlazado en el ejecutable (zlib y MIT piden acompañar el aviso).
-install(FILES ${raylib_SOURCE_DIR}/LICENSE DESTINATION licencias RENAME raylib.txt)
-install(FILES ${raylib_SOURCE_DIR}/src/external/glfw/LICENSE.md DESTINATION licencias RENAME glfw.txt)
-install(FILES ${imgui_SOURCE_DIR}/LICENSE.txt DESTINATION licencias RENAME imgui.txt)
-install(FILES ${implot_SOURCE_DIR}/LICENSE DESTINATION licencias RENAME implot.txt)
-install(FILES ${entt_SOURCE_DIR}/LICENSE DESTINATION licencias RENAME entt.txt)
-install(FILES ${tomlplusplus_SOURCE_DIR}/LICENSE DESTINATION licencias RENAME tomlplusplus.txt)
+install(FILES ${raylib_SOURCE_DIR}/LICENSE DESTINATION licenses RENAME raylib.txt)
+install(FILES ${raylib_SOURCE_DIR}/src/external/glfw/LICENSE.md DESTINATION licenses RENAME glfw.txt)
+install(FILES ${imgui_SOURCE_DIR}/LICENSE.txt DESTINATION licenses RENAME imgui.txt)
+install(FILES ${implot_SOURCE_DIR}/LICENSE DESTINATION licenses RENAME implot.txt)
+install(FILES ${entt_SOURCE_DIR}/LICENSE DESTINATION licenses RENAME entt.txt)
+install(FILES ${tomlplusplus_SOURCE_DIR}/LICENSE DESTINATION licenses RENAME tomlplusplus.txt)
 if(MINGW)
     # printf de C99 (%zu): el de MSVCRT no lo entiende.
     target_compile_definitions(bio_options INTERFACE __USE_MINGW_ANSI_STDIO=1)

@@ -1,0 +1,126 @@
+# Fibroblasto dérmico humano: célula fusiforme del tejido conectivo, extendida ~130 × 30 µm sobre el
+# fondo, ~3000 µm³. Migra con un lamelipodio en el frente; se detiene al tocar a otra (inhibición por
+# contacto) y deja de dividirse en confluencia.
+[[being]]
+id = "human_dermal_fibroblast"
+legacy_ids = ["fibroblasto_dermico_humano"]
+name = "Fibroblasto dermico humano"
+tags = ["human_cell", "animal_cell", "fibroblast"]
+description = "Celula del tejido conectivo de la dermis, en cultivo: fusiforme, pegada al fondo, migra con un lamelipodio y se detiene al tocar a otra. Deja de dividirse cuando la monocapa se completa (inhibicion por contacto)."
+body_plan = "adherent_human_cell"
+locomotion = "crawl"
+feeding = "none"
+relative_dry_mass = 0.0500
+ph = [6.8, 7.8]
+temperature = [30.0, 40.0]
+max_salinity = 16.0
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 65.0
+semi_minor_axis = 15.0
+shape_memory = 2.0
+color = [214, 210, 198]
+nucleus = 0.4
+squareness = 1.4
+[being.cell]
+adherent = true
+rounded_radius = 11.0
+contact_inhibition_locomotion = true
+contact_inhibition_proliferation = true
+min_serum = 0.01
+[being.appearance]
+style = "adherent_cell"
+
+# Tiempos en "h" (también "min"), rapidez en "um/h" o "um/min", densidad en "1/cm2", flujos por
+# célula en "fmol/h" (o "amol/s"), Km en "mM" o "uM", lactato por glucosa en "mol/mol". Todos a
+# 37 °C; el programa los lleva a 20 °C con Q10 = 2 y a 37 °C vuelven a su valor.
+
+[physiology.human_dermal_fibroblast.max_growth]
+value = 30.0
+unit = "h"
+temperature = 37.0
+source = "Fibroblastos dérmicos humanos de donante joven en DMEM con 10 % de SFB: duplicación de la población de ~24–48 h según el donante y el pasaje. Valor central del rango."
+estimate = true
+
+[physiology.human_dermal_fibroblast.phase_g1]
+value = 17.0
+unit = "h"
+temperature = 37.0
+source = "Completa la duplicación de ~30 h con S, G2 y M de la célula humana típica (Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4: S 8 h, G2 4 h, M 1 h). La fase G1 es la que varía entre tipos celulares."
+estimate = true
+
+[physiology.human_dermal_fibroblast.phase_s]
+value = 8.0
+unit = "h"
+temperature = 37.0
+source = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4 (célula humana típica en cultivo)."
+estimate = true
+
+[physiology.human_dermal_fibroblast.phase_g2]
+value = 4.0
+unit = "h"
+temperature = 37.0
+source = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4 (célula humana típica en cultivo)."
+estimate = true
+
+[physiology.human_dermal_fibroblast.phase_m]
+value = 1.0
+unit = "h"
+temperature = 37.0
+source = "Alberts et al., Molecular Biology of the Cell, 6ª ed., fig. 17-4 (célula humana típica en cultivo)."
+estimate = true
+
+[physiology.human_dermal_fibroblast.migration_speed]
+value = 40.0
+unit = "um/h"
+temperature = 37.0
+source = "Fibroblastos sobre vidrio o plástico: ~0,5–1 µm/min. El modelo de paseo aleatorio persistente es el de Gail & Boone (1970), Biophys. J. 10:980, medido en fibroblastos 3T3 de ratón."
+estimate = true
+
+[physiology.human_dermal_fibroblast.persistence]
+value = 1.0
+unit = "h"
+temperature = 37.0
+source = "Persistencia de la dirección de fibroblastos en 2D del orden de 1 h (modelo de Gail & Boone 1970, Biophys. J. 10:980)."
+estimate = true
+
+[physiology.human_dermal_fibroblast.confluence]
+value = 40000.0
+unit = "1/cm2"
+source = "Monocapa confluente de fibroblastos humanos: ~3–5·10⁴ células/cm²."
+estimate = true
+
+[physiology.human_dermal_fibroblast.glucose_vmax]
+value = 60.0
+unit = "fmol/h"
+temperature = 37.0
+source = "Consumo de glucosa de fibroblastos en cultivo ~1–2 µmol por 10⁶ células por día (~40–80 fmol/h por célula)."
+estimate = true
+
+[physiology.human_dermal_fibroblast.glucose_km]
+value = 3.0
+unit = "mM"
+temperature = 37.0
+source = "Km de GLUT1, el transportador de glucosa de los fibroblastos: ~1–3 mM (Carruthers 1990, Physiol. Rev. 70:1135)."
+
+[physiology.human_dermal_fibroblast.glutamine_vmax]
+value = 12.0
+unit = "fmol/h"
+temperature = 37.0
+source = "Consumo de glutamina de células humanas no tumorales en cultivo ~20 % del de glucosa."
+estimate = true
+
+[physiology.human_dermal_fibroblast.glutamine_km]
+value = 0.1
+unit = "mM"
+temperature = 37.0
+source = "Km de los transportadores de glutamina (ASCT2/SLC1A5) del orden de 0,1 mM."
+estimate = true
+
+[physiology.human_dermal_fibroblast.lactate_per_glucose]
+value = 1.0
+unit = "mol/mol"
+temperature = 37.0
+source = "Las células en cultivo convierten buena parte de la glucosa en lactato aun con O2: ~1 lactato por glucosa en células no tumorales (2 sería toda)."
+estimate = true

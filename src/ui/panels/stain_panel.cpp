@@ -28,7 +28,7 @@ std::string slug(const std::string& name) {
     }
     while (!out.empty() && out.back() == '_')
         out.pop_back();
-    return out.empty() ? "tincion" : out;
+    return out.empty() ? "stain" : out;
 }
 
 const StainSpec* factoryOf(const std::string& id) {
@@ -119,7 +119,7 @@ void drawRule(StainSpec& spec, std::size_t index, bool& removed) {
 
 class StainPanel : public Panel {
   public:
-    const char* key() const override { return "tinciones"; }
+    const char* key() const override { return "stains"; }
     const char* title() const override { return "Tinciones"; }
     Dock dock() const override { return Dock::Left; }
 

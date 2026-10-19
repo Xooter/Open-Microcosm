@@ -18,12 +18,12 @@ constexpr double kDay = 24.0 * 3600.0;
 
 CultureRun gauseTube(std::uint64_t seed, float bacteriaPerMl = 5e7f) {
     CultureSpec s;
-    s.vessel = "tubo_gause";
+    s.vessel = "gause_tube";
     s.medium = "osterhout_gause";
     s.temperature = 26.0f;
     s.seed = seed;
-    s.program.entries.push_back({"medio", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 1.0f});
-    s.program.entries.push_back({"bacterias", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, bacteriaPerMl});
+    s.program.entries.push_back({"medium", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 1.0f});
+    s.program.entries.push_back({"bacteria", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, bacteriaPerMl});
     CultureRun r;
     r.start(s);
     r.apply({0, CultureOp::Bacteria, "", bacteriaPerMl});

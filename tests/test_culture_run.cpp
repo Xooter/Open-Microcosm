@@ -15,7 +15,7 @@ namespace {
 CultureSpec gauseTube(std::uint64_t seed) {
     CultureSpec s;
     s.name = "prueba";
-    s.vessel = "tubo_gause";
+    s.vessel = "gause_tube";
     s.medium = "osterhout_gause";
     s.temperature = 26.0f;
     s.seed = seed;
@@ -35,8 +35,8 @@ std::vector<double> fingerprint(const CultureRun& r) {
 TEST_CASE("escena de cultivo: guardar y cargar repite la corrida") {
     CultureRun a;
     CultureSpec spec = gauseTube(11);
-    spec.program.entries.push_back({"medio", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 1.0f});
-    spec.program.entries.push_back({"bacterias", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 5e7f});
+    spec.program.entries.push_back({"medium", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 1.0f});
+    spec.program.entries.push_back({"bacteria", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 5e7f});
     a.start(spec);
     CHECK(a.apply({0, CultureOp::Bacteria, "", 5e7}));
     CHECK(a.apply({0, CultureOp::Inoculate, "paramecium", 5}));
@@ -106,4 +106,30 @@ TEST_CASE("alícuota: el conteo es Poisson alrededor de la densidad") {
     for (int k = 0; k < n; ++k)
         sum += r.countAliquot(SpeciesId::Paramecium, 0.1f, static_cast<std::uint64_t>(k));
     CHECK(sum / n == doctest::Approx(40.0).epsilon(0.05));
+}
+
+TEST_CASE("escena de cultivo: una guardada con los nombres viejos (en español) se lee igual") {
+    const std::string old = "cultivo_version=1\nnombre=gause\nrecipiente=tubo_gause\nmedio=osterhout_gause\n"
+                            "temperatura=26\nluz=0\nseed=1934\nprograma=medio evento 24 inf 0 0 24 0.5 1\n"
+                            "evento=0 bacterias 5e7\nevento=0 inocular 5 paramecium_aurelia\n"
+                            "evento=0 concentracion 0.25 fosfato\nevento=0 reactivo 2 ampicilina\n";
+    CultureSpec s;
+    std::vector<CultureEvent> events;
+    REQUIRE(parseCultureScene(old, s, events));
+    CHECK(s.vessel == "gause_tube");
+    CHECK(s.temperature == doctest::Approx(26.0f));
+    CHECK(s.seed == 1934);
+    REQUIRE(s.program.entries.size() == 1);
+    CHECK(s.program.entries[0].target == "medium");
+    REQUIRE(events.size() == 4);
+    CHECK(events[0].op == CultureOp::Bacteria);
+    CHECK(events[1].op == CultureOp::Inoculate);
+    CHECK(events[2].op == CultureOp::Concentration);
+    CHECK(events[2].key == "phosphate");
+    CHECK(events[3].op == CultureOp::Reagent);
+    CHECK(events[3].key == "ampicillin");
+    const std::string now = serializeCultureScene(s, events);
+    CHECK(now.find("culture_version=1") != std::string::npos);
+    CHECK(now.find("vessel=gause_tube") != std::string::npos);
+    CHECK(now.find("event=0 inoculate 5 paramecium_aurelia") != std::string::npos);
 }

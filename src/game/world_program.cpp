@@ -14,12 +14,12 @@
 #include <string>
 
 ChemField* World::soluteByKey(const std::string& key) {
-    return key == "fosfato"     ? &phosphate_
-           : key == "nitrogeno" ? &nitrogen_
-           : key == "silice"    ? &silicate_
-           : key == "hierro"    ? &iron_
+    return key == "phosphate"     ? &phosphate_
+           : key == "nitrogen" ? &nitrogen_
+           : key == "silicate"    ? &silicate_
+           : key == "iron"    ? &iron_
            : key == "b12"       ? &vitamin_
-           : key == "organica"  ? &nutrients_
+           : key == "organic"  ? &nutrients_
            : key == "co2"       ? &co2_
                                 : nullptr;
 }
@@ -34,15 +34,15 @@ void World::applyProgram(float dt) {
         if (e.isAction()) {
             const int times = programEvents(e, from, to);
             for (int k = 0; k < times; ++k) {
-                if (e.target.rfind("inocular:", 0) == 0) {
-                    if (const std::optional<SpeciesId> id = findSpecies(e.target.substr(9)))
+                if (e.target.rfind("inoculate:", 0) == 0) {
+                    if (const std::optional<SpeciesId> id = findSpecies(e.target.substr(10)))
                         inoculate({BeingKind::Species, *id}, static_cast<int>(e.amount), {}, 0.0f);
-                } else if (e.target == "bacterias") {
+                } else if (e.target == "bacteria") {
                     // Por mL de la gota: la placa tiene el volumen de su película.
                     const double ul = units::kPi * dish_.radius * dish_.radius * fluid_.gapHeight * 1e-9;
                     inoculate({BeingKind::Bacterium, SpeciesId{}}, static_cast<int>(e.amount * ul * 1e-3), {}, 0.0f);
-                } else if (e.target.rfind("agregar:", 0) == 0) {
-                    if (ChemField* f = soluteByKey(e.target.substr(8)))
+                } else if (e.target.rfind("add:", 0) == 0) {
+                    if (ChemField* f = soluteByKey(e.target.substr(4)))
                         setMeanConcentration(*f, std::max(0.0f, meanConcentration(*f) + e.amount));
                 }
                 // "medio" y "dilucion" son del cultivo bien mezclado; en la placa está la perfusión.
@@ -52,15 +52,15 @@ void World::applyProgram(float dt) {
         float v;
         if (!programValue(e, to, v))
             continue;
-        if (e.target == "temperatura") {
+        if (e.target == "temperature") {
             medium_.temperature = v;
             medium = true;
-        } else if (e.target == "luz") {
+        } else if (e.target == "light") {
             medium_.surfaceLight = std::max(0.0f, v);
-        } else if (e.target.rfind("soluto:", 0) == 0) {
+        } else if (e.target.rfind("solute:", 0) == 0) {
             if (ChemField* f = soluteByKey(e.target.substr(7)))
                 setMeanConcentration(*f, std::max(0.0f, v));
-        } else if (e.target.rfind("parametro:", 0) == 0) {
+        } else if (e.target.rfind("parameter:", 0) == 0) {
             if (const ParamInfo* p = findParameter(e.target.substr(10)))
                 setParameterValue(*this, *p, v);
         }

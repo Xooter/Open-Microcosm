@@ -1,0 +1,37 @@
+# Chilodonella uncinata: cirtofórido aplanado de 25–70 µm (casi siempre ~45; Kreutz) que se desliza
+# sobre el fondo y raspa diatomeas y bacterias con una canasta de varillas. Ancho estimado (~65 %).
+[[being]]
+id = "chilodonella"
+name = "Chilodonella"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Ciliado chato de ~45 um que se desliza sobre el vidrio y raspa diatomeas y bacterias con una canasta de varillas."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "oral_groove"
+relative_speed = 0.2
+mouth_prey = ["navicula", "chlorella", "raphidocelis"]
+conjugation = true
+initial_count = 5
+walks = true
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [2.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 22.5
+semi_minor_axis = 14.5
+thickness = 6.0
+shape_memory = 10.0
+color = [184, 182, 162]
+nucleus = 0.3
+
+[physiology.chilodonella.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 22,5, 14,5 y 6 µm: 8200 µm³).
+value = 1.97
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 8200 µm³). No es una medición de la especie."
+estimate = true

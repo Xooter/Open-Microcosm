@@ -1,0 +1,7 @@
+# Portaobjetos con cubreobjetos de 22 × 22 mm sobre una gota de ~10 µL: una capa de ~20 µm.
+[[vessel]]
+id = "slide"
+legacy_ids = ["portaobjetos"]
+name = "Portaobjetos con cubreobjetos de 22 mm"
+area_cm2 = 4.84
+volume_ml = 0.01

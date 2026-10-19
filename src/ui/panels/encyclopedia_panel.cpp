@@ -14,7 +14,7 @@ namespace {
 class EncyclopediaPanel : public Panel {
   public:
     EncyclopediaPanel() { open = false; }
-    const char* key() const override { return "enciclopedia"; }
+    const char* key() const override { return "encyclopedia"; }
     const char* title() const override { return "Enciclopedia"; }
     Dock dock() const override { return Dock::Left; }
 

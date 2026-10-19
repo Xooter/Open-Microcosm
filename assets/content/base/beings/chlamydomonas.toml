@@ -1,0 +1,40 @@
+# Chlamydomonas reinhardtii: ~10 µm, dos flagelos, un gran cloroplasto en copa; se duplica
+# en ~6–8 h con buena luz (3× la tasa de Euglena). Se divide dentro de la pared madre en
+# 4 hijas (palintomía).
+
+[[being]]
+id = "chlamydomonas"
+name = "Chlamydomonas"
+tags = ["alga", "green_alga", "flagellate", "phototroph", "chytrid_host", "photobiont"]
+description = "Alga de dos flagelos que nada como en brazada. Dentro de la pared madre se divide en 4 hijas."
+locomotion = "flagellum"
+body_plan = "flagellate_chlorophyte"
+relative_speed = 1.25
+flees_from = ["amoeba"]
+phototaxis = true
+relative_photosynthesis = 3.0
+fissions_per_cycle = 2
+initial_count = 150
+chloroplasts = true
+ph = [5.0, 9.5]
+temperature = [-2.0, 35.0]
+max_salinity = 60.0
+storage = "starch"
+wall = "cellulose"
+[being.shape]
+semi_major_axis = 5.5
+semi_minor_axis = 4.5
+shape_memory = 6.0
+color = [110, 170, 80]
+nucleus = 0.32
+
+[being.appearance]
+style = "two_flagella"
+
+[physiology.chlamydomonas.max_growth]
+# Duplicación de la clorofila de la cepa silvestre a ~70 µmol fotones m⁻² s⁻¹ (no conteo de células).
+value = 20.0
+unit = "h"
+temperature = 25.0
+source = "PNAS (1997), tabla de crecimiento y fotosíntesis de cepas de C. reinhardtii: duplicación de la clorofila ~20 h a ~70 µmol fotones m⁻² s⁻¹. Temperatura sin verificar."
+estimate = true

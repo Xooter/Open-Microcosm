@@ -237,7 +237,7 @@ std::vector<StainSpec> makeBuiltins() {
     }
     {
         StainSpec s;
-        s.id = "orceina_acetica";
+        s.id = "acetic_orcein";
         s.name = "Orceína acética (cromosomas)";
         s.note = "Orceína en ácido acético: fija y tiñe la cromatina de rojo vinoso intenso. Sobre una punta de raíz aplastada deja ver los cromosomas en cada fase de la mitosis; el citoplasma queda casi incoloro. Fija y mata.";
         s.vital = false;
@@ -346,7 +346,7 @@ bool parseStain(const std::string& text, StainSpec& spec) {
     if (!versioned)
         return false;
     if (s.id.empty())
-        s.id = "tincion";
+        s.id = "stain";
     spec = s;
     return true;
 }

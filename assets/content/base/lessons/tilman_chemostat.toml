@@ -1,0 +1,30 @@
+[[lesson]]
+id = "tilman_chemostat"
+legacy_ids = ["tilman_quimiostato"]
+title = "Tilman: competencia por un recurso en un quimiostato"
+level = "universitario"
+goal = "Dos diatomeas compiten por el fosforo en un quimiostato. Gana la que puede crecer al ritmo de la dilucion con menos fosforo disuelto (la de menor R*), y la otra desaparece."
+source = "Tilman, D. (1977). Ecology 58: 338-348 (Asterionella formosa y Cyclotella meneghiniana en cultivos semicontinuos)."
+culture = """
+culture_version=1
+name=tilman
+vessel=microchemostat
+medium=wc_guillard
+temperature=20
+light=1
+seed=1977
+event=0 inflow_medium 0.25 phosphate
+event=0 concentration 0.25 phosphate
+event=0 inoculate 20 asterionella
+event=0 inoculate 20 cyclotella
+event=0 chemostat 0.0104167
+"""
+solution_hours = 1440.0
+[[lesson.step]]
+text = "Un quimiostato con 20 Asterionella y 20 Cyclotella. Entra medio con poco fosforo (0,25 uM) y sale cultivo a 0,25 por dia."
+goal = { kind = "time_h", op = ">=", value = 24.0 }
+prediction = { text = "Al final, que fraccion de las diatomeas va a ser Asterionella?", quantity = { kind = "fraction", key = "asterionella,cyclotella" }, unit = "fraction" }
+[[lesson.step]]
+text = "Deja correr el quimiostato 60 dias (subi la velocidad)."
+goal = { kind = "fraction", key = "asterionella,cyclotella", op = ">=", value = 0.9 }
+question = { text = "Por que gana Asterionella con poco fosforo?", options = ["Crece mas rapido", "Necesita menos fosforo disuelto para crecer al ritmo de la dilucion (menor R*)", "Se come a Cyclotella"], correct = 1, explanation = "Las dos tienen el mismo crecimiento maximo; Asterionella tiene una media saturacion del fosforo seis veces menor. En el quimiostato el fosforo baja hasta el R* de la mejor competidora y la otra no llega a reponer lo que se lava. Con silice limitante pasa al reves." }

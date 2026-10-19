@@ -1,0 +1,7 @@
+[[vessel]]
+id = "flask_t25"
+legacy_ids = ["frasco_t25"]
+name = "Frasco T-25"
+area_cm2 = 25.0
+volume_ml = 5.0
+source = "Corning, \"Surface Areas and Recommended Medium Volumes for Corning Cell Culture Vessels\" (CLS-AN-209)."

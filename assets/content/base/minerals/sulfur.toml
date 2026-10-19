@@ -1,0 +1,9 @@
+[[mineral]]
+id = "sulfur"
+legacy_ids = ["azufre"]
+name = "Azufre"
+description = "Glóbulos de azufre elemental: se forman donde hay sulfuros (fuentes termales). Muy refringentes: borde negro y centro brillante."
+radius = [0.8, 3.0]
+density_difference = 1000.0
+opacity = 0.3
+style = "refractile_globule"

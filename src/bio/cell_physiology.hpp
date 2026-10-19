@@ -18,7 +18,7 @@ struct CellSurroundings {
     float salinity = 0.0f;    // [PSU]
 };
 
-// µmax y medias saturaciones de la especie (fisiologia.toml, con su fuente) y los multiplicadores
+// µmax y medias saturaciones de la especie ([physiology.<id>.*], con su fuente) y los multiplicadores
 // de su genoma. Sin herencia, los de la especie.
 void applySpeciesPhysiology(MetabolicInput& in, SpeciesId id, const SpeciesInfo& info, const Heredity* heredity,
                             const MetabolismParams& params);

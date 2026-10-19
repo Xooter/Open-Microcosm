@@ -1,0 +1,7 @@
+[[term]]
+id = "henry_law"
+term = "Ley de Henry"
+definition = "La concentración de un gas disuelto en equilibrio es proporcional a su presión parcial en el aire. La constante baja con la temperatura y la sal: el agua tibia o salada guarda menos O₂."
+source = "Sander, R. (2015). Compilation of Henry's law constants (version 4.0) for water as solvent. Atmos. Chem. Phys. 15: 4399-4981."
+alias = ["henry"]
+related = ["ph"]

@@ -9,6 +9,7 @@
 #include <doctest/doctest.h>
 
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 #include <vector>
 
@@ -165,7 +166,12 @@ TEST_CASE("exportar: CSV con unidades y JSON con parámetros, serie y balance") 
         CHECK(depth >= 0);
     }
     CHECK(depth == 0);
-    CHECK(json.find("nan") == std::string::npos);
+    // Ningún número NaN (la palabra suelta: "maintenance" la contiene).
+    for (std::size_t at = json.find("nan"); at != std::string::npos; at = json.find("nan", at + 1)) {
+        const bool word = (at > 0 && std::isalpha(static_cast<unsigned char>(json[at - 1]))) ||
+                          (at + 3 < json.size() && std::isalpha(static_cast<unsigned char>(json[at + 3])));
+        CHECK_MESSAGE(word, json.substr(at > 20 ? at - 20 : 0, 40));
+    }
 
     const std::string species = speciesJson();
     for (int s = 0; s < speciesCount(); ++s)

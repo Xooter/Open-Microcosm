@@ -1,6 +1,6 @@
 #include "game/glossary.hpp"
 
-#include "core/paths.hpp"
+#include "core/pack_files.hpp"
 #include "core/toml_reader.hpp"
 
 #include <algorithm>
@@ -23,7 +23,7 @@ Registry& registry() {
     return r;
 }
 
-constexpr const char* kKeys[] = {"id", "termino", "definicion", "fuente", "alias", "relacionados", "leccion", "placa"};
+constexpr const char* kKeys[] = {"id", "term", "definition", "source", "alias", "related", "lesson", "plate"};
 
 void strings(const toml::table& t, const char* key, std::vector<std::string>& out) {
     if (const toml::array* a = t[key].as_array())
@@ -34,7 +34,7 @@ void strings(const toml::table& t, const char* key, std::vector<std::string>& ou
 
 void loadParsed(const toml::table& doc, const std::string& source, const std::string& pack) {
     Registry& reg = registry();
-    const toml::array* list = doc["termino"].as_array();
+    const toml::array* list = doc["term"].as_array();
     if (!list)
         return;
     for (const toml::node& node : *list) {
@@ -43,17 +43,17 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
             continue;
         GlossaryTerm g;
         g.pack = pack;
-        toml_io::Reader rd{*t, source + " [[termino]]", {}};
+        toml_io::Reader rd{*t, source + " [[term]]", {}};
         rd.text("id", g.key);
         const std::string where = source + " termino '" + g.key + "'";
         toml_io::warnUnknown(*t, kKeys, where, reg.warnings);
-        rd.text("termino", g.term);
-        rd.text("definicion", g.definition);
-        rd.text("fuente", g.source);
-        rd.text("leccion", g.lesson);
-        rd.text("placa", g.plate);
+        rd.text("term", g.term);
+        rd.text("definition", g.definition);
+        rd.text("source", g.source);
+        rd.text("lesson", g.lesson);
+        rd.text("plate", g.plate);
         strings(*t, "alias", g.aliases);
-        strings(*t, "relacionados", g.related);
+        strings(*t, "related", g.related);
         reg.warnings.insert(reg.warnings.end(), rd.errors.begin(), rd.errors.end());
         if (g.key.empty() || g.term.empty() || g.definition.empty()) {
             reg.warnings.push_back(where + ": sin id, término o definición: se saltea");
@@ -81,11 +81,13 @@ void ensureBase() {
     if (reg.baseLoaded)
         return;
     reg.baseLoaded = true;
-    const std::string path = assetPath("content/base/glosario.toml");
-    try {
-        loadParsed(toml::parse_file(path), path, "base");
-    } catch (const toml::parse_error& e) {
-        reg.warnings.push_back("no se pudo cargar " + path + ": " + std::string(e.description()));
+    for (const auto& file : packFolderFiles(basePackDir(), "glossary")) {
+        const std::string path = file.string();
+        try {
+            loadParsed(toml::parse_file(path), path, "base");
+        } catch (const toml::parse_error& e) {
+            reg.warnings.push_back("no se pudo cargar " + path + ": " + std::string(e.description()));
+        }
     }
     reg.ready.store(true, std::memory_order_release);
 }

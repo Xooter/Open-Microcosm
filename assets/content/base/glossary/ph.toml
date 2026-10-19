@@ -1,0 +1,7 @@
+[[term]]
+id = "ph"
+term = "pH"
+definition = "−log₁₀ de la actividad de los iones H⁺. En la gota lo fija el sistema del carbonato: el CO₂ disuelto (que respiran las células y se equilibra con el aire) y el bicarbonato. Cada especie tolera un rango de pH."
+source = "Stumm, W. & Morgan, J. J. (1996). Aquatic Chemistry, 3.ª ed. Wiley, cap. 4."
+alias = ["carbonato", "bicarbonato"]
+related = ["henry_law"]

@@ -1,0 +1,30 @@
+[[biome]]
+id = "puddle"
+legacy_ids = ["charco"]
+name = "Charco"
+description = "Agua de lluvia sobre barro y hojas: tibia, luminosa y muy rica. Casi todo vive acá."
+bacteria = 50000
+detritus = 60
+nitrogen_fixing_filaments = 15
+oscillatoria_filaments = 8
+cyanobacteria_temperature = [10.0, 35.0]
+saprolegnia = 4
+chytrid_clusters = 2
+allomyces = 2 # sobre insectos y hojas muertas
+lichens = 1
+physarum = 1  # el moho de la hojarasca húmeda
+patchiness = 0.6
+base_weight = 1.0
+weights = { mougeotia = 0.5, zygnema = 0.5, oedogonium = 0.5, phaeodactylum = 0.0, thalassiosira = 0.0, fragilariopsis = 0.0, polarella = 0.0 }
+[biome.medium]
+temperature = 22.0
+organic_inflow = 300.0 # hojas y barro: una infusión natural
+dust = 0.03
+[biome.sediment]
+# Barro: mucha arcilla y limo, granos de arena y óxidos de hierro del suelo.
+clay = 500
+quartz = 140
+mica = 15
+iron_oxide = 40
+frustule = 10
+grains = 5

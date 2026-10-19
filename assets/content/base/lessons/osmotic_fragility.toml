@@ -1,0 +1,32 @@
+[[lesson]]
+id = "osmotic_fragility"
+legacy_ids = ["fragilidad_osmotica"]
+title = "Fragilidad osmotica de los globulos rojos"
+level = "universitario"
+goal = "Medir a que concentracion de sal se hemolizan los globulos rojos: en un medio hipotonico se hinchan y estallan cuando pasan su volumen critico. Los mas viejos son mas fragiles."
+source = "Parpart, A. K. et al. (1947). J. Clin. Invest. 26: 636-640 (prueba de fragilidad osmotica: hemolisis de la mitad a ~0,45 % de NaCl)."
+plate = "live_blood"
+seed = 1
+controls = ["environment.salinity"]
+solution = ["0 0 0 0 0 0 4.5 0 0 0 0 0 environment.salinity", "18000 0 0 0 0 0 3 0 0 0 0 0 environment.salinity"]
+solution_hours = 10.0
+[[lesson.locked]]
+key = "environment.temperature"
+reason = "La prueba se hace a temperatura ambiente fija."
+[[lesson.actions]]
+text = "Solucion salina al 0,45 % (4,5 g/kg)"
+event = "0 0 0 0 0 0 4.5 0 0 0 0 0 environment.salinity"
+[[lesson.actions]]
+text = "Solucion salina al 0,3 % (3 g/kg)"
+event = "0 0 0 0 0 0 3 0 0 0 0 0 environment.salinity"
+[[lesson.step]]
+text = "La sangre esta diluida en solucion salina al 0,9 % (isotonica): los globulos rojos son discos."
+goal = { kind = "time_h", op = ">=", value = 0.1 }
+prediction = { text = "Que fraccion se va a hemolizar en solucion salina al 0,45 %?", quantity = { kind = "hemolysis" }, unit = "fraction" }
+[[lesson.step]]
+text = "Baja la salinidad a 4,5 g/kg (0,45 % de NaCl)."
+goal = { kind = "hemolysis", op = ">=", value = 0.2 }
+question = { text = "Por que no estallan todos a la vez?", options = ["Porque cada uno tiene su volumen critico: los viejos, con menos membrana sobrante, estallan antes", "Porque la sal no llega a todos", "Porque algunos ya estaban muertos"], correct = 0, explanation = "Cada globulo rojo puede hincharse hasta un volumen critico, que depende de cuanta membrana tiene de sobra. Con la edad pierde membrana y se vuelve mas fragil: la curva de fragilidad es una distribucion, no un umbral." }
+[[lesson.step]]
+text = "Baja la salinidad a 3 g/kg (0,3 %)."
+goal = { kind = "hemolysis", op = ">=", value = 0.8 }

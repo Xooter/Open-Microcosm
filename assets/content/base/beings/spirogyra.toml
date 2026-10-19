@@ -1,0 +1,35 @@
+# Spirogyra: alga verde filamentosa; células cilíndricas de ~60 × 30 µm unidas extremo con
+# extremo, con un cloroplasto en cinta helicoidal. Crece por división intercalar y se
+# fragmenta. Forma matas que dan refugio.
+
+[[being]]
+id = "spirogyra"
+name = "Spirogyra"
+tags = ["alga", "green_alga", "filamentous", "phototroph"]
+description = "Alga filamentosa con el cloroplasto en espiral. Crece a lo largo y se divide con un tabique."
+locomotion = "cilia"
+body_plan = "green_alga"
+relative_speed = 0.0
+relative_photosynthesis = 1.5
+initial_count = 3
+chloroplasts = true
+filament = true
+filament_cells = 8
+fragmentation_per_hour = 0.02
+relative_dry_mass = 0.3
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 35.0]
+storage = "starch"
+wall = "cellulose"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 30.0
+semi_minor_axis = 15.0
+shape_memory = 15.0
+color = [140, 184, 118]
+nucleus = 0.25
+squareness = 6.0
+
+[being.appearance]
+style = "helical_ribbon"

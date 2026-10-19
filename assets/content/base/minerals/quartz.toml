@@ -1,0 +1,10 @@
+[[mineral]]
+id = "quartz"
+legacy_ids = ["cuarzo"]
+name = "Limo de cuarzo"
+grain_name = "Grano de arena (cuarzo)"
+description = "Cuarzo (SiO₂): el mineral más común de la arena. Su índice de refracción (1,54) es mayor que el del agua (1,33): se ve por el relieve, con un borde oscuro grueso y una línea brillante de Becke por dentro."
+radius = [2.5, 15.0]
+density_difference = 1650.0
+opacity = 0.1
+style = "angular_grain"

@@ -1,0 +1,32 @@
+# Acineta tuberosa: suctorio en una lórica de 25–200 × 25–80 µm sobre un tallo, con dos haces de
+# 10–20 tentáculos de hasta 80 µm (Kreutz). Su cría (enjambre) mide 30–35 µm y nada con cilios.
+[[being]]
+id = "acineta"
+name = "Acineta"
+tags = ["protist", "ciliate", "suctorian"]
+description = "Suctorio dentro de una lorica triangular sobre un tallo, con dos haces de tentaculos largos que atrapan ciliados al pasar."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "tentacles"
+relative_speed = 0.5
+prey = ["tetrahymena", "colpidium", "colpoda", "paramecium", "paramecium_aurelia", "euplotes"]
+conjugation = true
+initial_count = 1
+sessile = true
+stalk_length = 60.0
+tentacle_reach = 70.0
+handling_hours = 4.0
+ph = [6.0, 9.5]
+temperature = [5.0, 28.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 34.0
+semi_minor_axis = 22.0
+shape_memory = 15.0
+color = [180, 178, 160]
+nucleus = 0.3
+
+[being.appearance]
+style = "capitate_tentacles"

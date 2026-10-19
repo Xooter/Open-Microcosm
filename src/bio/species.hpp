@@ -16,7 +16,7 @@
 
 // Tipos de ser con cuerpo blando (especies de protistas, algas, levaduras y, en adelante, células
 // de organismos pluricelulares). Son DATOS: se cargan de los paquetes de contenido
-// (assets/content/base/seres.toml y los del usuario) en un registro; el índice en el registro es
+// (assets/content/base/beings/ y los del usuario) en un registro; el índice en el registro es
 // el SpeciesId. Los nombres de abajo son los seres de fábrica en su orden de carga (las escenas
 // viejas guardan ese índice): el código que todavía distingue especies por nombre los usa.
 enum class SpeciesId : std::uint16_t {
@@ -79,14 +79,14 @@ enum class FeedingMode : std::uint8_t {
     Phagocytosis, // contacto y copa fagocítica (Amoeba)
     Raptorial,    // traga presas enteras por el polo anterior (Didinium)
     Tentacles,    // tentáculos que atrapan y succionan ciliados (suctorios)
-    NeckStrike,   // dispara un "cuello" extensible hacia la presa (Lacrymaria)
+    NeckStrike,   // dispara un "neck" extensible hacia la presa (Lacrymaria)
     Osmotroph,    // absorbe materia orgánica disuelta por la pared (levaduras)
     None,         // autótrofa estricta (Chlamydomonas)
 };
 
 // Célula de un organismo pluricelular en cultivo (fase 20b): qué mecanismos tiene, por nombre en
-// los datos ([ser.celula]). Los valores medidos (rapidez, persistencia, fases del ciclo…) van con
-// su fuente en fisiologia.toml.
+// los datos ([being.cell]). Los valores medidos (rapidez, persistencia, fases del ciclo…) van con
+// su fuente en [physiology.<id>.*].
 struct AnimalCellInfo {
     bool present = false;
     bool adherent = true;              // adherida al fondo por adhesiones focales: el agua no la lleva
@@ -104,7 +104,7 @@ struct SpeciesInfo {
     const char* key = "";  // id estable de los datos ("paramecium"): lo guardan las escenas
     const char* name = ""; // el que se muestra
     const char* description = ""; // qué es y qué hace (ficha y enciclopedia)
-    const char* plan = "";        // plan corporal (bio/body_plan, planes.toml)
+    const char* plan = "";        // plan corporal (bio/body_plan, body_plans/)
     LocomotionType locomotion = LocomotionType::Cilia;
     CellSpec spec;                  // forma, tamaño y color típicos
     float speedScale = 1.0f;        // respecto de la velocidad de su tipo de locomoción
@@ -189,7 +189,7 @@ std::optional<SpeciesId> findSpecies(std::string_view key);
 SpeciesSet speciesWithTag(std::string_view tag);
 bool hasTag(SpeciesId id, std::string_view tag);
 
-// Carga los [[ser]] de un archivo TOML de un paquete (se agregan al registro, después de los que
+// Carga los [[being]] de un archivo TOML de un paquete (se agregan al registro, después de los que
 // ya hay). Las referencias (presas, huidas) se resuelven al final de cada carga, contra todo lo
 // cargado. Devuelve false y deja el motivo en `error` si el archivo no se puede leer; los seres
 // con errores se saltean y quedan en `speciesLoadWarnings`. El registro carga solo el paquete de
@@ -199,7 +199,16 @@ bool loadSpeciesFile(const std::string& path, const std::string& pack, std::stri
 bool loadSpeciesText(const std::string& text, const std::string& source, const std::string& pack,
                      std::string* error = nullptr);
 const std::vector<std::string>& speciesLoadWarnings();
-// El [[ser]] como se leyó, en TOML (para exportarlo a un paquete).
+// Mientras viva, las cargas no resuelven las referencias: se resuelven todas juntas al destruirse.
+// Un paquete en carpeta trae un ser por archivo y uno nombra presas de archivos que todavía no se
+// leyeron (si no, avisaría referencias rotas que no lo son).
+struct SpeciesLoadBatch {
+    SpeciesLoadBatch();
+    ~SpeciesLoadBatch();
+    SpeciesLoadBatch(const SpeciesLoadBatch&) = delete;
+    SpeciesLoadBatch& operator=(const SpeciesLoadBatch&) = delete;
+};
+// El [[being]] como se leyó, en TOML (para exportarlo a un paquete).
 const std::string& speciesSource(SpeciesId id);
 // Paquete de donde vino cada ser ("base" para los de fábrica).
 const std::string& speciesPack(SpeciesId id);

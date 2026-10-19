@@ -45,7 +45,7 @@ TEST_CASE("ósmosis: la osmolaridad del medio y el volumen de Boyle–van 't Hof
 }
 
 TEST_CASE("preparado de cebolla: el tejido tiene paredes, protoplastos turgentes en agua, y se plasmoliza con sal") {
-    PlateSpec p = preparedPlate("epidermis_cebolla");
+    PlateSpec p = preparedPlate("onion_epidermis");
     CHECK(p.kind() == PlateKind::Slide);
     p.config.gridX = p.config.gridY = 64;     // un campo chico: unas pocas células
     p.config.tissue.osmoticSeconds = 2.0f;    // el equilibrio en segundos para el test (el dato: minutos)
@@ -80,7 +80,7 @@ TEST_CASE("validación: plasmólisis incipiente de la epidermis de cebolla cuand
           doctest::test_suite("validacion")) {
     // El protoplasto empieza a despegarse cuando el medio alcanza la osmolaridad del jugo celular
     // (~450 mOsm, ≈0,24 M de NaCl): por debajo queda turgente; por encima, plasmolizado.
-    PlateSpec p = preparedPlate("epidermis_cebolla");
+    PlateSpec p = preparedPlate("onion_epidermis");
     p.config.gridX = p.config.gridY = 64;
     p.config.tissue.osmoticSeconds = 1.0f;
     for (const float factor : {0.9f, 1.15f}) {
@@ -100,7 +100,7 @@ TEST_CASE("validación: plasmólisis incipiente de la epidermis de cebolla cuand
 
 TEST_CASE("validación: fragilidad osmótica de los glóbulos rojos (Parpart et al. 1947)" * doctest::test_suite("validacion")) {
     // Fracción hemolizada según el NaCl: empieza ~0,50 %, la mitad a ~0,42 %, casi todos ~0,35 %.
-    PlateSpec p = preparedPlate("sangre_viva");
+    PlateSpec p = preparedPlate("live_blood");
     const std::pair<float, float> expected[] = {{0.55f, 0.02f}, {0.42f, 0.5f}, {0.30f, 0.98f}};
     for (const auto& [percent, fraction] : expected) {
         World w(p.config);
@@ -126,7 +126,7 @@ TEST_CASE("validación: fragilidad osmótica de los glóbulos rojos (Parpart et 
 }
 
 TEST_CASE("validación: índice mitótico de la punta de raíz de cebolla" * doctest::test_suite("validacion")) {
-    PlateSpec p = preparedPlate("raiz_cebolla");
+    PlateSpec p = preparedPlate("onion_root_tip");
     World w(p.config);
     const Tissue& t = w.tissue();
     REQUIRE(t.cells.size() > 200);
@@ -144,7 +144,7 @@ TEST_CASE("validación: índice mitótico de la punta de raíz de cebolla" * doc
 }
 
 TEST_CASE("frotis de sangre: fijado, con glóbulos rojos, plaquetas y los tres tipos de leucocitos") {
-    PlateSpec p = preparedPlate("frotis_sangre");
+    PlateSpec p = preparedPlate("blood_smear");
     World w(p.config);
     Run run;
     run.start(w, plateRunConfig(p), 1);
@@ -154,12 +154,12 @@ TEST_CASE("frotis de sangre: fijado, con glóbulos rojos, plaquetas y los tres t
         (w.erythrocytes().kind[i] == BloodParticle::Erythrocyte ? red : platelets) += 1;
     const float area = 3.14159265f * w.dish().radius * w.dish().radius * 1e-8f;
     MESSAGE("glóbulos rojos " << red << ", plaquetas " << platelets << ", neutrófilos "
-                              << w.census().species[static_cast<int>(*findSpecies("neutrofilo"))] << ", linfocitos "
-                              << w.census().species[static_cast<int>(*findSpecies("linfocito"))] << ", monocitos "
-                              << w.census().species[static_cast<int>(*findSpecies("monocito"))]);
+                              << w.census().species[static_cast<int>(*findSpecies("neutrophil"))] << ", linfocitos "
+                              << w.census().species[static_cast<int>(*findSpecies("lymphocyte"))] << ", monocitos "
+                              << w.census().species[static_cast<int>(*findSpecies("monocyte"))]);
     CHECK(static_cast<float>(red) == doctest::Approx(1.1e6f * area).epsilon(0.1));
     CHECK(platelets > 0);
-    for (const char* key : {"neutrofilo", "linfocito", "monocito"})
+    for (const char* key : {"neutrophil", "lymphocyte", "monocyte"})
         CHECK(w.census().species[static_cast<int>(*findSpecies(key))] >= 1);
     // Fijado: nada se mueve.
     const float x0 = w.erythrocytes().x[0];

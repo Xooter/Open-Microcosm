@@ -1,0 +1,18 @@
+[[medium]]
+id = "wc_guillard"
+name = "Medio WC (Guillard y Lorenzen)"
+description = "Medio definido para algas de agua dulce y diatomeas: nitrato, fosfato, silicato, hierro con EDTA y vitaminas (B12 incluida)."
+source = "Guillard, R. R. L. & Lorenzen, C. J. (1972). J. Phycol. 8: 10-14 (medio WC): NaNO3 1 mM, K2HPO4 50 uM, Na2SiO3 100 uM, FeCl3 11,7 uM con EDTA, B12 0,37 nM."
+[medium.composition]
+salinity = 0.2
+alkalinity = 300.0
+phosphate = 50.0
+nitrogen = 1000.0
+silicate = 100.0
+iron = 11.7
+vitamin_b12 = 3.7e-4
+glucose = 0.0
+phages = 0.0
+organic_inflow = 0.0
+detritus_inflow = 0.0
+dust = 0.0

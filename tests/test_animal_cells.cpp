@@ -19,7 +19,7 @@ constexpr float kDt = 1.0f / 60.0f;
 // Cultivo de DMEM en la incubadora, chico y sin nada vivo.
 std::unique_ptr<World> culture(int grid = 64, float bioTimeScale = 3600.0f, std::uint64_t seed = 7) {
     PlateSpec p;
-    p.prepared = "cultivo_dmem";
+    p.prepared = "dmem_culture";
     p.seed = seed;
     p.rebuild();
     p.config.gridX = p.config.gridY = grid;
@@ -53,7 +53,7 @@ void run(World& w, float bioHours) {
 
 TEST_CASE("fibroblasto: adherido al fondo, la corriente no lo arrastra") {
     auto w = culture();
-    const entt::entity e = spawnAt(*w, id("fibroblasto_dermico_humano"), center(*w));
+    const entt::entity e = spawnAt(*w, id("human_dermal_fibroblast"), center(*w));
     REQUIRE(static_cast<bool>(e != entt::null));
     CHECK(w->registry().all_of<Adherent, AnimalCell>(e));
     // La siembra es asincrónica (cada célula en un punto del ciclo): ésta empieza G1, así no se
@@ -77,7 +77,7 @@ TEST_CASE("fibroblasto: adherido al fondo, la corriente no lo arrastra") {
 TEST_CASE("fibroblasto: el ciclo dura lo que suman sus fases y las hijas empiezan G1") {
     // Escala biológica 600: con 3600 la mitosis (el surco es física, en tiempo real) se alarga.
     auto w = culture(64, 600.0f);
-    const SpeciesId fib = id("fibroblasto_dermico_humano");
+    const SpeciesId fib = id("human_dermal_fibroblast");
     const entt::entity e = spawnAt(*w, fib, center(*w));
     REQUIRE(static_cast<bool>(e != entt::null));
     AnimalCell& ac = w->registry().get<AnimalCell>(e);
@@ -112,7 +112,7 @@ TEST_CASE("fibroblasto: el ciclo dura lo que suman sus fases y las hijas empieza
 TEST_CASE("fibroblasto: sin suero no pasa el punto de restricción y queda en G0") {
     auto w = culture();
     w->medium().serum = 0.0f;
-    const SpeciesId fib = id("fibroblasto_dermico_humano");
+    const SpeciesId fib = id("human_dermal_fibroblast");
     const entt::entity e = spawnAt(*w, fib, center(*w));
     REQUIRE(static_cast<bool>(e != entt::null));
     w->registry().get<AnimalCell>(e).phase = CellPhase::G1; // antes del punto de restricción
@@ -129,7 +129,7 @@ TEST_CASE("fibroblasto: sin suero no pasa el punto de restricción y queda en G0
 
 TEST_CASE("inhibición por contacto: en una monocapa densa el fibroblasto queda en G0; HeLa sigue en el ciclo" *
           doctest::test_suite("largos")) {
-    for (const char* key : {"fibroblasto_dermico_humano", "hela"}) {
+    for (const char* key : {"human_dermal_fibroblast", "hela"}) {
         auto w = culture(64, 600.0f, 4);
         const SpeciesId sp = id(key);
         // Placa de ~0,35 mm de diámetro sembrada por encima de la confluencia de los fibroblastos.
@@ -175,7 +175,7 @@ TEST_CASE("apoptosis: sin glucosa la célula se fragmenta en cuerpos apoptótico
     auto w = culture(64, 600.0f);
     for (float& v : w->nutrients().grid().v)
         v = 0.0f;
-    const SpeciesId fib = id("fibroblasto_dermico_humano");
+    const SpeciesId fib = id("human_dermal_fibroblast");
     const entt::entity e = spawnAt(*w, fib, center(*w));
     REQUIRE(static_cast<bool>(e != entt::null));
     w->registry().get<AnimalCell>(e).phase = CellPhase::G1; // que no llegue a dividirse antes
@@ -203,7 +203,7 @@ TEST_CASE("neutrófilo: sigue el fMLP de las bacterias, las fagocita y no se div
     const Vec2 c = center(*w);
     const Vec2 colony = c + Vec2{70.0f, 0.0f};
     w->inoculate({BeingKind::Bacterium, SpeciesId::Paramecium}, 2000, colony, 15.0f);
-    const SpeciesId neu = id("neutrofilo");
+    const SpeciesId neu = id("neutrophil");
     const entt::entity e = spawnAt(*w, neu, c - Vec2{20.0f, 0.0f});
     REQUIRE(static_cast<bool>(e != entt::null));
     float d0 = length(w->registry().get<RingBody>(e).centroid - colony);
@@ -221,14 +221,14 @@ TEST_CASE("neutrófilo: sigue el fMLP de las bacterias, las fagocita y no se div
     CHECK(w->census().species[static_cast<int>(neu)] == 1);
 }
 
-// --- Validación (suite "validacion"): contra los datos con fuente de fisiologia.toml ------------
+// --- Validación (suite "validacion"): contra los datos con fuente de [physiology.<id>.*] ------------
 
 TEST_CASE("validación: el fibroblasto migra como un paseo persistente (Fürth: S y P de los datos)" *
           doctest::test_suite("validacion")) {
     // 9 fibroblastos separados (sin tocarse) durante 6 h; se compara el desplazamiento cuadrático
     // medio con el de Fürth–Ornstein: <d²> = 2 S² P [t − P (1 − e^(−t/P))] (Gail & Boone 1970).
     auto w = culture(256, 600.0f, 11);
-    const SpeciesId fib = id("fibroblasto_dermico_humano");
+    const SpeciesId fib = id("human_dermal_fibroblast");
     const Vec2 c = center(*w);
     for (int i = -1; i <= 1; ++i)
         for (int j = -1; j <= 1; ++j)
@@ -290,13 +290,13 @@ TEST_CASE("validación: duplicación de la población de HeLa (densidad baja)" *
 }
 
 TEST_CASE("validación: duplicación de la población del fibroblasto (densidad baja)" * doctest::test_suite("validacion")) {
-    checkDoubling("fibroblasto_dermico_humano");
+    checkDoubling("human_dermal_fibroblast");
 }
 
 TEST_CASE("validación: el fibroblasto llega a una meseta en confluencia (inhibición por contacto)" *
           doctest::test_suite("validacion")) {
     auto w = culture(128, 3600.0f, 9);
-    const SpeciesId fib = id("fibroblasto_dermico_humano");
+    const SpeciesId fib = id("human_dermal_fibroblast");
     w->inoculate({BeingKind::Species, fib}, 30, {}, 0.0f);
     std::vector<int> counts;
     for (int k = 0; k < 8; ++k) {
@@ -316,7 +316,7 @@ TEST_CASE("validación: el fibroblasto llega a una meseta en confluencia (inhibi
 TEST_CASE("validación: el neutrófilo migra a la rapidez medida en un gradiente de fMLP" *
           doctest::test_suite("validacion")) {
     auto w = culture(128, 60.0f, 3);
-    const SpeciesId neu = id("neutrofilo");
+    const SpeciesId neu = id("neutrophil");
     const entt::entity e = spawnAt(*w, neu, center(*w));
     REQUIRE(static_cast<bool>(e != entt::null));
     const Vec2 a = w->registry().get<RingBody>(e).centroid;

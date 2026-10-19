@@ -5,7 +5,7 @@
 #include <vector>
 
 // Glosario (fase P1, paso 14): términos de la biología y la física de la gota (Reynolds,
-// quimiotaxis, Redfield…) como datos de los paquetes (glosario.toml, [[termino]]). Cada término
+// quimiotaxis, Redfield…) como datos de los paquetes (glossary/, [[term]]). Cada término
 // tiene su definición, una fuente, sus otras formas en el texto (`alias`), términos relacionados y,
 // si existe, dónde verlo en la simulación: una lección o una placa preparada. La "animación" del
 // término es la placa misma (no hay dibujos aparte de lo que se simula).

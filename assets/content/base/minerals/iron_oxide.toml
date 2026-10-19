@@ -1,0 +1,10 @@
+[[mineral]]
+id = "iron_oxide"
+legacy_ids = ["oxido_hierro"]
+name = "Óxido de hierro"
+grain_name = "Grano de óxido de hierro"
+description = "Óxidos de hierro: opacos y pardo rojizos, hacen sombra. Dan su color al barro y al suelo."
+radius = [1.5, 6.0]
+density_difference = 4000.0
+opacity = 1.0
+style = "opaque_grain"

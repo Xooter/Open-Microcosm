@@ -1,0 +1,28 @@
+# Protoplastos de tejidos vegetales (viven dentro de su pared, que genera el preparado) y células
+# de la sangre y de la mucosa bucal. No forman parte de una gota (initial_count 0).
+
+# Epidermis de la escama de una cebolla morada (Allium cepa): células alargadas (~200–400 × 40–70
+# µm) con una vacuola enorme teñida de antocianinas, que muestra la plasmólisis sin teñir.
+[[being]]
+id = "onion_epidermal_cell"
+legacy_ids = ["celula_epidermica_cebolla"]
+name = "Celula de epidermis de cebolla"
+tags = ["plant_cell", "epidermis"]
+description = "Celula de la epidermis interna de la escama del bulbo de cebolla morada: pared de celulosa, una vacuola enorme con antocianinas (violeta) y el citoplasma en una capa delgada con el nucleo contra la pared. En agua salada pierde agua y el protoplasto se despega de la pared (plasmolisis)."
+body_plan = "plant_cell"
+locomotion = "none"
+relative_speed = 0.0
+feeding = "none"
+ph = [5.0, 8.0]
+temperature = [2.0, 35.0]
+max_salinity = 60.0
+storage = "none"
+wall = "cellulose"
+[being.shape]
+semi_major_axis = 120.0
+semi_minor_axis = 25.0
+shape_memory = 2.0
+color = [196, 136, 176]
+nucleus = 0.3
+[being.appearance]
+style = "plant_protoplast"

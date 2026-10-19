@@ -1,0 +1,36 @@
+# Más frío y menos rico que el charco; algas coloniales y grandes ciliados.
+[[biome]]
+id = "pond"
+legacy_ids = ["estanque"]
+name = "Estanque"
+description = "Agua quieta y templada con plantas acuáticas: Volvox, Spirogyra y Stentor."
+bacteria = 30000
+detritus = 60
+nitrogen_fixing_filaments = 15
+oscillatoria_filaments = 5
+cyanobacteria_temperature = [10.0, 35.0]
+saprolegnia = 4
+chytrid_clusters = 2
+allomyces = 3
+lichens = 1
+physarum = 0 # no vive en agua libre
+patchiness = 0.3
+base_weight = 1.0
+weights = { stentor = 1.5, spirogyra = 1.5, volvox = 2.0, candida = 0.3, naegleria = 0.0, oedogonium = 1.5, phaeodactylum = 0.0, thalassiosira = 0.0, fragilariopsis = 0.0, polarella = 0.0 }
+[biome.medium]
+temperature = 17.0
+phosphate = 20.0
+nitrogen = 300.0
+silicate = 150.0
+iron = 0.5
+vitamin_b12 = 0.001
+organic_inflow = 60.0
+dust = 0.01
+[biome.sediment]
+# Fondo fino y más limpio; muchas frústulas de diatomeas muertas.
+clay = 160
+quartz = 50
+mica = 8
+iron_oxide = 12
+frustule = 30
+grains = 2

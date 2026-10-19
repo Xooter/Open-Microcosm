@@ -1,0 +1,9 @@
+[[term]]
+id = "hemolysis"
+term = "Hemólisis"
+definition = "Ruptura de los glóbulos rojos con salida de la hemoglobina. En un medio diluido el glóbulo se hincha hasta su volumen crítico y se rompe: la mitad se hemoliza cerca de 0,45 % de NaCl (fragilidad osmótica)."
+source = "Parpart, A. K. et al. (1947). The osmotic resistance (fragility) of human red cells. J. Clin. Invest. 26: 636-640."
+alias = ["hemolizado", "hemolizados", "fragilidad osmótica"]
+related = ["osmosis"]
+lesson = "osmotic_fragility"
+plate = "live_blood"

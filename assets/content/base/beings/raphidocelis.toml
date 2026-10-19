@@ -1,0 +1,37 @@
+# Raphidocelis subcapitata (Selenastrum capricornutum, Pseudokirchneriella subcapitata): célula en
+# media luna retorcida de 8–14 × 2–3 µm y 40–60 µm³, el alga del ensayo de toxicidad OECD 201. Se
+# divide en 4 autosporas. Acá la silueta es de 5 µm de ancho (una de 2,5 µm no es estable como cuerpo
+# blando) y el espesor se achica para que el volumen sea el medido (~50 µm³).
+[[being]]
+id = "raphidocelis"
+name = "Raphidocelis subcapitata"
+tags = ["alga", "green_alga", "phototroph"]
+description = "Alga verde en media luna de ~11 um, la del ensayo de toxicidad estandar (OECD 201). Crece rapido y es muy sensible a los contaminantes."
+locomotion = "cilia"
+body_plan = "green_alga"
+relative_speed = 0.0
+relative_photosynthesis = 1.5
+fissions_per_cycle = 2
+initial_count = 12
+chloroplasts = true
+ph = [5.5, 9.5]
+temperature = [5.0, 35.0]
+storage = "starch"
+wall = "cellulose"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 5.5
+semi_minor_axis = 2.5
+thickness = 0.85
+shape_memory = 20.0
+color = [124, 178, 98]
+nucleus = 0.3
+
+[being.appearance]
+style = "coccoid"
+
+[physiology.raphidocelis.max_growth]
+value = 1.6
+unit = "1/day"
+temperature = 21.0
+source = "OECD (2011). Test No. 201: Freshwater alga and cyanobacteria, growth inhibition test, anexo 2: tasa de crecimiento más observada 1,5-1,7/día en medio OECD a ~70 µE m⁻² s⁻¹ y 21 °C (P. subcapitata ATCC 22662)."

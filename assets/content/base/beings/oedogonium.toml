@@ -1,0 +1,37 @@
+# Oedogonium: células de ~70 × 22 µm con un cloroplasto parietal reticulado. Al dividirse,
+# la pared se rompe en un anillo y deja "capuchones" apilados en un extremo de la célula (se
+# cuentan las divisiones). También se reproduce por zoósporas: todo el protoplasto sale como
+# una célula grande con una corona de flagelos, nada ~1 h, se fija y forma un filamento nuevo.
+
+[[being]]
+id = "oedogonium"
+name = "Oedogonium"
+tags = ["alga", "green_alga", "filamentous", "phototroph", "chytrid_host"]
+description = "Alga filamentosa: cada division deja un anillo (capuchon) en la pared, asi se cuentan las veces que se dividio."
+locomotion = "cilia"
+body_plan = "green_alga"
+relative_speed = 0.0
+relative_photosynthesis = 1.4
+initial_count = 2
+chloroplasts = true
+filament = true
+filament_cells = 7
+fragmentation_per_hour = 0.02
+zoospores = 0.25
+relative_dry_mass = 0.3
+cyclosis = 1.5
+ph = [6.0, 9.5]
+temperature = [5.0, 32.0]
+storage = "starch"
+wall = "cellulose"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 35.0
+semi_minor_axis = 11.0
+shape_memory = 15.0
+color = [136, 182, 116]
+nucleus = 0.3
+squareness = 6.0
+
+[being.appearance]
+style = "reticulate_plastid"

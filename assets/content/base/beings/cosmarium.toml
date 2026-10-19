@@ -1,0 +1,27 @@
+# Cosmarium botrytis: desmidia de dos semicélulas de 56–111 × 48–85 µm con verrugas, unidas por un
+# istmo, con dos pirenoides por semicélula (Kreutz).
+[[being]]
+id = "cosmarium"
+name = "Cosmarium"
+tags = ["alga", "green_alga", "desmid", "phototroph", "chytrid_host"]
+description = "Desmidia de ~85 um hecha de dos mitades simetricas unidas por un istmo. Al dividirse, cada hija se queda con una mitad y fabrica la otra."
+locomotion = "cilia"
+body_plan = "green_alga"
+relative_speed = 0.0
+relative_photosynthesis = 1.3
+initial_count = 3
+chloroplasts = true
+ph = [5.0, 9.0]
+temperature = [2.0, 30.0]
+storage = "starch"
+wall = "cellulose"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 42.0
+semi_minor_axis = 33.0
+shape_memory = 30.0
+color = [138, 182, 112]
+nucleus = 0.15
+
+[being.appearance]
+style = "coccoid"

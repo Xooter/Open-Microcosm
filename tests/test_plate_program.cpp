@@ -25,8 +25,8 @@ WorldConfig small() {
 
 TEST_CASE("programa en la placa: fotoperíodo y rampa con las horas biológicas") {
     WorldConfig c = small();
-    c.program.entries.push_back({"luz", ProgramShape::Cycle, 0.0, kProgramForever, 0.0f, 0.8f, 24.0f, 16.0f / 24.0f, 0.0f});
-    c.program.entries.push_back({"temperatura", ProgramShape::Ramp, 0.0, 10.0, 20.0f, 30.0f, 24.0f, 0.5f, 0.0f});
+    c.program.entries.push_back({"light", ProgramShape::Cycle, 0.0, kProgramForever, 0.0f, 0.8f, 24.0f, 16.0f / 24.0f, 0.0f});
+    c.program.entries.push_back({"temperature", ProgramShape::Ramp, 0.0, 10.0, 20.0f, 30.0f, 24.0f, 0.5f, 0.0f});
     World w(c);
     w.step(1.0f / 60.0f);
     CHECK(w.medium().surfaceLight == doctest::Approx(0.8f));
@@ -39,8 +39,8 @@ TEST_CASE("programa en la placa: fotoperíodo y rampa con las horas biológicas"
 
 TEST_CASE("programa en la placa: se guarda en el .plate y una intervención lo cambia en vivo") {
     PlateSpec p;
-    p.config.program.entries.push_back({"soluto:fosfato", ProgramShape::Event, 1.0, kProgramForever, 0.0f, 0.0f, 0.0f, 0.5f, 3.0f});
-    p.config.program.entries.push_back({"luz", ProgramShape::Sine, 0.0, kProgramForever, 0.5f, 0.4f, 24.0f, 0.5f, 0.0f});
+    p.config.program.entries.push_back({"solute:phosphate", ProgramShape::Event, 1.0, kProgramForever, 0.0f, 0.0f, 0.0f, 0.5f, 3.0f});
+    p.config.program.entries.push_back({"light", ProgramShape::Sine, 0.0, kProgramForever, 0.5f, 0.4f, 24.0f, 0.5f, 0.0f});
     PlateSpec read;
     REQUIRE(parsePlate(serializePlate(p), read));
     REQUIRE(read.config.program.entries.size() == 2);
@@ -56,7 +56,7 @@ TEST_CASE("programa en la placa: se guarda en el .plate y una intervención lo c
     REQUIRE(back.size() == 1);
     CHECK(applyIntervention(w, back[0]));
     REQUIRE(w.program().entries.size() == 1);
-    CHECK(w.program().entries[0].target == "luz");
+    CHECK(w.program().entries[0].target == "light");
     iv.index = 1;
     applyIntervention(w, iv);
     CHECK(w.program().entries.empty());
@@ -65,7 +65,7 @@ TEST_CASE("programa en la placa: se guarda en el .plate y una intervención lo c
 TEST_CASE("programa en la placa: un pulso agrega soluto a la hora programada") {
     WorldConfig c = small();
     c.medium.phosphate = 5.0f;
-    c.program.entries.push_back({"agregar:fosfato", ProgramShape::Event, 0.5, kProgramForever, 0.0f, 0.0f, 0.0f, 0.5f, 3.0f});
+    c.program.entries.push_back({"add:phosphate", ProgramShape::Event, 0.5, kProgramForever, 0.0f, 0.0f, 0.0f, 0.5f, 3.0f});
     World w(c);
     const float before = w.meanConcentration(w.phosphateField());
     for (int s = 0; s < 60 * 60; ++s) // 1 h biológica

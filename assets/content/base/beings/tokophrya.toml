@@ -1,0 +1,33 @@
+# Tokophrya infusionum: suctorio piriforme de 17–50 µm sobre un tallo corto, con dos haces de
+# tentáculos capitados (Rudzinska; ficha ATCC 30297). En el laboratorio se cría con Tetrahymena. Se
+# reproduce por gemación interna: una cría ciliada sale nadando (telotroco) y la madre sigue fija.
+[[being]]
+id = "tokophrya"
+name = "Tokophrya"
+tags = ["protist", "ciliate", "suctorian"]
+description = "Suctorio de ~40 um fijo a un tallo, con dos haces de tentaculos que atrapan ciliados y les succionan el citoplasma. Sus crias nacen adentro y salen nadando."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "tentacles"
+relative_speed = 0.5
+prey = ["tetrahymena", "colpidium", "paramecium", "paramecium_aurelia"]
+conjugation = true
+initial_count = 2
+sessile = true
+stalk_length = 25.0
+tentacle_reach = 40.0
+handling_hours = 4.0
+ph = [6.0, 9.5]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 22.0
+semi_minor_axis = 17.0
+shape_memory = 10.0
+color = [178, 180, 168]
+nucleus = 0.3
+
+[being.appearance]
+style = "capitate_tentacles"

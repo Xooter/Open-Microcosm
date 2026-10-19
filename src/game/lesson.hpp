@@ -15,7 +15,7 @@ class CultureRun;
 // pregunta con su explicación o una predicción que después se compara con lo medido. No hay
 // puntaje: el informe exportable lo corrige el docente.
 //
-// Datos de los paquetes (lecciones.toml, [[leccion]]); el código aporta las condiciones con nombre.
+// Datos de los paquetes (lessons/, [[lesson]]); el código aporta las condiciones con nombre.
 
 // Condición observable (mecanismos con nombre; los datos eligen cuál y con qué valor):
 //   "tiempo_h"      horas de laboratorio ≥ valor
@@ -61,12 +61,13 @@ struct LessonStep {
 
 struct Lesson {
     std::string key, title, level, objective, source, pack;
-    // Qué se prepara: una placa preparada (id de placas.toml), una gota de un bioma o un cultivo.
+    std::vector<std::string> legacyIds; // ids viejos (core/ids)
+    // Qué se prepara: una placa preparada (id de plates/), una gota de un bioma o un cultivo.
     std::string plate;      // id de una placa preparada
     std::string biome;      // id de bioma (gota) si no hay placa
     std::uint64_t seed = 1;
     int content = 2;        // DropContent de la gota (0 completa, 1 sin vida, 2 vacía)
-    std::string culture;    // escena de cultivo (texto .cultivo) si es un cultivo
+    std::string culture;    // escena de cultivo (texto .culture) si es un cultivo
     std::vector<std::string> setup; // intervenciones al empezar (texto de game/intervention)
     std::vector<std::string> exposed; // claves del registro de parámetros que ve el alumno
     // Acciones con nombre: botones del panel de la lección (el alumno no necesita otras

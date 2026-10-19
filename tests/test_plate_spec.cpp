@@ -41,7 +41,7 @@ TEST_CASE("PlateSpec: las placas viejas guardan el sedimento con claves en ingl�
     CHECK(p.config.sediment[MineralKind::Frustule] == 2);
     CHECK(p.config.sediment.rocks == 1);
     // Al guardarla de nuevo, con los ids de los minerales.
-    CHECK(serializePlate(p).find("sediment.arcilla=33") != std::string::npos);
+    CHECK(serializePlate(p).find("sediment.clay=33") != std::string::npos);
 }
 
 TEST_CASE("PlateSpec: la versión 2 nombra bioma, seres y paquetes por id; la 1 se sigue leyendo") {
@@ -52,7 +52,7 @@ TEST_CASE("PlateSpec: la versión 2 nombra bioma, seres y paquetes por id; la 1 
     a.config.speciesWeight[static_cast<int>(SpeciesId::Arcella)] = 2.5f;
     const std::string text = serializePlate(a);
     CHECK(text.find("plate_version=3\n") != std::string::npos);
-    CHECK(text.find("biome=musgo\n") != std::string::npos);
+    CHECK(text.find("biome=moss\n") != std::string::npos);
     CHECK(text.find("w.arcella=2.5\n") != std::string::npos);
     CHECK(text.find("pack=base ") != std::string::npos);
     std::vector<std::string> missing;
@@ -112,17 +112,17 @@ TEST_CASE("PlateSpec: la misma seed da la misma placa") {
 }
 
 TEST_CASE("PlateSpec: un cultivo celular preparado (DMEM en incubadora) va y vuelve") {
-    const PreparedPlate* pp = findPreparedPlate("cultivo_dmem");
+    const PreparedPlate* pp = findPreparedPlate("dmem_culture");
     REQUIRE(pp != nullptr);
     CHECK(pp->kind == PlateKind::CellCulture);
-    const Vessel* dish35 = findVessel("placa_35mm");
+    const Vessel* dish35 = findVessel("dish_35mm");
     REQUIRE(dish35 != nullptr);
     CHECK(dish35->depthUm() == doctest::Approx(2500.0f)); // 2 mL en 8 cm²
-    REQUIRE(findCultureMedium("dmem_alta_glucosa") != nullptr);
+    REQUIRE(findCultureMedium("dmem_high_glucose") != nullptr);
     CHECK(preparedLoadWarnings().empty());
 
     PlateSpec a;
-    a.prepared = "cultivo_dmem";
+    a.prepared = "dmem_culture";
     a.seed = 31;
     a.rebuild();
     const WorldConfig& c = a.config;
@@ -144,7 +144,7 @@ TEST_CASE("PlateSpec: un cultivo celular preparado (DMEM en incubadora) va y vue
     std::vector<std::string> missing;
     REQUIRE(parsePlate(serializePlate(a), b, &missing));
     CHECK(missing.empty());
-    CHECK(b.prepared == "cultivo_dmem");
+    CHECK(b.prepared == "dmem_culture");
     CHECK(b.config.depth == doctest::Approx(2500.0f));
     REQUIRE(b.config.seeding.size() == 1);
     CHECK(b.config.seeding[0].first == SpeciesId::Candida);
@@ -154,7 +154,7 @@ TEST_CASE("PlateSpec: un cultivo celular preparado (DMEM en incubadora) va y vue
 
 TEST_CASE("Inoculación: la cantidad pedida, en toda la placa o en un punto, y la misma con la misma seed") {
     PlateSpec p;
-    p.prepared = "cultivo_dmem";
+    p.prepared = "dmem_culture";
     p.seed = 5;
     p.rebuild();
     p.config.gridX = p.config.gridY = 64;
@@ -176,4 +176,39 @@ TEST_CASE("Inoculación: la cantidad pedida, en toda la placa o en un punto, y l
     Run run;
     run.start(w, plateRunConfig(seeded), 1);
     CHECK(w.census().species[static_cast<int>(SpeciesId::Candida)] == 9);
+}
+
+TEST_CASE("PlateSpec: una placa guardada con los ids y nombres viejos (en español) se lee igual") {
+    // Antes del contenido en inglés: ids de bioma, placa preparada y seres en español, y el
+    // programa con sus destinos y formas en español.
+    const std::string old = "plate_version=3\nbiome=charco\nprepared=cultivo_dmem\nseed=5\ncontent=2\n"
+                            "seeding=neutrofilo 12\nprograma=luz ciclo 0 inf 0 1 24 0.5 0\n"
+                            "programa=agregar:fosfato evento 24 inf 0 0 24 0.5 3\nsediment.arcilla=40\n"
+                            "w.linfocito=2\n";
+    PlateSpec p;
+    REQUIRE(parsePlate(old, p));
+    CHECK(p.biome == static_cast<int>(BiomeId::Puddle));
+    CHECK(p.prepared == "dmem_culture");
+    REQUIRE(p.config.seeding.size() == 1);
+    CHECK(p.config.seeding[0].first == *findSpecies("neutrophil"));
+    REQUIRE(p.config.program.entries.size() == 2);
+    CHECK(p.config.program.entries[0].target == "light");
+    CHECK(p.config.program.entries[0].shape == ProgramShape::Cycle);
+    CHECK(p.config.program.entries[1].target == "add:phosphate");
+    CHECK(p.config.program.entries[1].shape == ProgramShape::Event);
+    CHECK(p.config.sediment[MineralKind::Clay] == 40);
+    CHECK(p.config.speciesWeight[static_cast<int>(*findSpecies("lymphocyte"))] == doctest::Approx(2.0f));
+    // Se vuelve a guardar con los nombres nuevos.
+    const std::string now = serializePlate(p);
+    CHECK(now.find("biome=puddle") != std::string::npos);
+    CHECK(now.find("prepared=dmem_culture") != std::string::npos);
+    CHECK(now.find("program=light cycle") != std::string::npos);
+    CHECK(now.find("charco") == std::string::npos);
+}
+
+TEST_CASE("escena: una intervención con la clave de parámetro vieja se lee con la actual") {
+    const std::vector<Intervention> list =
+        parseInterventions("event=0 0 0 0 0 0 30 0 0 0 0 0 ambiente.salinidad\n");
+    REQUIRE(list.size() == 1);
+    CHECK(list[0].key == "environment.salinity");
 }

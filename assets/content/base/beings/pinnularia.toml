@@ -1,0 +1,33 @@
+# Pinnularia viridis: diatomea pennada grande, lineal, de 50–170 × 10–30 µm (Patrick y Reimer 1966),
+# con el rafe bien visible; se desliza sobre el vidrio. Frecuente en charcas, turberas y musgos
+# húmedos. Sin dato de su velocidad: la de Navicula. La valva real es lineal, de lados paralelos;
+# acá es una elipse alargada (cuadratura 2): con la de un cilindro el surco de la división no se
+# cierra (la forma de las hijas sale de la elipse de la madre, divisionRestShape).
+[[being]]
+id = "pinnularia"
+name = "Pinnularia"
+tags = ["alga", "diatom", "phototroph", "chytrid_host"]
+description = "Diatomea grande (~120 um) en forma de baston con la frustula estriada y un rafe en el medio por el que secreta mucilago para deslizarse."
+locomotion = "cilia"
+body_plan = "diatom"
+relative_speed = 0.012
+relative_photosynthesis = 1.5
+initial_count = 4
+chloroplasts = true
+raphe_glider = true
+frustule = true
+ph = [5.0, 9.0]
+temperature = [0.0, 30.0]
+storage = "chrysolaminarin"
+wall = "silica"
+genome = { chloroplasts = 1.0, trichocysts = 0.0, armor = 0.3 }
+[being.shape]
+semi_major_axis = 60.0
+semi_minor_axis = 11.0
+shape_memory = 40.0
+color = [202, 184, 122]
+nucleus = 0.3
+
+[being.appearance]
+style = "frustule"
+plastid_color = [176, 140, 50]

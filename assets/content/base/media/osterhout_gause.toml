@@ -1,0 +1,19 @@
+
+[[medium]]
+id = "osterhout_gause"
+name = "Solucion salina de Osterhout (Gause)"
+description = "Solucion de sales sin materia organica: las bacterias que se agregan como alimento no se multiplican, asi la comida de los paramecios es la que pone el experimentador cada dia (el protocolo de Gause)."
+source = "Gause, G. F. (1934). The Struggle for Existence, cap. V: medio salino de Osterhout con Bacillus pyocyaneus agregado a diario como alimento. Composicion ionica aproximada (ESTIMACION): agua dulce blanda, sin fosfato ni nitrogeno disponibles para algas."
+[medium.composition]
+salinity = 0.3
+alkalinity = 500.0
+phosphate = 0.0
+nitrogen = 0.0
+silicate = 0.0
+iron = 0.0
+vitamin_b12 = 0.0
+glucose = 0.0
+phages = 0.0
+organic_inflow = 0.0
+detritus_inflow = 0.0
+dust = 0.0

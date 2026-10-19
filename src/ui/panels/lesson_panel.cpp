@@ -1,4 +1,4 @@
-// Lección (fase P1): un protocolo con pasos, de los paquetes (lecciones.toml). El alumno no necesita
+// Lección (fase P1): un protocolo con pasos, de los paquetes (lessons/). El alumno no necesita
 // otros paneles: el de la lección prepara la placa o el cultivo, muestra los controles que expone,
 // las acciones con nombre, el tiempo y cada paso con su objetivo, su pregunta o su predicción. No hay
 // puntaje: se exporta un informe que corrige el docente.
@@ -31,7 +31,7 @@ namespace {
 class LessonPanel : public Panel {
   public:
     LessonPanel() { open = false; } // se abre desde el menú Ver
-    const char* key() const override { return "leccion"; }
+    const char* key() const override { return "lesson"; }
     const char* title() const override { return "Lección"; }
     Dock dock() const override { return Dock::Left; }
 
@@ -176,7 +176,7 @@ class LessonPanel : public Panel {
         if (culture_) {
             std::vector<CultureEvent> ev;
             CultureSpec ignored;
-            parseCultureScene("cultivo_version=1\nevento=0 " + a.event + "\n", ignored, ev);
+            parseCultureScene("culture_version=1\nevent=0 " + a.event + "\n", ignored, ev);
             for (const CultureEvent& e : ev)
                 culture_->apply(e);
             return;

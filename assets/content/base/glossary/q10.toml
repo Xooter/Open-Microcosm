@@ -1,0 +1,6 @@
+[[term]]
+id = "q10"
+term = "Q10"
+definition = "Cuánto se acelera un proceso al subir 10 °C la temperatura: Q10 = (R₂/R₁)^(10/(T₂−T₁)). En los procesos biológicos suele estar entre 2 y 3; la simulación usa 2 en todo lo biológico (la viscosidad y los gases cambian con su física)."
+source = "Schmidt-Nielsen, K. (1997). Animal Physiology: Adaptation and Environment, 5.ª ed. Cambridge University Press, cap. 6."
+alias = ["q10"]

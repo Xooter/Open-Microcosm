@@ -18,7 +18,7 @@ namespace {
 class NotesPanel : public Panel {
   public:
     NotesPanel() { open = false; } // se abre desde Ver
-    const char* key() const override { return "notas"; }
+    const char* key() const override { return "notes"; }
     const char* title() const override { return "Notas"; }
     Dock dock() const override { return Dock::RightLow; }
 

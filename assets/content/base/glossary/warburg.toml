@@ -1,0 +1,7 @@
+[[term]]
+id = "warburg"
+term = "Efecto Warburg"
+definition = "Las células cancerosas (y muchas células que proliferan) fermentan la glucosa a lactato aunque haya O₂ (glucólisis aeróbica). El lactato acidifica el medio y consume su bicarbonato."
+source = "Warburg, O. (1956). On the origin of cancer cells. Science 123: 309-314."
+alias = ["warburg", "glucólisis aeróbica", "lactato"]
+related = ["fermentation"]

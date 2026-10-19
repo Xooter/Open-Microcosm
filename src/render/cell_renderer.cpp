@@ -328,7 +328,7 @@ void CellRenderer::composite(const Camera2D& camera) {
 
 namespace {
 
-// Estilo de dibujo de cada ser: un nombre en sus datos ([ser.apariencia] estilo; ver
+// Estilo de dibujo de cada ser: un nombre en sus datos ([being.appearance] estilo; ver
 // drawingStyles en bio/species). Un ser nuevo elige cualquiera sin compilar; uno nuevo es código acá.
 enum class CellStyle : std::uint8_t {
     Ciliate, Flagellate, Amoeboid, RostrumFlagella, GirdlesProboscis, HelicalRibbon, AxialPlate,
@@ -348,36 +348,36 @@ CellStyle resolveStyle(SpeciesId sid) {
     const SpeciesInfo& info = speciesInfo(sid);
     const std::string_view name = info.style;
     constexpr std::pair<const char*, CellStyle> kNames[] = {
-        {"ciliado", CellStyle::Ciliate},
-        {"flagelado", CellStyle::Flagellate},
-        {"ameboide", CellStyle::Amoeboid},
-        {"rostro_de_flagelos", CellStyle::RostrumFlagella},
-        {"cinturones_y_proboscide", CellStyle::GirdlesProboscis},
-        {"cinta_helicoidal", CellStyle::HelicalRibbon},
-        {"placa_axial", CellStyle::AxialPlate},
-        {"plastos_estrellados", CellStyle::StellatePlastids},
-        {"plasto_reticulado", CellStyle::ReticulatePlastid},
-        {"frustula", CellStyle::Frustule},
-        {"colonia_esferica", CellStyle::SphericalColony},
-        {"colonia_plana", CellStyle::PlateColony},
-        {"corona_peristomal", CellStyle::PeristomeCrown},
-        {"corona_de_membranelas", CellStyle::MembranelleCrown},
-        {"tentaculos_capitados", CellStyle::CapitateTentacles},
-        {"cirros", CellStyle::Cirri},
-        {"cuello_extensible", CellStyle::Neck},
-        {"dos_flagelos", CellStyle::TwinFlagella},
-        {"levadura", CellStyle::Yeast},
-        {"celula_adherida", CellStyle::AdherentCell},
-        {"neutrofilo", CellStyle::Neutrophil},
-        {"protoplasto_vegetal", CellStyle::PlantProtoplast},
-        {"hoja_elodea", CellStyle::ElodeaLeaf},
-        {"celula_escamosa", CellStyle::Squamous},
-        {"linfocito", CellStyle::Lymphocyte},
-        {"monocito", CellStyle::Monocyte},
-        {"cocoide", CellStyle::Coccoid},
-        {"colonia_de_placa", CellStyle::PlateCells},
-        {"colonia_compacta", CellStyle::PackedCells},
-        {"colonia_hueca", CellStyle::HollowCells}};
+        {"ciliate", CellStyle::Ciliate},
+        {"flagellate", CellStyle::Flagellate},
+        {"amoeboid", CellStyle::Amoeboid},
+        {"flagellar_rostrum", CellStyle::RostrumFlagella},
+        {"girdles_and_proboscis", CellStyle::GirdlesProboscis},
+        {"helical_ribbon", CellStyle::HelicalRibbon},
+        {"axial_plate", CellStyle::AxialPlate},
+        {"stellate_plastids", CellStyle::StellatePlastids},
+        {"reticulate_plastid", CellStyle::ReticulatePlastid},
+        {"frustule", CellStyle::Frustule},
+        {"spherical_colony", CellStyle::SphericalColony},
+        {"flat_colony", CellStyle::PlateColony},
+        {"peristomal_crown", CellStyle::PeristomeCrown},
+        {"membranelle_crown", CellStyle::MembranelleCrown},
+        {"capitate_tentacles", CellStyle::CapitateTentacles},
+        {"cirri", CellStyle::Cirri},
+        {"extensible_neck", CellStyle::Neck},
+        {"two_flagella", CellStyle::TwinFlagella},
+        {"yeast", CellStyle::Yeast},
+        {"adherent_cell", CellStyle::AdherentCell},
+        {"neutrophil", CellStyle::Neutrophil},
+        {"plant_protoplast", CellStyle::PlantProtoplast},
+        {"elodea_leaf", CellStyle::ElodeaLeaf},
+        {"squamous_cell", CellStyle::Squamous},
+        {"lymphocyte", CellStyle::Lymphocyte},
+        {"monocyte", CellStyle::Monocyte},
+        {"coccoid", CellStyle::Coccoid},
+        {"plate_colony", CellStyle::PlateCells},
+        {"compact_colony", CellStyle::PackedCells},
+        {"hollow_colony", CellStyle::HollowCells}};
     for (const auto& [key, style] : kNames)
         if (name == key)
             return style;

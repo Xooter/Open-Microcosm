@@ -1,0 +1,40 @@
+# Chlorella vulgaris: alga verde esférica de 2–10 µm (adultas de 6–8 µm en medio líquido), con un
+# cloroplasto parietal en copa y un pirenoide; sin flagelos ni vacuola contráctil. Se reproduce por
+# autosporas: la célula madre se divide dentro de su pared en 2–4 (a veces 8 o 16) hijas que salen al
+# romperla. Temperaturas cardinales 4,4 / 28,9 / 42,1 °C (compilación de 424 cepas, Sci. Total
+# Environ. 2023).
+[[being]]
+id = "chlorella"
+name = "Chlorella"
+tags = ["alga", "green_alga", "phototroph", "chytrid_host"]
+description = "Alga verde redonda de ~7 um, inmovil, con un cloroplasto en copa. Se reproduce formando 4 autosporas dentro de la pared de la madre."
+locomotion = "cilia"
+body_plan = "green_alga"
+relative_speed = 0.0
+relative_photosynthesis = 1.5
+fissions_per_cycle = 2
+initial_count = 20
+chloroplasts = true
+ph = [5.5, 9.5]
+temperature = [4.0, 42.0]
+storage = "starch"
+wall = "cellulose"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 3.6
+semi_minor_axis = 3.4
+shape_memory = 15.0
+color = [120, 176, 96]
+nucleus = 0.3
+
+[being.appearance]
+style = "coccoid"
+
+[physiology.chlorella.max_growth]
+# Fotobiorreactor de columna de 84 L con 2 % de CO2: un cultivo denso, limitado por la luz; el µmax de
+# células aisladas con luz saturante es mayor. La literatura de C. vulgaris va de ~0,5 a ~1,1/día.
+value = 0.75
+unit = "1/day"
+temperature = 25.0
+source = "Bamba, B. S. B. et al. (2015). Effects of temperature and other operational parameters on Chlorella vulgaris mass cultivation in a simple and low-cost column photobioreactor. Appl. Biochem. Biotechnol. 177: 389-406, doi 10.1007/s12010-015-1751-7: µ = 0,75/día a 25 °C (0,76 a 30 °C, 0,63 a 35 °C)."
+estimate = true

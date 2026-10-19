@@ -1,0 +1,7 @@
+[[term]]
+id = "monod"
+term = "Cinética de Monod"
+definition = "La tasa de crecimiento sube con la concentración del recurso y se satura: μ = μmax·S/(Ks + S). Ks es la concentración a la que se crece a la mitad del máximo. Es la misma forma que la de Michaelis–Menten de las enzimas."
+source = "Monod, J. (1949). The growth of bacterial cultures. Annu. Rev. Microbiol. 3: 371-394."
+alias = ["monod", "michaelis–menten", "michaelis-menten"]
+related = ["chemostat", "liebig"]

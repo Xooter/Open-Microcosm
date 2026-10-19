@@ -51,11 +51,11 @@ Style styleOf(MineralKind kind) {
     if (n != cached) {
         for (int k = 0; k < n; ++k) {
             const std::string& s = mineralInfo(static_cast<MineralKind>(k)).style;
-            cache[k] = s == "grano_anguloso"        ? Style::Angular
-                       : s == "escama"              ? Style::Flake
-                       : s == "grano_opaco"         ? Style::Opaque
-                       : s == "globulo_refringente" ? Style::Globule
-                       : s == "frustula"            ? Style::Frustule
+            cache[k] = s == "angular_grain"        ? Style::Angular
+                       : s == "flake"              ? Style::Flake
+                       : s == "opaque_grain"         ? Style::Opaque
+                       : s == "refractile_globule" ? Style::Globule
+                       : s == "frustule"            ? Style::Frustule
                                                     : Style::Floc;
         }
         cached = n;

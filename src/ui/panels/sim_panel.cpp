@@ -19,7 +19,7 @@ namespace {
 
 class SimulationPanel : public Panel {
   public:
-    const char* key() const override { return "simulacion"; }
+    const char* key() const override { return "simulation"; }
     const char* title() const override { return "Simulación"; }
     Dock dock() const override { return Dock::RightLow; }
 
@@ -43,7 +43,7 @@ class SimulationPanel : public Panel {
             readout("Motor XPBD", "%s | %zu en detalle", world.substepSolver() ? world.substepSolver()->name() : "CPU",
                     world.nearBodies());
             if (ImGui::SmallButton(tr("Opciones de rendimiento e imagen...")))
-                app.panels.show("preferencias");
+                app.panels.show("preferences");
         }
         if (section("Programa"))
             drawProgram(app, world);
@@ -57,7 +57,7 @@ class SimulationPanel : public Panel {
     static void add(App& app, const ProgramEntry& e) {
         Program p;
         p.entries.push_back(e);
-        std::string line = serializeProgram(p).substr(9); // sin "programa="
+        std::string line = serializeProgram(p).substr(8); // sin "program="
         line.pop_back();                                  // sin el salto de línea
         std::replace(line.begin(), line.end(), ' ', ',');
         Intervention iv;
@@ -74,14 +74,14 @@ class SimulationPanel : public Panel {
         if (world.program().empty())
             note("Sin programa: el ambiente queda como se fija a mano.");
         if (ImGui::SmallButton(tr("Fotoperíodo 16:8")))
-            add(app, {"luz", ProgramShape::Cycle, 0.0, kProgramForever, 0.0f, 1.0f, 24.0f, 16.0f / 24.0f, 0.0f});
+            add(app, {"light", ProgramShape::Cycle, 0.0, kProgramForever, 0.0f, 1.0f, 24.0f, 16.0f / 24.0f, 0.0f});
         ImGui::SameLine();
         if (ImGui::SmallButton(tr("Ciclo térmico día/noche")))
-            add(app, {"temperatura", ProgramShape::Sine, 0.0, kProgramForever, world.medium().temperature, 4.0f, 24.0f, 0.5f, 0.0f});
+            add(app, {"temperature", ProgramShape::Sine, 0.0, kProgramForever, world.medium().temperature, 4.0f, 24.0f, 0.5f, 0.0f});
         tooltip("La temperatura oscila ±4 °C alrededor de la actual cada 24 h biológicas.");
         ImGui::SameLine();
         if (ImGui::SmallButton(tr("Pulso de fosfato diario")))
-            add(app, {"agregar:fosfato", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 10.0f});
+            add(app, {"add:phosphate", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 10.0f});
         tooltip("Cada 24 h biológicas se agregan 10 µM de fosfato (un aporte de nutrientes).");
         if (!world.program().empty() && ImGui::SmallButton(tr("Vaciar el programa"))) {
             Intervention iv;

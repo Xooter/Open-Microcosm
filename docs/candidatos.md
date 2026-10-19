@@ -36,7 +36,7 @@ marino. Cuando un ser pide otro, se indica (salina, turbera, mar abierto, suelo)
 ## Avance de los seres
 
 Cada ser cargado tiene su tamaño, su µmax (si hay uno publicado) y las fuentes en
-`assets/content/base/seres.toml` y `fisiologia.toml`, y un test que lo hace reproducirse
+`assets/content/base/beings/<id>.toml` (con su `[physiology.<id>.*]`), y un test que lo hace reproducirse
 (`tests/test_candidates.cpp`). µmax se lleva a 20 °C con Q10 = 2.
 
 ### Lote 1 (17/10/2026)
@@ -253,7 +253,7 @@ commit:
 | ⏸ *Acanthamoeba castellanii* | 15–35 µm | suelo, agua | Modelo de fagocitosis. Come bacterias y forma quistes muy resistentes | Pseudopod, Phagocytosis, encysts | — | **A** |
 | *Dictyostelium discoideum* | ~10 µm | suelo, musgo | Agregación por AMPc en ondas espirales. Se simula hasta la corriente de agregación (la babosa y el cuerpo fructífero son multicelulares) | Pseudopod, Phagocytosis | Quimiotaxis a AMPc con relevo; campo de AMPc | **A** |
 | *Vampyrella* | 30–60 µm | estanque | Perfora la pared de *Spirogyra* y sorbe el protoplasto | Pseudopod | Perforación de la pared | M |
-| *Difflugia* | 100–300 µm | estanque, musgo | Testa de granos de arena: los toma del sedimento | Pseudopod, coraza | Testa con minerales de `minerales.toml` | M |
+| *Difflugia* | 100–300 µm | estanque, musgo | Testa de granos de arena: los toma del sedimento | Pseudopod, coraza | Testa con minerales de `minerals/` | M |
 | ✅ *Euglypha* / *Nebela* / *Assulina* / *Hyalosphenia* | 30–150 µm | musgo, turbera | Tecamebas indicadoras de humedad (paleoecología) | Pseudopod, coraza | Testa de placas silíceas (consume Si) | M |
 | *Actinosphaerium* / *Actinophrys sol* | 40 µm–1 mm | estanque | Heliozoos: los axopodios atrapan ciliados al contacto. Flotan | Phagocytosis | Axopodios; fusión al comer presas grandes | M |
 | ✅ *Chaos carolinense* | 1–5 mm | estanque | Ameba gigante multinucleada | Pseudopod, Phagocytosis | — | B |

@@ -1,0 +1,27 @@
+# Frontonia leucas: ciliado ovalado de ~250 µm (Foissner; 173–335 µm según la población, Serra et al.
+# 2021, BMC Zool. 6: 4) con tricocistos, que traga diatomeas, flagelados y trozos de algas enteros.
+# Ancho estimado (~55 % del largo, por las figuras).
+[[being]]
+id = "frontonia"
+name = "Frontonia"
+tags = ["protist", "ciliate"]
+description = "Ciliado grande (~250 um) y ovalado que traga diatomeas y algas enteras: suele verse lleno de vacuolas pardas y verdes."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "raptorial"
+relative_speed = 0.5
+prey = ["navicula", "pinnularia", "asterionella", "cyclotella", "chlamydomonas", "euglena", "phacus", "cryptomonas", "chlorella"]
+conjugation = true
+initial_count = 2
+handling_hours = 1.0
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 125.0
+semi_minor_axis = 69.0
+shape_memory = 8.0
+color = [172, 176, 150]
+nucleus = 0.25

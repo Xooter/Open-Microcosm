@@ -1,7 +1,7 @@
 # Validación científica
 
 Qué se compara contra resultados publicados, con qué tolerancia y cómo está hoy. Los valores y
-sus fuentes viven en `assets/species/fisiologia.toml`; los tests en `tests/test_validation.cpp`
+sus fuentes viven en `assets/content/base/beings/ ([physiology.<id>.*])`; los tests en `tests/test_validation.cpp`
 (`ctest -L validacion`).
 
 ## Datos de fisiología cargados
@@ -94,7 +94,7 @@ salen de los de *P. caudatum* con el exponente del zooplancton (V^0,75–0,77). 
 
 ## Antibióticos: la CIM que emerge (fase P1, paso 11)
 
-Los reactivos (`reactivos.toml`, `game/reagent`) usan la función farmacodinámica que Regoes et al.
+Los reactivos (`reagents/`, `game/reagent`) usan la función farmacodinámica que Regoes et al.
 (2004, Antimicrob. Agents Chemother. 48: 3670-3676) ajustaron a curvas de muerte de *E. coli*
 (ψmax, ψmin, zMIC y κ), con la muerte proporcional a lo que crece la bacteria (los β-lactámicos no
 matan a las que no crecen). La CIM no entra a la simulación: sale de una dilución en caldo simulada

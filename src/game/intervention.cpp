@@ -1,6 +1,8 @@
 #include "game/intervention.hpp"
 
+
 #include "core/profiling.hpp"
+#include "game/legacy_names.hpp"
 #include "game/parameters.hpp"
 #include "game/reagent.hpp"
 #include "game/sandbox.hpp"
@@ -305,6 +307,9 @@ std::vector<Intervention> parseInterventions(const std::string& text, std::vecto
         std::copy(f + 2, f + 8, iv.v);
         if (tok.size() > 12)
             iv.key = tok[12];
+        // Una clave de parámetro vieja (en español) se lee y se vuelve a escribir con la actual.
+        if (const std::string_view current = currentParameterKey(iv.key); !current.empty())
+            iv.key = current;
         // El ser por su id (las escenas viejas, sin id, quedan con el índice: el orden de los de
         // fábrica no cambió).
         if (speciesOf(iv) >= 0 && !iv.key.empty()) {

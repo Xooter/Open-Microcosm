@@ -1,0 +1,18 @@
+[[reagent]]
+id = "tetracycline"
+legacy_ids = ["tetraciclina"]
+name = "Tetraciclina"
+description = "Se une a la subunidad 30S del ribosoma bacteriano (70S) e impide la sintesis de proteinas. Los ribosomas 80S de los eucariotas casi no la unen."
+mechanism = "pharmacodynamic"
+targets = ["bacteria"]
+growth_dependent = true
+diffusion = 500.0
+[reagent.pharmacodynamics]
+psi_max = 0.81
+psi_min = -8.1
+zmic = 0.67
+kappa = 0.61
+source = "Regoes, R. R. et al. (2004). Antimicrob. Agents Chemother. 48: 3670-3676, tabla 1 (E. coli O18:K1:H7): psi_max 0,81/h, psi_min -8,1/h, kappa 0,61, zMIC 0,67 ug/mL."
+[reagent.published_mic]
+value = 1.0
+source = "Regoes et al. (2004), tabla 1: CIM 1 ug/mL por dilución al doble."

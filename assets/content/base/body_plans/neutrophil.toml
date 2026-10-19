@@ -1,0 +1,15 @@
+# Neutrófilo: núcleo de 3–5 lóbulos, citoplasma lleno de gránulos (primarios con mieloperoxidasa,
+# secundarios), pocas mitocondrias.
+[[body_plan]]
+id = "neutrophil"
+name = "neutrofilo"
+morphology = "eukaryote"
+structures = [
+    { kind = "plasma_membrane", source = "simulated", arrangement = "envelope", brightfield = true, name = "membrana plasmatica (lamelipodio en el frente)" },
+    { kind = "nucleus", source = "simulated", arrangement = "interior", count = 1, brightfield = true, name = "nucleo multilobulado (3-5 lobulos)" },
+    { kind = "lysosome", source = "simulated", arrangement = "interior", brightfield = false, name = "granulos primarios (azurofilos) y secundarios" },
+    { kind = "food_vacuole", source = "simulated", arrangement = "interior", brightfield = true, name = "fagosomas con bacterias" },
+    { kind = "mitochondrion", source = "simulated", arrangement = "interior", length = 1.0, width = 0.3, brightfield = false, name = "mitocondrias (pocas)" },
+    { kind = "golgi", source = "declared", arrangement = "perinuclear", length = 1.0, width = 0.3, count = 1, brightfield = false, name = "aparato de Golgi" },
+    { kind = "ribosomes", source = "declared", arrangement = "interior", length = 0.025, width = 0.025, per_um3 = 1000.0, brightfield = false, name = "ribosomas 80S" },
+]

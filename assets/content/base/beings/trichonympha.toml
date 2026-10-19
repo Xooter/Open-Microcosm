@@ -1,0 +1,31 @@
+# Trichonympha: flagelado hipermastigino de ~150 µm del intestino de las termitas, con miles
+# de flagelos en el rostro; anaerobio estricto. Fagocita astillas de madera por el polo
+# posterior y fermenta la celulosa.
+
+[[being]]
+id = "trichonympha"
+name = "Trichonympha"
+tags = ["protist", "flagellate", "termite_symbiont", "obligate_symbiont"]
+description = "Flagelado con miles de flagelos del intestino de las termitas: digiere la madera por ellas y no tolera el oxigeno."
+locomotion = "flagellum"
+body_plan = "parabasalid"
+feeding = "anterior_pole"
+relative_speed = 0.6
+initial_count = 12
+anaerobe = true
+posterior_mouth = true
+ph = [6.0, 9.5]
+temperature = [15.0, 35.0]
+storage = "glycogen"
+wall = "none"
+genome = { chloroplasts = 0.0 }
+[being.shape]
+semi_major_axis = 75.0
+semi_minor_axis = 40.0
+shape_memory = 6.0
+color = [200, 186, 150]
+nucleus = 0.2
+taper = 0.3
+
+[being.appearance]
+style = "flagellar_rostrum"

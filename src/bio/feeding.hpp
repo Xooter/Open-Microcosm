@@ -45,7 +45,7 @@ struct FeedingParams {
     float mouthRadius = 6.0f;            // alcance del citostoma para células y detritos [µm]
     // Radio de captura de bacterias del citostoma [µm], horizontal y vertical: la corriente oral arrastra
     // el agua de alrededor del cuerpo hacia el surco oral. CALIBRADO para que la placa coma lo que dice
-    // la respuesta funcional de P. caudatum (aclaramiento ~24 µL/h con pocas presas, fisiologia.toml;
+    // la respuesta funcional de P. caudatum (aclaramiento ~24 µL/h con pocas presas, [physiology.<id>.*];
     // `bio_bench --respuesta-funcional paramecium`, tests/test_culture.cpp).
     float bacteriaCaptureRadius = 75.0f;
     float ciliateMaxParticle = 5.0f;     // radio máximo que entra por la boca del ciliado [µm]

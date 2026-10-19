@@ -1,0 +1,26 @@
+# Phacus pleuronectes: euglenoide rígido (sin metabolia), aplanado como una hoja, de 37–80 × 30–50 µm,
+# con una espina caudal, un flagelo del largo del cuerpo, estigma y dos granos grandes de paramilón
+# (diagnosis de M. Kreutz, realmicrolife.com). Fotótrofo: no fagocita.
+[[being]]
+id = "phacus"
+name = "Phacus"
+tags = ["protist", "flagellate", "euglenid", "phototroph"]
+description = "Euglenoide verde, rigido y chato como una hoja, con una espina en la cola y dos granos grandes de paramilon. Nada hacia la luz con un flagelo."
+locomotion = "flagellum"
+body_plan = "euglenid"
+phototaxis = true
+initial_count = 6
+chloroplasts = true
+cyclosis = 1.0
+ph = [5.0, 9.5]
+temperature = [10.0, 35.0]
+storage = "paramylon"
+wall = "none"
+[being.shape]
+semi_major_axis = 27.0
+semi_minor_axis = 19.0
+thickness = 5.0
+shape_memory = 30.0
+color = [118, 170, 90]
+nucleus = 0.25
+taper = 0.6

@@ -1,0 +1,7 @@
+[[term]]
+id = "cytostome"
+term = "Citostoma"
+definition = "La boca celular de los ciliados, al fondo del surco oral. Los cilios orales arman una corriente que lleva las bacterias hasta ahí, donde se forma la vacuola digestiva."
+source = "Lynn, D. H. (2008). The Ciliated Protozoa, 3.ª ed. Springer, cap. 2."
+alias = ["surco oral", "corriente oral"]
+related = ["food_vacuole", "clearance"]

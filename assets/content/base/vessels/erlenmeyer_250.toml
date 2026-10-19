@@ -1,0 +1,6 @@
+[[vessel]]
+id = "erlenmeyer_250"
+name = "Erlenmeyer de 250 mL (100 mL de medio)"
+area_cm2 = 50.0
+volume_ml = 100.0
+source = "Frasco de Erlenmeyer de 250 mL con 100 mL de medio (fondo de ~8 cm de diámetro)."

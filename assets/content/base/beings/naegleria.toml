@@ -1,0 +1,25 @@
+# Naegleria gruberi: ameboflagelado de ~20 µm (forma limax, seudópodos eruptivos) que come
+# bacterias; tolera hasta ~45 °C (aguas termales) y forma quistes.
+
+[[being]]
+id = "naegleria"
+name = "Naegleria"
+tags = ["protist", "amoeboid", "bacterivore"]
+description = "Ameboflagelado de suelos y aguas termales: tolera mas de 40 grados y se enquista si se seca."
+locomotion = "pseudopod"
+body_plan = "amoeba"
+feeding = "phagocytosis"
+relative_speed = 2.0
+encysts = true
+initial_count = 6
+handling_hours = 0.3
+ph = [5.0, 9.5]
+temperature = [10.0, 46.0]
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 11.0
+semi_minor_axis = 8.0
+shape_memory = 0.0
+color = [196, 190, 170]
+nucleus = 0.3

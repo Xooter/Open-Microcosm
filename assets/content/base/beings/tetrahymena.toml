@@ -1,0 +1,39 @@
+# Tamaños y tasas con su fuente: los valores medidos van en [physiology]; acá, en el comentario de
+# cada ser.
+
+# Tetrahymena pyriformis: ciliado piriforme de 40–60 × 20–30 µm (Foissner et al. 1994), el modelo de
+# laboratorio de los cultivos de ciliados y la presa con la que se mide el crecimiento de Amoeba.
+# Nada a ~500 µm/s. Es amicronucleada: no tiene micronúcleo y no se conjuga (T. thermophila sí).
+# Tiene mucocistos, no tricocistos. Crece mejor a ~27 °C (Thormar 1962).
+[[being]]
+id = "tetrahymena"
+name = "Tetrahymena"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Ciliado chico (~50 um) en forma de pera que filtra bacterias con una boca de membranelas. Es el ciliado de laboratorio por excelencia y presa de amebas y suctorios."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "oral_groove"
+relative_speed = 0.8
+initial_count = 10
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 35.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 25.0
+semi_minor_axis = 14.0
+shape_memory = 8.0
+color = [176, 182, 156]
+nucleus = 0.32
+taper = 0.3
+
+
+[physiology.tetrahymena.max_growth]
+# Cultivo monoxénico en lote con Klebsiella aerogenes; en cultivo continuo (Curds & Cockburn 1971,
+# J. Gen. Microbiol. 66: 95) el µmax estimado fue el doble, 0,43/h, sin temperatura informada.
+value = 0.22
+unit = "1/h"
+temperature = 25.0
+source = "Curds, C. R. & Cockburn, A. (1968). Studies on the growth and feeding of Tetrahymena pyriformis in axenic and monoxenic culture. J. Gen. Microbiol. 54: 343-358: tasa máxima de crecimiento 0,22/h (monoxénico, con Klebsiella aerogenes) y 0,20/h (axénico) a 25 °C."

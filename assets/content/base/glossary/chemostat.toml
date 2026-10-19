@@ -1,0 +1,8 @@
+[[term]]
+id = "chemostat"
+term = "Quimiostato"
+definition = "Cultivo continuo: entra medio fresco y sale cultivo al mismo caudal, con una tasa de dilución D. En el estado estacionario la población crece tan rápido como se lava (μ = D) y el recurso limitante queda en S* = Ks·D/(μmax − D), sin importar cuánto entra."
+source = "Novick, A. & Szilard, L. (1950). Description of the chemostat. Science 112: 715-716."
+alias = ["quimiostatos", "tasa de dilución", "cultivo continuo"]
+related = ["monod", "r_star"]
+lesson = "tilman_chemostat"

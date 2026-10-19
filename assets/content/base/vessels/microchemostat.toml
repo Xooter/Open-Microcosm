@@ -1,0 +1,10 @@
+# Cámara de un microquimiostato: los cultivos continuos en chips de microfluídica van de nanolitros a
+# decenas de microlitros (Balagaddé et al. 2005, Science 309: 137-140, cámaras de 16 nL). Permite
+# simular por individuo un quimiostato de algas con cientos de células.
+[[vessel]]
+id = "microchemostat"
+legacy_ids = ["microquimiostato"]
+name = "Cámara de microquimiostato (20 µL)"
+area_cm2 = 0.04
+volume_ml = 0.02
+source = "Microquimiostatos en chips de microfluídica: Balagaddé, F. K. et al. (2005). Science 309: 137-140 (cámaras de 16 nL); 20 µL es una cámara grande de ese tipo."

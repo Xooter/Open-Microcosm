@@ -16,7 +16,7 @@
 
 TEST_CASE("fisiología: el archivo de fábrica carga y cada valor tiene fuente") {
     std::string error;
-    REQUIRE_MESSAGE(loadSpeciesPhysiology(assetPath("content/base/fisiologia.toml"), &error), error);
+    REQUIRE_MESSAGE(loadBasePhysiology(&error), error);
     for (const std::string& w : physiologyWarnings())
         FAIL_CHECK(w);
     int present = 0;
@@ -40,9 +40,9 @@ TEST_CASE("fisiología: unidades, Q10 y avisos") {
     const std::filesystem::path path = std::filesystem::temp_directory_path() / "bio_fisiologia_prueba.toml";
     {
         std::ofstream out(path);
-        out << "[paramecium.crecimiento_maximo]\nvalor = 2.4\nunidad = \"1/dia\"\ntemperatura = 30.0\nfuente = \"prueba\"\n"
-               "[euglena.crecimiento_maximo]\nvalor = 1.0\nunidad = \"furlongs\"\nfuente = \"prueba\"\n"
-               "[NoExiste.crecimiento_maximo]\nvalor = 1.0\nunidad = \"1/h\"\nfuente = \"prueba\"\n";
+        out << "[paramecium.max_growth]\nvalue = 2.4\nunit = \"1/day\"\ntemperature = 30.0\nsource = \"prueba\"\n"
+               "[euglena.max_growth]\nvalue = 1.0\nunit = \"furlongs\"\nsource = \"prueba\"\n"
+               "[NoExiste.max_growth]\nvalue = 1.0\nunit = \"1/h\"\nsource = \"prueba\"\n";
     }
     REQUIRE(loadSpeciesPhysiology(path.string()));
     // 2,4/día a 30 °C → 0,1/h a 30 °C → la mitad a 20 °C.
@@ -51,11 +51,11 @@ TEST_CASE("fisiología: unidades, Q10 y avisos") {
     CHECK(physiologyWarnings().size() == 2); // unidad desconocida y especie inexistente
     std::filesystem::remove(path);
     // Vuelve la tabla de fábrica para el resto de los tests.
-    REQUIRE(loadSpeciesPhysiology(assetPath("content/base/fisiologia.toml")));
+    REQUIRE(loadBasePhysiology());
 }
 
 TEST_CASE("fisiología: la ficha y la exportación de especies muestran la fuente") {
-    REQUIRE(loadSpeciesPhysiology(assetPath("content/base/fisiologia.toml")));
+    REQUIRE(loadBasePhysiology());
     // Ficha de un paramecio: la sección con µmax, lo publicado y la cita.
     WorldConfig config;
     config.bacteria = 0;

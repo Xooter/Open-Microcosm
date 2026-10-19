@@ -16,7 +16,7 @@ namespace {
 
 class MeasurePanel : public Panel {
   public:
-    const char* key() const override { return "medicion"; }
+    const char* key() const override { return "measurement"; }
     const char* title() const override { return "Medición"; }
     Dock dock() const override { return Dock::RightLow; }
 

@@ -415,7 +415,7 @@ Inspection inspectCell(const World& w, entt::entity e) {
         add(s, "Rojo neutro", "vacuolas digestivas y lisosomas (acidos)");
     }
 
-    // --- Fisiología con su fuente (assets/content/base/fisiologia.toml): de dónde sale cada número.
+    // --- Fisiología con su fuente ([physiology.<id>.*] de cada ser): de dónde sale cada número.
     {
         const SpeciesPhysiology& phys = speciesPhysiology(sid);
         auto cite = [](InspectSection& s, const SourcedValue& v) {

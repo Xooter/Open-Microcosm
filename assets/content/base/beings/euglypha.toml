@@ -1,0 +1,26 @@
+# Euglypha strigosa: tecameba de testa ovoide de 45–100 µm, hecha de escamas ovales de sílice con
+# espinas, en el musgo y en las turberas (Kreutz). Al dividirse, la hija arma su testa con escamas que
+# la madre tiene en reserva (acá se divide como una ameba con coraza).
+[[being]]
+id = "euglypha"
+name = "Euglypha"
+tags = ["protist", "amoeboid", "testate_amoeba"]
+description = "Ameba con una testa ovalada (~70 um) de escamas de silice con espinas. Asoma seudopodos finos por la abertura. Vive en el musgo."
+locomotion = "pseudopod"
+body_plan = "amoeba"
+feeding = "phagocytosis"
+relative_speed = 0.4
+prey = ["chlorella", "navicula", "chlamydomonas", "desmodesmus"]
+initial_count = 3
+handling_hours = 1.0
+ph = [4.5, 8.5]
+temperature = [0.0, 28.0]
+storage = "glycogen"
+wall = "none"
+genome = { armor = 0.9 }
+[being.shape]
+semi_major_axis = 36.0
+semi_minor_axis = 24.0
+shape_memory = 0.0
+color = [200, 198, 186]
+nucleus = 0.25

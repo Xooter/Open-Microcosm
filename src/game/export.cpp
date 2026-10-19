@@ -2,6 +2,7 @@
 #include "bio/physiology.hpp"
 
 #include "build_info.hpp"
+#include "core/paths.hpp"
 #include "game/parameters.hpp"
 
 #include "game/biome.hpp"
@@ -185,7 +186,7 @@ void speciesList(Json& j, const char* key, const SpeciesSet& mask) {
     j.endArray();
 }
 
-// Un valor de fisiologia.toml: el que usa la simulación (a 20 °C) y el publicado, con su fuente.
+// Un valor de [physiology.<id>.*]: el que usa la simulación (a 20 °C) y el publicado, con su fuente.
 void writeSourced(Json& j, const char* key, const SourcedValue& v, const char* unit) {
     if (!v.present)
         return;
@@ -488,10 +489,7 @@ std::string defaultExportsDir() {
     return (fs::path(defaultProgressPath()).parent_path() / "exports").string();
 }
 
-std::string defaultPhotosDir() {
-    namespace fs = std::filesystem;
-    return (fs::path(defaultProgressPath()).parent_path() / "fotos").string();
-}
+std::string defaultPhotosDir() { return userDataSubdir("photos", "fotos"); }
 
 bool writeTextFile(const std::string& path, const std::string& text) {
     namespace fs = std::filesystem;

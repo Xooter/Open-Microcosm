@@ -1,0 +1,7 @@
+[[term]]
+id = "redfield"
+term = "Proporción de Redfield"
+definition = "Relación media de átomos de carbono, nitrógeno y fósforo en el fitoplancton marino: C:N:P = 106:16:1. Sirve para saber qué nutriente falta: con N:P del agua muy por debajo de 16, el que limita es el nitrógeno."
+source = "Redfield, A. C. (1958). The biological control of chemical factors in the environment. Am. Sci. 46: 205-221."
+alias = ["redfield"]
+related = ["liebig", "monod"]

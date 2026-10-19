@@ -11,14 +11,15 @@
 
 // Biomas (fase 11): cada uno es un ambiente real con su química, su temperatura y su elenco de
 // especies. La gota de cada partida sale de un bioma con variaciones por seed. Son datos de los
-// paquetes de contenido (fase 20.0): los de fábrica, en assets/content/base/biomas.toml.
+// paquetes de contenido (fase 20.0): los de fábrica, en assets/content/base/biomes/.
 // BiomeId es el índice en el registro; los nombres son alias de los de fábrica (en su orden).
 enum class BiomeId : std::uint16_t { Puddle, Pond, Moss, TermiteGut, HotSpring, SeaIce };
 int biomeCount();
 
 struct Biome {
-    std::string key, name, description, pack; // key: id estable de los datos ("charco")
-    std::string source;                        // el [[bioma]] como se leyó (para exportarlo)
+    std::string key, name, description, pack; // key: id estable de los datos ("puddle")
+    std::vector<std::string> legacyIds;       // ids viejos (core/ids)
+    std::string source;                        // el [[biome]] como se leyó (para exportarlo)
     MediumParams medium;
     // Multiplicador de la población inicial: `baseWeight` para todos, salvo los listados por id.
     float baseWeight = 1.0f;
@@ -43,7 +44,7 @@ const Biome& biome(BiomeId id);
 // Por id de los datos ("charco"); vacío si no está cargado.
 std::optional<BiomeId> findBiome(std::string_view key);
 
-// Carga los [[bioma]] de un archivo TOML de un paquete (se agregan a los cargados). Los biomas con
+// Carga los [[biome]] de un archivo TOML de un paquete (se agregan a los cargados). Los biomas con
 // errores se saltean y quedan en `biomeLoadWarnings`; false si el archivo no se puede leer.
 bool loadBiomesFile(const std::string& path, const std::string& pack, std::string* error = nullptr);
 bool loadBiomesText(const std::string& text, const std::string& source, const std::string& pack,

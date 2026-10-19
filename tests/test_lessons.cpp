@@ -38,9 +38,9 @@ std::size_t runLesson(const Lesson& l) {
         REQUIRE(parseCultureScene(l.culture, spec, events));
         std::vector<CultureEvent> solution;
         CultureSpec ignored;
-        std::string text = "cultivo_version=1\n";
+        std::string text = "culture_version=1\n";
         for (const std::string& s : l.solution)
-            text += "evento=" + s + "\n";
+            text += "event=" + s + "\n";
         parseCultureScene(text, ignored, solution);
         events.insert(events.end(), solution.begin(), solution.end());
         CultureRun run;
@@ -96,10 +96,10 @@ TEST_CASE("lecciones: las de fábrica se leen sin avisos") {
 
 TEST_CASE("lección: Jennings se completa con su solución" * doctest::test_suite("largos")) { checkLesson("jennings_co2"); }
 TEST_CASE("lección: plasmólisis se completa con su solución" * doctest::test_suite("largos")) {
-    checkLesson("plasmolisis_cebolla");
+    checkLesson("onion_plasmolysis");
 }
 TEST_CASE("lección: fragilidad osmótica se completa con su solución" * doctest::test_suite("largos")) {
-    checkLesson("fragilidad_osmotica");
+    checkLesson("osmotic_fragility");
 }
-TEST_CASE("lección: Gause se completa" * doctest::test_suite("largos")) { checkLesson("gause_competencia"); }
-TEST_CASE("lección: Tilman se completa" * doctest::test_suite("largos")) { checkLesson("tilman_quimiostato"); }
+TEST_CASE("lección: Gause se completa" * doctest::test_suite("largos")) { checkLesson("gause_competition"); }
+TEST_CASE("lección: Tilman se completa" * doctest::test_suite("largos")) { checkLesson("tilman_chemostat"); }

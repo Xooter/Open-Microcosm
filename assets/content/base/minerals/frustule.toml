@@ -1,0 +1,10 @@
+# Es además el mineral que dejan las diatomeas al morir (con su sílice).
+[[mineral]]
+id = "frustule"
+legacy_ids = ["frustula"]
+name = "Frústula vacía"
+description = "Frústula vacía de diatomea: la caja de sílice (ópalo) que queda cuando muere la célula. No se descompone, a diferencia del resto del organismo; el rafe y las estrías siguen intactos."
+radius = [18.0, 28.0] # medio largo de Navicula
+density_difference = 600.0 # ópalo hueco
+opacity = 0.1
+style = "frustule"

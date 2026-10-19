@@ -31,7 +31,7 @@ const char* const kShapes[] = {"Rampa", "Ciclo", "Seno", "Evento"};
 class CulturePanel : public Panel {
   public:
     CulturePanel() { open = false; } // se abre desde el menú Ver
-    const char* key() const override { return "cultivos"; }
+    const char* key() const override { return "cultures"; }
     const char* title() const override { return "Cultivos"; }
     Dock dock() const override { return Dock::Right; }
 
@@ -76,7 +76,7 @@ class CulturePanel : public Panel {
     float soluteValue_ = 10.0f;
     // Programa.
     ProgramEntry entry_;
-    char target_[64] = "luz";
+    char target_[64] = "light";
     // Muestra.
     float aliquotMl_ = 0.1f, concentrate_ = 1.0f;
     int countSpecies_ = 0, lastCount_ = -1;
@@ -277,7 +277,7 @@ class CulturePanel : public Panel {
             run.apply({0, CultureOp::Dilute, "", dilute_});
         const char* solutes[kSoluteCount];
         for (int k = 0; k < kSoluteCount; ++k)
-            solutes[k] = soluteKey(static_cast<Solute>(k));
+            solutes[k] = soluteLabel(static_cast<Solute>(k));
         combo("Soluto", &solute_, solutes, kSoluteCount);
         sliderLog("Concentración [µM]", &soluteValue_, 1e-4f, 1e5f, "%.3g");
         if (ImGui::Button(tr("Fijar concentración")))
@@ -291,7 +291,7 @@ class CulturePanel : public Panel {
             tooltip(tr(reagent(reagent_).description.c_str()));
             sliderLog("Dosis [µg/mL]", &dose_, 0.01f, 1000.0f, "%.3g",
                       "Una dosis-respuesta se mide como en el laboratorio: un lote (panel Experimento) con el factor "
-                      "reactivo:<id> y una serie de dosis al doble.");
+                      "reagent:<id> y una serie de dosis al doble.");
             ImGui::TextDisabled("%s %.3g µg/mL", tr("Ahora:"), run.culture().reagentConcentration(reagent_));
             if (ImGui::Button(tr("Fijar la dosis")))
                 run.apply({0, CultureOp::Reagent, reagent(reagent_).key, dose_});
@@ -315,14 +315,14 @@ class CulturePanel : public Panel {
             ImGui::PopID();
         }
         if (ImGui::SmallButton(tr("Fotoperíodo 16:8")))
-            add(run, {"luz", ProgramShape::Cycle, 0.0, kProgramForever, 0.0f, 1.0f, 24.0f, 16.0f / 24.0f, 0.0f});
+            add(run, {"light", ProgramShape::Cycle, 0.0, kProgramForever, 0.0f, 1.0f, 24.0f, 16.0f / 24.0f, 0.0f});
         ImGui::SameLine();
         if (ImGui::SmallButton(tr("Protocolo de Gause")))
             gause(run);
         tooltip("Cada 24 h se centrifuga, se cambia todo el medio y se agregan bacterias frescas (Gause 1934, cap. V).");
         ImGui::InputText(tr("Objetivo"), target_, sizeof target_);
-        tooltip("temperatura, luz, soluto:<fosfato|nitrogeno|silice|hierro|b12|organica|co2>, o una acción: bacterias, "
-                "medio, dilucion, inocular:<id del ser>.");
+        tooltip("temperature, light, solute:<phosphate|nitrogen|silicate|iron|b12|organic|co2>, o una acción: bacteria, "
+                "medium, dilution, inoculate:<id del ser>.");
         int shape = static_cast<int>(entry_.shape);
         if (combo("Forma", &shape, kShapes, 4))
             entry_.shape = static_cast<ProgramShape>(shape);
@@ -349,8 +349,8 @@ class CulturePanel : public Panel {
     }
 
     static void gause(CultureRun& run) {
-        add(run, {"medio", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 1.0f});
-        add(run, {"bacterias", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 5e7f});
+        add(run, {"medium", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 1.0f});
+        add(run, {"bacteria", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 5e7f});
     }
 
     void drawSample(App& app, CultureRun& run) {
@@ -430,7 +430,7 @@ class CulturePanel : public Panel {
         if (ImGui::Button(tr("Guardar escena de cultivo"))) {
             std::error_code ec;
             fs::create_directories(dir, ec);
-            const std::string path = (dir / (run.spec().name + ".cultivo")).string();
+            const std::string path = (dir / (run.spec().name + ".culture")).string();
             message_ = writeTextFile(path, serializeCultureScene(run.spec(), run.events())) ? path : tr("No se pudo guardar.");
         }
         tooltip("El cultivo como se preparó, su programa y todo lo que se le hizo con su paso: cargarlo lo repite.");
@@ -445,7 +445,8 @@ class CulturePanel : public Panel {
         std::error_code ec;
         if (fs::is_directory(dir, ec))
             for (const auto& f : fs::directory_iterator(dir, ec)) {
-                if (f.path().extension() != ".cultivo")
+                // ".cultivo": las guardadas antes de que los archivos pasaran al inglés.
+                if (f.path().extension() != ".culture" && f.path().extension() != ".cultivo")
                     continue;
                 if (ImGui::SmallButton((std::string(tr("Cargar")) + " " + f.path().stem().string()).c_str())) {
                     std::ifstream in(f.path());

@@ -41,7 +41,7 @@ std::string speciesJson();
 
 // Carpeta de exportaciones: <datos>/biogame/exports.
 std::string defaultExportsDir();
-// Carpeta de las fotos y los time-lapses: <datos>/biogame/fotos.
+// Carpeta de las fotos y los time-lapses: <datos>/biogame/photos.
 std::string defaultPhotosDir();
 // Escribe `text` en `path` creando la carpeta. false si falla.
 bool writeTextFile(const std::string& path, const std::string& text);

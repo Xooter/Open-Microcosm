@@ -1,0 +1,21 @@
+[[plate]]
+id = "potato_lugol"
+legacy_ids = ["papa_lugol"]
+name = "Preparado: papa con Lugol"
+description = "Un corte fino de tuberculo de papa tenido con Lugol: celulas grandes del parenquima llenas de amiloplastos, granos de almidon con capas concentricas que el yodo tine de azul negro."
+kind = "slide"
+medium = "distilled_water"
+vessel = "slide"
+field_um = 1024.0
+fixed = true
+stain = "lugol"
+[plate.environment]
+temperature = 22.0
+co2 = 0.00042
+light = 1.0
+[plate.tissue]
+arrangement = "polygonal"
+content = "starch"
+length_um = 130.0
+width_um = 130.0
+wall_um = 1.5

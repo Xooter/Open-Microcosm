@@ -1,0 +1,23 @@
+# Chaos nobile: ameba gigante polipodial de 240–820 µm con 6–49 núcleos y cristales bipiramidales;
+# se parece a Amoeba proteus pero con seudópodos más finos y muchos núcleos (Kreutz).
+[[being]]
+id = "chaos"
+name = "Chaos"
+tags = ["protist", "amoeboid"]
+description = "Ameba gigante (~0,3 mm, a veces casi 1 mm) con muchos nucleos. Extiende varios seudopodos a la vez y envuelve ciliados y algas."
+locomotion = "pseudopod"
+body_plan = "amoeba"
+feeding = "phagocytosis"
+prey = ["paramecium", "paramecium_aurelia", "euglena", "chlamydomonas", "tetrahymena", "colpidium", "colpoda", "phacus", "cryptomonas", "navicula", "pinnularia"]
+initial_count = 1
+handling_hours = 1.5
+ph = [6.0, 9.5]
+temperature = [10.0, 28.0]
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 160.0
+semi_minor_axis = 160.0
+shape_memory = 0.0
+color = [190, 180, 164]
+nucleus = 0.08

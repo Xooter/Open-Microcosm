@@ -1,5 +1,6 @@
 #include "game/experiment.hpp"
 
+
 #include "bio/physiology.hpp"
 #include "build_info.hpp"
 #include "core/profiling.hpp"
@@ -7,6 +8,7 @@
 #include "game/biome.hpp"
 #include "game/dose_fit.hpp"
 #include "game/export.hpp"
+#include "game/legacy_names.hpp"
 #include "game/parameters.hpp"
 #include "game/prepared.hpp"
 #include "game/reagent.hpp"
@@ -56,7 +58,7 @@ void columnsFor(ExperimentSpec::Kind kind, std::vector<std::string>& names, std:
         names.push_back(speciesInfo(static_cast<SpeciesId>(s)).key);
         units.push_back(culture ? "individuos/mL" : "individuos");
     }
-    names.push_back("bacterias");
+    names.push_back("bacteria");
     units.push_back(culture ? "bacterias/mL" : "bacterias");
     for (int k = 0; k < kSoluteCount; ++k) {
         names.push_back(soluteKey(static_cast<Solute>(k)));
@@ -93,12 +95,12 @@ void plateRow(const World& w, std::vector<double>& row) {
 }
 
 float* mediumField(MediumParams& m, const std::string& solute) {
-    if (solute == "fosfato") return &m.phosphate;
-    if (solute == "nitrogeno") return &m.nitrogen;
-    if (solute == "silice") return &m.silicate;
-    if (solute == "hierro") return &m.iron;
+    if (solute == "phosphate") return &m.phosphate;
+    if (solute == "nitrogen") return &m.nitrogen;
+    if (solute == "silicate") return &m.silicate;
+    if (solute == "iron") return &m.iron;
     if (solute == "b12") return &m.vitamin;
-    if (solute == "organica") return &m.organic;
+    if (solute == "organic") return &m.organic;
     return nullptr;
 }
 
@@ -116,21 +118,21 @@ ReplicaResult runCultureReplica(const ExperimentSpec& spec, const ExperimentLeve
     std::vector<CultureEvent> events = spec.cultureEvents;
     std::vector<CultureEvent> extra;
     for (const auto& [key, value] : level.settings) {
-        if (key == "temperatura")
+        if (key == "temperature")
             cs.temperature = static_cast<float>(value);
-        else if (key == "luz")
+        else if (key == "light")
             cs.light = static_cast<float>(value);
-        else if (key == "bacterias") {
+        else if (key == "bacteria") {
             events.erase(std::remove_if(events.begin(), events.end(),
                                         [](const CultureEvent& e) { return e.step == 0 && e.op == CultureOp::Bacteria; }),
                          events.end());
             extra.push_back({0, CultureOp::Bacteria, "", value});
-        } else if (key.rfind("soluto:", 0) == 0) {
+        } else if (key.rfind("solute:", 0) == 0) {
             extra.push_back({0, CultureOp::Concentration, key.substr(7), value});
-        } else if (key.rfind("reactivo:", 0) == 0) {
-            extra.push_back({0, CultureOp::Reagent, key.substr(9), value});
-        } else if (key.rfind("inocular:", 0) == 0) {
-            const std::string id = key.substr(9);
+        } else if (key.rfind("reagent:", 0) == 0) {
+            extra.push_back({0, CultureOp::Reagent, key.substr(8), value});
+        } else if (key.rfind("inoculate:", 0) == 0) {
+            const std::string id = key.substr(10);
             events.erase(std::remove_if(events.begin(), events.end(),
                                         [&](const CultureEvent& e) {
                                             return e.step == 0 && e.op == CultureOp::Inoculate && e.key == id;
@@ -161,9 +163,9 @@ ReplicaResult runPlateReplica(const ExperimentSpec& spec, const ExperimentLevel&
     plate.seed = seed;
     plate.config.seed = seed;
     for (const auto& [key, value] : level.settings) {
-        if (key == "temperatura")
+        if (key == "temperature")
             plate.config.medium.temperature = static_cast<float>(value);
-        else if (key.rfind("soluto:", 0) == 0) {
+        else if (key.rfind("solute:", 0) == 0) {
             if (float* f = mediumField(plate.config.medium, key.substr(7)))
                 *f = static_cast<float>(value);
         } else if (findParameter(key)) {
@@ -377,7 +379,7 @@ std::string experimentJson(const ExperimentResult& r) {
     std::ostringstream j;
     j << "{\n  \"formato\": \"biogame-experimento\",\n  \"version\": 1,\n";
     j << "  \"nombre\": " << quoted(r.spec.name) << ",\n";
-    j << "  \"tipo\": \"" << (r.spec.kind == ExperimentSpec::Kind::Culture ? "cultivo" : "placa") << "\",\n";
+    j << "  \"tipo\": \"" << (r.spec.kind == ExperimentSpec::Kind::Culture ? "culture" : "plate") << "\",\n";
     j << "  \"procedencia\": {\"version_programa\": " << quoted(BIO_VERSION) << ", \"commit\": " << quoted(BIO_GIT)
       << ", \"compilacion\": " << quoted(BIO_BUILD_FLAGS) << ", \"motor_xpbd\": \"CPU\", \"maquina\": "
       << quoted(machineDescription())
@@ -425,8 +427,8 @@ std::string experimentJson(const ExperimentResult& r) {
     j << "\n  }";
     // Dosis-respuesta: con un solo factor que es un reactivo, la CI50 (Hill) y la CIM de las bacterias
     // al final, como en una dilución en caldo (crecimiento visible: ~10⁷ por mL, ESTIMACIÓN).
-    const int bact = r.column("bacterias");
-    if (r.spec.factors.size() == 1 && r.spec.factors[0].key.rfind("reactivo:", 0) == 0 && bact >= 0 && !r.times.empty()) {
+    const int bact = r.column("bacteria");
+    if (r.spec.factors.size() == 1 && r.spec.factors[0].key.rfind("reagent:", 0) == 0 && bact >= 0 && !r.times.empty()) {
         std::vector<double> doses, finals;
         for (std::size_t l = 0; l < r.levels.size(); ++l) {
             doses.push_back(r.levels[l].settings.empty() ? 0.0 : r.levels[l].settings[0].second);
@@ -434,7 +436,7 @@ std::string experimentJson(const ExperimentResult& r) {
         }
         const DoseFit f = fitDoseResponse(doses, finals);
         const bool culture = r.spec.kind == ExperimentSpec::Kind::Culture;
-        j << ",\n  \"dosis_respuesta\": {\"reactivo\": " << quoted(r.spec.factors[0].key.substr(9))
+        j << ",\n  \"dosis_respuesta\": {\"reactivo\": " << quoted(r.spec.factors[0].key.substr(8))
           << ", \"unidad\": \"ug/mL\", \"ci50\": " << num(f.valid ? f.ic50 : 0.0) << ", \"hill\": " << num(f.hill)
           << ", \"r2\": " << num(f.r2);
         if (culture)
@@ -443,6 +445,27 @@ std::string experimentJson(const ExperimentResult& r) {
     }
     j << "\n}\n";
     return j.str();
+}
+
+// Un experimento guardado con las claves viejas (en español): se renombran antes de leerlo.
+void renameLegacyKeys(toml::table& t) {
+    std::vector<std::pair<std::string, std::string>> renames;
+    for (auto& [k, v] : t) {
+        if (toml::table* sub = v.as_table())
+            renameLegacyKeys(*sub);
+        else if (toml::array* a = v.as_array())
+            for (toml::node& n : *a)
+                if (toml::table* e = n.as_table())
+                    renameLegacyKeys(*e);
+        const std::string_view now = currentName(k.str());
+        if (now != k.str() && !t.contains(now))
+            renames.emplace_back(std::string(k.str()), std::string(now));
+    }
+    for (const auto& [old, now] : renames) {
+        toml::node_view<toml::node> n = t[old];
+        t.insert(now, *n.node());
+        t.erase(old);
+    }
 }
 
 bool parseExperiment(const std::string& text, ExperimentSpec& spec, std::string* error) {
@@ -454,51 +477,57 @@ bool parseExperiment(const std::string& text, ExperimentSpec& spec, std::string*
             *error = std::string(e.description());
         return false;
     }
-    const toml::table* ex = doc["experimento"].as_table();
+    renameLegacyKeys(doc);
+    const toml::table* ex = doc["experiment"].as_table();
     if (!ex) {
         if (error)
-            *error = "falta [experimento]";
+            *error = "falta [experiment]";
         return false;
     }
     spec = ExperimentSpec{};
-    spec.name = (*ex)["nombre"].value_or(spec.name);
-    const std::string kind = (*ex)["tipo"].value_or(std::string("cultivo"));
-    spec.kind = kind == "placa" ? ExperimentSpec::Kind::Plate : ExperimentSpec::Kind::Culture;
-    spec.replicas = static_cast<int>((*ex)["replicas"].value_or(static_cast<std::int64_t>(spec.replicas)));
+    spec.name = (*ex)["name"].value_or(spec.name);
+    const std::string kind(currentName((*ex)["kind"].value_or(std::string("culture"))));
+    spec.kind = kind == "plate" ? ExperimentSpec::Kind::Plate : ExperimentSpec::Kind::Culture;
+    spec.replicas = static_cast<int>((*ex)["replicates"].value_or(static_cast<std::int64_t>(spec.replicas)));
     spec.seed = static_cast<std::uint64_t>((*ex)["seed"].value_or(static_cast<std::int64_t>(spec.seed)));
-    spec.hours = (*ex)["horas"].value_or(spec.hours);
-    spec.sampleHours = (*ex)["muestreo_h"].value_or(spec.sampleHours);
-    spec.threads = static_cast<int>((*ex)["hilos"].value_or(static_cast<std::int64_t>(0)));
-    if (const toml::table* c = doc["cultivo"].as_table()) {
+    spec.hours = (*ex)["hours"].value_or(spec.hours);
+    spec.sampleHours = (*ex)["sample_h"].value_or(spec.sampleHours);
+    spec.threads = static_cast<int>((*ex)["threads"].value_or(static_cast<std::int64_t>(0)));
+    if (const toml::table* c = doc["culture"].as_table()) {
         CultureSpec& cs = spec.culture;
         cs.name = spec.name;
-        cs.vessel = (*c)["recipiente"].value_or(cs.vessel);
-        cs.medium = (*c)["medio"].value_or(cs.medium);
-        cs.temperature = static_cast<float>((*c)["temperatura"].value_or(static_cast<double>(cs.temperature)));
-        cs.light = static_cast<float>((*c)["luz"].value_or(static_cast<double>(cs.light)));
-        std::string scene = "cultivo_version=1\n";
-        if (const toml::array* p = (*c)["programa"].as_array())
+        cs.vessel = (*c)["vessel"].value_or(cs.vessel);
+        cs.medium = (*c)["medium"].value_or(cs.medium);
+        // Un id viejo se reescribe con el actual.
+        if (const Vessel* v = findVessel(cs.vessel))
+            cs.vessel = v->key;
+        if (const CultureMedium* m = findCultureMedium(cs.medium))
+            cs.medium = m->key;
+        cs.temperature = static_cast<float>((*c)["temperature"].value_or(static_cast<double>(cs.temperature)));
+        cs.light = static_cast<float>((*c)["light"].value_or(static_cast<double>(cs.light)));
+        std::string scene = "culture_version=1\n";
+        if (const toml::array* p = (*c)["program"].as_array())
             for (const toml::node& n : *p)
                 if (auto s = n.value<std::string>())
-                    scene += "programa=" + *s + '\n';
-        if (const toml::array* e = (*c)["eventos"].as_array())
+                    scene += "program=" + *s + '\n';
+        if (const toml::array* e = (*c)["events"].as_array())
             for (const toml::node& n : *e)
                 if (auto s = n.value<std::string>())
-                    scene += "evento=" + *s + '\n';
+                    scene += "event=" + *s + '\n';
         CultureSpec parsed;
         parseCultureScene(scene, parsed, spec.cultureEvents);
         cs.program = parsed.program;
     }
-    if (const toml::table* p = doc["placa"].as_table())
-        spec.plateScene = (*p)["escena"].value_or(std::string());
+    if (const toml::table* p = doc["plate"].as_table())
+        spec.plateScene = (*p)["scene"].value_or(std::string());
     if (const toml::array* fs = doc["factor"].as_array())
         for (const toml::node& n : *fs) {
             const toml::table* t = n.as_table();
             if (!t)
                 continue;
             ExperimentFactor f;
-            f.key = (*t)["clave"].value_or(std::string());
-            if (const toml::array* v = (*t)["valores"].as_array())
+            f.key = currentTarget((*t)["key"].value_or(std::string()));
+            if (const toml::array* v = (*t)["values"].as_array())
                 for (const toml::node& x : *v)
                     if (auto d = x.value<double>())
                         f.values.push_back(*d);
@@ -507,7 +536,7 @@ bool parseExperiment(const std::string& text, ExperimentSpec& spec, std::string*
         }
     if (spec.kind == ExperimentSpec::Kind::Plate && spec.plateScene.empty()) {
         if (error)
-            *error = "un experimento de placa necesita [placa] escena";
+            *error = "un experimento de placa necesita [plate] escena";
         return false;
     }
     return true;
@@ -515,33 +544,33 @@ bool parseExperiment(const std::string& text, ExperimentSpec& spec, std::string*
 
 std::string serializeExperiment(const ExperimentSpec& s) {
     std::ostringstream out;
-    out << "[experimento]\nnombre = " << quoted(s.name) << "\ntipo = \""
-        << (s.kind == ExperimentSpec::Kind::Culture ? "cultivo" : "placa") << "\"\nreplicas = " << s.replicas
+    out << "[experiment]\nnombre = " << quoted(s.name) << "\ntipo = \""
+        << (s.kind == ExperimentSpec::Kind::Culture ? "culture" : "plate") << "\"\nreplicas = " << s.replicas
         << "\nseed = " << s.seed << "\nhoras = " << num(s.hours) << "\nmuestreo_h = " << num(s.sampleHours) << "\n";
     if (s.kind == ExperimentSpec::Kind::Culture) {
         const CultureSpec& c = s.culture;
-        out << "\n[cultivo]\nrecipiente = " << quoted(c.vessel) << "\nmedio = " << quoted(c.medium)
-            << "\ntemperatura = " << num(c.temperature) << "\nluz = " << num(c.light) << "\nprograma = [";
+        out << "\n[culture]\nvessel = " << quoted(c.vessel) << "\nmedium = " << quoted(c.medium)
+            << "\ntemperature = " << num(c.temperature) << "\nlight = " << num(c.light) << "\nprogram = [";
         const std::string program = serializeProgram(c.program);
         std::istringstream lines(program);
         std::string line;
         bool first = true;
         while (std::getline(lines, line)) {
-            out << (first ? "" : ", ") << quoted(line.substr(9));
+            out << (first ? "" : ", ") << quoted(line.substr(8));
             first = false;
         }
-        out << "]\neventos = [";
+        out << "]\nevents = [";
         first = true;
         const std::string scene = serializeCultureScene(c, s.cultureEvents);
         std::istringstream sl(scene);
         while (std::getline(sl, line))
-            if (line.rfind("evento=", 0) == 0) {
-                out << (first ? "" : ", ") << quoted(line.substr(7));
+            if (line.rfind("event=", 0) == 0) {
+                out << (first ? "" : ", ") << quoted(line.substr(6));
                 first = false;
             }
         out << "]\n";
     } else {
-        out << "\n[placa]\nescena = " << quoted(s.plateScene) << "\n";
+        out << "\n[plate]\nscene = " << quoted(s.plateScene) << "\n";
     }
     for (const ExperimentFactor& f : s.factors) {
         out << "\n[[factor]]\nclave = " << quoted(f.key) << "\nvalores = [";

@@ -5,7 +5,7 @@
 #include <vector>
 
 // Reactivos (fase P1, paso 11): antibióticos y otros compuestos que se agregan a la placa (gotero) o
-// al cultivo. Datos de los paquetes (reactivos.toml, [[reactivo]]): el código aporta el MECANISMO y
+// al cultivo. Datos de los paquetes (reagents/, [[reagent]]): el código aporta el MECANISMO y
 // los datos sus parámetros medidos, con fuente. La CI50 y la CIM no son datos de entrada: salen de
 // un experimento de dosis-respuesta (game/experiment, game/dose_fit), como en el laboratorio.
 //
@@ -18,7 +18,8 @@
 // ahora respecto de ψmax: una bacteria que no crece no muere (tolerancia de la fase estacionaria).
 struct Reagent {
     std::string key, name, description, pack;
-    std::vector<std::string> targets; // "bacterias" (los eucariotas no tienen pared de peptidoglicano)
+    std::vector<std::string> legacyIds; // ids viejos (core/ids)
+    std::vector<std::string> targets; // "bacteria" (los eucariotas no tienen pared de peptidoglicano)
     bool growthDependent = true;
     double psiMax = 1.0, psiMin = -1.0; // [1/h]
     double zMic = 1.0;                  // [µg/mL]

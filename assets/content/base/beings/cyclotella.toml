@@ -1,0 +1,49 @@
+# Cyclotella meneghiniana: diatomea céntrica planctónica, disco de ~15 µm, inmóvil. Tilman (1977).
+
+[[being]]
+id = "cyclotella"
+name = "Cyclotella"
+tags = ["alga", "diatom", "phototroph", "chytrid_host"]
+description = "Diatomea en disco, planctonica. Muy eficiente con poca silice: gana a Asterionella cuando la silice limita (Tilman 1977)."
+locomotion = "cilia"
+body_plan = "diatom"
+relative_speed = 0.0
+relative_photosynthesis = 1.5
+initial_count = 20
+chloroplasts = true
+frustule = true
+ph = [6.0, 9.5]
+temperature = [2.0, 35.0]
+storage = "chrysolaminarin"
+wall = "silica"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 8.0
+semi_minor_axis = 8.0
+# Disco: el eje de la frústula (vista de cintura) mide la mitad del diámetro.
+thickness = 4.0
+shape_memory = 40.0
+color = [204, 182, 112]
+nucleus = 0.3
+[being.appearance]
+style = "frustule"
+plastid_color = [176, 140, 50]
+
+[physiology.cyclotella.max_growth]
+value = 1.1
+unit = "1/day"
+temperature = 24.0
+source = "Tilman & Kilham (1976), J. Phycol. 12: 375-383. SIN VERIFICAR."
+estimate = true
+
+[physiology.cyclotella.p_half_saturation]
+value = 0.25
+unit = "µM"
+source = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con fosfato). SIN VERIFICAR."
+estimate = true
+
+[physiology.cyclotella.si_half_saturation]
+value = 1.4
+unit = "µM"
+source = "Tilman & Kilham (1976), J. Phycol. 12: 375-383 (K de crecimiento con silicato). SIN VERIFICAR."
+estimate = true

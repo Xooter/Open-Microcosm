@@ -60,6 +60,11 @@ double cellContent(const CultureCell& c) {
 } // namespace
 
 const char* soluteKey(Solute s) {
+    static const char* const names[] = {"o2", "co2", "phosphate", "nitrogen", "silicate", "iron", "b12", "organic"};
+    return names[static_cast<int>(s)];
+}
+
+const char* soluteLabel(Solute s) {
     static const char* const names[] = {"o2", "co2", "fosfato", "nitrogeno", "silice", "hierro", "b12", "organica"};
     return names[static_cast<int>(s)];
 }
@@ -267,18 +272,18 @@ void Culture::applyProgram(double fromHours, double toHours) {
         if (e.isAction()) {
             const int times = programEvents(e, fromHours, toHours);
             for (int k = 0; k < times; ++k) {
-                if (e.target == "bacterias")
+                if (e.target == "bacteria")
                     inoculateBacteria(static_cast<std::uint64_t>(std::max(0.0, static_cast<double>(e.amount) * volumeMl())));
-                else if (e.target == "medio")
+                else if (e.target == "medium")
                     renewMedium(e.amount);
-                else if (e.target == "dilucion")
+                else if (e.target == "dilution")
                     dilute(e.amount);
-                else if (e.target.rfind("agregar:", 0) == 0) {
+                else if (e.target.rfind("add:", 0) == 0) {
                     for (int s = 0; s < kSoluteCount; ++s)
-                        if (e.target.substr(8) == soluteKey(static_cast<Solute>(s)))
+                        if (e.target.substr(4) == soluteKey(static_cast<Solute>(s)))
                             setConcentration(static_cast<Solute>(s), concentration(static_cast<Solute>(s)) + e.amount);
-                } else if (e.target.rfind("inocular:", 0) == 0) {
-                    if (const std::optional<SpeciesId> id = findSpecies(e.target.substr(9)))
+                } else if (e.target.rfind("inoculate:", 0) == 0) {
+                    if (const std::optional<SpeciesId> id = findSpecies(e.target.substr(10)))
                         inoculate(*id, static_cast<int>(e.amount));
                 }
             }
@@ -287,11 +292,11 @@ void Culture::applyProgram(double fromHours, double toHours) {
         float v;
         if (!programValue(e, toHours, v))
             continue;
-        if (e.target == "temperatura")
+        if (e.target == "temperature")
             medium_.temperature = v;
-        else if (e.target == "luz")
+        else if (e.target == "light")
             medium_.surfaceLight = std::max(0.0f, v);
-        else if (e.target.rfind("soluto:", 0) == 0) {
+        else if (e.target.rfind("solute:", 0) == 0) {
             const std::string key = e.target.substr(7);
             for (int k = 0; k < kSoluteCount; ++k)
                 if (key == soluteKey(static_cast<Solute>(k)))
@@ -562,7 +567,7 @@ void Culture::stepBacteria(float bioDt) {
         // Reactivos: la muerte que agregan con lo que crece ahora la cohorte (Regoes et al. 2004).
         double kill = 0.0;
         for (std::size_t r = 0; r < reagents_.size(); ++r)
-            if (reagents_[r] > 0.0 && reagent(static_cast<int>(r)).affects("bacterias"))
+            if (reagents_[r] > 0.0 && reagent(static_cast<int>(r)).affects("bacteria"))
                 kill += reagentKillRate(reagent(static_cast<int>(r)), reagents_[r],
                                         change / std::max(1e-6f, b.mass) / std::max(1e-9f, hours));
         b.mass += change;

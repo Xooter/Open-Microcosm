@@ -1,0 +1,60 @@
+# Paramecium aurelia: ~130 × 40 µm, más chico que P. caudatum; mismo modo de vida (bacterívoro
+# por surco oral). En el cultivo mixto de Gause (1934) excluye a P. caudatum.
+
+[[being]]
+id = "paramecium_aurelia"
+name = "Paramecium aurelia"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Paramecio mas chico (~130 um). En el cultivo mixto de Gause (1934) desplaza a P. caudatum: exclusion competitiva."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "oral_groove"
+flees_from = ["didinium", "lacrymaria"]
+conjugation = true
+chemokinesis = true
+acid_trap = true
+initial_count = 20
+cyclosis = 4.0
+ph = [6.0, 9.5]
+temperature = [5.0, 35.0]
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 65.0
+semi_minor_axis = 20.0
+shape_memory = 8.0
+color = [168, 180, 142]
+nucleus = 0.32
+
+[physiology.paramecium_aurelia.max_growth]
+# Ajuste logístico (r) al monocultivo de P. aurelia de la fig. 22 (datos en gauseR):
+# r = 0,707 ± 0,090 /día, K = 222 (volumen relativo).
+value = 0.707
+unit = "1/day"
+temperature = 26.0
+source = "Gause, G. F. (1934). The Struggle for Existence, fig. 22 (P. aurelia en monocultivo). Temperatura del cultivo sin verificar (se asume 26 °C)."
+estimate = true
+
+# Diatomeas de Tilman (1977, Ecology 58: 338-348) con las constantes de Tilman & Kilham (1976,
+# J. Phycol. 12: 375-383, doi 10.1111/j.1529-8817.1976.tb02860.x). SIN VERIFICAR contra las
+# tablas originales: confirmado solo que Asterionella tiene la K de P más baja (gana con P
+# limitante) y Cyclotella la de Si más baja (gana con Si limitante).
+[physiology.paramecium_aurelia.max_ingestion]
+# Sin medición directa: la de P. caudatum escalada por alometría con el volumen celular (la
+# ingestión específica máxima del zooplancton escala ~V^−0,23-−0,25: Hansen, Bjørnsen y Hansen
+# 1997, Limnol. Oceanogr. 42: 687-704). Volúmenes de los esferoides de [being.shape]: P. aurelia
+# 1,09·10⁵ µm³ contra 2,36·10⁵ (0,46), ×0,46^0,75 = 0,56.
+value = 14600.0
+unit = "bacteria/h"
+temperature = 25.0
+source = "Escalada por alometría (V^0,75; Hansen et al. 1997) desde P. caudatum (Applied Water Science 2013, doi:10.1007/s13201-013-0130-1)."
+estimate = true
+
+[physiology.paramecium_aurelia.clearance]
+# El de P. caudatum escalado como el aclaramiento específico máximo del zooplancton: ∝ V^−0,23
+# (Hansen et al. 1997), o sea aclaramiento ∝ V^0,77: 23,6 × 0,46^0,77 = 13,0 µL/h.
+value = 13.0
+unit = "uL/h"
+temperature = 20.0
+source = "Escalado desde P. caudatum con el exponente del aclaramiento específico máximo del zooplancton (V^-0,23; Hansen, Bjørnsen y Hansen 1997, Limnol. Oceanogr. 42: 687-704)."
+estimate = true

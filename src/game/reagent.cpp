@@ -1,6 +1,7 @@
 #include "game/reagent.hpp"
 
-#include "core/paths.hpp"
+#include "core/pack_files.hpp"
+#include "core/ids.hpp"
 #include "core/toml_reader.hpp"
 
 #include <algorithm>
@@ -23,14 +24,14 @@ Registry& registry() {
     return r;
 }
 
-constexpr const char* kKeys[] = {"id", "nombre", "descripcion", "mecanismo", "blancos", "depende_del_crecimiento",
-                                 "farmacodinamia", "cim_publicada", "difusion"};
-constexpr const char* kPdKeys[] = {"psi_max", "psi_min", "zmic", "kappa", "fuente"};
-constexpr const char* kMicKeys[] = {"valor", "fuente"};
+constexpr const char* kKeys[] = {"id", "legacy_ids", "name", "description", "mechanism", "targets", "growth_dependent",
+                                 "pharmacodynamics", "published_mic", "diffusion"};
+constexpr const char* kPdKeys[] = {"psi_max", "psi_min", "zmic", "kappa", "source"};
+constexpr const char* kMicKeys[] = {"value", "source"};
 
 void loadParsed(const toml::table& doc, const std::string& source, const std::string& pack) {
     Registry& reg = registry();
-    const toml::array* list = doc["reactivo"].as_array();
+    const toml::array* list = doc["reagent"].as_array();
     if (!list)
         return;
     for (const toml::node& node : *list) {
@@ -39,41 +40,42 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
             continue;
         Reagent r;
         r.pack = pack;
-        toml_io::Reader rd{*t, source + " [[reactivo]]", {}};
+        toml_io::Reader rd{*t, source + " [[reagent]]", {}};
         rd.text("id", r.key);
         const std::string where = source + " reactivo '" + r.key + "'";
         toml_io::warnUnknown(*t, kKeys, where, reg.warnings);
-        rd.text("nombre", r.name);
-        rd.text("descripcion", r.description);
-        rd.flag("depende_del_crecimiento", r.growthDependent);
-        rd.num("difusion", r.diffusion);
-        const std::string mechanism = (*t)["mecanismo"].value_or(std::string("farmacodinamico"));
-        if (mechanism != "farmacodinamico")
+        rd.strings("legacy_ids", r.legacyIds);
+        rd.text("name", r.name);
+        rd.text("description", r.description);
+        rd.flag("growth_dependent", r.growthDependent);
+        rd.num("diffusion", r.diffusion);
+        const std::string mechanism = (*t)["mechanism"].value_or(std::string("pharmacodynamic"));
+        if (mechanism != "pharmacodynamic")
             reg.warnings.push_back(where + ": mecanismo desconocido '" + mechanism + "'");
-        if (const toml::array* b = (*t)["blancos"].as_array())
+        if (const toml::array* b = (*t)["targets"].as_array())
             for (const toml::node& n : *b)
                 if (auto s = n.value<std::string>())
                     r.targets.push_back(*s);
-        if (const toml::table* pd = (*t)["farmacodinamia"].as_table()) {
+        if (const toml::table* pd = (*t)["pharmacodynamics"].as_table()) {
             toml_io::warnUnknown(*pd, kPdKeys, where + " farmacodinamia", reg.warnings);
             toml_io::Reader p{*pd, where + " farmacodinamia", {}};
             p.num("psi_max", r.psiMax);
             p.num("psi_min", r.psiMin);
             p.num("zmic", r.zMic);
             p.num("kappa", r.kappa);
-            p.text("fuente", r.source);
+            p.text("source", r.source);
             reg.warnings.insert(reg.warnings.end(), p.errors.begin(), p.errors.end());
         } else {
-            reg.warnings.push_back(where + ": falta [reactivo.farmacodinamia]");
+            reg.warnings.push_back(where + ": falta [reagent.pharmacodynamics]");
         }
-        if (const toml::table* m = (*t)["cim_publicada"].as_table()) {
+        if (const toml::table* m = (*t)["published_mic"].as_table()) {
             toml_io::warnUnknown(*m, kMicKeys, where + " cim_publicada", reg.warnings);
-            r.publishedMic = (*m)["valor"].value_or(0.0);
-            r.micSource = (*m)["fuente"].value_or(std::string());
+            r.publishedMic = (*m)["value"].value_or(0.0);
+            r.micSource = (*m)["source"].value_or(std::string());
         }
         reg.warnings.insert(reg.warnings.end(), rd.errors.begin(), rd.errors.end());
         if (r.source.empty())
-            reg.warnings.push_back(where + ": la farmacodinamia necesita su 'fuente'");
+            reg.warnings.push_back(where + ": la farmacodinamia necesita su 'source'");
         if (r.key.empty() || r.name.empty() || !(r.psiMax > 0.0) || !(r.zMic > 0.0) || !(r.kappa > 0.0)) {
             reg.warnings.push_back(where + ": sin id, nombre o farmacodinamia válida: se saltea");
             continue;
@@ -94,11 +96,13 @@ void ensureBase() {
     if (reg.baseLoaded)
         return;
     reg.baseLoaded = true;
-    const std::string path = assetPath("content/base/reactivos.toml");
-    try {
-        loadParsed(toml::parse_file(path), path, "base");
-    } catch (const toml::parse_error& e) {
-        reg.warnings.push_back("no se pudo cargar " + path + ": " + std::string(e.description()));
+    for (const auto& file : packFolderFiles(basePackDir(), "reagents")) {
+        const std::string path = file.string();
+        try {
+            loadParsed(toml::parse_file(path), path, "base");
+        } catch (const toml::parse_error& e) {
+            reg.warnings.push_back("no se pudo cargar " + path + ": " + std::string(e.description()));
+        }
     }
     reg.ready.store(true, std::memory_order_release);
 }
@@ -119,10 +123,7 @@ const Reagent& reagent(int index) {
 }
 int findReagent(std::string_view key) {
     ensureBase();
-    for (std::size_t i = 0; i < registry().reagents.size(); ++i)
-        if (registry().reagents[i].key == key)
-            return static_cast<int>(i);
-    return -1;
+    return static_cast<int>(indexOfId(registry().reagents, key));
 }
 bool loadReagentsText(const std::string& text, const std::string& source, const std::string& pack, std::string* error) {
     std::lock_guard<std::recursive_mutex> lock(registry().mutex);

@@ -1,0 +1,37 @@
+# Colpoda cucullus: ciliado arriñonado de 40–120 µm (usualmente 60–80; Kreutz), el típico de las
+# infusiones de heno y del musgo mojado: se enquista cuando se seca y se divide dentro de un quiste
+# reproductivo en 2–4 hijas (acá se divide libre). Casi nunca se conjuga. Ancho estimado (~65 % del
+# largo, "anchamente reniforme").
+[[being]]
+id = "colpoda"
+name = "Colpoda"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Ciliado arrinonado de ~70 um, el de las infusiones de heno y del musgo. Cuando el agua se seca se enquista, y al mojarse sale del quiste en minutos."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "oral_groove"
+relative_speed = 0.7
+encysts = true
+initial_count = 8
+cyclosis = 2.0
+ph = [5.0, 9.5]
+temperature = [2.0, 32.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 35.0
+semi_minor_axis = 23.0
+thickness = 16.0
+shape_memory = 8.0
+color = [182, 180, 158]
+nucleus = 0.3
+
+[physiology.colpoda.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 35, 23 y 16 µm: 53952 µm³).
+value = 1.19
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 53952 µm³). No es una medición de la especie."
+estimate = true

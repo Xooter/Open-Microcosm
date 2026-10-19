@@ -113,7 +113,7 @@ struct MetabolicInput {
     float toxin = 0.0f;       // daño por toxinas (microcistina, violaceína): multiplica el gasto
     // Anaerobias con hidrogenosomas (Trichonympha): ~4 ATP por glucosa en vez de 2.
     float fermentationScale = 1.0f;
-    // Medias saturaciones de la especie [µM] (assets/content/base/fisiologia.toml); 0: las generales.
+    // Medias saturaciones de la especie [µM] ([physiology.<id>.*] de cada ser); 0: las generales.
     float phosphorusHalfSaturation = 0.0f;
     float siliconHalfSaturation = 0.0f;
 };

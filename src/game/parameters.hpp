@@ -24,7 +24,7 @@ enum class ParamGroup : std::uint8_t {
 };
 
 struct ParamInfo {
-    const char* key;   // estable, no se traduce: "medio.alcalinidad"
+    const char* key;   // estable, no se traduce: "medium.alkalinity"
     const char* label; // clave de traducción (texto en español)
     const char* unit;  // "" si no tiene
     ParamGroup group;

@@ -1,0 +1,7 @@
+[[term]]
+id = "photosynthesis"
+term = "Fotosíntesis"
+definition = "Fijación del CO₂ en azúcares con la energía de la luz, liberando O₂. Las algas y las cianobacterias la hacen en la luz local, que atenúa lo que hay encima."
+source = "Falkowski, P. G. & Raven, J. A. (2007). Aquatic Photosynthesis, 2.ª ed. Princeton University Press."
+alias = ["fotosintética", "fotosintéticas", "fotótrofa", "fotótrofas", "clorofila"]
+related = ["beer_lambert", "respiration"]

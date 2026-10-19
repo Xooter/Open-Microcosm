@@ -90,4 +90,4 @@ BioGame es software libre bajo la **GNU General Public License, versión 3 o pos
 (`GPL-3.0-or-later`, texto completo en `LICENSE`). Quien distribuya el programa o una versión
 modificada tiene que ofrecer el código fuente con la misma licencia. Las dependencias (raylib y
 GLFW: zlib; Dear ImGui, ImPlot, EnTT y toml++: MIT; la fuente Roboto: Apache 2.0) son compatibles;
-sus licencias se instalan en `licencias/` junto al ejecutable.
+sus licencias se instalan en `licenses/` junto al ejecutable.

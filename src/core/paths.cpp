@@ -71,3 +71,14 @@ std::string userDataDir() {
         base = ".";
     return (base / "biogame").string();
 }
+
+std::string userDataSubdir(const char* name, const char* legacyName) {
+    const fs::path dir = fs::path(userDataDir()) / name;
+    if (legacyName) {
+        std::error_code ec;
+        const fs::path old = fs::path(userDataDir()) / legacyName;
+        if (!fs::exists(dir, ec) && fs::is_directory(old, ec))
+            fs::rename(old, dir, ec);
+    }
+    return dir.string();
+}

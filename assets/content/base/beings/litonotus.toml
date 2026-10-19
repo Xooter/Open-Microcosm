@@ -1,0 +1,39 @@
+# Litonotus lamella: haptórido en lanza de 50–100 × 10–25 µm (Kreutz), aplanado, con extrusomas en la
+# hendidura oral: caza ciliados, sobre todo hipotricos como Euplotes (la pareja Litonotus–Euplotes es
+# un sistema depredador–presa de laboratorio).
+[[being]]
+id = "litonotus"
+name = "Litonotus"
+tags = ["protist", "ciliate"]
+description = "Ciliado chato en forma de lanza (~75 um) con una boca en hendidura armada de extrusomas. Caza otros ciliados, sobre todo Euplotes."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "raptorial"
+relative_speed = 0.5
+prey = ["euplotes", "tetrahymena", "colpidium", "colpoda", "chilodonella"]
+conjugation = true
+initial_count = 2
+handling_hours = 2.0
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 37.5
+semi_minor_axis = 9.0
+thickness = 4.0
+shape_memory = 6.0
+color = [186, 188, 170]
+nucleus = 0.3
+taper = 0.5
+
+[physiology.litonotus.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 37,5, 9 y 4 µm: 5655 µm³).
+value = 2.18
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 5655 µm³). No es una medición de la especie."
+estimate = true

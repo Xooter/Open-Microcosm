@@ -1,0 +1,30 @@
+# Amoeba proteus (chica): ~180 µm, fagocita algas y ciliados.
+
+[[being]]
+id = "amoeba"
+name = "Amoeba"
+tags = ["protist", "amoeboid"]
+description = "Ameba gigante: extiende seudopodos, envuelve a la presa con la membrana y la encierra en una vacuola."
+locomotion = "pseudopod"
+body_plan = "amoeba"
+feeding = "phagocytosis"
+prey = ["paramecium", "euglena", "chlamydomonas", "euplotes", "navicula", "pediastrum", "paramecium_aurelia", "asterionella", "cyclotella", "tetrahymena", "colpidium", "phacus", "pinnularia"]
+initial_count = 2
+handling_hours = 1.5
+ph = [6.0, 9.5]
+temperature = [10.0, 30.0]
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 90.0
+semi_minor_axis = 90.0
+shape_memory = 0.0
+color = [188, 176, 160]
+nucleus = 0.2
+
+[physiology.amoeba.max_growth]
+# Generación más corta a 20 °C, bien alimentada con Tetrahymena (rango 44-84 h según el alimento).
+value = 44.0
+unit = "h"
+temperature = 20.0
+source = "Rogerson, A. (1980). Can. J. Zool.: tiempo de generación de Amoeba proteus alimentada con Tetrahymena pyriformis, 44 h a 20 °C (tesis de Rogerson 1978, Univ. of Stirling: 44-84 h a 20 °C)."

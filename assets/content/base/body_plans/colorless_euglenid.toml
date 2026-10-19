@@ -1,0 +1,17 @@
+# Euglenoide incoloro (Peranema): sin cloroplastos ni estigma; un aparato de ingestión con dos varillas
+# (no hay tipo de estructura para él: se nombra en la ficha) y granos de paramilón.
+[[body_plan]]
+id = "colorless_euglenid"
+name = "euglenido incoloro"
+morphology = "eukaryote"
+structures = [
+    { kind = "plasma_membrane", source = "simulated", arrangement = "envelope", brightfield = true, name = "pelicula estriada" },
+    { kind = "nucleus", source = "simulated", arrangement = "interior", count = 1, brightfield = true, name = "nucleo" },
+    { kind = "mitochondrion", source = "simulated", arrangement = "interior", length = 2.0, width = 0.5, brightfield = false, name = "mitocondrias" },
+    { kind = "contractile_vacuole", source = "simulated", arrangement = "interior", count = 1, brightfield = true, name = "vacuola contractil" },
+    { kind = "food_vacuole", source = "simulated", arrangement = "interior", brightfield = true, name = "vacuolas digestivas" },
+    { kind = "storage_granule", source = "simulated", arrangement = "interior", brightfield = true, name = "granulos de paramilon" },
+    { kind = "endoplasmic_reticulum", source = "declared", arrangement = "perinuclear", length = 3.0, width = 0.05, count = 1, brightfield = false, name = "reticulo endoplasmico rugoso" },
+    { kind = "golgi", source = "declared", arrangement = "perinuclear", length = 1.0, width = 0.3, count = 1, brightfield = false, name = "aparato de Golgi (un dictiosoma)" },
+    { kind = "ribosomes", source = "declared", arrangement = "interior", length = 0.025, width = 0.025, per_um3 = 3000.0, brightfield = false, name = "ribosomas 80S" },
+]

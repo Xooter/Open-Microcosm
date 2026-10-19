@@ -1,0 +1,25 @@
+# Monocito: el leucocito más grande (~12–20 µm), con núcleo arriñonado y citoplasma gris azulado.
+[[being]]
+id = "monocyte"
+legacy_ids = ["monocito"]
+name = "Monocito"
+tags = ["human_cell", "animal_cell", "leukocyte", "phagocyte"]
+description = "El globulo blanco mas grande (~15 um): nucleo en forma de rinon y citoplasma gris azulado con vacuolas. En los tejidos se vuelve macrofago."
+body_plan = "leukocyte"
+locomotion = "none"
+relative_speed = 0.0
+feeding = "none"
+relative_dry_mass = 0.2588
+ph = [6.8, 7.8]
+temperature = [10.0, 40.0]
+max_salinity = 16.0
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 7.5
+semi_minor_axis = 7.0
+shape_memory = 4.0
+color = [218, 218, 214]
+nucleus = 0.6
+[being.appearance]
+style = "monocyte"

@@ -1,0 +1,30 @@
+[[lesson]]
+id = "gause_competition"
+legacy_ids = ["gause_competencia"]
+title = "Gause: competencia entre dos paramecios"
+level = "universitario"
+goal = "Repetir el experimento de Gause (1934): dos especies de Paramecium que comen lo mismo, en un tubo con una racion diaria de bacterias. Con una sola comida, una de las dos termina excluyendo a la otra (exclusion competitiva)."
+source = "Gause, G. F. (1934). The Struggle for Existence. Williams & Wilkins, cap. V; datos digitalizados en el paquete de R gauseR."
+culture = """
+culture_version=1
+name=gause
+vessel=gause_tube
+medium=osterhout_gause
+temperature=26
+light=0
+seed=1934
+program=medium event 24 inf 0 0 24 0.5 1
+program=bacteria event 24 inf 0 0 24 0.5 5e7
+event=0 bacteria 5e7
+event=0 inoculate 5 paramecium
+event=0 inoculate 5 paramecium_aurelia
+"""
+solution_hours = 720.0
+[[lesson.step]]
+text = "En el tubo hay 5 Paramecium caudatum y 5 P. aurelia. Cada dia se cambia el medio y se agrega la misma racion de bacterias (el protocolo de Gause)."
+goal = { kind = "time_h", op = ">=", value = 24.0 }
+prediction = { text = "Al dia 30, que fraccion de los paramecios va a ser P. aurelia?", quantity = { kind = "fraction", key = "paramecium_aurelia,paramecium" }, unit = "fraction" }
+[[lesson.step]]
+text = "Deja correr el cultivo 30 dias (subi la velocidad). Mira el grafico del panel Cultivos."
+goal = { kind = "time_h", op = ">=", value = 720.0 }
+question = { text = "Que predice el principio de exclusion competitiva?", options = ["Que las dos conviven si hay comida para todas", "Que dos especies que dependen del mismo recurso limitante no pueden coexistir: la que lo aprovecha mejor desplaza a la otra", "Que gana siempre la que crece mas rapido"], correct = 1, explanation = "Gause vio que P. aurelia excluia a P. caudatum. En el modelo, la ventaja de P. aurelia (mas comida por biomasa) es chica y la que se adelanta al principio puede ganar: corre replicas en el panel Experimento y compara la proporcion de veces que gana cada una." }

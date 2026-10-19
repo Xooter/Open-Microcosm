@@ -1,0 +1,33 @@
+[[lesson]]
+id = "onion_plasmolysis"
+legacy_ids = ["plasmolisis_cebolla"]
+title = "Plasmolisis de la epidermis de cebolla"
+level = "secundario"
+goal = "Ver la osmosis en una celula vegetal: en un medio mas concentrado que su jugo celular, el protoplasto pierde agua y se despega de la pared (plasmolisis); en agua vuelve a llenarla."
+source = "Practica clasica de laboratorio de biologia; osmosis de Boyle-van 't Hoff (bio/osmosis)."
+plate = "onion_epidermis"
+seed = 1
+controls = ["environment.salinity"]
+solution = ["0 0 0 0 0 0 30 0 0 0 0 0 environment.salinity", "18000 0 0 0 0 0 0 0 0 0 0 0 environment.salinity"]
+solution_hours = 10.0
+[[lesson.locked]]
+key = "environment.temperature"
+reason = "La osmosis depende de la concentracion: la temperatura se deja fija para que solo cambie la sal."
+[[lesson.actions]]
+text = "Montar en agua con sal (30 g/kg)"
+event = "0 0 0 0 0 0 30 0 0 0 0 0 environment.salinity"
+[[lesson.actions]]
+text = "Montar en agua (sin sal)"
+event = "0 0 0 0 0 0 0 0 0 0 0 0 environment.salinity"
+[[lesson.step]]
+text = "La epidermis esta montada en agua: las celulas estan turgentes, con el protoplasto apretado contra la pared."
+goal = { kind = "time_h", op = ">=", value = 0.1 }
+prediction = { text = "Que fraccion de las celulas se va a plasmolizar en agua con 30 g/kg de sal?", quantity = { kind = "plasmolysis" }, unit = "fraction" }
+[[lesson.step]]
+text = "Monta la epidermis en agua con sal (boton de la leccion, o la salinidad en 30 g/kg) y espera unos minutos."
+goal = { kind = "plasmolysis", op = ">=", value = 0.5 }
+question = { text = "Por que el protoplasto se despega de la pared?", options = ["La sal disuelve la pared", "El agua sale de la vacuola hacia el medio mas concentrado y la pared rigida no la sigue", "La celula se muere y se encoge"], correct = 1, explanation = "El agua cruza la membrana hacia donde hay mas solutos. La vacuola pierde agua y el protoplasto se achica; la pared de celulosa es rigida y queda en su lugar. La celula sigue viva: en agua se recupera." }
+[[lesson.step]]
+text = "Ahora monta la epidermis otra vez en agua sin sal y mira que pasa."
+goal = { kind = "plasmolysis", op = "<=", value = 0.1 }
+question = { text = "Que muestra la deplasmolisis?", options = ["Que las celulas estaban muertas", "Que la plasmolisis es reversible: la celula estaba viva y su membrana sigue siendo semipermeable", "Que la pared se reparo"], correct = 1, explanation = "Solo una membrana viva y semipermeable puede volver a tomar agua y llenar la pared. Una celula muerta no se plasmoliza ni se recupera." }

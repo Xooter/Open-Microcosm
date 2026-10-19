@@ -1,0 +1,14 @@
+# Levadura: pared de glucano y manano, vacuola grande, sin vacuola contráctil.
+[[body_plan]]
+id = "yeast"
+name = "levadura"
+morphology = "eukaryote"
+structures = [
+    { kind = "cell_wall", source = "declared", arrangement = "envelope", width = 0.15, count = 1, brightfield = false, name = "pared de glucano y manano" },
+    { kind = "plasma_membrane", source = "simulated", arrangement = "envelope", brightfield = false, name = "membrana plasmatica" },
+    { kind = "nucleus", source = "simulated", arrangement = "interior", count = 1, brightfield = false, name = "nucleo" },
+    { kind = "mitochondrion", source = "simulated", arrangement = "interior", length = 1.0, width = 0.4, brightfield = false, name = "mitocondrias" },
+    { kind = "endoplasmic_reticulum", source = "declared", arrangement = "perinuclear", length = 3.0, width = 0.05, count = 1, brightfield = false, name = "reticulo endoplasmico rugoso" },
+    { kind = "golgi", source = "declared", arrangement = "perinuclear", length = 1.0, width = 0.3, count = 1, brightfield = false, name = "aparato de Golgi (un dictiosoma)" },
+    { kind = "ribosomes", source = "declared", arrangement = "interior", length = 0.025, width = 0.025, per_um3 = 3000.0, brightfield = false, name = "ribosomas 80S" },
+]

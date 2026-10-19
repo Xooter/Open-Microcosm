@@ -1,0 +1,32 @@
+# Lacrymaria olor ("lágrima de cisne"): cuerpo de ~100 µm y un cuello que se estira hasta
+# 7–8 veces ese largo en segundos para atrapar ciliados y flagelados chicos.
+
+[[being]]
+id = "lacrymaria"
+name = "Lacrymaria"
+tags = ["protist", "ciliate"]
+description = "'Lagrima de cisne': estira un cuello hasta 7 veces su cuerpo en segundos para atrapar presas."
+locomotion = "cilia"
+conjugation = true
+body_plan = "ciliate"
+feeding = "neck"
+relative_speed = 0.5
+prey = ["euglena", "chlamydomonas", "euplotes"]
+initial_count = 2
+neck_reach = 400.0
+handling_hours = 1.5
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 50.0
+semi_minor_axis = 15.0
+shape_memory = 6.0
+color = [184, 188, 172]
+nucleus = 0.32
+
+[being.appearance]
+style = "extensible_neck"

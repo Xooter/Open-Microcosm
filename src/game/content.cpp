@@ -3,6 +3,7 @@
 #include "bio/body_plan.hpp"
 #include "bio/physiology.hpp"
 #include "build_info.hpp"
+#include "core/pack_files.hpp"
 #include "core/paths.hpp"
 #include "core/toml_reader.hpp"
 #include "game/glossary.hpp"
@@ -18,6 +19,7 @@
 #include <filesystem>
 #include <fstream>
 #include <mutex>
+#include <optional>
 #include <set>
 #include <sstream>
 
@@ -91,23 +93,23 @@ bool validId(const std::string& id) {
     return true;
 }
 
-// Lee y valida el manifiesto ([paquete]). false: el paquete se rechaza.
+// Lee y valida el manifiesto ([pack]). false: el paquete se rechaza.
 bool readManifest(const toml::table& doc, const std::string& where, PackInfo& p, std::vector<std::string>& messages) {
-    const toml::table* t = doc.get("paquete") ? doc.get("paquete")->as_table() : nullptr;
+    const toml::table* t = doc.get("pack") ? doc.get("pack")->as_table() : nullptr;
     if (!t) {
-        messages.push_back(where + ": falta la tabla [paquete] (id, nombre, version, autor, licencia)");
+        messages.push_back(where + ": falta la tabla [pack] (id, nombre, version, autor, licencia)");
         return false;
     }
     toml_io::Reader r{*t, where, {}};
-    constexpr const char* kKeys[] = {"id", "nombre", "version", "autor", "licencia", "programa_minimo"};
-    toml_io::warnUnknown(*t, kKeys, where + " [paquete]", messages);
+    constexpr const char* kKeys[] = {"id", "name", "version", "author", "license", "min_program", "order"};
+    toml_io::warnUnknown(*t, kKeys, where + " [pack]", messages);
     std::string minimum;
     r.text("id", p.id);
-    r.text("nombre", p.name);
+    r.text("name", p.name);
     r.text("version", p.version);
-    r.text("autor", p.author);
-    r.text("licencia", p.license);
-    r.text("programa_minimo", minimum);
+    r.text("author", p.author);
+    r.text("license", p.license);
+    r.text("min_program", minimum);
     messages.insert(messages.end(), r.errors.begin(), r.errors.end());
     if (!validId(p.id)) {
         messages.push_back(where + ": el id del paquete tiene que ser de 1 a 64 letras minúsculas, dígitos o '_'");
@@ -173,22 +175,22 @@ std::string sanitizeFileName(const std::string& name) {
     return out.substr(0, 64);
 }
 
-// Las [[escena]] de un .biopack pasan a la carpeta de placas (no se pisa una que ya existe).
+// Las [[scene]] de un .biopack pasan a la carpeta de placas (no se pisa una que ya existe).
 void installScenes(const toml::table& doc, const std::string& where, const std::string& pack,
                    std::vector<std::string>& messages) {
-    const toml::array* scenes = doc.get("escena") ? doc.get("escena")->as_array() : nullptr;
+    const toml::array* scenes = doc.get("scene") ? doc.get("scene")->as_array() : nullptr;
     if (!scenes)
         return;
     for (const toml::node& n : *scenes) {
         const toml::table* t = n.as_table();
         if (!t)
             continue;
-        toml_io::Reader r{*t, where + " [[escena]]", {}};
+        toml_io::Reader r{*t, where + " [[scene]]", {}};
         std::string id, plate;
         r.text("id", id);
-        r.text("placa", plate);
+        r.text("plate", plate);
         if (id.empty() || plate.empty() || !r.errors.empty()) {
-            messages.push_back(where + ": una [[escena]] sin 'id' o sin 'placa': se saltea");
+            messages.push_back(where + ": una [[scene]] sin 'id' o sin 'plate': se saltea");
             continue;
         }
         PlateSpec probe;
@@ -208,22 +210,63 @@ void installScenes(const toml::table& doc, const std::string& where, const std::
     }
 }
 
+// La tabla de definiciones de cada carpeta (la misma que en un .biopack).
+const char* folderArray(std::string_view folder) {
+    constexpr std::pair<const char*, const char*> kArrays[] = {
+        {"body_plans", "body_plan"}, {"minerals", "mineral"},     {"beings", "being"},    {"biomes", "biome"},
+        {"media", "medium"},     {"vessels", "vessel"}, {"plates", "plate"},  {"lessons", "lesson"},
+        {"reagents", "reagent"}, {"glossary", "term"}};
+    for (const auto& [f, array] : kArrays)
+        if (folder == f)
+            return array;
+    return nullptr;
+}
+
+// Los archivos del paquete: el manifiesto y los de cada carpeta, en orden de carga.
+std::vector<fs::path> packFiles(const fs::path& dir) {
+    std::vector<fs::path> files{dir / kPackManifest};
+    for (const char* folder : kPackFolders)
+        for (const fs::path& f : packFolderFiles(dir, folder))
+            files.push_back(f);
+    return files;
+}
+
+// FNV-1a de las rutas relativas y del contenido, en orden de nombre (no depende del orden de
+// carga ni de dónde está la carpeta).
 std::uint64_t fingerprintDir(const fs::path& dir) {
-    std::vector<fs::path> files;
-    std::error_code ec;
-    for (const auto& entry : fs::directory_iterator(dir, ec))
-        if (entry.is_regular_file() && entry.path().extension() == ".toml")
-            files.push_back(entry.path());
+    std::vector<fs::path> files = packFiles(dir);
     std::sort(files.begin(), files.end());
     std::uint64_t h = 1469598103934665603ull;
     for (const fs::path& f : files) {
-        mix(h, f.filename().string());
+        mix(h, f.lexically_relative(dir).generic_string());
         std::ifstream in(f, std::ios::binary);
         std::stringstream ss;
         ss << in.rdbuf();
         mix(h, ss.str());
     }
     return h;
+}
+
+// Un archivo de una carpeta es UNA definición de su tipo, con el nombre de su id: así un ser
+// nuevo es un archivo nuevo y se encuentra por el nombre.
+void checkDefinitionFile(std::string_view folder, const fs::path& path, const std::string& text,
+                         std::vector<std::string>& messages) {
+    const char* array = folderArray(folder);
+    toml::table doc;
+    try {
+        doc = toml::parse(text, path.string());
+    } catch (const toml::parse_error&) {
+        return; // el error lo informa el registro
+    }
+    const toml::array* list = array ? doc[array].as_array() : nullptr;
+    if (!list || list->size() != 1) {
+        messages.push_back(path.string() + ": tiene que traer una sola definición [[" + std::string(array ? array : "?") +
+                           "]]");
+        return;
+    }
+    const auto id = (*list)[0].as_table() ? (*(*list)[0].as_table())["id"].value<std::string>() : std::nullopt;
+    if (id && *id != path.stem().string())
+        messages.push_back(path.string() + ": el archivo tiene que llamarse como su id ('" + *id + ".toml')");
 }
 
 void ensureBase() {
@@ -233,12 +276,12 @@ void ensureBase() {
         return;
     p.baseLoaded = true;
     // Los registros cargan sus archivos de fábrica solos; acá solo el manifiesto y la huella.
-    const fs::path dir = assetPath("content/base");
+    const fs::path dir = basePackDir();
     PackInfo base;
     base.path = dir.string();
     try {
         std::vector<std::string> ignored;
-        readManifest(toml::parse_file((dir / "paquete.toml").string()), base.path, base, ignored);
+        readManifest(toml::parse_file((dir / kPackManifest).string()), base.path, base, ignored);
     } catch (const toml::parse_error&) {
     }
     if (base.id.empty())
@@ -247,11 +290,8 @@ void ensureBase() {
     p.list.push_front(std::move(base));
 }
 
-constexpr const char* kDirFiles[] = {"planes.toml", "minerales.toml", "seres.toml",   "fisiologia.toml",
-                                     "biomas.toml", "medios.toml",    "recipientes.toml", "placas.toml",
-                                     "lecciones.toml", "reactivos.toml", "glosario.toml"};
-constexpr const char* kBiopackKeys[] = {"paquete", "ser",   "plan",       "mineral", "bioma",
-                                        "fisiologia", "medio", "recipiente", "placa",   "escena", "leccion", "reactivo", "termino"};
+constexpr const char* kBiopackKeys[] = {"pack", "being",   "body_plan",       "mineral", "biome",
+                                        "physiology", "medium", "vessel", "plate",   "scene", "lesson", "reagent", "term"};
 
 } // namespace
 
@@ -276,7 +316,7 @@ std::string fingerprintHex(std::uint64_t fingerprint) {
     return buf;
 }
 
-std::string userPacksDir() { return (fs::path(userDataDir()) / "paquetes").string(); }
+std::string userPacksDir() { return userDataSubdir("packs", "paquetes"); }
 
 bool loadPack(const std::string& path, std::vector<std::string>& messages) {
     ensureBase();
@@ -289,11 +329,11 @@ bool loadPack(const std::string& path, std::vector<std::string>& messages) {
     std::error_code ec;
     bool ok = false;
     if (fs::is_directory(p, ec)) {
-        // Carpeta: el manifiesto y los archivos conocidos.
+        // Carpeta: el manifiesto y una carpeta por tipo, con un archivo por definición.
         std::string manifest;
-        if (readFile(p / "paquete.toml", manifest, local)) {
+        if (readFile(p / kPackManifest, manifest, local)) {
             try {
-                ok = readManifest(toml::parse(manifest, (p / "paquete.toml").string()), path, info, local);
+                ok = readManifest(toml::parse(manifest, (p / kPackManifest).string()), path, info, local);
             } catch (const toml::parse_error& e) {
                 local.push_back(path + ": " + std::string(e.description()));
             }
@@ -305,15 +345,37 @@ bool loadPack(const std::string& path, std::vector<std::string>& messages) {
         if (ok) {
             for (const auto& entry : fs::directory_iterator(p, ec)) {
                 const std::string name = entry.path().filename().string();
-                if (entry.path().extension() == ".toml" && name != "paquete.toml" &&
-                    std::find_if(std::begin(kDirFiles), std::end(kDirFiles), [&](const char* f) { return name == f; }) ==
-                        std::end(kDirFiles))
-                    local.push_back(path + ": archivo desconocido '" + name + "' (se ignora)");
+                const bool folder = std::find_if(std::begin(kPackFolders), std::end(kPackFolders),
+                                                 [&](const char* f) { return name == f; }) != std::end(kPackFolders);
+                if (entry.is_directory() && !folder && name != kPackLangFolder)
+                    local.push_back(path + ": carpeta desconocida '" + name + "' (se ignora)");
+                else if (!entry.is_directory() && entry.path().extension() == ".toml" && name != kPackManifest)
+                    local.push_back(path + ": archivo suelto '" + name + "' (va en la carpeta de su tipo; se ignora)");
             }
-            for (const char* file : kDirFiles) {
-                std::string text;
-                if (fs::exists(p / file, ec) && readFile(p / file, text, local))
-                    loadDefinitions(text, (p / file).string(), info.id, local);
+            // Topes del paquete entero (seguridad: un paquete compartido no puede colgar el programa).
+            const std::vector<fs::path> files = packFiles(p);
+            std::uintmax_t total = 0;
+            for (const fs::path& f : files)
+                total += fs::file_size(f, ec);
+            if (files.size() > kMaxPackFiles || total > kMaxPackBytes) {
+                local.push_back(path + ": supera el tamaño máximo de un paquete (8 MB y " +
+                                std::to_string(kMaxPackFiles) + " archivos)");
+                ok = false;
+            }
+        }
+        if (ok) {
+            for (const char* folder : kPackFolders) {
+                // Los seres se nombran entre sí (presas, huidas): se resuelven con la carpeta entera.
+                std::optional<SpeciesLoadBatch> batch;
+                if (std::string_view(folder) == "beings")
+                    batch.emplace();
+                for (const fs::path& f : packFolderFiles(p, folder)) {
+                    std::string text;
+                    if (!readFile(f, text, local))
+                        continue;
+                    checkDefinitionFile(folder, f, text, local);
+                    loadDefinitions(text, f.string(), info.id, local);
+                }
             }
             info.fingerprint = fingerprintDir(p);
         }
@@ -397,12 +459,12 @@ std::string biopackText(const BiopackSpec& spec, std::vector<std::string>& messa
     toml::table manifest;
     toml::table head;
     head.insert("id", spec.id);
-    head.insert("nombre", spec.name.empty() ? spec.id : spec.name);
+    head.insert("name", spec.name.empty() ? spec.id : spec.name);
     head.insert("version", spec.version);
-    head.insert("autor", spec.author);
-    head.insert("licencia", spec.license);
-    head.insert("programa_minimo", std::string(BIO_VERSION));
-    manifest.insert("paquete", std::move(head));
+    head.insert("author", spec.author);
+    head.insert("license", spec.license);
+    head.insert("min_program", std::string(BIO_VERSION));
+    manifest.insert("pack", std::move(head));
     out << manifest << "\n\n";
     std::set<std::string> plans;
     for (const SpeciesId id : spec.beings) {
@@ -438,11 +500,11 @@ std::string biopackText(const BiopackSpec& spec, std::vector<std::string>& messa
     for (const auto& [name, text] : spec.scenes) {
         toml::table scene;
         scene.insert("id", sanitizeFileName(name));
-        scene.insert("placa", text);
+        scene.insert("plate", text);
         toml::array list;
         list.push_back(std::move(scene));
         toml::table root;
-        root.insert("escena", std::move(list));
+        root.insert("scene", std::move(list));
         out << root << "\n\n";
     }
     std::string text = out.str();

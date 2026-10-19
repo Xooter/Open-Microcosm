@@ -1,0 +1,28 @@
+# Haematococcus lacustris (H. pluvialis): volvocal de 10–50 µm (la célula) dentro de una envoltura
+# esférica grande, con dos flagelos que la atraviesan, estigma y gránulos rojos de astaxantina; vive en
+# charcos de piedra y bebederos (Kreutz). Con estrés se enquista y se vuelve roja (aplanosporas).
+[[being]]
+id = "haematococcus"
+name = "Haematococcus"
+tags = ["alga", "green_alga", "flagellate", "phototroph"]
+description = "Alga verde de ~35 um con dos flagelos dentro de una envoltura de gelatina. Cuando el charco se seca se enquista y se vuelve rojo sangre (astaxantina)."
+locomotion = "flagellum"
+body_plan = "flagellate_chlorophyte"
+phototaxis = true
+encysts = true
+initial_count = 4
+chloroplasts = true
+ph = [5.5, 9.5]
+temperature = [2.0, 32.0]
+storage = "starch"
+wall = "cellulose"
+[being.shape]
+semi_major_axis = 17.0
+semi_minor_axis = 16.0
+shape_memory = 12.0
+color = [150, 168, 96]
+nucleus = 0.3
+
+[being.appearance]
+style = "two_flagella"
+plastid_color = [110, 150, 60]

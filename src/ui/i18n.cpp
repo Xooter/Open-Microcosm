@@ -1,4 +1,5 @@
 #include "ui/i18n.hpp"
+#include "core/pack_files.hpp"
 #include "core/paths.hpp"
 #include "game/content.hpp"
 
@@ -98,9 +99,14 @@ bool loadLanguage(const std::string& code) {
     // Las traducciones de los paquetes del usuario (los textos de sus seres, medios, lecciones…).
     for (const PackInfo& p : loadedPacks()) {
         std::error_code ec;
-        const std::filesystem::path file = std::filesystem::path(p.path) / "idiomas" / (code + ".txt");
-        if (std::filesystem::is_regular_file(file, ec))
-            loadFile(file.string());
+        // "idiomas": los paquetes de antes de que las carpetas pasaran al inglés.
+        for (const char* folder : {kPackLangFolder, "idiomas"}) {
+            const std::filesystem::path file = std::filesystem::path(p.path) / folder / (code + ".txt");
+            if (std::filesystem::is_regular_file(file, ec)) {
+                loadFile(file.string());
+                break;
+            }
+        }
     }
     return true;
 }

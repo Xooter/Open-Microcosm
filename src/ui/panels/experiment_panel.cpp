@@ -2,6 +2,7 @@
 // media y su intervalo de confianza. Sale del cultivo elegido, de la placa en pantalla (su escena)
 // o de un experimento guardado (.toml, el mismo formato que corre `bio_lote`).
 #include "app/app.hpp"
+#include "core/paths.hpp"
 #include "game/experiment.hpp"
 #include "game/export.hpp"
 #include "game/scene.hpp"
@@ -28,9 +29,7 @@ namespace {
 
 const char* const kSources[] = {"Cultivo elegido", "Placa en pantalla", "Archivo (.toml)"};
 
-std::string experimentsDir() {
-    return (std::filesystem::path(defaultCulturesDir()).parent_path() / "experimentos").string();
-}
+std::string experimentsDir() { return userDataSubdir("experiments", "experimentos"); }
 
 struct Job {
     std::thread thread;
@@ -43,7 +42,7 @@ class ExperimentPanel : public Panel {
   public:
     ExperimentPanel() { open = false; } // se abre desde el menú Ver
     ~ExperimentPanel() override { stop(); }
-    const char* key() const override { return "experimento"; }
+    const char* key() const override { return "experiment"; }
     const char* title() const override { return "Experimento"; }
     Dock dock() const override { return Dock::Right; }
 
@@ -59,8 +58,8 @@ class ExperimentPanel : public Panel {
         sliderLog("Duración [h]", &hours_, 0.1f, 2000.0f, "%.1f", "Horas de laboratorio (biológicas en la placa).");
         sliderLog("Muestreo [h]", &sample_, 0.01f, 48.0f, "%.2f");
         ImGui::InputText(tr("Factor"), factor_, sizeof factor_);
-        tooltip("Opcional. Cultivo: temperatura, luz, bacterias, soluto:<clave>, inocular:<id>. Placa: temperatura, "
-                "soluto:<clave> o una clave del registro de parámetros.");
+        tooltip("Opcional. Cultivo: temperature, light, bacteria, solute:<clave>, inoculate:<id>. Placa: temperature, "
+                "solute:<clave> o una clave del registro de parámetros.");
         ImGui::InputText(tr("Valores"), values_, sizeof values_);
         tooltip("Separados por comas: un nivel por valor.");
         ImGui::EndDisabled();

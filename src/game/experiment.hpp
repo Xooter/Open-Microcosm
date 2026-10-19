@@ -13,15 +13,16 @@
 // ventana. Sin réplicas no hay estadística, y entre máquinas la reproducibilidad prometida es
 // estadística. Un experimento es un archivo TOML (como los paquetes):
 //
-//   [experimento]  nombre, tipo ("cultivo" o "placa"), replicas, seed, horas, muestreo_h
-//   [cultivo]      recipiente, medio, temperatura, luz, programa = ["linea", ...] (game/program),
-//                  eventos = ["paso op valor [clave]", ...] (como en la escena de cultivo)
-//   [placa]        escena = "texto de una escena .plate (placa + eventos)"
-//   [[factor]]     clave, valores = [...]
+//   [experiment]  name, kind ("culture" o "plate"), replicates, seed, hours, sample_h, threads
+//   [culture]     vessel, medium, temperature, light, program = ["linea", ...] (game/program),
+//                 events = ["paso op valor [clave]", ...] (como en la escena de cultivo)
+//   [plate]       scene = "texto de una escena .plate (placa + eventos)"
+//   [[factor]]    key, values = [...]
 //
-// Factores: en un cultivo, "temperatura", "luz", "bacterias" (por mL al empezar), "soluto:<clave>"
-// (µM al empezar) o "inocular:<id del ser>" (individuos al empezar); en una placa, "temperatura",
-// "soluto:<clave>" o una clave del registro de parámetros (game/parameters).
+// Factores: en un cultivo, "temperature", "light", "bacteria" (por mL al empezar), "solute:<clave>"
+// (µM al empezar), "inoculate:<id del ser>" (individuos al empezar) o "reagent:<id>"; en una placa,
+// "temperature", "solute:<clave>" o una clave del registro de parámetros (game/parameters). Los
+// guardados con las claves viejas (en español) se leen igual (game/legacy_names).
 // Cada combinación de niveles corre `replicas` veces con seeds derivadas de la del experimento.
 // El tiempo es la hora de laboratorio: la del cultivo, o las horas biológicas de la placa.
 

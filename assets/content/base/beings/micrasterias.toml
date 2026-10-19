@@ -1,0 +1,28 @@
+# Micrasterias rotata: desmidia en disco de 200–400 × 190–270 µm, con dos semicélulas de cinco lóbulos
+# muy recortados; de turberas y pantanos (Kreutz). Los lóbulos no se dibujan.
+[[being]]
+id = "micrasterias"
+name = "Micrasterias"
+tags = ["alga", "green_alga", "desmid", "phototroph"]
+description = "Desmidia grande (~0,3 mm) en forma de estrella plana con lobulos recortados, de los pantanos acidos. Una de las celulas mas bellas del microscopio."
+locomotion = "cilia"
+body_plan = "green_alga"
+relative_speed = 0.0
+relative_photosynthesis = 1.2
+initial_count = 1
+chloroplasts = true
+ph = [4.0, 8.0]
+temperature = [2.0, 28.0]
+storage = "starch"
+wall = "cellulose"
+genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 150.0
+semi_minor_axis = 115.0
+thickness = 30.0
+shape_memory = 30.0
+color = [136, 180, 110]
+nucleus = 0.1
+
+[being.appearance]
+style = "coccoid"

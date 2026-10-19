@@ -39,20 +39,20 @@ TEST_CASE("glosario: los términos aparecen en un texto como palabras enteras") 
         return std::find(found.begin(), found.end(), k) != found.end();
     };
     CHECK(has("osmosis"));
-    CHECK(has("plasmolisis"));
-    CHECK(has("fago"));
-    CHECK(has("fagocitosis"));
-    CHECK(has("numero_reynolds"));
-    CHECK_FALSE(has("quimiostato"));
+    CHECK(has("plasmolysis"));
+    CHECK(has("phage"));
+    CHECK(has("phagocytosis"));
+    CHECK(has("reynolds_number"));
+    CHECK_FALSE(has("chemostat"));
     // En orden de aparición.
     REQUIRE(found.size() >= 2);
     CHECK(found[0] == findGlossaryTerm("osmosis"));
     // Formas traducidas: un texto en otro idioma también los encuentra.
     std::vector<std::vector<std::string>> extra(static_cast<std::size_t>(glossaryCount()));
-    extra[static_cast<std::size_t>(findGlossaryTerm("quimiostato"))] = {"chemostat"};
+    extra[static_cast<std::size_t>(findGlossaryTerm("chemostat"))] = {"chemostat"};
     const std::vector<int> en = glossaryTermsIn("A Chemostat at steady state", extra);
     REQUIRE(en.size() == 1);
-    CHECK(en[0] == findGlossaryTerm("quimiostato"));
+    CHECK(en[0] == findGlossaryTerm("chemostat"));
 }
 
 TEST_CASE("notas: van y vuelven en la escena sin ser intervenciones") {

@@ -30,9 +30,9 @@ SOURCES = ["src/ui/**/*.cpp", "src/app/*.cpp", "src/game/parameters.cpp", "src/g
            "src/bio/metabolism.cpp", "src/game/inspect.cpp", "src/game/encyclopedia.cpp", "src/game/scale_path.cpp",
            "src/game/stain.cpp", "src/game/biome.cpp"]
 # Campos de texto de los paquetes que se muestran.
-TEXT_FIELDS = {"nombre", "descripcion", "titulo", "objetivo", "texto", "explicacion", "motivo", "definicion",
-               "nivel", "termino"}
-LIST_FIELDS = {"opciones", "alias"}
+TEXT_FIELDS = {"name", "description", "title", "goal", "text", "explanation", "reason", "definition",
+               "level", "term"}
+LIST_FIELDS = {"options", "alias"}
 
 
 def unescape(s):
@@ -84,7 +84,7 @@ def data_keys():
     keys = set()
     if tomllib is None:
         return keys
-    for path in glob.glob(os.path.join(ROOT, "assets/content/base/*.toml")):
+    for path in glob.glob(os.path.join(ROOT, "assets/content/base/**/*.toml"), recursive=True):
         with open(path, "rb") as f:
             walk(tomllib.load(f), keys)
     return keys

@@ -1,6 +1,7 @@
 #include "game/biome.hpp"
 
-#include "core/paths.hpp"
+#include "core/pack_files.hpp"
+#include "core/ids.hpp"
 #include "core/rng.hpp"
 #include "game/medium_toml.hpp"
 
@@ -10,7 +11,7 @@
 #include <deque>
 #include <mutex>
 
-// Registro de biomas (fase 20.0): los de fábrica vienen de assets/content/base/biomas.toml; los
+// Registro de biomas (fase 20.0): los de fábrica vienen de assets/content/base/biomes/; los
 // paquetes agregan los suyos detrás. Deque: agregar no mueve los ya cargados.
 
 namespace {
@@ -29,39 +30,40 @@ Registry& registry() {
 }
 
 constexpr const char* kBiomeKeys[] = {
-    "id",        "nombre",      "descripcion", "bacterias", "detritos", "filamentos_fijadores", "filamentos_oscillatoria",
-    "cianobacterias_temperatura", "saprolegnia", "grupos_quitridios", "allomyces", "liquenes", "physarum",
-    "manchas",   "peso_base",   "pesos",       "medio",     "sedimento"};
+    "id",        "legacy_ids", "name",      "description", "bacteria", "detritus", "nitrogen_fixing_filaments", "oscillatoria_filaments",
+    "cyanobacteria_temperature", "saprolegnia", "chytrid_clusters", "allomyces", "lichens", "physarum",
+    "patchiness",   "base_weight",   "weights",       "medium",     "sediment"};
 
-// Un [[bioma]] → Biome. false si tiene errores (se descarta).
+// Un [[biome]] → Biome. false si tiene errores (se descarta).
 bool readBiome(const toml::table& t, const std::string& source, const std::string& pack, Biome& b,
                std::vector<std::string>& warnings) {
     toml_io::Reader r{t, source, {}};
     r.text("id", b.key);
-    r.text("nombre", b.name);
+    r.text("name", b.name);
     if (b.key.empty() || b.name.empty()) {
-        warnings.push_back(source + ": un [[bioma]] sin 'id' o sin 'nombre': se saltea");
+        warnings.push_back(source + ": un [[biome]] sin 'id' o sin 'name': se saltea");
         return false;
     }
     r.where = source + " (" + b.key + ")";
     b.pack = pack;
+    r.strings("legacy_ids", b.legacyIds);
     toml_io::warnUnknown(t, kBiomeKeys, r.where, warnings);
-    r.text("descripcion", b.description);
-    r.count("bacterias", b.bacteria);
-    r.count("detritos", b.detritus);
-    r.count("filamentos_fijadores", b.cyanoFilaments);
-    r.count("filamentos_oscillatoria", b.oscillatoriaFilaments);
-    r.range("cianobacterias_temperatura", b.cyanoTMin, b.cyanoTMax);
+    r.text("description", b.description);
+    r.count("bacteria", b.bacteria);
+    r.count("detritus", b.detritus);
+    r.count("nitrogen_fixing_filaments", b.cyanoFilaments);
+    r.count("oscillatoria_filaments", b.oscillatoriaFilaments);
+    r.range("cyanobacteria_temperature", b.cyanoTMin, b.cyanoTMax);
     r.count("saprolegnia", b.saprolegnia);
-    r.count("grupos_quitridios", b.chytridClusters);
+    r.count("chytrid_clusters", b.chytridClusters);
     r.count("allomyces", b.allomyces);
-    r.count("liquenes", b.lichens);
+    r.count("lichens", b.lichens);
     r.count("physarum", b.physarum);
-    r.count("manchas", b.patchiness);
+    r.count("patchiness", b.patchiness);
     if (b.patchiness > 1.0f)
-        r.errors.push_back(r.where + ": 'manchas' va de 0 a 1");
-    r.count("peso_base", b.baseWeight);
-    if (const toml::table* w = r.table("pesos")) {
+        r.errors.push_back(r.where + ": 'patchiness' va de 0 a 1");
+    r.count("base_weight", b.baseWeight);
+    if (const toml::table* w = r.table("weights")) {
         for (const auto& [k, v] : *w) {
             const auto x = v.value<double>();
             if (!x || *x < 0.0)
@@ -70,10 +72,10 @@ bool readBiome(const toml::table& t, const std::string& source, const std::strin
                 b.weights.emplace_back(std::string(k.str()), static_cast<float>(*x));
         }
     }
-    if (const toml::table* m = r.table("medio"))
-        readMedium(*m, r.where + " [medio]", b.medium, r.errors, warnings);
-    if (const toml::table* sed = r.table("sedimento"))
-        readSediment(*sed, r.where + " [sedimento]", b.sediment, r.errors, warnings);
+    if (const toml::table* m = r.table("medium"))
+        readMedium(*m, r.where + " [medium]", b.medium, r.errors, warnings);
+    if (const toml::table* sed = r.table("sediment"))
+        readSediment(*sed, r.where + " [sediment]", b.sediment, r.errors, warnings);
     if (!r.errors.empty()) {
         warnings.insert(warnings.end(), r.errors.begin(), r.errors.end());
         warnings.push_back(r.where + ": el bioma no se carga");
@@ -84,7 +86,7 @@ bool readBiome(const toml::table& t, const std::string& source, const std::strin
 
 void loadParsed(const toml::table& doc, const std::string& source, const std::string& pack) {
     Registry& reg = registry();
-    const toml::array* biomes = doc.get("bioma") ? doc.get("bioma")->as_array() : nullptr;
+    const toml::array* biomes = doc.get("biome") ? doc.get("biome")->as_array() : nullptr;
     if (!biomes)
         return; // el archivo no trae biomas
     for (const toml::node& n : *biomes) {
@@ -94,7 +96,7 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
         Biome b;
         if (!readBiome(*t, source, pack, b, reg.warnings))
             continue;
-        b.source = toml_io::snippet("bioma", *t);
+        b.source = toml_io::snippet("biome", *t);
         bool duplicate = false;
         for (const Biome& other : reg.entries)
             duplicate = duplicate || other.key == b.key;
@@ -118,9 +120,11 @@ void ensureBase() {
     if (reg.baseLoaded)
         return;
     reg.baseLoaded = true;
-    std::string error;
-    if (!loadBiomesFile(assetPath("content/base/biomas.toml"), "base", &error))
-        reg.warnings.push_back("no se pudieron cargar los biomas de fábrica: " + error);
+    for (const auto& path : packFolderFiles(basePackDir(), "biomes")) {
+        std::string error;
+        if (!loadBiomesFile(path.string(), "base", &error))
+            reg.warnings.push_back("no se pudieron cargar los biomas de fábrica: " + error);
+    }
     reg.ready.store(true, std::memory_order_release);
 }
 
@@ -183,11 +187,10 @@ const Biome& biome(BiomeId id) {
 
 std::optional<BiomeId> findBiome(std::string_view key) {
     ensureBase();
-    const auto& entries = registry().entries;
-    for (std::size_t i = 0; i < entries.size(); ++i)
-        if (entries[i].key == key)
-            return static_cast<BiomeId>(i);
-    return std::nullopt;
+    const std::ptrdiff_t i = indexOfId(registry().entries, key);
+    if (i < 0)
+        return std::nullopt;
+    return static_cast<BiomeId>(i);
 }
 
 float Biome::weight(SpeciesId id) const {
@@ -195,7 +198,7 @@ float Biome::weight(SpeciesId id) const {
     for (const auto& [k, w] : weights)
         if (k == key)
             return w;
-    return hasTag(id, "simbionte_obligado") ? 0.0f : baseWeight;
+    return hasTag(id, "obligate_symbiont") ? 0.0f : baseWeight;
 }
 
 float dropAreaScale(const WorldConfig& c) {

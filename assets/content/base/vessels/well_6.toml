@@ -1,0 +1,7 @@
+[[vessel]]
+id = "well_6"
+legacy_ids = ["pocillo_6"]
+name = "Pocillo de placa de 6"
+area_cm2 = 9.5
+volume_ml = 2.0
+source = "Corning, \"Surface Areas and Recommended Medium Volumes for Corning Cell Culture Vessels\" (CLS-AN-209)."
