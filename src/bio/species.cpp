@@ -1,5 +1,7 @@
 #include "bio/species.hpp"
 
+#include "bio/silhouette.hpp"
+
 #include "core/ids.hpp"
 #include "core/pack_files.hpp"
 #include "core/toml_reader.hpp"
@@ -82,7 +84,8 @@ constexpr const char* kBeingKeys[] = {
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "cyclosis", "ph",
     "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process"};
-constexpr const char* kProcessKeys[] = {"kind", "at", "length", "base_width", "tip_width", "curve", "count", "spread"};
+constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
+                                        "curve", "count", "spread", "body",       "fillet"};
 constexpr std::pair<const char*, ProcessKind> kProcessKind[] = {
     {"horn", ProcessKind::Horn}, {"spine", ProcessKind::Spine}, {"arm", ProcessKind::Arm}, {"seta", ProcessKind::Seta}};
 constexpr const char* kAnimalCellKeys[] = {"adherent", "rounded_radius", "contact_inhibition_locomotion",
@@ -218,6 +221,10 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
                 pr.num("curve", curveDeg);
                 pr.count("count", p.count);
                 pr.count("spread", spreadDeg);
+                // Por omisión, cuernos y brazos son del cuerpo y espinas y setas, de la cubierta.
+                p.inBody = p.kind == ProcessKind::Horn || p.kind == ProcessKind::Arm;
+                pr.flag("body", p.inBody);
+                pr.count("fillet", p.fillet);
                 if (p.length <= 0.0f || p.baseWidth <= 0.0f || p.count < 1)
                     pr.errors.push_back(pr.where + ": 'length' y 'base_width' tienen que ser positivos y 'count' al menos 1");
                 p.at = atDeg * units::kPi / 180.0f;
@@ -286,6 +293,20 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         warnings.insert(warnings.end(), r.errors.begin(), r.errors.end());
         warnings.push_back(r.where + ": el ser no se carga");
         return false;
+    }
+    // Con prolongaciones en el cuerpo, la célula entera es una silueta (cuerpo + cuernos con redondeo).
+    if (std::any_of(s.processes.begin(), s.processes.end(), [](const ProcessSpec& p) { return p.inBody; })) {
+        const Silhouette sil = buildSilhouette(s.spec, s.processes);
+        if (sil.outline.empty()) {
+            warnings.push_back(r.where + ": no se pudo armar la silueta con sus prolongaciones (se usa el cuerpo solo)");
+        } else {
+            s.outline = sil.outline;
+            s.outlineArea = sil.area;
+            s.outlineBodyCenter = sil.bodyCenter;
+            s.outlineAreaFactor = sil.areaFactor;
+            for (const Vec2& q : sil.outline)
+                s.outlineReach = std::max(s.outlineReach, length(q));
+        }
     }
     return true;
 }

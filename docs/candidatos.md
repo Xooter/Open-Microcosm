@@ -149,16 +149,39 @@ su borde), y la ficha los nombra. Usan el mecanismo:
 | *Trachelomonas hispida* | espinas cortas en toda la lórica (~2 µm) | Kreutz; largo estimado |
 | *Euglypha strigosa* | espinas en los bordes de la testa (~6 µm) | Kreutz; largo y cantidad estimados |
 
+### Prolongaciones en el cuerpo (19/10/2026)
+
+Como en la realidad, los cuernos, los brazos y la espina caudal son **parte de la célula**: la silueta
+de la especie (`bio/silhouette`) une el cuerpo y las prolongaciones con un redondeo y es la forma del
+anillo de membrana. Chocan, crecen y se dividen con la célula, y la pared o la teca las mantiene rígidas
+(`shape_memory` 60 en *Ceratium* y *Staurastrum*). Las espinas de las cubiertas (*Trachelomonas*,
+*Coleps*, *Euglypha*) siguen siendo de la cubierta: más finas que la membrana, solo se dibujan, ahora
+con la base redondeada. Cambios en el motor:
+
+- solo la membrana plástica choca consigo misma (antes, cualquier célula con otra cerca), en CPU y GPU;
+- la masa sale del cuerpo, no del área con cuernos (`outlineAreaFactor`);
+- la división transforma cada mitad en una silueta entera, y su surco se ubica en el cuerpo;
+- `smallPrey`, la boca y el flagelo usan el cuerpo, no la punta de un cuerno;
+- las células con cuernos se ubican en la placa con su alcance completo (`speciesReach`).
+
+**Estado:** pasan las rápidas. Falla el caso largo "Ceratium se divide en dos hijas con cuernos"
+(`tests/test_silhouette.cpp`): la división no termina en 180 s. Falta correr el resto de las largas y
+la validación, y comparar checksums y `bio_bench` antes y después (el cambio del contacto consigo mismo
+alcanza a todas las células con pared o película).
+
 **Fase 2 (pendiente):**
-- Colisión: las prolongaciones atraviesan hoy otras células y la pared de la placa (un brazo de
-  *Staurastrum* puede asomar del vidrio). Colisionadores rígidos en `sim/contacts`, también en GPU.
+- ~~Colisión~~: resuelta para las prolongaciones del cuerpo, que son anillo. Las espinas de las
+  cubiertas no chocan (son más finas que la membrana).
 - Límite para los depredadores: los cuernos protegen del pastoreo, pero la simulación no tiene un
   tamaño de boca por depredador (los raptoriales tragan presas de cualquier tamaño, y *Didinium* traga
-  *Paramecium* más grandes que él). Hace falta el dato de apertura bucal de cada depredador antes de
-  modelarlo.
+  *Paramecium* más grandes que él). Hace falta el dato de apertura bucal de cada depredador.
 - División: las hijas nacen con todas las prolongaciones (en *Ceratium* cada hija regenera las que le
-  faltan de la teca de la madre).
+  faltan de la teca de la madre). En *Staurastrum* la división real es entre las dos semicélulas, en un
+  plano paralelo a la vista apical; acá se estrangula en la vista.
 - *Pediastrum* puede pasar a este mecanismo (hoy sus cuernos son parte de su estilo de dibujo).
+- **Tecamebas** (*Euglypha*, *Arcella*): la testa es rígida y solo el citoplasma que sale por la
+  abertura forma seudópodos; hoy todo el cuerpo es una membrana plástica con coraza, y con la gemación
+  de *Euglypha* aparecen cuerdas rectas cruzando el contorno. Revisar.
 
 ## Validación de los lotes 2 a 4 (19/10/2026)
 

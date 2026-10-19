@@ -23,6 +23,9 @@ constexpr std::uint32_t kTissueGroup = 0xFFFFFFF0u;
 
 namespace {
 SpeciesId speciesOfEntity(const entt::registry& reg, entt::entity e);
+// La especie de una célula para medir su cuerpo (silueta, masa). Una célula sin especie ni
+// locomoción (spawnCell) no tiene silueta: una ficha vacía, con el área de su anillo.
+const SpeciesInfo& cellInfo(const entt::registry& reg, entt::entity e);
 } // namespace
 
 namespace {
@@ -242,7 +245,7 @@ void World::step(float dt) {
     for (auto [e, body, loco] : registry_.view<RingBody, Locomotion>().each()) {
         if (registry_.any_of<Cyst, Captured>(e))
             continue;
-        const bool oral = speciesInfo(speciesOfEntity(registry_, e)).feeding == FeedingMode::OralGroove;
+        const bool oral = cellInfo(registry_, e).feeding == FeedingMode::OralGroove;
         if (!oral && !(loco.type == LocomotionType::Flagellum && loco.speed > 0.0f))
             continue;
         applySwimmerForces(body, bodies_, loco, locomotionParams_, fluid_, oral);
@@ -1405,11 +1408,17 @@ SpeciesId speciesOfEntity(const entt::registry& reg, entt::entity e) {
         return sp->id;
     return playerSpecies(reg.get<Locomotion>(e).type);
 }
+const SpeciesInfo& cellInfo(const entt::registry& reg, entt::entity e) {
+    static const SpeciesInfo kNone;
+    if (!reg.all_of<Species>(e) && !reg.all_of<Locomotion>(e))
+        return kNone;
+    return speciesInfo(speciesOfEntity(reg, e));
+}
 } // namespace
 
 void World::applyTraits(entt::entity e) {
     const Heredity& h = registry_.get<Heredity>(e);
-    const SpeciesInfo& info = speciesInfo(speciesOfEntity(registry_, e));
+    const SpeciesInfo& info = cellInfo(registry_, e);
     Locomotion& loco = registry_.get<Locomotion>(e);
     loco.power = h.traits.speed * info.speedScale * viscositySpeed_;
     registry_.get<Digestion>(e).rateScale = h.traits.digestion;
@@ -1424,6 +1433,38 @@ void World::applyTraits(entt::entity e) {
         body.shapeRate = shape.shapeRate;
 }
 
+namespace {
+// Citostoma del ciliado: en el surco oral, ~54° del polo anterior. Con cuernos o brazos, la boca y el
+// flagelo van en el polo anterior del cuerpo, no en la punta de un cuerno.
+void placeMouth(const RingBody& body, Locomotion& loco, const SpeciesInfo& info) {
+    if (!info.outline.empty() && info.outlineArea > 0.0f && loco.type != LocomotionType::Cilia) {
+        const float k = std::sqrt(std::abs(body.restArea) / info.outlineArea);
+        const Vec2 pole = (info.outlineBodyCenter + Vec2{info.spec.radiusX, 0.0f}) * k;
+        float best = 1e9f;
+        for (std::size_t i = 0; i < body.restRing.size(); ++i) {
+            const Vec2 d = body.restRing[i] - pole;
+            if (dot(d, d) < best) {
+                best = dot(d, d);
+                loco.mouthRing = static_cast<std::uint32_t>(i);
+            }
+        }
+        return;
+    }
+    if (loco.type != LocomotionType::Cilia)
+        return;
+    float best = 1e9f;
+    for (std::size_t i = 0; i < body.restRing.size(); ++i) {
+        const float a = std::atan2(body.restRing[i].y, body.restRing[i].x);
+        const float d = std::abs(a - 0.3f * units::kPi);
+        if (d < best) {
+            best = d;
+            loco.mouthRing = static_cast<std::uint32_t>(i);
+        }
+    }
+}
+
+} // namespace
+
 entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& genome, std::uint32_t run,
                                   float angle, const CellSpec* shape) {
     const SpeciesInfo& info = speciesInfo(species);
@@ -1434,6 +1475,11 @@ entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& 
     spec.radiusX *= traits.sizeScale;
     spec.radiusY *= traits.sizeScale;
     spec.shapeRate *= traits.rigidity;
+    if (!shape && !info.outline.empty()) { // cuerpo con cuernos o brazos (bio/silhouette)
+        spec.outline = &info.outline;
+        spec.outlineScale = traits.sizeScale;
+        spec.outlineBodyCenter = info.outlineBodyCenter;
+    }
     // Una célula animal adherente nace redonda (cae de la suspensión de la siembra) y se extiende
     // después: el cuerpo empieza como un círculo, con la masa y la forma extendida de su tipo.
     const bool seededRound = info.animalCell.present && info.animalCell.adherent && !shape;
@@ -1458,11 +1504,14 @@ entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& 
         loco.mouthRing = static_cast<std::uint32_t>(0.15f * static_cast<float>(body.ring.size()));
     if (info.mouthAtRear)
         loco.mouthRing = static_cast<std::uint32_t>(body.ring.size() / 2);
+    if (!info.outline.empty())
+        placeMouth(body, loco, info);
     if (info.locomotion == LocomotionType::Pseudopod)
         soft_body::makePlastic(body, bodies_, 1.0f);
     Metabolism meta;
     meta.biomass = meta.birthBiomass =
-        cellMassPmol(seededRound ? units::kPi * spread.radiusX * spread.radiusY : body.restArea) * cellMassScale(info);
+        cellMassPmol(seededRound ? units::kPi * spread.radiusX * spread.radiusY : body.restArea / info.outlineAreaFactor) *
+        cellMassScale(info);
     meta.reserves = 0.3f * meta.biomass;
     registry_.emplace<Species>(e, Species{species});
     registry_.emplace<Locomotion>(e, loco);
@@ -1525,10 +1574,10 @@ void World::populateEcosystem(float scale) {
         }
         for (int placed = 0, attempts = 0; placed < count && attempts < 200 * count; ++attempts) {
             Rng rng(config_.seed, rng_stream::kPopulate, 1000 + k++, 0);
-            const Vec2 p = randomPoint(rng, std::max(info.spec.radiusX, info.spec.radiusY) * 1.5f + 10.0f);
+            const Vec2 p = randomPoint(rng, speciesReach(info) * 1.5f + 10.0f);
             if (std::abs(minImage(p.x - middle.x, width_)) < 250.0f && std::abs(minImage(p.y - middle.y, height_)) < 200.0f)
                 continue;
-            if (!placeIsFree(p, std::max(info.spec.radiusX, info.spec.radiusY) + 6.0f))
+            if (!placeIsFree(p, speciesReach(info) + 6.0f))
                 continue;
             spawnWild(id, p, rng, true);
             ++placed;
@@ -1562,8 +1611,7 @@ int World::inoculate(Being being, int count, Vec2 center, float radius) {
     if (being.kind == BeingKind::Species && !speciesInfo(being.species).filament) {
         const SpeciesInfo& info = speciesInfo(being.species);
         // Una célula animal llega redonda de la suspensión (se extiende después).
-        const float size = info.animalCell.adherent ? info.animalCell.roundRadius
-                                                    : std::max(info.spec.radiusX, info.spec.radiusY);
+        const float size = info.animalCell.adherent ? info.animalCell.roundRadius : speciesReach(info);
         reach = size * 1.5f + 10.0f;
         clearance = size + 6.0f;
     }
@@ -1596,7 +1644,7 @@ int World::placeSampled(const std::vector<SampledCell>& cells) {
         const SpeciesInfo& info = speciesInfo(s.species);
         if (info.filament || info.colonyDaughters > 0)
             continue;
-        const float size = std::max(info.spec.radiusX, info.spec.radiusY);
+        const float size = speciesReach(info);
         const float reach = size * 1.5f + 10.0f, clearance = size + 6.0f;
         for (int attempt = 0; attempt < 60; ++attempt) {
             Rng rng(config_.seed, rng_stream::kTools, toolCounter_++, step_);
@@ -1984,7 +2032,7 @@ void World::applyMotion(float dt) {
         }
         applyLocomotion(body, bodies_, loco, locomotionParams_, simTime_, width_, height_);
         if (loco.type == LocomotionType::Pseudopod ||
-            (loco.type == LocomotionType::Crawl && speciesInfo(speciesOfEntity(registry_, e)).feeding == FeedingMode::Phagocytosis)) {
+            (loco.type == LocomotionType::Crawl && cellInfo(registry_, e).feeding == FeedingMode::Phagocytosis)) {
             const bool hadCup = registry_.all_of<PhagocyticCup>(e);
             updateCup(e, body, dt);
             if (hadCup || registry_.all_of<PhagocyticCup>(e)) // la copa puede cambiar su contorno
@@ -2080,7 +2128,7 @@ void World::updateFeeding(float dt) {
     for (auto [e, body, loco, dig] : feeders.each()) {
         if (registry_.all_of<Cyst>(e))
             continue;
-        const FeedingMode mode = speciesInfo(speciesOfEntity(registry_, e)).feeding;
+        const FeedingMode mode = cellInfo(registry_, e).feeding;
         if (mode == FeedingMode::None)
             continue;
         if (mode == FeedingMode::Raptorial) {
@@ -2182,7 +2230,8 @@ void World::engulf(entt::entity predator, const Closure& closure, entt::entity p
     const RingBody& predatorBefore = registry_.get<RingBody>(predator);
     const CellLook look = registry_.get<CellLook>(preyEntity);
     const RingBody& preyBody = registry_.get<RingBody>(preyEntity);
-    const float preyArea = std::abs(preyBody.restArea);
+    // La masa sale del cuerpo: los cuernos y brazos agrandan el área sin agregar esa masa.
+    const float preyArea = std::abs(preyBody.restArea) / cellInfo(registry_, preyEntity).outlineAreaFactor;
     float preyMass = cellMassPmol(preyArea), preyPhosphorus = 0.0f;
     if (const Metabolism* m = registry_.try_get<Metabolism>(preyEntity)) {
         preyMass = m->biomass + m->reserves;
@@ -2217,7 +2266,7 @@ void World::engulf(entt::entity predator, const Closure& closure, entt::entity p
         player_ = entt::null;
         lastDeathCause_ = "fagocitada";
     }
-    recordDeath(preyEntity, std::string("fagocitada por ") + speciesInfo(speciesOfEntity(registry_, predator)).name);
+    recordDeath(preyEntity, std::string("fagocitada por ") + cellInfo(registry_, predator).name);
     // El predador pudo tener a la presa sujeta en otra copa: se quita al destruirla.
     if (const float si = releaseMicronutrients(preyEntity, preyBody.centroid); si > 0.0f)
         exchange(silicate_, preyBody.centroid, si, Flow::Death);
@@ -2246,7 +2295,7 @@ void World::engulf(entt::entity predator, const Closure& closure, entt::entity p
     }
     soft_body::untangle(body, bodies_); // por si el cierre dejó las puntas de los labios cruzadas
     ++dig.cellsEaten;
-    dig.handling = speciesInfo(speciesOfEntity(registry_, predator)).handlingHours * 3600.0f;
+    dig.handling = cellInfo(registry_, predator).handlingHours * 3600.0f;
     dig.bacteriaEaten += bacteriaInside;
 }
 
@@ -2262,7 +2311,7 @@ void World::feedAtMouth(entt::entity e, RingBody& body, const Locomotion& loco, 
     const float reach = feedingParams_.mouthRadius;
     const bool ciliate = loco.type == LocomotionType::Cilia;
     // Trichonympha traga astillas de madera grandes por su polo posterior.
-    const float maxParticle = speciesInfo(speciesOfEntity(registry_, e)).mouthAtRear
+    const float maxParticle = cellInfo(registry_, e).mouthAtRear
                                   ? 6.0f
                                   : (ciliate ? feedingParams_.ciliateMaxParticle : feedingParams_.flagellateMaxParticle);
     // Caudal máximo [bacterias/s real]: el medido de la especie ([physiology.<id>.*], a 20 °C) o el
@@ -2305,7 +2354,7 @@ void World::feedAtMouth(entt::entity e, RingBody& body, const Locomotion& loco, 
 
     // Filtradores grandes (Stentor, Euplotes): la corriente oral también trae algas chicas, que
     // entran enteras por el citostoma.
-    if (const SpeciesSet& mask = speciesInfo(speciesOfEntity(registry_, e)).mouthPrey; mask.any() && !isSatiated(e)) {
+    if (const SpeciesSet& mask = cellInfo(registry_, e).mouthPrey; mask.any() && !isSatiated(e)) {
         for (const RingBody* other : bodyList_) {
             const auto oe = static_cast<entt::entity>(other->id);
             const Species* os = registry_.try_get<Species>(oe);
@@ -2406,26 +2455,6 @@ void World::feedByContact(RingBody& body, Digestion& dig, float dt) {
 // ---------------------------------------------------------------------------
 // Ciclo de vida: metabolismo, crecimiento, división y muerte
 // ---------------------------------------------------------------------------
-
-namespace {
-
-
-// Citostoma del ciliado: en el surco oral, ~54° del polo anterior.
-void placeMouth(const RingBody& body, Locomotion& loco) {
-    if (loco.type != LocomotionType::Cilia)
-        return;
-    float best = 1e9f;
-    for (std::size_t i = 0; i < body.restRing.size(); ++i) {
-        const float a = std::atan2(body.restRing[i].y, body.restRing[i].x);
-        const float d = std::abs(a - 0.3f * units::kPi);
-        if (d < best) {
-            best = d;
-            loco.mouthRing = static_cast<std::uint32_t>(i);
-        }
-    }
-}
-
-} // namespace
 
 float World::filmHeight(std::uint64_t id, float period) const {
     const auto slot = static_cast<std::uint64_t>(simTime_ / std::max(1e-3f, period));
@@ -2766,7 +2795,7 @@ void World::updateLifecycle(float dt) {
         in.digested = dig ? digest(*dig, body, bodies_, feedingParams_, dt, bioDt, excreted) : 0.0f;
         if (dig)
             dig->handling = std::max(0.0f, dig->handling - bioDt);
-        if (speciesInfo(speciesOfEntity(registry_, e)).feeding == FeedingMode::Osmotroph) {
+        if (cellInfo(registry_, e).feeding == FeedingMode::Osmotroph) {
             // Levaduras: transportadores de la pared absorben lo disuelto (Monod; menos afines
             // que las bacterias, prosperan donde abunda la materia orgánica).
             const float c = std::max(0.0f, nutrients_.grid().sample(body.centroid.x, body.centroid.y));
@@ -2865,7 +2894,9 @@ void World::updateLifecycle(float dt) {
         }
 
         // Tamaño: biomasa + lo que hay en las vacuolas. Los organelos crecen con la célula.
-        float target = cellAreaForMass(meta.biomass / cellMassScale(info)) * (her ? her->traits.volume : 1.0f) +
+        // Con cuernos o brazos, el área de la silueta es la del cuerpo por su factor de área.
+        float target = cellAreaForMass(meta.biomass / cellMassScale(info)) * info.outlineAreaFactor *
+                           (her ? her->traits.volume : 1.0f) +
                        (dig ? vacuoleContentArea(*dig) : 0.0f);
         if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e)) // redondeada en mitosis y apoptosis
             target = animalTargetArea(e, *ac, target);
@@ -2959,7 +2990,10 @@ void World::updateLifecycle(float dt) {
             if (body.membraneReservoirRate <= 0.0f && dv->motherArea > 0.0f && !info.filament) {
                 const float t = std::clamp((dv->progress - 0.2f) / 0.8f, 0.0f, 1.0f);
                 const float scale = std::sqrt(std::abs(body.restArea) / dv->motherArea);
-                divisionRestShape(dv->motherRest, scale, t * t * (3.0f - 2.0f * t), body.restRing);
+                const float smooth = t * t * (3.0f - 2.0f * t);
+                if (info.outline.empty() ||
+                    !divisionRestShapeOutline(dv->motherRest, info.outline, info.outlineArea, scale, smooth, body.restRing))
+                    divisionRestShape(dv->motherRest, scale, smooth, body.restRing);
                 const std::size_t rn = body.restRing.size();
                 for (std::size_t i = 0; i < rn; ++i)
                     body.restEdge[i] = length(body.restRing[(i + 1) % rn] - body.restRing[i]);
@@ -2972,7 +3006,7 @@ void World::updateLifecycle(float dt) {
                 // pared lateral y parte la célula en dos sin cambiar el ancho del filamento.
                 if (dv->progress >= 1.0f && dv->nucleus2 != ~0u && septumTips(body, ta, tb))
                     splits_.push_back({e, ta, tb});
-            } else if (dv->progress > 0.3f && furrowClosed(body, bodies_, ta, tb)) {
+            } else if (dv->progress > 0.3f && furrowClosed(body, bodies_, ta, tb, furrowBodyHalfLength(e, body))) {
                 splits_.push_back({e, ta, tb});
             }
         }
@@ -2988,8 +3022,13 @@ void World::updateLifecycle(float dt) {
         registry_.remove<Cyst>(e);
         RingBody& b = registry_.get<RingBody>(e);
         const CellShape& shape = registry_.get<CellShape>(e);
-        const float k = std::sqrt(std::abs(soft_body::area(b, bodies_)) / (units::kPi * shape.radiusX * shape.radiusY));
-        soft_body::reshapeRest(b, bodies_, shape.radiusX * k, shape.radiusY * k, shape.squareness, shape.taper);
+        if (const SpeciesInfo& si = cellInfo(registry_, e); !si.outline.empty()) {
+            // Al salir del quiste vuelve a su silueta con cuernos o brazos.
+            soft_body::reshapeRestToOutline(b, bodies_, si.outline, std::sqrt(std::abs(soft_body::area(b, bodies_)) / si.outlineArea));
+        } else {
+            const float k = std::sqrt(std::abs(soft_body::area(b, bodies_)) / (units::kPi * shape.radiusX * shape.radiusY));
+            soft_body::reshapeRest(b, bodies_, shape.radiusX * k, shape.radiusY * k, shape.squareness, shape.taper);
+        }
         b.shapeRate = shape.shapeRate;
     }
     encysting_.clear();
@@ -3054,7 +3093,7 @@ bool World::isSatiated(entt::entity e) const {
     if (d && (d->handling > 0.0f || satiated(*d, m->biomass)))
         return true;
     // Los suctorios succionan directo a sus reservas: con el citoplasma lleno no atrapan más.
-    return speciesInfo(speciesOfEntity(registry_, e)).feeding == FeedingMode::Tentacles && m->reserves > 0.6f * m->biomass;
+    return cellInfo(registry_, e).feeding == FeedingMode::Tentacles && m->reserves > 0.6f * m->biomass;
 }
 
 void World::duplicateOrganelles(entt::entity cell) {
@@ -3082,9 +3121,21 @@ void World::duplicateOrganelles(entt::entity cell) {
     dv.vacuole2 = split(an.contractileVacuole, {0.6f * half, cv.y}, {-0.6f * half, cv.y});
 }
 
+float World::furrowBodyHalfLength(entt::entity e, const RingBody& body) const {
+    // Con cuernos o brazos, el surco se ubica en el cuerpo: su semieje mayor al tamaño actual.
+    const SpeciesInfo& info = cellInfo(registry_, e);
+    if (info.outline.empty() || info.outlineArea <= 0.0f)
+        return 0.0f;
+    // El contorno es del tamaño típico: el área actual ya incluye el tamaño del genoma.
+    const float rx = info.spec.radiusX;
+    const Dividing* dv = registry_.try_get<Dividing>(e);
+    const float area = dv && dv->motherArea > 0.0f ? dv->motherArea : std::abs(body.restArea);
+    return rx * std::sqrt(area / info.outlineArea);
+}
+
 void World::applyDivisionForces() {
     for (auto [e, body, dv] : registry_.view<RingBody, Dividing>().each()) {
-        if (dv.progress < 0.3f || speciesInfo(speciesOfEntity(registry_, e)).filament)
+        if (dv.progress < 0.3f || cellInfo(registry_, e).filament)
             continue;
         // Célula animal: el anillo contráctil es la forma de reposo de las dos hijas, que se cierra
         // al ritmo de su fase M (world_animal.cpp); un empuje aparte iba más rápido que ella y
@@ -3094,8 +3145,9 @@ void World::applyDivisionForces() {
         // Velocidad para cerrar el surco en el tiempo que queda (con un mínimo).
         const float remaining = std::max(0.5f, (1.0f - dv.progress) * metabolismParams_.divisionHours *
                                                    3600.0f / bioScale());
-        const float speed = std::clamp(furrowHalfWidth(body, bodies_) / remaining, 1.0f, 30.0f);
-        applyFurrow(body, bodies_, speed);
+        const float half = furrowBodyHalfLength(e, body);
+        const float speed = std::clamp(furrowHalfWidth(body, bodies_, half) / remaining, 1.0f, 30.0f);
+        applyFurrow(body, bodies_, speed, half);
     }
 }
 
@@ -3168,7 +3220,7 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
 
     // Cada hija vuelve a la forma de su especie, a su tamaño actual.
     const CellShape shape = registry_.get<CellShape>(cell);
-    const bool filament = speciesInfo(speciesOfEntity(registry_, cell)).filament;
+    const bool filament = cellInfo(registry_, cell).filament;
     // Área de cada hija: la de su mitad, pero nunca menos del 20 % del total (un surco que corta
     // casi en el borde dejaba una mitad sin área: se rearmaba con radios nulos y la hija nacía con
     // todo en NaN). La restricción de área la infla hasta su forma.
@@ -3191,6 +3243,16 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
         // nacida estirada o enredada tenía miles de puntos, se estiraba más y sus hijas más todavía
         // (anillos de 300 → 5000 puntos en pocas divisiones, cruzando toda la placa).
         const float a = &b == &body ? targetA : targetB;
+        // Con cuernos o brazos, cada hija vuelve a la silueta de su especie (nace con todas las
+        // prolongaciones: en Ceratium cada hija se queda con media teca y regenera la otra mitad).
+        if (const SpeciesInfo& si = cellInfo(registry_, cell); !si.outline.empty()) {
+            const float k = std::sqrt(a / si.outlineArea);
+            const float perim = polygon::perimeter(si.outline) * k;
+            soft_body::resampleRing(b, bodies_, std::max<std::size_t>(48, static_cast<std::size_t>(perim / kMembraneSpacing)));
+            soft_body::reshapeRestToOutline(b, bodies_, si.outline, k);
+            b.shapeRate = shape.shapeRate;
+            return;
+        }
         const float aspect = std::max(1e-3f, shape.radiusX / std::max(1e-3f, shape.radiusY));
         const float ry = std::sqrt(a / (units::kPi * aspect)), rx = aspect * ry;
         const float h = (rx - ry) * (rx - ry) / std::max(1e-6f, (rx + ry) * (rx + ry));
@@ -3265,9 +3327,10 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
     if (motile) {
         childLoco.forward = childLoco.turn = childLoco.speed = 0.0f;
         childLoco.active = false;
-        placeMouth(registry_.get<RingBody>(child), childLoco);
+        const SpeciesInfo& mouthInfo = cellInfo(registry_, cell);
+        placeMouth(registry_.get<RingBody>(child), childLoco, mouthInfo);
         registry_.emplace<Locomotion>(child, childLoco);
-        placeMouth(registry_.get<RingBody>(cell), registry_.get<Locomotion>(cell));
+        placeMouth(registry_.get<RingBody>(cell), registry_.get<Locomotion>(cell), mouthInfo);
         if (!hasSpecies || speciesInfo(species.id).speedScale > 0.0f)
             registry_.emplace<Autopilot>(child); // la hija que no controla el jugador deambula sola
         if (hasSpecies && speciesInfo(species.id).sessile)
@@ -3356,7 +3419,7 @@ void World::lyse(entt::entity cell, const char* cause, bool apoptotic) {
     }
     releaseChytridSpores(cell); // los esporangios maduran sobre el alga muerta
     const RingBody& body = registry_.get<RingBody>(cell);
-    float total = cellMassPmol(body.restArea);
+    float total = cellMassPmol(body.restArea / cellInfo(registry_, cell).outlineAreaFactor);
     if (const Metabolism* m = registry_.try_get<Metabolism>(cell))
         total = m->biomass + m->reserves;
     if (const Digestion* d = registry_.try_get<Digestion>(cell))
@@ -3462,7 +3525,7 @@ Census World::census() const {
         if (registry_.all_of<Rock>(e))
             continue; // los granos de arena no son biomasa
         const Metabolism* m = registry_.try_get<Metabolism>(e);
-        const float mass = m ? m->biomass : cellMassPmol(body.restArea);
+        const float mass = m ? m->biomass : cellMassPmol(body.restArea / cellInfo(registry_, e).outlineAreaFactor);
         c.totalBiomass += mass;
         if (const Species* sp = registry_.try_get<Species>(e))
             ++c.species[static_cast<int>(sp->id)];
@@ -3795,7 +3858,7 @@ void World::hunt(entt::entity predator, const RingBody& body) {
     const Vec2 mouth = {bodies_.x[body.ring[front]], bodies_.y[body.ring[front]]};
     if (isSatiated(predator))
         return; // digiriendo: Didinium caza ~1 paramecio cada pocas horas
-    const SpeciesSet& preyMask = speciesInfo(speciesOfEntity(registry_, predator)).prey;
+    const SpeciesSet& preyMask = cellInfo(registry_, predator).prey;
     for (const RingBody* other : bodyList_) {
         const auto oe = static_cast<entt::entity>(other->id);
         const Species* os = registry_.try_get<Species>(oe);
@@ -3831,7 +3894,7 @@ void World::swallow(entt::entity predator, entt::entity preyEntity) {
     }
     const CellLook look = registry_.get<CellLook>(preyEntity);
     const RingBody& prey = registry_.get<RingBody>(preyEntity);
-    const float preyArea = std::abs(prey.restArea);
+    const float preyArea = std::abs(prey.restArea) / cellInfo(registry_, preyEntity).outlineAreaFactor;
     float preyMass = cellMassPmol(preyArea), preyPhosphorus = 0.0f;
     if (const Metabolism* m = registry_.try_get<Metabolism>(preyEntity)) {
         preyMass = m->biomass + m->reserves;
@@ -3852,7 +3915,7 @@ void World::swallow(entt::entity predator, entt::entity preyEntity) {
     }
     if (grabSlot_ != kNoGrab && bodies_.owner[grabSlot_] == prey.id)
         endGrab();
-    recordDeath(preyEntity, std::string("tragada por ") + speciesInfo(speciesOfEntity(registry_, predator)).name);
+    recordDeath(preyEntity, std::string("tragada por ") + cellInfo(registry_, predator).name);
     if (const float si = releaseMicronutrients(preyEntity, prey.centroid); si > 0.0f)
         exchange(silicate_, prey.centroid, si, Flow::Death);
     destroyCell(registry_, bodies_, preyEntity);
@@ -3866,13 +3929,23 @@ void World::swallow(entt::entity predator, entt::entity preyEntity) {
     ingest(predatorDig, predatorBody, bodies_, site, preyArea, preyMass, look.r, look.g, look.b, true,
            preyPhosphorus, 1.0f, preyNitrogen);
     ++predatorDig.cellsEaten;
-    predatorDig.handling = speciesInfo(speciesOfEntity(registry_, predator)).handlingHours * 3600.0f;
+    predatorDig.handling = cellInfo(registry_, predator).handlingHours * 3600.0f;
 }
 
 bool World::smallPrey(const RingBody& prey) const {
     // Espesor efectivo 2·área/perímetro: una Euglena es larga pero fina (~10 µm), un paramecio
     // es ancho (~35 µm). Por debajo de ~4 puntos de membrana del depredador, la copa no se
     // resuelve.
+    // Con cuernos o brazos, cuenta el cuerpo: los brazos finos de Staurastrum bajan mucho 2·A/P sin
+    // hacer más chica a la célula.
+    const SpeciesInfo& info = cellInfo(registry_, static_cast<entt::entity>(prey.id));
+    if (!info.outline.empty() && info.outlineArea > 0.0f) {
+        const float k = std::sqrt(std::abs(prey.restArea) / info.outlineArea);
+        const float rx = info.spec.radiusX * k, ry = info.spec.radiusY * k;
+        const float h = (rx - ry) * (rx - ry) / std::max(1e-6f, (rx + ry) * (rx + ry));
+        const float ellipse = units::kPi * (rx + ry) * (1.0f + 3.0f * h / (10.0f + std::sqrt(4.0f - 3.0f * h)));
+        return 2.0f * units::kPi * rx * ry / ellipse < 12.0f;
+    }
     const float perimeter = soft_body::perimeter(prey, bodies_);
     return perimeter > 0.0f && 2.0f * std::abs(prey.restArea) / perimeter < 12.0f;
 }
@@ -3894,7 +3967,7 @@ std::size_t poleIndex(const RingBody& body, bool anterior) {
 void World::anchorHere(entt::entity e) {
     // El tallo sale del polo posterior hacia atrás y se fija al vidrio.
     const RingBody& body = registry_.get<RingBody>(e);
-    const SpeciesInfo& info = speciesInfo(speciesOfEntity(registry_, e));
+    const SpeciesInfo& info = cellInfo(registry_, e);
     const std::uint32_t base = body.ring[poleIndex(body, false)];
     const Vec2 h = bodyHeading(body);
     const Vec2 hold = Vec2{bodies_.x[base], bodies_.y[base]} - h * info.stalkLength;
@@ -3904,7 +3977,7 @@ void World::anchorHere(entt::entity e) {
 
 void World::applyAnchor(entt::entity e, RingBody& body, Anchored& anchor, bool disturbed, float dt) {
     PROFILE_SCOPE("World::applyAnchor");
-    const SpeciesInfo& info = speciesInfo(speciesOfEntity(registry_, e));
+    const SpeciesInfo& info = cellInfo(registry_, e);
     // Espasmonema: ante una perturbación el tallo se enrolla en ~10 ms y se re-extiende en
     // unos segundos.
     if (info.contractileStalk && disturbed)
@@ -3940,7 +4013,7 @@ void World::trapWithTentacles(entt::entity e, const RingBody& body) {
     for (auto [pe, cap] : registry_.view<Captured>().each())
         if (cap.by == e)
             return; // ya tiene una presa
-    const SpeciesInfo& info = speciesInfo(speciesOfEntity(registry_, e));
+    const SpeciesInfo& info = cellInfo(registry_, e);
     for (const RingBody* other : bodyList_) {
         const auto oe = static_cast<entt::entity>(other->id);
         const Species* os = registry_.try_get<Species>(oe);
@@ -3965,7 +4038,7 @@ void World::strikeWithNeck(entt::entity e, const RingBody& body, float dt) {
     // Lacrymaria olor: el cuello (lleno de microtúbulos) se estira hacia la presa y su extremo
     // ciliado con toxicistos la atrapa; después se retrae.
     Neck& neck = registry_.get_or_emplace<Neck>(e);
-    const SpeciesInfo& info = speciesInfo(speciesOfEntity(registry_, e));
+    const SpeciesInfo& info = cellInfo(registry_, e);
     const std::uint32_t front = body.ring[poleIndex(body, true)];
     const Vec2 head = {bodies_.x[front], bodies_.y[front]};
     const bool full = isSatiated(e);
@@ -4282,7 +4355,7 @@ void World::settleZoospore(entt::entity e) {
     // nuevo, que crece por división intercalar.
     registry_.remove<Zoospore>(e);
     Locomotion& loco = registry_.get<Locomotion>(e);
-    loco.type = speciesInfo(speciesOfEntity(registry_, e)).locomotion;
+    loco.type = cellInfo(registry_, e).locomotion;
     loco.forward = loco.turn = loco.speed = 0.0f;
     loco.active = false;
     applyTraits(e); // sin nado (las células del filamento no se mueven)

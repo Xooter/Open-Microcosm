@@ -597,6 +597,8 @@ class World {
     void removeAmbient(std::vector<std::size_t>& indices);
     void updateLifecycle(float dt);
     void applyDivisionForces();
+    // Semieje del cuerpo para ubicar el surco en las células con cuernos o brazos (0: el del anillo).
+    float furrowBodyHalfLength(entt::entity e, const RingBody& body) const;
     void duplicateOrganelles(entt::entity cell);
     bool septumTips(const RingBody& body, std::size_t& tipA, std::size_t& tipB) const;
     void divide(entt::entity cell, std::size_t tipA, std::size_t tipB);

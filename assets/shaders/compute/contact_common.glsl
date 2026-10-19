@@ -44,6 +44,9 @@ vec2 contactTerm(uint m, bool probe, out bool near) {
                 } else {
                     if (a.owner != me.owner && a.group == me.group)
                         continue;
+                    // Solo la membrana plástica choca consigo misma (como en sim/contacts.cpp).
+                    if (a.owner == me.owner && (me.flags & 1u) == 0u)
+                        continue;
                     if (a.owner == me.owner &&
                         min(ringDistance(me.ringPos, a.ringPos, me.ringSize), ringDistance(me.ringPos, bm.ringPos, me.ringSize)) <= 3u)
                         continue;

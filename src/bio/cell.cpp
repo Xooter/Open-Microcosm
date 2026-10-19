@@ -1,6 +1,7 @@
 #include "bio/cell.hpp"
 
 #include "bio/division.hpp"
+#include "bio/silhouette.hpp"
 #include "core/units.hpp"
 #include "sim/polygon.hpp"
 #include "sim/soft_body.hpp"
@@ -24,28 +25,48 @@ entt::entity createCell(entt::registry& registry, BodyParticles& bodies, const C
     const float c = std::cos(spec.angle), s = std::sin(spec.angle);
     auto place = [&](Vec2 local) { return spec.center + rotate(local, c, s); };
 
-    // Perímetro de la superelipse (polilínea densa) para espaciar la membrana uniformemente.
+    // Con silueta (cuerpo + cuernos o brazos), el anillo recorre ese contorno; si no, la superelipse.
+    const bool outlined = spec.outline && spec.outline->size() >= 3;
+    // Perímetro (polilínea densa) para espaciar la membrana uniformemente.
     float perimeter = 0.0f;
-    for (int k = 0; k < 256; ++k)
-        perimeter += length(superellipsePoint(rx, ry, spec.squareness, 2.0f * units::kPi * (k + 1) / 256.0f, spec.taper) -
-                            superellipsePoint(rx, ry, spec.squareness, 2.0f * units::kPi * k / 256.0f, spec.taper));
+    if (outlined) {
+        perimeter = outlinePerimeter(*spec.outline) * spec.outlineScale;
+    } else {
+        for (int k = 0; k < 256; ++k)
+            perimeter += length(superellipsePoint(rx, ry, spec.squareness, 2.0f * units::kPi * (k + 1) / 256.0f, spec.taper) -
+                                superellipsePoint(rx, ry, spec.squareness, 2.0f * units::kPi * k / 256.0f, spec.taper));
+    }
     // Al menos 48 puntos: en células chicas (Euglena, ~14 µm de ancho) la membrana se afina.
     const int n = std::max(48, static_cast<int>(perimeter / kMembraneSpacing));
     const float membraneRadius = 0.6f * perimeter / static_cast<float>(n);
 
+    std::vector<Vec2> sampled;
+    Vec2 sampledMean;
+    if (outlined) {
+        sampleOutline(*spec.outline, n, spec.outlineScale, 0.0f, false, sampled);
+        // El centro del cuerpo blando es el promedio de sus puntos: se centra exacto.
+        for (const Vec2& q : sampled)
+            sampledMean = sampledMean + q;
+        sampledMean = sampledMean * (1.0f / static_cast<float>(n));
+        for (Vec2& q : sampled)
+            q = q - sampledMean;
+    }
     for (int i = 0; i < n; ++i) {
         const float t = 2.0f * units::kPi * static_cast<float>(i) / static_cast<float>(n);
-        const Vec2 local = superellipsePoint(rx, ry, spec.squareness, t, spec.taper);
+        const Vec2 local = outlined ? sampled[static_cast<std::size_t>(i)] : superellipsePoint(rx, ry, spec.squareness, t, spec.taper);
         const Vec2 p = place(local);
         body.ring.push_back(bodies.allocate(BodyKind::Membrane, p.x, p.y, membraneRadius, 1.0f, id));
         body.restRing.push_back(local);
     }
+    // El núcleo, la vacuola contráctil y los gránulos van en el cuerpo, no en los cuernos.
+    const Vec2 core = outlined ? spec.outlineBodyCenter * spec.outlineScale - sampledMean : Vec2{};
     for (int i = 0; i < n; ++i) {
         body.restEdge.push_back(length(body.restRing[(i + 1) % n] - body.restRing[i]));
     }
     body.restArea = polygon::signedArea(body.restRing.data(), n);
 
     auto addInterior = [&](Vec2 local, float radius, float invMass, float anchor) {
+        local = local + core;
         const Vec2 p = place(local);
         body.interior.push_back(bodies.allocate(BodyKind::Interior, p.x, p.y, radius, invMass, id));
         body.restInterior.push_back(local);

@@ -1,5 +1,7 @@
 #include "sim/polygon.hpp"
 
+#include <cmath>
+
 #include <numeric>
 
 namespace polygon {
@@ -48,6 +50,59 @@ bool triangulate(const Vec2* p, int n, std::vector<int>& triangles, std::vector<
     }
     triangles.insert(triangles.end(), {idx[0], idx[1], idx[2]});
     return true;
+}
+
+float perimeter(const std::vector<Vec2>& outline) {
+    float p = 0.0f;
+    for (std::size_t i = 0; i < outline.size(); ++i)
+        p += length(outline[(i + 1) % outline.size()] - outline[i]);
+    return p;
+}
+
+void sampleClosed(const std::vector<Vec2>& dense, int n, float scale, float start, bool reverse, std::vector<Vec2>& out) {
+    out.clear();
+    const std::size_t m = dense.size();
+    if (m < 3 || n < 1)
+        return;
+    // Largo acumulado (en el sentido pedido).
+    thread_local std::vector<Vec2> path;
+    thread_local std::vector<float> arc;
+    path.resize(m + 1);
+    arc.assign(m + 1, 0.0f);
+    for (std::size_t k = 0; k <= m; ++k) {
+        const std::size_t idx = reverse ? (m - k % m) % m : k % m;
+        path[k] = dense[idx];
+        if (k > 0)
+            arc[k] = arc[k - 1] + length(path[k] - path[k - 1]);
+    }
+    const float total = arc[m];
+    std::size_t seg = 0;
+    for (int i = 0; i < n; ++i) {
+        float s = (start + static_cast<float>(i) / static_cast<float>(n)) * total;
+        s = std::fmod(s, total);
+        if (seg > 0 && arc[seg] > s)
+            seg = 0;
+        while (seg + 1 < m && arc[seg + 1] < s)
+            ++seg;
+        const float len = arc[seg + 1] - arc[seg];
+        const float t = len > 0.0f ? (s - arc[seg]) / len : 0.0f;
+        out.push_back((path[seg] + (path[seg + 1] - path[seg]) * t) * scale);
+    }
+}
+
+float arcFraction(const std::vector<Vec2>& dense, std::size_t index, bool reverse) {
+    const std::size_t m = dense.size();
+    if (m < 3 || index == 0)
+        return 0.0f;
+    float upTo = 0.0f, total = 0.0f;
+    for (std::size_t k = 0; k < m; ++k) {
+        const float len = length(dense[(k + 1) % m] - dense[k]);
+        if (k < index)
+            upTo += len;
+        total += len;
+    }
+    const float f = total > 0.0f ? upTo / total : 0.0f;
+    return reverse ? 1.0f - f : f;
 }
 
 } // namespace polygon

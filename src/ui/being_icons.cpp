@@ -4,6 +4,7 @@
 #include "core/units.hpp"
 #include "render/cell_renderer.hpp"
 #include "render/minerals.hpp"
+#include "sim/polygon.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -37,6 +38,37 @@ void drawCellGlyph(const CellSpec& spec, Vector2 c, float scale, bool enabled) {
     DrawCircleV(c, nucleus, withAlpha({110, 105, 90, 200}, enabled));
 }
 
+// Silueta con cuernos o brazos (bio/silhouette): el contorno de la especie, triangulado (no siempre es
+// estrellado desde el centro, como los cuernos curvos de Ceratium).
+void drawOutlineGlyph(const SpeciesInfo& info, Vector2 c, float half, bool enabled) {
+    float extent = 0.0f;
+    for (const Vec2& q : info.outline)
+        extent = std::max(extent, std::max(std::abs(q.x), std::abs(q.y)));
+    const float scale = half / std::max(1e-3f, extent);
+    constexpr int kN = 96;
+    std::vector<Vec2> pts;
+    polygon::sampleClosed(info.outline, kN, scale, 0.0f, false, pts);
+    std::vector<Vector2> screen(pts.size());
+    for (std::size_t i = 0; i < pts.size(); ++i)
+        screen[i] = {c.x + pts[i].x, c.y + pts[i].y};
+    const Color fill = withAlpha({info.spec.r, info.spec.g, info.spec.b, 230}, enabled);
+    std::vector<int> tris, scratch;
+    if (polygon::triangulate(pts.data(), static_cast<int>(pts.size()), tris, scratch)) {
+        for (std::size_t t = 0; t + 2 < tris.size(); t += 3) { // las dos vueltas: raylib descarta una
+            const Vector2 a = screen[static_cast<std::size_t>(tris[t])], b = screen[static_cast<std::size_t>(tris[t + 1])],
+                          d = screen[static_cast<std::size_t>(tris[t + 2])];
+            DrawTriangle(a, b, d, fill);
+            DrawTriangle(a, d, b, fill);
+        }
+    }
+    const Color edge = withAlpha({60, 64, 52, 220}, enabled);
+    for (std::size_t i = 0; i < screen.size(); ++i)
+        DrawLineEx(screen[i], screen[(i + 1) % screen.size()], 1.2f, edge);
+    const Vec2 core = info.outlineBodyCenter * scale;
+    const float nucleus = std::max(1.5f, info.spec.nucleusFraction * std::min(info.spec.radiusX, info.spec.radiusY) * scale * 0.6f);
+    DrawCircleV({c.x + core.x, c.y + core.y}, nucleus, withAlpha({110, 105, 90, 200}, enabled));
+}
+
 void drawBeingIcon(Being b, Rectangle r, bool enabled) {
     const Vector2 c = {r.x + 0.5f * r.width, r.y + 0.5f * r.height};
     const float half = 0.4f * r.width;
@@ -44,7 +76,9 @@ void drawBeingIcon(Being b, Rectangle r, bool enabled) {
     case BeingKind::Species: {
         const SpeciesInfo& info = speciesInfo(b.species);
         const CellSpec& spec = info.spec;
-        if (info.filament) { // tres células unidas extremo con extremo
+        if (!info.outline.empty()) {
+            drawOutlineGlyph(info, c, half, enabled);
+        } else if (info.filament) { // tres células unidas extremo con extremo
             const float s = half / (3.0f * spec.radiusX);
             for (int k = -1; k <= 1; ++k)
                 drawCellGlyph(spec, {c.x + 2.0f * spec.radiusX * s * static_cast<float>(k), c.y}, s, enabled);

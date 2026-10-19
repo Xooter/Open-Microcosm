@@ -240,7 +240,9 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   - anclaje de organelos al citoesqueleto.
 - **Contactos:** punto contra arista, con esquema Jacobi. Se **intercalan** con las restricciones
   en cada iteración del sub-paso. Al final del paso, una pasada saca cualquier partícula de
-  membrana que haya quedado dentro de otra célula.
+  membrana que haya quedado dentro de otra célula. Solo la membrana plástica choca consigo misma
+  (se pliega al hacer seudópodos): una pared, teca o película no se pliega, y los dos lados de un
+  cuerno fino quedan más cerca que dos radios de partícula.
 - Las bacterias y los detritos se excluyen del interior de las células.
 - **Membrana plástica** (ameba, `soft_body::makePlastic`): sin tensión de aristas ni memoria de
   forma; tensión cortical (flujo de curvatura) que alisa arrugas sin frenar lóbulos; área
@@ -306,11 +308,16 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   *Paramecium* además se acumula donde hay CO₂ (`acidTrap`, Jennings): los enjambres emergen.
 - Depredación: `handlingHours` (tiempo de manipulación entre presas enteras, `Digestion::handling`)
   y saciedad por volumen ingerido (`satiated`, `World::isSatiated`).
-- **Prolongaciones rígidas** (`ProcessSpec`, `[[being.process]]`: cuernos de *Ceratium*, brazos de
-  *Staurastrum*, espinas de lóricas y testas): son pared, no membrana, así que no entran en el anillo
-  (un cuerno de 2 µm de punta sería más fino que una partícula). El render las dibuja en el marco del
-  cuerpo (`forEachProcess`) y la ficha las nombra; la colisión y el límite para los depredadores están
-  pendientes (fase 2 en `docs/candidatos.md`).
+- **Prolongaciones** (`ProcessSpec`, `[[being.process]]`), como en la realidad:
+  - **del cuerpo** (cuernos de *Ceratium*, brazos de *Staurastrum*, espina caudal de *Phacus*): la
+    silueta de la especie (`bio/silhouette`: unión suave por campos de distancia, contorno por marching
+    squares) es la forma del anillo de membrana (`createCell`, `reshapeRestToOutline`,
+    `divisionRestShapeOutline`). Está centrada en el promedio de sus puntos, que es el centro de
+    `soft_body::bestFit` (no el centroide de área). La masa sale del cuerpo
+    (`SpeciesInfo::outlineAreaFactor`), el surco de la división y `smallPrey` miden el cuerpo, y la
+    boca y el flagelo van en su polo anterior (`placeMouth`);
+  - **de la cubierta** (espinas de lóricas, placas y testas): más finas que la membrana, solo se
+    dibujan (`forEachProcess` en el render) y la ficha las nombra.
 - Algas: filamentos (`filament`: crecen a lo largo con `setRestAreaAxial` y se dividen por tabique),
   colonias (`colonyDaughters`), diatomeas (`glider`, `frustule`), `dryMassScale` para cuerpos
   huecos o vacuolados. Fotótrofas cuentan P y N (`Metabolism::phosphorus/nitrogen`), conservados:

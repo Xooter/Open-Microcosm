@@ -59,9 +59,12 @@ constexpr Color kBleb = {224, 221, 210, 210};           // burbujas de membrana 
 constexpr float kRimMicrometers = 5.0f;
 constexpr float kPi = 3.14159265f;
 
-// Prolongaciones rígidas (ProcessSpec de bio/species): cada copia sale del contorno en su dirección y
-// es rígida en el marco del cuerpo (es pared o lórica, no membrana). Llama a emit(left, right, n) con
-// los dos bordes, de la base (metida medio ancho en la célula, para que no quede una muesca) a la punta.
+// Espinas de la cubierta (ProcessSpec con inBody = false: lórica de Trachelomonas, placas de Coleps,
+// testa de Euglypha): son de la cubierta, no de la célula, y más finas que la membrana, así que no están
+// en el anillo. Cada copia sale del contorno en su dirección, rígida en el marco del cuerpo, con la base
+// ensanchada en un redondeo. Las prolongaciones del cuerpo (cuernos, brazos) ya son parte del contorno
+// (bio/silhouette) y se dibujan con él. Llama a emit(left, right, n) con los dos bordes, de la base
+// (metida medio ancho en la célula, para que no quede una muesca) a la punta.
 // `shell` es lo que la lórica o la testa sobresale de la membrana [µm]: las espinas salen de su borde.
 // Lo que la coraza (lórica o testa) sobresale de la membrana en su dibujo [µm]: el mismo
 // cálculo que el trazo de la coraza en drawDetails (t = 1 + 4·coraza, centrado a 0,5·t + 1 µm).
@@ -85,6 +88,9 @@ template <typename F> void forEachProcess(const RingBody& body, const SpeciesInf
     const Vec2 h = bodyHeading(body);
     Vec2 left[kProcessSegments + 1], right[kProcessSegments + 1];
     for (const ProcessSpec& p : info.processes) {
+        if (p.inBody)
+            continue;
+        const float fillet = (p.fillet > 0.0f ? p.fillet : 0.5f * p.baseWidth) * scale;
         for (int k = 0; k < p.count; ++k) {
             const float a = processAngle(p, k);
             const Vec2 dir = rotate(h, std::cos(a), std::sin(a));
@@ -111,7 +117,9 @@ template <typename F> void forEachProcess(const RingBody& body, const SpeciesInf
                 const Vec2 c = base + dir * (ax.x + 0.5f * p.baseWidth * scale * (1.0f - s)) + side * ax.y;
                 const Vec2 t = rotate(dir, std::cos(p.curve * s), std::sin(p.curve * s));
                 const Vec2 nrm = {-t.y, t.x};
-                const float w = 0.5f * processWidth(p, s, scale);
+                // Redondeo en la base: se ensancha en el primer tramo, hasta `fillet` desde la cubierta.
+                const float along = s * p.length * scale, flare = fillet > 0.0f ? std::max(0.0f, 1.0f - along / fillet) : 0.0f;
+                const float w = 0.5f * processWidth(p, s, scale) + fillet * flare * flare;
                 left[i] = c + nrm * w;
                 right[i] = c - nrm * w;
             }
@@ -550,7 +558,7 @@ void drawTwinFlagella(const RingBody& body, const Locomotion& loco, float time, 
     fastCircleV({eye.x, eye.y}, std::max(0.8f, 0.15f * half), kEyespot);
 }
 
-void drawFlagellum(const BodyParticles& bp, const RingBody& body, const Locomotion& loco,
+void drawFlagellum(const BodyParticles& bp, const RingBody& body, const Locomotion& loco, const SpeciesInfo& info,
                    float time, float px) {
     const Vec2 h = bodyHeading(body);
     const Vec2 side = {-h.y, h.x};
@@ -564,10 +572,16 @@ void drawFlagellum(const BodyParticles& bp, const RingBody& body, const Locomoti
             front = i;
         }
     }
-    const Vec2 base = ringPos(bp, body, front);
     float halfLength = 0.0f;
     for (const Vec2& q : body.restRing)
         halfLength = std::max(halfLength, std::abs(q.x));
+    // Con cuernos o brazos, el flagelo sale del polo anterior del cuerpo (loco.mouthRing, ver
+    // placeMouth en game/world) y mide lo del cuerpo, no lo de la punta de un cuerno.
+    if (!info.outline.empty() && info.outlineArea > 0.0f && loco.mouthRing < body.ring.size()) {
+        front = loco.mouthRing;
+        halfLength = info.spec.radiusX * std::sqrt(std::abs(body.restArea) / info.outlineArea);
+    }
+    const Vec2 base = ringPos(bp, body, front);
     const float length = 2.2f * halfLength; // Euglena: flagelo de ~1 largo corporal
     const float beating = loco.speed > 0.0f ? 1.0f : 0.2f;
     const int copies = loco.speed > 0.0f ? 3 : 1;
@@ -1112,7 +1126,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 drawCircleFast(toRay(m + in * 2.5f), 2.5f, kMouth, px);
             }
             if (!cyst && loco && loco->type == LocomotionType::Flagellum && style == CellStyle::Flagellate)
-                drawFlagellum(bp, body, *loco, time, px);
+                drawFlagellum(bp, body, *loco, speciesInfo(sid), time, px);
 
             // Colonias (Volvox, Pediastrum): el interior es matriz gelatinosa, sin anatomía de una
             // sola célula.

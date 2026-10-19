@@ -40,11 +40,24 @@ struct Dividing {
 // de la propia forma (en la célula real, de vesículas que se fusionan en el surco).
 void divisionRestShape(const std::vector<Vec2>& mother, float scale, float t, std::vector<Vec2>& out);
 
+// Lo mismo para un contorno cualquiera (silueta con cuernos o brazos): la mitad anterior de la madre
+// (x ≥ 0 en su marco) va a la silueta entera de una hija, con su polo posterior en el plano de
+// división, y la posterior a la otra hija, con su polo anterior ahí; las dos con el anterior hacia +x,
+// como en la fisión transversal. `outline` es la silueta de la especie (tamaño típico); cada hija
+// tiene la mitad del área de la madre. Devuelve false si la mitad anterior no es un solo tramo del
+// anillo (el que llama usa entonces la versión elíptica).
+bool divisionRestShapeOutline(const std::vector<Vec2>& mother, const std::vector<Vec2>& outline, float outlineArea,
+                              float scale, float t, std::vector<Vec2>& out);
+
+// `bodyHalfLength` [µm]: el semieje del cuerpo, cuando el anillo tiene cuernos o brazos (la franja del
+// surco se mide desde el cuerpo, no desde la punta de un cuerno). 0: la mitad del largo del anillo.
+
 // Velocidades del surco: la membrana cercana al plano de división se cierra hacia el eje.
-void applyFurrow(const RingBody& body, BodyParticles& bp, float speed);
+void applyFurrow(const RingBody& body, BodyParticles& bp, float speed, float bodyHalfLength = 0.0f);
 
 // Media anchura actual del surco (distancia de su fondo al eje) [µm].
-float furrowHalfWidth(const RingBody& body, const BodyParticles& bp);
+float furrowHalfWidth(const RingBody& body, const BodyParticles& bp, float bodyHalfLength = 0.0f);
 
 // ¿Se tocaron los dos lados del surco? Devuelve los índices de anillo de sus fondos.
-bool furrowClosed(const RingBody& body, const BodyParticles& bp, std::size_t& tipA, std::size_t& tipB);
+bool furrowClosed(const RingBody& body, const BodyParticles& bp, std::size_t& tipA, std::size_t& tipB,
+                  float bodyHalfLength = 0.0f);

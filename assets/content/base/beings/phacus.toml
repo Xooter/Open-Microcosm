@@ -26,9 +26,10 @@ nucleus = 0.25
 taper = 0.6
 
 # Espina caudal bien marcada, oblicua y algo curvada (Kreutz); largo estimado por las figuras (el
-# ejemplar de 77 µm la incluye).
+# ejemplar de 77 µm la incluye). Es la película de la célula que se prolonga: parte del cuerpo.
 [[being.process]]
 kind = "spine"
+body = true
 at = 180.0
 length = 10.0
 base_width = 4.0

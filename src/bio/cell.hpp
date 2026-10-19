@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <vector>
 
 struct CellSpec {
     Vec2 center;
@@ -20,6 +21,12 @@ struct CellSpec {
     float squareness = 2.0f;                // superelipse: 2 = elipse, ~6 = cilindro (Spirogyra)
     float taper = 0.0f;                     // afinamiento del polo posterior (0 = simétrica)
     std::uint8_t r = 180, g = 185, b = 160; // tinte del citoplasma
+    // Con prolongaciones en el cuerpo, el contorno de la especie (bio/silhouette, para el tamaño típico)
+    // reemplaza a la superelipse: `outlineScale` es el tamaño respecto del típico y `outlineBodyCenter`,
+    // el centro del cuerpo en el marco del contorno (ahí van el núcleo y los gránulos).
+    const std::vector<Vec2>* outline = nullptr;
+    float outlineScale = 1.0f;
+    Vec2 outlineBodyCenter;
 };
 
 // Componentes de célula (el cuerpo físico es el componente RingBody de sim/soft_body.hpp).

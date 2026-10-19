@@ -109,6 +109,11 @@ void ContactSolver::iterate(BodyParticles& bp, const std::vector<ContactMember>&
                         const ContactMember& b = members[a.next];
                         if (a.owner != me.owner && a.group == me.group)
                             continue;
+                        // Solo la membrana plástica choca consigo misma (se pliega al hacer seudópodos).
+                        // Una pared, teca o película no puede plegarse, y los dos lados de un cuerno
+                        // fino (más cerca que dos radios de partícula) no se tienen que repeler.
+                        if (a.owner == me.owner && !me.selfContact)
+                            continue;
                         if (a.owner == me.owner &&
                             std::min(ringDistance(me.ringPos, a.ringPos, me.ringSize),
                                      ringDistance(me.ringPos, b.ringPos, me.ringSize)) <= kSelfSkip)

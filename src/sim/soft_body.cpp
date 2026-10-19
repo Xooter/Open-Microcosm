@@ -5,6 +5,7 @@
 #include "sim/polygon.hpp"
 
 #include <algorithm>
+#include <limits>
 #include <cmath>
 
 namespace soft_body {
@@ -537,6 +538,78 @@ void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry, fl
         const float tf = taper > 0.0f ? (1.0f - taper) + taper * std::clamp(0.5f * (x / rx + 1.0f), 0.0f, 1.0f) : 1.0f;
         body.restRing[i] = {x, r * sp * tf};
     }
+    for (std::size_t i = 0; i < n; ++i)
+        body.restEdge[i] = length(body.restRing[(i + 1) % n] - body.restRing[i]);
+    body.restArea = polygon::signedArea(body.restRing.data(), static_cast<int>(n));
+    body.centroid = c;
+    body.angle = theta;
+    for (std::size_t k = 0; k < body.interior.size(); ++k)
+        body.restInterior[k] = toLocal(body, pos(bp, body.interior[k]));
+    refresh(body, bp);
+}
+
+void reshapeRestToOutline(RingBody& body, const BodyParticles& bp, const std::vector<Vec2>& outline, float scale) {
+    const std::size_t n = body.ring.size();
+    if (n < 3 || outline.size() < 3)
+        return;
+    Vec2 c;
+    for (std::uint32_t s : body.ring)
+        c = c + pos(bp, s);
+    c = c * (1.0f / static_cast<float>(n));
+    // Orientación: el giro del contorno que mejor calza con el anillo actual (cada punto del anillo
+    // contra el punto más cercano del contorno), en pasos de 5°. Pasa pocas veces (división, quiste).
+    constexpr int kTurns = 72;
+    const std::size_t stride = std::max<std::size_t>(1, outline.size() / 160);
+    float bestCost = std::numeric_limits<float>::max(), theta = 0.0f;
+    for (int t = 0; t < kTurns; ++t) {
+        const float a = 6.2831853f * static_cast<float>(t) / kTurns;
+        const float co = std::cos(a), si = std::sin(a);
+        float cost = 0.0f;
+        for (std::uint32_t s : body.ring) {
+            const Vec2 d = rotate(pos(bp, s) - c, co, -si);
+            float nearest = std::numeric_limits<float>::max();
+            for (std::size_t k = 0; k < outline.size(); k += stride) {
+                const Vec2 e = outline[k] * scale - d;
+                nearest = std::min(nearest, dot(e, e));
+            }
+            cost += nearest;
+            if (cost >= bestCost)
+                break;
+        }
+        if (cost < bestCost) {
+            bestCost = cost;
+            theta = a;
+        }
+    }
+    const float co = std::cos(theta), si = std::sin(theta);
+    // Mismo sentido de recorrido que el anillo; el primer punto, en la dirección que tiene ahora.
+    float ringArea = 0.0f;
+    for (std::size_t i = 0; i < n; ++i)
+        ringArea += cross(pos(bp, body.ring[i]), pos(bp, body.ring[(i + 1) % n]));
+    const bool reverse = ringArea < 0.0f;
+    const Vec2 d0 = rotate(pos(bp, body.ring[0]) - c, co, -si);
+    const float a0 = std::atan2(d0.y, d0.x);
+    std::size_t k0 = 0;
+    float bestGap = 10.0f;
+    for (std::size_t k = 0; k < outline.size(); ++k) {
+        float gap = std::abs(std::atan2(outline[k].y, outline[k].x) - a0);
+        gap = std::min(gap, 6.2831853f - gap);
+        if (gap < bestGap) {
+            bestGap = gap;
+            k0 = k;
+        }
+    }
+    thread_local std::vector<Vec2> sampled;
+    polygon::sampleClosed(outline, static_cast<int>(n), scale, polygon::arcFraction(outline, k0, reverse), reverse, sampled);
+    // Centrado exacto en el promedio de los puntos (el centro que usa bestFit).
+    Vec2 mean;
+    for (const Vec2& q : sampled)
+        mean = mean + q;
+    mean = mean * (1.0f / static_cast<float>(n));
+    body.restRing.resize(n);
+    for (std::size_t i = 0; i < n; ++i)
+        body.restRing[i] = sampled[i] - mean;
+    body.restEdge.resize(n);
     for (std::size_t i = 0; i < n; ++i)
         body.restEdge[i] = length(body.restRing[(i + 1) % n] - body.restRing[i]);
     body.restArea = polygon::signedArea(body.restRing.data(), static_cast<int>(n));

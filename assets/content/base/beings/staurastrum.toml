@@ -21,7 +21,8 @@ genome = { chloroplasts = 1.0, trichocysts = 0.0 }
 [being.shape]
 semi_major_axis = 13.0
 semi_minor_axis = 12.0
-shape_memory = 30.0
+# Pared de celulosa rígida: los brazos no se doblan.
+shape_memory = 60.0
 color = [138, 182, 112]
 nucleus = 0.25
 

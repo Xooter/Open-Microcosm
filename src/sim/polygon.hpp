@@ -86,4 +86,12 @@ inline Vec2 inwardNormal(Vec2 edgeDir, float signedArea) {
 // degenerado (por ejemplo, auto-intersectado); en ese caso conviene un fallback.
 bool triangulate(const Vec2* p, int n, std::vector<int>& triangles, std::vector<int>& scratch);
 
+// Perímetro de un contorno cerrado.
+float perimeter(const std::vector<Vec2>& outline);
+// Reparte `n` puntos por longitud de arco sobre un contorno cerrado (denso), escalado por `scale`,
+// empezando en la fracción `start` ∈ [0, 1) del recorrido. Con `reverse`, lo recorre al revés.
+void sampleClosed(const std::vector<Vec2>& dense, int n, float scale, float start, bool reverse, std::vector<Vec2>& out);
+// Fracción del recorrido (en el sentido pedido) en la que está el punto `index` del contorno.
+float arcFraction(const std::vector<Vec2>& dense, std::size_t index, bool reverse);
+
 } // namespace polygon

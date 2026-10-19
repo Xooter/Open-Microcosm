@@ -118,6 +118,10 @@ void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry, fl
 // (con un número par de puntos), donde una división estrangula la cintura.
 void reshapeRestEven(RingBody& body, const BodyParticles& bp, float rx, float ry, float squareness = 2.0f,
                      float taper = 0.0f, bool pinMinorAxis = false);
+// Forma de reposo de un contorno cualquiera (la silueta de una especie con cuernos o brazos), escalado
+// por `scale`: se orienta como mejor calza con la forma actual del anillo (un contorno sin simetría
+// no tiene eje principal confiable) y los puntos se reparten parejos por longitud de arco.
+void reshapeRestToOutline(RingBody& body, const BodyParticles& bp, const std::vector<Vec2>& outline, float scale);
 // Membrana plástica: inserta partículas donde la membrana se estiró y quita donde se juntó
 // (la célula real agrega membrana desde reservorios internos). Devuelve true si cambió.
 bool remesh(RingBody& body, BodyParticles& bp, float spacing);

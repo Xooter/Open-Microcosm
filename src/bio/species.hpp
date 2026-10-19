@@ -6,6 +6,7 @@
 
 #include <entt/entity/entity.hpp>
 
+#include <algorithm>
 #include <bitset>
 #include <cstdint>
 #include <optional>
@@ -87,11 +88,13 @@ enum class FeedingMode : std::uint8_t {
 // Célula de un organismo pluricelular en cultivo (fase 20b): qué mecanismos tiene, por nombre en
 // los datos ([being.cell]). Los valores medidos (rapidez, persistencia, fases del ciclo…) van con
 // su fuente en [physiology.<id>.*].
-// Prolongación rígida de la superficie: el cuerno de la teca de Ceratium, el brazo de una desmidia, la
-// espina de una lórica o de una testa. Es pared (celulosa, sílice, lórica), no membrana: no se deforma
-// con el cuerpo blando ni entra en su anillo (uno de 2 µm de punta sería más fino que una partícula de
-// membrana). Hoy se dibuja y se nombra en la ficha; la colisión con otros cuerpos y el límite que pone
-// a los depredadores quedan para después (ver docs/candidatos.md).
+// Prolongación de la superficie, en dos clases como en la realidad:
+//  - del cuerpo (`inBody`): el cuerno de la teca de Ceratium, el brazo de una desmidia, la espina caudal
+//    de Phacus. Tienen citoplasma adentro: son parte de la célula y de su anillo de membrana (la silueta
+//    de bio/silhouette las une al cuerpo con un redondeo), y por eso chocan y se dividen con ella;
+//  - de la cubierta: las espinas de una lórica, de las placas de Coleps o de una testa. No tienen
+//    citoplasma y miden ~1 µm, menos que la resolución de la membrana (3 µm): se dibujan sobre la
+//    cubierta (render) y no son parte del cuerpo blando.
 enum class ProcessKind : std::uint8_t { Horn, Spine, Arm, Seta };
 struct ProcessSpec {
     ProcessKind kind = ProcessKind::Spine;
@@ -102,6 +105,8 @@ struct ProcessSpec {
     float curve = 0.0f;     // giro total a lo largo [rad] (positivo: hacia la izquierda del eje)
     int count = 1;          // copias: repartidas en `spread`, o en toda la vuelta si spread = 0
     float spread = 0.0f;    // abanico que cubren las copias [rad]
+    bool inBody = true;     // parte de la célula (cuerno, brazo) o de su cubierta (espina de lórica)
+    float fillet = 0.0f;    // radio del redondeo con el cuerpo [µm] (0: medio ancho de la base)
 };
 // Dirección [rad desde el polo anterior] de la copia k de una prolongación.
 float processAngle(const ProcessSpec& p, int k);
@@ -198,6 +203,13 @@ struct SpeciesInfo {
     std::uint8_t plastidColor[3] = {0, 0, 0};
     AnimalCellInfo animalCell;
     std::vector<ProcessSpec> processes; // [[being.process]]
+    // Contorno de la célula entera cuando tiene prolongaciones en el cuerpo (bio/silhouette): denso,
+    // antihorario, centrado en su centroide y para el tamaño típico. Vacío: la superelipse de `spec`.
+    std::vector<Vec2> outline;
+    float outlineArea = 0.0f;       // área de ese contorno [µm²]
+    Vec2 outlineBodyCenter;         // centro del cuerpo en el marco del contorno
+    float outlineAreaFactor = 1.0f; // área del contorno / área de la elipse del cuerpo
+    float outlineReach = 0.0f;      // distancia máxima del centro al contorno [µm] (punta del cuerno)
 };
 // Estilos de dibujo que el render sabe hacer (para validar los datos).
 const std::vector<std::string>& drawingStyles();
@@ -210,6 +222,10 @@ Genome speciesGenome(SpeciesId id);
 // semiejes mayor, menor y vertical, por la materia seca relativa. Una célula alargada pesa mucho
 // menos que la esfera de su silueta (un paramecio, ~0,5).
 float cellMassScale(const SpeciesInfo& info);
+// Radio que ocupa la célula del tamaño típico, con sus cuernos o brazos [µm] (para ubicarla en la placa).
+inline float speciesReach(const SpeciesInfo& info) {
+    return std::max({info.spec.radiusX, info.spec.radiusY, info.outlineReach});
+}
 // Por id de los datos ("paramecium"); vacío si no está cargado.
 std::optional<SpeciesId> findSpecies(std::string_view key);
 // Los tipos de ser con una etiqueta (vacío si nadie la tiene).

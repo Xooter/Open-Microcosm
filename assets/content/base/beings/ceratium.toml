@@ -22,7 +22,8 @@ wall = "cellulose"
 [being.shape]
 semi_major_axis = 30.0
 semi_minor_axis = 17.5
-shape_memory = 30.0
+# Teca de placas de celulosa: rígida (la memoria de forma más alta del paquete).
+shape_memory = 60.0
 color = [196, 176, 120]
 nucleus = 0.2
 
