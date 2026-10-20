@@ -97,11 +97,13 @@ void apply(RingBody& body, const std::vector<Vec2>& shape, float areaScale, floa
     for (Vec2& q : body.restInterior) {
         const int b0 = binOf(from, q.x);
         const float lo0 = from.lo[static_cast<std::size_t>(b0)], hi0 = from.hi[static_cast<std::size_t>(b0)];
-        const float x = xAtFraction(to, fractionAt(from, q.x));
+        // Lejos de los polos y del borde: con cada ida y vuelta de la forma (contracciones repetidas) los
+        // organelos derivaban hacia los extremos y quedaban fuera del contorno (trababan el surco).
+        const float x = xAtFraction(to, std::clamp(fractionAt(from, q.x), 0.06f, 0.94f));
         const int b1 = binOf(to, x);
         const float lo1 = to.lo[static_cast<std::size_t>(b1)], hi1 = to.hi[static_cast<std::size_t>(b1)];
         const float half0 = 0.5f * (hi0 - lo0), half1 = 0.5f * (hi1 - lo1);
-        const float rel = half0 > 1e-3f ? std::clamp((q.y - 0.5f * (lo0 + hi0)) / half0, -0.85f, 0.85f) : 0.0f;
+        const float rel = half0 > 1e-3f ? std::clamp((q.y - 0.5f * (lo0 + hi0)) / half0, -0.75f, 0.75f) : 0.0f;
         q = {x, 0.5f * (lo1 + hi1) + rel * half1};
     }
 }

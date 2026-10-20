@@ -3138,11 +3138,18 @@ void World::updateLifecycle(float dt) {
             // mundo es la misma) para que el surco, que corta en x = 0, corra a lo largo del eje.
             std::uint32_t poleSlot = ~0u;
             if (info.divisionLongitudinal && !smallPlastic) {
+                // Antes de partirse a lo largo el zooide se acorta y se ensancha (Lynn 2008): así el surco
+                // cruza la dimensión corta, como en una división transversal (en una célula casi redonda el
+                // eje del surco no queda definido y no cerraba).
+                constexpr float kWiden = 1.4f;
                 poleSlot = body.ring[poleIndex(body, false)];
                 for (Vec2& q : body.restRing)
-                    q = {q.y, -q.x};
+                    q = {q.y * kWiden, -q.x / kWiden};
                 for (Vec2& q : body.restInterior)
-                    q = {q.y, -q.x};
+                    q = {q.y * kWiden, -q.x / kWiden};
+                const std::size_t rn = body.restRing.size();
+                for (std::size_t i = 0; i < rn; ++i)
+                    body.restEdge[i] = length(body.restRing[(i + 1) % rn] - body.restRing[i]);
             }
             Dividing& d = registry_.emplace<Dividing>(e);
             d.poleSlot = poleSlot;

@@ -64,9 +64,9 @@ TEST_CASE("mecánicas: Peridinium avanza en hélice (la velocidad oscila a los l
     // Hélice de 8 µm a 1 vuelta/s: la velocidad lateral oscila con amplitud 2π·8 ≈ 50 µm/s (RMS ≈ 35).
     CHECK(lateralSpeed(world, e, 3.0f) > 25.0f);
 
-    // La Euglena, con el bamboleo genérico (15 %), se aparta mucho menos.
+    // Cryptomonas, con el bamboleo genérico (15 %), se aparta mucho menos (Euglena ya nada en hélice).
     World other = emptyWorld();
-    const entt::entity eu = spawn(other, "euglena", center(other));
+    const entt::entity eu = spawn(other, "cryptomonas", center(other));
     CHECK(lateralSpeed(other, eu, 3.0f) < 20.0f);
 }
 
@@ -446,7 +446,8 @@ TEST_CASE("mecánicas: Coleps come a mordiscos una célula paralizada más grand
     const entt::entity k = spawn(world, "coleps", c + Vec2{0.5f * (pb.aabbMax.x - pb.aabbMin.x) + 30.0f, 0.0f});
     world.registry().get<RingBody>(k).angle = 3.14159265f;
     CHECK(world.isDamaged(p));
-    run(world, 3.0f);
+    // Al tocarlo de entrada retrocede (reacción de evitación) y vuelve atraído por la célula dañada.
+    run(world, 8.0f);
     CHECK((!world.registry().valid(p) || world.registry().get<Metabolism>(p).biomass < 0.8f * before));
 }
 
