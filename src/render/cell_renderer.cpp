@@ -1364,7 +1364,9 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             } else if (loco && style == CellStyle::Neck) {
                 drawCilia(bp, body, time, px, CiliaPattern::All, 0.6f);
                 // Cuello extensible con la punta ciliada (toxicistos).
-                if (const Neck* neck = reg.try_get<Neck>(e)) {
+                if (Vec2 tip; world.neckTip(e, body, tip)) { // el cuello es la membrana: solo la punta
+                    drawCircleFast(toRay(tip), std::max(2.5f, 2.0f * px), kMouth, px);
+                } else if (const Neck* neck = reg.try_get<Neck>(e)) {
                     float half = 0.0f;
                     for (const Vec2& q : body.restRing)
                         half = std::max(half, q.x);

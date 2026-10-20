@@ -1,5 +1,7 @@
 # Lacrymaria olor ("lágrima de cisne"): cuerpo de ~100 µm y un cuello que se estira hasta
-# 7–8 veces ese largo en segundos para atrapar ciliados y flagelados chicos.
+# 7–8 veces ese largo en segundos para atrapar ciliados y flagelados chicos. El cuello es la parte
+# anterior de la célula (Coyle et al. 2019, Curr. Biol. 29: R1192): un tramo de membrana que se
+# despliega en un tubo fino.
 
 [[being]]
 id = "lacrymaria"
@@ -25,6 +27,8 @@ genome = { trichocysts = 0.0 }
 semi_major_axis = 50.0
 semi_minor_axis = 15.0
 shape_memory = 6.0
+# Cuerpo en frasco: se angosta hacia el polo anterior, de donde sale el cuello.
+taper_front = 0.5
 color = [184, 188, 172]
 nucleus = 0.32
 

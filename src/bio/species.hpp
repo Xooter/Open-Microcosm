@@ -656,4 +656,11 @@ struct Neck {
     float length = 0.0f;   // [µm]
     Vec2 direction{1.0f, 0.0f};
     entt::entity target = entt::null;
+    // El cuello es parte de la célula: un tramo de `kNeckPoints` puntos de membrana alrededor del polo
+    // anterior (desde el índice `first` del anillo) se despliega en un tubo. `base` es la forma de reposo
+    // sin cuello (vacía hasta que se arma).
+    std::vector<Vec2> base;
+    std::size_t first = 0;
+    float areaScale = 1.0f;
 };
+inline constexpr std::size_t kNeckPoints = 16;

@@ -277,6 +277,8 @@ class World {
     void setStir(Vec2 position, Vec2 velocity, float radius);
     // Punto del anillo en el polo anterior o posterior de la forma de reposo.
     static std::size_t poleIndex(const RingBody& body, bool anterior);
+    // Punta del cuello de Lacrymaria en la membrana (false si está retraído).
+    bool neckTip(entt::entity e, const RingBody& body, Vec2& tip) const;
     // Partícula del polo posterior (donde va el pie o el tallo), también durante una división longitudinal.
     std::uint32_t posteriorSlot(entt::entity e, const RingBody& body) const;
     void clearStir() { stirActive_ = false; }
@@ -616,6 +618,10 @@ class World {
     bool branchColony(entt::entity mother, entt::entity child);
     void trapWithTentacles(entt::entity e, const RingBody& body, FeedingMode mode);
     void strikeWithNeck(entt::entity e, const RingBody& body, float dt);
+    // El cuello de Lacrymaria en la membrana (game/world_neck.cpp).
+    void updateNeckShape(entt::entity e, RingBody& body);
+    void retractNeck(entt::entity e, RingBody& body);
+    Vec2 neckBase(entt::entity e, const RingBody& body) const;
     // Contracción del cuerpo entero (game/world_contraction.cpp).
     void updateContraction(entt::entity e, RingBody& body, bool trigger, float dt);
     void applyContractionKicks();

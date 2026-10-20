@@ -2223,6 +2223,7 @@ void World::updateFeeding(float dt) {
         }
         if (mode == FeedingMode::NeckStrike) {
             strikeWithNeck(e, body, dt);
+            updateNeckShape(e, body);
             continue;
         }
         if (mode == FeedingMode::Phagocytosis) {
@@ -3105,6 +3106,7 @@ void World::updateLifecycle(float dt) {
             unmorphForDivision(e, body);
             relaxShapeWave(e, body);
             finishSemicell(e, body);
+            retractNeck(e, body);
             // Ameba chica: con pocos puntos de membrana (una de ~10 µm tiene ~24) el surco no tiene de dónde
             // estrangular ni quedan 12 por hija; y la corteza se relaja en los polos durante la citocinesis
             // (relajación polar), si no su tensión redondea la célula contra el surco. En una grande (Chaos)
@@ -4372,8 +4374,7 @@ void World::strikeWithNeck(entt::entity e, const RingBody& body, float dt) {
     // ciliado con toxicistos la atrapa; después se retrae.
     Neck& neck = registry_.get_or_emplace<Neck>(e);
     const SpeciesInfo& info = cellInfo(registry_, e);
-    const std::uint32_t front = body.ring[poleIndex(body, true)];
-    const Vec2 head = {bodies_.x[front], bodies_.y[front]};
+    const Vec2 head = neckBase(e, body);
     const bool full = isSatiated(e);
 
     auto preyOk = [&](entt::entity oe) {
@@ -4406,7 +4407,9 @@ void World::strikeWithNeck(entt::entity e, const RingBody& body, float dt) {
     const Vec2 to = imageCenter(neck.target) - head;
     neck.direction = to * (1.0f / std::max(1e-3f, length(to)));
     neck.length = std::min(info.neckReach, neck.length + 300.0f * dt);
-    const Vec2 tip = head + neck.direction * neck.length;
+    // La punta es la de la membrana (el cuello real llega a donde llega, no a donde apunta).
+    Vec2 tip = head + neck.direction * neck.length;
+    neckTip(e, body, tip);
     const RingBody& prey = registry_.get<RingBody>(neck.target);
     const Vec2 shift = imageShift(prey, tip);
     const int pn = static_cast<int>(prey.poly.size());

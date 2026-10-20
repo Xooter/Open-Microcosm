@@ -95,5 +95,6 @@ void World::finishSemicell(entt::entity e, RingBody& body) {
 
 float World::restShapeAreaScale(entt::entity e) const {
     const SemicellGrowth* g = registry_.try_get<SemicellGrowth>(e);
-    return contractionAreaScale(e) * (g ? g->areaScale : 1.0f);
+    const Neck* neck = registry_.try_get<Neck>(e);
+    return contractionAreaScale(e) * (g ? g->areaScale : 1.0f) * (neck && !neck->base.empty() ? neck->areaScale : 1.0f);
 }
