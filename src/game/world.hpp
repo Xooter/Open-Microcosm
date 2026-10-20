@@ -594,6 +594,9 @@ class World {
     // Tallos (game/world_stalk.cpp): física de la varilla, crecimiento, contracción, tallo vacío.
     void stepStalks(float dt);
     void contractStalk(Anchored& anchor, float dt);
+    // Colonia deslizante (Bacillaria), game/world_sliding.cpp.
+    void joinSlidingColony(entt::entity mother, entt::entity child);
+    void applySlidingColonies(float dt);
     // Colonia: la hija se queda en una rama nueva del tallo de la madre. false si no corresponde.
     bool branchColony(entt::entity mother, entt::entity child);
     void trapWithTentacles(entt::entity e, const RingBody& body, FeedingMode mode);
@@ -826,6 +829,12 @@ class World {
     std::vector<Vec2> stalkFlow_;         // agua en cada nodo de un tallo (buffer reusado)
     std::vector<entt::entity> stalkGone_; // tallos vacíos degradados en este paso
     std::vector<std::pair<int, entt::entity>> stalkOrder_; // por profundidad en la colonia
+    // Uniones deslizantes de Bacillaria: b va al costado de a (lado `side`), corrida a lo largo del eje.
+    struct SlidingJunction {
+        entt::entity a, b;
+        float side;
+    };
+    std::vector<SlidingJunction> slides_;
     std::vector<entt::entity> detaching_; // zooides que se sueltan en este paso
     std::uint32_t nextStalkId_ = 1;
     std::vector<std::size_t> eatenBacteria_, eatenAmbient_;

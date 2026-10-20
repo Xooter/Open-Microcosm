@@ -235,7 +235,7 @@ TEST_CASE("sandbox: cada ser del catálogo cae en la categoría que le correspon
                     *findSpecies("micrasterias"), *findSpecies("gomphonema"), *findSpecies("ulothrix"),
                     *findSpecies("phaeodactylum"), *findSpecies("thalassiosira"), *findSpecies("fragilariopsis"),
                     *findSpecies("polarella"), *findSpecies("staurastrum"), *findSpecies("peridinium"),
-                    *findSpecies("lingulodinium")}},
+                    *findSpecies("lingulodinium"), *findSpecies("bacillaria")}},
         {C::Fungi, {SpeciesId::Candida, *findSpecies("saccharomyces")}},
         {C::HumanCells, {*findSpecies("human_dermal_fibroblast"), *findSpecies("hela"), *findSpecies("neutrophil"),
                          *findSpecies("buccal_squamous_cell"), *findSpecies("lymphocyte"), *findSpecies("monocyte"),

@@ -753,6 +753,7 @@ void World::beginBodies(float dt) {
     }
 
     applyMotion(dt);
+    applySlidingColonies(dt);
     applyDivisionForces();
     for (RingBody* body : bodyList_) {
         soft_body::adaptPlastic(*body, bodies_, dt);
@@ -3473,6 +3474,8 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
             relinkAfterDivision(cell, child);
             ++observed_.filamentDivisions;
         }
+        if (sinfo.slidingColonyMax > 0)
+            joinSlidingColony(cell, child);
     }
     if (registry_.all_of<AnimalCell>(cell))
         afterAnimalDivision(cell, child);

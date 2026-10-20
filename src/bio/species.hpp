@@ -364,7 +364,13 @@ struct SpeciesInfo {
     // completarse, y el tiempo en que precipita (0: no tiene).
     float loricaIronRatio = 0.0f;
     float loricaHours = 24.0f;
-    float perforationHours = 0.5f; // Vampyrella: en abrir el agujero en la pared [h biológicas]          // come células dañadas (paralizadas, atrapadas, moribundas)
+    float perforationHours = 0.5f; // Vampyrella: en abrir el agujero en la pared [h biológicas]
+    // Colonia deslizante (Bacillaria paxillifer): las hijas quedan lado a lado, unidas por el rafe, y cada
+    // par se desliza a lo largo del eje con la misma oscilación: la colonia se estira y se cierra como una
+    // regla de carpintero (Kapinga & Gordon 1992). Amplitud relativa al largo y período [s].
+    int slidingColonyMax = 0;          // células por colonia (0: no forma)
+    float slidingAmplitude = 0.8f;     // fracción del largo
+    float slidingPeriod = 80.0f;       // [s]          // come células dañadas (paralizadas, atrapadas, moribundas)
     StalkSpec stalk;                    // [being.stalk] (o las claves viejas sessile/stalk_length/spasmoneme)
     LightDamageSpec lightDamage;        // [being.light_damage]
     StressPigmentSpec stressPigment;    // [being.stress_pigment]

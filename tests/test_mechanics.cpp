@@ -794,3 +794,28 @@ TEST_CASE("mecánicas: Zoothamnium arma una colonia ramificada que se contrae en
     CHECK(colony("carchesium", carContracted) >= 1);
     CHECK(carContracted >= 1);
 }
+
+TEST_CASE("mecánicas: la colonia de Bacillaria se estira y se cierra como una regla de carpintero") {
+    World world = emptyWorld();
+    const entt::entity e = spawn(world, "bacillaria", center(world));
+    REQUIRE(world.forceReproduction(e));
+    entt::entity child = entt::null;
+    for (int s = 0; s < 60 * 240 && child == entt::null; ++s) {
+        world.step(kDt);
+        for (auto [c, sp] : world.registry().view<Species>().each())
+            if (c != e && sp.id == *findSpecies("bacillaria"))
+                child = c;
+    }
+    REQUIRE((child != entt::null));
+    // A lo largo de un período, el corrimiento de la hija sobre el eje de la madre cambia de signo.
+    float lo = 1e9f, hi = -1e9f;
+    for (int s = 0; s < 60 * 60; ++s) {
+        world.step(kDt);
+        const RingBody& a = world.registry().get<RingBody>(e);
+        const RingBody& b = world.registry().get<RingBody>(child);
+        const float along = dot(b.centroid - a.centroid, bodyHeading(a));
+        lo = std::min(lo, along);
+        hi = std::max(hi, along);
+    }
+    CHECK(hi - lo > 40.0f);
+}

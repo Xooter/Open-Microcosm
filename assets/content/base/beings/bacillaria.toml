@@ -1,0 +1,35 @@
+# Bacillaria paxillifer: diatomea pennada en aguja, de 70–150 × 5–8 µm, de aguas salobres y costeras.
+# Forma colonias de células apiladas lado a lado, unidas por el rafe, que se deslizan una sobre otra de
+# forma coordinada: la colonia se estira hasta quedar casi en fila y vuelve a cerrarse, como una regla de
+# carpintero, en ciclos de alrededor de un minuto (Kapinga & Gordon 1992, Diatom Res. 7: 221; Schmid
+# 2007). Acá células de ~70 µm (más largas no terminan de dividirse) y colonias de hasta 8. Amplitud y
+# período estimados con un deslizamiento de ~5 µm/s. Sin µmax publicado: usa el general.
+[[being]]
+id = "bacillaria"
+name = "Bacillaria"
+tags = ["alga", "diatom", "phototroph", "colonial"]
+description = "Diatomea en aguja que vive en colonias: las celulas, pegadas de costado, se deslizan una sobre otra y la colonia se estira y se cierra como una regla de carpintero."
+locomotion = "cilia"
+body_plan = "diatom"
+relative_speed = 0.0
+relative_photosynthesis = 1.5
+initial_count = 2
+chloroplasts = true
+frustule = true
+ph = [6.5, 9.5]
+temperature = [2.0, 32.0]
+max_salinity = 40.0
+storage = "chrysolaminarin"
+wall = "silica"
+genome = { chloroplasts = 1.0, trichocysts = 0.0, armor = 0.3 }
+[being.shape]
+semi_major_axis = 35.0
+semi_minor_axis = 4.0
+shape_memory = 40.0
+color = [200, 182, 120]
+nucleus = 0.3
+
+[being.sliding_colony]
+max_cells = 8
+amplitude = 0.8
+period_s = 60.0

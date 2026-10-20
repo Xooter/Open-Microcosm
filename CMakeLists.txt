@@ -151,6 +151,7 @@ add_library(biosim STATIC
     src/game/world_contraction.cpp
     src/game/world_stalk.cpp
     src/game/world_signals.cpp
+    src/game/world_sliding.cpp
     src/game/inspect.cpp
     src/game/world_chem.cpp
     src/game/world_program.cpp

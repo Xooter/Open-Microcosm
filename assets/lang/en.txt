@@ -1826,3 +1826,5 @@ Zoothamnium	Zoothamnium
 Peritrico colonial: un arbolito de tallos ramificados con un zooide en cada punta. Todo el arbol se contrae junto, porque el espasmonema corre por todas las ramas.	Colonial peritrich: a little tree of branching stalks with a zooid at each tip. The whole tree contracts at once, because the spasmoneme runs through every branch.
 Carchesium	Carchesium
 Peritrico colonial de tallos ramificados como Zoothamnium, pero cada rama tiene su propio resorte: los zooides se contraen de a uno.	Colonial peritrich with branching stalks like Zoothamnium, but each branch has its own spring: the zooids contract one at a time.
+Bacillaria	Bacillaria
+Diatomea en aguja que vive en colonias: las celulas, pegadas de costado, se deslizan una sobre otra y la colonia se estira y se cierra como una regla de carpintero.	Needle-shaped diatom that lives in colonies: the cells, joined side by side, slide over one another and the colony stretches out and folds back like a carpenter's rule.

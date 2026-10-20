@@ -128,3 +128,4 @@ TEST_CASE("candidatos: Mesodinium se divide" * doctest::test_suite("largos")) { 
 TEST_CASE("candidatos: Paramecium tetraurelia se divide" * doctest::test_suite("largos")) { reproduces("paramecium_tetraurelia"); }
 TEST_CASE("candidatos: Zoothamnium se divide" * doctest::test_suite("largos")) { reproduces("zoothamnium"); }
 TEST_CASE("candidatos: Carchesium se divide" * doctest::test_suite("largos")) { reproduces("carchesium"); }
+TEST_CASE("candidatos: Bacillaria se divide" * doctest::test_suite("largos")) { reproduces("bacillaria"); }
