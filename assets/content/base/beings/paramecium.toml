@@ -5,6 +5,10 @@ name = "Paramecium"
 tags = ["protist", "ciliate", "bacterivore"]
 description = "Ciliado de ~200 um que come bacterias por un surco oral. Retrocede al chocar (reaccion de evitacion) y se junta donde hay CO2."
 locomotion = "cilia"
+# Nada en hélice girando sobre su eje (vista desde arriba, una oscilación lateral): radio y período
+# estimados, del orden de los de Bullington 1925 y Jennings 1906, a verificar.
+helix_radius = 15.0
+helix_period = 1.0
 body_plan = "ciliate"
 feeding = "oral_groove"
 flees_from = ["didinium", "lacrymaria"]

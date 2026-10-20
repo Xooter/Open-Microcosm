@@ -332,8 +332,9 @@ struct SpeciesInfo {
     CellSpec spec;                  // forma, tamaño y color típicos
     float speedScale = 1.0f;        // respecto de la velocidad de su tipo de locomoción
     // Nado helicoidal (dinoflagelados: el flagelo transversal del cíngulo hace girar la célula mientras
-    // el longitudinal la empuja). Vista desde arriba, la hélice es una oscilación lateral de este radio
-    // y período; 0 = el bamboleo genérico del flagelo.
+    // el longitudinal la empuja; ciliados y euglenoides: giran sobre su eje largo al avanzar). Vista desde
+    // arriba, la hélice es una oscilación lateral de este radio y período; 0 = el bamboleo genérico del
+    // flagelo, o la línea recta de los cilios.
     float helixRadius = 0.0f;       // [µm]
     float helixPeriod = 0.0f;       // [s]
     // Deslizamiento flagelar (Peranema): el flagelo, rígido y hacia adelante, se apoya en el vidrio y

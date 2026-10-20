@@ -9,6 +9,10 @@ name = "Frontonia"
 tags = ["protist", "ciliate"]
 description = "Ciliado grande (~250 um) y ovalado que traga diatomeas y algas enteras: suele verse lleno de vacuolas pardas y verdes."
 locomotion = "cilia"
+# Nada en hélice girando sobre su eje (vista desde arriba, una oscilación lateral): radio y período
+# estimados, del orden de los de Bullington 1925 y Jennings 1906, a verificar.
+helix_radius = 15.0
+helix_period = 1.5
 body_plan = "ciliate"
 feeding = "raptorial"
 relative_speed = 0.5

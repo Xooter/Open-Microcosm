@@ -6,6 +6,10 @@ name = "Euglena"
 tags = ["protist", "flagellate", "euglenid", "phototroph"]
 description = "Flagelado verde con mancha ocular: nada hacia la luz y hace fotosintesis, pero tambien absorbe comida."
 locomotion = "flagellum"
+# Nada en hélice girando sobre su eje (vista desde arriba, una oscilación lateral): radio y período
+# estimados, a verificar.
+helix_radius = 5.0
+helix_period = 1.0
 body_plan = "euglenid"
 feeding = "anterior_pole"
 flees_from = ["lacrymaria"]

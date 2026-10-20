@@ -10,6 +10,10 @@ name = "Paramecium tetraurelia (killer)"
 tags = ["protist", "ciliate", "bacterivore"]
 description = "Paramecio 'killer': sus bacterias endosimbiontes sueltan cuerpos R al agua que matan a los paramecios sensibles que los comen."
 locomotion = "cilia"
+# Nada en hélice girando sobre su eje (vista desde arriba, una oscilación lateral): radio y período
+# estimados, del orden de los de Bullington 1925 y Jennings 1906, a verificar.
+helix_radius = 10.0
+helix_period = 0.8
 body_plan = "ciliate"
 feeding = "oral_groove"
 flees_from = ["didinium", "lacrymaria"]

@@ -9,6 +9,10 @@ name = "Paramecium aurelia"
 tags = ["protist", "ciliate", "bacterivore"]
 description = "Paramecio mas chico (~130 um). En el cultivo mixto de Gause (1934) desplaza a P. caudatum: exclusion competitiva."
 locomotion = "cilia"
+# Nada en hélice girando sobre su eje (vista desde arriba, una oscilación lateral): radio y período
+# estimados, del orden de los de Bullington 1925 y Jennings 1906, a verificar.
+helix_radius = 10.0
+helix_period = 0.8
 body_plan = "ciliate"
 feeding = "oral_groove"
 flees_from = ["didinium", "lacrymaria"]

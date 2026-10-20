@@ -75,6 +75,12 @@ void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
             omega = 0.0f;
         }
         linear = h * loco.speed;
+        // Los ciliados avanzan girando sobre su eje largo en una hélice (Jennings 1906; Bullington 1925):
+        // vista desde arriba, una oscilación lateral. No en los saltos ni retrocediendo.
+        if (loco.helixRadius > 0.0f && loco.helixPeriod > 0.0f && loco.burst <= 0.0f && f > 0.0f) {
+            const float w = 6.2831853f / loco.helixPeriod;
+            linear = linear + side * (f * loco.helixRadius * w * std::cos(w * simTime + loco.phase));
+        }
         break;
     }
     case LocomotionType::Flagellum: {

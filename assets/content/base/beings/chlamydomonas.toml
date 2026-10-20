@@ -8,6 +8,10 @@ name = "Chlamydomonas"
 tags = ["alga", "green_alga", "flagellate", "phototroph", "chytrid_host", "photobiont"]
 description = "Alga de dos flagelos que nada como en brazada. Dentro de la pared madre se divide en 4 hijas."
 locomotion = "flagellum"
+# Nada en hélice girando sobre su eje (vista desde arriba, una oscilación lateral): radio y período
+# estimados, a verificar.
+helix_radius = 3.0
+helix_period = 0.5
 body_plan = "flagellate_chlorophyte"
 relative_speed = 1.25
 flees_from = ["amoeba"]

@@ -9,6 +9,10 @@ name = "Tetrahymena vorax"
 tags = ["protist", "ciliate", "bacterivore"]
 description = "Ciliado que cambia de forma: come bacterias, pero si huele a otros ciliados se vuelve un macrostoma de boca enorme y se los come."
 locomotion = "cilia"
+# Nada en hélice girando sobre su eje (vista desde arriba, una oscilación lateral): radio y período
+# estimados, del orden de los de Bullington 1925 y Jennings 1906, a verificar.
+helix_radius = 5.0
+helix_period = 0.6
 body_plan = "ciliate"
 feeding = "oral_groove"
 relative_speed = 0.8

@@ -7,6 +7,10 @@ name = "Colpidium"
 tags = ["protist", "ciliate", "bacterivore"]
 description = "Ciliado arrinonado de ~55 um que come bacterias. Abunda en infusiones de hojas y es la presa de Didinium en los microcosmos de laboratorio."
 locomotion = "cilia"
+# Nada en hélice girando sobre su eje (vista desde arriba, una oscilación lateral): radio y período
+# estimados, del orden de los de Bullington 1925 y Jennings 1906, a verificar.
+helix_radius = 5.0
+helix_period = 0.6
 body_plan = "ciliate"
 feeding = "oral_groove"
 relative_speed = 0.8
