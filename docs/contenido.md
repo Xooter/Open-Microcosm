@@ -76,6 +76,18 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   `b12_auxotroph`, `frustule`, `filament`, `filament_cells`, `fragmentation_per_hour`, `zoospores`,
   `daughter_colonies`, `colony_cells`, `mother_dies_at_release`, `relative_dry_mass`, `budding`,
   `anaerobe`, `posterior_mouth`, `cyclosis`.
+- `[[being.response]]` (hasta 4): respuesta fóbica temporal. `field`: `light` | `oxygen` | `shear`
+  (deformación del agua [1/s]); `kind`: `step_up` | `step_down` (cambio relativo mayor que
+  `threshold` respecto de lo que recuerda de los últimos `memory` s, con el nivel arriba de
+  `min_level`) | `above` (el nivel pasa `threshold`); `action`: `avoid` (reacción de evitación o
+  fotofóbica) | `jump`; `refractory` [s].
+- `[being.jump]`: saltos. `speed` [µm/s], `duration` [s], `interval` [s] medio entre saltos
+  espontáneos (0: solo de escape, con una respuesta `jump` o una amenaza a menos de 40 µm).
+- `[being.light_damage]`: daño fotodinámico. Arriba de `threshold` (irradiancia relativa) se paga
+  como estrés, `stress` con la lámpara al máximo; necesita O₂.
+- `[being.stress_pigment]`: pigmento de estrés (astaxantina). `rate_per_hour` con luz arriba de
+  `light_threshold` o sin N (el doble en el quiste), `decay_per_hour` sin estrés, `protection`
+  (fracción del daño por luz que evita al máximo) y `color`.
 - `[being.shape]`: `semi_major_axis` y `semi_minor_axis` [µm], `thickness` [µm] (por omisión, el
   menor), `shape_memory` [1/s], `color` RGB del citoplasma, `nucleus` (radio relativo),
   `squareness` (2 elipse, ~6 cilindro), `taper` del polo posterior.

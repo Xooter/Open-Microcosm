@@ -161,10 +161,22 @@ StainTarget storageTarget(Storage s) {
     }
 }
 
+Color pigmentTint(Color c, const SpeciesInfo& info, float pigment) {
+    const float k = 0.85f * std::clamp(pigment, 0.0f, 1.0f);
+    const std::uint8_t* p = info.stressPigment.color;
+    auto mix = [k](unsigned char a, std::uint8_t b) {
+        return static_cast<unsigned char>(static_cast<float>(a) + (static_cast<float>(b) - static_cast<float>(a)) * k);
+    };
+    return {mix(c.r, p[0]), mix(c.g, p[1]), mix(c.b, p[2]), c.a};
+}
+
 // Color con que entra la célula entera en la textura de cobertura.
 Color cellTint(const StainSpec* st, const entt::registry& reg, entt::entity e, const CellLook& look) {
     Color base = {look.r, look.g, look.b, 255};
     const Species* sp = reg.try_get<Species>(e);
+    // Pigmento de estrés (astaxantina): la célula vira al rojo a medida que lo acumula.
+    if (const Metabolism* m = reg.try_get<Metabolism>(e); sp && m && m->pigment > 0.0f)
+        base = pigmentTint(base, speciesInfo(sp->id), m->pigment);
     if (!st)
         return base;
     if (st->mode == StainMode::Fluorescence) {
@@ -1134,7 +1146,9 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             // sola célula.
             const bool colony = isColony(style);
             const SpeciesInfo& look = speciesInfo(sid);
-            const Color plastid = look.plastidColorSet ? Color{look.plastidColor[0], look.plastidColor[1], look.plastidColor[2], kChloroplast.a} : kChloroplast;
+            Color plastid = look.plastidColorSet ? Color{look.plastidColor[0], look.plastidColor[1], look.plastidColor[2], kChloroplast.a} : kChloroplast;
+            if (const Metabolism* pm = reg.try_get<Metabolism>(e); pm && pm->pigment > 0.0f)
+                plastid = pigmentTint(plastid, look, pm->pigment); // la astaxantina tapa a la clorofila
             // Gránulos y organelos del citoplasma, por tipo.
             const bool organelles = level >= DetailLevel::Detail;
             const BodyPlan& plan = speciesPlan(sid);

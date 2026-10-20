@@ -121,6 +121,8 @@ const char* World::applyEnvironmentStress(entt::entity e, const RingBody& body, 
     around.microcystin = toxin_.grid().sample(body.centroid.x, body.centroid.y);
     around.temperature = medium_.temperature;
     around.salinity = medium_.salinity;
+    around.light = in.light;
+    around.pigment = registry_.get<Metabolism>(e).pigment;
     Digestion* d = registry_.try_get<Digestion>(e);
     return ::applyEnvironmentStress(info, around, d ? &d->toxin : nullptr, bioDt, in);
 }

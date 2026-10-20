@@ -31,6 +31,18 @@ nucleus = 0.32
 [being.appearance]
 style = "two_flagella"
 
+# Respuesta fotofóbica: un aumento brusco de luz la hace frenar, nadar hacia atrás un instante y salir
+# en otra dirección (Foster & Smyth 1980, Microbiol. Rev. 44: 572; Hegemann 2008). Umbrales relativos
+# a la lámpara, estimados.
+[[being.response]]
+field = "light"
+kind = "step_up"
+threshold = 0.2
+min_level = 0.6
+memory = 1.0
+refractory = 2.0
+action = "avoid"
+
 [physiology.chlamydomonas.max_growth]
 # Duplicación de la clorofila de la cepa silvestre a ~70 µmol fotones m⁻² s⁻¹ (no conteo de células).
 value = 20.0

@@ -118,6 +118,53 @@ inline float processWidth(const ProcessSpec& p, float s, float scale) {
     return scale * (p.baseWidth + (p.tipWidth - p.baseWidth) * s);
 }
 
+// Respuesta fóbica temporal (mecanismo M1, docs/plan_mecanicas.md): la célula compara lo que siente
+// ahora con lo que sintió hace un momento (memoria de `memory` segundos) y reacciona a un cambio
+// brusco, como la reacción de evitación de los ciliados (Jennings) o la respuesta fotofóbica de los
+// flagelados (Diehn 1973). `StepUp`: subida relativa mayor que `threshold` con el nivel arriba de
+// `minLevel`; `StepDown`: bajada relativa desde un nivel arriba de `minLevel`; `Above`: el nivel
+// absoluto pasa `threshold` (la deformación del agua, mecanorrecepción: mecanismo M2).
+inline constexpr std::size_t kMaxResponses = 4; // memoria fija en el piloto (sin asignaciones)
+enum class ResponseField : std::uint8_t { Light, Oxygen, Shear };
+enum class ResponseKind : std::uint8_t { StepUp, StepDown, Above };
+enum class ResponseAction : std::uint8_t { Avoid, Jump };
+struct ResponseSpec {
+    ResponseField field = ResponseField::Light;
+    ResponseKind kind = ResponseKind::StepUp;
+    ResponseAction action = ResponseAction::Avoid;
+    float threshold = 0.2f;  // cambio relativo (StepUp/StepDown) o nivel [1/s para el corte] (Above)
+    float minLevel = 0.0f;   // nivel por debajo del cual no responde
+    float memory = 1.0f;     // [s] memoria del nivel anterior
+    float refractory = 1.0f; // [s] sin volver a responder
+};
+
+// Saltos (Halteria, Mesodinium): cirros o cerdas saltadoras la lanzan unos cuerpos de largo en
+// decenas de ms. Espontáneos (intervalo medio `interval`) y de escape (respuesta con `action =
+// "jump"`). Sin inercia: la velocidad es la del golpe mientras dura.
+struct JumpSpec {
+    float speed = 0.0f;    // [µm/s] (0: no salta)
+    float duration = 0.05f; // [s]
+    float interval = 0.0f; // [s] medio entre saltos espontáneos (0: solo de escape)
+};
+
+// Daño fotodinámico (Blepharisma: la blefarismina, con luz y O₂, genera especies reactivas; Giese
+// 1946). Por encima de `threshold` (irradiancia relativa) se paga como estrés, `stress` con la
+// lámpara al máximo (en las unidades del estrés de pH).
+struct LightDamageSpec {
+    float threshold = 1.0f;
+    float stress = 0.0f;
+};
+
+// Pigmento de estrés (astaxantina de Haematococcus; Boussiba 2000): se acumula con luz alta o falta de
+// nitrógeno, sobre todo en el quiste, y filtra la luz (protege del daño fotodinámico).
+struct StressPigmentSpec {
+    float ratePerHour = 0.0f;  // fracción del máximo por hora biológica con estrés (0: no tiene)
+    float decayPerHour = 0.0f; // sin estrés
+    float lightThreshold = 1.0f; // irradiancia relativa que lo induce
+    float protection = 0.0f;   // fracción del daño por luz que evita con el pigmento al máximo
+    std::uint8_t color[3] = {170, 40, 30};
+};
+
 struct AnimalCellInfo {
     bool present = false;
     bool adherent = true;              // adherida al fondo por adhesiones focales: el agua no la lleva
@@ -211,6 +258,10 @@ struct SpeciesInfo {
     std::uint8_t plastidColor[3] = {0, 0, 0};
     AnimalCellInfo animalCell;
     std::vector<ProcessSpec> processes; // [[being.process]]
+    std::vector<ResponseSpec> responses; // [[being.response]]
+    JumpSpec jump;                      // [being.jump]
+    LightDamageSpec lightDamage;        // [being.light_damage]
+    StressPigmentSpec stressPigment;    // [being.stress_pigment]
     // Contorno de la célula entera cuando tiene prolongaciones en el cuerpo (bio/silhouette): denso,
     // antihorario, centrado en su centroide y para el tamaño típico. Vacío: la superelipse de `spec`.
     std::vector<Vec2> outline;

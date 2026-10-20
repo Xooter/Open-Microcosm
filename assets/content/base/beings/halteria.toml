@@ -2,7 +2,11 @@
 
 # Halteria grandinella: oligotrico globoso de 20–40 µm (~30 µm de ancho; Kreutz), uno de los ciliados
 # más comunes del plancton; come bacterias, algas y flagelados chicos. Avanza a saltos con hileras de
-# cerdas saltadoras: los saltos no se modelan (nada con cilios).
+# cerdas saltadoras. Entre salto y salto casi no se desplaza: gira y filtra con las membranelas.
+# Saltos: unos pocos cuerpos de largo en decenas de ms, espontáneos y de escape ante la deformación del
+# agua de un depredador que se acerca (Tamar 1979, Arch. Protistenk. 122: 290; Gilbert 1994, Microb.
+# Ecol. 27: 189; umbrales de deformación de Jakobsen 2001, Mar. Ecol. Prog. Ser. 214: 67). Velocidad,
+# duración, intervalo y umbral: órdenes de magnitud, a verificar en esas fuentes.
 [[being]]
 id = "halteria"
 name = "Halteria"
@@ -11,7 +15,7 @@ description = "Ciliado globoso de ~30 um con una corona de membranelas y cerdas 
 locomotion = "cilia"
 body_plan = "ciliate"
 feeding = "oral_groove"
-relative_speed = 0.6
+relative_speed = 0.15
 mouth_prey = ["chlorella", "raphidocelis", "cryptomonas"]
 conjugation = true
 initial_count = 8
@@ -30,6 +34,19 @@ nucleus = 0.3
 
 [being.appearance]
 style = "membranelle_crown"
+
+[being.jump]
+speed = 1500.0
+duration = 0.05
+interval = 1.5
+
+# Escape: la corriente de un depredador la deforma más de ~2/s y salta.
+[[being.response]]
+field = "shear"
+kind = "above"
+threshold = 2.0
+action = "jump"
+refractory = 0.5
 
 
 [physiology.halteria.max_growth]

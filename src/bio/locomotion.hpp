@@ -56,6 +56,7 @@ struct Locomotion {
     float helixPeriod = 0.0f; // [s]
     float phase = 0.0f;       // fase propia de la hélice [rad] (cada célula gira a su tiempo)
     bool gliding = false;     // se desliza sobre el vidrio con el flagelo (no nada)
+    float burst = 0.0f;       // salto en curso: velocidad a lo largo del eje [µm/s] (0: no salta)
     std::uint32_t mouthRing = 0; // índice del anillo con el citostoma (boca)
 };
 

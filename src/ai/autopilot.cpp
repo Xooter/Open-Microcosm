@@ -21,15 +21,81 @@ float turnToward(Vec2 h, Vec2 to) {
     return clampTurn(2.0f * std::atan2(cross(h, u), dot(h, u)));
 }
 
+// Respuestas fóbicas temporales (M1) y mecanoestímulo (M2): compara el nivel de ahora con el recordado.
+// Devuelve la acción disparada en este paso, si hay una.
+enum class Fired { None, Avoid, Jump };
+Fired evaluateResponses(Autopilot& pilot, const SpeciesInfo& species, const Perception& sense, float dt) {
+    pilot.refractory = std::max(0.0f, pilot.refractory - dt);
+    Fired fired = Fired::None;
+    const std::size_t n = std::min(species.responses.size(), pilot.responseMemory.size());
+    for (std::size_t k = 0; k < n; ++k) {
+        const ResponseSpec& r = species.responses[k];
+        const float level = r.field == ResponseField::Light    ? sense.light
+                            : r.field == ResponseField::Oxygen ? sense.oxygen
+                                                               : sense.shear;
+        float& memory = pilot.responseMemory[k];
+        if (memory < 0.0f)
+            memory = level;
+        const float scale = std::max(memory, 1e-3f);
+        bool fire = false;
+        switch (r.kind) {
+        case ResponseKind::StepUp: fire = level > r.minLevel && level - memory > r.threshold * scale; break;
+        case ResponseKind::StepDown: fire = memory > r.minLevel && memory - level > r.threshold * scale; break;
+        case ResponseKind::Above: fire = level > r.threshold; break;
+        }
+        memory += (level - memory) * std::min(1.0f, dt / r.memory);
+        if (fire && pilot.refractory <= 0.0f && fired == Fired::None) {
+            fired = r.action == ResponseAction::Jump ? Fired::Jump : Fired::Avoid;
+            pilot.refractory = r.refractory;
+        }
+    }
+    return fired;
+}
+
 } // namespace
 
 void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, const SpeciesInfo& species,
                     const Perception& sense, Rng& rng, float dt) {
     const Vec2 h = bodyHeading(body);
+    const Fired fired = evaluateResponses(pilot, species, sense, dt);
+    loco.burst = 0.0f;
+
+    // Saltos (Halteria): espontáneos cada tanto y de escape ante la corriente de un depredador o una
+    // amenaza cerca (Gilbert 1994: el salto la saca del alcance de los rotíferos).
+    if (const JumpSpec& jump = species.jump; jump.speed > 0.0f) {
+        bool start = fired == Fired::Jump || (sense.hasThreat && sense.threatDistance < 40.0f);
+        if (jump.interval > 0.0f) {
+            if (pilot.nextJump < 0.0f)
+                pilot.nextJump = -jump.interval * std::log(1.0f - 0.999f * rng.uniform());
+            pilot.nextJump -= dt;
+            if (pilot.nextJump <= 0.0f) {
+                start = true;
+                pilot.nextJump = -jump.interval * std::log(1.0f - 0.999f * rng.uniform());
+            }
+        }
+        if (start && pilot.jump <= 0.0f) {
+            pilot.jump = jump.duration;
+            pilot.turn = rng.uniform(-1.0f, 1.0f); // después del salto se reorienta
+        }
+        if (pilot.jump > 0.0f) {
+            pilot.jump -= dt;
+            loco.burst = jump.speed;
+            loco.forward = 1.0f;
+            loco.turn = 0.0f;
+            loco.active = true;
+            pilot.intent = Intent::Jump;
+            return;
+        }
+    }
 
     switch (loco.type) {
     case LocomotionType::Cilia: {
         loco.active = false;
+        if (fired == Fired::Avoid && pilot.reverse <= 0.0f) { // respuesta fóbica: reacción de evitación
+            pilot.intent = Intent::Phobic;
+            pilot.reverse = 1.0f;
+            pilot.turn = rng.uniform() < 0.5f ? -1.0f : 1.0f;
+        }
         // Reacción de evitación: ante una amenaza o un choque del polo anterior (mecanorrecepción),
         // la ciliatura se invierte, la célula retrocede y gira.
         const bool preyAhead = sense.hasPrey && sense.preyDistance < 10.0f;
@@ -103,6 +169,20 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
     }
     case LocomotionType::Flagellum: {
         loco.active = true;
+        // Respuesta fotofóbica (Euglena, Chlamydomonas): ante un aumento brusco de la luz se detiene,
+        // gira y sale en otra dirección; mientras dura, no hace fototaxis.
+        if (fired == Fired::Avoid) {
+            const float a = rng.uniform(2.0f, 4.3f); // hacia atrás, con desvío
+            pilot.target = body.centroid + Vec2{h.x * std::cos(a) - h.y * std::sin(a), h.x * std::sin(a) + h.y * std::cos(a)} * 300.0f;
+            pilot.reverse = 1.5f;
+            pilot.retarget = rng.uniform(3.0f, 8.0f);
+        }
+        if (pilot.reverse > 0.0f) {
+            pilot.reverse -= dt;
+            loco.target = pilot.target;
+            pilot.intent = Intent::Phobic;
+            return;
+        }
         pilot.intent = Intent::Wander;
         if (sense.bumped) { // chocó: cambia de rumbo
             const float angle = rng.uniform(0.0f, 2.0f * units::kPi);

@@ -1,6 +1,10 @@
 # Haematococcus lacustris (H. pluvialis): volvocal de 10–50 µm (la célula) dentro de una envoltura
 # esférica grande, con dos flagelos que la atraviesan, estigma y gránulos rojos de astaxantina; vive en
 # charcos de piedra y bebederos (Kreutz). Con estrés se enquista y se vuelve roja (aplanosporas).
+# Pigmento de estrés: con luz alta o sin nitrógeno acumula astaxantina en gotas de lípidos, sobre todo en
+# el quiste, en unos días; la astaxantina filtra la luz y la protege del daño fotooxidativo (Boussiba
+# 2000, Physiol. Plant. 108: 111). Tasas y umbrales estimados por ese curso temporal (días); la célula
+# verde, sin pigmento, sufre con la luz intensa (fotoinhibición).
 [[being]]
 id = "haematococcus"
 name = "Haematococcus"
@@ -26,3 +30,14 @@ nucleus = 0.3
 [being.appearance]
 style = "two_flagella"
 plastid_color = [110, 150, 60]
+
+[being.light_damage]
+threshold = 0.7
+stress = 0.5
+
+[being.stress_pigment]
+rate_per_hour = 0.02
+decay_per_hour = 0.005
+light_threshold = 0.6
+protection = 0.8
+color = [175, 35, 25]

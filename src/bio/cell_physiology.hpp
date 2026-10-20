@@ -16,12 +16,19 @@ struct CellSurroundings {
     float microcystin = 0.0f; // [µM]
     float temperature = 20.0f; // [°C]
     float salinity = 0.0f;    // [PSU]
+    float light = 0.0f;       // irradiancia relativa [0, 1]
+    float pigment = 0.0f;     // pigmento de estrés de la célula [0, 1] (filtra la luz)
 };
 
 // µmax y medias saturaciones de la especie ([physiology.<id>.*], con su fuente) y los multiplicadores
 // de su genoma. Sin herencia, los de la especie.
 void applySpeciesPhysiology(MetabolicInput& in, SpeciesId id, const SpeciesInfo& info, const Heredity* heredity,
                             const MetabolismParams& params);
+
+// Pigmento de estrés (astaxantina): sube con luz por encima del umbral de la especie o sin nitrógeno
+// (más rápido en el quiste) y baja despacio sin estrés.
+void updateStressPigment(const SpeciesInfo& info, float light, Limitation limiting, bool cyst, float bioDt,
+                         Metabolism& m);
 
 // Metabolismo mínimo dentro de la pared del quiste.
 void applyCyst(MetabolicInput& in);

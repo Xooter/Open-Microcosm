@@ -1680,6 +1680,7 @@ int World::placeSampled(const std::vector<SampledCell>& cells) {
             m.iron = s.meta.iron;
             m.vitamin = s.meta.vitamin;
             m.ageHours = s.meta.ageHours;
+            m.pigment = s.meta.pigment;
             m.pendingFissions = s.meta.pendingFissions;
             registry_.get<Lineage>(e).generation = s.generation;
             if (info.speedScale > 0.0f)
@@ -1972,6 +1973,7 @@ void World::applyMotion(float dt) {
         Locomotion& loco = registry_.get<Locomotion>(e);
         const bool engulfing = registry_.all_of<PhagocyticCup>(e);
         bool disturbed = false;
+        loco.burst = 0.0f; // el salto lo pone el piloto paso a paso
         if (e == player_) {
             loco.forward = playerInput_.forward;
             loco.turn = playerInput_.turn;
@@ -2001,6 +2003,9 @@ void World::applyMotion(float dt) {
             if (isSatiated(e))
                 sense.hasPrey = false; // saciada: no persigue presas
             steerAutopilot(*pilot, loco, body, speciesInfo(sp), sense, rng, dt);
+            if (loco.burst > 0.0f) // el golpe de los cirros también lo frena la viscosidad del medio
+                if (const Heredity* hh = registry_.try_get<Heredity>(e))
+                    loco.burst *= hh->traits.speed * viscositySpeed_;
             // Perturbación mecánica: un choque, una amenaza cerca o una corriente fuerte.
             disturbed = sense.bumped || (sense.hasThreat && sense.threatDistance < 40.0f) ||
                         length(fluid_.velocityAt(body.centroid)) > 40.0f;
@@ -2845,6 +2850,7 @@ void World::updateLifecycle(float dt) {
         const float phosphorusBefore = meta.phosphorus, nitrogenBefore = meta.nitrogen;
         const float siliconBefore = meta.silicon, ironBefore = meta.iron, vitaminBefore = meta.vitamin;
         const MetabolicOutput out = updateMetabolism(meta, mp, in);
+        updateStressPigment(info, in.light, meta.limiting, cyst != nullptr, bioDt, meta);
         if (out.phosphateTaken > 0.0f) {
             // El fosfato sale del agua cercana; si no alcanza, la célula toma lo que hay.
             const float taken = -exchange(phosphate_, body.centroid, -out.phosphateTaken, Flow::Uptake);
@@ -3818,6 +3824,22 @@ Perception World::perceive(entt::entity e, const RingBody& body, SpeciesId speci
     const Vec2 l = front + side * 15.0f, r = front - side * 15.0f;
     p.lightLeft = light_.sample(l.x, l.y);
     p.lightRight = light_.sample(r.x, r.y);
+    // Lo que miden las respuestas fóbicas (M1) y el mecanoestímulo (M2), solo si la especie los usa.
+    if (!info.responses.empty() || info.jump.speed > 0.0f) {
+        p.light = light_.sample(body.centroid.x, body.centroid.y);
+        p.oxygen = oxygen_.grid().sample(body.centroid.x, body.centroid.y);
+        // Deformación del agua alrededor de la célula [1/s]: diferencias del flujo de fondo a un radio
+        // de cada lado (lo que deforma a la célula, no su propio nado; Jakobsen 2001).
+        const float d = std::max(4.0f, myRadius);
+        const Vec2 ux1 = fluid_.backgroundAt(body.centroid + Vec2{d, 0.0f});
+        const Vec2 ux0 = fluid_.backgroundAt(body.centroid - Vec2{d, 0.0f});
+        const Vec2 uy1 = fluid_.backgroundAt(body.centroid + Vec2{0.0f, d});
+        const Vec2 uy0 = fluid_.backgroundAt(body.centroid - Vec2{0.0f, d});
+        const float inv = 0.5f / d;
+        const float dudx = (ux1.x - ux0.x) * inv, dvdy = (uy1.y - uy0.y) * inv;
+        const float dudy = (uy1.x - uy0.x) * inv, dvdx = (ux1.y - ux0.y) * inv;
+        p.shear = std::sqrt((dudx - dvdy) * (dudx - dvdy) + (dudy + dvdx) * (dudy + dvdx));
+    }
     return p;
 }
 

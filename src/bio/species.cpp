@@ -83,9 +83,20 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process"};
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "light_damage",
+    "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
+constexpr const char* kResponseKeys[] = {"field", "kind", "action", "threshold", "min_level", "memory", "refractory"};
+constexpr std::pair<const char*, ResponseField> kResponseField[] = {
+    {"light", ResponseField::Light}, {"oxygen", ResponseField::Oxygen}, {"shear", ResponseField::Shear}};
+constexpr std::pair<const char*, ResponseKind> kResponseKind[] = {
+    {"step_up", ResponseKind::StepUp}, {"step_down", ResponseKind::StepDown}, {"above", ResponseKind::Above}};
+constexpr std::pair<const char*, ResponseAction> kResponseAction[] = {{"avoid", ResponseAction::Avoid},
+                                                                     {"jump", ResponseAction::Jump}};
+constexpr const char* kJumpKeys[] = {"speed", "duration", "interval"};
+constexpr const char* kLightDamageKeys[] = {"threshold", "stress"};
+constexpr const char* kPigmentKeys[] = {"rate_per_hour", "decay_per_hour", "light_threshold", "protection", "color"};
 constexpr std::pair<const char*, ProcessKind> kProcessKind[] = {
     {"horn", ProcessKind::Horn}, {"spine", ProcessKind::Spine}, {"arm", ProcessKind::Arm}, {"seta", ProcessKind::Seta}};
 constexpr const char* kAnimalCellKeys[] = {"adherent", "rounded_radius", "contact_inhibition_locomotion",
@@ -237,6 +248,76 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
                 s.processes.push_back(p);
             }
         }
+    }
+    if (const toml::node* rn = t.get("response")) {
+        const toml::array* arr = rn->as_array();
+        if (!arr) {
+            r.errors.push_back(r.where + ": 'response' tiene que ser una lista ([[being.response]])");
+        } else {
+            for (const toml::node& item : *arr) {
+                const toml::table* rt = item.as_table();
+                if (!rt) {
+                    r.errors.push_back(r.where + ": cada [[being.response]] tiene que ser una tabla");
+                    continue;
+                }
+                toml_io::warnUnknown(*rt, kResponseKeys, r.where + " [response]", warnings);
+                Reader rr{*rt, r.where + " [response]", {}};
+                ResponseSpec resp;
+                rr.choice("field", kResponseField, resp.field, true);
+                rr.choice("kind", kResponseKind, resp.kind, true);
+                rr.choice("action", kResponseAction, resp.action);
+                rr.count("threshold", resp.threshold);
+                rr.count("min_level", resp.minLevel);
+                rr.count("memory", resp.memory);
+                rr.count("refractory", resp.refractory);
+                if (resp.memory <= 0.0f)
+                    rr.errors.push_back(rr.where + ": 'memory' tiene que ser positivo");
+                r.errors.insert(r.errors.end(), rr.errors.begin(), rr.errors.end());
+                s.responses.push_back(resp);
+            }
+            if (s.responses.size() > kMaxResponses)
+                r.errors.push_back(r.where + ": a lo sumo " + std::to_string(kMaxResponses) + " [[being.response]]");
+        }
+    }
+    if (const toml::table* jt = r.table("jump")) {
+        toml_io::warnUnknown(*jt, kJumpKeys, r.where + " [jump]", warnings);
+        Reader jr{*jt, r.where + " [jump]", {}};
+        jr.count("speed", s.jump.speed);
+        jr.count("duration", s.jump.duration);
+        jr.count("interval", s.jump.interval);
+        if (s.jump.speed <= 0.0f || s.jump.duration <= 0.0f)
+            jr.errors.push_back(jr.where + ": 'speed' y 'duration' tienen que ser positivos");
+        r.errors.insert(r.errors.end(), jr.errors.begin(), jr.errors.end());
+    }
+    if (const toml::table* lt = r.table("light_damage")) {
+        toml_io::warnUnknown(*lt, kLightDamageKeys, r.where + " [light_damage]", warnings);
+        Reader lr{*lt, r.where + " [light_damage]", {}};
+        lr.count("threshold", s.lightDamage.threshold);
+        lr.count("stress", s.lightDamage.stress);
+        if (s.lightDamage.threshold >= 1.0f)
+            lr.errors.push_back(lr.where + ": 'threshold' tiene que ser menor que 1 (la lámpara al máximo)");
+        r.errors.insert(r.errors.end(), lr.errors.begin(), lr.errors.end());
+    }
+    if (const toml::table* pt = r.table("stress_pigment")) {
+        toml_io::warnUnknown(*pt, kPigmentKeys, r.where + " [stress_pigment]", warnings);
+        Reader pr{*pt, r.where + " [stress_pigment]", {}};
+        StressPigmentSpec& sp = s.stressPigment;
+        pr.count("rate_per_hour", sp.ratePerHour);
+        pr.count("decay_per_hour", sp.decayPerHour);
+        pr.count("light_threshold", sp.lightThreshold);
+        pr.count("protection", sp.protection);
+        if (const toml::node* c = pt->get("color")) {
+            const toml::array* a = c->as_array();
+            if (!a || a->size() != 3)
+                pr.errors.push_back(pr.where + ": 'color' tiene que ser [r, g, b] (0–255)");
+            else
+                for (std::size_t i = 0; i < 3; ++i)
+                    sp.color[i] = static_cast<std::uint8_t>(
+                        std::clamp((*a)[i].value<std::int64_t>().value_or(0), std::int64_t{0}, std::int64_t{255}));
+        }
+        if (sp.protection > 1.0f)
+            pr.errors.push_back(pr.where + ": 'protection' es una fracción (0–1)");
+        r.errors.insert(r.errors.end(), pr.errors.begin(), pr.errors.end());
     }
     if (const toml::table* look = t.get("appearance") ? t.get("appearance")->as_table() : nullptr) {
         for (const auto& [k, v] : *look)

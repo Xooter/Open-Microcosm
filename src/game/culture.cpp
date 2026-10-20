@@ -919,10 +919,13 @@ void Culture::stepCells(float dt, float bioDt) {
         around.ph = static_cast<float>(ph_);
         around.temperature = medium_.temperature;
         around.salinity = medium_.salinity;
+        around.light = in.light;
+        around.pigment = c.meta.pigment;
         const char* stress = applyEnvironmentStress(info, around, &c.digestion.toxin, bioDt, in);
         const float pBefore = c.meta.phosphorus, nBefore = c.meta.nitrogen;
         const float siBefore = c.meta.silicon, feBefore = c.meta.iron, b12Before = c.meta.vitamin;
         const MetabolicOutput out = updateMetabolism(c.meta, mp, in);
+        updateStressPigment(info, in.light, c.meta.limiting, c.cyst, bioDt, c.meta);
         if (out.phosphateTaken > 0.0f)
             c.meta.phosphorus = pBefore - static_cast<float>(exchange(Solute::Phosphate, -out.phosphateTaken, Flow::Uptake));
         if (out.nitrogenTaken > 0.0f)

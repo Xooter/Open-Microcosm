@@ -25,6 +25,18 @@ shape_memory = 4.0
 color = [120, 172, 92]
 nucleus = 0.32
 
+# Respuesta fotofóbica: con luz ya intensa, un aumento brusco la hace detenerse, girar y salir en otra
+# dirección (Diehn 1973, Science 181: 1009). Con la fototaxis, eso la deja en la luz moderada. Umbrales
+# relativos a la lámpara, estimados.
+[[being.response]]
+field = "light"
+kind = "step_up"
+threshold = 0.15
+min_level = 0.7
+memory = 1.0
+refractory = 2.0
+action = "avoid"
+
 [physiology.euglena.max_growth]
 # Medio con digerido de fermentación metánica al 10 % (no es un medio estándar).
 value = 0.047

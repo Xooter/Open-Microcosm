@@ -1,7 +1,10 @@
 # Blepharisma americanum: heterótrico rosa de 180–280 µm, aplanado lateralmente, con pigmento
 # (blefarismina) en bandas y un macronúcleo moniliforme (Kreutz). Ancho estimado (~35 % del largo) y
-# espesor la mitad del ancho. Come bacterias, flagelados y ciliados chicos. La blefarismina lo hace
-# huir de la luz fuerte (fotofobia) y la luz intensa lo daña: no está modelado.
+# espesor la mitad del ancho. Come bacterias, flagelados y ciliados chicos. La blefarismina es su
+# fotorreceptor: ante un aumento brusco de luz hace la reacción de evitación (respuesta fotofóbica,
+# Kraml & Marwan 1983, Photochem. Photobiol. 37: 313), así que se junta en la sombra; y con luz intensa
+# y O₂ es fotodinámica y lo daña (Giese 1946, Physiol. Zool. 19: 1; las albinas resisten). Umbrales
+# relativos a la lámpara: estimados, sin medición en estas unidades.
 [[being]]
 id = "blepharisma"
 name = "Blepharisma"
@@ -28,6 +31,19 @@ thickness = 20.0
 shape_memory = 6.0
 color = [214, 156, 170]
 nucleus = 0.25
+
+[[being.response]]
+field = "light"
+kind = "step_up"
+threshold = 0.2
+min_level = 0.3
+memory = 2.0
+refractory = 3.0
+action = "avoid"
+
+[being.light_damage]
+threshold = 0.5
+stress = 0.6
 
 [physiology.blepharisma.max_growth]
 # Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en

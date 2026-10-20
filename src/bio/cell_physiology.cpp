@@ -50,7 +50,15 @@ const char* applyEnvironmentStress(const SpeciesInfo& info, const CellSurroundin
     // Anaerobias estrictas (Trichonympha): el O₂ las intoxica.
     const float o2 = std::max(0.0f, around.o2);
     const float oxic = info.anaerobe ? o2 / 20.0f : 0.0f;
-    in.phStress += thermal + saline + oxic;
+    // Daño fotodinámico (Blepharisma): proporcional a la luz por encima del umbral; el pigmento de estrés
+    // la filtra. Necesita O₂ (las especies reactivas salen de él): en anoxia no daña.
+    float photo = 0.0f;
+    if (const LightDamageSpec& ld = info.lightDamage; ld.stress > 0.0f && around.light > ld.threshold) {
+        photo = ld.stress * (around.light - ld.threshold) / (1.0f - ld.threshold) *
+                (1.0f - info.stressPigment.protection * std::clamp(around.pigment, 0.0f, 1.0f)) *
+                std::min(1.0f, std::max(0.0f, around.o2) / 20.0f);
+    }
+    in.phStress += thermal + saline + oxic + photo;
     if (info.anaerobe)
         in.fermentationScale = 0.5f;
     // Microcistina: inhibe fosfatasas; daña a los consumidores (ciliados), no a las algas.
@@ -72,9 +80,25 @@ const char* applyEnvironmentStress(const SpeciesInfo& info, const CellSurroundin
         return "estres osmotico";
     if (oxic > 1.0f)
         return "oxigeno (anaerobia)";
+    if (photo > 1.0f)
+        return "dano por luz";
     if (in.phStress > 1.0f)
         return "pH extremo";
     return nullptr;
+}
+
+void updateStressPigment(const SpeciesInfo& info, float light, Limitation limiting, bool cyst, float bioDt,
+                         Metabolism& m) {
+    const StressPigmentSpec& sp = info.stressPigment;
+    if (sp.ratePerHour <= 0.0f)
+        return;
+    const float hours = bioDt / 3600.0f;
+    const float lightStress = std::max(0.0f, light - sp.lightThreshold) / std::max(1e-3f, 1.0f - sp.lightThreshold);
+    const float stress = std::min(1.0f, lightStress + (limiting == Limitation::Nitrogen ? 1.0f : 0.0f));
+    // En el quiste (aplanóspora) la síntesis es mayor: es donde la célula se vuelve roja.
+    const float rate = sp.ratePerHour * stress * (cyst ? 2.0f : 1.0f);
+    m.pigment += (rate * (1.0f - m.pigment) - sp.decayPerHour * (stress > 0.0f ? 0.0f : m.pigment)) * hours;
+    m.pigment = std::clamp(m.pigment, 0.0f, 1.0f);
 }
 
 float osmotrophDemand(float biomass, float organic, float bioDt) {

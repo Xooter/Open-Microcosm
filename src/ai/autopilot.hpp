@@ -3,6 +3,7 @@
 #include "core/rng.hpp"
 #include "core/vec2.hpp"
 
+#include <array>
 #include <cstdint>
 
 struct Locomotion;
@@ -21,6 +22,10 @@ struct Perception {
     bool bumped = false; // el polo anterior tocó otra célula (mecanorrecepción)
     float lightLeft = 0.0f, lightRight = 0.0f; // a cada lado del polo anterior
     float acid = 0.0f;  // log(1 + exceso de CO₂ sobre el equilibrio con el aire)
+    // Solo si la especie tiene respuestas fóbicas o saltos (si no, quedan en 0):
+    float light = 0.0f;  // irradiancia relativa en el centro
+    float oxygen = 0.0f; // [µM]
+    float shear = 0.0f;  // deformación del agua alrededor [1/s]
 };
 
 // Por qué la célula se mueve como se mueve en este momento (solo informativo: la ficha de
@@ -36,6 +41,8 @@ enum class Intent : std::uint8_t {
     Glide,       // diatomea: se desliza por el rafe, con inversiones
     Walk,        // hipotrico: camina sobre los cirros
     Pause,       // parada de un caminante
+    Jump,        // salto (cirros o cerdas saltadoras)
+    Phobic,      // respuesta fóbica a un cambio brusco (luz, O₂, corriente)
 };
 
 // Componente: comportamiento de las células que no controla el jugador. Sale de los datos de
@@ -53,6 +60,11 @@ struct Autopilot {
     float reverse = 0.0f;  // tiempo restante de la reacción de evitación [s]
     bool walking = true;   // hipotricos: alternan caminatas y paradas
     float acidMemory = 0.0f;
+    // Respuestas fóbicas (SpeciesInfo::responses): nivel recordado de cada una (< 0: sin medir todavía).
+    std::array<float, 4> responseMemory{-1.0f, -1.0f, -1.0f, -1.0f};
+    float refractory = 0.0f; // [s] sin volver a responder
+    float jump = 0.0f;       // [s] que le quedan al salto en curso
+    float nextJump = -1.0f;  // [s] hasta el próximo salto espontáneo (< 0: sin sortear)
 };
 
 void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, const SpeciesInfo& species,

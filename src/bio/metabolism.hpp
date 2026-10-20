@@ -85,6 +85,7 @@ struct Metabolism {
     int fissions = 1;          // divisiones por ciclo (2 = palintomía en 4 hijas)
     int pendingFissions = 0;   // divisiones que faltan del ciclo actual
     float ageHours = 0.0f;
+    float pigment = 0.0f;      // pigmento de estrés (astaxantina) [0, 1] del máximo
     bool photosynthetic = false;
     // Estado del último paso (para el HUD).
     bool starving = false;

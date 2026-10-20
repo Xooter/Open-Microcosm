@@ -69,8 +69,12 @@ void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
     case LocomotionType::Cilia: {
         const float f = loco.forward >= 0.0f ? loco.forward : loco.forward * p.ciliaReverse;
         loco.speed = f * p.ciliaSpeed * loco.power;
-        linear = h * loco.speed;
         omega = loco.turn * p.ciliaTurnRate;
+        if (loco.burst > 0.0f) { // salto: el golpe de los cirros la lanza en línea recta
+            loco.speed = loco.burst; // ya escalado por el genoma y la viscosidad (World)
+            omega = 0.0f;
+        }
+        linear = h * loco.speed;
         break;
     }
     case LocomotionType::Flagellum: {

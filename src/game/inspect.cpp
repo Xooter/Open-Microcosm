@@ -185,6 +185,8 @@ const char* intentText(Intent i, LocomotionType type, const SpeciesInfo& info) {
     case Intent::Glide: return "se desliza por el rafe, con inversiones de sentido";
     case Intent::Walk: return "camina sobre los cirros";
     case Intent::Pause: return "parada brusca";
+    case Intent::Jump: return "salta: los cirros la lanzan varios cuerpos de largo en un instante";
+    case Intent::Phobic: return "respuesta fobica: un cambio brusco (luz, corriente) la hace retroceder y girar";
     }
     return "";
 }
