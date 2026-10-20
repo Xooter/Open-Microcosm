@@ -107,7 +107,8 @@ constexpr const char* kMorphKeys[] = {"name",        "signal",       "threshold"
                                       "length_scale", "area_scale",  "feeding",   "prey",  "mouth_width"};
 constexpr const char* kStalkKeys[] = {"kind",        "length",         "width",          "bending_rate",
                                       "growth_hours", "decay_hours",   "contracted_fraction", "extension_s",
-                                      "spontaneous_per_min", "detaches"};
+                                      "spontaneous_per_min", "detaches", "colony", "max_zooids", "branch_angle",
+                                      "shared_spasmoneme"};
 constexpr std::pair<const char*, StalkKind> kStalkKind[] = {{"spasmoneme", StalkKind::Spasmoneme},
                                                             {"rigid", StalkKind::Rigid},
                                                             {"mucilage", StalkKind::Mucilage},
@@ -472,6 +473,12 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         sr.count("extension_s", sp.extensionSeconds);
         sr.count("spontaneous_per_min", sp.spontaneousPerMinute);
         sr.flag("detaches", sp.detaches);
+        sr.flag("colony", sp.colony);
+        sr.count("max_zooids", sp.maxZooids);
+        float branchDeg = sp.branchAngle * 180.0f / units::kPi;
+        sr.count("branch_angle", branchDeg);
+        sp.branchAngle = branchDeg * units::kPi / 180.0f;
+        sr.flag("shared_spasmoneme", sp.sharedSpasmoneme);
         if (sp.kind != StalkKind::Foot && sp.length <= 0.0f)
             sr.errors.push_back(sr.where + ": un tallo necesita 'length' positivo");
         if (sp.contractedFraction <= 0.0f || sp.contractedFraction > 1.0f || sp.extensionSeconds <= 0.0f)

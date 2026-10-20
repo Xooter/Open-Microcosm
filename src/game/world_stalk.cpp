@@ -15,9 +15,52 @@ const SpeciesInfo& infoOfEntity(const entt::registry& reg, entt::entity e) {
 }
 } // namespace
 
+bool World::branchColony(entt::entity mother, entt::entity child) {
+    const Anchored* an = registry_.try_get<Anchored>(mother);
+    if (!an || !registry_.valid(an->rod) || !registry_.all_of<RingBody>(child))
+        return false;
+    Stalk* parent = registry_.try_get<Stalk>(an->rod);
+    if (!parent)
+        return false;
+    const StalkSpec& spec = speciesInfo(parent->species).stalk;
+    if (!spec.colony || parent->rod.nodes.size() < 2)
+        return false;
+    const entt::entity root = registry_.valid(parent->root) ? parent->root : an->rod;
+    int zooids = 0;
+    for (auto [se, st] : registry_.view<Stalk>().each())
+        zooids += (se == root || st.root == root) && st.zooid != entt::null ? 1 : 0;
+    if (zooids >= spec.maxZooids)
+        return false; // colonia completa: la hija se va como telotroco
+    // La rama sale de la punta del tallo de la madre, girada hacia un lado (alternando).
+    const Vec2 tip = parent->rod.nodes.back(), prev = parent->rod.nodes[parent->rod.nodes.size() - 2];
+    Vec2 dir = tip - prev;
+    const float len = length(dir);
+    dir = len > 1e-3f ? dir * (1.0f / len) : parent->rod.baseDirection;
+    const float a = (parent->children % 2 == 0 ? 1.0f : -1.0f) * spec.branchAngle; // alternan de lado
+    dir = {dir.x * std::cos(a) - dir.y * std::sin(a), dir.x * std::sin(a) + dir.y * std::cos(a)};
+    const SpeciesId species = parent->species;
+    const std::uint32_t id = nextStalkId_++;
+    const entt::entity parentEntity = an->rod;
+    const int depth = parent->depth + 1;
+    ++parent->children;
+    const entt::entity rod = registry_.create(); // ojo: puede realocar el almacenamiento de Stalk
+    Stalk& st = registry_.emplace<Stalk>(rod);
+    layStalk(st.rod, tip, dir, std::max(1.0f, 0.05f * spec.length), stalkNodeCount(spec.length));
+    st.species = species;
+    st.zooid = child;
+    st.id = id;
+    st.parent = parentEntity;
+    st.root = root;
+    st.depth = depth;
+    st.turn = a;
+    registry_.emplace_or_replace<Anchored>(child, Anchored{tip, st.rod.length, 0.0f, rod});
+    return true;
+}
+
 void World::contractStalk(Anchored& anchor, float dt) {
     // Espasmonema: el Ca²⁺ dispara la espasmina y el tallo se enrolla en milisegundos; el zooide cae
-    // hacia el disco. El tirón mueve el agua (lo sienten los vecinos).
+    // hacia el disco. El tirón mueve el agua (lo sienten los vecinos). En Zoothamnium el espasmonema es
+    // continuo por todas las ramas: se contrae la colonia entera.
     if (!registry_.valid(anchor.rod))
         return;
     Stalk* st = registry_.try_get<Stalk>(anchor.rod);
@@ -26,6 +69,12 @@ void World::contractStalk(Anchored& anchor, float dt) {
     const StalkSpec& spec = speciesInfo(st->species).stalk;
     if (spec.kind != StalkKind::Spasmoneme || st->rod.contracted > 0.5f || st->rod.nodes.size() < 2)
         return;
+    if (spec.sharedSpasmoneme) {
+        const entt::entity root = registry_.valid(st->root) ? st->root : anchor.rod;
+        for (auto [se, other] : registry_.view<Stalk>().each())
+            if (se != anchor.rod && (se == root || other.root == root))
+                other.rod.contracted = 1.0f;
+    }
     const float before = stalkRestLength(st->rod, spec);
     st->rod.contracted = 1.0f;
     const float shortening = before - stalkRestLength(st->rod, spec);
@@ -59,9 +108,25 @@ void World::stepStalks(float dt) {
     }
 
     stalkGone_.clear();
-    for (auto [se, st] : registry_.view<Stalk>().each()) {
+    // De la base hacia las ramas: cada rama sale de la punta de su padre ya resuelta en este paso.
+    stalkOrder_.clear();
+    for (auto [se, st] : registry_.view<Stalk>().each())
+        stalkOrder_.push_back({st.depth, se});
+    std::sort(stalkOrder_.begin(), stalkOrder_.end(),
+              [](const auto& a, const auto& b) { return a.first != b.first ? a.first < b.first : a.second < b.second; });
+    for (const auto& [depth, se] : stalkOrder_) {
+        Stalk& st = registry_.get<Stalk>(se);
         const StalkSpec& spec = speciesInfo(st.species).stalk;
         StalkRod& rod = st.rod;
+        if (registry_.valid(st.parent)) // rama de una colonia: su base va con la punta del padre
+            if (const Stalk* parent = registry_.try_get<Stalk>(st.parent); parent && parent->rod.nodes.size() >= 2) {
+                const Vec2 tip = parent->rod.nodes.back(), prev = parent->rod.nodes[parent->rod.nodes.size() - 2];
+                Vec2 d = tip - prev;
+                const float dl = length(d);
+                d = dl > 1e-3f ? d * (1.0f / dl) : parent->rod.baseDirection;
+                rod.baseDirection = {d.x * std::cos(st.turn) - d.y * std::sin(st.turn), d.x * std::sin(st.turn) + d.y * std::cos(st.turn)};
+                rod.nodes[0] = tip;
+            }
         // ¿Sigue el zooide? Si murió o se fue, el tallo queda vacío en el vidrio.
         const Vec2* tip = nullptr;
         Vec2 pole;
@@ -79,7 +144,7 @@ void World::stepStalks(float dt) {
             st.zooid = entt::null;
             st.emptyHours += hours;
             rod.contracted = 0.0f; // sin zooide el espasmonema queda relajado
-            if (st.emptyHours > spec.decayHours) {
+            if (st.emptyHours > spec.decayHours && st.children == 0) { // con ramas vivas, sigue sosteniéndolas
                 stalkGone_.push_back(se);
                 continue;
             }
@@ -106,6 +171,10 @@ void World::stepStalks(float dt) {
             anchor->contracted = rod.contracted;
         }
     }
-    for (entt::entity se : stalkGone_)
+    for (entt::entity se : stalkGone_) {
+        if (const Stalk* st = registry_.try_get<Stalk>(se); st && registry_.valid(st->parent))
+            if (Stalk* parent = registry_.try_get<Stalk>(st->parent))
+                --parent->children;
         registry_.destroy(se);
+    }
 }

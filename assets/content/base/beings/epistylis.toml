@@ -29,7 +29,7 @@ nucleus = 0.3
 style = "peristomal_crown"
 
 # Tallo rígido y grueso, sin espasmonema, con estrías longitudinales (Kreutz); se contrae el zooide, no el
-# tallo. Ancho estimado por las figuras.
+# tallo. Colonial: las hijas quedan en ramas dicotómicas (hasta 12 zooides acá). Ancho estimado.
 [being.stalk]
 kind = "rigid"
 length = 200.0
@@ -37,6 +37,9 @@ width = 8.0
 bending_rate = 30.0
 growth_hours = 6.0
 detaches = true
+colony = true
+max_zooids = 12
+branch_angle = 30.0
 
 [physiology.epistylis.max_growth]
 # Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en

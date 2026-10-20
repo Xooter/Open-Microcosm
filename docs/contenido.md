@@ -98,7 +98,8 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   y `width` [µm], `bending_rate` [1/s] (rigidez frente al arrastre del agua), `growth_hours` (en
   secretarlo después de fijarse), `decay_hours` (lo que dura vacío), `contracted_fraction` y
   `extension_s` (espasmonema), `spontaneous_per_min`, `detaches` (con hambre el zooide se suelta y
-  deja el tallo). Las claves viejas `sessile`, `stalk_length` y `spasmoneme` se siguen leyendo.
+  deja el tallo), `colony` (la hija queda en una rama nueva del tallo de la madre, hasta `max_zooids`;
+  `branch_angle` [°]) y `shared_spasmoneme` (la colonia entera se contrae junta). Las claves viejas `sessile`, `stalk_length` y `spasmoneme` se siguen leyendo.
 - `[being.toxicysts]`: `reach` [µm] desde el polo anterior (probóscide), `paralysis_hours` y `lethal`.
   Lo que toca queda paralizado (no nada, no huye, no dispara tricocistos) y, si es letal, muere al
   terminar la parálisis. `histophagous = true` (en `[[being]]`): va hacia las células dañadas

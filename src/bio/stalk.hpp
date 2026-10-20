@@ -28,6 +28,12 @@ struct StalkSpec {
     float extensionSeconds = 2.0f;  // [s] en re-extenderse
     float spontaneousPerMinute = 0.0f; // contracciones espontáneas
     bool detaches = false;          // con hambre el zooide se suelta (telotroco) y deja el tallo
+    // Colonia (Zoothamnium, Carchesium, Epistylis, Gomphonema): al dividirse, la hija se queda en una
+    // rama nueva del tallo de la madre en vez de irse nadando, hasta `maxZooids` por colonia.
+    bool colony = false;
+    int maxZooids = 16;
+    float branchAngle = 0.5f;       // [rad] entre la rama y el tallo del que sale
+    bool sharedSpasmoneme = false;  // Zoothamnium: un espasmonema continuo, se contrae la colonia entera
 };
 
 // Varilla: nodos desde el disco adhesivo (0, fijo) hasta la punta (la última, unida al zooide).

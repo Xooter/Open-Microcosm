@@ -1,0 +1,61 @@
+# Zoothamnium: peritrico colonial con zooides de ~50 µm en las puntas de un tallo ramificado (colonias de
+# mm). El espasmonema es continuo por todas las ramas: ante un estímulo la colonia entera se contrae a la
+# vez (Kreutz; Ryu, Pepper, Nagai & France 2017, Micromachines 8: 1). Al dividirse, la hija queda en una
+# rama nueva; acá hasta 12 zooides por colonia (después las hijas se van como telotrocos). Ancho y
+# flexión del tallo, ángulo de las ramas: estimados.
+[[being]]
+id = "zoothamnium"
+name = "Zoothamnium"
+tags = ["protist", "ciliate", "bacterivore", "colonial"]
+description = "Peritrico colonial: un arbolito de tallos ramificados con un zooide en cada punta. Todo el arbol se contrae junto, porque el espasmonema corre por todas las ramas."
+locomotion = "cilia"
+conjugation = true
+body_plan = "ciliate"
+feeding = "oral_groove"
+relative_speed = 0.4
+initial_count = 1
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 25.0
+semi_minor_axis = 18.0
+shape_memory = 10.0
+color = [182, 186, 168]
+nucleus = 0.32
+
+[being.appearance]
+style = "peristomal_crown"
+
+[being.stalk]
+kind = "spasmoneme"
+length = 80.0
+width = 4.0
+bending_rate = 3.0
+growth_hours = 4.0
+contracted_fraction = 0.35
+extension_s = 2.0
+spontaneous_per_min = 0.3
+colony = true
+max_zooids = 12
+branch_angle = 35.0
+shared_spasmoneme = true
+
+[[being.response]]
+field = "shear"
+kind = "above"
+threshold = 2.0
+action = "contract"
+refractory = 2.0
+
+[physiology.zoothamnium.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 25.0, 18.0 y 18.0 µm: 33929 µm³).
+value = 1.35
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 33929 µm³). No es una medición de la especie."
+estimate = true

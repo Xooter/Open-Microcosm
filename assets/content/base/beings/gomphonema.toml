@@ -30,10 +30,14 @@ style = "frustule"
 plastid_color = [176, 140, 50]
 
 # Tallo de mucílago (polisacáridos) que secreta por los poros del polo basal: hialino, flexible, se mece
-# con la corriente (Kreutz; Wang et al. 1997). Ancho, flexión y crecimiento estimados.
+# con la corriente (Kreutz; Wang et al. 1997). Al dividirse, cada hija secreta su rama: colonias
+# arborescentes (hasta 16 células acá). Ancho, flexión y crecimiento estimados.
 [being.stalk]
 kind = "mucilage"
 length = 40.0
 width = 4.0
 bending_rate = 0.8
 growth_hours = 12.0
+colony = true
+max_zooids = 16
+branch_angle = 25.0

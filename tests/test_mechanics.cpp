@@ -759,3 +759,38 @@ TEST_CASE("mecánicas: los cuerpos R de un Paramecium killer matan a P. aurelia 
     CHECK_FALSE(world.registry().valid(sensitive));
     CHECK(world.registry().valid(other));
 }
+
+TEST_CASE("mecánicas: Zoothamnium arma una colonia ramificada que se contrae entera; en Carchesium, de a uno") {
+    auto colony = [](const char* key, int& contracted) {
+        World world = emptyWorld();
+        world.bioTimeScale() = 3600.0f;
+        Rng rng(9, 1, 0, 0);
+        const entt::entity e = world.spawnWild(*findSpecies(key), center(world), rng, false);
+        REQUIRE(world.forceReproduction(e));
+        int zooids = 1;
+        for (int s = 0; s < 60 * 120 && zooids < 2; ++s) {
+            world.step(kDt);
+            zooids = static_cast<int>(world.registry().view<Anchored>().size());
+        }
+        // Las dos hijas quedaron fijas: una en el tallo y otra en una rama que sale de él.
+        int branches = 0;
+        for (auto [se, st] : world.registry().view<Stalk>().each())
+            branches += world.registry().valid(st.parent) ? 1 : 0;
+        // Una sacudida junto a uno de los zooides.
+        const RingBody& rb = world.registry().get<RingBody>(e);
+        for (int s = 0; s < 4; ++s) {
+            world.setStir(rb.centroid + Vec2{0.0f, 25.0f}, {1500.0f, 0.0f}, 25.0f);
+            world.step(kDt);
+        }
+        world.clearStir();
+        contracted = 0;
+        for (auto [se, st] : world.registry().view<Stalk>().each())
+            contracted += st.rod.contracted > 0.5f ? 1 : 0;
+        return branches;
+    };
+    int zooContracted = 0, carContracted = 0;
+    CHECK(colony("zoothamnium", zooContracted) >= 1);
+    CHECK(zooContracted >= 2); // la colonia entera
+    CHECK(colony("carchesium", carContracted) >= 1);
+    CHECK(carContracted >= 1);
+}

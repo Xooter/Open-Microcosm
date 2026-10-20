@@ -1,0 +1,58 @@
+# Carchesium polypinum: peritrico colonial con zooides de ~100 µm y tallos ramificados en los que el
+# espasmonema de cada rama es independiente (se interrumpe en las bifurcaciones): cada zooide se contrae
+# solo (Kreutz). Hasta 12 zooides por colonia. Ancho y flexión del tallo, ángulo de las ramas: estimados.
+[[being]]
+id = "carchesium"
+name = "Carchesium"
+tags = ["protist", "ciliate", "bacterivore", "colonial"]
+description = "Peritrico colonial de tallos ramificados como Zoothamnium, pero cada rama tiene su propio resorte: los zooides se contraen de a uno."
+locomotion = "cilia"
+conjugation = true
+body_plan = "ciliate"
+feeding = "oral_groove"
+relative_speed = 0.4
+initial_count = 1
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 50.0
+semi_minor_axis = 30.0
+shape_memory = 10.0
+color = [182, 186, 168]
+nucleus = 0.32
+
+[being.appearance]
+style = "peristomal_crown"
+
+[being.stalk]
+kind = "spasmoneme"
+length = 120.0
+width = 4.0
+bending_rate = 3.0
+growth_hours = 4.0
+contracted_fraction = 0.35
+extension_s = 2.0
+spontaneous_per_min = 0.3
+colony = true
+max_zooids = 12
+branch_angle = 30.0
+
+[[being.response]]
+field = "shear"
+kind = "above"
+threshold = 2.0
+action = "contract"
+refractory = 2.0
+
+[physiology.carchesium.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 50.0, 30.0 y 30.0 µm: 188496 µm³).
+value = 0.85
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 188496 µm³). No es una medición de la especie."
+estimate = true

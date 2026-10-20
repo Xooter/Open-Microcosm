@@ -594,6 +594,8 @@ class World {
     // Tallos (game/world_stalk.cpp): física de la varilla, crecimiento, contracción, tallo vacío.
     void stepStalks(float dt);
     void contractStalk(Anchored& anchor, float dt);
+    // Colonia: la hija se queda en una rama nueva del tallo de la madre. false si no corresponde.
+    bool branchColony(entt::entity mother, entt::entity child);
     void trapWithTentacles(entt::entity e, const RingBody& body, FeedingMode mode);
     void strikeWithNeck(entt::entity e, const RingBody& body, float dt);
     // Contracción del cuerpo entero (game/world_contraction.cpp).
@@ -823,6 +825,7 @@ class World {
     std::vector<SignalField> signals_;
     std::vector<Vec2> stalkFlow_;         // agua en cada nodo de un tallo (buffer reusado)
     std::vector<entt::entity> stalkGone_; // tallos vacíos degradados en este paso
+    std::vector<std::pair<int, entt::entity>> stalkOrder_; // por profundidad en la colonia
     std::vector<entt::entity> detaching_; // zooides que se sueltan en este paso
     std::uint32_t nextStalkId_ = 1;
     std::vector<std::size_t> eatenBacteria_, eatenAmbient_;

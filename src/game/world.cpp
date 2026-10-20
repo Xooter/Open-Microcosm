@@ -3435,7 +3435,7 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
         placeMouth(registry_.get<RingBody>(cell), registry_.get<Locomotion>(cell), mouthInfo);
         if (!hasSpecies || speciesInfo(species.id).speedScale > 0.0f)
             registry_.emplace<Autopilot>(child); // la hija que no controla el jugador deambula sola
-        if (hasSpecies && speciesInfo(species.id).sessile)
+        if (hasSpecies && speciesInfo(species.id).sessile && !branchColony(cell, child))
             registry_.emplace<Telotroch>(child, Telotroch{60.0f}); // nada un rato y se fija
     }
     // Las dos hijas son una generación nueva del linaje.

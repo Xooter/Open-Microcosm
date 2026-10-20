@@ -460,6 +460,12 @@ struct Stalk {
     entt::entity zooid = entt::null; // null: tallo vacío
     float emptyHours = 0.0f;         // [h biológicas] sin zooide
     std::uint32_t id = 0;            // estable (dibujo de la hélice)
+    // Colonia: la rama sale de la punta del tallo `parent` (que la sostiene y la mueve); `root` es el
+    // tallo de la colonia que está en el vidrio.
+    entt::entity parent = entt::null, root = entt::null;
+    int depth = 0;
+    int children = 0;                // ramas vivas que salen de este (no se degrada mientras tenga)
+    float turn = 0.0f;               // ángulo de la rama respecto del último tramo del padre [rad]
 };
 
 // Componente: hija nadadora de una especie sésil (telotroco), antes de fijarse.
