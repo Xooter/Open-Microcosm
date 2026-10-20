@@ -237,6 +237,7 @@ void World::step(float dt) {
     // Orden de AGENTS.md: fluido → química → partículas → organismos.
     fluid_.clearForces();
     applyStir();
+    applyContractionKicks();
     fluid_.solve(fft_);
     fluid_.keepAsBackground();
     // Nadadores y filtradores mueven el agua; afecta a todo lo demás (bacterias, partículas),
@@ -1973,6 +1974,7 @@ void World::applyMotion(float dt) {
         Locomotion& loco = registry_.get<Locomotion>(e);
         const bool engulfing = registry_.all_of<PhagocyticCup>(e);
         bool disturbed = false;
+        bool contract = false;
         loco.burst = 0.0f; // el salto lo pone el piloto paso a paso
         if (e == player_) {
             loco.forward = playerInput_.forward;
@@ -2003,6 +2005,7 @@ void World::applyMotion(float dt) {
             if (isSatiated(e))
                 sense.hasPrey = false; // saciada: no persigue presas
             steerAutopilot(*pilot, loco, body, speciesInfo(sp), sense, rng, dt);
+            contract = pilot->contract;
             if (loco.burst > 0.0f) // el golpe de los cirros también lo frena la viscosidad del medio
                 if (const Heredity* hh = registry_.try_get<Heredity>(e))
                     loco.burst *= hh->traits.speed * viscositySpeed_;
@@ -2011,6 +2014,15 @@ void World::applyMotion(float dt) {
                         length(fluid_.velocityAt(body.centroid)) > 40.0f;
         } else {
             continue;
+        }
+        if (cellInfo(registry_, e).contraction.extension > 1.0f) {
+            updateContraction(e, body, contract, dt);
+            // Recién contraída no nada: los cilios se detienen y vuelven a batir al re-extenderse.
+            if (const Contraction* c = registry_.try_get<Contraction>(e); c && c->state > 0.8f) {
+                loco.forward = loco.turn = 0.0f;
+                if (Autopilot* ap = registry_.try_get<Autopilot>(e))
+                    ap->intent = Intent::Contract;
+            }
         }
         // Sésiles: no nadan; el tallo las sostiene (la corona ciliar solo hace corriente).
         if (Anchored* anchor = registry_.try_get<Anchored>(e)) {
@@ -2995,6 +3007,7 @@ void World::updateLifecycle(float dt) {
         }
         if (!dv && readyToDivide(meta, cost)) {
             meta.reserves -= cost * meta.biomass;
+            contractForDivision(e, body);
             Dividing& d = registry_.emplace<Dividing>(e);
             d.motherRest = body.restRing;
             d.motherArea = std::abs(body.restArea);
@@ -3828,9 +3841,9 @@ Perception World::perceive(entt::entity e, const RingBody& body, SpeciesId speci
     if (!info.responses.empty() || info.jump.speed > 0.0f) {
         p.light = light_.sample(body.centroid.x, body.centroid.y);
         p.oxygen = oxygen_.grid().sample(body.centroid.x, body.centroid.y);
-        // Deformación del agua alrededor de la célula [1/s]: diferencias del flujo de fondo a un radio
-        // de cada lado (lo que deforma a la célula, no su propio nado; Jakobsen 2001).
-        const float d = std::max(4.0f, myRadius);
+        // Tasa de deformación del agua en la célula [1/s]: diferencias del flujo de fondo a 10 µm de cada
+        // lado del centro (lo que deforma a la célula, no su propio nado; Jakobsen 2001).
+        constexpr float d = 10.0f;
         const Vec2 ux1 = fluid_.backgroundAt(body.centroid + Vec2{d, 0.0f});
         const Vec2 ux0 = fluid_.backgroundAt(body.centroid - Vec2{d, 0.0f});
         const Vec2 uy1 = fluid_.backgroundAt(body.centroid + Vec2{0.0f, d});

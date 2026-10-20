@@ -574,6 +574,10 @@ class World {
     void anchorHere(entt::entity e);
     void trapWithTentacles(entt::entity e, const RingBody& body);
     void strikeWithNeck(entt::entity e, const RingBody& body, float dt);
+    // Contracción del cuerpo entero (game/world_contraction.cpp).
+    void updateContraction(entt::entity e, RingBody& body, bool trigger, float dt);
+    void applyContractionKicks();
+    void contractForDivision(entt::entity e, RingBody& body);
     void linkCells(entt::entity a, entt::entity b);
     void solveLinks(float h);
     void relinkAfterDivision(entt::entity mother, entt::entity child);
@@ -774,6 +778,13 @@ class World {
     std::vector<std::pair<entt::entity, entt::entity>> conjugationsDone_;
     std::vector<entt::entity> abandonedConjugations_;
     std::vector<entt::entity> encysting_, excysting_;
+    // Impulso al agua de las contracciones de este paso: se suma al flujo de fondo del paso siguiente
+    // (lo sienten las vecinas: ondas de disparo hidrodinámicas, Mathijssen et al. 2019).
+    struct ContractionKick {
+        Vec2 center, axis;
+        float halfLength, speed, radius;
+    };
+    std::vector<ContractionKick> contractionKicks_;
     std::vector<std::size_t> eatenBacteria_, eatenAmbient_;
     std::vector<std::uint8_t> takenBacteria_, takenAmbient_;
     std::vector<float> bacterialDemand_;

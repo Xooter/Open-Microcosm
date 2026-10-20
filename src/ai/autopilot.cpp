@@ -23,7 +23,7 @@ float turnToward(Vec2 h, Vec2 to) {
 
 // Respuestas fóbicas temporales (M1) y mecanoestímulo (M2): compara el nivel de ahora con el recordado.
 // Devuelve la acción disparada en este paso, si hay una.
-enum class Fired { None, Avoid, Jump };
+enum class Fired { None, Avoid, Jump, Contract };
 Fired evaluateResponses(Autopilot& pilot, const SpeciesInfo& species, const Perception& sense, float dt) {
     pilot.refractory = std::max(0.0f, pilot.refractory - dt);
     Fired fired = Fired::None;
@@ -32,7 +32,8 @@ Fired evaluateResponses(Autopilot& pilot, const SpeciesInfo& species, const Perc
         const ResponseSpec& r = species.responses[k];
         const float level = r.field == ResponseField::Light    ? sense.light
                             : r.field == ResponseField::Oxygen ? sense.oxygen
-                                                               : sense.shear;
+                            : r.field == ResponseField::Shear  ? sense.shear
+                                                               : (sense.bumped ? 1.0f : 0.0f);
         float& memory = pilot.responseMemory[k];
         if (memory < 0.0f)
             memory = level;
@@ -45,7 +46,9 @@ Fired evaluateResponses(Autopilot& pilot, const SpeciesInfo& species, const Perc
         }
         memory += (level - memory) * std::min(1.0f, dt / r.memory);
         if (fire && pilot.refractory <= 0.0f && fired == Fired::None) {
-            fired = r.action == ResponseAction::Jump ? Fired::Jump : Fired::Avoid;
+            fired = r.action == ResponseAction::Jump       ? Fired::Jump
+                    : r.action == ResponseAction::Contract ? Fired::Contract
+                                                           : Fired::Avoid;
             pilot.refractory = r.refractory;
         }
     }
@@ -59,6 +62,9 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
     const Vec2 h = bodyHeading(body);
     const Fired fired = evaluateResponses(pilot, species, sense, dt);
     loco.burst = 0.0f;
+    pilot.contract = fired == Fired::Contract;
+    if (pilot.contract)
+        pilot.intent = Intent::Contract;
 
     // Saltos (Halteria): espontáneos cada tanto y de escape ante la corriente de un depredador o una
     // amenaza cerca (Gilbert 1994: el salto la saca del alcance de los rotíferos).

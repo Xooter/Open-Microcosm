@@ -1,5 +1,10 @@
 # Stentor coeruleus: trompeta azul (pigmento stentorina), extendida hasta ~1 mm; aquí una
 # contraída de ~200 µm. Se fija por el pie; su corriente oral trae bacterias y algas chicas.
+# Contracción: al tocarla, ante una corriente brusca o un aumento brusco de luz (la stentorina es su
+# fotorreceptor; Song 1981), los mionemas la acortan entera en milisegundos y se re-extiende en unos
+# segundos (Newman 1972, J. Cell Biol. 52: 115; habituación: Wood 1970, Dexter et al. 2019). Extendida
+# llega a ~1 mm en forma de trompeta: acá, una elipse afinada de ~2 veces el largo contraído (la vista
+# conserva el área, así que no se ensancha en la boca). Tiempo de re-extensión y umbrales estimados.
 
 [[being]]
 id = "stentor"
@@ -32,3 +37,30 @@ taper = 0.8
 
 [being.appearance]
 style = "membranelle_crown"
+
+[being.contraction]
+extension = 2.0
+extension_s = 15.0
+
+[[being.response]]
+field = "touch"
+kind = "above"
+threshold = 0.5
+action = "contract"
+refractory = 2.0
+
+[[being.response]]
+field = "shear"
+kind = "above"
+threshold = 2.0
+action = "contract"
+refractory = 2.0
+
+[[being.response]]
+field = "light"
+kind = "step_up"
+threshold = 0.3
+min_level = 0.3
+memory = 2.0
+action = "contract"
+refractory = 5.0

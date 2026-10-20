@@ -83,17 +83,19 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "light_damage",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "light_damage",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
 constexpr const char* kResponseKeys[] = {"field", "kind", "action", "threshold", "min_level", "memory", "refractory"};
 constexpr std::pair<const char*, ResponseField> kResponseField[] = {
-    {"light", ResponseField::Light}, {"oxygen", ResponseField::Oxygen}, {"shear", ResponseField::Shear}};
+    {"light", ResponseField::Light}, {"oxygen", ResponseField::Oxygen}, {"shear", ResponseField::Shear},
+    {"touch", ResponseField::Touch}};
 constexpr std::pair<const char*, ResponseKind> kResponseKind[] = {
     {"step_up", ResponseKind::StepUp}, {"step_down", ResponseKind::StepDown}, {"above", ResponseKind::Above}};
-constexpr std::pair<const char*, ResponseAction> kResponseAction[] = {{"avoid", ResponseAction::Avoid},
-                                                                     {"jump", ResponseAction::Jump}};
+constexpr std::pair<const char*, ResponseAction> kResponseAction[] = {
+    {"avoid", ResponseAction::Avoid}, {"jump", ResponseAction::Jump}, {"contract", ResponseAction::Contract}};
+constexpr const char* kContractionKeys[] = {"extension", "extension_s"};
 constexpr const char* kJumpKeys[] = {"speed", "duration", "interval"};
 constexpr const char* kLightDamageKeys[] = {"threshold", "stress"};
 constexpr const char* kPigmentKeys[] = {"rate_per_hour", "decay_per_hour", "light_threshold", "protection", "color"};
@@ -288,6 +290,15 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         if (s.jump.speed <= 0.0f || s.jump.duration <= 0.0f)
             jr.errors.push_back(jr.where + ": 'speed' y 'duration' tienen que ser positivos");
         r.errors.insert(r.errors.end(), jr.errors.begin(), jr.errors.end());
+    }
+    if (const toml::table* ct = r.table("contraction")) {
+        toml_io::warnUnknown(*ct, kContractionKeys, r.where + " [contraction]", warnings);
+        Reader cr{*ct, r.where + " [contraction]", {}};
+        cr.count("extension", s.contraction.extension);
+        cr.count("extension_s", s.contraction.extensionSeconds);
+        if (s.contraction.extension < 1.0f || s.contraction.extensionSeconds <= 0.0f)
+            cr.errors.push_back(cr.where + ": 'extension' tiene que ser al menos 1 y 'extension_s' positivo");
+        r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
     }
     if (const toml::table* lt = r.table("light_damage")) {
         toml_io::warnUnknown(*lt, kLightDamageKeys, r.where + " [light_damage]", warnings);

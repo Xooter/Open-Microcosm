@@ -196,3 +196,109 @@ TEST_CASE("mecánicas: daño fotodinámico y pigmento de estrés (Blepharisma, H
     CHECK(starved.pigment > 0.5f);
     CHECK(stressAt(haema, 1.0f, 250.0f, cyst.pigment) < 0.5f * stressAt(haema, 1.0f, 250.0f, 0.0f));
 }
+
+namespace {
+
+float restHalfLength(const World& world, entt::entity e) {
+    float l = 0.0f;
+    for (const Vec2& q : world.registry().get<RingBody>(e).restRing)
+        l = std::max(l, std::abs(q.x));
+    return l;
+}
+
+bool simpleRing(const World& world, entt::entity e) {
+    const RingBody& b = world.registry().get<RingBody>(e);
+    const BodyParticles& bp = world.bodies();
+    auto p = [&](std::size_t i) {
+        const std::uint32_t s = b.ring[i % b.ring.size()];
+        return Vec2{bp.x[s], bp.y[s]};
+    };
+    const std::size_t n = b.ring.size();
+    for (std::size_t i = 0; i < n; ++i)
+        for (std::size_t j = i + 2; j < n; ++j) {
+            if (i == 0 && j == n - 1)
+                continue;
+            const Vec2 a = p(i), c = p(i + 1), d = p(j), f = p(j + 1);
+            if (cross(c - a, d - a) * cross(c - a, f - a) < 0.0f && cross(f - d, a - d) * cross(f - d, c - d) < 0.0f)
+                return false;
+        }
+    return true;
+}
+
+void run(World& world, float seconds) {
+    for (int s = 0; s < static_cast<int>(seconds / kDt); ++s)
+        world.step(kDt);
+}
+
+} // namespace
+
+TEST_CASE("mecánicas: Stentor se extiende, se contrae entero ante una sacudida y se vuelve a extender") {
+    World world = emptyWorld();
+    Rng rng(7, 1, 0, 0);
+    const entt::entity e = world.spawnWild(*findSpecies("stentor"), center(world), rng, false); // fija por el pie
+    const float contracted = restHalfLength(world, e);
+    run(world, 20.0f); // nace contraída y se extiende en ~15 s
+    const float extended = restHalfLength(world, e);
+    CHECK(extended > 1.8f * contracted);
+    CHECK(simpleRing(world, e));
+    // Una corriente brusca a un costado (la deforma, no solo la empuja): se contrae en un instante.
+    for (int s = 0; s < 6; ++s) {
+        const RingBody& rb = world.registry().get<RingBody>(e);
+        const Vec2 h = bodyHeading(rb);
+        world.setStir(rb.centroid + Vec2{-h.y, h.x} * 40.0f, h * 1500.0f, 40.0f);
+        world.step(kDt);
+    }
+    world.clearStir();
+    CHECK(world.registry().get<Contraction>(e).state > 0.9f);
+    CHECK(restHalfLength(world, e) < 1.2f * contracted);
+    run(world, 0.5f);
+    const RingBody& b = world.registry().get<RingBody>(e);
+    float actual = 0.0f; // largo real del cuerpo a lo largo de su eje
+    for (std::uint32_t sIdx : b.ring)
+        actual = std::max(actual, std::abs(dot(Vec2{world.bodies().x[sIdx], world.bodies().y[sIdx]} - b.centroid,
+                                               bodyHeading(b))));
+    CHECK(actual < 0.75f * extended);
+    CHECK(simpleRing(world, e));
+    run(world, 20.0f);
+    CHECK(restHalfLength(world, e) > 1.8f * contracted);
+    CHECK(simpleRing(world, e));
+}
+
+TEST_CASE("mecánicas: la contracción de un Spirostomum deforma el agua a cientos de µm (Mathijssen 2019)") {
+    // Onda de disparo hidrodinámica: el remolino de una contracción supera el umbral de deformación de
+    // sus vecinos (1/s) a ~1 cuerpo de distancia. Se mide el flujo de fondo del paso siguiente.
+    World world = emptyWorld(23);
+    const Vec2 c = center(world);
+    const entt::entity e = spawn(world, "spirostomum", c);
+    world.registry().get<Locomotion>(e).power = 0.0f; // quieto
+    run(world, 3.0f);                                 // extendido
+    auto strainAt = [&](Vec2 p) {
+        constexpr float d = 10.0f;
+        const Fluid& f = world.fluid();
+        const Vec2 ux1 = f.backgroundAt(p + Vec2{d, 0.0f}), ux0 = f.backgroundAt(p - Vec2{d, 0.0f});
+        const Vec2 uy1 = f.backgroundAt(p + Vec2{0.0f, d}), uy0 = f.backgroundAt(p - Vec2{0.0f, d});
+        const float dudx = (ux1.x - ux0.x) / (2 * d), dvdy = (uy1.y - uy0.y) / (2 * d);
+        const float dudy = (uy1.x - uy0.x) / (2 * d), dvdx = (ux1.y - ux0.y) / (2 * d);
+        return std::sqrt((dudx - dvdy) * (dudx - dvdy) + (dudy + dvdx) * (dudy + dvdx));
+    };
+    auto maxStrainAround = [&](float radius) {
+        const Vec2 at = world.registry().get<RingBody>(e).centroid;
+        float worst = 0.0f;
+        for (int k = 0; k < 32; ++k) {
+            const float a = 6.2831853f * static_cast<float>(k) / 32.0f;
+            worst = std::max(worst, strainAt(at + Vec2{std::cos(a), std::sin(a)} * radius));
+        }
+        return worst;
+    };
+    const float calm = maxStrainAround(250.0f);
+    // Un toque fuerte a un costado del centro: se contrae.
+    const RingBody& rb = world.registry().get<RingBody>(e);
+    const Vec2 h = bodyHeading(rb);
+    world.setStir(rb.centroid + Vec2{-h.y, h.x} * 30.0f, h * 1500.0f, 30.0f);
+    world.step(kDt);
+    world.clearStir();
+    REQUIRE(world.registry().get<Contraction>(e).state > 0.99f);
+    world.step(kDt); // el impulso entra en el flujo de fondo de este paso
+    CHECK(calm < 0.1f);
+    CHECK(maxStrainAround(250.0f) > 1.0f);
+}

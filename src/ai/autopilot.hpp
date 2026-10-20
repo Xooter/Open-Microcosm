@@ -43,6 +43,7 @@ enum class Intent : std::uint8_t {
     Pause,       // parada de un caminante
     Jump,        // salto (cirros o cerdas saltadoras)
     Phobic,      // respuesta fóbica a un cambio brusco (luz, O₂, corriente)
+    Contract,    // se contrajo entera (mionemas) y se está re-extendiendo
 };
 
 // Componente: comportamiento de las células que no controla el jugador. Sale de los datos de
@@ -65,6 +66,7 @@ struct Autopilot {
     float refractory = 0.0f; // [s] sin volver a responder
     float jump = 0.0f;       // [s] que le quedan al salto en curso
     float nextJump = -1.0f;  // [s] hasta el próximo salto espontáneo (< 0: sin sortear)
+    bool contract = false;   // en este paso disparó la contracción del cuerpo (la aplica el mundo)
 };
 
 void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, const SpeciesInfo& species,

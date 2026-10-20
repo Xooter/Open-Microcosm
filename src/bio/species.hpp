@@ -125,9 +125,9 @@ inline float processWidth(const ProcessSpec& p, float s, float scale) {
 // `minLevel`; `StepDown`: bajada relativa desde un nivel arriba de `minLevel`; `Above`: el nivel
 // absoluto pasa `threshold` (la deformación del agua, mecanorrecepción: mecanismo M2).
 inline constexpr std::size_t kMaxResponses = 4; // memoria fija en el piloto (sin asignaciones)
-enum class ResponseField : std::uint8_t { Light, Oxygen, Shear };
+enum class ResponseField : std::uint8_t { Light, Oxygen, Shear, Touch };
 enum class ResponseKind : std::uint8_t { StepUp, StepDown, Above };
-enum class ResponseAction : std::uint8_t { Avoid, Jump };
+enum class ResponseAction : std::uint8_t { Avoid, Jump, Contract };
 struct ResponseSpec {
     ResponseField field = ResponseField::Light;
     ResponseKind kind = ResponseKind::StepUp;
@@ -145,6 +145,15 @@ struct JumpSpec {
     float speed = 0.0f;    // [µm/s] (0: no salta)
     float duration = 0.05f; // [s]
     float interval = 0.0f; // [s] medio entre saltos espontáneos (0: solo de escape)
+};
+
+// Contracción del cuerpo entero (Stentor, Spirostomum): los mionemas, disparados por Ca²⁺, acortan la
+// célula en milisegundos y se re-extiende en segundos (Newman 1972; Mathijssen et al. 2019). La forma
+// de la especie es la contraída; extendida mide `extension` veces su largo (la vista conserva el área).
+// La dispara una respuesta con `action = "contract"`.
+struct ContractionSpec {
+    float extension = 1.0f;      // largo extendido / largo contraído (1: no se contrae)
+    float extensionSeconds = 10.0f; // [s] para volver a extenderse
 };
 
 // Daño fotodinámico (Blepharisma: la blefarismina, con luz y O₂, genera especies reactivas; Giese
@@ -260,6 +269,7 @@ struct SpeciesInfo {
     std::vector<ProcessSpec> processes; // [[being.process]]
     std::vector<ResponseSpec> responses; // [[being.response]]
     JumpSpec jump;                      // [being.jump]
+    ContractionSpec contraction;        // [being.contraction]
     LightDamageSpec lightDamage;        // [being.light_damage]
     StressPigmentSpec stressPigment;    // [being.stress_pigment]
     // Contorno de la célula entera cuando tiene prolongaciones en el cuerpo (bio/silhouette): denso,
@@ -349,6 +359,12 @@ struct Captured {
 };
 
 // Componente: cuello extensible de Lacrymaria.
+// Componente: estado de la contracción del cuerpo (ContractionSpec). 1 = contraída, 0 = extendida.
+struct Contraction {
+    float state = 1.0f;
+    float stretch = 1.0f; // largo de la forma de reposo actual / el de la contraída
+};
+
 struct Neck {
     float length = 0.0f;   // [µm]
     Vec2 direction{1.0f, 0.0f};

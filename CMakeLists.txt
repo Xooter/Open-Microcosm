@@ -147,6 +147,7 @@ add_library(biosim STATIC
     src/game/world_minerals.cpp
     src/game/world_animal.cpp
     src/game/world_tissue.cpp
+    src/game/world_contraction.cpp
     src/game/inspect.cpp
     src/game/world_chem.cpp
     src/game/world_program.cpp

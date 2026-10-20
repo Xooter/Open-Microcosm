@@ -1,0 +1,61 @@
+# Spirostomum ambiguum: heterotrico gigante de agua dulce, vermiforme, de 884 × 89 µm extendido y 306 ×
+# 117 µm contraído (medido en PMC11581044), con macronúcleo moniliforme; vive en el fondo de charcos y
+# estanques ricos en materia orgánica y come bacterias. Ante un estímulo mecánico se contrae entero en
+# ~5 ms (mionemas, Ca²⁺) y se re-extiende despacio; el remolino de su contracción dispara a las vecinas
+# a cientos de µm, una onda de disparo hidrodinámica (Mathijssen, Culver, Bhamla & Prakash 2019, Nature
+# 571: 560). La forma de los datos es la contraída; extendida, `extension` veces más larga. Tiempo de
+# re-extensión, umbral de deformación y velocidad: órdenes de magnitud, a verificar en esa fuente.
+[[being]]
+id = "spirostomum"
+name = "Spirostomum"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Ciliado gigante con forma de gusano, de casi 1 mm extendido. Ante una sacudida se contrae entero en milisegundos, y el remolino que levanta hace contraerse a sus vecinos."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "oral_groove"
+relative_speed = 0.4
+conjugation = true
+initial_count = 2
+cyclosis = 1.0
+ph = [6.0, 9.0]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 153.0
+semi_minor_axis = 58.5
+shape_memory = 6.0
+color = [206, 200, 176]
+nucleus = 0.25
+squareness = 3.0
+
+[being.appearance]
+style = "membranelle_crown"
+
+[being.contraction]
+extension = 2.9
+extension_s = 2.0
+
+[[being.response]]
+field = "shear"
+kind = "above"
+threshold = 1.0
+action = "contract"
+refractory = 3.0
+
+[[being.response]]
+field = "touch"
+kind = "above"
+threshold = 0.5
+action = "contract"
+refractory = 3.0
+
+[physiology.spirostomum.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide contraído (semiejes 153, 58,5 y 58,5 µm: 2,19e6 µm³).
+value = 0.44
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 2,19e6 µm³). No es una medición de la especie."
+estimate = true
