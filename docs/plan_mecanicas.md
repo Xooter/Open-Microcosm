@@ -174,7 +174,8 @@ al terminar el plan.
   nuevos.
 - Contracción y plasticidad por partícula afectan `solve.comp` (GPU).
 - Una FFT por señal: solo difunden si están activas.
-- Escalas de tiempo de las señales (difusión real, cinética ×60).
+- Escalas de tiempo de las señales: resuelto con `bio_time` en todas las que se liberan y degradan en
+  tiempo biológico (difunden con D × bioTimeScale, así √(D·τ) es el largo real).
 - Paridad placa–cultivo: apertura bucal, mixotrofia y simbiontes en funciones sin cuerpo.
 - Bloqueos: división de células largas y de amebas plásticas chicas; caso largo de *Ceratium*.
 - Validación de Gause y *Didinium* con la apertura bucal.

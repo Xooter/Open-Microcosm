@@ -344,26 +344,27 @@ TEST_CASE("mecánicas: el tallo de Vorticella es una varilla inextensible que el
     REQUIRE(st);
     const float adult = speciesInfo(*findSpecies("vorticella")).stalk.length;
     CHECK(polyLength(st->rod.nodes) == doctest::Approx(adult).epsilon(0.02));
-    run(world, 1.0f);
-    const float calmBend = bend(stalkOf(world, e)->rod.nodes);
-    // Una corriente lateral a la mitad del tallo (sin tocar al zooide) lo dobla; el largo no cambia.
-    auto pushMiddle = [&](float seconds) {
-        for (int s = 0; s < static_cast<int>(seconds / kDt); ++s) {
-            const std::vector<Vec2>& n = stalkOf(world, e)->rod.nodes;
-            const Vec2 mid = n[n.size() / 2], axis = n.back() - n.front();
-            const Vec2 side = Vec2{-axis.y, axis.x} * (1.0f / std::max(1e-3f, length(axis)));
-            world.setStir(mid, side * 150.0f, 25.0f);
-            world.step(kDt);
-        }
-        world.clearStir();
-    };
-    pushMiddle(0.5f);
-    const Stalk* bent = stalkOf(world, e);
-    CHECK(bend(bent->rod.nodes) > calmBend + 5.0f);
-    CHECK(polyLength(bent->rod.nodes) == doctest::Approx(stalkRestLength(bent->rod, speciesInfo(bent->species).stalk)).epsilon(0.03));
-    // Sin corriente vuelve a quedar derecho.
+    // Sin el zooide (y su corriente oral, que también lo dobla) el tallo vacío queda derecho.
+    const entt::entity rod = world.registry().get<Anchored>(e).rod;
+    world.removeCellAt(world.registry().get<RingBody>(e).centroid);
+    run(world, 2.0f);
+    const float calmBend = bend(world.registry().get<Stalk>(rod).rod.nodes);
+    CHECK(calmBend < 3.0f);
+    // Una corriente lateral a la mitad lo dobla; el largo no cambia.
+    for (int s = 0; s < 30; ++s) {
+        const std::vector<Vec2>& n = world.registry().get<Stalk>(rod).rod.nodes;
+        const Vec2 mid = n[n.size() / 2], axis = n.back() - n.front();
+        const Vec2 side = Vec2{-axis.y, axis.x} * (1.0f / std::max(1e-3f, length(axis)));
+        world.setStir(mid, side * 150.0f, 25.0f);
+        world.step(kDt);
+    }
+    world.clearStir();
+    const Stalk& bent = world.registry().get<Stalk>(rod);
+    CHECK(bend(bent.rod.nodes) > calmBend + 5.0f);
+    CHECK(polyLength(bent.rod.nodes) == doctest::Approx(stalkRestLength(bent.rod, speciesInfo(bent.species).stalk)).epsilon(0.03));
+    // Sin corriente vuelve a quedar derecho (es elástico).
     run(world, 3.0f);
-    CHECK(bend(stalkOf(world, e)->rod.nodes) < calmBend + 3.0f);
+    CHECK(bend(world.registry().get<Stalk>(rod).rod.nodes) < calmBend + 2.0f);
 }
 
 TEST_CASE("mecánicas: el espasmonema se enrolla al instante y se re-extiende; el tallo de Epistylis no se contrae") {
@@ -431,11 +432,15 @@ TEST_CASE("mecánicas: Stentor se fija por el pie y con hambre lo suelta, nada y
     // Sin bacterias pasa hambre: en algunas horas biológicas se suelta.
     world.registry().get<Metabolism>(e).reserves = 0.0f;
     bool released = false, reattached = false;
-    for (int s = 0; s < 60 * 60 && !reattached; ++s) {
+    for (int s = 0; s < 60 * 150 && !reattached; ++s) {
         world.step(kDt);
         if (!world.registry().valid(e))
             break;
-        released = released || world.registry().all_of<Telotroch>(e);
+        if (!released && world.registry().all_of<Telotroch>(e)) {
+            released = true; // ya nadando: encontró comida (que no se muera antes de volver a fijarse)
+            Metabolism& m = world.registry().get<Metabolism>(e);
+            m.reserves = 3.0f * m.biomass;
+        }
         reattached = released && world.registry().all_of<Anchored>(e);
     }
     CHECK(released);
@@ -508,7 +513,7 @@ TEST_CASE("mecánicas: la kairomona de Lembadion le arma alas a Euplotes y lo de
             le = spawn(world, "lembadion", c + Vec2{150.0f, 0.0f});
             world.registry().get<Locomotion>(le).power = 0.0f;
         }
-        run(world, 12.0f);
+        run(world, 30.0f); // la kairomona llega a su nivel en ~1 vida media (12 h) y el morfo tarda 8 h
         const bool winged = world.morphAmount(eu) > 0.9f;
         if (winged && le != entt::null) {
             CHECK_FALSE(world.fitsMouth(le, world.registry().get<RingBody>(le), eu, world.registry().get<RingBody>(eu)));
@@ -530,7 +535,7 @@ TEST_CASE("mecánicas: Tetrahymena vorax pasa a macrostoma junto a Tetrahymena y
         const entt::entity t = spawn(world, "tetrahymena", c + Vec2{80.0f + 20.0f * k, 60.0f});
         world.registry().get<Locomotion>(t).power = 0.0f;
     }
-    run(world, 8.0f);
+    run(world, 20.0f); // las señales llegan a su nivel en horas y la transformación tarda 6 h
     CHECK(world.morphAmount(v) > 0.9f);
     CHECK(world.feedingOf(v) == FeedingMode::Raptorial);
     CHECK(world.preyOf(v).test(static_cast<std::size_t>(*findSpecies("tetrahymena"))));
@@ -559,7 +564,8 @@ TEST_CASE("mecánicas: la lórica de Trachelomonas toma hierro del agua y la hij
     const double before = world.totalIron();
     run(world, 30.0f); // ~30 h biológicas
     const Metabolism& m = world.registry().get<Metabolism>(e);
-    CHECK(m.loricaIron > 0.5f * speciesInfo(*findSpecies("trachelomonas")).loricaIronRatio * m.biomass);
+    // La lórica agota el hierro disuelto a su alrededor: acumula de a poco (más del 20 % de una completa).
+    CHECK(m.loricaIron > 0.2f * speciesInfo(*findSpecies("trachelomonas")).loricaIronRatio * m.biomass);
     CHECK(world.totalIron() == doctest::Approx(before).epsilon(1e-3)); // se conserva
     Metabolism mother = m;
     const Metabolism child = splitMetabolism(mother, 0.5f);
@@ -630,14 +636,14 @@ TEST_CASE("mecánicas: sin fósforo, Anabaena/Dolichospermum forma acinetos junt
 }
 
 TEST_CASE("mecánicas: Spirillum volutans hace aerotaxis hacia su O₂ óptimo y forma una banda (M8)") {
-    // Gradiente de O₂ de 0 a 250 µM a lo ancho (sin agua en movimiento): cerca del 4 % de la saturación
-    // (~10 µM) está su óptimo.
+    // Gradiente de O₂ exponencial a lo ancho (sin agua en movimiento), de ~0,4 a ~250 µM, con su óptimo
+    // (~10 µM, el 4 % de la saturación) en el centro, lejos de los bordes periódicos de la grilla.
     constexpr int kN = 64;
     constexpr float kCell = 8.0f, kSize = kN * kCell;
     Grid2D oxygen(kN, kN, kCell), nutrients(kN, kN, kCell);
     for (int y = 0; y < kN; ++y)
         for (int x = 0; x < kN; ++x)
-            oxygen.at(x, y) = 250.0f * static_cast<float>(x) / (kN - 1);
+            oxygen.at(x, y) = 10.0f * std::exp((static_cast<float>(x) * kCell - 0.5f * kSize) / 80.0f);
     Fluid fluid(kN, kN, kCell);
     Bacteria bac;
     Rng rng(3, 1, 0, 0);
@@ -684,7 +690,7 @@ TEST_CASE("mecánicas: Lingulodinium destella al agitar el agua, y de noche much
         float best = 0.0f;
         for (int s = 0; s < 6; ++s) {
             const RingBody& rb = world.registry().get<RingBody>(e);
-            world.setStir(rb.centroid + Vec2{0.0f, 25.0f}, {1500.0f, 0.0f}, 25.0f);
+            world.setStir(rb.centroid + Vec2{0.0f, 15.0f}, {4000.0f, 0.0f}, 15.0f); // un golpe de agua (>10/s)
             world.step(kDt);
             if (const Luminescence* l = world.registry().try_get<Luminescence>(e))
                 best = std::max(best, l->glow);

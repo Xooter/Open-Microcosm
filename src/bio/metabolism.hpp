@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cstdint>
 
 // Metabolismo simplificado pero real. Todo en pmol equivalentes de glucosa de materia seca y en
@@ -147,8 +148,12 @@ inline float divisionBiomass(const Metabolism& m) {
     return m.pendingFissions > 0 ? 1.8f * birth : static_cast<float>(1 << m.fissions) * birth;
 }
 
+// En palintomía (n divisiones seguidas sin crecer, como las autosporas o el quiste de Colpoda) la madre
+// junta las reservas de todo el ciclo: la primera citocinesis cuesta cost·B y las 2^k hijas de cada
+// ronda, juntas, otro tanto. Si no, las hijas se quedaban sin con qué dividirse.
 inline bool readyToDivide(const Metabolism& m, float cost) {
-    return m.biomass >= divisionBiomass(m) && m.reserves >= cost * m.biomass;
+    const float rounds = m.pendingFissions > 0 ? 1.0f : static_cast<float>(std::max(1, m.fissions));
+    return m.biomass >= divisionBiomass(m) && m.reserves >= rounds * cost * m.biomass;
 }
 
 inline bool isDead(const Metabolism& m, const MetabolismParams& p) {

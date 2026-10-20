@@ -29,11 +29,13 @@ shape_memory = 8.0
 color = [168, 176, 146]
 nucleus = 0.32
 
+# Se reparten en tiempo biológico (como su liberación y su degradación): el largo del área afectada es el real.
 [being.release]
 signal = "kappa_r_bodies"
 rate = 0.001
 diffusion = 1.0
 half_life_hours = 72.0
+bio_time = true
 
 [physiology.paramecium_tetraurelia.max_growth]
 # Sin medición de la cepa: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en °C,

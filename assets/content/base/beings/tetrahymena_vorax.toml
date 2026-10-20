@@ -30,7 +30,8 @@ nucleus = 0.3
 [being.morph]
 name = "macrostoma"
 signal = "tetrahymena_cues"
-threshold = 0.05
+# Unas pocas Tetrahymena por gota la inducen (estimado).
+threshold = 0.02
 hours = 6.0
 width_scale = 1.6
 length_scale = 1.2

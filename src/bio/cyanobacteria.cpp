@@ -206,8 +206,11 @@ void Cyanobacteria::credit(const std::vector<float>& takenP, const std::vector<f
         }
         // Acinetos: se forman junto a un heterocisto cuando el fósforo limita, germinan cuando vuelve.
         if (!f.oscillatoria) {
+            // Le falta P si lo que tiene guardado no alcanza ni para la mitad del crecimiento posible.
             const float biomassNow = mass * params.cellPmol;
-            const bool pLimited = f.phosphorus < biomassNow * params.phosphorusRatio * 1.05f;
+            const float byPNow = std::max(0.0f, f.phosphorus / params.phosphorusRatio - biomassNow);
+            const float possible = potential_.size() > fi ? potential_[fi] : 0.0f;
+            const bool pLimited = possible > 0.0f && byPNow < 0.5f * possible;
             Rng arng(seed, rng_stream::kCyano + 500, fi, step);
             for (std::size_t k = 0; k < f.x.size(); ++k) {
                 const bool nextToHeterocyst = (k > 0 && f.heterocyst[k - 1] == kHeterocyst) ||

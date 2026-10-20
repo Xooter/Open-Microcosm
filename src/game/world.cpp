@@ -255,6 +255,7 @@ void World::step(float dt) {
     }
     if (pushed)
         fluid_.solve(fft_);
+    stepStalks(dt); // con el agua de este paso; también los tallos vacíos, aunque no quede ninguna célula
 
     // Los cuerpos blandos se lanzan ya (en la GPU, si hay): mientras tanto avanzan la química,
     // la luz, las bacterias, las cianobacterias y los hongos, que no los mueven.
@@ -1890,7 +1891,8 @@ bool World::forceReproduction(entt::entity e) {
         --internalBirth_;
         m.biomass = need;
     }
-    m.reserves = std::max(m.reserves, (cost + 0.05f) * m.biomass);
+    const float rounds = m.pendingFissions > 0 ? 1.0f : static_cast<float>(std::max(1, m.fissions));
+    m.reserves = std::max(m.reserves, (rounds * cost + 0.05f) * m.biomass);
     return true;
 }
 
@@ -1950,7 +1952,6 @@ void World::buildPerceptionGrid() {
 
 void World::applyMotion(float dt) {
     PROFILE_SCOPE("World::applyMotion");
-    stepStalks(dt);
     buildPerceptionGrid();
     // La percepción de cada piloto automático lee solo estado de este momento (centroides, cajas y
     // contornos de los vecinos, química, luz) y se calcula en paralelo antes del bucle. En el
@@ -4250,13 +4251,19 @@ void World::applyAnchor(entt::entity e, RingBody& body, Anchored& anchor, float 
     } else {
         target = base + Vec2{minImage(anchor.holdfast.x - base.x, width_), minImage(anchor.holdfast.y - base.y, height_)};
     }
-    // Rápido al contraerse el espasmonema (lo arrastra en ms).
+    // El tallo arrastra al zooide entero (el polo posterior está unido a la escópula), rápido al contraerse
+    // el espasmonema (lo trae en ms). Tirar solo de unos puntos del polo los estiraba y el cuerpo no venía.
     const float rate = anchor.contracted > 0.9f ? 60.0f : 6.0f;
-    for (int k = -2; k <= 2; ++k) {
-        const std::uint32_t s = body.ring[(back + n + static_cast<std::size_t>(k + static_cast<int>(n))) % n];
-        bodies_.vx[s] += (target.x - base.x) * rate;
-        bodies_.vy[s] += (target.y - base.y) * rate;
+    const Vec2 pull = (target - base) * rate;
+    for (std::uint32_t s : body.ring) {
+        bodies_.vx[s] += pull.x;
+        bodies_.vy[s] += pull.y;
     }
+    for (std::uint32_t s : body.interior) {
+        bodies_.vx[s] += pull.x;
+        bodies_.vy[s] += pull.y;
+    }
+    (void)n;
     // El tallo la mantiene erguida: el polo anterior sigue la dirección del tallo.
     const std::uint32_t tip = body.ring[front];
     bodies_.vx[tip] += dir.x * 3.0f;
@@ -4275,7 +4282,7 @@ void World::trapWithTentacles(entt::entity e, const RingBody& body, FeedingMode 
                 const RingBody& prey = registry_.get<RingBody>(pe);
                 const Vec2 shift = imageShift(prey, body.centroid);
                 if (polygon::closestOnBoundary(body.poly.data(), static_cast<int>(body.poly.size()), prey.centroid + shift).dist2 <
-                        std::pow(0.5f * std::sqrt(std::abs(prey.restArea) / units::kPi) + 4.0f, 2.0f) &&
+                        std::pow(std::sqrt(std::abs(prey.restArea) / units::kPi) + 3.0f, 2.0f) && // apoyada en el cuerpo
                     std::none_of(swallows_.begin(), swallows_.end(), [&](const auto& sw) { return sw.second == pe; }))
                     swallows_.push_back({e, pe}); // llegó al cuerpo: la envuelve
             }

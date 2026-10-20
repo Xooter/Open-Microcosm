@@ -30,11 +30,14 @@ shape_memory = 8.0
 color = [186, 184, 166]
 nucleus = 0.25
 
+# Difunde en tiempo biológico: su liberación y su degradación son biológicas, y así el gradiente tiene su
+# largo real (√(D·τ) ≈ 2 mm: en una gota llega a casi todos lados).
 [being.release]
 signal = "lembadion_kairomone"
 rate = 0.001
 diffusion = 100.0
 half_life_hours = 12.0
+bio_time = true
 
 [physiology.lembadion.max_growth]
 # Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en

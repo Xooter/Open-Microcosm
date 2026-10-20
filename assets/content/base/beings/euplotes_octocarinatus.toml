@@ -33,7 +33,8 @@ nucleus = 0.3
 [being.morph]
 name = "con alas"
 signal = "lembadion_kairomone"
-threshold = 0.05
+# Con la kairomona repartida en la gota, uno o dos Lembadion por gota ya la inducen (estimado).
+threshold = 0.01
 hours = 8.0
 width_scale = 1.4
 area_scale = 1.4
