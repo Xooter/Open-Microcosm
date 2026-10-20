@@ -34,7 +34,8 @@ style = "peristomal_crown"
 # Zooide contráctil (mionemas): ante un estímulo, el peristoma se cierra sobre la corona y la campana se
 # redondea en milisegundos; se vuelve a abrir en segundos. Extendido mide 50 µm de largo (Kreutz), en
 # campana desde la escópula (unida al tallo) hasta el peristoma; el ancho del peristoma sale de conservar
-# el volumen. El telotroco nada contraído, con el peristoma cerrado. Tiempo de re-extensión y ancho de la
+# el volumen. El telotroco nada contraído, con el peristoma cerrado, como un cilindro corto y con el
+# polo aboral adelante (lo empuja la corona de cilios posterior). Tiempo de re-extensión y ancho de la
 # escópula: estimados.
 [being.contraction]
 extension = 1.17
@@ -42,6 +43,8 @@ extension_s = 3.0
 profile = "bell"
 foot_width = 0.15
 swimming_extension = 0.0
+swimming_squareness = 3.5
+aboral_first = true
 
 [being.stalk]
 kind = "spasmoneme"

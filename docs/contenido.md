@@ -94,7 +94,8 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   y `foot_width` es el ancho del pie sobre el de la boca) | `bell` (zooide de los peritricos: lados
   convexos desde la escópula hasta el labio del peristoma). `flare`: exponente del perfil (3 trompeta,
   0,5 campana). El zooide de un peritrico se contrae también con su espasmonema. `swimming_extension` (0–1): cuánto se
-  extiende mientras nada suelta. `spontaneous_per_min`: contracciones sin estímulo. La dispara una
+  extiende mientras nada suelta; `swimming_squareness`: suelta toma la contraída más cuadrada (el cilindro
+  corto del telotroco) y `aboral_first`: nada con el polo posterior adelante. `spontaneous_per_min`: contracciones sin estímulo. La dispara una
   respuesta `contract`; el remolino de la contracción entra en el agua y lo sienten las vecinas.
 - `[being.shape_wave]`: la forma de reposo cambia en el tiempo, sin cambiar de área. `kind`:
   `metaboly` (movimiento euglenoide: una onda de ensanchamiento corre del polo anterior al posterior;

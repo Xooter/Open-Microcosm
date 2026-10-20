@@ -175,6 +175,11 @@ struct ContractionSpec {
     float footWidth = 0.1f;      // trompeta y campana: ancho del pie / el de la boca
     float flare = 0.0f;          // exponente del perfil (0: el del perfil, 3 trompeta y 0,5 campana)
     float swimmingExtension = 1.0f; // extensión (0–1) mientras nada suelta, sin pie fijo
+    // Telotroco de los peritricos: nada como un cilindro corto (la contraída, más cuadrada: exponente de
+    // superelipse; 0 = la contraída tal cual) y con el polo aboral adelante, la corona de cilios atrás
+    // que lo empuja (Kreutz; Lynn 2008, The Ciliated Protozoa).
+    float swimmingSquareness = 0.0f;
+    bool aboralFirst = false;
     float spontaneousPerMinute = 0.0f; // contracciones sin estímulo
 };
 
@@ -591,9 +596,10 @@ struct Contraction {
     float state = 1.0f;
     float stretch = 1.0f; // largo de la forma de reposo actual / el de la contraída
     float areaScale = 1.0f; // área de la silueta actual / la de la contraída (el blanco de área)
+    float swim = 0.0f;      // cuánto tomó la forma de nado (0–1)
     // Formas de reposo contraída y extendida, punto a punto (la misma membrana: no "rueda"). Se rehacen
     // cuando el anillo cambia de tamaño (división).
-    std::vector<Vec2> contracted, extended;
+    std::vector<Vec2> contracted, extended, swimming;
 };
 
 // Componente: paralizada por toxicistos (M6): no nada, no huye ni dispara tricocistos.

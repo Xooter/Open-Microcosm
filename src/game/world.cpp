@@ -2067,6 +2067,8 @@ void World::applyMotion(float dt) {
                     ap->intent = Intent::Contract;
             }
         }
+        // El telotroco de los peritricos nada de cola, empujado por su corona posterior.
+        loco.aboralFirst = cellInfo(registry_, e).contraction.aboralFirst && registry_.all_of<Telotroch>(e);
         if (cellInfo(registry_, e).shapeWave.kind != ShapeWaveKind::None)
             updateShapeWave(e, body, loco, dt);
         // Sésiles: no nadan; el tallo las sostiene (la corona ciliar solo hace corriente).

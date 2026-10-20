@@ -70,6 +70,10 @@ void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
         const float f = loco.forward >= 0.0f ? loco.forward : loco.forward * p.ciliaReverse;
         loco.speed = f * p.ciliaSpeed * loco.power;
         omega = loco.turn * p.ciliaTurnRate;
+        if (loco.aboralFirst) { // la corona posterior lo empuja: avanza de cola, y para ir hacia un lado gira al revés
+            loco.speed = -loco.speed;
+            omega = -omega;
+        }
         if (loco.burst > 0.0f) { // salto: el golpe de los cirros la lanza en línea recta
             loco.speed = loco.burst; // ya escalado por el genoma y la viscosidad (World)
             omega = 0.0f;

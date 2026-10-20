@@ -58,6 +58,7 @@ struct Locomotion {
     bool gliding = false;     // se desliza sobre el vidrio con el flagelo (no nada)
     float burst = 0.0f;       // salto en curso: velocidad a lo largo del eje [µm/s] (0: no salta)
     bool pusher = false;      // flagelo posterior: empuja desde atrás
+    bool aboralFirst = false; // cilios: avanza con el polo posterior adelante (telotroco de los peritricos)
     bool testate = false;     // tecameba: los seudópodos salen por la abertura y arrastran la testa rígida
     std::uint32_t mouthRing = 0; // índice del anillo con el citostoma (boca)
 };

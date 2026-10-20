@@ -101,7 +101,8 @@ constexpr const char* kSymbiontKeys[] = {"kind",           "source",          "p
                                          "growth_per_hour", "decay_per_hour", "photosynthesis"};
 constexpr const char* kBiolumKeys[] = {"flash_s", "recharge_s", "circadian", "day_capacity", "color"};
 constexpr const char* kContractionKeys[] = {"extension",          "extension_s",        "profile", "foot_width",
-                                           "flare",              "swimming_extension", "spontaneous_per_min"};
+                                           "flare",              "swimming_extension", "spontaneous_per_min",
+                                           "swimming_squareness", "aboral_first"};
 constexpr const char* kShapeWaveKeys[] = {"kind",  "amplitude",         "period_s",       "wavelength",
                                          "reach", "episodes_per_min", "episode_s"};
 constexpr std::pair<const char*, ShapeWaveKind> kShapeWaveKind[] = {{"metaboly", ShapeWaveKind::Metaboly},
@@ -503,6 +504,8 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         cr.count("flare", s.contraction.flare);
         cr.count("swimming_extension", s.contraction.swimmingExtension);
         cr.count("spontaneous_per_min", s.contraction.spontaneousPerMinute);
+        cr.count("swimming_squareness", s.contraction.swimmingSquareness);
+        cr.flag("aboral_first", s.contraction.aboralFirst);
         if (s.contraction.extension < 1.0f || s.contraction.extensionSeconds <= 0.0f)
             cr.errors.push_back(cr.where + ": 'extension' tiene que ser al menos 1 y 'extension_s' positivo");
         if (s.contraction.footWidth <= 0.0f || s.contraction.footWidth > 1.0f || s.contraction.flare < 0.0f || s.contraction.swimmingExtension < 0.0f ||

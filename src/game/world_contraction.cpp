@@ -95,6 +95,22 @@ void buildShapes(Contraction& c, const RingBody& body, const ContractionSpec& sp
     c.contracted = body.restRing;
     const std::size_t n = c.contracted.size();
     c.extended.resize(n);
+    // Forma de nado: la contraída llevada a una superelipse más cuadrada (el cilindro corto del telotroco).
+    c.swimming.clear();
+    if (spec.swimmingSquareness > 0.0f) {
+        float rx = 0.0f, ry = 0.0f;
+        for (const Vec2& q : c.contracted) {
+            rx = std::max(rx, std::abs(q.x));
+            ry = std::max(ry, std::abs(q.y));
+        }
+        const float p = spec.swimmingSquareness;
+        for (const Vec2& q : c.contracted) {
+            const float a = std::atan2(q.y / std::max(1e-3f, ry), q.x / std::max(1e-3f, rx));
+            const float co = std::cos(a), si = std::sin(a);
+            c.swimming.push_back({rx * std::copysign(std::pow(std::abs(co), 2.0f / p), co),
+                                  ry * std::copysign(std::pow(std::abs(si), 2.0f / p), si)});
+        }
+    }
     float minX = 1e9f, maxX = -1e9f;
     std::size_t front = 0;
     for (std::size_t i = 0; i < n; ++i) {
@@ -156,6 +172,10 @@ void applyShape(RingBody& body, Contraction& c, float s) {
     const float a = std::abs(polygon::signedArea(shape.data(), static_cast<int>(n)));
     const float a0 = std::abs(polygon::signedArea(c.contracted.data(), static_cast<int>(n)));
     const float scale = a0 > 0.0f ? a / a0 : 1.0f;
+    // Nadando, hacia la forma del telotroco (con el área de la contraída: el volumen es el mismo).
+    if (c.swim > 0.0f && c.swimming.size() == n)
+        for (std::size_t i = 0; i < n; ++i)
+            shape[i] = shape[i] + (c.swimming[i] - c.contracted[i]) * c.swim;
     rest_shape::apply(body, shape, scale, c.areaScale);
     c.areaScale = scale;
 }
@@ -205,7 +225,12 @@ void World::updateContraction(entt::entity e, RingBody& body, bool trigger, floa
         const float target = 1.0f - cap, rate = dt / spec.extensionSeconds;
         c.state = c.state > target ? std::max(target, c.state - rate) : std::min(target, c.state + rate);
     }
-    if (!fire && c.state == before && !rebuilt)
+    // Suelta y nadando toma de a poco la forma del telotroco; fijada, la deja.
+    const float swimBefore = c.swim;
+    const float swimTarget = !anchored && !c.swimming.empty() ? 1.0f : 0.0f;
+    c.swim = swimTarget > c.swim ? std::min(1.0f, c.swim + dt / spec.extensionSeconds)
+                                 : std::max(0.0f, c.swim - dt / spec.extensionSeconds);
+    if (!fire && c.state == before && c.swim == swimBefore && !rebuilt)
         return; // quieta en su extensión
     // Re-extensión suave; la contracción, de golpe.
     const float s = smoothstep(1.0f - c.state);
@@ -220,7 +245,7 @@ void World::updateContraction(entt::entity e, RingBody& body, bool trigger, floa
     applyShape(body, c, s);
     c.stretch = stretch;
     const CellShape* shape = registry_.try_get<CellShape>(e);
-    body.shapeRate = c.state > 0.9f ? kContractRate : shape ? shape->shapeRate : body.shapeRate;
+    body.shapeRate = c.state > 0.9f && c.swim < 0.5f ? kContractRate : shape ? shape->shapeRate : body.shapeRate;
 }
 
 float World::contractionAreaScale(entt::entity e) const {
@@ -234,6 +259,7 @@ void World::contractForDivision(entt::entity e, RingBody& body) {
     Contraction* c = registry_.try_get<Contraction>(e);
     if (!c || c->stretch <= 1.0f || c->contracted.size() != body.restRing.size())
         return;
+    c->swim = 0.0f;
     applyShape(body, *c, 0.0f);
     c->state = 1.0f;
     c->stretch = 1.0f;
