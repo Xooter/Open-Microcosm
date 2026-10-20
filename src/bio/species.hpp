@@ -440,6 +440,9 @@ struct SpeciesInfo {
     // par se desliza a lo largo del eje con la misma oscilación: la colonia se estira y se cierra como una
     // regla de carpintero (Kapinga & Gordon 1992). Amplitud relativa al largo y período [s].
     int slidingColonyMax = 0;          // células por colonia (0: no forma)
+    // Colonia en estrella (Asterionella): las células irradian de un centro, unidas por el polo
+    // posterior con almohadillas de mucílago, a ángulos iguales. 0: no forma.
+    int starColonyMax = 0;
     // Tecameba (Arcella, Euglypha): el cuerpo blando es la testa, rígida; solo el citoplasma que sale por
     // la abertura forma seudópodos, lobosos (dedos) o filosos (finos). 0: no; 1: lobosos; 2: filosos.
     std::uint8_t testate = 0;
@@ -549,6 +552,13 @@ struct Stalk {
 };
 
 // Componente: hija nadadora de una especie sésil (telotroco), antes de fijarse.
+// Componente: miembro de una colonia en estrella. `root` es la célula fundadora (también miembro, con
+// `slot` 0); cada miembro apunta hacia afuera a `slot` · 360° / máximo de la de la fundadora.
+struct StarMember {
+    entt::entity root;
+    int slot;
+};
+
 struct Telotroch {
     float timer; // [s] hasta fijarse
 };

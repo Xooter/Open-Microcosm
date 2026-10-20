@@ -239,6 +239,15 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         if (s.testate == 0)
             r.errors.push_back(r.where + ": 'testate' es \"lobose\" o \"filose\"");
     }
+    if (const toml::table* sc = r.table("star_colony")) {
+        constexpr const char* kKeys[] = {"max_cells"};
+        toml_io::warnUnknown(*sc, kKeys, r.where + " [star_colony]", warnings);
+        Reader cr{*sc, r.where + " [star_colony]", {}};
+        cr.count("max_cells", s.starColonyMax);
+        if (s.starColonyMax < 2 || s.starColonyMax > 32)
+            cr.errors.push_back(cr.where + ": 'max_cells' va de 2 a 32");
+        r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
     if (const toml::table* sc = r.table("sliding_colony")) {
         constexpr const char* kKeys[] = {"max_cells", "amplitude", "period_s"};
         toml_io::warnUnknown(*sc, kKeys, r.where + " [sliding_colony]", warnings);

@@ -1,6 +1,7 @@
 # Asterionella formosa: diatomea pennada planctónica, células de ~60 × 3 µm (sin rafe: no se
-# desliza). En la naturaleza forma colonias en estrella de ~8 células; acá células sueltas, y
-# algo más anchas (6 µm) para que el cuerpo blando sea estable. Tilman (1977).
+# desliza). Forma colonias en estrella de ~8 células unidas por el polo posterior con almohadillas de
+# mucílago ([being.star_colony]); acá algo más anchas (6 µm) para que el cuerpo blando sea estable.
+# Tilman (1977).
 
 [[being]]
 id = "asterionella"
@@ -19,6 +20,9 @@ temperature = [2.0, 30.0]
 storage = "chrysolaminarin"
 wall = "silica"
 genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+[being.star_colony]
+max_cells = 8
+
 [being.shape]
 semi_major_axis = 32.0
 semi_minor_axis = 3.0

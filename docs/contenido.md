@@ -141,6 +141,8 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   de un alga de la biomasa del huésped). Se reparten en la división.
 - `[being.signal_toxicity]`: sensibilidad a una señal tóxica de otro ser (los cuerpos R de un killer).
   `signal` y `ec50` [µM]: la dosis tóxica de referencia; mata si la pasa.
+- `[being.star_colony]`: colonia en estrella (*Asterionella*): `max_cells` células unidas por el polo
+  posterior, a ángulos iguales. Se siembra en colonias (de la mitad al máximo) y crece por división.
 - `[being.sliding_colony]`: colonia deslizante (Bacillaria). `max_cells`, `amplitude` (fracción del largo
   que se corre cada célula respecto de su vecina) y `period_s` del ciclo de estirarse y cerrarse.
 - `[being.light_damage]`: daño fotodinámico. Arriba de `threshold` (irradiancia relativa) se paga

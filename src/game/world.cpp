@@ -755,6 +755,7 @@ void World::beginBodies(float dt) {
 
     applyMotion(dt);
     applySlidingColonies(dt);
+    applyStarColonies(dt);
     applyDivisionForces();
     for (RingBody* body : bodyList_) {
         soft_body::adaptPlastic(*body, bodies_, dt);
@@ -1718,12 +1719,19 @@ int World::placeSampled(const std::vector<SampledCell>& cells) {
 }
 
 entt::entity World::spawnWild(SpeciesId id, Vec2 p, Rng& rng, bool randomStage) {
+    const entt::entity e = spawnWildCell(id, p, rng, randomStage, nullptr);
+    if (speciesInfo(id).starColonyMax > 0) // Asterionella: se la encuentra en colonias
+        foundStarColony(e, rng, randomStage);
+    return e;
+}
+
+entt::entity World::spawnWildCell(SpeciesId id, Vec2 p, Rng& rng, bool randomStage, const float* angle) {
     const SpeciesInfo& info = speciesInfo(id);
     Genome g = speciesGenome(id);
     // Las células somáticas de un cultivo son clonales: sin la variación genética de un protista.
     mutate(g, info.locomotion, rng, info.animalCell.present ? 0.0f : 0.5f);
     g[Gene::MatingType] = rng.uniform() < 0.5f ? 0.0f : 1.0f;
-    const entt::entity e = spawnOrganism(id, p, g, 0, rng.uniform(0.0f, 2.0f * units::kPi));
+    const entt::entity e = spawnOrganism(id, p, g, 0, angle ? *angle : rng.uniform(0.0f, 2.0f * units::kPi));
     if (randomStage) {
         // Población en distintas etapas del ciclo celular (si no, todas se dividirían juntas).
         Metabolism& m = registry_.get<Metabolism>(e);
@@ -3508,6 +3516,8 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
         }
         if (sinfo.slidingColonyMax > 0)
             joinSlidingColony(cell, child);
+        if (sinfo.starColonyMax > 0)
+            joinStarColony(cell, child);
     }
     if (registry_.all_of<AnimalCell>(cell))
         afterAnimalDivision(cell, child);

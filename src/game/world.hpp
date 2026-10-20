@@ -597,6 +597,11 @@ class World {
     // Colonia deslizante (Bacillaria), game/world_sliding.cpp.
     void joinSlidingColony(entt::entity mother, entt::entity child);
     void applySlidingColonies(float dt);
+    // Colonia en estrella (Asterionella), game/world_star.cpp.
+    entt::entity spawnWildCell(SpeciesId species, Vec2 at, Rng& rng, bool randomStage, const float* angle);
+    void foundStarColony(entt::entity root, Rng& rng, bool randomStage);
+    bool joinStarColony(entt::entity mother, entt::entity child);
+    void applyStarColonies(float dt);
     // Colonia: la hija se queda en una rama nueva del tallo de la madre. false si no corresponde.
     bool branchColony(entt::entity mother, entt::entity child);
     void trapWithTentacles(entt::entity e, const RingBody& body, FeedingMode mode);
