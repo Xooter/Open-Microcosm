@@ -123,13 +123,14 @@ constexpr const char* kJumpKeys[] = {"speed", "duration", "interval"};
 constexpr const char* kLightDamageKeys[] = {"threshold", "stress"};
 constexpr const char* kPigmentKeys[] = {"rate_per_hour", "decay_per_hour", "light_threshold", "protection", "color"};
 constexpr std::pair<const char*, ProcessKind> kProcessKind[] = {
-    {"horn", ProcessKind::Horn}, {"spine", ProcessKind::Spine}, {"arm", ProcessKind::Arm}, {"seta", ProcessKind::Seta}};
+    {"horn", ProcessKind::Horn}, {"spine", ProcessKind::Spine}, {"arm", ProcessKind::Arm}, {"seta", ProcessKind::Seta},
+    {"notch", ProcessKind::Notch}};
 constexpr const char* kAnimalCellKeys[] = {"adherent", "rounded_radius", "contact_inhibition_locomotion",
                                            "contact_inhibition_proliferation", "min_serum",
                                            "apoptosis_without_serum_h", "divides", "fmlp_chemotaxis"};
 constexpr const char* kLookKeys[] = {"style", "plastid_color"};
 constexpr const char* kShapeKeys[] = {"semi_major_axis", "semi_minor_axis", "shape_memory", "color",
-                                      "nucleus",        "squareness",    "taper",  "taper_front", "thickness"};
+                                      "nucleus",        "squareness",    "taper",  "taper_front", "bend", "thickness"};
 
 using toml_io::known;
 using toml_io::Reader;
@@ -311,6 +312,8 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
                 // Por omisión, cuernos y brazos son del cuerpo y espinas y setas, de la cubierta.
                 p.inBody = p.kind == ProcessKind::Horn || p.kind == ProcessKind::Arm;
                 pr.flag("body", p.inBody);
+                if (p.kind == ProcessKind::Notch)
+                    p.inBody = true; // una escotadura es siempre del cuerpo
                 pr.count("fillet", p.fillet);
                 if (p.length <= 0.0f || p.baseWidth <= 0.0f || p.count < 1)
                     pr.errors.push_back(pr.where + ": 'length' y 'base_width' tienen que ser positivos y 'count' al menos 1");
@@ -614,6 +617,9 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         f.num("squareness", s.spec.squareness);
         f.num("taper", s.spec.taper.back);
         f.num("taper_front", s.spec.taper.front);
+        float bendDeg = 0.0f;
+        f.num("bend", bendDeg);
+        s.spec.bend = bendDeg * units::kPi / 180.0f;
         f.num("thickness", s.thickness);
         if (const toml::node* c = shape->get("color")) {
             const toml::array* a = c->as_array();
@@ -629,6 +635,8 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
             f.errors.push_back(f.where + ": los semiejes tienen que ser positivos");
         if (s.spec.taper.back < 0.0f || s.spec.taper.back >= 1.0f || s.spec.taper.front < 0.0f || s.spec.taper.front >= 1.0f)
             f.errors.push_back(f.where + ": 'taper' y 'taper_front' van de 0 a menos de 1");
+        if (std::abs(s.spec.bend) > 0.9f * units::kPi)
+            f.errors.push_back(f.where + ": 'bend' va de -162° a 162°");
         r.errors.insert(r.errors.end(), f.errors.begin(), f.errors.end());
     }
     if (!r.errors.empty()) {
@@ -636,8 +644,10 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         warnings.push_back(r.where + ": el ser no se carga");
         return false;
     }
-    // Con prolongaciones en el cuerpo, la célula entera es una silueta (cuerpo + cuernos con redondeo).
-    if (std::any_of(s.processes.begin(), s.processes.end(), [](const ProcessSpec& p) { return p.inBody; })) {
+    // Con prolongaciones o escotaduras en el cuerpo, o el eje curvado, la célula entera es una silueta
+    // (cuerpo + cuernos con redondeo − escotaduras).
+    if (s.spec.bend != 0.0f ||
+        std::any_of(s.processes.begin(), s.processes.end(), [](const ProcessSpec& p) { return p.inBody; })) {
         const Silhouette sil = buildSilhouette(s.spec, s.processes);
         if (sil.outline.empty()) {
             warnings.push_back(r.where + ": no se pudo armar la silueta con sus prolongaciones (se usa el cuerpo solo)");

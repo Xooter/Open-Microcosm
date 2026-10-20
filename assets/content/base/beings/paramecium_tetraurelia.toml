@@ -29,6 +29,16 @@ shape_memory = 8.0
 color = [168, 176, 146]
 nucleus = 0.32
 
+# Zapatilla: el surco oral hunde un lado, desde el tercio anterior hasta la boca, en la mitad del
+# cuerpo. Profundidad y largo estimados.
+[[being.process]]
+kind = "notch"
+at = 54.0
+length = 4.0
+base_width = 28.0
+tip_width = 14.0
+fillet = 7.0
+
 # Se reparten en tiempo biológico (como su liberación y su degradación): el largo del área afectada es el real.
 [being.release]
 signal = "kappa_r_bodies"

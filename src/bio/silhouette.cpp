@@ -25,8 +25,18 @@ float smoothMin(float a, float b, float k) {
 float taperFactorAt(const CellSpec& s, float x) { return taperFactor(s.taper, x, s.radiusX); }
 
 // Distancia aproximada (con signo) al borde de la superelipse afinada del cuerpo: exacta en el borde,
-// que es lo único que se usa (el nivel cero), y con la escala del semieje menor alrededor.
+// que es lo único que se usa (el nivel cero), y con la escala del semieje menor alrededor. Con `bend`, el
+// eje (de largo 2·rx) es un arco de ese ángulo con el centro de curvatura hacia +y: el punto se lleva a
+// coordenadas del arco (largo a lo largo del eje y distancia al eje) antes de medir.
 float bodyDistance(const CellSpec& s, Vec2 q) {
+    if (s.bend != 0.0f) {
+        const float radius = 2.0f * s.radiusX / s.bend; // con signo: negativo, curvada hacia −y
+        const Vec2 v = q - Vec2{0.0f, radius};
+        const float sign = radius > 0.0f ? 1.0f : -1.0f;
+        const float along = std::abs(radius) * std::atan2(v.x, -sign * v.y);
+        const float across = sign * (std::abs(radius) - length(v));
+        q = {along, across};
+    }
     const float y = q.y / taperFactorAt(s, q.x);
     const float p = s.squareness;
     const float f = std::pow(std::pow(std::abs(q.x) / s.radiusX, p) + std::pow(std::abs(y) / s.radiusY, p), 1.0f / p);
@@ -46,6 +56,7 @@ Vec2 bodyEdge(const CellSpec& s, float a) {
 }
 
 struct Capsule {
+    bool subtract = false; // escotadura: se resta del cuerpo
     std::vector<Vec2> axis;
     std::vector<float> half; // medio ancho en cada punto del eje
     float smooth;            // radio del redondeo con el cuerpo
@@ -170,10 +181,17 @@ Silhouette buildSilhouette(const CellSpec& body, const std::vector<ProcessSpec>&
             continue;
         for (int k = 0; k < p.count; ++k) {
             const float a = processAngle(p, k);
-            const Vec2 dir = {std::cos(a), std::sin(a)}, side = {-dir.y, dir.x};
-            // La base arranca medio ancho adentro del cuerpo: el redondeo la une sin escalón.
-            const Vec2 base = bodyEdge(body, a) - dir * (0.5f * p.baseWidth);
+            Vec2 dir = {std::cos(a), std::sin(a)}, side = {-dir.y, dir.x};
+            // La base arranca medio ancho adentro del cuerpo: el redondeo la une sin escalón. La de una
+            // escotadura arranca medio ancho afuera y entra hacia el centro.
+            const bool notch = p.kind == ProcessKind::Notch;
+            const Vec2 base = bodyEdge(body, a) + dir * ((notch ? 0.5f : -0.5f) * p.baseWidth);
+            if (notch) {
+                dir = dir * -1.0f;
+                side = side * -1.0f;
+            }
             Capsule c;
+            c.subtract = notch;
             c.smooth = p.fillet > 0.0f ? p.fillet : 0.5f * p.baseWidth;
             c.lo = c.hi = base;
             // El largo se mide desde el borde del cuerpo hasta la punta redondeada: el eje, que arranca
@@ -196,11 +214,16 @@ Silhouette buildSilhouette(const CellSpec& body, const std::vector<ProcessSpec>&
             caps.push_back(std::move(c));
         }
     }
-    if (caps.empty())
+    if (caps.empty() && body.bend == 0.0f)
         return sil;
 
     // Grilla que cubre el cuerpo y todas las prolongaciones.
     Vec2 lo = {-body.radiusX, -body.radiusY}, hi = {body.radiusX, body.radiusY};
+    if (body.bend != 0.0f) { // la media luna se arquea hacia el centro de curvatura
+        const float radius = 2.0f * body.radiusX / body.bend;
+        const float sag = radius * (1.0f - std::cos(0.5f * body.bend));
+        (sag > 0.0f ? hi.y : lo.y) += sag;
+    }
     for (const Capsule& c : caps) {
         lo = {std::min(lo.x, c.lo.x), std::min(lo.y, c.lo.y)};
         hi = {std::max(hi.x, c.hi.x), std::max(hi.y, c.hi.y)};
@@ -216,7 +239,8 @@ Silhouette buildSilhouette(const CellSpec& body, const std::vector<ProcessSpec>&
             float d = bodyDistance(body, q);
             for (const Capsule& c : caps)
                 if (q.x >= c.lo.x && q.x <= c.hi.x && q.y >= c.lo.y && q.y <= c.hi.y)
-                    d = smoothMin(d, capsuleDistance(c, q), c.smooth);
+                    d = c.subtract ? -smoothMin(-d, capsuleDistance(c, q), c.smooth) // máximo suave: resta
+                                   : smoothMin(d, capsuleDistance(c, q), c.smooth);
             field[static_cast<std::size_t>(j) * nx + i] = d;
         }
     }

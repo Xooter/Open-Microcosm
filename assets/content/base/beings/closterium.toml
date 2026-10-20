@@ -18,13 +18,16 @@ temperature = [2.0, 30.0]
 storage = "starch"
 wall = "cellulose"
 genome = { chloroplasts = 1.0, trichocysts = 0.0 }
-# La silueta es un huso simétrico (sin la curvatura de la media luna): las dos puntas son iguales.
 [being.shape]
 semi_major_axis = 137.0
 semi_minor_axis = 22.0
 shape_memory = 30.0
 color = [140, 184, 116]
 nucleus = 0.15
+# Media luna: el eje se curva en un arco (~100°, estimado sobre Kreutz) y las puntas se afinan.
+bend = 100.0
+taper = 0.6
+taper_front = 0.6
 
 [being.appearance]
 style = "coccoid"

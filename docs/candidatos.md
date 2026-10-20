@@ -195,7 +195,8 @@ Lo que hubo que arreglar:
 - ***Euglypha*** se reproduce por **gemación**: la tecameba real no se estrangula; la hija sale por la
   abertura y arma su testa. (Así también evita el problema de las amebas plásticas chicas.)
 - ***Closterium*** y ***Ceratium***: sin `taper`, que afina solo el polo posterior y cruzaba el anillo al
-  dividirse; los dos son simétricos en la silueta que se simula.
+  dividirse; los dos son simétricos en la silueta que se simula. (Después: *Closterium* es una silueta
+  en media luna, con `bend` y las dos puntas afinadas, y se divide con la silueta.)
 - **Catálogo:** liberar hijas cuenta como alga solo con cloroplastos (*Euglypha* brota y es ameba).
 
 **Rendimiento** (`bio_bench --wildlife 3`, 300 pasos, contra 52ca0f0): charco 31,7 → 43,1 ms/paso

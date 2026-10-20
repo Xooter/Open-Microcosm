@@ -30,6 +30,16 @@ shape_memory = 8.0
 color = [182, 180, 158]
 nucleus = 0.3
 
+# Arriñonada: el lado oral es una escotadura ancha y poco profunda en el tercio anterior, donde está la
+# boca (Kreutz). Profundidad y abertura estimadas.
+[[being.process]]
+kind = "notch"
+at = 55.0
+length = 7.0
+base_width = 22.0
+tip_width = 14.0
+fillet = 6.0
+
 [physiology.colpoda.max_growth]
 # Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
 # °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 35, 23 y 16 µm: 53952 µm³).

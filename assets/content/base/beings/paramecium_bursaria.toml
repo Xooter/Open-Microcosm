@@ -29,6 +29,16 @@ shape_memory = 8.0
 color = [150, 186, 120]
 nucleus = 0.3
 
+# Zapatilla: el surco oral hunde un lado, desde el tercio anterior hasta la boca, en la mitad del
+# cuerpo. Profundidad y largo estimados.
+[[being.process]]
+kind = "notch"
+at = 54.0
+length = 5.0
+base_width = 26.0
+tip_width = 13.0
+fillet = 6.5
+
 [being.photosymbiont]
 kind = "endosymbionts"
 source = ["chlorella"]

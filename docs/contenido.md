@@ -145,7 +145,8 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
 - `[being.shape]`: `semi_major_axis` y `semi_minor_axis` [µm], `thickness` [µm] (por omisión, el
   menor), `shape_memory` [1/s], `color` RGB del citoplasma, `nucleus` (radio relativo),
   `squareness` (2 elipse, ~6 cilindro), `taper` (afinamiento del polo posterior) y `taper_front` (del anterior), de 0 a menos de 1;
-  con los dos, un huso.
+  con los dos, un huso. `bend` [°]: el eje se curva en un arco de ese ángulo (la media luna de
+  *Closterium*; la célula pasa a ser una silueta).
 - `[being.appearance]`: `style`, un dibujo con nombre (`ciliate`, `flagellate`, `amoeboid`,
   `flagellar_rostrum`, `girdles_and_proboscis`, `helical_ribbon`, `axial_plate`,
   `stellate_plastids`, `reticulate_plastid`, `frustule`, `spherical_colony`, `flat_colony`,
@@ -158,7 +159,7 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   [fracción], `apoptosis_without_serum_h`, `divides`, `fmlp_chemotaxis`. `relative_dry_mass`: la
   célula extendida es mucho más delgada que el esferoide de su silueta.
 - `[[being.process]]` (una por prolongación): **prolongaciones** de la célula o de su cubierta.
-  `kind`: `horn` | `spine` | `arm` | `seta`; `at`: dirección desde el polo anterior del cuerpo [°];
+  `kind`: `horn` | `spine` | `arm` | `seta` | `notch`; `at`: dirección desde el polo anterior del cuerpo [°];
   `length` desde la superficie, `base_width` y `tip_width` [µm], para el tamaño típico (escalan con la
   célula); `curve`: giro total a lo largo [°, positivo hacia la izquierda]; `count`: copias, repartidas
   en `spread` [°] alrededor de `at` o, sin `spread`, en toda la vuelta (simetría radial); `body`: si es
@@ -169,6 +170,10 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
     cuerpo y las prolongaciones con un redondeo y es la forma del anillo de membrana: chocan, crecen
     y se dividen con la célula, y la memoria de forma de la pared (`shape_memory`) las mantiene
     rígidas. La masa sigue saliendo del esferoide del cuerpo (los cuernos casi no tienen citoplasma).
+  - **Escotaduras** (`notch`, siempre del cuerpo: el seno de *Cosmarium*, las incisiones de los lóbulos
+    de *Micrasterias*, el lado oral de *Colpoda*, el surco oral de *Paramecium*): se restan de la
+    silueta con un redondeo. `length` es la profundidad desde el borde, `base_width` la abertura y
+    `tip_width` el fondo.
   - **De la cubierta** (`body = false`: espinas de la lórica de *Trachelomonas*, de las placas de
     *Coleps*, de la testa de *Euglypha*): sin citoplasma y más finas que la resolución de la membrana
     (3 µm); se dibujan sobre la cubierta, con la base redondeada, y no son parte del cuerpo blando.

@@ -26,6 +26,16 @@ taper = 0.15
 color = [160, 176, 138]
 nucleus = 0.32
 
+# Zapatilla: el surco oral hunde un lado, desde el tercio anterior hasta la boca, en la mitad del
+# cuerpo. Profundidad y largo estimados.
+[[being.process]]
+kind = "notch"
+at = 54.0
+length = 5.0
+base_width = 40.0
+tip_width = 20.0
+fillet = 10.0
+
 [physiology.paramecium.max_growth]
 # Ajuste logístico (r) al monocultivo de P. caudatum de la fig. 22 (datos digitalizados en el paquete
 # de R gauseR, Clark et al.): r = 0,946 ± 0,109 /día, K = 203 (volumen relativo). La figura mide

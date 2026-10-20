@@ -98,7 +98,11 @@ enum class FeedingMode : std::uint8_t {
 //  - de la cubierta: las espinas de una lórica, de las placas de Coleps o de una testa. No tienen
 //    citoplasma y miden ~1 µm, menos que la resolución de la membrana (3 µm): se dibujan sobre la
 //    cubierta (render) y no son parte del cuerpo blando.
-enum class ProcessKind : std::uint8_t { Horn, Spine, Arm, Seta };
+// Y la escotadura (`notch`): lo contrario, una entrada en el cuerpo (el seno que separa las dos
+// semicélulas de Cosmarium, las incisiones de los lóbulos de Micrasterias, el lado oral de Colpoda o el
+// surco oral de Paramecium). Se resta de la silueta: `length` es la profundidad desde el borde,
+// `base_width` la abertura y `tip_width` el fondo. Siempre es del cuerpo.
+enum class ProcessKind : std::uint8_t { Horn, Spine, Arm, Seta, Notch };
 struct ProcessSpec {
     ProcessKind kind = ProcessKind::Spine;
     float at = 0.0f;        // dirección desde el polo anterior [rad], en el plano de la vista

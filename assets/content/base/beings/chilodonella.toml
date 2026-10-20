@@ -27,6 +27,15 @@ shape_memory = 10.0
 color = [184, 182, 162]
 nucleus = 0.3
 
+# Oval y chata, con una escotadura en el borde anterior izquierdo (Kreutz). Tamaño estimado.
+[[being.process]]
+kind = "notch"
+at = 40.0
+length = 3.0
+base_width = 12.0
+tip_width = 6.0
+fillet = 3.0
+
 [physiology.chilodonella.max_growth]
 # Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
 # °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 22,5, 14,5 y 6 µm: 8200 µm³).

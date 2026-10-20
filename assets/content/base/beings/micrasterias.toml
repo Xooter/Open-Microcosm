@@ -1,5 +1,5 @@
 # Micrasterias rotata: desmidia en disco de 200–400 × 190–270 µm, con dos semicélulas de cinco lóbulos
-# muy recortados; de turberas y pantanos (Kreutz). Los lóbulos no se dibujan.
+# muy recortados; de turberas y pantanos (Kreutz).
 [[being]]
 id = "micrasterias"
 name = "Micrasterias"
@@ -23,6 +23,68 @@ thickness = 30.0
 shape_memory = 30.0
 color = [136, 180, 110]
 nucleus = 0.1
+
+# Semicélulas de cinco lóbulos (Kreutz): el seno profundo y angosto del istmo y, en cada semicélula, las
+# incisiones entre el lóbulo polar y los laterales (±35° del polo) y las que parten cada lateral en dos
+# (±64°), en cuña; y el margen dentado de los lóbulos (escotaduras chicas alrededor). Profundidades y
+# aberturas estimadas sobre las figuras.
+[[being.process]]
+kind = "notch"
+at = 90.0
+length = 95.0
+base_width = 6.0
+tip_width = 4.0
+count = 2
+fillet = 2.0
+
+[[being.process]]
+kind = "notch"
+at = 0.0
+length = 45.0
+base_width = 12.0
+tip_width = 3.0
+count = 2
+spread = 140.0
+fillet = 2.0
+
+[[being.process]]
+kind = "notch"
+at = 180.0
+length = 45.0
+base_width = 12.0
+tip_width = 3.0
+count = 2
+spread = 140.0
+fillet = 2.0
+
+[[being.process]]
+kind = "notch"
+at = 0.0
+length = 30.0
+base_width = 9.0
+tip_width = 3.0
+count = 2
+spread = 256.0
+fillet = 2.0
+
+[[being.process]]
+kind = "notch"
+at = 180.0
+length = 30.0
+base_width = 9.0
+tip_width = 3.0
+count = 2
+spread = 256.0
+fillet = 2.0
+
+[[being.process]]
+kind = "notch"
+at = 9.0
+length = 9.0
+base_width = 7.0
+tip_width = 2.5
+count = 20
+fillet = 1.5
 
 [being.appearance]
 style = "coccoid"

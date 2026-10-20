@@ -21,6 +21,7 @@ struct CellSpec {
     float nucleusFraction = 0.32f;          // radio del núcleo / semieje menor
     float squareness = 2.0f;                // superelipse: 2 = elipse, ~6 = cilindro (Spirogyra)
     Taper taper;                            // afinamiento de los polos (sim/taper.hpp)
+    float bend = 0.0f;                      // arco del eje [rad] (media luna de Closterium; solo la silueta)
     std::uint8_t r = 180, g = 185, b = 160; // tinte del citoplasma
     // Con prolongaciones en el cuerpo, el contorno de la especie (bio/silhouette, para el tamaño típico)
     // reemplaza a la superelipse: `outlineScale` es el tamaño respecto del típico y `outlineBodyCenter`,
