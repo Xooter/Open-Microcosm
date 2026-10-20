@@ -34,6 +34,13 @@ void updateStressPigment(const SpeciesInfo& info, float light, Limitation limiti
 // (proporcional a la biomasa) en `loricaHours`.
 float loricaIronDemand(const SpeciesInfo& info, const Metabolism& m, float bioDt);
 
+// Fotosimbiontes (Paramecium bursaria, Mesodinium): actualiza su cantidad (división con luz o pérdida) y
+// devuelve el azúcar que le pasan al huésped en `bioDt` [pmol de glucosa].
+float stepPhotosymbionts(const SpeciesInfo& host, const MetabolismParams& p, Metabolism& m, float light, float bioDt);
+// Al comer una presa: si es de la especie fuente, la retiene como simbionte (sus algas o sus
+// cloroplastos). Devuelve true si la retuvo.
+bool acquireSymbionts(const SpeciesInfo& host, SpeciesId prey, Metabolism& m);
+
 // Metabolismo mínimo dentro de la pared del quiste.
 void applyCyst(MetabolicInput& in);
 

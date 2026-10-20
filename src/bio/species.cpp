@@ -27,7 +27,7 @@ struct Entry {
     std::string source; // el [[being]] como se leyó (para exportarlo)
     std::vector<std::string> legacyIds; // ids viejos (core/ids)
     // Referencias sin resolver (ids o etiquetas): se resuelven contra todo lo cargado.
-    std::vector<std::string> prey, mouthPrey, flee, morphPrey;
+    std::vector<std::string> prey, mouthPrey, flee, morphPrey, symbiontSource;
 };
 
 // Estado del registro en estáticos locales: otras unidades piden especies al inicializar sus
@@ -84,7 +84,7 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "bioluminescence", "stalk", "toxicysts", "histophagous", "release", "morph", "light_damage",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "bioluminescence", "photosymbiont", "stalk", "toxicysts", "histophagous", "release", "morph", "light_damage",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
@@ -97,6 +97,8 @@ constexpr std::pair<const char*, ResponseKind> kResponseKind[] = {
 constexpr std::pair<const char*, ResponseAction> kResponseAction[] = {
     {"avoid", ResponseAction::Avoid}, {"jump", ResponseAction::Jump}, {"contract", ResponseAction::Contract},
     {"flash", ResponseAction::Flash}};
+constexpr const char* kSymbiontKeys[] = {"kind",           "source",          "per_prey", "max", "initial",
+                                         "growth_per_hour", "decay_per_hour", "photosynthesis"};
 constexpr const char* kBiolumKeys[] = {"flash_s", "recharge_s", "circadian", "day_capacity", "color"};
 constexpr const char* kContractionKeys[] = {"extension", "extension_s"};
 constexpr const char* kToxicystKeys[] = {"reach", "paralysis_hours", "lethal"};
@@ -383,6 +385,28 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
             tr.errors.push_back(tr.where + ": 'reach' y 'paralysis_hours' tienen que ser positivos");
         r.errors.insert(r.errors.end(), tr.errors.begin(), tr.errors.end());
     }
+    if (const toml::table* st = r.table("photosymbiont")) {
+        toml_io::warnUnknown(*st, kSymbiontKeys, r.where + " [photosymbiont]", warnings);
+        Reader sr{*st, r.where + " [photosymbiont]", {}};
+        PhotosymbiontSpec& ps = s.photosymbiont;
+        ps.present = true;
+        std::string kind;
+        sr.text("kind", kind);
+        if (kind == "kleptoplasts")
+            ps.kleptoplasts = true;
+        else if (kind != "endosymbionts")
+            sr.errors.push_back(sr.where + ": 'kind' es \"endosymbionts\" o \"kleptoplasts\"");
+        sr.strings("source", e.symbiontSource);
+        sr.count("per_prey", ps.perPrey);
+        sr.count("max", ps.max);
+        sr.count("initial", ps.initial);
+        sr.count("growth_per_hour", ps.growthPerHour);
+        sr.count("decay_per_hour", ps.decayPerHour);
+        sr.count("photosynthesis", ps.photosynthesis);
+        if (ps.max <= 0.0f || ps.initial > ps.max)
+            sr.errors.push_back(sr.where + ": 'max' tiene que ser positivo y 'initial' no pasarlo");
+        r.errors.insert(r.errors.end(), sr.errors.begin(), sr.errors.end());
+    }
     if (const toml::table* bt = r.table("bioluminescence")) {
         toml_io::warnUnknown(*bt, kBiolumKeys, r.where + " [bioluminescence]", warnings);
         Reader br{*bt, r.where + " [bioluminescence]", {}};
@@ -587,6 +611,8 @@ void resolve() {
         e.info.prey = setOf(e, e.prey, "prey");
         e.info.mouthPrey = setOf(e, e.mouthPrey, "mouth_prey");
         e.info.flee = setOf(e, e.flee, "flees_from");
+        if (e.info.photosymbiont.present)
+            e.info.photosymbiont.source = setOf(e, e.symbiontSource, "photosymbiont.source");
         if (e.info.morph.preySet)
             e.info.morph.prey = setOf(e, e.morphPrey, "morph.prey");
     }

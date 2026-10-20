@@ -700,3 +700,45 @@ TEST_CASE("mecánicas: Lingulodinium destella al agitar el agua, y de noche much
     CHECK(night > 0.5f);
     CHECK(day < 0.1f * night);
 }
+
+TEST_CASE("mecánicas: Paramecium bursaria vive de sus Chlorella con luz; a oscuras las pierde") {
+    auto biomassAfter = [](float light, float& symbionts) {
+        WorldConfig config;
+        config.bacteria = 0;
+        config.detritus = 0;
+        config.seed = 7;
+        config.medium.surfaceLight = light;
+        World world(config);
+        world.bioTimeScale() = 3600.0f;
+        const entt::entity e = spawn(world, "paramecium_bursaria", center(world));
+        world.registry().get<Locomotion>(e).power = 0.0f;
+        const float before = world.registry().get<Metabolism>(e).biomass;
+        run(world, 24.0f); // un día biológico sin comida
+        if (!world.registry().valid(e))
+            return 0.0f;
+        symbionts = world.registry().get<Metabolism>(e).symbionts;
+        return world.registry().get<Metabolism>(e).biomass / before;
+    };
+    float lit = 0.0f, dark = 0.0f;
+    const float inLight = biomassAfter(1.0f, lit), inDark = biomassAfter(0.0f, dark);
+    CHECK(inLight > inDark);
+    CHECK(lit > dark);
+    CHECK(dark < speciesInfo(*findSpecies("paramecium_bursaria")).photosymbiont.initial);
+}
+
+TEST_CASE("mecánicas: los cleptoplastos de Mesodinium se gastan y se reponen comiendo criptofitas") {
+    const SpeciesInfo& meso = speciesInfo(*findSpecies("mesodinium"));
+    MetabolismParams p;
+    Metabolism m;
+    m.biomass = 1.0f;
+    m.symbionts = meso.photosymbiont.max;
+    float sugar = 0.0f;
+    for (int h = 0; h < 24 * 14; ++h)
+        sugar += stepPhotosymbionts(meso, p, m, 1.0f, 3600.0f);
+    CHECK(sugar > 0.0f);
+    CHECK(m.symbionts < 0.5f * meso.photosymbiont.max); // dos semanas después
+    const float before = m.symbionts;
+    CHECK(acquireSymbionts(meso, *findSpecies("cryptomonas"), m));
+    CHECK(m.symbionts > before);
+    CHECK_FALSE(acquireSymbionts(meso, *findSpecies("chlorella"), m)); // de otra presa no los toma
+}

@@ -1816,3 +1816,7 @@ Salpingoeca	Salpingoeca
 Coanoflagelado de ~6 um: un flagelo rodeado por un collar de microvellosidades que filtra bacterias. Pariente unicelular de los animales.	Choanoflagellate of ~6 um: one flagellum surrounded by a collar of microvilli that filters bacteria. A unicellular relative of animals.
 Lingulodinium	Lingulodinium
 Dinoflagelado marino de ~45 um que emite un destello azul cuando el agua se agita, sobre todo de noche: su reloj interno regula cuanto brilla.	Marine dinoflagellate of ~45 um that gives off a blue flash when the water is stirred, mostly at night: its internal clock sets how bright it glows.
+Paramecium bursaria	Paramecium bursaria
+Paramecio verde lleno de algas Chlorella que viven adentro y le pasan azucar con la luz: con luz puede crecer casi sin comer.	Green paramecium full of Chlorella algae that live inside it and pass it sugar in the light: in light it can grow almost without eating.
+Mesodinium rubrum	Mesodinium rubrum
+Ciliado rojo de ~30 um que roba los cloroplastos de las criptofitas que come y fotosintetiza con ellos unas semanas. Se mueve a saltos.	Red ciliate of ~30 um that steals the chloroplasts of the cryptophytes it eats and photosynthesises with them for a few weeks. It moves in jumps.

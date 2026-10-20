@@ -87,6 +87,31 @@ const char* applyEnvironmentStress(const SpeciesInfo& info, const CellSurroundin
     return nullptr;
 }
 
+float stepPhotosymbionts(const SpeciesInfo& host, const MetabolismParams& p, Metabolism& m, float light, float bioDt) {
+    const PhotosymbiontSpec& ps = host.photosymbiont;
+    if (!ps.present || m.symbionts <= 0.0f)
+        return 0.0f;
+    const float hours = bioDt / 3600.0f;
+    const float l = std::clamp(light, 0.0f, 1.0f);
+    if (ps.kleptoplasts) {
+        m.symbionts *= std::exp(-ps.decayPerHour * hours); // los cloroplastos robados se gastan
+    } else {
+        // Las algas se dividen con luz dentro del huésped (que regula su número) y se pierden a oscuras.
+        const float growth = ps.growthPerHour * l * (1.0f - m.symbionts / ps.max) - ps.decayPerHour * (1.0f - l);
+        m.symbionts = std::clamp(m.symbionts * std::exp(growth * hours), 0.0f, ps.max);
+    }
+    // Azúcar (maltosa en P. bursaria) proporcional a la carga y a la luz, como la fotosíntesis de un alga.
+    return p.photosynthesisPerHour * ps.photosynthesis * (m.symbionts / ps.max) * l * m.biomass * hours;
+}
+
+bool acquireSymbionts(const SpeciesInfo& host, SpeciesId prey, Metabolism& m) {
+    const PhotosymbiontSpec& ps = host.photosymbiont;
+    if (!ps.present || !ps.source.test(static_cast<std::size_t>(prey)) || m.symbionts >= ps.max)
+        return false;
+    m.symbionts = std::min(ps.max, m.symbionts + ps.perPrey);
+    return true;
+}
+
 float loricaIronDemand(const SpeciesInfo& info, const Metabolism& m, float bioDt) {
     if (info.loricaIronRatio <= 0.0f || info.loricaHours <= 0.0f)
         return 0.0f;

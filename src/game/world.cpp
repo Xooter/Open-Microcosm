@@ -1546,6 +1546,7 @@ entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& 
         m.nitrogen = endow(nitrogen_, Element::N, center, metabolismParams_.nitrogenRatio * m.biomass);
     }
     seedMicronutrients(registry_.get<Metabolism>(e), info, center);
+    registry_.get<Metabolism>(e).symbionts = info.photosymbiont.initial; // la silvestre ya los trae
     Rng rng(config_.seed, rng_stream::kOrganelles, body.id, step_);
     refillOrganelles(body, bodies_, genome, rng);
     if (info.animalCell.present) {
@@ -1695,6 +1696,7 @@ int World::placeSampled(const std::vector<SampledCell>& cells) {
             m.ageHours = s.meta.ageHours;
             m.pigment = s.meta.pigment;
             m.loricaIron = s.meta.loricaIron;
+            m.symbionts = s.meta.symbionts;
             m.pendingFissions = s.meta.pendingFissions;
             registry_.get<Lineage>(e).generation = s.generation;
             if (info.speedScale > 0.0f)
@@ -2898,6 +2900,12 @@ void World::updateLifecycle(float dt) {
         const float siliconBefore = meta.silicon, ironBefore = meta.iron, vitaminBefore = meta.vitamin;
         const MetabolicOutput out = updateMetabolism(meta, mp, in);
         updateStressPigment(info, in.light, meta.limiting, cyst != nullptr, bioDt, meta);
+        // Fotosimbiontes: el azúcar que pasan al huésped; su O₂ sale y su CO₂ entra a la tasa real.
+        if (const float sugar = stepPhotosymbionts(info, mp, meta, in.light, bioDt); sugar > 0.0f) {
+            meta.reserves += sugar;
+            exchangeO2(body.centroid, 6.0f * sugar / bioTimeScale_);
+            exchangeCO2(body.centroid, -6.0f * sugar / bioTimeScale_);
+        }
         // Lórica de Trachelomonas: el hierro precipita del agua sobre ella.
         if (const float want = loricaIronDemand(info, meta, bioDt); want > 0.0f)
             meta.loricaIron -= exchange(iron_, body.centroid, -want, Flow::Uptake);
@@ -4079,6 +4087,10 @@ bool World::isDamaged(entt::entity e) const {
 
 void World::swallow(entt::entity predator, entt::entity preyEntity) {
     PROFILE_SCOPE("World::swallow");
+    // Paramecium bursaria y Mesodinium retienen las algas o los cloroplastos de la presa (igual se digiere
+    // el resto de la célula).
+    if (const Species* ps = registry_.try_get<Species>(preyEntity); ps && registry_.all_of<Metabolism>(predator))
+        acquireSymbionts(cellInfo(registry_, predator), ps->id, registry_.get<Metabolism>(predator));
     smallPreyCenter_.clear();
     {
         const RingBody& pb = registry_.get<RingBody>(predator);

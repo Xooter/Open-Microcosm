@@ -16,7 +16,7 @@ lichens = 3 # los líquenes crecen sobre el musgo
 physarum = 3 # hojarasca y musgo húmedo
 patchiness = 0.4
 base_weight = 0.0
-weights = { paramecium = 0.3, euglena = 0.5, amoeba = 1.0, chlamydomonas = 0.4, vorticella = 1.0, euplotes = 1.0, arcella = 3.0, navicula = 0.5, candida = 1.0, naegleria = 3.0, zygnema = 0.5, pinnularia = 1.0, colpoda = 3.0, euglypha = 2.0, lingulodinium = 0.0 }
+weights = { paramecium = 0.3, euglena = 0.5, amoeba = 1.0, chlamydomonas = 0.4, vorticella = 1.0, euplotes = 1.0, arcella = 3.0, navicula = 0.5, candida = 1.0, naegleria = 3.0, zygnema = 0.5, pinnularia = 1.0, colpoda = 3.0, euglypha = 2.0, lingulodinium = 0.0, mesodinium = 0.0 }
 [biome.medium]
 temperature = 12.0
 light = 0.4

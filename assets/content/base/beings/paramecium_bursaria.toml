@@ -1,0 +1,60 @@
+# Paramecium bursaria: paramecio verde de 80–150 µm (~110 × 50 µm), con cientos de Chlorella endosimbiontes
+# (~300–700 por célula) en vacuolas perialgales. Las algas se dividen adentro con luz y le pasan maltosa:
+# con luz las verdes crecen aun sin comida; a oscuras pierden algas y vuelven a depender de las bacterias.
+# En la división las algas se reparten entre las hijas; las que se quedan sin algas las recuperan comiendo
+# Chlorella libres (Karakashian 1963, Physiol. Zool. 36: 52; Kodama & Fujishima 2010). Se acumula donde
+# hay luz. Carga máxima, tasas y fracción de la fotosíntesis que le pasa: estimadas.
+[[being]]
+id = "paramecium_bursaria"
+name = "Paramecium bursaria"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Paramecio verde lleno de algas Chlorella que viven adentro y le pasan azucar con la luz: con luz puede crecer casi sin comer."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "oral_groove"
+mouth_prey = ["chlorella"]
+flees_from = ["didinium", "lacrymaria"]
+conjugation = true
+chemokinesis = true
+initial_count = 6
+cyclosis = 4.0
+ph = [6.0, 9.5]
+temperature = [5.0, 32.0]
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 55.0
+semi_minor_axis = 25.0
+shape_memory = 8.0
+color = [150, 186, 120]
+nucleus = 0.3
+
+[being.photosymbiont]
+kind = "endosymbionts"
+source = ["chlorella"]
+per_prey = 1.0
+max = 500.0
+initial = 400.0
+growth_per_hour = 0.03
+decay_per_hour = 0.01
+photosynthesis = 0.8
+
+# Con algas sigue la luz (fototaxis de las verdes; Iwatsuki & Naitoh 1982): acá, con la reacción de
+# evitación al oscurecerse.
+[[being.response]]
+field = "light"
+kind = "step_down"
+threshold = 0.3
+min_level = 0.2
+memory = 2.0
+refractory = 3.0
+action = "avoid"
+
+[physiology.paramecium_bursaria.max_growth]
+# Sin medición en estas condiciones: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día,
+# T en °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 55, 25 y 25 µm: 143990 µm³).
+value = 0.91
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 143990 µm³). No es una medición de la especie."
+estimate = true

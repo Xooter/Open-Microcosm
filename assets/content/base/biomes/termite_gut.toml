@@ -15,7 +15,7 @@ lichens = 0
 physarum = 0
 patchiness = 0.8
 base_weight = 0.0
-weights = { candida = 0.5, trichonympha = 1.0, lingulodinium = 0.0 }
+weights = { candida = 0.5, trichonympha = 1.0, lingulodinium = 0.0, mesodinium = 0.0 }
 [biome.medium]
 temperature = 28.0
 light = 0.0

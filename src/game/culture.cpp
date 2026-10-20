@@ -354,6 +354,7 @@ int Culture::inoculate(SpeciesId id, int count) {
         // El inóculo trae su cuota de nutrientes de su cultivo de origen: entrada externa.
         c.meta.needsSilicon = info.frustule;
         c.meta.needsVitamin = info.vitaminB12;
+        c.meta.symbionts = info.photosymbiont.initial;
         if (c.meta.photosynthetic) {
             c.meta.phosphorus = p.phosphorusRatio * c.meta.biomass;
             c.meta.nitrogen = p.nitrogenRatio * c.meta.biomass;
@@ -865,6 +866,7 @@ void Culture::feed(float dt, float bioDt) {
         }
         const float area = units::kPi * radius(q) * radius(q);
         ingestContents(p.digestion, area, static_cast<float>(cellContent(q)), true, phosphorus, 1.0f, nitrogen);
+        acquireSymbionts(info, q.species, p.meta);
         ++p.digestion.cellsEaten;
         p.digestion.handling = info.handlingHours * 3600.0f;
         releaseEaten(q);
@@ -934,6 +936,11 @@ void Culture::stepCells(float dt, float bioDt) {
         const float siBefore = c.meta.silicon, feBefore = c.meta.iron, b12Before = c.meta.vitamin;
         const MetabolicOutput out = updateMetabolism(c.meta, mp, in);
         updateStressPigment(info, in.light, c.meta.limiting, c.cyst, bioDt, c.meta);
+        if (const float sugar = stepPhotosymbionts(info, mp, c.meta, in.light, bioDt); sugar > 0.0f) {
+            c.meta.reserves += sugar;
+            exchange(Solute::Oxygen, 6.0 * sugar, Flow::Other); // como la fotosíntesis de las algas
+            exchange(Solute::CO2, -6.0 * sugar, Flow::Other);
+        }
         if (const float want = loricaIronDemand(info, c.meta, bioDt); want > 0.0f)
             c.meta.loricaIron -= static_cast<float>(exchange(Solute::Iron, -want, Flow::Uptake));
         if (out.phosphateTaken > 0.0f)

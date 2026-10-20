@@ -1,0 +1,61 @@
+# Mesodinium rubrum: ciliado de 20–50 µm (~32 µm) de aguas marinas y salobres, que forma mareas rojas.
+# Caza criptofitas y retiene sus cloroplastos (y su núcleo) unas semanas: fotosintetiza con ellos, pero
+# como no los puede reemplazar, se gastan y tiene que volver a comer (Johnson, Oldach, Delwiche & Stoecker
+# 2007, Nature 445: 426). Nada a saltos muy rápidos con sus cirros (Fenchel & Hansen 2006, Mar. Biol. Res.
+# 2: 33). Vida media de los cleptoplastos, carga, velocidad de los saltos: órdenes de magnitud, a verificar.
+# Acá come Cryptomonas (en la realidad, criptofitas marinas como Teleaulax).
+[[being]]
+id = "mesodinium"
+name = "Mesodinium rubrum"
+tags = ["protist", "ciliate", "marine"]
+description = "Ciliado rojo de ~30 um que roba los cloroplastos de las criptofitas que come y fotosintetiza con ellos unas semanas. Se mueve a saltos."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "raptorial"
+prey = ["cryptomonas"]
+relative_speed = 0.1
+initial_count = 4
+handling_hours = 1.0
+cyclosis = 1.0
+ph = [7.0, 9.5]
+temperature = [2.0, 25.0]
+max_salinity = 40.0
+storage = "starch"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 16.0
+semi_minor_axis = 13.0
+shape_memory = 8.0
+color = [214, 168, 150]
+nucleus = 0.3
+
+[being.jump]
+speed = 5000.0
+duration = 0.03
+interval = 4.0
+
+[[being.response]]
+field = "shear"
+kind = "above"
+threshold = 2.0
+action = "jump"
+refractory = 0.5
+
+[being.photosymbiont]
+kind = "kleptoplasts"
+source = ["cryptomonas"]
+per_prey = 4.0
+max = 20.0
+initial = 12.0
+decay_per_hour = 0.003
+photosynthesis = 1.0
+
+[physiology.mesodinium.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 16, 13 y 13 µm: 11326 µm³).
+value = 1.81
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 11326 µm³). No es una medición de la especie."
+estimate = true

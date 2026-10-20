@@ -195,6 +195,23 @@ struct ToxicystSpec {
     bool lethal = true;          // al terminar la parálisis, la presa muere (lisis)
 };
 
+// Fotosimbiontes dentro de un heterótrofo: endosimbiontes (las Chlorella de Paramecium bursaria, que se
+// dividen con luz dentro del huésped y le pasan azúcar; Karakashian 1963) o cleptoplastos (los
+// cloroplastos que Mesodinium rubrum roba a las criptofitas y usa unas semanas; Johnson et al. 2007). Se
+// adquieren al comer presas de `source` y se reparten en la división. La cantidad vive en
+// Metabolism::symbionts (en unidades de la especie: algas o cloroplastos).
+struct PhotosymbiontSpec {
+    bool present = false;
+    bool kleptoplasts = false;   // no se dividen adentro: solo decaen
+    SpeciesSet source;           // resuelta como `prey`
+    float perPrey = 1.0f;        // lo que aporta cada presa comida
+    float max = 1.0f;
+    float initial = 0.0f;        // con lo que nace la silvestre
+    float growthPerHour = 0.0f;  // endosimbiontes: con luz, logística hasta `max`
+    float decayPerHour = 0.0f;   // cleptoplastos: siempre; endosimbiontes: en oscuridad
+    float photosynthesis = 1.0f; // con la carga completa, respecto de un alga de su biomasa
+};
+
 // Bioluminiscencia (Lingulodinium, Noctiluca): la deformación del agua abre canales en los
 // centelleones y la luciferina emite un destello de ~0,1 s (respuesta con `action = "flash"`); la
 // capacidad se recarga en minutos y la regula un reloj circadiano: de noche (subjetiva) brilla decenas
@@ -326,6 +343,7 @@ struct SpeciesInfo {
     JumpSpec jump;                      // [being.jump]
     ContractionSpec contraction;        // [being.contraction]
     BioluminescenceSpec bioluminescence; // [being.bioluminescence]
+    PhotosymbiontSpec photosymbiont;     // [being.photosymbiont]
     ToxicystSpec toxicysts;             // [being.toxicysts]
     ReleaseSpec release;                // [being.release]
     MorphSpec morph;                    // [being.morph]

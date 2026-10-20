@@ -116,6 +116,11 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
 - `feeding = "axopodia"` (heliozoos: `tentacle_reach` es el largo de los axopodios, y `mouth_width`, lo
   que puede envolver) y `feeding = "perforation"` (Vampyrella: `tentacle_reach` desde su centro y
   `perforation_hours` en abrir la pared antes de vaciarla).
+- `[being.photosymbiont]`: algas endosimbiontes o cleptoplastos. `kind` (`endosymbionts` |
+  `kleptoplasts`), `source` (presas de las que los toma), `per_prey`, `max`, `initial` (con lo que
+  nace la silvestre), `growth_per_hour` (las algas con luz), `decay_per_hour` (los cleptoplastos
+  siempre; las algas a oscuras) y `photosynthesis` (azúcar que pasan con la carga completa, respecto
+  de un alga de la biomasa del huésped). Se reparten en la división.
 - `[being.light_damage]`: daño fotodinámico. Arriba de `threshold` (irradiancia relativa) se paga
   como estrés, `stress` con la lámpara al máximo; necesita O₂.
 - `[being.stress_pigment]`: pigmento de estrés (astaxantina). `rate_per_hour` con luz arriba de

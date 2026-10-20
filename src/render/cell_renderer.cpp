@@ -1138,6 +1138,30 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             }
             if (level < DetailLevel::Normal)
                 return;
+            // Fotosimbiontes: las Chlorella de P. bursaria (verdes) o los cloroplastos robados de Mesodinium,
+            // con el color del cloroplasto de su especie fuente; tantos puntos como la carga.
+            if (const Metabolism* sm = reg.try_get<Metabolism>(e); sm && sm->symbionts > 0.0f && species) {
+                const PhotosymbiontSpec& ps = speciesInfo(species->id).photosymbiont;
+                Color dot = kChloroplast;
+                for (int k = 0; k < speciesCount(); ++k)
+                    if (ps.source.test(static_cast<std::size_t>(k))) {
+                        const SpeciesInfo& src = speciesInfo(static_cast<SpeciesId>(k));
+                        if (src.plastidColorSet)
+                            dot = {src.plastidColor[0], src.plastidColor[1], src.plastidColor[2], kChloroplast.a};
+                        break;
+                    }
+                const Frame f = frameOf(body);
+                const int dots = std::clamp(static_cast<int>(40.0f * sm->symbionts / std::max(1e-3f, ps.max)), 1, 40);
+                const float rd = std::max(0.8f, 0.07f * f.width);
+                for (int k = 0; k < dots; ++k) {
+                    // Posición fija por célula y punto (hash), dentro del 75 % del cuerpo.
+                    const std::uint32_t hsh = (body.id * 2654435761u) ^ (static_cast<std::uint32_t>(k) * 40503u);
+                    const float a = 6.2831853f * static_cast<float>(hsh & 0xFFFF) / 65536.0f;
+                    const float rr = 0.75f * std::sqrt(static_cast<float>((hsh >> 16) & 0xFFFF) / 65536.0f);
+                    const Vec2 p = f.c + f.h * (rr * f.half * std::cos(a)) + f.side * (rr * f.width * std::sin(a));
+                    fastCircleV(toRay(p), rd, dot);
+                }
+            }
 
             const SpeciesId sid = species ? species->id : SpeciesId::Paramecium;
             const CellStyle style = styleOf(sid);

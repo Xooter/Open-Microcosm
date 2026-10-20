@@ -15,7 +15,7 @@ lichens = 1
 physarum = 1  # el moho de la hojarasca húmeda
 patchiness = 0.6
 base_weight = 1.0
-weights = { mougeotia = 0.5, zygnema = 0.5, oedogonium = 0.5, phaeodactylum = 0.0, thalassiosira = 0.0, fragilariopsis = 0.0, polarella = 0.0, lingulodinium = 0.0 }
+weights = { mougeotia = 0.5, zygnema = 0.5, oedogonium = 0.5, phaeodactylum = 0.0, thalassiosira = 0.0, fragilariopsis = 0.0, polarella = 0.0, lingulodinium = 0.0, mesodinium = 0.0 }
 [biome.medium]
 temperature = 22.0
 organic_inflow = 300.0 # hojas y barro: una infusión natural

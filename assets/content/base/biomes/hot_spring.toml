@@ -16,7 +16,7 @@ lichens = 0
 physarum = 0
 patchiness = 0.2
 base_weight = 0.0
-weights = { candida = 0.5, naegleria = 4.0, lingulodinium = 0.0 }
+weights = { candida = 0.5, naegleria = 4.0, lingulodinium = 0.0, mesodinium = 0.0 }
 [biome.medium]
 temperature = 42.0
 alkalinity = 3000.0

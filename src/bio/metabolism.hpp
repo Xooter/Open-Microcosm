@@ -87,6 +87,7 @@ struct Metabolism {
     float ageHours = 0.0f;
     float pigment = 0.0f;      // pigmento de estrés (astaxantina) [0, 1] del máximo
     float loricaIron = 0.0f;   // [pmol Fe] precipitado en la lórica (Trachelomonas): fuera de la cuota
+    float symbionts = 0.0f;    // fotosimbiontes (algas o cleptoplastos, en unidades de la especie)
     bool photosynthetic = false;
     // Estado del último paso (para el HUD).
     bool starving = false;
