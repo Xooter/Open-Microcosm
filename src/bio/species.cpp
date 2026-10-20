@@ -100,7 +100,10 @@ constexpr std::pair<const char*, ResponseAction> kResponseAction[] = {
 constexpr const char* kSymbiontKeys[] = {"kind",           "source",          "per_prey", "max", "initial",
                                          "growth_per_hour", "decay_per_hour", "photosynthesis"};
 constexpr const char* kBiolumKeys[] = {"flash_s", "recharge_s", "circadian", "day_capacity", "color"};
-constexpr const char* kContractionKeys[] = {"extension", "extension_s"};
+constexpr const char* kContractionKeys[] = {"extension",  "extension_s",        "profile",
+                                           "foot_width", "swimming_extension", "spontaneous_per_min"};
+constexpr std::pair<const char*, ContractionProfile> kContractionProfile[] = {{"uniform", ContractionProfile::Uniform},
+                                                                              {"trumpet", ContractionProfile::Trumpet}};
 constexpr const char* kToxicystKeys[] = {"reach", "paralysis_hours", "lethal"};
 constexpr const char* kReleaseKeys[] = {"signal", "rate", "diffusion", "half_life_hours", "bio_time"};
 constexpr const char* kRelayKeys[] = {"threshold", "pulse", "refractory_minutes", "pacemaker_fraction",
@@ -487,8 +490,16 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         Reader cr{*ct, r.where + " [contraction]", {}};
         cr.count("extension", s.contraction.extension);
         cr.count("extension_s", s.contraction.extensionSeconds);
+        cr.choice("profile", kContractionProfile, s.contraction.profile, false);
+        cr.count("foot_width", s.contraction.footWidth);
+        cr.count("swimming_extension", s.contraction.swimmingExtension);
+        cr.count("spontaneous_per_min", s.contraction.spontaneousPerMinute);
         if (s.contraction.extension < 1.0f || s.contraction.extensionSeconds <= 0.0f)
             cr.errors.push_back(cr.where + ": 'extension' tiene que ser al menos 1 y 'extension_s' positivo");
+        if (s.contraction.footWidth <= 0.0f || s.contraction.footWidth > 1.0f || s.contraction.swimmingExtension < 0.0f ||
+            s.contraction.swimmingExtension > 1.0f || s.contraction.spontaneousPerMinute < 0.0f)
+            cr.errors.push_back(cr.where + ": 'foot_width' va de 0 a 1, 'swimming_extension' de 0 a 1 y "
+                                           "'spontaneous_per_min' no es negativo");
         r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
     }
     // Tallo: las claves viejas (sessile, stalk_length, spasmoneme) dan un tallo con los valores por

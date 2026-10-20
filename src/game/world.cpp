@@ -2999,7 +2999,7 @@ void World::updateLifecycle(float dt) {
         // Tamaño: biomasa + lo que hay en las vacuolas. Los organelos crecen con la célula.
         // Con cuernos o brazos, el área de la silueta es la del cuerpo por su factor de área.
         float target = cellAreaForMass(meta.biomass / cellMassScale(info)) * info.outlineAreaFactor *
-                           (her ? her->traits.volume : 1.0f) * morphAreaScale(e) +
+                           (her ? her->traits.volume : 1.0f) * morphAreaScale(e) * contractionAreaScale(e) +
                        (dig ? vacuoleContentArea(*dig) : 0.0f);
         if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e)) // redondeada en mitosis y apoptosis
             target = animalTargetArea(e, *ac, target);
@@ -3449,6 +3449,8 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
     registry_.emplace<CellAnatomy>(child, anB);
     registry_.emplace<Metabolism>(child, childMeta);
     registry_.emplace<Digestion>(child, std::move(childDig));
+    if (hasSpecies && speciesInfo(species.id).contraction.extension > 1.0f)
+        registry_.emplace<Contraction>(child); // nace contraída y se extiende de a poco
     if (motile) {
         childLoco.forward = childLoco.turn = childLoco.speed = 0.0f;
         childLoco.active = false;

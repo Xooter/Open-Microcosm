@@ -1051,6 +1051,43 @@ void drawStalks(const entt::registry& reg, float px, Rectangle view) {
     }
 }
 
+// Pie (Stentor): sin tallo; el extremo posterior, fino, se pega al vidrio con una secreción adhesiva y
+// unos seudópodos cortos que se abren sobre el sustrato (Tartar 1961). Una mancha hialina y los
+// seudópodos, fijos por célula (hash del id), sin azar.
+void drawFeet(const World& world, float px, Rectangle view) {
+    const entt::registry& reg = world.registry();
+    const BodyParticles& bp = world.bodies();
+    for (const auto [e, anchor, body] : reg.view<Anchored, RingBody>().each()) {
+        if (reg.valid(anchor.rod) || body.ring.empty())
+            continue;
+        const Species* sp = reg.try_get<Species>(e);
+        if (!sp || speciesInfo(sp->id).stalk.kind != StalkKind::Foot)
+            continue;
+        const std::uint32_t s = body.ring[World::poleIndex(body, false)];
+        const Vec2 pole = {bp.x[s], bp.y[s]};
+        if (pole.x + 30.0f < view.x || pole.x - 30.0f > view.x + view.width || pole.y + 30.0f < view.y ||
+            pole.y - 30.0f > view.y + view.height)
+            continue;
+        const Vec2 back = bodyHeading(body) * -1.0f;
+        if (px > 3.0f) { // de lejos, un punto
+            fastCircleV(toRay(pole + back * 2.0f), 1.5f * px, kStalkEdge);
+            continue;
+        }
+        const float pad = 6.0f;
+        fastCircleV(toRay(pole + back * 2.0f), pad, kStalkFill);
+        drawRingFast(toRay(pole + back * 2.0f), pad - std::max(0.3f, 0.8f * px), pad, 28, Fade(kStalkEdge, 0.5f), px);
+        for (int k = 0; k < 6; ++k) {
+            const std::uint32_t h = (body.id * 2654435761u) ^ (static_cast<std::uint32_t>(k) * 40503u);
+            const float spread = (static_cast<float>(k) - 2.5f) * 0.42f + 0.15f * (static_cast<float>(h & 0xFF) / 255.0f - 0.5f);
+            const float len = 6.0f + 8.0f * static_cast<float>((h >> 8) & 0xFF) / 255.0f;
+            const Vec2 dir = rotate(back, std::cos(spread), std::sin(spread));
+            const Vec2 mid = pole + dir * (0.5f * len) + Vec2{-dir.y, dir.x} * (0.8f * std::sin(static_cast<float>(h >> 16)));
+            fastLine(toRay(pole), toRay(mid), std::max(0.5f * px, 0.9f), kStalkEdge);
+            fastLine(toRay(mid), toRay(pole + dir * len), std::max(0.5f * px, 0.6f), Fade(kStalkEdge, 0.7f));
+        }
+    }
+}
+
 } // namespace
 
 void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Rectangle view) {
@@ -1076,6 +1113,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
     }
     setActiveBatch(&batch_); // membranas, gránulos y apéndices: una sola llamada (ver TriangleBatch)
     drawStalks(reg, px, view);
+    drawFeet(world, px, view);
 
     for (const auto [e, body, anatomy] : reg.view<RingBody, CellAnatomy>().each()) {
         const Locomotion* loco = reg.try_get<Locomotion>(e);

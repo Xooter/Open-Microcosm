@@ -88,9 +88,12 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
 - `[being.bioluminescence]`: destello ante una respuesta `flash`. `flash_s` [s], `recharge_s` [s],
   `circadian` (reloj de 24 h biológicas: de día brilla `day_capacity` de lo de noche) y `color`.
 - `[being.contraction]`: contracción del cuerpo entero (mionemas). La forma de `[being.shape]` es la
-  contraída; extendida mide `extension` veces su largo (con el área de la biomasa) y vuelve a
-  extenderse en `extension_s` [s]. La dispara una respuesta `contract`; el remolino de la contracción
-  entra en el agua y lo sienten las vecinas.
+  contraída; extendida mide `extension` veces su largo y vuelve a extenderse en `extension_s` [s].
+  `profile`: `uniform` (la contraída estirada, con el área de la silueta) | `trumpet` (disco oral,
+  cono y pedúnculo fino terminado en el pie; el ancho de la boca conserva el volumen de la contraída,
+  y `foot_width` es el ancho del pie sobre el de la boca). `swimming_extension` (0–1): cuánto se
+  extiende mientras nada suelta. `spontaneous_per_min`: contracciones sin estímulo. La dispara una
+  respuesta `contract`; el remolino de la contracción entra en el agua y lo sienten las vecinas.
 - `[being.jump]`: saltos. `speed` [µm/s], `duration` [s], `interval` [s] medio entre saltos
   espontáneos (0: solo de escape, con una respuesta `jump` o una amenaza a menos de 40 µm).
 - `[being.stalk]`: pie o tallo de un ser fijo (lo hace sésil). `kind`: `spasmoneme` (se enrolla) |

@@ -2,9 +2,12 @@
 # contraída de ~200 µm. Se fija por el pie; su corriente oral trae bacterias y algas chicas.
 # Contracción: al tocarla, ante una corriente brusca o un aumento brusco de luz (la stentorina es su
 # fotorreceptor; Song 1981), los mionemas la acortan entera en milisegundos y se re-extiende en unos
-# segundos (Newman 1972, J. Cell Biol. 52: 115; habituación: Wood 1970, Dexter et al. 2019). Extendida
-# llega a ~1 mm en forma de trompeta: acá, una elipse afinada de ~2 veces el largo contraído (la vista
-# conserva el área, así que no se ensancha en la boca). Tiempo de re-extensión y umbrales estimados.
+# segundos (Newman 1972, J. Cell Biol. 52: 115; habituación: Wood 1970, Dexter et al. 2019).
+# Contraída es una pera casi esférica; fija y extendida, una trompeta: el disco oral ancho con la banda
+# de membranelas, el cuerpo cónico y el extremo posterior fino como un pedúnculo (es la misma célula)
+# que termina en el pie. Suelta, nada en forma de pera (Tartar 1961, The Biology of Stentor). El ancho
+# de la boca sale de conservar el volumen. Largo extendido, ancho del pie, tiempo de re-extensión,
+# contracciones espontáneas y umbrales: estimados, a verificar en Tartar 1961 y Wood 1970.
 
 [[being]]
 id = "stentor"
@@ -27,18 +30,22 @@ wall = "none"
 genome = { trichocysts = 0.0 }
 [being.shape]
 semi_major_axis = 100.0
-semi_minor_axis = 55.0
+semi_minor_axis = 80.0
 shape_memory = 6.0
 color = [120, 150, 200]
 nucleus = 0.32
-taper = 0.8
+taper = 0.5
 
 [being.appearance]
 style = "membranelle_crown"
 
 [being.contraction]
-extension = 2.0
+extension = 3.0
 extension_s = 15.0
+profile = "trumpet"
+foot_width = 0.1
+swimming_extension = 0.3
+spontaneous_per_min = 0.2
 
 [[being.response]]
 field = "touch"

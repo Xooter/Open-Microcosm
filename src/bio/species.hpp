@@ -153,10 +153,20 @@ struct JumpSpec {
 // Contracción del cuerpo entero (Stentor): los mionemas, disparados por Ca²⁺, acortan la
 // célula en milisegundos y se re-extiende en segundos (Newman 1972; Mathijssen et al. 2019). La forma
 // de la especie es la contraída; extendida mide `extension` veces su largo (la vista conserva el área).
-// La dispara una respuesta con `action = "contract"`.
+// La dispara una respuesta con `action = "contract"` o, cada tanto, sola (`spontaneousPerMinute`).
+// Forma extendida (`profile`):
+//  - uniforme: la contraída estirada a lo largo, con el ancho en proporción inversa;
+//  - trompeta (Stentor): disco oral ancho, cuerpo cónico y el extremo posterior fino como un pedúnculo
+//    de la misma célula, que termina en el pie. El ancho de la boca sale de conservar el volumen de la
+//    contraída (el citoplasma es incompresible): la silueta no conserva el área.
+enum class ContractionProfile : std::uint8_t { Uniform, Trumpet };
 struct ContractionSpec {
     float extension = 1.0f;      // largo extendido / largo contraído (1: no se contrae)
     float extensionSeconds = 10.0f; // [s] para volver a extenderse
+    ContractionProfile profile = ContractionProfile::Uniform;
+    float footWidth = 0.1f;      // trompeta: ancho del pie / el de la boca
+    float swimmingExtension = 1.0f; // extensión (0–1) mientras nada suelta, sin pie fijo
+    float spontaneousPerMinute = 0.0f; // contracciones sin estímulo
 };
 
 // Señal química que libera la célula (M3): una kairomona del depredador (Lembadion), lo que suelta la
@@ -541,6 +551,10 @@ struct Luminescence {
 struct Contraction {
     float state = 1.0f;
     float stretch = 1.0f; // largo de la forma de reposo actual / el de la contraída
+    float areaScale = 1.0f; // área de la silueta actual / la de la contraída (el blanco de área)
+    // Formas de reposo contraída y extendida, punto a punto (la misma membrana: no "rueda"). Se rehacen
+    // cuando el anillo cambia de tamaño (división).
+    std::vector<Vec2> contracted, extended;
 };
 
 // Componente: paralizada por toxicistos (M6): no nada, no huye ni dispara tricocistos.

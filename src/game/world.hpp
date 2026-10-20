@@ -605,6 +605,7 @@ class World {
     void updateContraction(entt::entity e, RingBody& body, bool trigger, float dt);
     void applyContractionKicks();
     void contractForDivision(entt::entity e, RingBody& body);
+    float contractionAreaScale(entt::entity e) const; // área de la silueta / la contraída
     void setupSignals(const WorldConfig& config);
     void updateSignals(float dt);
     void updateMorphs(float dt);
