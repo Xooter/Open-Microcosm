@@ -1441,6 +1441,7 @@ void World::applyTraits(entt::entity e) {
     loco.helixPeriod = info.helixPeriod;
     loco.gliding = info.flagellarGliding;
     loco.pusher = info.flagellumPosterior;
+    loco.testate = info.testate != 0;
     if (const RingBody* rb = registry_.try_get<RingBody>(e)) // fase propia, estable por célula
         loco.phase = 6.2831853f * static_cast<float>((rb->id * 2654435761u) >> 8 & 0xFFFF) / 65536.0f;
     registry_.get<Digestion>(e).rateScale = h.traits.digestion;
@@ -1528,7 +1529,7 @@ entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& 
         loco.mouthRing = static_cast<std::uint32_t>(body.ring.size() / 2);
     if (!info.outline.empty())
         placeMouth(body, loco, info);
-    if (info.locomotion == LocomotionType::Pseudopod)
+    if (info.locomotion == LocomotionType::Pseudopod && info.testate == 0) // la testa es rígida
         soft_body::makePlastic(body, bodies_, 1.0f);
     Metabolism meta;
     meta.biomass = meta.birthBiomass =
@@ -2090,7 +2091,7 @@ void World::applyMotion(float dt) {
             pullTogether(body, registry_.get<RingBody>(cj->partner));
         }
         applyLocomotion(body, bodies_, loco, locomotionParams_, simTime_, width_, height_);
-        if (loco.type == LocomotionType::Pseudopod ||
+        if ((loco.type == LocomotionType::Pseudopod && !loco.testate) || // la testa rígida no arma copas
             (loco.type == LocomotionType::Crawl && cellInfo(registry_, e).feeding == FeedingMode::Phagocytosis)) {
             const bool hadCup = registry_.all_of<PhagocyticCup>(e);
             updateCup(e, body, dt);

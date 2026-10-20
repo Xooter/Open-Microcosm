@@ -105,6 +105,14 @@ void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
         if (length(to) < 1.0f)
             return;
         const Vec2 u = normalized(to);
+        if (loco.testate) {
+            // Tecameba: los seudópodos se adhieren adelante de la abertura y tiran; la testa rígida se
+            // traslada entera y gira hasta dejar la abertura (el polo anterior) hacia donde va.
+            loco.speed = 0.5f * p.pseudopodSpeed * loco.power;
+            linear = u * loco.speed;
+            omega = std::clamp(std::atan2(cross(h, u), dot(h, u)), -0.5f, 0.5f);
+            break;
+        }
         // Frente: la membrana orientada hacia el objetivo protruye; cola: se contrae.
         for (std::size_t i = 0; i < body.ring.size(); ++i) {
             const Vec2 o = outwardNormal(body, bp, i);

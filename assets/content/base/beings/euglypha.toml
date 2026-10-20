@@ -8,6 +8,7 @@ name = "Euglypha"
 tags = ["protist", "amoeboid", "testate_amoeba"]
 description = "Ameba con una testa ovalada (~70 um) de escamas de silice con espinas. Asoma seudopodos finos por la abertura. Vive en el musgo."
 locomotion = "pseudopod"
+testate = "filose"
 body_plan = "amoeba"
 feeding = "phagocytosis"
 relative_speed = 0.4
@@ -24,7 +25,8 @@ genome = { armor = 0.9 }
 [being.shape]
 semi_major_axis = 36.0
 semi_minor_axis = 24.0
-shape_memory = 0.0
+# La testa de placas de sílice es rígida.
+shape_memory = 30.0
 color = [200, 198, 186]
 nucleus = 0.25
 

@@ -83,7 +83,7 @@ constexpr const char* kBeingKeys[] = {
     "encysts", "conjugation", "initial_count", "sessile", "stalk_length", "spasmoneme", "walks", "tentacle_reach",
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
-    "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "sliding_colony", "cyclosis", "ph",
+    "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "sliding_colony", "testate", "cyclosis", "ph",
     "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "morph", "light_damage",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
@@ -221,6 +221,12 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
     r.count("lorica_iron_ratio", s.loricaIronRatio);
     r.count("lorica_hours", s.loricaHours);
     r.count("perforation_hours", s.perforationHours);
+    if (const toml::node* tn = t.get("testate")) {
+        const std::string kind = tn->value<std::string>().value_or("");
+        s.testate = kind == "lobose" ? 1 : kind == "filose" ? 2 : 0;
+        if (s.testate == 0)
+            r.errors.push_back(r.where + ": 'testate' es \"lobose\" o \"filose\"");
+    }
     if (const toml::table* sc = r.table("sliding_colony")) {
         constexpr const char* kKeys[] = {"max_cells", "amplitude", "period_s"};
         toml_io::warnUnknown(*sc, kKeys, r.where + " [sliding_colony]", warnings);

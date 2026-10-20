@@ -1,5 +1,7 @@
 # Arcella vulgaris: ameba con testa (caparazón orgánico pardo de ~100 µm). Pseudópodos
-# lentos por la abertura; come bacterias y algas; la testa la protege de las amebas.
+# lentos por la abertura; come bacterias y algas; la testa la protege de las amebas. La testa es rígida:
+# solo el citoplasma que sale por la abertura forma seudópodos lobosos, que la arrastran (Kreutz). Se
+# reproduce sacando la hija por la abertura, que arma su testa (como una gemación). Velocidad estimada.
 
 [[being]]
 id = "arcella"
@@ -7,6 +9,8 @@ name = "Arcella"
 tags = ["protist", "amoeboid", "testate_amoeba"]
 description = "Ameba que vive dentro de una testa parda en forma de cupula; asoma seudopodos por la abertura."
 locomotion = "pseudopod"
+testate = "lobose"
+budding = true
 body_plan = "amoeba"
 feeding = "phagocytosis"
 relative_speed = 0.5
@@ -21,6 +25,7 @@ genome = { armor = 0.9 }
 [being.shape]
 semi_major_axis = 50.0
 semi_minor_axis = 50.0
-shape_memory = 0.0
+# La testa de proteína (con hierro y manganeso) es rígida.
+shape_memory = 30.0
 color = [196, 170, 120]
 nucleus = 0.25

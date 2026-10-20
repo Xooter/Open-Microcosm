@@ -819,3 +819,22 @@ TEST_CASE("mecánicas: la colonia de Bacillaria se estira y se cierra como una r
     }
     CHECK(hi - lo > 40.0f);
 }
+
+TEST_CASE("mecánicas: la testa de Arcella no se deforma; avanza arrastrada por los seudópodos de la abertura") {
+    World world = emptyWorld();
+    const entt::entity e = spawn(world, "arcella", center(world));
+    CHECK(world.registry().get<RingBody>(e).membraneReservoirRate <= 0.0f); // no es plástica
+    const Vec2 start = world.registry().get<RingBody>(e).centroid;
+    run(world, 30.0f);
+    const RingBody& b = world.registry().get<RingBody>(e);
+    CHECK(length(b.centroid - start) > 10.0f);
+    // Sigue casi redonda: el radio de cada punto de la membrana no se aparta más de un 15 % del medio.
+    float mean = 0.0f;
+    for (std::uint32_t s : b.ring)
+        mean += length(Vec2{world.bodies().x[s], world.bodies().y[s]} - b.centroid);
+    mean /= static_cast<float>(b.ring.size());
+    float worst = 0.0f;
+    for (std::uint32_t s : b.ring)
+        worst = std::max(worst, std::abs(length(Vec2{world.bodies().x[s], world.bodies().y[s]} - b.centroid) - mean));
+    CHECK(worst < 0.15f * mean);
+}

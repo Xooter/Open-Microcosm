@@ -369,6 +369,9 @@ struct SpeciesInfo {
     // par se desliza a lo largo del eje con la misma oscilación: la colonia se estira y se cierra como una
     // regla de carpintero (Kapinga & Gordon 1992). Amplitud relativa al largo y período [s].
     int slidingColonyMax = 0;          // células por colonia (0: no forma)
+    // Tecameba (Arcella, Euglypha): el cuerpo blando es la testa, rígida; solo el citoplasma que sale por
+    // la abertura forma seudópodos, lobosos (dedos) o filosos (finos). 0: no; 1: lobosos; 2: filosos.
+    std::uint8_t testate = 0;
     float slidingAmplitude = 0.8f;     // fracción del largo
     float slidingPeriod = 80.0f;       // [s]          // come células dañadas (paralizadas, atrapadas, moribundas)
     StalkSpec stalk;                    // [being.stalk] (o las claves viejas sessile/stalk_length/spasmoneme)

@@ -1138,6 +1138,36 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             }
             if (level < DetailLevel::Normal)
                 return;
+            // Tecameba: los seudópodos salen por la abertura (polo anterior) hacia donde va: lobosos (dedos
+            // de citoplasma hialino, Arcella) o filosos (finos y ramificados, Euglypha).
+            if (species && speciesInfo(species->id).testate != 0 && loco) {
+                const Frame f = frameOf(body);
+                const Vec2 aperture = f.c + f.h * f.half;
+                const bool moving = loco->active && loco->speed > 0.0f;
+                const bool lobose = speciesInfo(species->id).testate == 1;
+                const int fingers = lobose ? 3 : 6;
+                for (int k = 0; k < fingers; ++k) {
+                    const float spread = (static_cast<float>(k) - 0.5f * (fingers - 1)) * (lobose ? 0.35f : 0.25f);
+                    const float wave = 0.15f * std::sin(0.8f * time + 1.7f * static_cast<float>(k) + 0.3f * static_cast<float>(body.id % 7u));
+                    const float a = spread + wave;
+                    const Vec2 d = rotate(f.h, std::cos(a), std::sin(a));
+                    const float len = (moving ? 0.9f : 0.45f) * f.half * (lobose ? 1.0f : 1.6f) *
+                                      (0.75f + 0.25f * std::sin(0.5f * time + static_cast<float>(k)));
+                    if (lobose) {
+                        constexpr int kBeads = 6;
+                        for (int b = 0; b <= kBeads; ++b) {
+                            const float t = static_cast<float>(b) / kBeads;
+                            fastCircleV(toRay(aperture + d * (t * len)), (0.22f - 0.08f * t) * f.width,
+                                        Color{226, 222, 206, 170});
+                        }
+                    } else {
+                        fastLine(toRay(aperture), toRay(aperture + d * len), std::max(0.4f, 0.5f * px), kMembrane);
+                        const Vec2 fork = aperture + d * (0.6f * len);
+                        fastLine(toRay(fork), toRay(fork + rotate(d, std::cos(0.5f), std::sin(0.5f)) * (0.3f * len)),
+                                 std::max(0.3f, 0.4f * px), kMembrane);
+                    }
+                }
+            }
             // Fotosimbiontes: las Chlorella de P. bursaria (verdes) o los cloroplastos robados de Mesodinium,
             // con el color del cloroplasto de su especie fuente; tantos puntos como la carga.
             if (const Metabolism* sm = reg.try_get<Metabolism>(e); sm && sm->symbionts > 0.0f && species) {
