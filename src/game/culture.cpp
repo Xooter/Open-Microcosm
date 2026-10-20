@@ -195,7 +195,7 @@ void Culture::washOut(const CultureCell& c) {
         carbon += v.contentPmol;
     }
     const std::pair<Element, double> out[] = {{Element::P, p}, {Element::N, n}, {Element::Si, c.meta.silicon},
-                                              {Element::Fe, c.meta.iron}, {Element::C, kCarbonPerPmol * carbon}};
+                                              {Element::Fe, cellIron(c.meta)}, {Element::C, kCarbonPerPmol * carbon}};
     for (const auto& [e, pmol] : out) {
         ledger_.add(e, Flow::Washout, -pmol);
         ledger_.addExternal(e, -pmol);
@@ -360,7 +360,7 @@ int Culture::inoculate(SpeciesId id, int count) {
             c.meta.iron = p.ironRatio * c.meta.biomass;
             recordExternal(Solute::Phosphate, c.meta.phosphorus, Flow::Spawn);
             recordExternal(Solute::Nitrogen, c.meta.nitrogen, Flow::Spawn);
-            recordExternal(Solute::Iron, c.meta.iron, Flow::Spawn);
+            recordExternal(Solute::Iron, cellIron(c.meta), Flow::Spawn);
         }
         if (c.meta.needsSilicon) {
             c.meta.silicon = p.siliconRatio * c.meta.biomass;
@@ -406,7 +406,7 @@ void Culture::receive(std::vector<CultureCell> cells, std::uint64_t bacteria, do
         recordExternal(Solute::Phosphate, p, Flow::Spawn);
         recordExternal(Solute::Nitrogen, n, Flow::Spawn);
         recordExternal(Solute::Silicate, c.meta.silicon, Flow::Spawn);
-        recordExternal(Solute::Iron, c.meta.iron, Flow::Spawn);
+        recordExternal(Solute::Iron, cellIron(c.meta), Flow::Spawn);
         cells_.push_back(std::move(c));
     }
     inoculateBacteria(bacteria);
@@ -455,7 +455,7 @@ MassBudget Culture::massBudget() const {
         add(Element::P, Pool::Cells, c.meta.phosphorus);
         add(Element::N, Pool::Cells, c.meta.nitrogen);
         add(Element::Si, Pool::Cells, c.meta.silicon);
-        add(Element::Fe, Pool::Cells, c.meta.iron);
+        add(Element::Fe, Pool::Cells, cellIron(c.meta));
         add(Element::C, Pool::Cells, kCarbonPerPmol * (c.meta.biomass + c.meta.reserves));
         for (const FoodVacuole& v : c.digestion.vacuoles) {
             add(Element::P, Pool::Vacuoles, v.phosphorus);
@@ -880,8 +880,8 @@ void Culture::feed(float dt, float bioDt) {
 void Culture::releaseEaten(const CultureCell& prey) {
     // Simplificación (como en la placa, World::releaseMicronutrients): el hierro y la B₁₂ vuelven
     // disueltos de inmediato; la sílice de una diatomea comida se disuelve en el agua.
-    if (prey.meta.iron > 0.0f)
-        exchange(Solute::Iron, prey.meta.iron, Flow::Death);
+    if (cellIron(prey.meta) > 0.0f)
+        exchange(Solute::Iron, cellIron(prey.meta), Flow::Death);
     if (prey.meta.vitamin > 0.0f)
         exchange(Solute::Vitamin, prey.meta.vitamin, Flow::Death);
     if (prey.meta.silicon > 0.0f)
@@ -934,6 +934,8 @@ void Culture::stepCells(float dt, float bioDt) {
         const float siBefore = c.meta.silicon, feBefore = c.meta.iron, b12Before = c.meta.vitamin;
         const MetabolicOutput out = updateMetabolism(c.meta, mp, in);
         updateStressPigment(info, in.light, c.meta.limiting, c.cyst, bioDt, c.meta);
+        if (const float want = loricaIronDemand(info, c.meta, bioDt); want > 0.0f)
+            c.meta.loricaIron -= static_cast<float>(exchange(Solute::Iron, -want, Flow::Uptake));
         if (out.phosphateTaken > 0.0f)
             c.meta.phosphorus = pBefore - static_cast<float>(exchange(Solute::Phosphate, -out.phosphateTaken, Flow::Uptake));
         if (out.nitrogenTaken > 0.0f)
@@ -1037,8 +1039,8 @@ void Culture::lyse(std::size_t index, const char* cause) {
         exchange(Solute::Phosphate, phosphorus, Flow::Death);
     if (nitrogen > 0.0)
         exchange(Solute::Nitrogen, nitrogen, Flow::Death);
-    if (c.meta.iron > 0.0f)
-        exchange(Solute::Iron, c.meta.iron, Flow::Death);
+    if (cellIron(c.meta) > 0.0f)
+        exchange(Solute::Iron, cellIron(c.meta), Flow::Death);
     if (c.meta.vitamin > 0.0f)
         exchange(Solute::Vitamin, c.meta.vitamin, Flow::Death);
     frustules_ += c.meta.silicon; // el Si queda en la frústula vacía

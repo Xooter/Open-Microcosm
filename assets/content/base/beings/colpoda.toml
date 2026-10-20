@@ -1,6 +1,7 @@
 # Colpoda cucullus: ciliado arriñonado de 40–120 µm (usualmente 60–80; Kreutz), el típico de las
 # infusiones de heno y del musgo mojado: se enquista cuando se seca y se divide dentro de un quiste
-# reproductivo en 2–4 hijas (acá se divide libre). Casi nunca se conjuga. Ancho estimado (~65 % del
+# reproductivo en 2–4 hijas: deja de nadar y de comer, secreta una pared fina y se divide dos veces adentro
+# (Kreutz; Foissner 1993). Casi nunca se conjuga. Ancho estimado (~65 % del
 # largo, "anchamente reniforme").
 [[being]]
 id = "colpoda"
@@ -12,6 +13,8 @@ body_plan = "ciliate"
 feeding = "oral_groove"
 relative_speed = 0.7
 encysts = true
+fissions_per_cycle = 2
+divides_in_cyst = true
 initial_count = 8
 cyclosis = 2.0
 ph = [5.0, 9.5]

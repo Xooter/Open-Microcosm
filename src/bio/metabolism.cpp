@@ -144,6 +144,7 @@ Metabolism splitMetabolism(Metabolism& meta, float fA) {
     childMeta.silicon = meta.silicon * (1.0f - fA);
     childMeta.iron = meta.iron * (1.0f - fA);
     childMeta.vitamin = meta.vitamin * (1.0f - fA);
+    childMeta.loricaIron = 0.0f; // la hija sale por el poro y arma su lórica; la madre se queda la suya
     meta.biomass *= fA;
     meta.reserves *= fA;
     meta.phosphorus *= fA;

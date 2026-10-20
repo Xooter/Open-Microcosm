@@ -83,6 +83,8 @@ enum class FeedingMode : std::uint8_t {
     Tentacles,    // tentáculos que atrapan y succionan ciliados (suctorios)
     NeckStrike,   // dispara un "neck" extensible hacia la presa (Lacrymaria)
     Osmotroph,    // absorbe materia orgánica disuelta por la pared (levaduras)
+    Axopodia,     // heliozoos: los axopodios atrapan al contacto, se acortan y la traen al cuerpo, que la traga
+    Perforation,  // Vampyrella: perfora la pared de un alga y le vacía el protoplasto
     None,         // autótrofa estricta (Chlamydomonas)
 };
 
@@ -310,7 +312,15 @@ struct SpeciesInfo {
     ToxicystSpec toxicysts;             // [being.toxicysts]
     ReleaseSpec release;                // [being.release]
     MorphSpec morph;                    // [being.morph]
-    bool histophagous = false;          // come células dañadas (paralizadas, atrapadas, moribundas)
+    bool histophagous = false;
+    // Se divide dentro de un quiste reproductivo (Colpoda): mientras dura el ciclo de divisiones no nada
+    // ni come, encerrada en una pared fina, y salen 2^fissions hijas.
+    bool dividesInCyst = false;
+    // Lórica que se mineraliza con hierro del agua (Trachelomonas): pmol Fe por pmol de biomasa al
+    // completarse, y el tiempo en que precipita (0: no tiene).
+    float loricaIronRatio = 0.0f;
+    float loricaHours = 24.0f;
+    float perforationHours = 0.5f; // Vampyrella: en abrir el agujero en la pared [h biológicas]          // come células dañadas (paralizadas, atrapadas, moribundas)
     StalkSpec stalk;                    // [being.stalk] (o las claves viejas sessile/stalk_length/spasmoneme)
     LightDamageSpec lightDamage;        // [being.light_damage]
     StressPigmentSpec stressPigment;    // [being.stress_pigment]
@@ -419,9 +429,13 @@ struct Zoospore {
     float hoursLeft; // [h biológicas] hasta fijarse
 };
 
-// Componente: presa atrapada por los tentáculos de un suctorio, que le succiona el citoplasma.
+// Componente: presa sujeta por un depredador: los tentáculos de un suctorio (le succiona el
+// citoplasma), los axopodios de un heliozoo (la arrastran hasta el cuerpo, que la traga entera) o una
+// Vampyrella que le perfora la pared (después de `delayHours`, le vacía el protoplasto).
 struct Captured {
     entt::entity by;
+    float delayHours = 0.0f; // [h biológicas] hasta empezar a drenarla (la perforación de la pared)
+    bool drain = true;       // false: no la drena, la trae para tragarla (axopodios)
 };
 
 // Componente: cuello extensible de Lacrymaria.

@@ -532,3 +532,96 @@ TEST_CASE("mecánicas: Tetrahymena vorax pasa a macrostoma junto a Tetrahymena y
     CHECK(world.feedingOf(v) == FeedingMode::Raptorial);
     CHECK(world.preyOf(v).test(static_cast<std::size_t>(*findSpecies("tetrahymena"))));
 }
+
+TEST_CASE("mecánicas: Colpoda se divide en cuatro dentro de su quiste reproductivo, quieta y sin comer") {
+    World world = emptyWorld();
+    const entt::entity e = spawn(world, "colpoda", center(world));
+    REQUIRE(world.forceReproduction(e));
+    run(world, 0.5f);
+    CHECK(world.inDivisionCyst(e));
+    int count = 0;
+    for (int s = 0; s < 60 * 240 && count < 4; ++s) {
+        world.step(kDt);
+        count = 0;
+        for (auto [c, sp] : world.registry().view<Species>().each())
+            count += sp.id == *findSpecies("colpoda") ? 1 : 0;
+    }
+    CHECK(count == 4);
+}
+
+TEST_CASE("mecánicas: la lórica de Trachelomonas toma hierro del agua y la hija nace con la suya vacía") {
+    World world = emptyWorld();
+    world.bioTimeScale() = 3600.0f;
+    const entt::entity e = spawn(world, "trachelomonas", center(world));
+    const double before = world.totalIron();
+    run(world, 30.0f); // ~30 h biológicas
+    const Metabolism& m = world.registry().get<Metabolism>(e);
+    CHECK(m.loricaIron > 0.5f * speciesInfo(*findSpecies("trachelomonas")).loricaIronRatio * m.biomass);
+    CHECK(world.totalIron() == doctest::Approx(before).epsilon(1e-3)); // se conserva
+    Metabolism mother = m;
+    const Metabolism child = splitMetabolism(mother, 0.5f);
+    CHECK(child.loricaIron == doctest::Approx(0.0f));
+    CHECK(mother.loricaIron == doctest::Approx(m.loricaIron));
+}
+
+TEST_CASE("mecánicas: los axopodios de Actinophrys atrapan un flagelado y lo traen al cuerpo para tragarlo") {
+    World world = emptyWorld();
+    const Vec2 c = center(world);
+    spawn(world, "actinophrys", c);
+    const entt::entity p = spawn(world, "chlamydomonas", c + Vec2{55.0f, 0.0f});
+    world.registry().get<Locomotion>(p).power = 0.0f;
+    bool caught = false, eaten = false;
+    for (int s = 0; s < 60 * 30 && !eaten; ++s) {
+        world.step(kDt);
+        eaten = !world.registry().valid(p);
+        caught = caught || eaten || world.registry().all_of<Captured>(p);
+    }
+    CHECK(caught);
+    CHECK(eaten);
+}
+
+TEST_CASE("mecánicas: Vampyrella perfora una célula de Spirogyra y después le vacía el protoplasto") {
+    World world = emptyWorld();
+    world.bioTimeScale() = 3600.0f;
+    const Vec2 c = center(world);
+    const auto sid = *findSpecies("spirogyra");
+    const entt::entity alga = world.spawnOrganism(sid, c, speciesGenome(sid), 0);
+    const float before = world.registry().get<Metabolism>(alga).biomass;
+    spawn(world, "vampyrella", c + Vec2{0.0f, 35.0f});
+    bool perforating = false;
+    for (int s = 0; s < 30 && !perforating; ++s) {
+        world.step(kDt);
+        if (const Captured* cap = world.registry().try_get<Captured>(alga))
+            perforating = cap->delayHours > 0.0f;
+    }
+    CHECK(perforating);
+    run(world, 2.0f); // ~2 h biológicas
+    CHECK((!world.registry().valid(alga) || world.registry().get<Metabolism>(alga).biomass < 0.7f * before));
+}
+
+TEST_CASE("mecánicas: sin fósforo, Anabaena/Dolichospermum forma acinetos junto a los heterocistos y germinan al volver") {
+    WorldConfig config;
+    config.bacteria = 0;
+    config.detritus = 0;
+    config.seed = 5;
+    config.cyanoFilaments = 6;
+    config.oscillatoriaFilaments = 0;
+    config.medium.phosphate = 0.0f;
+    World world(config);
+    world.bioTimeScale() = 3600.0f;
+    auto akinetes = [&] {
+        int n = 0;
+        for (const CyanoFilament& f : world.cyanobacteria().filaments)
+            for (std::uint8_t type : f.heterocyst)
+                n += type == kAkinete ? 1 : 0;
+        return n;
+    };
+    run(world, 40.0f); // ~40 h biológicas sin P
+    const int formed = akinetes();
+    CHECK(formed > 0);
+    // Vuelve el fósforo: germinan.
+    world.medium().phosphate = 5.0f;
+    world.refreshMedium();
+    run(world, 120.0f);
+    CHECK(akinetes() < formed);
+}

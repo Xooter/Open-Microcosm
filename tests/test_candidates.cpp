@@ -119,3 +119,5 @@ TEST_CASE("candidatos: Lembadion se divide" * doctest::test_suite("largos")) { r
 TEST_CASE("candidatos: Euplotes octocarinatus se divide" * doctest::test_suite("largos")) { reproduces("euplotes_octocarinatus"); }
 TEST_CASE("candidatos: Tetrahymena vorax se divide" * doctest::test_suite("largos")) { reproduces("tetrahymena_vorax"); }
 TEST_CASE("candidatos: Ochromonas se divide" * doctest::test_suite("largos")) { reproduces("ochromonas"); }
+TEST_CASE("candidatos: Actinophrys se divide" * doctest::test_suite("largos")) { reproduces("actinophrys"); }
+TEST_CASE("candidatos: Vampyrella se divide" * doctest::test_suite("largos")) { reproduces("vampyrella"); }

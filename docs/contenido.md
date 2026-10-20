@@ -105,6 +105,13 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
 - `[being.morph]`: morfo inducido por una señal. `name`, `signal`, `threshold` [µM], `hours` (de la
   transición, en los dos sentidos), `width_scale`, `length_scale`, `area_scale` (área por la misma
   masa), y, completo el cambio, `feeding`, `prey` y `mouth_width` propios.
+- `divides_in_cyst`: se divide dentro de un quiste reproductivo (Colpoda): quieta, sin comer y con una
+  pared fina mientras dura el ciclo (con `fissions_per_cycle` da 2, 4… hijas).
+- `lorica_iron_ratio` [pmol Fe / pmol de biomasa] y `lorica_hours`: lórica que se mineraliza con hierro
+  del agua (Trachelomonas); la hija sale y arma una nueva.
+- `feeding = "axopodia"` (heliozoos: `tentacle_reach` es el largo de los axopodios, y `mouth_width`, lo
+  que puede envolver) y `feeding = "perforation"` (Vampyrella: `tentacle_reach` desde su centro y
+  `perforation_hours` en abrir la pared antes de vaciarla).
 - `[being.light_damage]`: daño fotodinámico. Arriba de `threshold` (irradiancia relativa) se paga
   como estrés, `stress` con la lámpara al máximo; necesita O₂.
 - `[being.stress_pigment]`: pigmento de estrés (astaxantina). `rate_per_hour` con luz arriba de

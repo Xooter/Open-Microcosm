@@ -1,0 +1,28 @@
+# Vampyrella lateritia: ameba anaranjada (carotenoides) de 30–50 µm con filopodios finos, especialista
+# de las algas zignematales. Se pega a una célula de Spirogyra o de Mougeotia, le disuelve un agujero
+# redondo en la pared y sorbe el protoplasto; después forma un quiste digestivo y se divide adentro en
+# 2–4 (Hess, Sausen & Melkonian 2012, PLoS ONE 7: e50411; Kreutz). Tiempo de la perforación estimado.
+# Sin µmax publicado: usa el general.
+[[being]]
+id = "vampyrella"
+name = "Vampyrella"
+tags = ["protist", "amoeba"]
+description = "Ameba anaranjada de ~40 um que se pega a las algas filamentosas, les abre un agujero en la pared y les sorbe el contenido."
+locomotion = "pseudopod"
+body_plan = "amoeba"
+feeding = "perforation"
+prey = ["spirogyra", "mougeotia", "zygnema"]
+tentacle_reach = 26.0
+perforation_hours = 0.5
+divides_in_cyst = true
+initial_count = 2
+ph = [5.5, 9.0]
+temperature = [5.0, 28.0]
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 20.0
+semi_minor_axis = 18.0
+shape_memory = 0.0
+color = [226, 158, 96]
+nucleus = 0.2

@@ -1802,3 +1802,11 @@ Ciliado que cambia de forma: come bacterias, pero si huele a otros ciliados se v
 Ochromonas	Ochromonas
 Flagelado dorado de ~10 um que fotosintetiza y ademas come bacterias y algas chicas: un mixotrofo.	Golden flagellate of ~10 um that photosynthesises and also eats bacteria and small algae: a mixotroph.
 forma inducida: %s (%.0f%%)	induced form: %s (%.0f%%)
+atrapa presas con los axopodios y las envuelve enteras	traps prey with its axopodia and engulfs them whole
+perfora la pared de un alga y le vacia el protoplasto	perforates an alga's wall and empties its protoplast
+Actinophrys	Actinophrys
+Heliozoo: una esfera espumosa de ~45 um erizada de axopodios finos y rigidos. Flota y lo que los toca queda pegado y es arrastrado hasta el cuerpo, que lo envuelve.	Heliozoan: a foamy sphere of ~45 um bristling with thin, stiff axopodia. It floats, and whatever touches them sticks and is drawn to the body, which engulfs it.
+Vampyrella	Vampyrella
+Ameba anaranjada de ~40 um que se pega a las algas filamentosas, les abre un agujero en la pared y les sorbe el contenido.	Orange amoeba of ~40 um that clings to filamentous algae, opens a hole in their wall and sucks out their contents.
+Acinetos	Akinetes
+%zu: celulas de resistencia (se forman sin fosforo y germinan cuando vuelve)	%zu: resting cells (formed without phosphorus, germinate when it returns)

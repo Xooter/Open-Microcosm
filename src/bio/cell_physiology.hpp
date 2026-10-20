@@ -30,6 +30,10 @@ void applySpeciesPhysiology(MetabolicInput& in, SpeciesId id, const SpeciesInfo&
 void updateStressPigment(const SpeciesInfo& info, float light, Limitation limiting, bool cyst, float bioDt,
                          Metabolism& m);
 
+// Hierro que la lórica quiere precipitar del agua en `bioDt` [pmol]: se acerca al de una lórica completa
+// (proporcional a la biomasa) en `loricaHours`.
+float loricaIronDemand(const SpeciesInfo& info, const Metabolism& m, float bioDt);
+
 // Metabolismo mínimo dentro de la pared del quiste.
 void applyCyst(MetabolicInput& in);
 

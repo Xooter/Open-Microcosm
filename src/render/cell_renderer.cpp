@@ -1091,8 +1091,8 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             level = static_cast<DetailLevel>(static_cast<int>(level) + 1);
         forEachImage(world, body, view, [&] {
             const std::size_t n = body.poly.size();
-            for (auto [pe, cap] : reg.view<Captured>().each()) { // tentáculo succionando a la presa
-                if (cap.by != e || !reg.valid(pe))
+            for (auto [pe, cap] : reg.view<Captured>().each()) { // tentáculo o axopodio con la presa
+                if (cap.by != e || !reg.valid(pe) || (species && speciesInfo(species->id).feeding == FeedingMode::Perforation))
                     continue;
                 const RingBody& prey = reg.get<RingBody>(pe);
                 const Vec2 pc = body.centroid + Vec2{minImage(prey.centroid.x - body.centroid.x, world.width()),
@@ -1132,6 +1132,13 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             if (loco && style == CellStyle::RostrumFlagella) {
                 drawCilia(bp, body, time, px, CiliaPattern::Rostrum, 2.4f); // miles de flagelos
                 drawCilia(bp, body, time, px, CiliaPattern::Rostrum, 1.5f);
+            } else if (const Metabolism* dm = reg.try_get<Metabolism>(e);
+                       species && speciesInfo(species->id).dividesInCyst && (dividing || (dm && dm->pendingFissions > 0))) {
+                // Quiste reproductivo (Colpoda): pared fina y esférica alrededor de la célula que se divide.
+                float r = 0.0f;
+                for (std::size_t i = 0; i < n; ++i)
+                    r = std::max(r, length(body.poly[i] - body.centroid));
+                drawRingFast(toRay(body.centroid), r + 2.0f, r + 2.0f + std::max(1.0f, 1.2f * px), 64, kCystWall, px);
             } else if (cyst) { // quiste: pared gruesa y sin apéndices
                 for (std::size_t i = 0; i < n; ++i)
                     fastLine(toRay(body.poly[i]), toRay(body.poly[(i + 1) % n]), std::max(2.5f, 3.0f * px), kCystWall);
@@ -1306,10 +1313,19 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 // Coraza: una capa externa gruesa (lórica o testa).
                 if (her->traits.armor > 0.05f) {
                     const float t = 1.0f + 4.0f * her->traits.armor;
+                    // Lórica que se mineraliza (Trachelomonas): hialina recién hecha, parda con el hierro.
+                    Color armor = kArmor;
+                    if (const Metabolism* am = reg.try_get<Metabolism>(e);
+                        am && species && speciesInfo(species->id).loricaIronRatio > 0.0f) {
+                        const float full = speciesInfo(species->id).loricaIronRatio * am->biomass;
+                        const float f = full > 0.0f ? std::clamp(am->loricaIron / full, 0.0f, 1.0f) : 0.0f;
+                        auto mix = [f](float a, float b) { return static_cast<unsigned char>(a + (b - a) * f); };
+                        armor = {mix(210, 120), mix(204, 70), mix(176, 28), mix(150, 225)};
+                    }
                     for (std::size_t i = 0; i < n; ++i) {
                         const Vec2 a = ringPos(bp, body, i) + outwardAt(bp, body, i) * (0.5f * t + 1.0f);
                         const Vec2 b = ringPos(bp, body, i + 1) + outwardAt(bp, body, i + 1) * (0.5f * t + 1.0f);
-                        fastLine(toRay(a), toRay(b), t, kArmor);
+                        fastLine(toRay(a), toRay(b), t, armor);
                     }
                 }
             }

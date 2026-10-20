@@ -1678,7 +1678,7 @@ int World::placeSampled(const std::vector<SampledCell>& cells) {
             const std::pair<Element, float> delta[] = {{Element::P, s.meta.phosphorus - m.phosphorus},
                                                        {Element::N, s.meta.nitrogen - m.nitrogen},
                                                        {Element::Si, s.meta.silicon - m.silicon},
-                                                       {Element::Fe, s.meta.iron - m.iron}};
+                                                       {Element::Fe, cellIron(s.meta) - cellIron(m)}};
             for (const auto& [el, pmol] : delta) {
                 ledger_.add(el, Flow::Spawn, pmol);
                 ledger_.addExternal(el, pmol);
@@ -1693,6 +1693,7 @@ int World::placeSampled(const std::vector<SampledCell>& cells) {
             m.vitamin = s.meta.vitamin;
             m.ageHours = s.meta.ageHours;
             m.pigment = s.meta.pigment;
+            m.loricaIron = s.meta.loricaIron;
             m.pendingFissions = s.meta.pendingFissions;
             registry_.get<Lineage>(e).generation = s.generation;
             if (info.speedScale > 0.0f)
@@ -2027,7 +2028,14 @@ void World::applyMotion(float dt) {
         } else if (!registry_.all_of<Anchored>(e)) {
             continue; // sin piloto ni tallo: nada que mover (las fijas inmóviles, como Gomphonema, siguen)
         }
-        if (registry_.all_of<Paralyzed>(e)) { // los toxicistos la dejaron sin cilios que batan
+        if (const FeedingMode fm = cellInfo(registry_, e).feeding; fm == FeedingMode::Perforation || fm == FeedingMode::Axopodia)
+            for (auto [pe, cap] : registry_.view<Captured>().each())
+                if (cap.by == e) { // pegada a su presa (Vampyrella perforando, el heliozoo trayéndola)
+                    loco.forward = loco.turn = 0.0f;
+                    loco.active = false;
+                    break;
+                }
+        if (registry_.all_of<Paralyzed>(e) || inDivisionCyst(e)) { // sin cilios que batan
             loco.forward = loco.turn = loco.burst = 0.0f;
             loco.active = false;
             contract = disturbed = false;
@@ -2174,14 +2182,14 @@ void World::updateFeeding(float dt) {
         if (registry_.all_of<Cyst>(e))
             continue;
         const FeedingMode mode = feedingOf(e);
-        if (mode == FeedingMode::None)
+        if (mode == FeedingMode::None || inDivisionCyst(e))
             continue;
         if (mode == FeedingMode::Raptorial) {
             hunt(e, body);
             continue;
         }
-        if (mode == FeedingMode::Tentacles) {
-            trapWithTentacles(e, body);
+        if (mode == FeedingMode::Tentacles || mode == FeedingMode::Axopodia || mode == FeedingMode::Perforation) {
+            trapWithTentacles(e, body, mode);
             continue;
         }
         if (mode == FeedingMode::NeckStrike) {
@@ -2555,8 +2563,8 @@ float World::releaseMicronutrients(entt::entity e, Vec2 at) {
     const Metabolism* m = registry_.try_get<Metabolism>(e);
     if (!m)
         return 0.0f;
-    if (m->iron > 0.0f)
-        exchange(iron_, at, m->iron, Flow::Death);
+    if (cellIron(*m) > 0.0f) // con el de la lórica (simplificación: se redisuelve)
+        exchange(iron_, at, cellIron(*m), Flow::Death);
     if (m->vitamin > 0.0f)
         exchange(vitamin_, at, m->vitamin);
     return m->silicon;
@@ -2609,7 +2617,7 @@ MassBudget World::massBudget() const {
         add(Element::P, Pool::Cells, m.phosphorus);
         add(Element::N, Pool::Cells, m.nitrogen);
         add(Element::Si, Pool::Cells, m.silicon);
-        add(Element::Fe, Pool::Cells, m.iron);
+        add(Element::Fe, Pool::Cells, cellIron(m));
         add(Element::C, Pool::Cells, kC * (m.biomass + m.reserves));
     }
     for (auto [e, d] : registry_.view<Digestion>().each())
@@ -2884,6 +2892,9 @@ void World::updateLifecycle(float dt) {
         const float siliconBefore = meta.silicon, ironBefore = meta.iron, vitaminBefore = meta.vitamin;
         const MetabolicOutput out = updateMetabolism(meta, mp, in);
         updateStressPigment(info, in.light, meta.limiting, cyst != nullptr, bioDt, meta);
+        // Lórica de Trachelomonas: el hierro precipita del agua sobre ella.
+        if (const float want = loricaIronDemand(info, meta, bioDt); want > 0.0f)
+            meta.loricaIron -= exchange(iron_, body.centroid, -want, Flow::Uptake);
         if (out.phosphateTaken > 0.0f) {
             // El fosfato sale del agua cercana; si no alcanza, la célula toma lo que hay.
             const float taken = -exchange(phosphate_, body.centroid, -out.phosphateTaken, Flow::Uptake);
@@ -2932,16 +2943,19 @@ void World::updateLifecycle(float dt) {
                 unparalyzed_.push_back(e);
             }
         }
-        if (const Captured* cap = registry_.try_get<Captured>(e)) {
+        if (Captured* cap = registry_.try_get<Captured>(e)) {
             if (!registry_.valid(cap->by) || !registry_.all_of<Metabolism>(cap->by)) {
                 released_.push_back(e);
-            } else {
+            } else if (cap->delayHours > 0.0f) {
+                cap->delayHours -= bioDt / 3600.0f; // todavía perforando la pared
+            } else if (cap->drain) {
                 const float f = 1.0f - std::exp(-bioDt / 3600.0f);
                 const float fromReserves = meta.reserves * f, fromBiomass = meta.biomass * f;
                 meta.reserves -= fromReserves;
                 meta.biomass -= fromBiomass;
                 registry_.get<Metabolism>(cap->by).reserves += fromReserves + fromBiomass;
-                deathCause = "succionada por un suctorio";
+                deathCause = cellInfo(registry_, cap->by).feeding == FeedingMode::Perforation ? "vaciada por Vampyrella"
+                                                                                               : "succionada por un suctorio";
             }
         }
         if (registry_.all_of<ChytridInfection>(e))
@@ -4019,6 +4033,13 @@ float World::preyWidth(entt::entity e, const RingBody& body) const {
     return k * std::min(2.0f * info.spec.radiusX / r, 2.0f * info.spec.radiusY * r);
 }
 
+bool World::inDivisionCyst(entt::entity e) const {
+    if (!cellInfo(registry_, e).dividesInCyst)
+        return false;
+    const Metabolism* m = registry_.try_get<Metabolism>(e);
+    return registry_.all_of<Dividing>(e) || (m && m->pendingFissions > 0);
+}
+
 bool World::isDamaged(entt::entity e) const {
     // Herida, atrapada o moribunda: paralizada, sujeta por un suctorio, apoptótica o con menos de 60 %
     // de la biomasa con que nació (la membrana deja salir citoplasma que atrae a los histófagos).
@@ -4173,14 +4194,27 @@ void World::applyAnchor(entt::entity e, RingBody& body, Anchored& anchor, float 
     bodies_.vy[tip] += dir.y * 3.0f;
 }
 
-void World::trapWithTentacles(entt::entity e, const RingBody& body) {
+void World::trapWithTentacles(entt::entity e, const RingBody& body, FeedingMode mode) {
     PROFILE_SCOPE("World::trapWithTentacles");
     // Suctorio: los tentáculos capitados se adhieren a un ciliado que pasa (descargan
-    // haptocistos) y lo sujetan mientras le succionan el citoplasma.
+    // haptocistos) y lo sujetan mientras le succionan el citoplasma. Heliozoo: los extrusomas de los
+    // axopodios la pegan, el axopodio se acorta y la presa llega al cuerpo, que la envuelve entera.
+    // Vampyrella: se pega a una célula del alga, le disuelve un agujero en la pared y la vacía.
     for (auto [pe, cap] : registry_.view<Captured>().each())
-        if (cap.by == e)
+        if (cap.by == e) {
+            if (mode == FeedingMode::Axopodia && registry_.all_of<RingBody>(pe)) {
+                const RingBody& prey = registry_.get<RingBody>(pe);
+                const Vec2 shift = imageShift(prey, body.centroid);
+                if (polygon::closestOnBoundary(body.poly.data(), static_cast<int>(body.poly.size()), prey.centroid + shift).dist2 <
+                        std::pow(0.5f * std::sqrt(std::abs(prey.restArea) / units::kPi) + 4.0f, 2.0f) &&
+                    std::none_of(swallows_.begin(), swallows_.end(), [&](const auto& sw) { return sw.second == pe; }))
+                    swallows_.push_back({e, pe}); // llegó al cuerpo: la envuelve
+            }
             return; // ya tiene una presa
+        }
     const SpeciesInfo& info = cellInfo(registry_, e);
+    if (mode != FeedingMode::Tentacles && isSatiated(e))
+        return;
     for (const RingBody* other : bodyList_) {
         const auto oe = static_cast<entt::entity>(other->id);
         const Species* os = registry_.try_get<Species>(oe);
@@ -4192,9 +4226,13 @@ void World::trapWithTentacles(entt::entity e, const RingBody& body) {
                              .dist2;
         if (d2 > info.tentacleReach * info.tentacleReach)
             continue;
+        if (mode == FeedingMode::Axopodia && !fitsMouth(e, body, oe, *other))
+            continue; // demasiado grande para envolverla
         if (!repelledByTrichocysts(e, oe)) {
-            registry_.emplace<Captured>(oe, Captured{e});
-            registry_.get<Digestion>(e).handling = info.handlingHours * 3600.0f;
+            registry_.emplace<Captured>(oe, Captured{e, mode == FeedingMode::Perforation ? info.perforationHours : 0.0f,
+                                                     mode != FeedingMode::Axopodia});
+            if (mode == FeedingMode::Tentacles)
+                registry_.get<Digestion>(e).handling = info.handlingHours * 3600.0f;
         }
         return;
     }

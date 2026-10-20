@@ -385,6 +385,8 @@ class World {
     bool isSatiated(entt::entity e) const;
     // Herida, atrapada o moribunda (lo que comen los histófagos).
     bool isDamaged(entt::entity e) const;
+    // Dividiéndose dentro de su quiste reproductivo (Colpoda).
+    bool inDivisionCyst(entt::entity e) const;
     // Señales (M3) y morfos inducidos (M4), game/world_signals.cpp.
     int signalIndex(std::string_view id) const;
     float signalAt(int index, Vec2 p) const;
@@ -591,7 +593,7 @@ class World {
     // Tallos (game/world_stalk.cpp): física de la varilla, crecimiento, contracción, tallo vacío.
     void stepStalks(float dt);
     void contractStalk(Anchored& anchor, float dt);
-    void trapWithTentacles(entt::entity e, const RingBody& body);
+    void trapWithTentacles(entt::entity e, const RingBody& body, FeedingMode mode);
     void strikeWithNeck(entt::entity e, const RingBody& body, float dt);
     // Contracción del cuerpo entero (game/world_contraction.cpp).
     void updateContraction(entt::entity e, RingBody& body, bool trigger, float dt);

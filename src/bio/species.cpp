@@ -63,7 +63,8 @@ constexpr std::pair<const char*, FeedingMode> kFeeding[] = {
     {"oral_groove", FeedingMode::OralGroove}, {"anterior_pole", FeedingMode::Anterior},
     {"phagocytosis", FeedingMode::Phagocytosis}, {"raptorial", FeedingMode::Raptorial},
     {"tentacles", FeedingMode::Tentacles},  {"neck", FeedingMode::NeckStrike},
-    {"osmotrophy", FeedingMode::Osmotroph},  {"none", FeedingMode::None}};
+    {"osmotrophy", FeedingMode::Osmotroph},  {"axopodia", FeedingMode::Axopodia},
+    {"perforation", FeedingMode::Perforation}, {"none", FeedingMode::None}};
 constexpr std::pair<const char*, Storage> kStorage[] = {{"none", Storage::None},
                                                         {"starch", Storage::Starch},
                                                         {"glycogen", Storage::Glycogen},
@@ -82,7 +83,7 @@ constexpr const char* kBeingKeys[] = {
     "encysts", "conjugation", "initial_count", "sessile", "stalk_length", "spasmoneme", "walks", "tentacle_reach",
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
-    "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "cyclosis", "ph",
+    "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "cyclosis", "ph",
     "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "stalk", "toxicysts", "histophagous", "release", "morph", "light_damage",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
@@ -204,6 +205,10 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
     r.flag("posterior_mouth", s.mouthAtRear);
     r.flag("histophagous", s.histophagous);
     r.count("mouth_width", s.mouthWidth);
+    r.flag("divides_in_cyst", s.dividesInCyst);
+    r.count("lorica_iron_ratio", s.loricaIronRatio);
+    r.count("lorica_hours", s.loricaHours);
+    r.count("perforation_hours", s.perforationHours);
     r.num("cyclosis", s.cyclosis);
     r.range("ph", s.phMin, s.phMax);
     r.range("temperature", s.tMin, s.tMax);

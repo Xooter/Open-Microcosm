@@ -1,0 +1,39 @@
+# Actinophrys sol: heliozoo de agua dulce, esfera de 40–50 µm de citoplasma espumoso con decenas de
+# axopodios rígidos (haces de microtúbulos) de ~1 µm de grosor y una o dos veces el diámetro de largo.
+# Flota. Los extrusomas de los axopodios pegan a los flagelados y ciliados que los tocan; el axopodio se
+# acorta y la presa llega al cuerpo, que la envuelve en una vacuola (Patterson & Hausmann 1981, Eur. J.
+# Cell Biol. 24: 67; Kreutz). Largo de los axopodios y boca (lo que puede envolver): estimados. Sin µmax
+# publicado: usa el general.
+[[being]]
+id = "actinophrys"
+name = "Actinophrys"
+tags = ["protist", "heliozoan"]
+description = "Heliozoo: una esfera espumosa de ~45 um erizada de axopodios finos y rigidos. Flota y lo que los toca queda pegado y es arrastrado hasta el cuerpo, que lo envuelve."
+locomotion = "none"
+body_plan = "amoeba"
+feeding = "axopodia"
+prey = ["chlamydomonas", "euglena", "cryptomonas", "tetrahymena", "colpidium", "halteria", "colpoda", "ochromonas"]
+tentacle_reach = 70.0
+mouth_width = 45.0
+initial_count = 2
+handling_hours = 1.0
+cyclosis = 0.5
+ph = [6.0, 9.5]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 22.0
+semi_minor_axis = 22.0
+shape_memory = 3.0
+color = [222, 222, 210]
+nucleus = 0.25
+
+# Axopodios: finos (menos que la resolución de la membrana), radiales.
+[[being.process]]
+kind = "spine"
+at = 0.0
+length = 48.0
+base_width = 1.5
+tip_width = 0.4
+count = 28

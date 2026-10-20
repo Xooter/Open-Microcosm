@@ -489,7 +489,10 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                 }
                 for (std::size_t k = 0; k < fil.x.size(); ++k) {
                     const Vector2 p = {fil.x[k] + fx + offX, fil.y[k] + fy + offY};
-                    if (fil.heterocyst[k]) {
+                    if (fil.heterocyst[k] == kAkinete) { // acineto: grande, granular, de pared gruesa
+                        drawCircleFast(p, 4.2f, {92, 112, 70, 235}, px);
+                        drawRingFast(p, 3.3f, 4.2f, 18, {70, 82, 50, 240}, px);
+                    } else if (fil.heterocyst[k] == kHeterocyst) {
                         drawCircleFast(p, 3.0f, {214, 222, 180, 230}, px);
                         drawRingFast(p, 2.4f, 3.0f, 16, {120, 140, 100, 230}, px);
                     } else {

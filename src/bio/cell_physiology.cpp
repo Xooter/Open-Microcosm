@@ -87,6 +87,13 @@ const char* applyEnvironmentStress(const SpeciesInfo& info, const CellSurroundin
     return nullptr;
 }
 
+float loricaIronDemand(const SpeciesInfo& info, const Metabolism& m, float bioDt) {
+    if (info.loricaIronRatio <= 0.0f || info.loricaHours <= 0.0f)
+        return 0.0f;
+    const float deficit = info.loricaIronRatio * m.biomass - m.loricaIron;
+    return deficit > 0.0f ? deficit * (1.0f - std::exp(-bioDt / (info.loricaHours * 3600.0f))) : 0.0f;
+}
+
 void updateStressPigment(const SpeciesInfo& info, float light, Limitation limiting, bool cyst, float bioDt,
                          Metabolism& m) {
     const StressPigmentSpec& sp = info.stressPigment;

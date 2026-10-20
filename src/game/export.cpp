@@ -152,6 +152,8 @@ const char* feedingName(FeedingMode f) {
     case FeedingMode::Tentacles: return "tentaculos (succion)";
     case FeedingMode::NeckStrike: return "cuello extensible";
     case FeedingMode::Osmotroph: return "osmotrofia";
+    case FeedingMode::Axopodia: return "axopodios";
+    case FeedingMode::Perforation: return "perforacion de la pared";
     case FeedingMode::None: return "autotrofa";
     }
     return "";

@@ -1,6 +1,9 @@
 # Trachelomonas hispida: euglenoide dentro de una lórica elipsoidal de 20–42 × 15–26 µm cubierta de
 # espinas cortas, parda o anaranjada por el hierro y el manganeso; 8–10 cloroplastos y un estigma grande
-# (Kreutz).
+# (Kreutz). La lórica la secreta la célula y se mineraliza con el hierro (y el manganeso, sin modelar) que
+# precipita del agua: recién hecha es hialina y se oscurece en un día o dos (Dunlap, Walne & Bentley 1983,
+# Protoplasma 117: 97). Al dividirse, la hija sale por el poro y arma una lórica nueva. Cantidad de hierro
+# (~20 veces la cuota celular) y tiempo: estimados.
 [[being]]
 id = "trachelomonas"
 name = "Trachelomonas"
@@ -17,6 +20,8 @@ temperature = [5.0, 32.0]
 storage = "paramylon"
 wall = "none"
 genome = { armor = 0.8 }
+lorica_iron_ratio = 0.002
+lorica_hours = 24.0
 [being.shape]
 semi_major_axis = 15.5
 semi_minor_axis = 10.5

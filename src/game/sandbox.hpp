@@ -94,7 +94,7 @@ inline BeingCategory categoryOf(Being b) {
         if (s.filament || s.glider || (s.colonyDaughters > 0 && s.chloroplasts) ||
             (s.feeding == FeedingMode::None && s.chloroplasts))
             return BeingCategory::Algae;
-        if (s.locomotion == LocomotionType::Pseudopod)
+        if (s.locomotion == LocomotionType::Pseudopod || s.feeding == FeedingMode::Axopodia) // y los heliozoos
             return BeingCategory::Amoebae;
         if (s.locomotion == LocomotionType::Flagellum)
             return BeingCategory::Flagellates;

@@ -86,6 +86,7 @@ struct Metabolism {
     int pendingFissions = 0;   // divisiones que faltan del ciclo actual
     float ageHours = 0.0f;
     float pigment = 0.0f;      // pigmento de estrés (astaxantina) [0, 1] del máximo
+    float loricaIron = 0.0f;   // [pmol Fe] precipitado en la lórica (Trachelomonas): fuera de la cuota
     bool photosynthetic = false;
     // Estado del último paso (para el HUD).
     bool starving = false;
@@ -93,6 +94,9 @@ struct Metabolism {
     float aerobic = 1.0f;
     float o2 = 0.0f, light = 0.0f;
 };
+
+// Todo el hierro de la célula: la cuota más el de su lórica (para el balance y al morir).
+inline float cellIron(const Metabolism& m) { return m.iron + m.loricaIron; }
 
 struct MetabolicInput {
     float o2;            // [µM] en la célula

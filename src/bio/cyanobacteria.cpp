@@ -151,7 +151,7 @@ void Cyanobacteria::grow(const Grid2D& light, const Grid2D& phosphate, const Gri
         float growing = 0.0f, mass = 0.0f;
         for (std::size_t k = 0; k < f.x.size(); ++k) {
             mass += f.mass[k];
-            if (!f.heterocyst[k])
+            if (f.heterocyst[k] == kVegetativeCell)
                 growing += f.mass[k] * std::clamp(light.sample(f.x[k], f.y[k]), 0.0f, 1.0f);
         }
         const std::size_t mid = f.x.size() / 2;
@@ -186,13 +186,14 @@ void Cyanobacteria::credit(const std::vector<float>& takenP, const std::vector<f
         std::size_t vegetative = 0, heterocysts = 0;
         for (std::size_t k = 0; k < f.x.size(); ++k) {
             mass += f.mass[k];
-            (f.heterocyst[k] ? heterocysts : vegetative) += 1;
+            heterocysts += f.heterocyst[k] == kHeterocyst ? 1 : 0;
+            vegetative += f.heterocyst[k] == kVegetativeCell ? 1 : 0;
         }
         // Fijación de N₂ en los heterocistos; una parte se filtra al agua como amonio.
         if (heterocysts > 0) {
             const std::size_t h = [&] {
                 for (std::size_t k = 0; k < f.x.size(); ++k)
-                    if (f.heterocyst[k])
+                    if (f.heterocyst[k] == kHeterocyst)
                         return k;
                 return std::size_t{0};
             }();
@@ -202,6 +203,24 @@ void Cyanobacteria::credit(const std::vector<float>& takenP, const std::vector<f
             fixedTotal += fixed;
             f.nitrogen += fixed * (1.0f - params.fixedNLeak);
             releases.push_back({f.x[h], f.y[h], 0.0f, 0.0f, fixed * params.fixedNLeak, 0.0f});
+        }
+        // Acinetos: se forman junto a un heterocisto cuando el fósforo limita, germinan cuando vuelve.
+        if (!f.oscillatoria) {
+            const float biomassNow = mass * params.cellPmol;
+            const bool pLimited = f.phosphorus < biomassNow * params.phosphorusRatio * 1.05f;
+            Rng arng(seed, rng_stream::kCyano + 500, fi, step);
+            for (std::size_t k = 0; k < f.x.size(); ++k) {
+                const bool nextToHeterocyst = (k > 0 && f.heterocyst[k - 1] == kHeterocyst) ||
+                                              (k + 1 < f.x.size() && f.heterocyst[k + 1] == kHeterocyst);
+                if (f.heterocyst[k] == kVegetativeCell && pLimited && nextToHeterocyst &&
+                    arng.uniform() < params.akinetePerHour * hours) {
+                    f.heterocyst[k] = kAkinete;
+                    --vegetative;
+                } else if (f.heterocyst[k] == kAkinete && !pLimited && arng.uniform() < params.germinationPerHour * hours) {
+                    f.heterocyst[k] = kVegetativeCell;
+                    ++vegetative;
+                }
+            }
         }
         if (vegetative == 0)
             continue;
@@ -217,7 +236,7 @@ void Cyanobacteria::credit(const std::vector<float>& takenP, const std::vector<f
         }
         const float each = newBiomass / params.cellPmol / static_cast<float>(vegetative);
         for (std::size_t k = 0; k < f.x.size(); ++k) {
-            if (f.heterocyst[k])
+            if (f.heterocyst[k] != kVegetativeCell)
                 continue;
             f.mass[k] += each;
             if (f.mass[k] >= 2.0f && total < params.maxCells) { // división intercalar
@@ -228,7 +247,7 @@ void Cyanobacteria::credit(const std::vector<float>& takenP, const std::vector<f
                 f.x.insert(f.x.begin() + static_cast<std::ptrdiff_t>(k) + 1, nx);
                 f.y.insert(f.y.begin() + static_cast<std::ptrdiff_t>(k) + 1, ny);
                 f.mass.insert(f.mass.begin() + static_cast<std::ptrdiff_t>(k) + 1, f.mass[k]);
-                f.heterocyst.insert(f.heterocyst.begin() + static_cast<std::ptrdiff_t>(k) + 1, 0);
+                f.heterocyst.insert(f.heterocyst.begin() + static_cast<std::ptrdiff_t>(k) + 1, kVegetativeCell);
                 ++total;
                 ++k;
             }
@@ -237,9 +256,9 @@ void Cyanobacteria::credit(const std::vector<float>& takenP, const std::vector<f
         // (Oscillatoria no los forma).
         int sinceLast = params.heterocystSpacing / 2;
         for (std::size_t k = 0; k < f.x.size() && !f.oscillatoria; ++k) {
-            sinceLast = f.heterocyst[k] ? 0 : sinceLast + 1;
-            if (sinceLast >= params.heterocystSpacing) {
-                f.heterocyst[k] = 1;
+            sinceLast = f.heterocyst[k] == kHeterocyst ? 0 : sinceLast + 1;
+            if (sinceLast >= params.heterocystSpacing && f.heterocyst[k] == kVegetativeCell) {
+                f.heterocyst[k] = kHeterocyst;
                 sinceLast = 0;
             }
         }
@@ -248,7 +267,7 @@ void Cyanobacteria::credit(const std::vector<float>& takenP, const std::vector<f
         std::size_t cut = f.x.size();
         const float pDeath = params.mortalityPerHour * hours;
         for (std::size_t k = 0; k < f.x.size(); ++k) {
-            if (rng.uniform() >= pDeath)
+            if (rng.uniform() >= pDeath * (f.heterocyst[k] == kAkinete ? params.akineteMortality : 1.0f))
                 continue;
             float cellMass = 0.0f;
             for (float m : f.mass)

@@ -42,6 +42,13 @@ struct CyanoParams {
     // Microcistina (~0,1–1% del peso seco): se libera al morir la célula.
     float toxinRatio = 0.001f;               // pmol de toxina por pmol de biomasa
     float exudation = 0.1f;                  // fracción de lo fijado que sale como materia orgánica
+    // Acinetos (Anabaena/Dolichospermum): células de resistencia grandes, de pared gruesa, que se forman
+    // junto a un heterocisto cuando falta fósforo (o con poca luz y frío); no crecen, casi no mueren y
+    // sobreviven al filamento; germinan cuando vuelve el fósforo (Kaplan-Levy, Hadas, Summers, Rücker &
+    // Sukenik 2010, en Dormancy and Resistance in Harsh Environments). Tasas estimadas.
+    float akinetePerHour = 0.05f;      // formación de cada célula junto a un heterocisto, con estrés
+    float germinationPerHour = 0.02f;  // sin estrés
+    float akineteMortality = 0.1f;     // fracción de la mortalidad de una vegetativa
     // Rango térmico de crecimiento [°C] y temperatura del agua (la fija el bioma).
     float tMin = 10.0f, tMax = 35.0f, temperature = 20.0f;
     // Oscillatoria: deslizamiento ~2–10 µm/s y vaivén de la punta (rotación del tricoma).
@@ -56,10 +63,13 @@ struct CyanoRelease {
     float organic, phosphorus, nitrogen, toxin; // [pmol]
 };
 
+// Tipo de cada célula del filamento (CyanoFilament::heterocyst).
+inline constexpr std::uint8_t kVegetativeCell = 0, kHeterocyst = 1, kAkinete = 2;
+
 struct CyanoFilament {
     std::vector<float> x, y;     // posiciones contiguas (la cadena no se envuelve por cuenta)
     std::vector<float> mass;     // relativa (1 = recién dividida, se divide en 2)
-    std::vector<std::uint8_t> heterocyst;
+    std::vector<std::uint8_t> heterocyst; // tipo de célula: kVegetativeCell, kHeterocyst o kAkinete
     float phosphorus = 0.0f;     // [pmol P] de todo el filamento
     float nitrogen = 0.0f;       // [pmol N]
     float direction = 1.0f;      // sentido de deslizamiento

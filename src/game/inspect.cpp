@@ -126,6 +126,8 @@ const char* feedingText(FeedingMode f) {
     case FeedingMode::Tentacles: return "succiona a sus presas con tentaculos";
     case FeedingMode::NeckStrike: return "ataca con un cuello extensible";
     case FeedingMode::Osmotroph: return "absorbe materia organica disuelta por la pared";
+    case FeedingMode::Axopodia: return "atrapa presas con los axopodios y las envuelve enteras";
+    case FeedingMode::Perforation: return "perfora la pared de un alga y le vacia el protoplasto";
     case FeedingMode::None: return "autotrofa: solo fotosintesis";
     }
     return "";
@@ -600,10 +602,11 @@ Inspection inspectCyano(const World& w, const Picked& p) {
     ins.valid = true;
     ins.at = {f.x[node], f.y[node]};
     ins.radius = 0.5f * cp.spacing * static_cast<float>(f.x.size()) + 6.0f;
-    std::size_t hetero = 0;
+    std::size_t hetero = 0, akinetes = 0;
     float mass = 0.0f;
     for (std::size_t k = 0; k < f.x.size(); ++k) {
-        hetero += f.heterocyst[k];
+        hetero += f.heterocyst[k] == kHeterocyst ? 1 : 0;
+        akinetes += f.heterocyst[k] == kAkinete ? 1 : 0;
         mass += f.mass[k];
     }
     ins.title = f.oscillatoria ? "Oscillatoria" : "Anabaena";
@@ -615,6 +618,8 @@ Inspection inspectCyano(const World& w, const Picked& p) {
     InspectSection& s = section(ins, "Filamento");
     add(s, "Celulas", fmt("%zu (largo ~%.0f um)", f.x.size(), cp.spacing * static_cast<float>(f.x.size())));
     add(s, "Heterocistos", f.oscillatoria ? "ninguno: no fija N2" : fmt("%zu: fijan N2 donde el O2 no los inhibe", hetero));
+    if (akinetes > 0)
+        add(s, "Acinetos", fmt("%zu: celulas de resistencia (se forman sin fosforo y germinan cuando vuelve)", akinetes));
     add(s, "Biomasa", fmt("%.3f pmol", mass * cp.cellPmol));
     add(s, "Fosforo y N", fmt("%.4f y %.4f pmol", f.phosphorus, f.nitrogen));
     add(s, "Deslizamiento", fmt("%.1f um/s, %s", f.oscillatoria ? cp.oscillatoriaGlide : cp.glideSpeed,
