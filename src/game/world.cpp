@@ -885,9 +885,12 @@ void World::finishBodies() {
     const auto nb = static_cast<std::ptrdiff_t>(bodyList_.size());
     resolvePenetrations();
 
-    // Remallado de membranas plásticas: asigna slots en el pool compartido, por eso es serial.
+    // Remallado de membranas plásticas: asigna slots en el pool compartido, por eso es serial. Dividiéndose,
+    // con la mitad del espaciado: el surco de una ameba chica necesita puntos de dónde estrangular.
     for (RingBody* body : bodyList_)
-        soft_body::remesh(*body, bodies_, kMembraneSpacing);
+        soft_body::remesh(*body, bodies_,
+                          registry_.all_of<Dividing>(static_cast<entt::entity>(body->id)) ? 0.5f * kMembraneSpacing
+                                                                                          : kMembraneSpacing);
 
     std::uint64_t faults = 0;
 #pragma omp parallel for schedule(dynamic, 1) reduction(+ : faults)
@@ -3081,6 +3084,15 @@ void World::updateLifecycle(float dt) {
             meta.reserves -= cost * meta.biomass;
             contractForDivision(e, body);
             unmorphForDivision(e, body);
+            if (body.membraneReservoirRate > 0.0f) {
+                // Ameba: con pocos puntos de membrana (una de ~10 µm tiene ~24) el surco no tiene de dónde
+                // estrangular ni quedan 12 por hija; y la corteza se relaja en los polos durante la
+                // citocinesis (relajación polar), si no su tensión redondea la célula contra el surco.
+                if (body.ring.size() < 48)
+                    soft_body::resampleRing(body, bodies_, 48);
+                body.corticalTension = 0.0f;
+                body.bendScale = 0.0f; // la corteza se remodela: no vuelve a la curvatura del círculo
+            }
             Dividing& d = registry_.emplace<Dividing>(e);
             d.motherRest = body.restRing;
             d.motherArea = std::abs(body.restArea);
@@ -3106,7 +3118,11 @@ void World::updateLifecycle(float dt) {
                 // pared lateral y parte la célula en dos sin cambiar el ancho del filamento.
                 if (dv->progress >= 1.0f && dv->nucleus2 != ~0u && septumTips(body, ta, tb))
                     splits_.push_back({e, ta, tb});
-            } else if (dv->progress > 0.3f && furrowClosed(body, bodies_, ta, tb, furrowBodyHalfLength(e, body))) {
+            } else if (dv->progress > 0.3f &&
+                       furrowClosed(body, bodies_, ta, tb, furrowBodyHalfLength(e, body),
+                                    // Membrana plástica: remallada con espaciado fino, un cuello de ~2,5 aristas
+                                    // es ya la fusión de las dos caras a esta resolución.
+                                    body.membraneReservoirRate > 0.0f ? 1.25f * kMembraneSpacing : 0.0f)) {
                 splits_.push_back({e, ta, tb});
             }
         }

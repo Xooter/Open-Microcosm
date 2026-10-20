@@ -1,0 +1,35 @@
+# Acanthamoeba castellanii: ameba de vida libre de suelo y agua, trofozoíto de 15–45 µm con
+# acantopodios (seudópodos finos en espina), modelo de fagocitosis; come bacterias y levaduras y forma
+# quistes muy resistentes, también con calor (Marciano-Cabral & Cabral 2003, Clin. Microbiol. Rev. 16:
+# 273). Crece mejor cerca de 32 °C y se enquista por encima de ~36 °C.
+[[being]]
+id = "acanthamoeba"
+name = "Acanthamoeba"
+tags = ["protist", "amoeboid", "bacterivore"]
+description = "Ameba de ~30 um del suelo y el agua, con seudopodos finos en espina. Come bacterias y levaduras, y forma quistes muy resistentes."
+locomotion = "pseudopod"
+body_plan = "amoeba"
+feeding = "phagocytosis"
+prey = ["saccharomyces", "candida"]
+relative_speed = 1.0
+encysts = true
+initial_count = 4
+handling_hours = 0.5
+ph = [5.0, 9.5]
+temperature = [8.0, 36.0]
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 16.0
+semi_minor_axis = 13.0
+shape_memory = 0.0
+color = [200, 194, 172]
+nucleus = 0.28
+
+[physiology.acanthamoeba.max_growth]
+# Con E. coli adherida (biopelícula); temperatura sin verificar en la fuente.
+value = 0.04
+unit = "1/h"
+temperature = 25.0
+source = "Pickup, Z. L., Pickup, R. & Parry, J. D. (2007). Growth of Acanthamoeba castellanii and Hartmannella vermiformis on live, heat-killed and DTAF-stained bacterial prey. FEMS Microbiol. Ecol. 59: 556 (µ ≈ 0,04/h con E. coli). Temperatura sin verificar (se asume 25 °C)."
+estimate = true

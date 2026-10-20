@@ -1828,3 +1828,5 @@ Carchesium	Carchesium
 Peritrico colonial de tallos ramificados como Zoothamnium, pero cada rama tiene su propio resorte: los zooides se contraen de a uno.	Colonial peritrich with branching stalks like Zoothamnium, but each branch has its own spring: the zooids contract one at a time.
 Bacillaria	Bacillaria
 Diatomea en aguja que vive en colonias: las celulas, pegadas de costado, se deslizan una sobre otra y la colonia se estira y se cierra como una regla de carpintero.	Needle-shaped diatom that lives in colonies: the cells, joined side by side, slide over one another and the colony stretches out and folds back like a carpenter's rule.
+Acanthamoeba	Acanthamoeba
+Ameba de ~30 um del suelo y el agua, con seudopodos finos en espina. Come bacterias y levaduras, y forma quistes muy resistentes.	Amoeba of ~30 um from soil and water, with thin spiny pseudopodia. It eats bacteria and yeasts and forms very hardy cysts.

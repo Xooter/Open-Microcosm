@@ -129,3 +129,5 @@ TEST_CASE("candidatos: Paramecium tetraurelia se divide" * doctest::test_suite("
 TEST_CASE("candidatos: Zoothamnium se divide" * doctest::test_suite("largos")) { reproduces("zoothamnium"); }
 TEST_CASE("candidatos: Carchesium se divide" * doctest::test_suite("largos")) { reproduces("carchesium"); }
 TEST_CASE("candidatos: Bacillaria se divide" * doctest::test_suite("largos")) { reproduces("bacillaria"); }
+TEST_CASE("candidatos: Acanthamoeba se divide" * doctest::test_suite("largos")) { reproduces("acanthamoeba"); }
+TEST_CASE("candidatos: Naegleria se divide" * doctest::test_suite("largos")) { reproduces("naegleria"); }

@@ -59,5 +59,6 @@ void applyFurrow(const RingBody& body, BodyParticles& bp, float speed, float bod
 float furrowHalfWidth(const RingBody& body, const BodyParticles& bp, float bodyHalfLength = 0.0f);
 
 // ¿Se tocaron los dos lados del surco? Devuelve los índices de anillo de sus fondos.
+// `minTouch`: distancia mínima que cuenta como cerrado (membranas plásticas: unas pocas aristas).
 bool furrowClosed(const RingBody& body, const BodyParticles& bp, std::size_t& tipA, std::size_t& tipB,
-                  float bodyHalfLength = 0.0f);
+                  float bodyHalfLength = 0.0f, float minTouch = 0.0f);

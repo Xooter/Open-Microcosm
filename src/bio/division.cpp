@@ -15,20 +15,29 @@ Vec2 pos(const BodyParticles& bp, std::uint32_t s) { return {bp.x[s], bp.y[s]}; 
 struct Axis {
     Vec2 c, h, side;
     float halfLength;
+    float spacing; // distancia media entre puntos de la membrana
 };
 
 Axis axisOf(const RingBody& body, const BodyParticles& bp, float bodyHalfLength = 0.0f) {
-    Axis a{body.centroid, bodyHeading(body), {}, 0.0f};
+    Axis a{body.centroid, bodyHeading(body), {}, 0.0f, 0.0f};
     a.side = {-a.h.y, a.h.x};
-    for (std::uint32_t s : body.ring)
+    const std::size_t n = body.ring.size();
+    for (std::size_t i = 0; i < n; ++i) {
+        const std::uint32_t s = body.ring[i];
         a.halfLength = std::max(a.halfLength, std::abs(dot(pos(bp, s) - a.c, a.h)));
+        a.spacing += length(pos(bp, body.ring[(i + 1) % n]) - pos(bp, s));
+    }
+    a.spacing /= static_cast<float>(std::max<std::size_t>(1, n));
     if (bodyHalfLength > 0.0f)
         a.halfLength = bodyHalfLength;
     return a;
 }
 
-// El surco abarca la franja central de la célula.
-float bandOf(const Axis& a) { return 0.3f * a.halfLength; }
+// El surco abarca la franja central de la célula. En una célula chica (una ameba de ~10 µm, con
+// pocos puntos de membrana) la franja del 30 % agarraba uno o dos puntos por lado, y la conservación del
+// área los frenaba lejos del eje: el surco se estancaba y la célula quedaba dividiéndose para siempre
+// (Acanthamoeba, Naegleria). Abarca al menos tres puntos de cada lado.
+float bandOf(const Axis& a) { return std::max(0.3f * a.halfLength, 3.0f * a.spacing); }
 
 // Fondo del surco de cada lado: el punto de la franja más cercano al eje.
 void furrowTips(const RingBody& body, const BodyParticles& bp, const Axis& a, std::size_t& tipA,
@@ -76,7 +85,7 @@ float furrowHalfWidth(const RingBody& body, const BodyParticles& bp, float bodyH
 }
 
 bool furrowClosed(const RingBody& body, const BodyParticles& bp, std::size_t& tipA, std::size_t& tipB,
-                  float bodyHalfLength) {
+                  float bodyHalfLength, float minTouch) {
     const Axis a = axisOf(body, bp, bodyHalfLength);
     float da, db;
     furrowTips(body, bp, a, tipA, tipB, da, db);
@@ -85,7 +94,7 @@ bool furrowClosed(const RingBody& body, const BodyParticles& bp, std::size_t& ti
     // El contacto de la membrana consigo misma deja las dos caras del surco a 2 radios (de punto a
     // arista), ~2,6 entre vértices: con 2,5 radios las células casi redondas (Cosmarium) y las de
     // radio de membrana grande quedaban con el surco cerrado sin partirse nunca.
-    const float touch = 3.0f * bp.radius[body.ring[0]];
+    const float touch = std::max(minTouch, 3.0f * bp.radius[body.ring[0]]);
     return length(pos(bp, body.ring[tipA]) - pos(bp, body.ring[tipB])) < touch;
 }
 
