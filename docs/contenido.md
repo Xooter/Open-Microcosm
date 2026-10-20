@@ -91,7 +91,9 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   contraída; extendida mide `extension` veces su largo y vuelve a extenderse en `extension_s` [s].
   `profile`: `uniform` (la contraída estirada, con el área de la silueta) | `trumpet` (disco oral,
   cono y pedúnculo fino terminado en el pie; el ancho de la boca conserva el volumen de la contraída,
-  y `foot_width` es el ancho del pie sobre el de la boca). `swimming_extension` (0–1): cuánto se
+  y `foot_width` es el ancho del pie sobre el de la boca) | `bell` (zooide de los peritricos: lados
+  convexos desde la escópula hasta el labio del peristoma). `flare`: exponente del perfil (3 trompeta,
+  0,5 campana). El zooide de un peritrico se contrae también con su espasmonema. `swimming_extension` (0–1): cuánto se
   extiende mientras nada suelta. `spontaneous_per_min`: contracciones sin estímulo. La dispara una
   respuesta `contract`; el remolino de la contracción entra en el agua y lo sienten las vecinas.
 - `[being.jump]`: saltos. `speed` [µm/s], `duration` [s], `interval` [s] medio entre saltos

@@ -157,14 +157,19 @@ struct JumpSpec {
 // Forma extendida (`profile`):
 //  - uniforme: la contraída estirada a lo largo, con el ancho en proporción inversa;
 //  - trompeta (Stentor): disco oral ancho, cuerpo cónico y el extremo posterior fino como un pedúnculo
-//    de la misma célula, que termina en el pie. El ancho de la boca sale de conservar el volumen de la
-//    contraída (el citoplasma es incompresible): la silueta no conserva el área.
-enum class ContractionProfile : std::uint8_t { Uniform, Trumpet };
+//    de la misma célula, que termina en el pie;
+//  - campana (zooide de los peritricos: Vorticella, Epistylis): lados convexos desde la escópula, donde
+//    se une al tallo, hasta el peristoma. Contraído, el peristoma se cierra y el zooide se redondea.
+// En las dos, el radio va de `footWidth`·R en el polo posterior a R en el anterior como una potencia del
+// largo (`flare`: > 1 se abre al final, < 1 se abre enseguida; la campana suma el labio del peristoma), y R sale de conservar el volumen de la
+// contraída (el citoplasma es incompresible): la silueta no conserva el área.
+enum class ContractionProfile : std::uint8_t { Uniform, Trumpet, Bell };
 struct ContractionSpec {
     float extension = 1.0f;      // largo extendido / largo contraído (1: no se contrae)
     float extensionSeconds = 10.0f; // [s] para volver a extenderse
     ContractionProfile profile = ContractionProfile::Uniform;
-    float footWidth = 0.1f;      // trompeta: ancho del pie / el de la boca
+    float footWidth = 0.1f;      // trompeta y campana: ancho del pie / el de la boca
+    float flare = 0.0f;          // exponente del perfil (0: el del perfil, 3 trompeta y 0,5 campana)
     float swimmingExtension = 1.0f; // extensión (0–1) mientras nada suelta, sin pie fijo
     float spontaneousPerMinute = 0.0f; // contracciones sin estímulo
 };

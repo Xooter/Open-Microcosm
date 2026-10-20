@@ -1281,7 +1281,12 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 const float growth = vm && vm->birthBiomass > 0.0f ? vm->biomass / vm->birthBiomass - 1.0f : 0.0f;
                 drawVolvocineColony(body, style, speciesInfo(sid).colonyCells, growth, time, px);
             } else if (loco && style == CellStyle::PeristomeCrown) {
-                drawCilia(bp, body, time, px, reg.all_of<Telotroch>(e) ? CiliaPattern::Posterior : CiliaPattern::Crown, 1.3f);
+                // Contraído, el peristoma se cierra sobre la corona: los cilios orales quedan adentro.
+                const Contraction* ct = reg.try_get<Contraction>(e);
+                if (reg.all_of<Telotroch>(e))
+                    drawCilia(bp, body, time, px, CiliaPattern::Posterior, 1.3f);
+                else if (!ct || ct->state < 0.6f)
+                    drawCilia(bp, body, time, px, CiliaPattern::Crown, 1.3f);
             } else if (loco && style == CellStyle::MembranelleCrown) {
                 drawCilia(bp, body, time, px, CiliaPattern::Crown, 2.0f); // membranelas adorales
                 drawCilia(bp, body, time, px, CiliaPattern::All, 0.4f);

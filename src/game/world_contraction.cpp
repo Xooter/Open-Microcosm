@@ -19,9 +19,12 @@ const SpeciesInfo& infoOf(const entt::registry& reg, entt::entity e) {
 // La contracción real dura ~5–10 ms, menos que un paso: la forma de reposo salta a la contraída y la
 // memoria de forma muy alta lleva ahí al cuerpo en unos pocos pasos.
 constexpr float kContractRate = 40.0f; // [1/s]
-// Trompeta: el radio crece desde el pie como una potencia del largo, así la mitad posterior queda fina
-// (el "pedúnculo", que es la misma célula) y la anterior se abre en campana hasta el disco oral.
+// Exponente del perfil por omisión. Trompeta: la mitad posterior queda fina (el "pedúnculo", que es la
+// misma célula) y la anterior se abre hasta el disco oral. Campana: lados convexos, ancha casi enseguida.
 constexpr float kTrumpetFlare = 3.0f;
+constexpr float kBellFlare = 0.5f;
+// El labio del peristoma sobresale un poco del cuerpo de la campana (en el último 15 % del largo).
+constexpr float kBellLip = 0.12f;
 // El disco oral es casi plano; apenas abombado, así su centro es el polo anterior.
 constexpr float kDiscDome = 0.05f;
 
@@ -45,11 +48,14 @@ float revolvedVolume(const std::vector<Vec2>& ring) {
     return v;
 }
 
-// Contorno denso de la trompeta extendida, antihorario desde el centro del disco oral: disco, borde
+// Contorno denso de la trompeta o la campana extendida, antihorario desde el centro del disco oral: disco, borde
 // superior hasta el pie, pie redondeado, borde inferior y de nuevo el disco.
-void trumpetOutline(float halfLength, float oral, float foot, std::vector<Vec2>& out) {
+void trumpetOutline(float halfLength, float oral, float foot, float flare, float lip, std::vector<Vec2>& out) {
     constexpr int kDisc = 16, kSide = 128, kCap = 16;
-    auto radius = [&](float u) { return oral * (foot + (1.0f - foot) * std::pow(0.5f * (u + 1.0f), kTrumpetFlare)); };
+    auto radius = [&](float u) {
+        const float r = oral * (foot + (1.0f - foot) * std::pow(0.5f * (u + 1.0f), flare));
+        return r * (1.0f + lip * smoothstep(std::clamp((u - 0.7f) / 0.3f, 0.0f, 1.0f)));
+    };
     auto disc = [&](float y) { return halfLength - kDiscDome * oral * (y / oral) * (y / oral); };
     out.clear();
     for (int k = 0; k < kDisc; ++k) {
@@ -104,15 +110,17 @@ void buildShapes(Contraction& c, const RingBody& body, const ContractionSpec& sp
             c.extended[i] = {c.contracted[i].x * spec.extension, c.contracted[i].y / spec.extension};
         return;
     }
-    // Trompeta: el radio de la boca conserva el volumen de la contraída. Con r(u) = R·(f + (1−f)·v^p),
+    // Trompeta y campana: el radio de la boca conserva el volumen de la contraída. Con r(u) = R·(f + (1−f)·v^p),
     // v = (u+1)/2, el volumen es π·R²·2L·E con E = ⟨(f + (1−f)·v^p)²⟩.
     const float halfLength = halfContracted * spec.extension;
-    const float f = spec.footWidth, p = kTrumpetFlare;
+    const float f = spec.footWidth;
+    const float p = spec.flare > 0.0f ? spec.flare : spec.profile == ContractionProfile::Bell ? kBellFlare : kTrumpetFlare;
     const float meanSquare = f * f + 2.0f * f * (1.0f - f) / (p + 1.0f) + (1.0f - f) * (1.0f - f) / (2.0f * p + 1.0f);
     const float oral = std::sqrt(revolvedVolume(c.contracted) / (units::kPi * 2.0f * halfLength * meanSquare));
     thread_local std::vector<Vec2> outline;
     thread_local std::vector<float> cum;
-    trumpetOutline(halfLength, oral, f, outline);
+    // El labio agrega ~2 % de volumen: se desprecia.
+    trumpetOutline(halfLength, oral, f, p, spec.profile == ContractionProfile::Bell ? kBellLip : 0.0f, outline);
     if (polygon::signedArea(c.contracted.data(), static_cast<int>(n)) < 0.0f)
         for (Vec2& q : outline) // anillo horario: el contorno también
             q.y = -q.y;
@@ -218,6 +226,15 @@ void applyShape(RingBody& body, Contraction& c, float s) {
     c.areaScale = scale;
     for (std::size_t i = 0; i < n; ++i)
         body.restEdge[i] = length(body.restRing[(i + 1) % n] - body.restRing[i]);
+    // La forma de reposo va centrada en el promedio de sus puntos, que es el centro de soft_body::bestFit:
+    // la campana y la trompeta no son simétricas y, corridas, la memoria de forma empujaría al cuerpo
+    // entero (se despegaba del tallo).
+    Vec2 mean;
+    for (const Vec2& q : body.restRing)
+        mean = mean + q;
+    mean = mean * (1.0f / static_cast<float>(n));
+    for (Vec2& q : body.restRing)
+        q = q - mean;
     if (body.restInterior.empty())
         return;
     axialProfile(before, from);
@@ -230,7 +247,7 @@ void applyShape(RingBody& body, Contraction& c, float s) {
         const float lo1 = to.lo[static_cast<std::size_t>(b1)], hi1 = to.hi[static_cast<std::size_t>(b1)];
         const float half0 = 0.5f * (hi0 - lo0), half1 = 0.5f * (hi1 - lo1);
         const float rel = half0 > 1e-3f ? std::clamp((q.y - 0.5f * (lo0 + hi0)) / half0, -0.85f, 0.85f) : 0.0f;
-        q = {x, 0.5f * (lo1 + hi1) + rel * half1};
+        q = {x, 0.5f * (lo1 + hi1) + rel * half1}; // `to` ya es del anillo centrado
     }
 }
 } // namespace
@@ -261,8 +278,13 @@ void World::updateContraction(entt::entity e, RingBody& body, bool trigger, floa
         c.stretch = 1.0f;
         rebuilt = true;
     }
-    // Contracciones espontáneas (sin estímulo), solo extendida.
+    // El zooide de un peritrico se contrae con su espasmonema (también en las contracciones espontáneas
+    // del tallo y, en Zoothamnium, cuando se contrae la colonia entera).
     bool fire = trigger;
+    if (const Anchored* an = registry_.try_get<Anchored>(e); !fire && an && registry_.valid(an->rod) && c.state < 0.5f)
+        if (const Stalk* st = registry_.try_get<Stalk>(an->rod); st && st->rod.contracted > 0.97f)
+            fire = true;
+    // Contracciones espontáneas (sin estímulo), solo extendida.
     if (!fire && spec.spontaneousPerMinute > 0.0f && c.state < 1.0f - 0.95f * cap) {
         Rng rng(config_.seed, rng_stream::kContraction, body.id, step_);
         fire = rng.uniform() < spec.spontaneousPerMinute / 60.0f * dt;

@@ -19,14 +19,27 @@ storage = "glycogen"
 wall = "none"
 genome = { trichocysts = 0.0 }
 [being.shape]
-semi_major_axis = 52.0
-semi_minor_axis = 19.0
+# Contraído (casi una esfera); extendido, la campana de [being.contraction] con el mismo volumen.
+semi_major_axis = 28.3
+semi_minor_axis = 25.7
 shape_memory = 10.0
 color = [182, 186, 168]
 nucleus = 0.3
 
 [being.appearance]
 style = "peristomal_crown"
+
+# Zooide contráctil (mionemas): ante un estímulo, el peristoma se cierra sobre la corona y la campana se
+# redondea en milisegundos; se vuelve a abrir en segundos. Extendido mide 104 µm de largo (Kreutz), en
+# campana desde la escópula (unida al tallo) hasta el peristoma; el ancho del peristoma sale de conservar
+# el volumen. El telotroco nada contraído, con el peristoma cerrado. Tiempo de re-extensión y ancho de la
+# escópula: estimados.
+[being.contraction]
+extension = 1.84
+extension_s = 5.0
+profile = "bell"
+foot_width = 0.2
+swimming_extension = 0.0
 
 # Tallo rígido y grueso, sin espasmonema, con estrías longitudinales (Kreutz); se contrae el zooide, no el
 # tallo. Colonial: las hijas quedan en ramas dicotómicas (hasta 12 zooides acá). Ancho estimado.
@@ -41,9 +54,18 @@ colony = true
 max_zooids = 12
 branch_angle = 30.0
 
+# Mecanorrecepción: una corriente brusca contrae el zooide (el tallo rígido no se contrae). Umbral
+# estimado, como en Vorticella.
+[[being.response]]
+field = "shear"
+kind = "above"
+threshold = 2.0
+action = "contract"
+refractory = 2.0
+
 [physiology.epistylis.max_growth]
 # Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
-# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 52, 19 y 19 µm: 78632 µm³).
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 28.3, 25.7 y 25.7 µm, la forma contraída: 78632 µm³).
 value = 1.07
 unit = "1/day"
 temperature = 20.0

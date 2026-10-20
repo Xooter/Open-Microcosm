@@ -2057,8 +2057,11 @@ void World::applyMotion(float dt) {
             contractStalk(*anchored, dt);
         if (cellInfo(registry_, e).contraction.extension > 1.0f) {
             updateContraction(e, body, contract || (anchored && disturbed), dt);
-            // Recién contraída no nada: los cilios se detienen y vuelven a batir al re-extenderse.
-            if (const Contraction* c = registry_.try_get<Contraction>(e); c && c->state > 0.8f) {
+            // Recién contraída no nada: los cilios se detienen y vuelven a batir al re-extenderse. El que nada
+            // contraído (el telotroco de los peritricos, con el peristoma cerrado) sigue nadando.
+            const ContractionSpec& cs = cellInfo(registry_, e).contraction;
+            const float swimState = anchored ? 0.0f : 1.0f - cs.swimmingExtension;
+            if (const Contraction* c = registry_.try_get<Contraction>(e); c && c->state > std::max(0.8f, swimState + 0.05f)) {
                 loco.forward = loco.turn = 0.0f;
                 if (Autopilot* ap = registry_.try_get<Autopilot>(e))
                     ap->intent = Intent::Contract;

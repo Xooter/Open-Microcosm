@@ -21,14 +21,27 @@ storage = "glycogen"
 wall = "none"
 genome = { trichocysts = 0.0 }
 [being.shape]
-semi_major_axis = 25.0
-semi_minor_axis = 18.0
+# Contraído (casi una esfera); extendido, la campana de [being.contraction] con el mismo volumen.
+semi_major_axis = 21.4
+semi_minor_axis = 19.5
 shape_memory = 10.0
 color = [182, 186, 168]
 nucleus = 0.32
 
 [being.appearance]
 style = "peristomal_crown"
+
+# Zooide contráctil (mionemas): ante un estímulo, el peristoma se cierra sobre la corona y la campana se
+# redondea en milisegundos; se vuelve a abrir en segundos. Extendido mide 50 µm de largo (Kreutz), en
+# campana desde la escópula (unida al tallo) hasta el peristoma; el ancho del peristoma sale de conservar
+# el volumen. El telotroco nada contraído, con el peristoma cerrado. Tiempo de re-extensión y ancho de la
+# escópula: estimados.
+[being.contraction]
+extension = 1.17
+extension_s = 3.0
+profile = "bell"
+foot_width = 0.15
+swimming_extension = 0.0
 
 [being.stalk]
 kind = "spasmoneme"
@@ -53,7 +66,7 @@ refractory = 2.0
 
 [physiology.zoothamnium.max_growth]
 # Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
-# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 25.0, 18.0 y 18.0 µm: 33929 µm³).
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 21.4, 19.5 y 19.5 µm, la forma contraída: 33929 µm³).
 value = 1.35
 unit = "1/day"
 temperature = 20.0
