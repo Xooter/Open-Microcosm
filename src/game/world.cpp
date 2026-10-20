@@ -3951,6 +3951,17 @@ Perception World::perceive(entt::entity e, const RingBody& body, SpeciesId speci
         const float dudy = (uy1.x - uy0.x) * inv, dvdx = (ux1.y - ux0.y) * inv;
         p.shear = std::sqrt((dudx - dvdy) * (dudx - dvdy) + (dudy + dvdx) * (dudy + dvdx));
     }
+    if (!info.chemotaxis.signal.empty()) {
+        const Relay* relay = registry_.try_get<Relay>(e);
+        p.chemotactic = !info.relay.present || (relay && relay->competent);
+        if (p.chemotactic) {
+            const int i = signalIndex(info.chemotaxis.signal);
+            constexpr float d = 4.0f; // de un lado al otro de la célula
+            p.signal = signalAt(i, body.centroid);
+            p.signalGradient = {(signalAt(i, body.centroid + Vec2{d, 0.0f}) - signalAt(i, body.centroid - Vec2{d, 0.0f})) / (2.0f * d),
+                                (signalAt(i, body.centroid + Vec2{0.0f, d}) - signalAt(i, body.centroid - Vec2{0.0f, d})) / (2.0f * d)};
+        }
+    }
     return p;
 }
 

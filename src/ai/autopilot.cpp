@@ -222,6 +222,25 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
     }
     case LocomotionType::Pseudopod: {
         loco.active = true;
+        // Agregación (Dictyostelium): mientras la señal sube (el frente de la onda de AMPc), el seudópodo
+        // sale hacia donde hay más; detrás de la onda no la sigue (si no, volvería hacia atrás).
+        if (sense.chemotactic) {
+            const bool rising = sense.signal > pilot.signalMemory * 1.02f + 1e-6f;
+            pilot.signalMemory += (sense.signal - pilot.signalMemory) * std::min(1.0f, dt / 2.0f);
+            const float g = length(sense.signalGradient);
+            if (rising && g > 1e-7f) {
+                loco.target = body.centroid + sense.signalGradient * (100.0f / g);
+                pilot.target = loco.target;
+                pilot.retarget = 30.0f; // sigue hacia el centro un rato después del frente
+                pilot.intent = Intent::Aggregate;
+                return;
+            }
+            if (pilot.intent == Intent::Aggregate && pilot.retarget > 0.0f) {
+                pilot.retarget -= dt;
+                loco.target = pilot.target;
+                return;
+            }
+        }
         if (sense.hasPrey && sense.preyDistance < 300.0f) { // quimiotaxis hacia la presa
             loco.target = sense.prey;
             pilot.intent = Intent::Chase;

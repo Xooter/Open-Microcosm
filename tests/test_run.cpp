@@ -224,7 +224,7 @@ TEST_CASE("sandbox: cada ser del catálogo cae en la categoría que le correspon
                           *findSpecies("ochromonas"), *findSpecies("salpingoeca")}}, // Ochromonas, mixótrofa: come, así que no es alga
         {C::Amoebae, {SpeciesId::Amoeba, SpeciesId::Arcella, SpeciesId::Naegleria, *findSpecies("chaos"),
                       *findSpecies("euglypha"), *findSpecies("actinophrys"), *findSpecies("vampyrella"),
-                      *findSpecies("acanthamoeba")}},
+                      *findSpecies("acanthamoeba"), *findSpecies("dictyostelium")}},
         {C::Algae, {SpeciesId::Chlamydomonas, SpeciesId::Spirogyra, SpeciesId::Navicula, SpeciesId::Volvox,
                     SpeciesId::Pediastrum, SpeciesId::Mougeotia, SpeciesId::Zygnema, SpeciesId::Oedogonium,
                     SpeciesId::Asterionella, SpeciesId::Cyclotella, *findSpecies("chlorella"),

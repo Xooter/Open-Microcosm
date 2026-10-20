@@ -15,10 +15,10 @@ void World::setupSignals(const WorldConfig& config) {
     // Una señal por id que libere algún ser cargado (la primera definición manda).
     for (int k = 0; k < speciesCount() && signals_.size() < kMaxSignals; ++k) {
         const ReleaseSpec& r = speciesInfo(static_cast<SpeciesId>(k)).release;
-        if (r.rate <= 0.0f || signalIndex(r.signal) >= 0)
+        if (r.signal.empty() || signalIndex(r.signal) >= 0)
             continue;
         signals_.push_back({r.signal, ChemField(config.gridX, config.gridY, config.cellSize, r.diffusion, 0.0f),
-                            r.halfLifeHours, false});
+                            r.halfLifeHours, false, r.diffusion, r.bioTime});
         signals_.back().field.setMask(&dishMask_);
     }
 }
@@ -42,8 +42,40 @@ void World::updateSignals(float dt) {
         return;
     const float bioDt = dt * bioScale();
     const float perPmol = microMolarPerPmol();
+    for (SignalField& s : signals_) // la de un proceso biológico difunde en tiempo biológico
+        s.field.diffusion = s.baseDiffusion * (s.bioTime ? bioTimeScale_ : 1.0f);
+    const float hours = bioDt / 3600.0f;
     for (auto [e, body, sp] : registry_.view<RingBody, Species>().each()) {
-        const ReleaseSpec& r = speciesInfo(sp.id).release;
+        const SpeciesInfo& info = speciesInfo(sp.id);
+        const ReleaseSpec& r = info.release;
+        if (info.relay.present && !registry_.any_of<Cyst>(e)) {
+            // Relevo (Dictyostelium): con hambre se vuelve competente; dispara al sentir la señal (o solo,
+            // si es marcapasos) y queda refractaria.
+            const RelaySpec& rl = info.relay;
+            Relay& relay = registry_.get_or_emplace<Relay>(e);
+            const Metabolism* m = registry_.try_get<Metabolism>(e);
+            relay.starvingHours = m && m->starving ? relay.starvingHours + hours : 0.0f;
+            if (!relay.competent && relay.starvingHours >= rl.competenceHours) {
+                relay.competent = true;
+                Rng rng(config_.seed, rng_stream::kCells + 70, body.id, step_);
+                relay.pacemaker = rng.uniform() < rl.pacemakerFraction;
+                relay.pacemakerHours = rng.uniform(0.0f, rl.pacemakerMinutes / 60.0f);
+            }
+            relay.refractoryHours = std::max(0.0f, relay.refractoryHours - hours);
+            if (relay.pacemaker)
+                relay.pacemakerHours -= hours;
+            const int i = signalIndex(r.signal);
+            if (relay.competent && relay.refractoryHours <= 0.0f && i >= 0 &&
+                (signalAt(i, body.centroid) >= rl.threshold || (relay.pacemaker && relay.pacemakerHours <= 0.0f))) {
+                SignalField& s = signals_[static_cast<std::size_t>(i)];
+                Grid2D& g = s.field.grid();
+                g.at(g.cellX(body.centroid.x), g.cellY(body.centroid.y)) += rl.pulse * perPmol;
+                s.active = true;
+                relay.refractoryHours = rl.refractoryMinutes / 60.0f;
+                if (relay.pacemaker)
+                    relay.pacemakerHours = rl.pacemakerMinutes / 60.0f;
+            }
+        }
         if (r.rate <= 0.0f || registry_.any_of<Cyst>(e))
             continue;
         const int i = signalIndex(r.signal);

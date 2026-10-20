@@ -84,7 +84,7 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "sliding_colony", "testate", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "morph", "light_damage",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
@@ -102,7 +102,9 @@ constexpr const char* kSymbiontKeys[] = {"kind",           "source",          "p
 constexpr const char* kBiolumKeys[] = {"flash_s", "recharge_s", "circadian", "day_capacity", "color"};
 constexpr const char* kContractionKeys[] = {"extension", "extension_s"};
 constexpr const char* kToxicystKeys[] = {"reach", "paralysis_hours", "lethal"};
-constexpr const char* kReleaseKeys[] = {"signal", "rate", "diffusion", "half_life_hours"};
+constexpr const char* kReleaseKeys[] = {"signal", "rate", "diffusion", "half_life_hours", "bio_time"};
+constexpr const char* kRelayKeys[] = {"threshold", "pulse", "refractory_minutes", "pacemaker_fraction",
+                                      "pacemaker_minutes", "competence_hours"};
 constexpr const char* kMorphKeys[] = {"name",        "signal",       "threshold", "hours", "width_scale",
                                       "length_scale", "area_scale",  "feeding",   "prey",  "mouth_width"};
 constexpr const char* kStalkKeys[] = {"kind",        "length",         "width",          "bending_rate",
@@ -363,9 +365,32 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         rr.count("rate", s.release.rate);
         rr.count("diffusion", s.release.diffusion);
         rr.count("half_life_hours", s.release.halfLifeHours);
-        if (s.release.signal.empty() || s.release.rate <= 0.0f || s.release.halfLifeHours <= 0.0f)
-            rr.errors.push_back(rr.where + ": hace falta 'signal', y 'rate' y 'half_life_hours' positivos");
+        rr.flag("bio_time", s.release.bioTime);
+        if (s.release.signal.empty() || s.release.halfLifeHours <= 0.0f)
+            rr.errors.push_back(rr.where + ": hace falta 'signal' y 'half_life_hours' positivo");
         r.errors.insert(r.errors.end(), rr.errors.begin(), rr.errors.end());
+    }
+    if (const toml::table* lt = r.table("relay")) {
+        toml_io::warnUnknown(*lt, kRelayKeys, r.where + " [relay]", warnings);
+        Reader lr{*lt, r.where + " [relay]", {}};
+        RelaySpec& rl = s.relay;
+        rl.present = true;
+        lr.count("threshold", rl.threshold);
+        lr.count("pulse", rl.pulse);
+        lr.count("refractory_minutes", rl.refractoryMinutes);
+        lr.count("pacemaker_fraction", rl.pacemakerFraction);
+        lr.count("pacemaker_minutes", rl.pacemakerMinutes);
+        lr.count("competence_hours", rl.competenceHours);
+        if (s.release.signal.empty())
+            lr.errors.push_back(lr.where + ": el relevo necesita un [being.release] con la señal");
+        r.errors.insert(r.errors.end(), lr.errors.begin(), lr.errors.end());
+    }
+    if (const toml::table* ct = r.table("chemotaxis")) {
+        constexpr const char* kKeys[] = {"signal"};
+        toml_io::warnUnknown(*ct, kKeys, r.where + " [chemotaxis]", warnings);
+        Reader cr{*ct, r.where + " [chemotaxis]", {}};
+        cr.text("signal", s.chemotaxis.signal);
+        r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
     }
     if (const toml::table* mt = r.table("morph")) {
         toml_io::warnUnknown(*mt, kMorphKeys, r.where + " [morph]", warnings);

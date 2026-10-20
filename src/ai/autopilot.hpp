@@ -26,6 +26,10 @@ struct Perception {
     float light = 0.0f;  // irradiancia relativa en el centro
     float oxygen = 0.0f; // [µM]
     float shear = 0.0f;  // deformación del agua alrededor [1/s]
+    // Quimiotaxis a una señal de otros (AMPc): solo si la especie la sigue y la célula es competente.
+    bool chemotactic = false;
+    float signal = 0.0f;  // [µM] en la célula
+    Vec2 signalGradient;  // [µM/µm]
 };
 
 // Por qué la célula se mueve como se mueve en este momento (solo informativo: la ficha de
@@ -44,6 +48,7 @@ enum class Intent : std::uint8_t {
     Jump,        // salto (cirros o cerdas saltadoras)
     Phobic,      // respuesta fóbica a un cambio brusco (luz, O₂, corriente)
     Contract,    // se contrajo entera (mionemas) y se está re-extendiendo
+    Aggregate,   // sigue la onda de una señal (AMPc) hacia el centro de agregación
 };
 
 // Componente: comportamiento de las células que no controla el jugador. Sale de los datos de
@@ -68,6 +73,7 @@ struct Autopilot {
     float nextJump = -1.0f;  // [s] hasta el próximo salto espontáneo (< 0: sin sortear)
     bool contract = false;   // en este paso disparó la contracción del cuerpo (la aplica el mundo)
     bool flash = false;      // en este paso disparó un destello (bioluminiscencia)
+    float signalMemory = 0.0f; // señal recordada (¿está subiendo?)
 };
 
 void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, const SpeciesInfo& species,

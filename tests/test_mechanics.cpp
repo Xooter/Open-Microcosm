@@ -838,3 +838,41 @@ TEST_CASE("mecánicas: la testa de Arcella no se deforma; avanza arrastrada por 
         worst = std::max(worst, std::abs(length(Vec2{world.bodies().x[s], world.bodies().y[s]} - b.centroid) - mean));
     CHECK(worst < 0.15f * mean);
 }
+
+TEST_CASE("mecánicas: con hambre, Dictyostelium releva pulsos de AMPc y se agrega hacia un centro") {
+    World world = emptyWorld(13);
+    world.bioTimeScale() = 600.0f; // horas de hambre en segundos, sin apurar demasiado la migración
+    const Vec2 c = center(world);
+    std::vector<entt::entity> cells;
+    Rng rng(4, 1, 0, 0);
+    for (int k = 0; k < 40; ++k) {
+        const float a = rng.uniform(0.0f, 6.2831853f), r = 300.0f * std::sqrt(rng.uniform());
+        const entt::entity e = spawn(world, "dictyostelium", c + Vec2{std::cos(a), std::sin(a)} * r);
+        world.registry().get<Metabolism>(e).reserves = 0.0f; // sin bacterias: pasan hambre
+        cells.push_back(e);
+    }
+    auto spread = [&] {
+        Vec2 mean;
+        int n = 0;
+        for (entt::entity e : cells)
+            if (world.registry().valid(e)) {
+                mean = mean + world.registry().get<RingBody>(e).centroid;
+                ++n;
+            }
+        mean = mean * (1.0f / std::max(1, n));
+        float d = 0.0f;
+        for (entt::entity e : cells)
+            if (world.registry().valid(e))
+                d += length(world.registry().get<RingBody>(e).centroid - mean);
+        return d / std::max(1, n);
+    };
+    run(world, 30.0f); // ~5 h biológicas: competentes
+    int competent = 0;
+    for (entt::entity e : cells)
+        if (const Relay* r = world.registry().try_get<Relay>(e))
+            competent += r->competent ? 1 : 0;
+    CHECK(competent > 20);
+    const float before = spread();
+    run(world, 60.0f);
+    CHECK(spread() < 0.7f * before);
+}

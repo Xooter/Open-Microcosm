@@ -105,7 +105,11 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   terminar la parálisis. `histophagous = true` (en `[[being]]`): va hacia las células dañadas
   (paralizadas, atrapadas, moribundas) y, si son grandes, las come a mordiscos entre varios.
 - `[being.release]`: señal química que libera cada célula. `signal` (id), `rate` [pmol/h biológica],
-  `diffusion` [µm²/s] y `half_life_hours`. Un campo por señal (hasta 4), que difunde solo después de
+  `diffusion` [µm²/s], `half_life_hours` y `bio_time` (difunde con D × bioTimeScale: la de un proceso
+  biológico rápido, como el relevo de AMPc, para que la onda tenga su largo real).
+- `[being.relay]`: relevo de la señal (Dictyostelium): `threshold` [µM], `pulse` [pmol],
+  `refractory_minutes`, `pacemaker_fraction`, `pacemaker_minutes` y `competence_hours` (de hambre).
+- `[being.chemotaxis]`: `signal` que sigue (sube el gradiente mientras la señal sube). Un campo por señal (hasta 4), que difunde solo después de
   que alguien la liberó.
 - `[being.morph]`: morfo inducido por una señal. `name`, `signal`, `threshold` [µM], `hours` (de la
   transición, en los dos sentidos), `width_scale`, `length_scale`, `area_scale` (área por la misma

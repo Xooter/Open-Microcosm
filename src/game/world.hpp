@@ -824,6 +824,8 @@ class World {
         ChemField field;
         float halfLifeHours;
         bool active; // difunde solo después de que alguien la liberó
+        float baseDiffusion;
+        bool bioTime; // difunde con D × bioTimeScale (ver ReleaseSpec::bioTime)
     };
     std::vector<SignalField> signals_;
     std::vector<Vec2> stalkFlow_;         // agua en cada nodo de un tallo (buffer reusado)

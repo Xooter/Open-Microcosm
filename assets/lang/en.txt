@@ -1830,3 +1830,6 @@ Bacillaria	Bacillaria
 Diatomea en aguja que vive en colonias: las celulas, pegadas de costado, se deslizan una sobre otra y la colonia se estira y se cierra como una regla de carpintero.	Needle-shaped diatom that lives in colonies: the cells, joined side by side, slide over one another and the colony stretches out and folds back like a carpenter's rule.
 Acanthamoeba	Acanthamoeba
 Ameba de ~30 um del suelo y el agua, con seudopodos finos en espina. Come bacterias y levaduras, y forma quistes muy resistentes.	Amoeba of ~30 um from soil and water, with thin spiny pseudopodia. It eats bacteria and yeasts and forms very hardy cysts.
+agregacion: sigue el frente de la onda de AMPc hacia el centro	aggregation: follows the front of the cAMP wave towards the centre
+Dictyostelium	Dictyostelium
+Ameba social de ~10 um. Cuando se queda sin bacterias, se comunica con pulsos de AMPc que se propagan en ondas y miles de amebas se juntan en corrientes hacia un centro.	Social amoeba of ~10 um. When it runs out of bacteria it signals with pulses of cAMP that spread in waves, and thousands of amoebae gather in streams towards a centre.

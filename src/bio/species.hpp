@@ -163,9 +163,31 @@ struct ContractionSpec {
 // presa (la "estomatina" de Tetrahymena)… Un campo por señal, que difunde solo si alguien la liberó.
 struct ReleaseSpec {
     std::string signal;          // id de la señal (lo nombran las que responden)
-    float rate = 0.0f;           // [pmol/h biológica] por célula
+    float rate = 0.0f;           // [pmol/h biológica] por célula (0 con `relay`: solo pulsos)
     float diffusion = 100.0f;    // [µm²/s] (moléculas chicas ~500; proteínas ~50–100)
     float halfLifeHours = 6.0f;  // [h biológicas]
+    // La señal es parte de un proceso biológico rápido (el relevo de AMPc): difunde en tiempo biológico
+    // (D × bioTimeScale) para que la onda tenga su largo real; si no, saldría √60 veces más corta.
+    bool bioTime = false;
+};
+
+// Relevo de una señal (Dictyostelium: Tomchik & Devreotes 1981; Martiel & Goldbeter 1987): una célula
+// competente (con `competenceHours` de hambre) que siente la señal por encima de `threshold`, o que es
+// marcapasos y le toca, suelta un pulso y queda refractaria. La onda se propaga de célula en célula.
+struct RelaySpec {
+    bool present = false;
+    float threshold = 0.01f;       // [µM]
+    float pulse = 1e-5f;           // [pmol] por disparo
+    float refractoryMinutes = 5.0f; // [min biológicos]
+    float pacemakerFraction = 0.05f; // células que disparan solas
+    float pacemakerMinutes = 6.0f;  // período de los marcapasos
+    float competenceHours = 4.0f;   // de hambre hasta volverse competente
+};
+
+// Quimiotaxis hacia una señal que liberan otros: sube el gradiente solo mientras la señal sube (el frente
+// de la onda), así no vuelve detrás de ella. Solo en células competentes si la especie tiene `relay`.
+struct ChemotaxisSpec {
+    std::string signal;
 };
 
 // Morfo inducido (M4): con la señal por encima del umbral, la célula cambia de forma en `hours`
@@ -355,6 +377,8 @@ struct SpeciesInfo {
     SignalToxicitySpec signalToxicity;   // [being.signal_toxicity]
     ToxicystSpec toxicysts;             // [being.toxicysts]
     ReleaseSpec release;                // [being.release]
+    RelaySpec relay;                    // [being.relay]
+    ChemotaxisSpec chemotaxis;          // [being.chemotaxis]
     MorphSpec morph;                    // [being.morph]
     bool histophagous = false;
     // Se divide dentro de un quiste reproductivo (Colpoda): mientras dura el ciclo de divisiones no nada
@@ -498,6 +522,15 @@ struct Captured {
 };
 
 // Componente: cuello extensible de Lacrymaria.
+// Componente: estado del relevo de la señal (Dictyostelium).
+struct Relay {
+    float starvingHours = 0.0f;
+    float refractoryHours = 0.0f;
+    float pacemakerHours = 0.0f; // marcapasos: horas hasta el próximo disparo
+    bool pacemaker = false;
+    bool competent = false;
+};
+
 // Componente: destello en curso (`glow`, 0–1) y carga disponible para el próximo.
 struct Luminescence {
     float glow = 0.0f;

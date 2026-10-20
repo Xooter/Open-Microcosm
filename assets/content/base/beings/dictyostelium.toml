@@ -1,0 +1,56 @@
+# Dictyostelium discoideum: ameba social del suelo del bosque, de ~10 µm. Con bacterias come y se divide
+# (~4 h por generación sobre bacterias; Sussman 1987, Methods Cell Biol. 28: 9, a verificar). Con hambre,
+# en unas horas se vuelve competente: algunas células disparan pulsos de AMPc cada ~6 min, las vecinas los
+# relevan (sueltan su pulso y quedan refractarias unos minutos) y se mueven hacia el frente de la onda;
+# las ondas en espiral o concéntricas juntan a las células en corrientes hacia un centro (Konijn et al.
+# 1967; Tomchik & Devreotes 1981, Science 212: 443; Martiel & Goldbeter 1987, Biophys. J. 52: 807). El
+# AMPc difunde (D ≈ 400 µm²/s, Dworkin & Keller 1977) y la fosfodiesterasa lo degrada en ~1 min. Acá se
+# simula hasta las corrientes de agregación: el montículo, la babosa y el cuerpo fructífero son
+# multicelulares. Migración en tiempo biológico (~15 µm/min). Umbral, pulso y fracción de marcapasos:
+# órdenes de magnitud.
+[[being]]
+id = "dictyostelium"
+name = "Dictyostelium"
+tags = ["protist", "amoeboid", "bacterivore", "social_amoeba"]
+description = "Ameba social de ~10 um. Cuando se queda sin bacterias, se comunica con pulsos de AMPc que se propagan en ondas y miles de amebas se juntan en corrientes hacia un centro."
+locomotion = "pseudopod"
+body_plan = "amoeba"
+feeding = "phagocytosis"
+relative_speed = 2.5
+initial_count = 12
+handling_hours = 0.2
+ph = [5.0, 8.5]
+temperature = [10.0, 28.0]
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 6.0
+semi_minor_axis = 5.0
+shape_memory = 0.0
+color = [204, 200, 182]
+nucleus = 0.3
+
+[being.release]
+signal = "camp"
+rate = 0.0
+diffusion = 400.0
+half_life_hours = 0.02
+bio_time = true
+
+[being.relay]
+threshold = 0.01
+pulse = 1e-5
+refractory_minutes = 5.0
+pacemaker_fraction = 0.05
+pacemaker_minutes = 6.0
+competence_hours = 4.0
+
+[being.chemotaxis]
+signal = "camp"
+
+[physiology.dictyostelium.max_growth]
+value = 4.0
+unit = "h"
+temperature = 22.0
+source = "Sussman, M. (1987). Cultivation and synchronous morphogenesis of Dictyostelium under controlled experimental conditions. Methods Cell Biol. 28: 9-29 (generación de ~4 h sobre bacterias a 22 °C). A verificar."
+estimate = true
