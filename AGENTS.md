@@ -257,6 +257,9 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   los euglenoides, vaivén de la probóscide) escriben la forma de reposo punto a punto con
   `rest_shape::apply`, que la centra en el promedio de sus puntos (si no, la memoria de forma empuja al
   cuerpo entero) y lleva los organelos.
+- **Más formas que cambian en vida:** la semicélula nueva de las desmidias (`world_semicell`), el cuello
+  de *Lacrymaria* en la membrana (`world_neck`) y las volteretas de *Closterium* (`world_somersault`)
+  usan `rest_shape::apply`; el área de reposo sigue a la forma con `World::restShapeAreaScale`.
 - **Topología:** `replaceRing` / `resizeRing` cambian el anillo (fusión, inserción de membrana).
   Los eventos de topología se aplican al final del paso.
 

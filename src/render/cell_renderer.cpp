@@ -1132,6 +1132,67 @@ void drawFeet(const World& world, float px, Rectangle view) {
     }
 }
 
+// Conjugación escalariforme de Spirogyra: el tubo entre las células enfrentadas (crece desde las dos
+// papilas hasta unirse) y la cigospora, un óvalo oscuro de pared gruesa dentro de la receptora.
+void drawAlgalConjugation(const entt::registry& reg, float px) {
+    constexpr Color kTubeFill = {214, 222, 196, 160};
+    constexpr Color kTubeEdge = {80, 92, 70, 200};
+    constexpr Color kZygote = {96, 84, 46, 225};
+    constexpr Color kZygoteRim = {58, 50, 26, 240};
+    auto half = [](const RingBody& b) {
+        float w = 0.0f;
+        for (const Vec2& q : b.restRing)
+            w = std::max(w, std::abs(q.y));
+        return w;
+    };
+    for (const auto [e, pair, body] : reg.view<AlgalPair, RingBody>().each()) {
+        if (!pair.donor || !reg.valid(pair.partner) || !reg.all_of<RingBody, Species>(pair.partner) || !reg.all_of<Species>(e))
+            continue;
+        const SpeciesInfo& info = speciesInfo(reg.get<Species>(e).id);
+        const RingBody& other = reg.get<RingBody>(pair.partner);
+        const float total = info.algalTubeHours + info.algalTransferHours + info.algalZygoteHours;
+        const float grown = std::clamp(pair.progress * total / std::max(1e-6f, info.algalTubeHours), 0.0f, 1.0f);
+        const Vec2 d = other.centroid - body.centroid;
+        const float dist = std::max(1e-3f, length(d));
+        const Vec2 u = d * (1.0f / dist);
+        const Vec2 a = body.centroid + u * half(body), b = other.centroid - u * half(other);
+        const Vec2 mid = (a + b) * 0.5f;
+        const float w = std::max(1.5f * px, 0.5f * std::min(half(body), half(other)));
+        for (const auto& [from, to] : {std::pair{a, a + (mid - a) * grown}, std::pair{b, b + (mid - b) * grown}}) {
+            fastLine(toRay(from), toRay(to), w, kTubeFill);
+            const Vec2 side = Vec2{-u.y, u.x} * (0.5f * w);
+            fastLine(toRay(from + side), toRay(to + side), std::max(0.6f * px, 0.6f), kTubeEdge);
+            fastLine(toRay(from - side), toRay(to - side), std::max(0.6f * px, 0.6f), kTubeEdge);
+        }
+    }
+    auto zygote = [&](const RingBody& body, float maturity) {
+        const Frame f = frameOf(body);
+        const float rx = (0.25f + 0.35f * maturity) * f.half, ry = (0.35f + 0.4f * maturity) * f.width;
+        constexpr int kN = 28;
+        Vec2 prev;
+        for (int k = 0; k <= kN; ++k) {
+            const float t = 6.2831853f * static_cast<float>(k) / kN;
+            const Vec2 p = f.c + f.h * (rx * std::cos(t)) + f.side * (ry * std::sin(t));
+            if (k > 0) {
+                fastTriangle(toRay(f.c), toRay(prev), toRay(p), Fade(kZygote, 0.4f + 0.6f * maturity));
+                fastLine(toRay(prev), toRay(p), std::max(0.8f * px, 1.2f), kZygoteRim);
+            }
+            prev = p;
+        }
+    };
+    for (const auto [e, pair, body] : reg.view<AlgalPair, RingBody>().each()) { // formándose en la receptora
+        if (pair.donor || !reg.all_of<Species>(e))
+            continue;
+        const SpeciesInfo& info = speciesInfo(reg.get<Species>(e).id);
+        const float total = info.algalTubeHours + info.algalTransferHours + info.algalZygoteHours;
+        const float start = (info.algalTubeHours + info.algalTransferHours) / std::max(1e-6f, total);
+        if (pair.progress > start)
+            zygote(body, (pair.progress - start) / std::max(1e-6f, 1.0f - start));
+    }
+    for (const auto [e, z, body] : reg.view<Zygospore, RingBody>().each())
+        zygote(body, z.maturity);
+}
+
 } // namespace
 
 void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Rectangle view) {
@@ -1158,6 +1219,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
     setActiveBatch(&batch_); // membranas, gránulos y apéndices: una sola llamada (ver TriangleBatch)
     drawStalks(reg, px, view);
     drawFeet(world, px, view);
+    drawAlgalConjugation(reg, px);
 
     for (const auto [e, body, anatomy] : reg.view<RingBody, CellAnatomy>().each()) {
         const Locomotion* loco = reg.try_get<Locomotion>(e);
@@ -1304,7 +1366,8 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 fastTriangle(toRay(tip + h * 8.0f), toRay(tip + Vec2{-h.y, h.x} * 5.0f), toRay(tip - Vec2{-h.y, h.x} * 5.0f), kMouth);
                 fastTriangle(toRay(tip + h * 8.0f), toRay(tip - Vec2{-h.y, h.x} * 5.0f), toRay(tip + Vec2{-h.y, h.x} * 5.0f), kMouth);
             } else if (style == CellStyle::HelicalRibbon) {
-                drawSpiralPlastid(body, time);
+                if (!reg.any_of<EmptyWall, Zygospore>(e)) // sin protoplasto, o condensado en la cigospora
+                    drawSpiralPlastid(body, time);
             } else if (style == CellStyle::AxialPlate) {
                 const Metabolism* mm = reg.try_get<Metabolism>(e);
                 drawPlatePlastid(body, mm ? mm->light : 0.5f);

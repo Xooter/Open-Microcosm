@@ -606,6 +606,8 @@ class World {
     void foundStarColony(entt::entity root, Rng& rng, bool randomStage);
     bool joinStarColony(entt::entity mother, entt::entity child);
     void applyStarColonies(float dt);
+    // Conjugación escalariforme de Spirogyra (game/world_algal_conjugation.cpp).
+    void updateAlgalConjugation(float dt);
     // Volteretas de Closterium (game/world_somersault.cpp).
     void updateSomersault(entt::entity e, RingBody& body, Locomotion& loco, float dt);
     void stopSomersault(entt::entity e, RingBody& body);

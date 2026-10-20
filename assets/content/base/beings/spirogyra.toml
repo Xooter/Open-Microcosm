@@ -23,6 +23,15 @@ temperature = [5.0, 35.0]
 storage = "starch"
 wall = "cellulose"
 genome = { chloroplasts = 1.0, trichocysts = 0.0 }
+# Conjugación escalariforme: con el nitrógeno limitando, dos filamentos de tipos distintos lado a lado
+# forman tubos entre células enfrentadas; el contenido de una pasa a la otra y queda una cigospora
+# (Transeau 1951; Kreutz). Distancia y tiempos estimados.
+[being.algal_conjugation]
+reach = 40.0
+tube_hours = 3.0
+transfer_hours = 1.0
+zygote_hours = 2.0
+
 [being.shape]
 semi_major_axis = 30.0
 semi_minor_axis = 15.0

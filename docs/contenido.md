@@ -143,6 +143,10 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   de un alga de la biomasa del huésped). Se reparten en la división.
 - `[being.signal_toxicity]`: sensibilidad a una señal tóxica de otro ser (los cuerpos R de un killer).
   `signal` y `ec50` [µM]: la dosis tóxica de referencia; mata si la pasa.
+- `[being.algal_conjugation]`: conjugación escalariforme (*Spirogyra*): con el nitrógeno limitando, células de
+  filamentos de tipos distintos lado a lado (a menos de `reach` [µm]) se emparejan; `tube_hours`,
+  `transfer_hours` (el contenido de la donante pasa a la receptora) y `zygote_hours` [h biológicas]. La
+  receptora queda como cigospora latente y la donante como pared vacía.
 - `[being.somersault]`: volteretas (*Closterium*): cada `interval_s` [s] en promedio fija una punta, se para
   sobre ella y cae del otro lado en `duration_s` [s], alternando las puntas.
 - `[being.semicell]`: desmidias (con silueta): `regrowth_hours` [h biológicas] en que la semicélula nueva

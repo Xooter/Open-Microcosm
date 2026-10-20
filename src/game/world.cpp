@@ -325,6 +325,7 @@ void World::step(float dt) {
     updateLifecycle(dt);     // metabolismo, división y muerte
     updateContractileVacuoles(dt);
     updateSemicells(dt);
+    updateAlgalConjugation(dt);
     tickDefenses(dt);
     excludeFromCells();
 
@@ -2872,6 +2873,12 @@ void World::updateLifecycle(float dt) {
         // azúcares); no se simula su metabolismo ni se divide (es un tejido maduro).
         if (registry_.all_of<Protoplast>(e))
             continue;
+        // Pared vacía de Spirogyra, o donante pasando su contenido: no tiene metabolismo propio.
+        // Simplificación: durante el pasaje (horas) la donante no respira.
+        if (registry_.all_of<EmptyWall>(e))
+            continue;
+        if (const AlgalPair* ap = registry_.try_get<AlgalPair>(e); ap && ap->donor && ap->progress > 0.0f)
+            continue;
         Digestion* dig = registry_.try_get<Digestion>(e);
         const Locomotion* loco = registry_.try_get<Locomotion>(e);
         MetabolicInput in;
@@ -2920,7 +2927,7 @@ void World::updateLifecycle(float dt) {
         if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e);
             ac && (ac->phase == CellPhase::G0 || ac->phase == CellPhase::Apoptotic || meta.biomass >= 2.0f * meta.birthBiomass))
             in.growthScale = 0.0f;
-        if (cyst)
+        if (cyst || registry_.all_of<Zygospore>(e)) // la cigospora está latente, como un quiste
             applyCyst(in);
         const char* stressCause = applyEnvironmentStress(e, body, info, in, bioDt);
         const float phosphorusBefore = meta.phosphorus, nitrogenBefore = meta.nitrogen;
@@ -3023,6 +3030,9 @@ void World::updateLifecycle(float dt) {
                        (dig ? vacuoleContentArea(*dig) : 0.0f);
         if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e)) // redondeada en mitosis y apoptosis
             target = animalTargetArea(e, *ac, target);
+        // La pared de la receptora no crece con lo que recibe: el contenido se condensa en la cigospora.
+        if (registry_.any_of<AlgalPair, Zygospore>(e))
+            target = std::abs(body.restArea);
         const float before = std::abs(body.restArea);
         // Las células de un filamento crecen solo a lo largo (pared rígida de ancho fijo).
         if (info.filament && !registry_.all_of<Zoospore>(e))
@@ -3056,6 +3066,9 @@ void World::updateLifecycle(float dt) {
 
         // Células animales: su ciclo por fases, el contacto y la apoptosis (game/world_animal.cpp).
         if (updateAnimalCell(e, body, meta, bioDt))
+            continue;
+        // La cigospora no se divide ni se enquista (germina después de un reposo que no se simula).
+        if (registry_.any_of<Zygospore, AlgalPair>(e))
             continue;
         // Quistes (Didinium): se enquista con hambre y sale cuando vuelve a haber presas cerca.
         if (cyst) {
@@ -3697,8 +3710,8 @@ Census World::census() const {
         const Metabolism* m = registry_.try_get<Metabolism>(e);
         const float mass = m ? m->biomass : cellMassPmol(body.restArea / cellInfo(registry_, e).outlineAreaFactor);
         c.totalBiomass += mass;
-        if (const Species* sp = registry_.try_get<Species>(e))
-            ++c.species[static_cast<int>(sp->id)];
+        if (const Species* sp = registry_.try_get<Species>(e); sp && !registry_.all_of<EmptyWall>(e))
+            ++c.species[static_cast<int>(sp->id)]; // una pared vacía no es una célula viva
         const Lineage* lin = registry_.try_get<Lineage>(e);
         if (lin && lin->run == run_) {
             c.lineageBiomass += mass;
@@ -4433,9 +4446,12 @@ std::vector<entt::entity> World::spawnFilament(SpeciesId species, Vec2 start, fl
     const Vec2 dir = {std::cos(angle), std::sin(angle)};
     std::vector<entt::entity> chain;
     Rng rng(config_.seed, rng_stream::kPopulate, 9000 + registry_.view<RingBody>().size(), 0);
+    // Todo el filamento es un clon: un solo tipo de apareamiento (la conjugación es entre filamentos).
+    const float mating = Rng(config_.seed, rng_stream::kMatingType, registry_.view<RingBody>().size(), 0).uniform() < 0.5f ? 0.0f : 1.0f;
     for (int k = 0; k < cells; ++k) {
         Genome g = speciesGenome(species);
         mutate(g, info.locomotion, rng, 0.3f);
+        g[Gene::MatingType] = mating;
         const Vec2 p = start + dir * (static_cast<float>(k) * (2.0f * info.spec.radiusX + 4.0f));
         chain.push_back(spawnOrganism(species, {wrapCoord(p.x, width_), wrapCoord(p.y, height_)}, g, run, angle));
         if (k > 0)

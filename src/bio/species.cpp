@@ -246,6 +246,18 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         if (s.testate == 0)
             r.errors.push_back(r.where + ": 'testate' es \"lobose\" o \"filose\"");
     }
+    if (const toml::table* ac = r.table("algal_conjugation")) {
+        constexpr const char* kKeys[] = {"reach", "tube_hours", "transfer_hours", "zygote_hours"};
+        toml_io::warnUnknown(*ac, kKeys, r.where + " [algal_conjugation]", warnings);
+        Reader cr{*ac, r.where + " [algal_conjugation]", {}};
+        cr.count("reach", s.algalPairReach);
+        cr.count("tube_hours", s.algalTubeHours);
+        cr.count("transfer_hours", s.algalTransferHours);
+        cr.count("zygote_hours", s.algalZygoteHours);
+        if (s.algalPairReach <= 0.0f || s.algalTubeHours <= 0.0f || s.algalTransferHours <= 0.0f || s.algalZygoteHours <= 0.0f)
+            cr.errors.push_back(cr.where + ": 'reach' y las horas tienen que ser positivos");
+        r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
     if (const toml::table* so = r.table("somersault")) {
         constexpr const char* kKeys[] = {"interval_s", "duration_s"};
         toml_io::warnUnknown(*so, kKeys, r.where + " [somersault]", warnings);

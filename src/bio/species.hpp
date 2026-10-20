@@ -455,6 +455,15 @@ struct SpeciesInfo {
     float semicellRegrowthHours = 0.0f;
     // Volteretas (Closterium): fija una punta con mucílago, se para sobre ella y cae del otro lado; cada
     // `somersaultInterval` [s] en promedio, en `somersaultSeconds` [s]. 0: no da volteretas.
+    // Conjugación escalariforme (Spirogyra): con el nitrógeno limitando, dos filamentos de tipos de
+    // apareamiento distintos que quedan lado a lado se emparejan célula a célula a menos de
+    // `algalPairReach` [µm] y forman un tubo (`algalTubeHours`); el contenido de la célula donante pasa a la
+    // receptora (`algalTransferHours`) y ahí queda una cigospora (`algalZygoteHours` hasta madurar). Horas
+    // biológicas. 0 en `algalPairReach`: no se conjuga así.
+    float algalPairReach = 0.0f;
+    float algalTubeHours = 3.0f;
+    float algalTransferHours = 1.0f;
+    float algalZygoteHours = 2.0f;
     float somersaultInterval = 0.0f;
     float somersaultSeconds = 30.0f;
     float cvPeriod = 0.0f;
@@ -596,6 +605,19 @@ struct Somersault {
     float areaScale = 1.0f;
     std::vector<Vec2> base;
 };
+
+// Componentes de la conjugación escalariforme. `AlgalPair`: emparejada con `partner`; `progress` 0–1
+// (tubo, pasaje del contenido, cigospora). `Zygospore`: la receptora, latente (como un quiste) dentro de
+// su pared. `EmptyWall`: la donante, una pared vacía que queda en el filamento.
+struct AlgalPair {
+    entt::entity partner;
+    bool donor = false;
+    float progress = 0.0f;
+};
+struct Zygospore {
+    float maturity = 0.0f; // 0–1 (se oscurece al madurar)
+};
+struct EmptyWall {};
 
 // Componente: fase del ciclo de la vacuola contráctil (0–1: diástole hasta 0,9, sístole después).
 struct ContractileCycle {

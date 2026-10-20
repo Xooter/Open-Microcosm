@@ -159,6 +159,7 @@ add_library(biosim STATIC
     src/game/world_semicell.cpp
     src/game/world_neck.cpp
     src/game/world_somersault.cpp
+    src/game/world_algal_conjugation.cpp
     src/game/inspect.cpp
     src/game/world_chem.cpp
     src/game/world_program.cpp
