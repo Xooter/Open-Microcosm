@@ -25,7 +25,9 @@ semi_minor_axis = 2.5
 shape_memory = 30.0
 color = [204, 184, 120]
 nucleus = 0.3
+# Fusiforme: las dos puntas afinadas.
 taper = 0.6
+taper_front = 0.6
 
 [being.appearance]
 style = "frustule"

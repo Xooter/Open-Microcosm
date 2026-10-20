@@ -25,7 +25,8 @@ semi_minor_axis = 40.0
 shape_memory = 6.0
 color = [200, 186, 150]
 nucleus = 0.2
-taper = 0.3
+# El rostro con los flagelos es el polo anterior, angosto; el posterior es ancho y redondeado.
+taper_front = 0.4
 
 [being.appearance]
 style = "flagellar_rostrum"

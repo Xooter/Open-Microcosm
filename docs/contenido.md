@@ -144,7 +144,8 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   (fracción del daño por luz que evita al máximo) y `color`.
 - `[being.shape]`: `semi_major_axis` y `semi_minor_axis` [µm], `thickness` [µm] (por omisión, el
   menor), `shape_memory` [1/s], `color` RGB del citoplasma, `nucleus` (radio relativo),
-  `squareness` (2 elipse, ~6 cilindro), `taper` del polo posterior.
+  `squareness` (2 elipse, ~6 cilindro), `taper` (afinamiento del polo posterior) y `taper_front` (del anterior), de 0 a menos de 1;
+  con los dos, un huso.
 - `[being.appearance]`: `style`, un dibujo con nombre (`ciliate`, `flagellate`, `amoeboid`,
   `flagellar_rostrum`, `girdles_and_proboscis`, `helical_ribbon`, `axial_plate`,
   `stellate_plastids`, `reticulate_plastid`, `frustule`, `spherical_colony`, `flat_colony`,

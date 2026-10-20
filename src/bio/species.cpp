@@ -129,7 +129,7 @@ constexpr const char* kAnimalCellKeys[] = {"adherent", "rounded_radius", "contac
                                            "apoptosis_without_serum_h", "divides", "fmlp_chemotaxis"};
 constexpr const char* kLookKeys[] = {"style", "plastid_color"};
 constexpr const char* kShapeKeys[] = {"semi_major_axis", "semi_minor_axis", "shape_memory", "color",
-                                      "nucleus",        "squareness",    "taper",  "thickness"};
+                                      "nucleus",        "squareness",    "taper",  "taper_front", "thickness"};
 
 using toml_io::known;
 using toml_io::Reader;
@@ -612,7 +612,8 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         f.num("shape_memory", s.spec.shapeRate);
         f.num("nucleus", s.spec.nucleusFraction);
         f.num("squareness", s.spec.squareness);
-        f.num("taper", s.spec.taper);
+        f.num("taper", s.spec.taper.back);
+        f.num("taper_front", s.spec.taper.front);
         f.num("thickness", s.thickness);
         if (const toml::node* c = shape->get("color")) {
             const toml::array* a = c->as_array();
@@ -626,6 +627,8 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         }
         if (s.spec.radiusX <= 0.0f || s.spec.radiusY <= 0.0f || s.thickness < 0.0f)
             f.errors.push_back(f.where + ": los semiejes tienen que ser positivos");
+        if (s.spec.taper.back < 0.0f || s.spec.taper.back >= 1.0f || s.spec.taper.front < 0.0f || s.spec.taper.front >= 1.0f)
+            f.errors.push_back(f.where + ": 'taper' y 'taper_front' van de 0 a menos de 1");
         r.errors.insert(r.errors.end(), f.errors.begin(), f.errors.end());
     }
     if (!r.errors.empty()) {

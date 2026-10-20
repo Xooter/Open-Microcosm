@@ -22,9 +22,7 @@ float smoothMin(float a, float b, float k) {
     return b + (a - b) * h - k * h * (1.0f - h);
 }
 
-float taperFactorAt(const CellSpec& s, float x) {
-    return s.taper > 0.0f ? (1.0f - s.taper) + s.taper * std::clamp(0.5f * (x / s.radiusX + 1.0f), 0.0f, 1.0f) : 1.0f;
-}
+float taperFactorAt(const CellSpec& s, float x) { return taperFactor(s.taper, x, s.radiusX); }
 
 // Distancia aproximada (con signo) al borde de la superelipse afinada del cuerpo: exacta en el borde,
 // que es lo único que se usa (el nivel cero), y con la escala del semieje menor alrededor.

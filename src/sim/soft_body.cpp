@@ -509,7 +509,7 @@ void resampleRing(RingBody& body, BodyParticles& bp, std::size_t count) {
     body.ring = std::move(ring);
 }
 
-void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry, float squareness, float taper) {
+void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry, float squareness, const Taper& taper) {
     const std::size_t n = body.ring.size();
     Vec2 c;
     for (std::uint32_t s : body.ring)
@@ -534,9 +534,7 @@ void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry, fl
         const float r = std::pow(std::pow(std::abs(cp) / rx, squareness) + std::pow(std::abs(sp) / ry, squareness),
                                  -1.0f / squareness);
         const float x = r * cp;
-        // Afinamiento del polo posterior (ver taperFactor en bio/cell.hpp; sim no conoce a bio).
-        const float tf = taper > 0.0f ? (1.0f - taper) + taper * std::clamp(0.5f * (x / rx + 1.0f), 0.0f, 1.0f) : 1.0f;
-        body.restRing[i] = {x, r * sp * tf};
+        body.restRing[i] = {x, r * sp * taperFactor(taper, x, rx)};
     }
     for (std::size_t i = 0; i < n; ++i)
         body.restEdge[i] = length(body.restRing[(i + 1) % n] - body.restRing[i]);
@@ -620,7 +618,7 @@ void reshapeRestToOutline(RingBody& body, const BodyParticles& bp, const std::ve
     refresh(body, bp);
 }
 
-void reshapeRestEven(RingBody& body, const BodyParticles& bp, float rx, float ry, float squareness, float taper,
+void reshapeRestEven(RingBody& body, const BodyParticles& bp, float rx, float ry, float squareness, const Taper& taper,
                      bool pinMinorAxis) {
     const std::size_t n = body.ring.size();
     if (n < 3)
@@ -644,8 +642,7 @@ void reshapeRestEven(RingBody& body, const BodyParticles& bp, float rx, float ry
         const float r = std::pow(std::pow(std::abs(cp) / rx, squareness) + std::pow(std::abs(sp) / ry, squareness),
                                  -1.0f / squareness);
         const float x = r * cp;
-        const float tf = taper > 0.0f ? (1.0f - taper) + taper * std::clamp(0.5f * (x / rx + 1.0f), 0.0f, 1.0f) : 1.0f;
-        return Vec2{x, r * sp * tf};
+        return Vec2{x, r * sp * taperFactor(taper, x, rx)};
     };
     const std::size_t m = 8 * n;
     // Buffers por hilo (se llama en cada paso mientras la célula cambia de forma): sin asignar.

@@ -21,6 +21,8 @@ wall = "none"
 semi_major_axis = 90.0
 semi_minor_axis = 25.0
 shape_memory = 8.0
+# "Caudatum": el polo posterior más aguzado que el anterior (estimado).
+taper = 0.15
 color = [160, 176, 138]
 nucleus = 0.32
 

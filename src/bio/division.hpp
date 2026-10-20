@@ -3,6 +3,7 @@
 #include "sim/body_particles.hpp"
 
 #include "core/vec2.hpp"
+#include "sim/taper.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -17,7 +18,7 @@ struct CellShape {
     float shapeRate;        // memoria de forma propia [1/s]
     float nucleusFraction;
     float squareness = 2.0f; // superelipse (2 = elipse)
-    float taper = 0.0f;
+    Taper taper;
 };
 
 // Componente: división en curso (fisión binaria).

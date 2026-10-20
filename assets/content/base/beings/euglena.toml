@@ -22,6 +22,8 @@ wall = "none"
 semi_major_axis = 25.0
 semi_minor_axis = 7.0
 shape_memory = 4.0
+# Huso: el polo anterior romo (con el reservorio y el flagelo) y la cola aguzada (Kreutz; estimado).
+taper = 0.5
 color = [120, 172, 92]
 nucleus = 0.32
 

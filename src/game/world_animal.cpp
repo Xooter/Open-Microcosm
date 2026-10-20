@@ -330,7 +330,7 @@ bool World::updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, f
             // Por longitud de arco: de redonda a huso (o al revés) la proyección radial amontona los
             // puntos en los lados y la forma de reposo se cruza (la célula se empujaba sola).
             soft_body::reshapeRestEven(body, bodies_, r + (shape->radiusX * k - r) * t, r + (shape->radiusY * k - r) * t,
-                                       2.0f + (shape->squareness - 2.0f) * t, shape->taper * t);
+                                       2.0f + (shape->squareness - 2.0f) * t, Taper{shape->taper.back * t, shape->taper.front * t});
         }
     }
     if (ac.phase == CellPhase::Apoptotic) {
@@ -417,7 +417,7 @@ bool World::updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, f
             soft_body::resampleRing(body, bodies_, std::max<std::size_t>(48, static_cast<std::size_t>(6.2831853f * r / kMembraneSpacing) & ~std::size_t{1}));
             // Círculo por longitud de arco: si el cuerpo todavía no terminó de redondearse, la
             // proyección radial dejaba la forma de reposo plegada y el surco no cerraba.
-            soft_body::reshapeRestEven(body, bodies_, r, r, 2.0f, 0.0f, true);
+            soft_body::reshapeRestEven(body, bodies_, r, r, 2.0f, {}, true);
             // La célula mitótica es una esfera tensa (el córtex se contrae al redondearse): la
             // membrana se pone sobre su círculo, en el mismo orden. Al retraerse desde el huso podía
             // quedar un rulo cerrado alrededor del núcleo que la flexión no deshace (lo atrapaba).

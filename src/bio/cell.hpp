@@ -3,6 +3,7 @@
 #include "core/rng.hpp"
 #include "core/vec2.hpp"
 #include "sim/body_particles.hpp"
+#include "sim/taper.hpp"
 
 #include <entt/entity/registry.hpp>
 
@@ -19,7 +20,7 @@ struct CellSpec {
                             // córtex blando (Amoeba) ~0.3
     float nucleusFraction = 0.32f;          // radio del núcleo / semieje menor
     float squareness = 2.0f;                // superelipse: 2 = elipse, ~6 = cilindro (Spirogyra)
-    float taper = 0.0f;                     // afinamiento del polo posterior (0 = simétrica)
+    Taper taper;                            // afinamiento de los polos (sim/taper.hpp)
     std::uint8_t r = 180, g = 185, b = 160; // tinte del citoplasma
     // Con prolongaciones en el cuerpo, el contorno de la especie (bio/silhouette, para el tamaño típico)
     // reemplaza a la superelipse: `outlineScale` es el tamaño respecto del típico y `outlineBodyCenter`,
@@ -49,12 +50,9 @@ void destroyCell(entt::registry& registry, BodyParticles& bodies, entt::entity c
 CellSpec randomCellSpec(Rng& rng, Vec2 center);
 
 // Punto de la superelipse de semiejes (rx, ry) y exponente p en el parámetro t.
-// `taper` > 0 afina el polo posterior (x < 0): trompeta de Stentor.
-inline float taperFactor(float x, float rx, float taper) {
-    return taper > 0.0f ? (1.0f - taper) + taper * std::clamp(0.5f * (x / rx + 1.0f), 0.0f, 1.0f) : 1.0f;
-}
-inline Vec2 superellipsePoint(float rx, float ry, float p, float t, float taper = 0.0f) {
+// `taper` afina los polos (sim/taper.hpp).
+inline Vec2 superellipsePoint(float rx, float ry, float p, float t, const Taper& taper = {}) {
     const float c = std::cos(t), s = std::sin(t);
     const float x = rx * std::copysign(std::pow(std::abs(c), 2.0f / p), c);
-    return {x, ry * std::copysign(std::pow(std::abs(s), 2.0f / p), s) * taperFactor(x, rx, taper)};
+    return {x, ry * std::copysign(std::pow(std::abs(s), 2.0f / p), s) * taperFactor(taper, x, rx)};
 }

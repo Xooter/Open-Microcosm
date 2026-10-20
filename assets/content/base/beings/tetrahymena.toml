@@ -27,7 +27,8 @@ semi_minor_axis = 14.0
 shape_memory = 8.0
 color = [176, 182, 156]
 nucleus = 0.32
-taper = 0.3
+# Piriforme: el polo angosto es el anterior, el de la boca (Foissner et al. 1994).
+taper_front = 0.3
 
 
 # Lo que suelta al agua (hierro ferroso, hipoxantina, uracilo: la "estomatina", Smith-Somerville et al.

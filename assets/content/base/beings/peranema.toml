@@ -30,4 +30,5 @@ semi_minor_axis = 10.0
 shape_memory = 2.0
 color = [200, 198, 184]
 nucleus = 0.3
-taper = 0.4
+# Angosta adelante, de donde sale el flagelo, y ancha y truncada atrás (Kreutz).
+taper_front = 0.5

@@ -1516,7 +1516,7 @@ entt::entity World::spawnOrganism(SpeciesId species, Vec2 center, const Genome& 
         const float r = info.animalCell.roundRadius * traits.sizeScale;
         spec.radiusX = spec.radiusY = r;
         spec.squareness = 2.0f;
-        spec.taper = 0.0f;
+        spec.taper = {};
         spec.nucleusFraction = std::min(0.8f, spread.nucleusFraction * spread.radiusY / r);
     }
     const entt::entity e = spawnCell(spec);

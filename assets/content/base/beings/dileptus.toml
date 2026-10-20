@@ -30,7 +30,9 @@ thickness = 15.0
 shape_memory = 6.0
 color = [190, 190, 172]
 nucleus = 0.2
-taper = 0.4
+# La probóscide afina el polo anterior; atrás, una cola corta. Proporciones estimadas sobre Kreutz.
+taper_front = 0.7
+taper = 0.3
 
 [being.toxicysts]
 reach = 60.0

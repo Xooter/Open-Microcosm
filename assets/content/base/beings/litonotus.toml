@@ -27,7 +27,8 @@ thickness = 4.0
 shape_memory = 6.0
 color = [186, 188, 170]
 nucleus = 0.3
-taper = 0.5
+# Lanza con "cuello": se angosta hacia el polo anterior (Kreutz).
+taper_front = 0.6
 
 # Toxicistos en el borde de la hendidura oral: paraliza al Euplotes antes de tragarlo (Kreutz). Alcance y
 # duración estimados.

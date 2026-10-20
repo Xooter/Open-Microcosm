@@ -3,6 +3,7 @@
 #include "core/vec2.hpp"
 #include "sim/body_particles.hpp"
 #include "sim/dish.hpp"
+#include "sim/taper.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -109,7 +110,7 @@ void resampleRing(RingBody& body, BodyParticles& bp, std::size_t count);
 // Para las hijas de una división: cada punto toma el radio de la elipse en su dirección.
 // `squareness`: exponente de superelipse (2 = elipse, mayor = rectángulo redondeado).
 void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry, float squareness = 2.0f,
-                 float taper = 0.0f);
+                 const Taper& taper = {});
 // Igual, pero los puntos se reparten parejos por longitud de arco sobre la forma meta, en el orden
 // del anillo (el primero queda en la dirección que tiene ahora). Para cambiar mucho de forma (una
 // célula redonda que se extiende en un huso): la proyección radial de reshapeRest amontona los
@@ -117,7 +118,7 @@ void reshapeRest(RingBody& body, const BodyParticles& bp, float rx, float ry, fl
 // `pinMinorAxis`: corre el reparto para que dos puntos caigan justo en los extremos del eje menor
 // (con un número par de puntos), donde una división estrangula la cintura.
 void reshapeRestEven(RingBody& body, const BodyParticles& bp, float rx, float ry, float squareness = 2.0f,
-                     float taper = 0.0f, bool pinMinorAxis = false);
+                     const Taper& taper = {}, bool pinMinorAxis = false);
 // Forma de reposo de un contorno cualquiera (la silueta de una especie con cuernos o brazos), escalado
 // por `scale`: se orienta como mejor calza con la forma actual del anillo (un contorno sin simetría
 // no tiene eje principal confiable) y los puntos se reparten parejos por longitud de arco.

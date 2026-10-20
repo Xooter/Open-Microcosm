@@ -26,6 +26,8 @@ semi_minor_axis = 15.0
 shape_memory = 8.0
 color = [196, 194, 176]
 nucleus = 0.3
+# Micróstoma piriforme, con el polo anterior (el de la boca) más angosto (estimado).
+taper_front = 0.25
 
 [being.morph]
 name = "macrostoma"
