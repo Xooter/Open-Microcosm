@@ -28,7 +28,7 @@ semi_minor_axis = 58.5
 shape_memory = 6.0
 color = [206, 200, 176]
 nucleus = 0.25
-squareness = 3.0
+# Cilíndrica en la realidad; acá elipse (con un contorno más cuadrado el surco de la división no cierra).
 
 [being.appearance]
 style = "membranelle_crown"

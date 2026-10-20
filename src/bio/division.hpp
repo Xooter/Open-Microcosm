@@ -32,6 +32,9 @@ struct Dividing {
     // Forma de reposo de la madre al empezar: se transforma de a poco en dos hijas.
     std::vector<Vec2> motherRest;
     float motherArea = 0.0f;
+    // Ameba chica (perímetro de menos de 48 espaciados de membrana al empezar): remallado fino y corteza relajada durante
+    // la citocinesis (ver World::updateLifecycle). Una grande (Chaos) no lo necesita.
+    bool smallPlastic = false;
 };
 
 // Forma de reposo en división: interpola cada punto entre la elipse madre y su lugar en dos

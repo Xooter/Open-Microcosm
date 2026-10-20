@@ -30,7 +30,7 @@ semi_minor_axis = 22.0
 shape_memory = 60.0
 color = [200, 180, 126]
 nucleus = 0.25
-squareness = 2.6
+# Poliédrica en la realidad; acá elipse (con un contorno más cuadrado el surco de la división no cierra).
 
 [being.appearance]
 plastid_color = [168, 130, 50]

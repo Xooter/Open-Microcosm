@@ -683,10 +683,21 @@ TEST_CASE("mecánicas: Salpingoeca nada con el flagelo atrás y deja en el agua 
 }
 
 TEST_CASE("mecánicas: Lingulodinium destella al agitar el agua, y de noche mucho más que de día" * doctest::test_suite("largos")) {
-    World world = emptyWorld();
+    // A oscuras, como se mira la bioluminiscencia (y sin fotosíntesis no crece ni se divide: una hija que la
+    // roza la haría destellar y gastaría la carga).
+    WorldConfig config;
+    config.bacteria = 0;
+    config.detritus = 0;
+    config.seed = 7;
+    config.medium.surfaceLight = 0.0f;
+    World world(config);
     const entt::entity e = spawn(world, "lingulodinium", center(world));
     world.registry().get<Locomotion>(e).power = 0.0f;
+    world.registry().get<Metabolism>(e).reserves = 30.0f * world.registry().get<Metabolism>(e).biomass; // no se enquista de hambre
+    // Destello / carga disponible: la capacidad que permite el reloj en ese momento.
     auto shake = [&] {
+        const Luminescence* before = world.registry().try_get<Luminescence>(e);
+        const float charge = before ? before->charge : 1.0f;
         float best = 0.0f;
         for (int s = 0; s < 6; ++s) {
             const RingBody& rb = world.registry().get<RingBody>(e);
@@ -696,15 +707,16 @@ TEST_CASE("mecánicas: Lingulodinium destella al agitar el agua, y de noche much
                 best = std::max(best, l->glow);
         }
         world.clearStir();
-        return best;
+        return charge > 0.05f ? best / charge : -1.0f;
     };
     world.bioTimeScale() = 3600.0f; // ~1 h biológica después de 1 s: de día
     run(world, 1.0f);
     const float day = shake();
     run(world, 70.0f); // se recarga (y pasa a la noche subjetiva: ~71 h → hora 23)
     const float night = shake();
-    CHECK(night > 0.5f);
-    CHECK(day < 0.1f * night);
+    CHECK(night > 0.9f);              // de noche sale casi toda la carga
+    CHECK(day >= 0.0f);
+    CHECK(day < 0.1f * night);       // de día, ~2 %
 }
 
 TEST_CASE("mecánicas: Paramecium bursaria vive de sus Chlorella con luz; a oscuras las pierde" * doctest::test_suite("largos")) {

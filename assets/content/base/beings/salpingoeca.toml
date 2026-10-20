@@ -1,4 +1,4 @@
-# Salpingoeca rosetta: coanoflagelado de ~6 µm, el pariente unicelular más cercano de los animales. Un
+# Salpingoeca rosetta: coanoflagelado de ~6–9 µm (acá 9 × 7), el pariente unicelular más cercano de los animales. Un
 # solo flagelo rodeado por un collar de ~40 microvellosidades; el flagelo bate y empuja agua a través del
 # collar, donde quedan retenidas las bacterias, que la célula fagocita en su base (Dayel & King 2014,
 # PLoS ONE 9: e95577). La forma nadadora avanza con el flagelo atrás (empujadora, "pusher"), así que el
@@ -23,8 +23,8 @@ max_salinity = 40.0
 storage = "glycogen"
 wall = "none"
 [being.shape]
-semi_major_axis = 3.5
-semi_minor_axis = 2.8
+semi_major_axis = 4.5
+semi_minor_axis = 3.5
 shape_memory = 6.0
 color = [214, 212, 196]
 nucleus = 0.3
