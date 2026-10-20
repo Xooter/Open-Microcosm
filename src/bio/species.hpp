@@ -292,6 +292,12 @@ struct SpeciesInfo {
     Vec2 outlineBodyCenter;         // centro del cuerpo en el marco del contorno
     float outlineAreaFactor = 1.0f; // área del contorno / área de la elipse del cuerpo
     float outlineReach = 0.0f;      // distancia máxima del centro al contorno [µm] (punta del cuerno)
+    // Ancho mínimo de Feret de la silueta (cuerpo y prolongaciones del cuerpo) al tamaño típico [µm]:
+    // lo que tiene que abrir una boca para tragarla entrando de punta (M5).
+    float minWidth = 0.0f;
+    // Apertura máxima de la boca (citostoma dilatado) al tamaño típico [µm]; 0 = sin límite (las amebas
+    // envuelven, no tragan; o no hay dato).
+    float mouthWidth = 0.0f;
 };
 // Estilos de dibujo que el render sabe hacer (para validar los datos).
 const std::vector<std::string>& drawingStyles();
@@ -312,6 +318,12 @@ inline float speciesReach(const SpeciesInfo& info) {
 std::optional<SpeciesId> findSpecies(std::string_view key);
 // Los tipos de ser con una etiqueta (vacío si nadie la tiene).
 SpeciesSet speciesWithTag(std::string_view tag);
+// Apertura bucal (M5): la presa entra si su ancho mínimo (silueta con cuernos o brazos), a su escala
+// lineal, no pasa la boca del depredador a la suya. Una función para la placa y el cultivo.
+inline bool fitsMouth(const SpeciesInfo& predator, float predatorScale, const SpeciesInfo& prey, float preyScale) {
+    return predator.mouthWidth <= 0.0f || prey.minWidth * preyScale <= predator.mouthWidth * predatorScale;
+}
+
 bool hasTag(SpeciesId id, std::string_view tag);
 
 // Carga los [[being]] de un archivo TOML de un paquete (se agregan al registro, después de los que

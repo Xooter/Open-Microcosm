@@ -1,5 +1,6 @@
 # Didinium nasutum: ~110 × 80 µm, en barril; caza paramecios con su probóscide y los traga
-# enteros. Cuando pasa hambre se enquista.
+# enteros. Cuando pasa hambre se enquista. El citostoma se dilata casi hasta el ancho del cuerpo: traga
+# un Paramecium caudatum (~50 µm de ancho); apertura máxima estimada en 70 µm.
 
 [[being]]
 id = "didinium"
@@ -11,6 +12,7 @@ conjugation = true
 body_plan = "ciliate"
 feeding = "raptorial"
 prey = ["paramecium", "paramecium_aurelia", "colpidium"]
+mouth_width = 70.0
 encysts = true
 initial_count = 2
 handling_hours = 3.0

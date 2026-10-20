@@ -82,7 +82,7 @@ constexpr const char* kBeingKeys[] = {
     "encysts", "conjugation", "initial_count", "sessile", "stalk_length", "spasmoneme", "walks", "tentacle_reach",
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
-    "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "cyclosis", "ph",
+    "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "cyclosis", "ph",
     "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "stalk", "toxicysts", "histophagous", "light_damage",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
@@ -118,6 +118,24 @@ constexpr const char* kShapeKeys[] = {"semi_major_axis", "semi_minor_axis", "sha
 
 using toml_io::known;
 using toml_io::Reader;
+
+// Ancho mínimo de Feret (calibre mínimo) de la silueta, o el eje menor de la elipse del cuerpo.
+float minimumWidth(const SpeciesInfo& s) {
+    if (s.outline.empty())
+        return 2.0f * std::min(s.spec.radiusX, s.spec.radiusY);
+    float best = 1e9f;
+    for (int k = 0; k < 180; ++k) {
+        const float a = units::kPi * static_cast<float>(k) / 180.0f;
+        const Vec2 u = {std::cos(a), std::sin(a)};
+        float lo = 1e9f, hi = -1e9f;
+        for (const Vec2& q : s.outline) {
+            lo = std::min(lo, dot(q, u));
+            hi = std::max(hi, dot(q, u));
+        }
+        best = std::min(best, hi - lo);
+    }
+    return best;
+}
 
 // Un [[being]] → Entry. Devuelve false si tiene errores (se descarta).
 bool readBeing(const toml::table& t, const std::string& source, const std::string& pack, Entry& e,
@@ -182,6 +200,7 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
     r.flag("anaerobe", s.anaerobe);
     r.flag("posterior_mouth", s.mouthAtRear);
     r.flag("histophagous", s.histophagous);
+    r.count("mouth_width", s.mouthWidth);
     r.num("cyclosis", s.cyclosis);
     r.range("ph", s.phMin, s.phMax);
     r.range("temperature", s.tMin, s.tMax);
@@ -456,6 +475,7 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
                 s.outlineReach = std::max(s.outlineReach, length(q));
         }
     }
+    s.minWidth = minimumWidth(s);
     return true;
 }
 

@@ -62,6 +62,8 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
 - `feeding`: `oral_groove` | `anterior_pole` | `phagocytosis` | `raptorial` | `tentacles` | `neck` |
   `osmotrophy` | `none`.
 - `prey`, `mouth_prey` (lo que traga con la corriente oral), `flees_from`: ids de seres o etiquetas.
+- `mouth_width` [µm]: apertura máxima de la boca (citostoma dilatado) al tamaño típico. Una presa
+  entra si su ancho mínimo (la silueta con cuernos o brazos) no la pasa; 0 = sin límite.
 - `conjugation`: se conjuga con otra célula de su especie y de otro tipo de apareamiento.
 - `ph` y `temperature` [°C]: rango tolerado; fuera se paga como mantenimiento extra.
   `max_salinity`.

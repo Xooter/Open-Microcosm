@@ -191,6 +191,7 @@ class Culture {
     float cruiseSpeed(const CultureCell& cell) const;
     float radius(const CultureCell& cell) const;
     // Núcleo de encuentro [µm³/s] entre un cazador y una presa.
+    bool fits(const CultureCell& predator, const CultureCell& prey) const;
     double encounterKernel(const CultureCell& predator, const CultureCell& prey) const;
     // Tasa de encuentros con presas capturables [1/s] (sin manipulación ni saciedad).
     double preyEncounterRate(const CultureCell& predator) const;

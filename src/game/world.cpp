@@ -2392,7 +2392,8 @@ void World::feedAtMouth(entt::entity e, RingBody& body, const Locomotion& loco, 
         for (const RingBody* other : bodyList_) {
             const auto oe = static_cast<entt::entity>(other->id);
             const Species* os = registry_.try_get<Species>(oe);
-            if (!os || !mask.test(static_cast<std::size_t>(os->id)) || !smallPrey(*other) || registry_.any_of<Cyst, Captured>(oe))
+            if (!os || !mask.test(static_cast<std::size_t>(os->id)) || !smallPrey(*other) || registry_.any_of<Cyst, Captured>(oe) ||
+                !fitsMouth(e, body, oe, *other))
                 continue;
             if (std::any_of(swallows_.begin(), swallows_.end(), [&](const auto& sw) { return sw.second == oe; }))
                 continue;
@@ -3809,7 +3810,8 @@ Perception World::perceive(entt::entity e, const RingBody& body, SpeciesId speci
         const Species& os = registry_.get<Species>(oe);
         const auto bit = static_cast<std::size_t>(os.id);
         // Los histófagos (Coleps) van hacia las células dañadas, sean de su dieta o no.
-        const bool prey = (info.prey.test(bit) || (info.histophagous && isDamaged(oe))) &&
+        const bool damaged = info.histophagous && isDamaged(oe);
+        const bool prey = ((info.prey.test(bit) && (info.mouthWidth <= 0.0f || fitsMouth(e, body, oe, other))) || damaged) &&
                           !registry_.any_of<Cyst, Discharge>(oe) &&
                           (info.feeding != FeedingMode::Phagocytosis || std::abs(other.restArea) <= maxPreyArea);
         const bool threat = info.flee.test(bit) && !registry_.all_of<Cyst>(oe);
@@ -3950,6 +3952,9 @@ void World::hunt(entt::entity predator, const RingBody& body) {
         const bool damaged = info.histophagous && isDamaged(oe);
         if (!preyMask.test(static_cast<std::size_t>(os->id)) && !damaged)
             continue;
+        const bool fits = fitsMouth(predator, body, oe, *other);
+        if (!fits && !damaged)
+            continue; // no le entra en la boca (cuernos, brazos o ancho): ni la ataca
         if (std::any_of(swallows_.begin(), swallows_.end(), [&](const auto& sw) { return sw.second == oe; }))
             continue;
         const Vec2 shift = imageShift(*other, mouth);
@@ -3967,7 +3972,7 @@ void World::hunt(entt::entity predator, const RingBody& body) {
             continue;
         // Histófago (Coleps): una célula dañada más grande que lo que traga se come a mordiscos, entre
         // varios (Kreutz; Foissner et al. 1999).
-        if (damaged && std::abs(other->restArea) > maxBite) {
+        if (damaged && (!fits || std::abs(other->restArea) > maxBite)) {
             nibbles_.push_back({predator, oe});
             return;
         }
@@ -3975,6 +3980,18 @@ void World::hunt(entt::entity predator, const RingBody& body) {
             swallows_.push_back({predator, oe});
         return;
     }
+}
+
+float World::linearScale(entt::entity e, const RingBody& body) const {
+    // Tamaño lineal de la célula respecto del típico de su especie (el área de reposo crece con la masa).
+    const SpeciesInfo& info = cellInfo(registry_, e);
+    const float typical = info.outlineArea > 0.0f ? info.outlineArea : units::kPi * info.spec.radiusX * info.spec.radiusY;
+    return typical > 0.0f ? std::sqrt(std::abs(body.restArea) / typical) : 1.0f;
+}
+
+bool World::fitsMouth(entt::entity predator, const RingBody& predatorBody, entt::entity prey, const RingBody& preyBody) const {
+    return ::fitsMouth(cellInfo(registry_, predator), linearScale(predator, predatorBody), cellInfo(registry_, prey),
+                       linearScale(prey, preyBody));
 }
 
 bool World::isDamaged(entt::entity e) const {

@@ -480,3 +480,15 @@ TEST_CASE("mecánicas: Coleps come a mordiscos una célula paralizada más grand
     run(world, 3.0f);
     CHECK((!world.registry().valid(p) || world.registry().get<Metabolism>(p).biomass < 0.8f * before));
 }
+
+TEST_CASE("mecánicas: la apertura bucal deja afuera a Staurastrum por sus brazos y no a Cosmarium (M5)") {
+    const SpeciesInfo& frontonia = speciesInfo(*findSpecies("frontonia"));
+    const SpeciesInfo& staurastrum = speciesInfo(*findSpecies("staurastrum"));
+    const SpeciesInfo& cosmarium = speciesInfo(*findSpecies("cosmarium"));
+    CHECK(staurastrum.minWidth > 2.0f * staurastrum.spec.radiusY + 30.0f); // los brazos la ensanchan
+    CHECK(fitsMouth(frontonia, 1.0f, cosmarium, 1.0f));
+    CHECK_FALSE(fitsMouth(frontonia, 1.0f, staurastrum, 1.0f));
+    CHECK(fitsMouth(speciesInfo(*findSpecies("amoeba")), 1.0f, staurastrum, 1.0f)); // sin boca: envuelve
+    // Una Frontonia chica (la mitad) ya no traga un Cosmarium.
+    CHECK_FALSE(fitsMouth(frontonia, 0.5f, cosmarium, 1.0f));
+}

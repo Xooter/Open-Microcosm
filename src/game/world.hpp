@@ -385,6 +385,9 @@ class World {
     bool isSatiated(entt::entity e) const;
     // Herida, atrapada o moribunda (lo que comen los histófagos).
     bool isDamaged(entt::entity e) const;
+    // Apertura bucal (M5): ¿la presa cabe en la boca del depredador?
+    bool fitsMouth(entt::entity predator, const RingBody& predatorBody, entt::entity prey, const RingBody& preyBody) const;
+    float linearScale(entt::entity e, const RingBody& body) const;
     const WorldConfig& config() const { return config_; } // con la que se creó
     const MediumParams& medium() const { return medium_; }
     // Debug: mata (lisa) a la célula bajo el cursor.

@@ -702,6 +702,14 @@ float Culture::radius(const CultureCell& c) const {
     return base * std::cbrt(std::max(0.5f, c.meta.biomass / std::max(1e-6f, c.meta.targetBirthBiomass)));
 }
 
+bool Culture::fits(const CultureCell& predator, const CultureCell& prey) const {
+    // Apertura bucal (M5), con la escala lineal de cada célula (genoma y masa actual).
+    auto scale = [](const CultureCell& c) {
+        return c.heredity.traits.sizeScale * std::cbrt(std::max(0.5f, c.meta.biomass / std::max(1e-6f, c.meta.targetBirthBiomass)));
+    };
+    return fitsMouth(speciesInfo(predator.species), scale(predator), speciesInfo(prey.species), scale(prey));
+}
+
 double Culture::encounterKernel(const CultureCell& predator, const CultureCell& prey) const {
     const SpeciesInfo& info = speciesInfo(predator.species);
     const double reach = std::max(info.tentacleReach, info.neckReach);
@@ -720,7 +728,7 @@ double Culture::preyEncounterRate(const CultureCell& predator) const {
         return 0.0;
     double rate = 0.0;
     for (const CultureCell& q : cells_)
-        if (&q != &predator && !q.cyst && info.prey.test(static_cast<std::size_t>(q.species)))
+        if (&q != &predator && !q.cyst && info.prey.test(static_cast<std::size_t>(q.species)) && fits(predator, q))
             rate += encounterKernel(predator, q) * (1.0 - q.heredity.traits.trichocystDefense);
     return rate / volumeUm3_;
 }
@@ -837,7 +845,7 @@ void Culture::feed(float dt, float bioDt) {
         std::size_t chosen = cells_.size();
         for (std::size_t k = 0; k < cells_.size(); ++k) {
             const CultureCell& q = cells_[k];
-            if (k == i || q.cyst || !info.prey.test(static_cast<std::size_t>(q.species)))
+            if (k == i || q.cyst || !info.prey.test(static_cast<std::size_t>(q.species)) || !fits(p, q))
                 continue;
             pick -= encounterKernel(p, q) * (1.0 - q.heredity.traits.trichocystDefense);
             chosen = k;
