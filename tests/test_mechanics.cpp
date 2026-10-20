@@ -267,45 +267,6 @@ TEST_CASE("mecánicas: Stentor se extiende, se contrae entero ante una sacudida 
     CHECK(simpleRing(world, e));
 }
 
-TEST_CASE("mecánicas: la contracción de un Spirostomum deforma el agua a cientos de µm (Mathijssen 2019)") {
-    // Onda de disparo hidrodinámica: el remolino de una contracción supera el umbral de deformación de
-    // sus vecinos (1/s) a ~1 cuerpo de distancia. Se mide el flujo de fondo del paso siguiente.
-    World world = emptyWorld(23);
-    const Vec2 c = center(world);
-    const entt::entity e = spawn(world, "spirostomum", c);
-    world.registry().get<Locomotion>(e).power = 0.0f; // quieto
-    run(world, 3.0f);                                 // extendido
-    auto strainAt = [&](Vec2 p) {
-        constexpr float d = 10.0f;
-        const Fluid& f = world.fluid();
-        const Vec2 ux1 = f.backgroundAt(p + Vec2{d, 0.0f}), ux0 = f.backgroundAt(p - Vec2{d, 0.0f});
-        const Vec2 uy1 = f.backgroundAt(p + Vec2{0.0f, d}), uy0 = f.backgroundAt(p - Vec2{0.0f, d});
-        const float dudx = (ux1.x - ux0.x) / (2 * d), dvdy = (uy1.y - uy0.y) / (2 * d);
-        const float dudy = (uy1.x - uy0.x) / (2 * d), dvdx = (ux1.y - ux0.y) / (2 * d);
-        return std::sqrt((dudx - dvdy) * (dudx - dvdy) + (dudy + dvdx) * (dudy + dvdx));
-    };
-    auto maxStrainAround = [&](float radius) {
-        const Vec2 at = world.registry().get<RingBody>(e).centroid;
-        float worst = 0.0f;
-        for (int k = 0; k < 32; ++k) {
-            const float a = 6.2831853f * static_cast<float>(k) / 32.0f;
-            worst = std::max(worst, strainAt(at + Vec2{std::cos(a), std::sin(a)} * radius));
-        }
-        return worst;
-    };
-    const float calm = maxStrainAround(250.0f);
-    // Un toque fuerte a un costado del centro: se contrae.
-    const RingBody& rb = world.registry().get<RingBody>(e);
-    const Vec2 h = bodyHeading(rb);
-    world.setStir(rb.centroid + Vec2{-h.y, h.x} * 30.0f, h * 1500.0f, 30.0f);
-    world.step(kDt);
-    world.clearStir();
-    REQUIRE(world.registry().get<Contraction>(e).state > 0.99f);
-    world.step(kDt); // el impulso entra en el flujo de fondo de este paso
-    CHECK(calm < 0.1f);
-    CHECK(maxStrainAround(250.0f) > 1.0f);
-}
-
 namespace {
 
 const Stalk* stalkOf(const World& world, entt::entity zooid) {

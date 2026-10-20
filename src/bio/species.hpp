@@ -150,7 +150,7 @@ struct JumpSpec {
     float interval = 0.0f; // [s] medio entre saltos espontáneos (0: solo de escape)
 };
 
-// Contracción del cuerpo entero (Stentor, Spirostomum): los mionemas, disparados por Ca²⁺, acortan la
+// Contracción del cuerpo entero (Stentor): los mionemas, disparados por Ca²⁺, acortan la
 // célula en milisegundos y se re-extiende en segundos (Newman 1972; Mathijssen et al. 2019). La forma
 // de la especie es la contraída; extendida mide `extension` veces su largo (la vista conserva el área).
 // La dispara una respuesta con `action = "contract"`.

@@ -1,4 +1,4 @@
-// Contracción del cuerpo entero (Stentor, Spirostomum): mecanismo de docs/plan_mecanicas.md (punto 8).
+// Contracción del cuerpo entero (Stentor): mecanismo de docs/plan_mecanicas.md (punto 8).
 #include "core/profiling.hpp"
 #include "game/world.hpp"
 #include "sim/soft_body.hpp"
@@ -76,7 +76,7 @@ void World::updateContraction(entt::entity e, RingBody& body, bool trigger, floa
 
 void World::contractForDivision(entt::entity e, RingBody& body) {
     // Simplificación: la célula se divide con la forma contraída de la especie (el surco de la división
-    // no llega a cerrar en una célula de casi 1 mm). Stentor y Spirostomum reales se dividen extendidos.
+    // no llega a cerrar en una célula de casi 1 mm). Stentor real se divide extendido.
     Contraction* c = registry_.try_get<Contraction>(e);
     if (!c || c->stretch <= 1.0f)
         return;

@@ -32,7 +32,7 @@ Estado: ⬜ pendiente · 🟡 en curso · ✅ hecho.
 | 5 | *Blepharisma* (+ *Euglena*, *Chlamydomonas*) | fotofobia y daño fotodinámico | M1 | ✅ |
 | 6 | *Colpoda* | quiste reproductivo (2–4 hijas) | autosporas, `Cyst` | ✅ |
 | 7 | *Haematococcus* | pigmento por estrés que fotoprotege | 5 | ✅ |
-| 8 | *Stentor* → *Spirostomum* | contracción del cuerpo entero | M2 | ✅ |
+| 8 | *Stentor* | contracción del cuerpo entero | M2 | ✅ |
 | 8b | sésiles | pie y tallo realistas | M2, 8 | ✅ |
 | 9 | *Dileptus* (+ *Didinium*, *Litonotus*) | toxicistos y presa paralizada | M6 | ✅ |
 | 10 | *Coleps* | histofagia: células dañadas, comida en grupo | M6 | ✅ |
@@ -74,9 +74,10 @@ apical, *Acetabularia*.
 6. **Colpoda.** Se enquista y se divide adentro en 2–4 (`division = "reproductive_cyst"`).
 7. **Haematococcus.** Con luz alta y poco N acumula astaxantina en el quiste: baja el daño por luz y lo
    vira a rojo.
-8. **Stentor / Spirostomum.** Mionemas (Ca²⁺): el cuerpo se acorta en ms y se re-extiende en segundos.
-   Componente `Contraction` con forma contraída por `reshapeRestEven`. *Spirostomum* espera la división
-   de las células largas.
+8. **Stentor.** Mionemas (Ca²⁺): el cuerpo se acorta en ms y se re-extiende en segundos.
+   Componente `Contraction`; extendida, trompeta (`profile = "trumpet"`). *Spirostomum* se quitó: su
+   respuesta escalonada (evitación ante un choque, contracción ante un estímulo fuerte) y la división
+   de una célula de casi 1 mm quedan pendientes.
 8b. **Pie y tallo** (ver abajo).
 9. **Dileptus.** Probóscide con toxicistos que paralizan (`Paralyzed`); la presa paralizada no descarga
    tricocistos.

@@ -1785,8 +1785,6 @@ zoospora: nada con su corona de flagelos ~%.1f h bio y despues se fija	zoospore:
 −log₁₀ de la actividad de los iones H⁺. En la gota lo fija el sistema del carbonato: el CO₂ disuelto (que respiran las células y se equilibra con el aire) y el bicarbonato. Cada especie tolera un rango de pH.	−log₁₀ of the activity of H⁺ ions. In the drop it is set by the carbonate system: dissolved CO₂ (which cells respire and which equilibrates with the air) and bicarbonate. Each species tolerates a range of pH.
 Peridinium	Peridinium
 Dinoflagelado de ~50 um con una teca de placas de celulosa y un surco en la cintura. El flagelo del surco lo hace girar mientras avanza: nada en helice.	Dinoflagellate of ~50 um with a theca of cellulose plates and a groove around its waist. The groove flagellum spins it as it advances: it swims in a helix.
-Spirostomum	Spirostomum
-Ciliado gigante con forma de gusano, de casi 1 mm extendido. Ante una sacudida se contrae entero en milisegundos, y el remolino que levanta hace contraerse a sus vecinos.	Giant worm-shaped ciliate, almost 1 mm long when extended. When jolted it contracts entirely within milliseconds, and the swirl it raises makes its neighbours contract too.
 se contrajo entera (mionemas, Ca2+) y se vuelve a extender de a poco	it contracted entirely (myonemes, Ca2+) and is slowly re-extending
 salta: los cirros la lanzan varios cuerpos de largo en un instante	jumps: its cirri launch it several body lengths in an instant
 respuesta fobica: un cambio brusco (luz, corriente) la hace retroceder y girar	phobic response: a sudden change (light, current) makes it back up and turn

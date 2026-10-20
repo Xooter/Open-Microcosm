@@ -113,7 +113,6 @@ TEST_CASE("candidatos: Fragilariopsis se divide" * doctest::test_suite("largos")
 TEST_CASE("candidatos: Polarella se divide" * doctest::test_suite("largos")) { reproduces("polarella"); }
 TEST_CASE("candidatos: Staurastrum se divide" * doctest::test_suite("largos")) { reproduces("staurastrum"); }
 TEST_CASE("candidatos: Peridinium se divide" * doctest::test_suite("largos")) { reproduces("peridinium"); }
-TEST_CASE("candidatos: Spirostomum se divide" * doctest::test_suite("largos")) { reproduces("spirostomum"); }
 TEST_CASE("candidatos: Dileptus se divide" * doctest::test_suite("largos")) { reproduces("dileptus"); }
 TEST_CASE("candidatos: Lembadion se divide" * doctest::test_suite("largos")) { reproduces("lembadion"); }
 TEST_CASE("candidatos: Euplotes octocarinatus se divide" * doctest::test_suite("largos")) { reproduces("euplotes_octocarinatus"); }
