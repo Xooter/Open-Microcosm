@@ -30,6 +30,13 @@ nucleus = 0.32
 [being.appearance]
 style = "girdles_and_proboscis"
 
+# Toxicistos de la probóscide: la presa que toca queda paralizada y muere aunque se suelte (Wessenberg &
+# Antipa 1970, J. Protozool. 17: 250). Duración estimada.
+[being.toxicysts]
+reach = 10.0
+paralysis_hours = 0.5
+lethal = true
+
 [physiology.didinium.max_growth]
 # Aumento de los depredadores con presa abundante en la fig. 32 (días 4 a 6: de 4,8 a 31): ln(31/4,8)/2.
 value = 0.93

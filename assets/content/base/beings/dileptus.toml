@@ -1,0 +1,47 @@
+# Dileptus anser (D. margaritifer): haptórido de 250–500 µm, alargado, con una probóscide larga (casi un
+# tercio del cuerpo) armada de toxicistos en una hilera ventral; con ella golpea a ciliados y rotíferos,
+# que quedan paralizados o muertos, y los traga por el citostoma de la base de la probóscide (Kreutz;
+# Visscher 1923; Hausmann 1978). Acá ~250 µm. La probóscide es el tercio anterior de la elipse (con un
+# cuerno del cuerpo la división no cierra todavía: ver candidatos.md); el alcance de los toxicistos es
+# el de la probóscide. Alcance y duración de la parálisis estimados.
+[[being]]
+id = "dileptus"
+name = "Dileptus"
+tags = ["protist", "ciliate"]
+description = "Ciliado cazador de ~250 um con una trompa larga cargada de toxicistos: golpea a otros ciliados, los paraliza y los traga enteros."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "raptorial"
+relative_speed = 0.3
+prey = ["paramecium", "paramecium_aurelia", "colpidium", "tetrahymena", "euplotes", "colpoda", "halteria"]
+conjugation = true
+initial_count = 1
+handling_hours = 2.0
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 125.0
+semi_minor_axis = 20.0
+thickness = 15.0
+shape_memory = 6.0
+color = [190, 190, 172]
+nucleus = 0.2
+taper = 0.4
+
+[being.toxicysts]
+reach = 60.0
+paralysis_hours = 1.0
+lethal = true
+
+[physiology.dileptus.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 125, 20 y 15 µm: 157080 µm³).
+value = 0.89
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 157080 µm³). No es una medición de la especie."
+estimate = true

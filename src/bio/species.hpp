@@ -157,6 +157,15 @@ struct ContractionSpec {
     float extensionSeconds = 10.0f; // [s] para volver a extenderse
 };
 
+// Toxicistos (Didinium, Dileptus, Litonotus): extrusomas de la probóscide o del borde que, al tocar a
+// la presa, la paralizan (y en general la matan) antes de tragarla (Hausmann 1978, Int. Rev. Cytol. 52:
+// 197). Mecanismo M6: la presa queda `Paralyzed`.
+struct ToxicystSpec {
+    float reach = 0.0f;          // alcance desde el polo anterior [µm] (0: no tiene)
+    float paralysisHours = 0.5f; // [h biológicas]
+    bool lethal = true;          // al terminar la parálisis, la presa muere (lisis)
+};
+
 // Daño fotodinámico (Blepharisma: la blefarismina, con luz y O₂, genera especies reactivas; Giese
 // 1946). Por encima de `threshold` (irradiancia relativa) se paga como estrés, `stress` con la
 // lámpara al máximo (en las unidades del estrés de pH).
@@ -271,6 +280,8 @@ struct SpeciesInfo {
     std::vector<ResponseSpec> responses; // [[being.response]]
     JumpSpec jump;                      // [being.jump]
     ContractionSpec contraction;        // [being.contraction]
+    ToxicystSpec toxicysts;             // [being.toxicysts]
+    bool histophagous = false;          // come células dañadas (paralizadas, atrapadas, moribundas)
     StalkSpec stalk;                    // [being.stalk] (o las claves viejas sessile/stalk_length/spasmoneme)
     LightDamageSpec lightDamage;        // [being.light_damage]
     StressPigmentSpec stressPigment;    // [being.stress_pigment]
@@ -377,6 +388,12 @@ struct Captured {
 struct Contraction {
     float state = 1.0f;
     float stretch = 1.0f; // largo de la forma de reposo actual / el de la contraída
+};
+
+// Componente: paralizada por toxicistos (M6): no nada, no huye ni dispara tricocistos.
+struct Paralyzed {
+    float hours;       // [h biológicas] que le quedan
+    bool lethal = true; // al terminar, muere
 };
 
 struct Neck {

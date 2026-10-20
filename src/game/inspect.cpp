@@ -291,6 +291,8 @@ Inspection inspectCell(const World& w, entt::entity e) {
             now(fmt(text, an->stalk, an->contracted > 0.3f ? " (contraido)" : growing ? " (todavia lo secreta)" : ""));
         }
     }
+    if (const Paralyzed* par = reg.try_get<Paralyzed>(e))
+        now(fmt("paralizada por toxicistos (%.1f h bio)", par->hours));
     if (reg.all_of<Discharge>(e))
         now("disparo tricocistos: el depredador retrocede");
     if (const Neck* neck = reg.try_get<Neck>(e); neck && neck->length > 5.0f)

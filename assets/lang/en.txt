@@ -1790,3 +1790,6 @@ Ciliado gigante con forma de gusano, de casi 1 mm extendido. Ante una sacudida s
 se contrajo entera (mionemas, Ca2+) y se vuelve a extender de a poco	it contracted entirely (myonemes, Ca2+) and is slowly re-extending
 salta: los cirros la lanzan varios cuerpos de largo en un instante	jumps: its cirri launch it several body lengths in an instant
 respuesta fobica: un cambio brusco (luz, corriente) la hace retroceder y girar	phobic response: a sudden change (light, current) makes it back up and turn
+paralizada por toxicistos (%.1f h bio)	paralysed by toxicysts (%.1f h bio)
+Dileptus	Dileptus
+Ciliado cazador de ~250 um con una trompa larga cargada de toxicistos: golpea a otros ciliados, los paraliza y los traga enteros.	Hunting ciliate of ~250 um with a long proboscis loaded with toxicysts: it strikes other ciliates, paralyses them and swallows them whole.

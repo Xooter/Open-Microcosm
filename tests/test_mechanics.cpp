@@ -438,3 +438,45 @@ TEST_CASE("mecánicas: Stentor se fija por el pie y con hambre lo suelta, nada y
     CHECK(released);
     CHECK(reattached);
 }
+
+TEST_CASE("mecánicas: los toxicistos de Dileptus paralizan a la presa antes de tragarla (M6)") {
+    World world = emptyWorld();
+    const Vec2 c = center(world);
+    const entt::entity d = spawn(world, "dileptus", c);
+    world.registry().get<Locomotion>(d).power = 0.0f; // quieto: la presa la pone el test
+    const RingBody& db = world.registry().get<RingBody>(d);
+    const Vec2 tip = db.centroid + bodyHeading(db) * restHalfLength(world, d);
+    const auto pid = *findSpecies("paramecium");
+    Genome g = speciesGenome(pid);
+    g[Gene::Trichocysts] = 0.0f; // sin defensa: el resultado no depende del azar
+    const entt::entity p = world.spawnOrganism(pid, tip + bodyHeading(db) * 70.0f, g, 0);
+    bool paralyzed = false;
+    for (int s = 0; s < 120 && !paralyzed; ++s) {
+        world.step(kDt);
+        paralyzed = !world.registry().valid(p) || world.registry().all_of<Paralyzed>(p);
+    }
+    CHECK(paralyzed);
+    if (world.registry().valid(p)) { // paralizada: no nada
+        const Vec2 before = world.registry().get<RingBody>(p).centroid;
+        run(world, 1.0f);
+        if (world.registry().valid(p))
+            CHECK(length(world.registry().get<RingBody>(p).centroid - before) < 15.0f);
+    }
+}
+
+TEST_CASE("mecánicas: Coleps come a mordiscos una célula paralizada más grande que él (histofagia)") {
+    World world = emptyWorld();
+    world.bioTimeScale() = 3600.0f;
+    const Vec2 c = center(world);
+    const auto pid = *findSpecies("paramecium");
+    const entt::entity p = world.spawnOrganism(pid, c, speciesGenome(pid), 0);
+    world.registry().emplace<Paralyzed>(p, Paralyzed{100.0f, false});
+    const float before = world.registry().get<Metabolism>(p).biomass;
+    // Un Coleps con la boca contra el paramecio.
+    const RingBody& pb = world.registry().get<RingBody>(p);
+    const entt::entity k = spawn(world, "coleps", c + Vec2{0.5f * (pb.aabbMax.x - pb.aabbMin.x) + 30.0f, 0.0f});
+    world.registry().get<RingBody>(k).angle = 3.14159265f;
+    CHECK(world.isDamaged(p));
+    run(world, 3.0f);
+    CHECK((!world.registry().valid(p) || world.registry().get<Metabolism>(p).biomass < 0.8f * before));
+}

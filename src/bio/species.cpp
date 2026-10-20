@@ -83,7 +83,7 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "stalk", "light_damage",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "stalk", "toxicysts", "histophagous", "light_damage",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
@@ -96,6 +96,7 @@ constexpr std::pair<const char*, ResponseKind> kResponseKind[] = {
 constexpr std::pair<const char*, ResponseAction> kResponseAction[] = {
     {"avoid", ResponseAction::Avoid}, {"jump", ResponseAction::Jump}, {"contract", ResponseAction::Contract}};
 constexpr const char* kContractionKeys[] = {"extension", "extension_s"};
+constexpr const char* kToxicystKeys[] = {"reach", "paralysis_hours", "lethal"};
 constexpr const char* kStalkKeys[] = {"kind",        "length",         "width",          "bending_rate",
                                       "growth_hours", "decay_hours",   "contracted_fraction", "extension_s",
                                       "spontaneous_per_min", "detaches"};
@@ -180,6 +181,7 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
     r.flag("budding", s.budding);
     r.flag("anaerobe", s.anaerobe);
     r.flag("posterior_mouth", s.mouthAtRear);
+    r.flag("histophagous", s.histophagous);
     r.num("cyclosis", s.cyclosis);
     r.range("ph", s.phMin, s.phMax);
     r.range("temperature", s.tMin, s.tMax);
@@ -297,6 +299,16 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         if (s.jump.speed <= 0.0f || s.jump.duration <= 0.0f)
             jr.errors.push_back(jr.where + ": 'speed' y 'duration' tienen que ser positivos");
         r.errors.insert(r.errors.end(), jr.errors.begin(), jr.errors.end());
+    }
+    if (const toml::table* tt = r.table("toxicysts")) {
+        toml_io::warnUnknown(*tt, kToxicystKeys, r.where + " [toxicysts]", warnings);
+        Reader tr{*tt, r.where + " [toxicysts]", {}};
+        tr.count("reach", s.toxicysts.reach);
+        tr.count("paralysis_hours", s.toxicysts.paralysisHours);
+        tr.flag("lethal", s.toxicysts.lethal);
+        if (s.toxicysts.reach <= 0.0f || s.toxicysts.paralysisHours <= 0.0f)
+            tr.errors.push_back(tr.where + ": 'reach' y 'paralysis_hours' tienen que ser positivos");
+        r.errors.insert(r.errors.end(), tr.errors.begin(), tr.errors.end());
     }
     if (const toml::table* ct = r.table("contraction")) {
         toml_io::warnUnknown(*ct, kContractionKeys, r.where + " [contraction]", warnings);

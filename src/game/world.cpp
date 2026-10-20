@@ -2016,6 +2016,11 @@ void World::applyMotion(float dt) {
         } else if (!registry_.all_of<Anchored>(e)) {
             continue; // sin piloto ni tallo: nada que mover (las fijas inmóviles, como Gomphonema, siguen)
         }
+        if (registry_.all_of<Paralyzed>(e)) { // los toxicistos la dejaron sin cilios que batan
+            loco.forward = loco.turn = loco.burst = 0.0f;
+            loco.active = false;
+            contract = disturbed = false;
+        }
         Anchored* anchored = registry_.try_get<Anchored>(e);
         if (anchored && (contract || disturbed)) // el espasmonema y el zooide se contraen juntos
             contractStalk(*anchored, dt);
@@ -2894,6 +2899,27 @@ void World::updateLifecycle(float dt) {
 
         // Atrapada por un suctorio: los tentáculos le succionan el citoplasma (~1 h biológica).
         const char* deathCause = stressCause ? stressCause : "inanicion";
+        // Mordiscos de histófagos (Coleps): cada uno se lleva citoplasma (~1 h biológica, entre todos).
+        for (const auto& [by, prey] : nibbles_) {
+            if (prey != e || !registry_.valid(by) || !registry_.all_of<Metabolism>(by))
+                continue;
+            const float f = 1.0f - std::exp(-bioDt / 3600.0f);
+            const float fromReserves = meta.reserves * f, fromBiomass = meta.biomass * f;
+            meta.reserves -= fromReserves;
+            meta.biomass -= fromBiomass;
+            registry_.get<Metabolism>(by).reserves += fromReserves + fromBiomass;
+            deathCause = "comida por histofagos";
+        }
+        if (Paralyzed* par = registry_.try_get<Paralyzed>(e)) {
+            par->hours -= bioDt / 3600.0f;
+            if (par->hours <= 0.0f) {
+                if (par->lethal) {
+                    dying_.push_back({e, "paralizada por toxicistos"});
+                    continue;
+                }
+                unparalyzed_.push_back(e);
+            }
+        }
         if (const Captured* cap = registry_.try_get<Captured>(e)) {
             if (!registry_.valid(cap->by) || !registry_.all_of<Metabolism>(cap->by)) {
                 released_.push_back(e);
@@ -3087,6 +3113,10 @@ void World::updateLifecycle(float dt) {
     for (entt::entity e : released_)
         registry_.remove<Captured>(e);
     released_.clear();
+    for (entt::entity e : unparalyzed_)
+        registry_.remove<Paralyzed>(e);
+    unparalyzed_.clear();
+    nibbles_.clear();
     for (entt::entity e : settling_) {
         registry_.remove<Telotroch>(e);
         anchorHere(e, false); // el telotroco se asienta y secreta su tallo
@@ -3778,7 +3808,9 @@ Perception World::perceive(entt::entity e, const RingBody& body, SpeciesId speci
         const RingBody& other = registry_.get<RingBody>(oe);
         const Species& os = registry_.get<Species>(oe);
         const auto bit = static_cast<std::size_t>(os.id);
-        const bool prey = info.prey.test(bit) && !registry_.any_of<Cyst, Discharge>(oe) &&
+        // Los histófagos (Coleps) van hacia las células dañadas, sean de su dieta o no.
+        const bool prey = (info.prey.test(bit) || (info.histophagous && isDamaged(oe))) &&
+                          !registry_.any_of<Cyst, Discharge>(oe) &&
                           (info.feeding != FeedingMode::Phagocytosis || std::abs(other.restArea) <= maxPreyArea);
         const bool threat = info.flee.test(bit) && !registry_.all_of<Cyst>(oe);
         if (!prey && !threat)
@@ -3864,6 +3896,8 @@ bool World::repelledByTrichocysts(entt::entity predator, entt::entity preyEntity
     // Defensa: al sentir el ataque, la presa dispara sus tricocistos (arpones de proteína que
     // eyecta en milisegundos) y puede rechazar al depredador.
     const Heredity* h = registry_.try_get<Heredity>(preyEntity);
+    if (registry_.all_of<Paralyzed>(preyEntity))
+        return false; // paralizada por los toxicistos: ya no reacciona
     if (!h || h->traits.trichocystDefense <= 0.0f)
         return false;
     const RingBody& prey = registry_.get<RingBody>(preyEntity);
@@ -3905,23 +3939,53 @@ void World::hunt(entt::entity predator, const RingBody& body) {
     const Vec2 mouth = {bodies_.x[body.ring[front]], bodies_.y[body.ring[front]]};
     if (isSatiated(predator))
         return; // digiriendo: Didinium caza ~1 paramecio cada pocas horas
-    const SpeciesSet& preyMask = cellInfo(registry_, predator).prey;
+    const SpeciesInfo& info = cellInfo(registry_, predator);
+    const SpeciesSet& preyMask = info.prey;
+    const float maxBite = feedingParams_.maxPreyAreaRatio * std::abs(body.restArea);
     for (const RingBody* other : bodyList_) {
         const auto oe = static_cast<entt::entity>(other->id);
         const Species* os = registry_.try_get<Species>(oe);
-        if (!os || !preyMask.test(static_cast<std::size_t>(os->id)) || registry_.any_of<Cyst, Discharge>(oe))
+        if (!os || other == &body || registry_.any_of<Cyst, Discharge>(oe))
+            continue;
+        const bool damaged = info.histophagous && isDamaged(oe);
+        if (!preyMask.test(static_cast<std::size_t>(os->id)) && !damaged)
             continue;
         if (std::any_of(swallows_.begin(), swallows_.end(), [&](const auto& sw) { return sw.second == oe; }))
             continue;
         const Vec2 shift = imageShift(*other, mouth);
         const polygon::Closest cl = polygon::closestOnBoundary(other->poly.data(), static_cast<int>(other->poly.size()),
                                                                mouth - shift);
+        // Toxicistos: lo que toca la probóscide queda paralizado (si no la rechaza antes con sus
+        // tricocistos), aunque todavía no esté en la boca.
+        if (info.toxicysts.reach > 0.0f && !registry_.all_of<Paralyzed>(oe) &&
+            cl.dist2 < info.toxicysts.reach * info.toxicysts.reach) {
+            if (repelledByTrichocysts(predator, oe))
+                return;
+            registry_.emplace<Paralyzed>(oe, Paralyzed{info.toxicysts.paralysisHours, info.toxicysts.lethal});
+        }
         if (cl.dist2 > 8.0f * 8.0f)
             continue;
+        // Histófago (Coleps): una célula dañada más grande que lo que traga se come a mordiscos, entre
+        // varios (Kreutz; Foissner et al. 1999).
+        if (damaged && std::abs(other->restArea) > maxBite) {
+            nibbles_.push_back({predator, oe});
+            return;
+        }
         if (!repelledByTrichocysts(predator, oe))
             swallows_.push_back({predator, oe});
         return;
     }
+}
+
+bool World::isDamaged(entt::entity e) const {
+    // Herida, atrapada o moribunda: paralizada, sujeta por un suctorio, apoptótica o con menos de 60 %
+    // de la biomasa con que nació (la membrana deja salir citoplasma que atrae a los histófagos).
+    if (registry_.any_of<Paralyzed, Captured>(e))
+        return true;
+    if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e); ac && ac->phase == CellPhase::Apoptotic)
+        return true;
+    const Metabolism* m = registry_.try_get<Metabolism>(e);
+    return m && m->birthBiomass > 0.0f && m->biomass < 0.6f * m->birthBiomass;
 }
 
 void World::swallow(entt::entity predator, entt::entity preyEntity) {

@@ -216,7 +216,7 @@ TEST_CASE("sandbox: cada ser del catálogo cae en la categoría que le correspon
                        *findSpecies("frontonia"), *findSpecies("tokophrya"), *findSpecies("coleps"),
                        *findSpecies("blepharisma"), *findSpecies("colpoda"), *findSpecies("chilodonella"),
                        *findSpecies("litonotus"), *findSpecies("acineta"), *findSpecies("halteria"),
-                       *findSpecies("epistylis"), *findSpecies("spirostomum")}},
+                       *findSpecies("epistylis"), *findSpecies("spirostomum"), *findSpecies("dileptus")}},
         {C::Flagellates, {SpeciesId::Euglena, SpeciesId::Trichonympha, *findSpecies("peranema")}},
         {C::Amoebae, {SpeciesId::Amoeba, SpeciesId::Arcella, SpeciesId::Naegleria, *findSpecies("chaos"),
                       *findSpecies("euglypha")}},

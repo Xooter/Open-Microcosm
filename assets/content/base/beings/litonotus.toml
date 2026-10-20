@@ -29,6 +29,13 @@ color = [186, 188, 170]
 nucleus = 0.3
 taper = 0.5
 
+# Toxicistos en el borde de la hendidura oral: paraliza al Euplotes antes de tragarlo (Kreutz). Alcance y
+# duración estimados.
+[being.toxicysts]
+reach = 15.0
+paralysis_hours = 0.5
+lethal = true
+
 [physiology.litonotus.max_growth]
 # Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
 # °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 37,5, 9 y 4 µm: 5655 µm³).

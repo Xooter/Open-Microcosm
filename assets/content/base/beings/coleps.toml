@@ -4,8 +4,8 @@
 
 # Coleps hirtus: ciliado en barril de 40–65 × 18–35 µm (NIES, ref. 4613) con una armadura de placas de
 # carbonato de calcio amorfo, boca apical y tres espinas posteriores. Omnívoro e histófago: come algas,
-# flagelados y en grupo, células heridas o muertas. Acá caza flagelados y algas chicas (la armadura no
-# se modela: el gen de coraza es solo de flagelados y amebas).
+# flagelados y en grupo, células heridas o muertas (histófago: va hacia ellas y las come a mordiscos entre
+# varios). La armadura no se modela: el gen de coraza es solo de flagelados y amebas.
 [[being]]
 id = "coleps"
 name = "Coleps"
@@ -19,6 +19,7 @@ prey = ["chlamydomonas", "cryptomonas", "chlorella", "desmodesmus", "raphidoceli
 conjugation = true
 initial_count = 6
 handling_hours = 0.5
+histophagous = true
 cyclosis = 2.0
 ph = [6.0, 9.5]
 temperature = [2.0, 30.0]

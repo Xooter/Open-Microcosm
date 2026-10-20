@@ -383,6 +383,8 @@ class World {
     const DeathRecord* deathOf(entt::entity e) const;
     // ¿Está saciada (manipulando una presa entera o con el citoplasma lleno)?
     bool isSatiated(entt::entity e) const;
+    // Herida, atrapada o moribunda (lo que comen los histófagos).
+    bool isDamaged(entt::entity e) const;
     const WorldConfig& config() const { return config_; } // con la que se creó
     const MediumParams& medium() const { return medium_; }
     // Debug: mata (lisa) a la célula bajo el cursor.
@@ -805,6 +807,8 @@ class World {
     };
     std::vector<EngulfEvent> engulfs_;
     std::vector<std::pair<entt::entity, entt::entity>> swallows_;
+    std::vector<std::pair<entt::entity, entt::entity>> nibbles_; // histófago → célula dañada (este paso)
+    std::vector<entt::entity> unparalyzed_;
     std::unordered_map<entt::entity, Vec2> smallPreyCenter_;
     std::vector<WorldEvent> events_;
     std::uint32_t run_ = 1;

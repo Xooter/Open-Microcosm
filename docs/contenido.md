@@ -93,6 +93,10 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   secretarlo después de fijarse), `decay_hours` (lo que dura vacío), `contracted_fraction` y
   `extension_s` (espasmonema), `spontaneous_per_min`, `detaches` (con hambre el zooide se suelta y
   deja el tallo). Las claves viejas `sessile`, `stalk_length` y `spasmoneme` se siguen leyendo.
+- `[being.toxicysts]`: `reach` [µm] desde el polo anterior (probóscide), `paralysis_hours` y `lethal`.
+  Lo que toca queda paralizado (no nada, no huye, no dispara tricocistos) y, si es letal, muere al
+  terminar la parálisis. `histophagous = true` (en `[[being]]`): va hacia las células dañadas
+  (paralizadas, atrapadas, moribundas) y, si son grandes, las come a mordiscos entre varios.
 - `[being.light_damage]`: daño fotodinámico. Arriba de `threshold` (irradiancia relativa) se paga
   como estrés, `stress` con la lámpara al máximo; necesita O₂.
 - `[being.stress_pigment]`: pigmento de estrés (astaxantina). `rate_per_hour` con luz arriba de
