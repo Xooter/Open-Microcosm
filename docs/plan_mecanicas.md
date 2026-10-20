@@ -25,24 +25,24 @@ Estado: ⬜ pendiente · 🟡 en curso · ✅ hecho.
 
 | # | Ser | Mecánica | Depende de | Estado |
 |---|---|---|---|---|
-| 1 | *Peridinium* | nado helicoidal | — | ⬜ |
-| 2 | *Peranema* | deslizamiento con el flagelo rígido | — | ⬜ |
-| 3 | *Pediastrum* | cuernos como prolongaciones del cuerpo | — | ⬜ |
-| 4 | *Halteria* | saltos espontáneos y de escape | M1, M2 | ⬜ |
-| 5 | *Blepharisma* (+ *Euglena*, *Chlamydomonas*) | fotofobia y daño fotodinámico | M1 | ⬜ |
+| 1 | *Peridinium* | nado helicoidal | — | ✅ |
+| 2 | *Peranema* | deslizamiento con el flagelo rígido | — | ✅ |
+| 3 | *Pediastrum* | cuernos como prolongaciones del cuerpo | — | ✅ |
+| 4 | *Halteria* | saltos espontáneos y de escape | M1, M2 | ✅ |
+| 5 | *Blepharisma* (+ *Euglena*, *Chlamydomonas*) | fotofobia y daño fotodinámico | M1 | ✅ |
 | 6 | *Colpoda* | quiste reproductivo (2–4 hijas) | autosporas, `Cyst` | ⬜ |
-| 7 | *Haematococcus* | pigmento por estrés que fotoprotege | 5 | ⬜ |
-| 8 | *Stentor* → *Spirostomum* | contracción del cuerpo entero | M2 | ⬜ |
-| 8b | sésiles | pie y tallo realistas | M2, 8 | ⬜ |
-| 9 | *Dileptus* (+ *Didinium*, *Litonotus*) | toxicistos y presa paralizada | M6 | ⬜ |
-| 10 | *Coleps* | histofagia: células dañadas, comida en grupo | M6 | ⬜ |
+| 7 | *Haematococcus* | pigmento por estrés que fotoprotege | 5 | ✅ |
+| 8 | *Stentor* → *Spirostomum* | contracción del cuerpo entero | M2 | ✅ |
+| 8b | sésiles | pie y tallo realistas | M2, 8 | ✅ |
+| 9 | *Dileptus* (+ *Didinium*, *Litonotus*) | toxicistos y presa paralizada | M6 | ✅ |
+| 10 | *Coleps* | histofagia: células dañadas, comida en grupo | M6 | ✅ |
 | 11 | *Trachelomonas* | lórica que toma Fe del agua | balance | ⬜ |
 | 12 | *Dolichospermum* | acinetos | cianobacterias | ⬜ |
 | 13 | *Spirillum volutans* (+ *E. coli*) | aerotaxis en bandas | M8 | ⬜ |
-| 14 | depredadores | apertura bucal: los cuernos protegen | M5 | ⬜ |
-| 15 | *Lembadion* + *Euplotes* | kairomona y alas inducidas | M3, M4, M5 | ⬜ |
-| 16 | *Tetrahymena vorax* | microstoma → macrostoma | M3, M4, M5 | ⬜ |
-| 17 | *Ochromonas* (+ colonias de *Chlorella*) | mixotrofia; colonias inducidas | M3, M5 | ⬜ |
+| 14 | depredadores | apertura bucal: los cuernos protegen | M5 | ✅ |
+| 15 | *Lembadion* + *Euplotes* | kairomona y alas inducidas | M3, M4, M5 | ✅ |
+| 16 | *Tetrahymena vorax* | microstoma → macrostoma | M3, M4, M5 | ✅ |
+| 17 | *Ochromonas* (+ colonias de *Chlorella*) | mixotrofia; colonias inducidas | M3, M5 | 🟡 |
 | 18 | *Actinophrys* | axopodios que atrapan al contacto | `Captured`, M6 | ⬜ |
 | 19 | *Vampyrella* | perfora la pared de *Spirogyra* | `Captured` | ⬜ |
 | 20 | *Salpingoeca* (+ espermatozoide) | collar filtrador, flagelo posterior | M7, M3 | ⬜ |
@@ -148,6 +148,20 @@ de lejos. Primera etapa sin contactos célula–tallo.
 7. 6, 11, 12, 18, 19.
 8. M7 + M8: 13, 20.
 9. 21–28, cada uno con su plan.
+
+## Avance (19/10/2026)
+
+Hechas las etapas 1 a 6 (un commit cada una). La 17 quedó a medias: Ochromonas es mixótrofa, pero las
+colonias de Chlorella de Boraas et al. (1998) aparecen por selección, no por una señal, y esperan un gen
+de colonialidad. Spirostomum se divide con la forma contraída (simplificación).
+
+**Tests:** escritos en `tests/test_mechanics.cpp` (y los de reproducción en `test_candidates.cpp`), pero a
+pedido del usuario las etapas 3b a 6 **no se corrieron**: hay que correr `rapidos`, `largos` y
+`validacion` al terminar el plan y arreglar lo que falle. En los largos ya fallaban antes las divisiones
+de Ceratium y Staurastrum.
+
+**Pendiente:** etapa 7 (6 Colpoda, 11 Trachelomonas, 12 Dolichospermum, 18 Actinophrys, 19 Vampyrella),
+etapa 8 (13, 20) y 21–28.
 
 ## Riesgos
 
