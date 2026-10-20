@@ -398,6 +398,7 @@ class World {
     // Apertura bucal (M5): ¿la presa cabe en la boca del depredador?
     bool fitsMouth(entt::entity predator, const RingBody& predatorBody, entt::entity prey, const RingBody& preyBody) const;
     float linearScale(entt::entity e, const RingBody& body) const;
+    void updateLuminescence(entt::entity e, bool trigger, float dt);
     const WorldConfig& config() const { return config_; } // con la que se creó
     const MediumParams& medium() const { return medium_; }
     // Debug: mata (lisa) a la célula bajo el cursor.

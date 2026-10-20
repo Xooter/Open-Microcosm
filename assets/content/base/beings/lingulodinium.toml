@@ -1,0 +1,57 @@
+# Lingulodinium polyedra (Gonyaulax polyedra): dinoflagelado tecado marino de 40–54 µm, poliédrico, de las
+# mareas rojas de California. Bioluminiscente: la deformación del agua (una ola, un remo, la corriente
+# de un copépodo) dispara en milisegundos un destello azul de ~0,1 s desde los centelleones (Latz,
+# Bovard & Kirk 2004, Biol. Bull. 207: 145). La capacidad de brillar la regula su reloj circadiano: de
+# noche es decenas de veces mayor que de día, aun con luz constante (Hastings & Sweeney 1957, PNAS 43:
+# 804). Umbral de deformación, recarga y capacidad diurna: órdenes de magnitud, a verificar. Marino: no
+# aparece en las gotas de agua dulce (se inocula). Sin µmax publicado: usa el general.
+[[being]]
+id = "lingulodinium"
+name = "Lingulodinium"
+tags = ["protist", "flagellate", "dinoflagellate", "phototroph", "marine"]
+description = "Dinoflagelado marino de ~45 um que emite un destello azul cuando el agua se agita, sobre todo de noche: su reloj interno regula cuanto brilla."
+locomotion = "flagellum"
+body_plan = "dinoflagellate"
+relative_speed = 1.5
+helix_radius = 6.0
+helix_period = 1.0
+phototaxis = true
+encysts = true
+initial_count = 3
+chloroplasts = true
+ph = [7.0, 9.5]
+temperature = [10.0, 30.0]
+max_salinity = 45.0
+storage = "starch"
+wall = "cellulose"
+[being.shape]
+semi_major_axis = 24.0
+semi_minor_axis = 22.0
+shape_memory = 60.0
+color = [200, 180, 126]
+nucleus = 0.25
+squareness = 2.6
+
+[being.appearance]
+plastid_color = [168, 130, 50]
+
+[being.bioluminescence]
+flash_s = 0.1
+recharge_s = 60.0
+circadian = true
+day_capacity = 0.02
+
+# Deformación del agua por encima de ~10/s: destello.
+[[being.response]]
+field = "shear"
+kind = "above"
+threshold = 10.0
+action = "flash"
+refractory = 0.2
+
+[[being.response]]
+field = "touch"
+kind = "above"
+threshold = 0.5
+action = "flash"
+refractory = 0.2

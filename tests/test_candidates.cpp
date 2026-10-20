@@ -122,3 +122,4 @@ TEST_CASE("candidatos: Ochromonas se divide" * doctest::test_suite("largos")) { 
 TEST_CASE("candidatos: Actinophrys se divide" * doctest::test_suite("largos")) { reproduces("actinophrys"); }
 TEST_CASE("candidatos: Vampyrella se divide" * doctest::test_suite("largos")) { reproduces("vampyrella"); }
 TEST_CASE("candidatos: Salpingoeca se divide" * doctest::test_suite("largos")) { reproduces("salpingoeca"); }
+TEST_CASE("candidatos: Lingulodinium se divide" * doctest::test_suite("largos")) { reproduces("lingulodinium"); }

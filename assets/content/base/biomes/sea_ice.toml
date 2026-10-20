@@ -16,7 +16,7 @@ lichens = 0
 physarum = 0
 patchiness = 0.3
 base_weight = 0.0
-weights = { chlamydomonas = 0.6, euplotes = 2.0, navicula = 4.0, candida = 0.5, fragilariopsis = 4.0, polarella = 2.0 }
+weights = { chlamydomonas = 0.6, euplotes = 2.0, navicula = 4.0, candida = 0.5, fragilariopsis = 4.0, polarella = 2.0, lingulodinium = 0.0 }
 [biome.medium]
 temperature = -2.0
 salinity = 60.0

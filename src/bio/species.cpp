@@ -84,7 +84,7 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "stalk", "toxicysts", "histophagous", "release", "morph", "light_damage",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "bioluminescence", "stalk", "toxicysts", "histophagous", "release", "morph", "light_damage",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
@@ -95,7 +95,9 @@ constexpr std::pair<const char*, ResponseField> kResponseField[] = {
 constexpr std::pair<const char*, ResponseKind> kResponseKind[] = {
     {"step_up", ResponseKind::StepUp}, {"step_down", ResponseKind::StepDown}, {"above", ResponseKind::Above}};
 constexpr std::pair<const char*, ResponseAction> kResponseAction[] = {
-    {"avoid", ResponseAction::Avoid}, {"jump", ResponseAction::Jump}, {"contract", ResponseAction::Contract}};
+    {"avoid", ResponseAction::Avoid}, {"jump", ResponseAction::Jump}, {"contract", ResponseAction::Contract},
+    {"flash", ResponseAction::Flash}};
+constexpr const char* kBiolumKeys[] = {"flash_s", "recharge_s", "circadian", "day_capacity", "color"};
 constexpr const char* kContractionKeys[] = {"extension", "extension_s"};
 constexpr const char* kToxicystKeys[] = {"reach", "paralysis_hours", "lethal"};
 constexpr const char* kReleaseKeys[] = {"signal", "rate", "diffusion", "half_life_hours"};
@@ -380,6 +382,28 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         if (s.toxicysts.reach <= 0.0f || s.toxicysts.paralysisHours <= 0.0f)
             tr.errors.push_back(tr.where + ": 'reach' y 'paralysis_hours' tienen que ser positivos");
         r.errors.insert(r.errors.end(), tr.errors.begin(), tr.errors.end());
+    }
+    if (const toml::table* bt = r.table("bioluminescence")) {
+        toml_io::warnUnknown(*bt, kBiolumKeys, r.where + " [bioluminescence]", warnings);
+        Reader br{*bt, r.where + " [bioluminescence]", {}};
+        BioluminescenceSpec& bl = s.bioluminescence;
+        bl.present = true;
+        br.count("flash_s", bl.flashSeconds);
+        br.count("recharge_s", bl.rechargeSeconds);
+        br.flag("circadian", bl.circadian);
+        br.count("day_capacity", bl.dayCapacity);
+        if (const toml::node* c = bt->get("color")) {
+            const toml::array* a = c->as_array();
+            if (!a || a->size() != 3)
+                br.errors.push_back(br.where + ": 'color' tiene que ser [r, g, b] (0–255)");
+            else
+                for (std::size_t i = 0; i < 3; ++i)
+                    bl.color[i] = static_cast<std::uint8_t>(
+                        std::clamp((*a)[i].value<std::int64_t>().value_or(0), std::int64_t{0}, std::int64_t{255}));
+        }
+        if (bl.flashSeconds <= 0.0f || bl.rechargeSeconds <= 0.0f)
+            br.errors.push_back(br.where + ": 'flash_s' y 'recharge_s' tienen que ser positivos");
+        r.errors.insert(r.errors.end(), br.errors.begin(), br.errors.end());
     }
     if (const toml::table* ct = r.table("contraction")) {
         toml_io::warnUnknown(*ct, kContractionKeys, r.where + " [contraction]", warnings);

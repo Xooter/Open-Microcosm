@@ -67,6 +67,7 @@ struct Autopilot {
     float jump = 0.0f;       // [s] que le quedan al salto en curso
     float nextJump = -1.0f;  // [s] hasta el próximo salto espontáneo (< 0: sin sortear)
     bool contract = false;   // en este paso disparó la contracción del cuerpo (la aplica el mundo)
+    bool flash = false;      // en este paso disparó un destello (bioluminiscencia)
 };
 
 void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, const SpeciesInfo& species,

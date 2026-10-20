@@ -2020,6 +2020,8 @@ void World::applyMotion(float dt) {
                 sense.hasPrey = false; // saciada: no persigue presas
             steerAutopilot(*pilot, loco, body, speciesInfo(sp), sense, rng, dt);
             contract = pilot->contract;
+            if (pilot->flash || cellInfo(registry_, e).bioluminescence.present)
+                updateLuminescence(e, pilot->flash, dt);
             if (loco.burst > 0.0f) // el golpe de los cirros también lo frena la viscosidad del medio
                 if (const Heredity* hh = registry_.try_get<Heredity>(e))
                     loco.burst *= hh->traits.speed * viscositySpeed_;
@@ -4009,6 +4011,26 @@ void World::hunt(entt::entity predator, const RingBody& body) {
         if (!repelledByTrichocysts(predator, oe))
             swallows_.push_back({predator, oe});
         return;
+    }
+}
+
+void World::updateLuminescence(entt::entity e, bool trigger, float dt) {
+    // Destello y recarga en tiempo real (es la respuesta mecánica de la célula); el ritmo circadiano,
+    // con la hora biológica de laboratorio (la de los programas).
+    const BioluminescenceSpec& spec = cellInfo(registry_, e).bioluminescence;
+    if (!spec.present)
+        return;
+    Luminescence& l = registry_.get_or_emplace<Luminescence>(e);
+    l.glow *= std::exp(-dt / spec.flashSeconds);
+    l.charge = std::min(1.0f, l.charge + dt / spec.rechargeSeconds);
+    if (trigger) {
+        float capacity = 1.0f;
+        if (spec.circadian) {
+            const double hour = std::fmod(static_cast<double>(simTime_) * bioTimeScale_ / 3600.0, 24.0);
+            capacity = hour >= 12.0 ? 1.0f : spec.dayCapacity; // noche subjetiva: la segunda mitad del día
+        }
+        l.glow = std::max(l.glow, l.charge * capacity);
+        l.charge = 0.0f;
     }
 }
 

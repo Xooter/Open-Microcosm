@@ -23,7 +23,7 @@ float turnToward(Vec2 h, Vec2 to) {
 
 // Respuestas fóbicas temporales (M1) y mecanoestímulo (M2): compara el nivel de ahora con el recordado.
 // Devuelve la acción disparada en este paso, si hay una.
-enum class Fired { None, Avoid, Jump, Contract };
+enum class Fired { None, Avoid, Jump, Contract, Flash };
 Fired evaluateResponses(Autopilot& pilot, const SpeciesInfo& species, const Perception& sense, float dt) {
     pilot.refractory = std::max(0.0f, pilot.refractory - dt);
     Fired fired = Fired::None;
@@ -48,6 +48,7 @@ Fired evaluateResponses(Autopilot& pilot, const SpeciesInfo& species, const Perc
         if (fire && pilot.refractory <= 0.0f && fired == Fired::None) {
             fired = r.action == ResponseAction::Jump       ? Fired::Jump
                     : r.action == ResponseAction::Contract ? Fired::Contract
+                    : r.action == ResponseAction::Flash    ? Fired::Flash
                                                            : Fired::Avoid;
             pilot.refractory = r.refractory;
         }
@@ -63,6 +64,7 @@ void steerAutopilot(Autopilot& pilot, Locomotion& loco, const RingBody& body, co
     const Fired fired = evaluateResponses(pilot, species, sense, dt);
     loco.burst = 0.0f;
     pilot.contract = fired == Fired::Contract;
+    pilot.flash = fired == Fired::Flash;
     if (pilot.contract)
         pilot.intent = Intent::Contract;
 

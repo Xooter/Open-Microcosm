@@ -1125,6 +1125,17 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     }
                     fastLine(toRay(l[m - 1]), toRay(r[m - 1]), membraneWidth, kMembrane);
                 });
+            // Bioluminiscencia: el destello (azul, ~475 nm) se ve como un halo; con la lámpara prendida
+            // casi no se nota, como en el microscopio.
+            if (const Luminescence* lum = reg.try_get<Luminescence>(e); lum && lum->glow > 0.01f && species) {
+                const std::uint8_t* c = speciesInfo(species->id).bioluminescence.color;
+                const float dark = 1.0f - 0.85f * std::clamp(world.medium().surfaceLight, 0.0f, 1.0f);
+                float r = 0.0f;
+                for (std::size_t i = 0; i < n; ++i)
+                    r = std::max(r, length(body.poly[i] - body.centroid));
+                fastCircleV(toRay(body.centroid), 1.6f * r,
+                            Color{c[0], c[1], c[2], static_cast<unsigned char>(220.0f * lum->glow * dark)});
+            }
             if (level < DetailLevel::Normal)
                 return;
 

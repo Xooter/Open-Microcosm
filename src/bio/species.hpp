@@ -130,7 +130,7 @@ inline float processWidth(const ProcessSpec& p, float s, float scale) {
 inline constexpr std::size_t kMaxResponses = 4; // memoria fija en el piloto (sin asignaciones)
 enum class ResponseField : std::uint8_t { Light, Oxygen, Shear, Touch };
 enum class ResponseKind : std::uint8_t { StepUp, StepDown, Above };
-enum class ResponseAction : std::uint8_t { Avoid, Jump, Contract };
+enum class ResponseAction : std::uint8_t { Avoid, Jump, Contract, Flash };
 struct ResponseSpec {
     ResponseField field = ResponseField::Light;
     ResponseKind kind = ResponseKind::StepUp;
@@ -193,6 +193,19 @@ struct ToxicystSpec {
     float reach = 0.0f;          // alcance desde el polo anterior [µm] (0: no tiene)
     float paralysisHours = 0.5f; // [h biológicas]
     bool lethal = true;          // al terminar la parálisis, la presa muere (lisis)
+};
+
+// Bioluminiscencia (Lingulodinium, Noctiluca): la deformación del agua abre canales en los
+// centelleones y la luciferina emite un destello de ~0,1 s (respuesta con `action = "flash"`); la
+// capacidad se recarga en minutos y la regula un reloj circadiano: de noche (subjetiva) brilla decenas
+// de veces más que de día, aun con luz constante (Hastings & Sweeney 1957; Latz et al. 2004).
+struct BioluminescenceSpec {
+    bool present = false;
+    float flashSeconds = 0.1f;   // [s] (física: el destello es en tiempo real)
+    float rechargeSeconds = 60.0f; // [s] en recuperar la carga
+    bool circadian = true;       // ritmo de 24 h biológicas; la placa empieza al amanecer subjetivo
+    float dayCapacity = 0.02f;   // fracción de la de noche
+    std::uint8_t color[3] = {80, 170, 255}; // ~475 nm
 };
 
 // Daño fotodinámico (Blepharisma: la blefarismina, con luz y O₂, genera especies reactivas; Giese
@@ -312,6 +325,7 @@ struct SpeciesInfo {
     std::vector<ResponseSpec> responses; // [[being.response]]
     JumpSpec jump;                      // [being.jump]
     ContractionSpec contraction;        // [being.contraction]
+    BioluminescenceSpec bioluminescence; // [being.bioluminescence]
     ToxicystSpec toxicysts;             // [being.toxicysts]
     ReleaseSpec release;                // [being.release]
     MorphSpec morph;                    // [being.morph]
@@ -442,6 +456,12 @@ struct Captured {
 };
 
 // Componente: cuello extensible de Lacrymaria.
+// Componente: destello en curso (`glow`, 0–1) y carga disponible para el próximo.
+struct Luminescence {
+    float glow = 0.0f;
+    float charge = 1.0f;
+};
+
 // Componente: estado de la contracción del cuerpo (ContractionSpec). 1 = contraída, 0 = extendida.
 struct Contraction {
     float state = 1.0f;

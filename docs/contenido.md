@@ -84,7 +84,9 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   (deformación del agua [1/s]) | `touch` (el polo anterior chocó: 1); `kind`: `step_up` | `step_down` (cambio relativo mayor que
   `threshold` respecto de lo que recuerda de los últimos `memory` s, con el nivel arriba de
   `min_level`) | `above` (el nivel pasa `threshold`); `action`: `avoid` (reacción de evitación o
-  fotofóbica) | `jump` | `contract`; `refractory` [s].
+  fotofóbica) | `jump` | `contract` | `flash`; `refractory` [s].
+- `[being.bioluminescence]`: destello ante una respuesta `flash`. `flash_s` [s], `recharge_s` [s],
+  `circadian` (reloj de 24 h biológicas: de día brilla `day_capacity` de lo de noche) y `color`.
 - `[being.contraction]`: contracción del cuerpo entero (mionemas). La forma de `[being.shape]` es la
   contraída; extendida mide `extension` veces su largo (con el área de la biomasa) y vuelve a
   extenderse en `extension_s` [s]. La dispara una respuesta `contract`; el remolino de la contracción

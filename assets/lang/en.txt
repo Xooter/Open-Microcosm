@@ -1814,3 +1814,5 @@ Spirillum volutans	Spirillum volutans
 Bacteria gigante en helice (~25 um), con un haz de flagelos en cada polo: invierte el sentido en vez de girar. Es microaerofila: se junta en una banda donde el O2 es bajo (aerotaxis).	Giant helical bacterium (~25 um) with a tuft of flagella at each pole: it reverses instead of tumbling. It is microaerophilic: it gathers in a band where O2 is low (aerotaxis).
 Salpingoeca	Salpingoeca
 Coanoflagelado de ~6 um: un flagelo rodeado por un collar de microvellosidades que filtra bacterias. Pariente unicelular de los animales.	Choanoflagellate of ~6 um: one flagellum surrounded by a collar of microvilli that filters bacteria. A unicellular relative of animals.
+Lingulodinium	Lingulodinium
+Dinoflagelado marino de ~45 um que emite un destello azul cuando el agua se agita, sobre todo de noche: su reloj interno regula cuanto brilla.	Marine dinoflagellate of ~45 um that gives off a blue flash when the water is stirred, mostly at night: its internal clock sets how bright it glows.

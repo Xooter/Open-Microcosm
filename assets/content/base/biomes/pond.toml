@@ -16,7 +16,7 @@ lichens = 1
 physarum = 0 # no vive en agua libre
 patchiness = 0.3
 base_weight = 1.0
-weights = { stentor = 1.5, spirogyra = 1.5, volvox = 2.0, candida = 0.3, naegleria = 0.0, oedogonium = 1.5, phaeodactylum = 0.0, thalassiosira = 0.0, fragilariopsis = 0.0, polarella = 0.0 }
+weights = { stentor = 1.5, spirogyra = 1.5, volvox = 2.0, candida = 0.3, naegleria = 0.0, oedogonium = 1.5, phaeodactylum = 0.0, thalassiosira = 0.0, fragilariopsis = 0.0, polarella = 0.0, lingulodinium = 0.0 }
 [biome.medium]
 temperature = 17.0
 phosphate = 20.0

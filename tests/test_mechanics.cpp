@@ -675,3 +675,28 @@ TEST_CASE("mecánicas: Salpingoeca nada con el flagelo atrás y deja en el agua 
     CHECK(aheadFlow("chlamydomonas") < 0.0f);
     CHECK(speciesInfo(*findSpecies("salpingoeca")).flagellumPosterior);
 }
+
+TEST_CASE("mecánicas: Lingulodinium destella al agitar el agua, y de noche mucho más que de día") {
+    World world = emptyWorld();
+    const entt::entity e = spawn(world, "lingulodinium", center(world));
+    world.registry().get<Locomotion>(e).power = 0.0f;
+    auto shake = [&] {
+        float best = 0.0f;
+        for (int s = 0; s < 6; ++s) {
+            const RingBody& rb = world.registry().get<RingBody>(e);
+            world.setStir(rb.centroid + Vec2{0.0f, 25.0f}, {1500.0f, 0.0f}, 25.0f);
+            world.step(kDt);
+            if (const Luminescence* l = world.registry().try_get<Luminescence>(e))
+                best = std::max(best, l->glow);
+        }
+        world.clearStir();
+        return best;
+    };
+    world.bioTimeScale() = 3600.0f; // ~1 h biológica después de 1 s: de día
+    run(world, 1.0f);
+    const float day = shake();
+    run(world, 70.0f); // se recarga (y pasa a la noche subjetiva: ~71 h → hora 23)
+    const float night = shake();
+    CHECK(night > 0.5f);
+    CHECK(day < 0.1f * night);
+}
