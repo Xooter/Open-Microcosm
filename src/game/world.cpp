@@ -324,6 +324,7 @@ void World::step(float dt) {
     }
     updateLifecycle(dt);     // metabolismo, división y muerte
     updateContractileVacuoles(dt);
+    updateSemicells(dt);
     tickDefenses(dt);
     excludeFromCells();
 
@@ -3015,7 +3016,7 @@ void World::updateLifecycle(float dt) {
         // Tamaño: biomasa + lo que hay en las vacuolas. Los organelos crecen con la célula.
         // Con cuernos o brazos, el área de la silueta es la del cuerpo por su factor de área.
         float target = cellAreaForMass(meta.biomass / cellMassScale(info)) * info.outlineAreaFactor *
-                           (her ? her->traits.volume : 1.0f) * morphAreaScale(e) * contractionAreaScale(e) +
+                           (her ? her->traits.volume : 1.0f) * morphAreaScale(e) * restShapeAreaScale(e) +
                        (dig ? vacuoleContentArea(*dig) : 0.0f);
         if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e)) // redondeada en mitosis y apoptosis
             target = animalTargetArea(e, *ac, target);
@@ -3103,6 +3104,7 @@ void World::updateLifecycle(float dt) {
             contractForDivision(e, body);
             unmorphForDivision(e, body);
             relaxShapeWave(e, body);
+            finishSemicell(e, body);
             // Ameba chica: con pocos puntos de membrana (una de ~10 µm tiene ~24) el surco no tiene de dónde
             // estrangular ni quedan 12 por hija; y la corteza se relaja en los polos durante la citocinesis
             // (relajación polar), si no su tensión redondea la célula contra el surco. En una grande (Chaos)
@@ -3530,6 +3532,10 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
             joinSlidingColony(cell, child);
         if (sinfo.starColonyMax > 0)
             joinStarColony(cell, child);
+        if (sinfo.semicellRegrowthHours > 0.0f && !sinfo.outline.empty()) {
+            startSemicell(cell, child);
+            startSemicell(child, cell);
+        }
     }
     if (registry_.all_of<AnimalCell>(cell))
         afterAnimalDivision(cell, child);

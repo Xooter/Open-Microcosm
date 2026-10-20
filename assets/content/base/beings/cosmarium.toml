@@ -34,5 +34,10 @@ tip_width = 3.0
 count = 2
 fillet = 2.0
 
+# Al dividirse, cada hija conserva una semicélula y la otra brota del istmo y se expande en unas horas
+# (Meindl 1993, Microbiol. Rev. 57: 415; tiempo estimado, a verificar).
+[being.semicell]
+regrowth_hours = 3.0
+
 [being.appearance]
 style = "coccoid"

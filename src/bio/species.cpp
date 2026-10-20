@@ -246,6 +246,15 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         if (s.testate == 0)
             r.errors.push_back(r.where + ": 'testate' es \"lobose\" o \"filose\"");
     }
+    if (const toml::table* sc = r.table("semicell")) {
+        constexpr const char* kKeys[] = {"regrowth_hours"};
+        toml_io::warnUnknown(*sc, kKeys, r.where + " [semicell]", warnings);
+        Reader cr{*sc, r.where + " [semicell]", {}};
+        cr.count("regrowth_hours", s.semicellRegrowthHours);
+        if (s.semicellRegrowthHours <= 0.0f)
+            cr.errors.push_back(cr.where + ": 'regrowth_hours' tiene que ser positivo");
+        r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
     if (const toml::table* cv = r.table("contractile_vacuole")) {
         constexpr const char* kKeys[] = {"period_s", "cytosol_mosm"};
         toml_io::warnUnknown(*cv, kKeys, r.where + " [contractile_vacuole]", warnings);

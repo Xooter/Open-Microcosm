@@ -450,6 +450,9 @@ struct SpeciesInfo {
     // que entra por ósmosis y se vacía de golpe. `cvPeriod` [s] es el ciclo en agua dulce (~16 mOsm); el
     // agua que entra, y así la frecuencia, es proporcional a la diferencia entre la osmolaridad del
     // citosol (`cvCytosol`, mOsm) y la del medio. 0: sin ciclo (se dibuja quieta).
+    // Desmidias: al dividirse cada hija conserva una semicélula y la otra brota del istmo y crece en
+    // estas horas biológicas (0: las hijas nacen enteras).
+    float semicellRegrowthHours = 0.0f;
     float cvPeriod = 0.0f;
     float cvCytosol = 60.0f;
     // Tecameba (Arcella, Euglypha): el cuerpo blando es la testa, rígida; solo el citoplasma que sale por
@@ -566,6 +569,16 @@ struct Stalk {
 struct StarMember {
     entt::entity root;
     int slot;
+};
+
+// Componente: semicélula nueva de una desmidia que crece después de la división. `full` es la forma de
+// reposo completa; la mitad del lado `newSign` (+1: x > 0) es la nueva.
+struct SemicellGrowth {
+    float progress = 0.0f; // 0–1
+    float newSign = 1.0f;
+    float isthmus = 1.0f;  // medio ancho del istmo [µm, en la escala de `full`]
+    float areaScale = 1.0f;
+    std::vector<Vec2> full;
 };
 
 // Componente: fase del ciclo de la vacuola contráctil (0–1: diástole hasta 0,9, sístole después).

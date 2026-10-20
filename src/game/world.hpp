@@ -604,6 +604,12 @@ class World {
     void foundStarColony(entt::entity root, Rng& rng, bool randomStage);
     bool joinStarColony(entt::entity mother, entt::entity child);
     void applyStarColonies(float dt);
+    // Semicélula nueva de las desmidias (game/world_semicell.cpp).
+    void startSemicell(entt::entity e, entt::entity sibling);
+    void updateSemicells(float dt);
+    void finishSemicell(entt::entity e, RingBody& body);
+    // Área de la silueta por la forma que cambia en vida (contracción, semicélula) / la de la especie.
+    float restShapeAreaScale(entt::entity e) const;
     // Ciclo de la vacuola contráctil (game/world_osmoregulation.cpp).
     void updateContractileVacuoles(float dt);
     // Colonia: la hija se queda en una rama nueva del tallo de la madre. false si no corresponde.
