@@ -277,6 +277,8 @@ class World {
     void setStir(Vec2 position, Vec2 velocity, float radius);
     // Punto del anillo en el polo anterior o posterior de la forma de reposo.
     static std::size_t poleIndex(const RingBody& body, bool anterior);
+    // Partícula del polo posterior (donde va el pie o el tallo), también durante una división longitudinal.
+    std::uint32_t posteriorSlot(entt::entity e, const RingBody& body) const;
     void clearStir() { stirActive_ = false; }
     void dropInk(Vec2 position, float radius, int count);
     void dropDetritus(Vec2 position);

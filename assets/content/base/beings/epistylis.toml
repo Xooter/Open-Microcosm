@@ -9,6 +9,8 @@ description = "Ciliado en forma de copa (~100 um) sobre un tallo rigido y ramifi
 locomotion = "cilia"
 body_plan = "ciliate"
 feeding = "oral_groove"
+# Se divide a lo largo, de la boca a la escópula (Lynn 2008); una hija se va como telotroco.
+division_axis = "longitudinal"
 relative_speed = 0.4
 conjugation = true
 initial_count = 3

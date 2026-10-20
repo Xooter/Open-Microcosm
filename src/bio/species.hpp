@@ -443,6 +443,9 @@ struct SpeciesInfo {
     // Colonia en estrella (Asterionella): las células irradian de un centro, unidas por el polo
     // posterior con almohadillas de mucílago, a ángulos iguales. 0: no forma.
     int starColonyMax = 0;
+    // División longitudinal (peritricos: el plano pasa por el eje, de la boca a la escópula; Lynn 2008)
+    // en vez de la transversal de la mayoría de los ciliados.
+    bool divisionLongitudinal = false;
     // Tecameba (Arcella, Euglypha): el cuerpo blando es la testa, rígida; solo el citoplasma que sale por
     // la abertura forma seudópodos, lobosos (dedos) o filosos (finos). 0: no; 1: lobosos; 2: filosos.
     std::uint8_t testate = 0;

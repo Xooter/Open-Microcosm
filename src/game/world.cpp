@@ -3113,7 +3113,18 @@ void World::updateLifecycle(float dt) {
                 body.corticalTension = 0.0f;
                 body.bendScale = 0.0f; // la corteza se remodela: no vuelve a la curvatura del círculo
             }
+            // División longitudinal: la forma de reposo gira 90° en el marco de la célula (la forma en el
+            // mundo es la misma) para que el surco, que corta en x = 0, corra a lo largo del eje.
+            std::uint32_t poleSlot = ~0u;
+            if (info.divisionLongitudinal && !smallPlastic) {
+                poleSlot = body.ring[poleIndex(body, false)];
+                for (Vec2& q : body.restRing)
+                    q = {q.y, -q.x};
+                for (Vec2& q : body.restInterior)
+                    q = {q.y, -q.x};
+            }
             Dividing& d = registry_.emplace<Dividing>(e);
+            d.poleSlot = poleSlot;
             d.smallPlastic = smallPlastic;
             d.motherRest = body.restRing;
             d.motherArea = std::abs(body.restArea);
@@ -4259,8 +4270,8 @@ void World::applyAnchor(entt::entity e, RingBody& body, Anchored& anchor, float 
     (void)e;
     (void)dt;
     const std::size_t n = body.ring.size();
-    const std::size_t back = poleIndex(body, false), front = poleIndex(body, true);
-    const Vec2 base = {bodies_.x[body.ring[back]], bodies_.y[body.ring[back]]};
+    const std::uint32_t backSlot = posteriorSlot(e, body);
+    const Vec2 base = {bodies_.x[backSlot], bodies_.y[backSlot]};
     // A dónde va el polo posterior: la punta del tallo (resuelto en stepStalks) o, con pie, el punto
     // de fijación. La dirección para mantenerse erguida es la del último tramo del tallo.
     Vec2 target, dir = bodyHeading(body);
@@ -4288,10 +4299,20 @@ void World::applyAnchor(entt::entity e, RingBody& body, Anchored& anchor, float 
         bodies_.vy[s] += pull.y;
     }
     (void)n;
-    // El tallo la mantiene erguida: el polo anterior sigue la dirección del tallo.
-    const std::uint32_t tip = body.ring[front];
+    // El tallo la mantiene erguida: el polo anterior sigue la dirección del tallo (no mientras se divide a
+    // lo largo: la forma de reposo está girada y su "polo anterior" es un costado).
+    if (const Dividing* dv = registry_.try_get<Dividing>(e); dv && dv->poleSlot != ~0u)
+        return;
+    const std::uint32_t tip = body.ring[poleIndex(body, true)];
     bodies_.vx[tip] += dir.x * 3.0f;
     bodies_.vy[tip] += dir.y * 3.0f;
+}
+
+std::uint32_t World::posteriorSlot(entt::entity e, const RingBody& body) const {
+    if (const Dividing* dv = registry_.try_get<Dividing>(e); dv && dv->poleSlot != ~0u)
+        if (std::find(body.ring.begin(), body.ring.end(), dv->poleSlot) != body.ring.end())
+            return dv->poleSlot;
+    return body.ring[poleIndex(body, false)];
 }
 
 void World::trapWithTentacles(entt::entity e, const RingBody& body, FeedingMode mode) {

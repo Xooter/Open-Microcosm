@@ -55,6 +55,8 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   nombra en sus `weights`.
 - `locomotion`: `cilia` | `flagellum` | `pseudopod` | `crawl` (células animales) | `none` (células
   de tejidos y frotis). `relative_speed`: respecto de la del tipo.
+  - `division_axis`: `transverse` (por omisión) | `longitudinal` (peritricos: el surco corre a lo largo del
+    eje, de la boca a la escópula).
   - `helix_radius` [µm] y `helix_period` [s]: nado helicoidal (dinoflagelados, ciliados, euglenoides); vista desde arriba,
     una oscilación lateral de ese radio. Sin ellos, el flagelo tiene el bamboleo genérico.
   - `flagellum = "posterior"`: el flagelo empuja desde atrás (coanoflagelados): el par de fuerzas en

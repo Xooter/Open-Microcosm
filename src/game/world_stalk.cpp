@@ -135,7 +135,7 @@ void World::stepStalks(float dt) {
             if (Anchored* an = registry_.try_get<Anchored>(st.zooid); an && an->rod == se)
                 if (const RingBody* body = registry_.try_get<RingBody>(st.zooid)) {
                     anchor = an;
-                    const std::uint32_t s = body->ring[poleIndex(*body, false)];
+                    const std::uint32_t s = posteriorSlot(st.zooid, *body);
                     const Vec2 last = rod.nodes.back();
                     pole = last + Vec2{minImage(bodies_.x[s] - last.x, width_), minImage(bodies_.y[s] - last.y, height_)};
                     tip = &pole;

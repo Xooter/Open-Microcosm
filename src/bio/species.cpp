@@ -78,7 +78,7 @@ constexpr std::pair<const char*, CellWall> kWall[] = {{"none", CellWall::None},
 // Claves conocidas de un [[being]] y de su [being.shape]: una clave que no esté acá es casi siempre un
 // error de tipeo, y se avisa (no se ignora en silencio).
 constexpr const char* kBeingKeys[] = {
-    "id", "legacy_ids", "name", "description", "body_plan", "tags", "locomotion", "feeding", "relative_speed", "helix_radius", "helix_period", "flagellar_gliding", "flagellum", "prey", "mouth_prey",
+    "id", "legacy_ids", "name", "description", "body_plan", "tags", "locomotion", "feeding", "relative_speed", "division_axis", "helix_radius", "helix_period", "flagellar_gliding", "flagellum", "prey", "mouth_prey",
     "flees_from", "chemokinesis", "acid_trap", "phototaxis", "relative_photosynthesis", "fissions_per_cycle",
     "encysts", "conjugation", "initial_count", "sessile", "stalk_length", "spasmoneme", "walks", "tentacle_reach",
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
@@ -230,6 +230,13 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
     r.flag("histophagous", s.histophagous);
     r.count("mouth_width", s.mouthWidth);
     r.flag("divides_in_cyst", s.dividesInCyst);
+    if (const toml::node* da = t.get("division_axis")) {
+        const std::string axis = da->value<std::string>().value_or("");
+        if (axis == "longitudinal")
+            s.divisionLongitudinal = true;
+        else if (axis != "transverse")
+            r.errors.push_back(r.where + ": 'division_axis' es \"transverse\" o \"longitudinal\"");
+    }
     r.count("lorica_iron_ratio", s.loricaIronRatio);
     r.count("lorica_hours", s.loricaHours);
     r.count("perforation_hours", s.perforationHours);

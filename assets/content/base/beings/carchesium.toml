@@ -10,6 +10,8 @@ locomotion = "cilia"
 conjugation = true
 body_plan = "ciliate"
 feeding = "oral_groove"
+# Se divide a lo largo, de la boca a la escópula (Lynn 2008); una hija se va como telotroco.
+division_axis = "longitudinal"
 relative_speed = 0.4
 initial_count = 1
 cyclosis = 2.0

@@ -36,6 +36,9 @@ struct Dividing {
     // Ameba chica (perímetro de menos de 48 espaciados de membrana al empezar): remallado fino y corteza relajada durante
     // la citocinesis (ver World::updateLifecycle). Una grande (Chaos) no lo necesita.
     bool smallPlastic = false;
+    // División longitudinal: la forma de reposo se giró 90° (el corte en x = 0 queda a lo largo del eje);
+    // el polo posterior (donde está el pie o el tallo) es esta partícula hasta partirse.
+    std::uint32_t poleSlot = ~0u;
 };
 
 // Forma de reposo en división: interpola cada punto entre la elipse madre y su lugar en dos
