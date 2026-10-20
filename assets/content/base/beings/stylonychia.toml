@@ -27,6 +27,8 @@ semi_major_axis = 150.0
 semi_minor_axis = 61.0
 thickness = 20.0
 shape_memory = 10.0
+# Contorno de lados casi paralelos y extremos redondeados (Kreutz; estimado).
+squareness = 2.6
 color = [180, 178, 160]
 nucleus = 0.25
 

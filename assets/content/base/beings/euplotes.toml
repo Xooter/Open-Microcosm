@@ -27,6 +27,8 @@ genome = { trichocysts = 0.0 }
 semi_major_axis = 45.0
 semi_minor_axis = 32.0
 shape_memory = 10.0
+# Oval ancho y algo truncado adelante (Kreutz; estimado).
+squareness = 2.3
 color = [178, 176, 160]
 nucleus = 0.32
 

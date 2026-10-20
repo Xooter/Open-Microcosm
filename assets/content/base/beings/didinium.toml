@@ -26,6 +26,8 @@ genome = { trichocysts = 0.0 }
 semi_major_axis = 55.0
 semi_minor_axis = 40.0
 shape_memory = 8.0
+# Barril, con los extremos casi truncados.
+squareness = 3.0
 color = [176, 168, 140]
 nucleus = 0.32
 

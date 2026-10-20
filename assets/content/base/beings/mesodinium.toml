@@ -29,6 +29,23 @@ semi_minor_axis = 13.0
 shape_memory = 8.0
 color = [214, 168, 150]
 nucleus = 0.3
+# Surco ecuatorial donde nacen los cirros (Kreutz): la célula se ve en dos partes. Profundidad estimada.
+[[being.process]]
+kind = "notch"
+at = 95.0
+length = 2.5
+base_width = 5.0
+tip_width = 3.0
+fillet = 1.5
+
+[[being.process]]
+kind = "notch"
+at = -95.0
+length = 2.5
+base_width = 5.0
+tip_width = 3.0
+fillet = 1.5
+
 
 [being.jump]
 speed = 5000.0
