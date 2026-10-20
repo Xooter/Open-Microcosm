@@ -1,0 +1,32 @@
+# Ochromonas danica: crisófita de 6–12 µm con dos flagelos desiguales y un cloroplasto pardo dorado.
+# Mixótrofa: fotosintetiza y además come bacterias y algas chicas (Chlorella) que engulle una por una;
+# las colonias más anchas que su boca se le escapan (Boraas, Seale & Boxhorn 1998, Evol. Ecol. 12: 153:
+# con Ochromonas como depredador, Chlorella vulgaris pasa en ~100 generaciones a formar colonias, por
+# selección). Apertura de la boca estimada. Sin µmax publicado: usa el general.
+[[being]]
+id = "ochromonas"
+name = "Ochromonas"
+tags = ["protist", "flagellate", "phototroph"]
+description = "Flagelado dorado de ~10 um que fotosintetiza y ademas come bacterias y algas chicas: un mixotrofo."
+locomotion = "flagellum"
+body_plan = "flagellate_chlorophyte"
+feeding = "anterior_pole"
+relative_speed = 0.6
+mouth_prey = ["chlorella", "raphidocelis"]
+mouth_width = 9.0
+phototaxis = true
+initial_count = 6
+chloroplasts = true
+ph = [5.5, 9.5]
+temperature = [5.0, 30.0]
+storage = "chrysolaminarin"
+wall = "none"
+[being.shape]
+semi_major_axis = 5.0
+semi_minor_axis = 4.0
+shape_memory = 6.0
+color = [200, 186, 140]
+nucleus = 0.3
+
+[being.appearance]
+plastid_color = [176, 140, 60]

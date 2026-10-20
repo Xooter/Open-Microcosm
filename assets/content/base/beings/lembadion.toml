@@ -1,0 +1,46 @@
+# Lembadion bullinum: ciliado de ~150 µm con una cavidad bucal enorme (casi todo el lado ventral) con la
+# que traga otros ciliados enteros, Euplotes entre ellos. Suelta al agua una proteína (kairomona) que hace
+# que Euplotes octocarinatus arme alas laterales y quede demasiado ancho para su boca (Kuhlmann &
+# Heckmann 1985, Science 227: 1347; Kusch 1993, Oecologia 96: 354). Tamaño de Kreutz; tasa de liberación,
+# difusión (proteína), vida media y apertura de la boca: estimadas.
+[[being]]
+id = "lembadion"
+name = "Lembadion"
+tags = ["protist", "ciliate"]
+description = "Ciliado de ~150 um con una boca enorme que traga otros ciliados enteros. Suelta una senal quimica que hace crecer alas defensivas a Euplotes."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "raptorial"
+relative_speed = 0.4
+prey = ["euplotes_octocarinatus", "tetrahymena", "colpidium", "halteria", "colpoda"]
+mouth_width = 55.0
+conjugation = true
+initial_count = 1
+handling_hours = 2.0
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 75.0
+semi_minor_axis = 45.0
+shape_memory = 8.0
+color = [186, 184, 166]
+nucleus = 0.25
+
+[being.release]
+signal = "lembadion_kairomone"
+rate = 0.001
+diffusion = 100.0
+half_life_hours = 12.0
+
+[physiology.lembadion.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 75, 45 y 45 µm: 636173 µm³).
+value = 0.61
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 636173 µm³). No es una medición de la especie."
+estimate = true

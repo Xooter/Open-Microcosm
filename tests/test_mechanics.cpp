@@ -492,3 +492,43 @@ TEST_CASE("mecánicas: la apertura bucal deja afuera a Staurastrum por sus brazo
     // Una Frontonia chica (la mitad) ya no traga un Cosmarium.
     CHECK_FALSE(fitsMouth(frontonia, 0.5f, cosmarium, 1.0f));
 }
+
+TEST_CASE("mecánicas: la kairomona de Lembadion le arma alas a Euplotes y lo deja fuera de su boca (M3, M4)") {
+    auto induced = [](bool withPredator) {
+        World world = emptyWorld();
+        world.bioTimeScale() = 3600.0f; // 1 s = 1 h biológica
+        const Vec2 c = center(world);
+        const entt::entity eu = spawn(world, "euplotes_octocarinatus", c);
+        world.registry().get<Locomotion>(eu).power = 0.0f;
+        entt::entity le = entt::null;
+        if (withPredator) {
+            le = spawn(world, "lembadion", c + Vec2{150.0f, 0.0f});
+            world.registry().get<Locomotion>(le).power = 0.0f;
+        }
+        run(world, 12.0f);
+        const bool winged = world.morphAmount(eu) > 0.9f;
+        if (winged && le != entt::null) {
+            CHECK_FALSE(world.fitsMouth(le, world.registry().get<RingBody>(le), eu, world.registry().get<RingBody>(eu)));
+        }
+        return winged;
+    };
+    CHECK(induced(true));
+    CHECK_FALSE(induced(false));
+}
+
+TEST_CASE("mecánicas: Tetrahymena vorax pasa a macrostoma junto a Tetrahymena y cambia de dieta") {
+    World world = emptyWorld();
+    world.bioTimeScale() = 3600.0f;
+    const Vec2 c = center(world);
+    const entt::entity v = spawn(world, "tetrahymena_vorax", c);
+    world.registry().get<Locomotion>(v).power = 0.0f;
+    CHECK(world.feedingOf(v) == FeedingMode::OralGroove);
+    for (int k = 0; k < 4; ++k) {
+        const entt::entity t = spawn(world, "tetrahymena", c + Vec2{80.0f + 20.0f * k, 60.0f});
+        world.registry().get<Locomotion>(t).power = 0.0f;
+    }
+    run(world, 8.0f);
+    CHECK(world.morphAmount(v) > 0.9f);
+    CHECK(world.feedingOf(v) == FeedingMode::Raptorial);
+    CHECK(world.preyOf(v).test(static_cast<std::size_t>(*findSpecies("tetrahymena"))));
+}

@@ -291,6 +291,8 @@ Inspection inspectCell(const World& w, entt::entity e) {
             now(fmt(text, an->stalk, an->contracted > 0.3f ? " (contraido)" : growing ? " (todavia lo secreta)" : ""));
         }
     }
+    if (const Morph* mo = reg.try_get<Morph>(e); mo && info.morph.present && mo->progress > 0.0f)
+        now(fmt("forma inducida: %s (%.0f%%)", info.morph.name.c_str(), 100.0f * mo->progress));
     if (const Paralyzed* par = reg.try_get<Paralyzed>(e))
         now(fmt("paralizada por toxicistos (%.1f h bio)", par->hours));
     if (reg.all_of<Discharge>(e))

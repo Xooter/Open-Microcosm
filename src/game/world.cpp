@@ -155,6 +155,7 @@ World::World(const WorldConfig& config)
     for (ChemField* f : {&oxygen_, &nutrients_, &phosphate_, &nitrogen_, &silicate_, &iron_, &vitamin_, &co2_, &toxin_,
                          &autoinducer_, &phage_, &glutamine_, &lactate_, &fmlp_})
         f->setMask(&dishMask_);
+    setupSignals(config);
     // Un medio de cultivo trae glutamina: sus campos difunden desde el principio.
     cultureFields_ = config.medium.glutamine > 0.0f;
     program_ = config.program;
@@ -271,8 +272,15 @@ void World::step(float dt) {
             ChemField* const r[] = {&reagent_};
             ChemField::advectAll(r, 1, fluid_, dt);
         }
+        for (SignalField& s : signals_) // señales entre seres, solo las que alguien liberó
+            if (s.active) {
+                ChemField* const f[] = {&s.field};
+                ChemField::advectAll(f, 1, fluid_, dt);
+            }
     }
     updateChemistrySources(dt);
+    updateSignals(dt);
+    updateMorphs(dt);
     updateWaterChemistry(dt);
     stepAmbient(dt); // deposita nutrientes de los detritos y su sombra
     oxygen_.diffuse(fft_, dt);
@@ -289,6 +297,9 @@ void World::step(float dt) {
                 f->diffuse(fft_, slowDiffusion_);
         if (reagentIndex_ >= 0)
             reagent_.diffuse(fft_, slowDiffusion_);
+        for (SignalField& s : signals_)
+            if (s.active)
+                s.field.diffuse(fft_, slowDiffusion_);
         slowDiffusion_ = 0.0f;
     }
     co2_.diffuse(fft_, dt);
@@ -2162,7 +2173,7 @@ void World::updateFeeding(float dt) {
     for (auto [e, body, loco, dig] : feeders.each()) {
         if (registry_.all_of<Cyst>(e))
             continue;
-        const FeedingMode mode = cellInfo(registry_, e).feeding;
+        const FeedingMode mode = feedingOf(e);
         if (mode == FeedingMode::None)
             continue;
         if (mode == FeedingMode::Raptorial) {
@@ -2953,7 +2964,7 @@ void World::updateLifecycle(float dt) {
         // Tamaño: biomasa + lo que hay en las vacuolas. Los organelos crecen con la célula.
         // Con cuernos o brazos, el área de la silueta es la del cuerpo por su factor de área.
         float target = cellAreaForMass(meta.biomass / cellMassScale(info)) * info.outlineAreaFactor *
-                           (her ? her->traits.volume : 1.0f) +
+                           (her ? her->traits.volume : 1.0f) * morphAreaScale(e) +
                        (dig ? vacuoleContentArea(*dig) : 0.0f);
         if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e)) // redondeada en mitosis y apoptosis
             target = animalTargetArea(e, *ac, target);
@@ -3039,6 +3050,7 @@ void World::updateLifecycle(float dt) {
         if (!dv && readyToDivide(meta, cost)) {
             meta.reserves -= cost * meta.biomass;
             contractForDivision(e, body);
+            unmorphForDivision(e, body);
             Dividing& d = registry_.emplace<Dividing>(e);
             d.motherRest = body.restRing;
             d.motherArea = std::abs(body.restArea);
@@ -3811,7 +3823,7 @@ Perception World::perceive(entt::entity e, const RingBody& body, SpeciesId speci
         const auto bit = static_cast<std::size_t>(os.id);
         // Los histófagos (Coleps) van hacia las células dañadas, sean de su dieta o no.
         const bool damaged = info.histophagous && isDamaged(oe);
-        const bool prey = ((info.prey.test(bit) && (info.mouthWidth <= 0.0f || fitsMouth(e, body, oe, other))) || damaged) &&
+        const bool prey = ((preyOf(e).test(bit) && (mouthWidthOf(e) <= 0.0f || fitsMouth(e, body, oe, other))) || damaged) &&
                           !registry_.any_of<Cyst, Discharge>(oe) &&
                           (info.feeding != FeedingMode::Phagocytosis || std::abs(other.restArea) <= maxPreyArea);
         const bool threat = info.flee.test(bit) && !registry_.all_of<Cyst>(oe);
@@ -3942,7 +3954,7 @@ void World::hunt(entt::entity predator, const RingBody& body) {
     if (isSatiated(predator))
         return; // digiriendo: Didinium caza ~1 paramecio cada pocas horas
     const SpeciesInfo& info = cellInfo(registry_, predator);
-    const SpeciesSet& preyMask = info.prey;
+    const SpeciesSet& preyMask = preyOf(predator);
     const float maxBite = feedingParams_.maxPreyAreaRatio * std::abs(body.restArea);
     for (const RingBody* other : bodyList_) {
         const auto oe = static_cast<entt::entity>(other->id);
@@ -3990,8 +4002,21 @@ float World::linearScale(entt::entity e, const RingBody& body) const {
 }
 
 bool World::fitsMouth(entt::entity predator, const RingBody& predatorBody, entt::entity prey, const RingBody& preyBody) const {
-    return ::fitsMouth(cellInfo(registry_, predator), linearScale(predator, predatorBody), cellInfo(registry_, prey),
-                       linearScale(prey, preyBody));
+    const float mouth = mouthWidthOf(predator);
+    return mouth <= 0.0f || preyWidth(prey, preyBody) <= mouth * linearScale(predator, predatorBody);
+}
+
+const SpeciesInfo& World::speciesOfCell(entt::entity e) const { return cellInfo(registry_, e); }
+
+float World::preyWidth(entt::entity e, const RingBody& body) const {
+    // Ancho mínimo a su tamaño; con un morfo (alas de Euplotes), el de la forma estirada.
+    const SpeciesInfo& info = cellInfo(registry_, e);
+    const float k = linearScale(e, body);
+    const Morph* m = registry_.try_get<Morph>(e);
+    if (!m || !info.outline.empty())
+        return info.minWidth * k;
+    const float r = std::sqrt(m->sy / m->sx);
+    return k * std::min(2.0f * info.spec.radiusX / r, 2.0f * info.spec.radiusY * r);
 }
 
 bool World::isDamaged(entt::entity e) const {

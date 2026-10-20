@@ -385,6 +385,14 @@ class World {
     bool isSatiated(entt::entity e) const;
     // Herida, atrapada o moribunda (lo que comen los histófagos).
     bool isDamaged(entt::entity e) const;
+    // Señales (M3) y morfos inducidos (M4), game/world_signals.cpp.
+    int signalIndex(std::string_view id) const;
+    float signalAt(int index, Vec2 p) const;
+    float morphAmount(entt::entity e) const;
+    // Lo que come una célula: el de su especie o el de su morfo inducido, si ya lo completó.
+    FeedingMode feedingOf(entt::entity e) const;
+    const SpeciesSet& preyOf(entt::entity e) const;
+    float mouthWidthOf(entt::entity e) const;
     // Apertura bucal (M5): ¿la presa cabe en la boca del depredador?
     bool fitsMouth(entt::entity predator, const RingBody& predatorBody, entt::entity prey, const RingBody& preyBody) const;
     float linearScale(entt::entity e, const RingBody& body) const;
@@ -589,6 +597,13 @@ class World {
     void updateContraction(entt::entity e, RingBody& body, bool trigger, float dt);
     void applyContractionKicks();
     void contractForDivision(entt::entity e, RingBody& body);
+    void setupSignals(const WorldConfig& config);
+    void updateSignals(float dt);
+    void updateMorphs(float dt);
+    void unmorphForDivision(entt::entity e, RingBody& body);
+    float morphAreaScale(entt::entity e) const;
+    const SpeciesInfo& speciesOfCell(entt::entity e) const;
+    float preyWidth(entt::entity e, const RingBody& body) const;
     void linkCells(entt::entity a, entt::entity b);
     void solveLinks(float h);
     void relinkAfterDivision(entt::entity mother, entt::entity child);
@@ -796,6 +811,13 @@ class World {
         float halfLength, speed, radius;
     };
     std::vector<ContractionKick> contractionKicks_;
+    struct SignalField {
+        std::string id;
+        ChemField field;
+        float halfLifeHours;
+        bool active; // difunde solo después de que alguien la liberó
+    };
+    std::vector<SignalField> signals_;
     std::vector<Vec2> stalkFlow_;         // agua en cada nodo de un tallo (buffer reusado)
     std::vector<entt::entity> stalkGone_; // tallos vacíos degradados en este paso
     std::vector<entt::entity> detaching_; // zooides que se sueltan en este paso

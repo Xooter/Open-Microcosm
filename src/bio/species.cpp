@@ -27,7 +27,7 @@ struct Entry {
     std::string source; // el [[being]] como se leyó (para exportarlo)
     std::vector<std::string> legacyIds; // ids viejos (core/ids)
     // Referencias sin resolver (ids o etiquetas): se resuelven contra todo lo cargado.
-    std::vector<std::string> prey, mouthPrey, flee;
+    std::vector<std::string> prey, mouthPrey, flee, morphPrey;
 };
 
 // Estado del registro en estáticos locales: otras unidades piden especies al inicializar sus
@@ -83,7 +83,7 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "stalk", "toxicysts", "histophagous", "light_damage",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "stalk", "toxicysts", "histophagous", "release", "morph", "light_damage",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
@@ -97,6 +97,9 @@ constexpr std::pair<const char*, ResponseAction> kResponseAction[] = {
     {"avoid", ResponseAction::Avoid}, {"jump", ResponseAction::Jump}, {"contract", ResponseAction::Contract}};
 constexpr const char* kContractionKeys[] = {"extension", "extension_s"};
 constexpr const char* kToxicystKeys[] = {"reach", "paralysis_hours", "lethal"};
+constexpr const char* kReleaseKeys[] = {"signal", "rate", "diffusion", "half_life_hours"};
+constexpr const char* kMorphKeys[] = {"name",        "signal",       "threshold", "hours", "width_scale",
+                                      "length_scale", "area_scale",  "feeding",   "prey",  "mouth_width"};
 constexpr const char* kStalkKeys[] = {"kind",        "length",         "width",          "bending_rate",
                                       "growth_hours", "decay_hours",   "contracted_fraction", "extension_s",
                                       "spontaneous_per_min", "detaches"};
@@ -319,6 +322,43 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
             jr.errors.push_back(jr.where + ": 'speed' y 'duration' tienen que ser positivos");
         r.errors.insert(r.errors.end(), jr.errors.begin(), jr.errors.end());
     }
+    if (const toml::table* rt = r.table("release")) {
+        toml_io::warnUnknown(*rt, kReleaseKeys, r.where + " [release]", warnings);
+        Reader rr{*rt, r.where + " [release]", {}};
+        rr.text("signal", s.release.signal);
+        rr.count("rate", s.release.rate);
+        rr.count("diffusion", s.release.diffusion);
+        rr.count("half_life_hours", s.release.halfLifeHours);
+        if (s.release.signal.empty() || s.release.rate <= 0.0f || s.release.halfLifeHours <= 0.0f)
+            rr.errors.push_back(rr.where + ": hace falta 'signal', y 'rate' y 'half_life_hours' positivos");
+        r.errors.insert(r.errors.end(), rr.errors.begin(), rr.errors.end());
+    }
+    if (const toml::table* mt = r.table("morph")) {
+        toml_io::warnUnknown(*mt, kMorphKeys, r.where + " [morph]", warnings);
+        Reader mr{*mt, r.where + " [morph]", {}};
+        MorphSpec& m = s.morph;
+        m.present = true;
+        mr.text("name", m.name);
+        mr.text("signal", m.signal);
+        mr.count("threshold", m.threshold);
+        mr.count("hours", m.hours);
+        mr.count("width_scale", m.widthScale);
+        mr.count("length_scale", m.lengthScale);
+        mr.count("area_scale", m.areaScale);
+        if (mt->get("feeding")) {
+            m.feedingSet = true;
+            mr.choice("feeding", kFeeding, m.feeding);
+        }
+        if (mt->get("prey")) {
+            m.preySet = true;
+            mr.strings("prey", e.morphPrey);
+        }
+        if (mt->get("mouth_width"))
+            mr.count("mouth_width", m.mouthWidth);
+        if (m.signal.empty() || m.hours <= 0.0f || m.widthScale <= 0.0f || m.lengthScale <= 0.0f || m.areaScale <= 0.0f)
+            mr.errors.push_back(mr.where + ": hace falta 'signal', y 'hours' y las escalas positivas");
+        r.errors.insert(r.errors.end(), mr.errors.begin(), mr.errors.end());
+    }
     if (const toml::table* tt = r.table("toxicysts")) {
         toml_io::warnUnknown(*tt, kToxicystKeys, r.where + " [toxicysts]", warnings);
         Reader tr{*tt, r.where + " [toxicysts]", {}};
@@ -511,6 +551,8 @@ void resolve() {
         e.info.prey = setOf(e, e.prey, "prey");
         e.info.mouthPrey = setOf(e, e.mouthPrey, "mouth_prey");
         e.info.flee = setOf(e, e.flee, "flees_from");
+        if (e.info.morph.preySet)
+            e.info.morph.prey = setOf(e, e.morphPrey, "morph.prey");
     }
 }
 

@@ -1,0 +1,48 @@
+# Euplotes octocarinatus: hipotrico de ~70 µm que camina con sus cirros y pasta bacterias y algas chicas.
+# Con la kairomona de Lembadion en el agua, en el curso de un ciclo celular desarrolla alas laterales: queda
+# ~40 % más ancho (sin más citoplasma) y Lembadion ya no lo puede tragar (Kuhlmann & Heckmann 1985,
+# Science 227: 1347). Sin la señal vuelve a la forma normal. Ancho del morfo, umbral y tiempo: estimados.
+[[being]]
+id = "euplotes_octocarinatus"
+name = "Euplotes octocarinatus"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Hipotrico que camina sobre cirros. Si huele a su depredador Lembadion, le crecen alas laterales que lo hacen demasiado ancho para ser tragado."
+locomotion = "cilia"
+conjugation = true
+body_plan = "ciliate"
+feeding = "oral_groove"
+relative_speed = 0.25
+mouth_prey = ["chlamydomonas", "chlorella", "raphidocelis", "desmodesmus", "cryptomonas"]
+initial_count = 3
+walks = true
+handling_hours = 1.0
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 30.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 35.0
+semi_minor_axis = 22.5
+thickness = 15.0
+shape_memory = 10.0
+color = [178, 176, 160]
+nucleus = 0.3
+
+[being.morph]
+name = "con alas"
+signal = "lembadion_kairomone"
+threshold = 0.05
+hours = 8.0
+width_scale = 1.4
+area_scale = 1.4
+
+[physiology.euplotes_octocarinatus.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 35, 22.5 y 15 µm: 49480 µm³).
+value = 1.22
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 49480 µm³). No es una medición de la especie."
+estimate = true

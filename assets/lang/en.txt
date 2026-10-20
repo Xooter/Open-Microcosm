@@ -1793,3 +1793,12 @@ respuesta fobica: un cambio brusco (luz, corriente) la hace retroceder y girar	p
 paralizada por toxicistos (%.1f h bio)	paralysed by toxicysts (%.1f h bio)
 Dileptus	Dileptus
 Ciliado cazador de ~250 um con una trompa larga cargada de toxicistos: golpea a otros ciliados, los paraliza y los traga enteros.	Hunting ciliate of ~250 um with a long proboscis loaded with toxicysts: it strikes other ciliates, paralyses them and swallows them whole.
+Lembadion	Lembadion
+Ciliado de ~150 um con una boca enorme que traga otros ciliados enteros. Suelta una senal quimica que hace crecer alas defensivas a Euplotes.	Ciliate of ~150 um with a huge mouth that swallows other ciliates whole. It releases a chemical signal that makes Euplotes grow defensive wings.
+Euplotes octocarinatus	Euplotes octocarinatus
+Hipotrico que camina sobre cirros. Si huele a su depredador Lembadion, le crecen alas laterales que lo hacen demasiado ancho para ser tragado.	Hypotrich that walks on cirri. When it smells its predator Lembadion, it grows lateral wings that make it too wide to be swallowed.
+Tetrahymena vorax	Tetrahymena vorax
+Ciliado que cambia de forma: come bacterias, pero si huele a otros ciliados se vuelve un macrostoma de boca enorme y se los come.	Shape-shifting ciliate: it eats bacteria, but when it smells other ciliates it turns into a big-mouthed macrostome and eats them.
+Ochromonas	Ochromonas
+Flagelado dorado de ~10 um que fotosintetiza y ademas come bacterias y algas chicas: un mixotrofo.	Golden flagellate of ~10 um that photosynthesises and also eats bacteria and small algae: a mixotroph.
+forma inducida: %s (%.0f%%)	induced form: %s (%.0f%%)

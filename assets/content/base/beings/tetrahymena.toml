@@ -30,6 +30,14 @@ nucleus = 0.32
 taper = 0.3
 
 
+# Lo que suelta al agua (hierro ferroso, hipoxantina, uracilo: la "estomatina", Smith-Somerville et al.
+# 2000) transforma a T. vorax en macrostoma. Tasa y vida media estimadas; difusión de molécula chica.
+[being.release]
+signal = "tetrahymena_cues"
+rate = 0.001
+diffusion = 700.0
+half_life_hours = 6.0
+
 [physiology.tetrahymena.max_growth]
 # Cultivo monoxénico en lote con Klebsiella aerogenes; en cultivo continuo (Curds & Cockburn 1971,
 # J. Gen. Microbiol. 66: 95) el µmax estimado fue el doble, 0,43/h, sin temperatura informada.

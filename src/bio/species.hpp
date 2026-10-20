@@ -157,6 +157,33 @@ struct ContractionSpec {
     float extensionSeconds = 10.0f; // [s] para volver a extenderse
 };
 
+// Señal química que libera la célula (M3): una kairomona del depredador (Lembadion), lo que suelta la
+// presa (la "estomatina" de Tetrahymena)… Un campo por señal, que difunde solo si alguien la liberó.
+struct ReleaseSpec {
+    std::string signal;          // id de la señal (lo nombran las que responden)
+    float rate = 0.0f;           // [pmol/h biológica] por célula
+    float diffusion = 100.0f;    // [µm²/s] (moléculas chicas ~500; proteínas ~50–100)
+    float halfLifeHours = 6.0f;  // [h biológicas]
+};
+
+// Morfo inducido (M4): con la señal por encima del umbral, la célula cambia de forma en `hours`
+// (Euplotes arma alas, Tetrahymena vorax pasa a macrostoma) y, completo el cambio, de dieta y de boca.
+// Sin la señal vuelve atrás en el mismo tiempo.
+struct MorphSpec {
+    bool present = false;
+    std::string name;            // para la ficha ("con alas", "macrostoma")
+    std::string signal;
+    float threshold = 0.0f;      // [µM]
+    float hours = 6.0f;          // [h biológicas]
+    float widthScale = 1.0f, lengthScale = 1.0f; // forma relativa a la de la especie
+    float areaScale = 1.0f;      // área por la misma masa (alas finas, casi sin citoplasma)
+    bool feedingSet = false;
+    FeedingMode feeding = FeedingMode::None;
+    bool preySet = false;
+    SpeciesSet prey;             // resuelta como `prey`
+    float mouthWidth = -1.0f;    // < 0: la de la especie
+};
+
 // Toxicistos (Didinium, Dileptus, Litonotus): extrusomas de la probóscide o del borde que, al tocar a
 // la presa, la paralizan (y en general la matan) antes de tragarla (Hausmann 1978, Int. Rev. Cytol. 52:
 // 197). Mecanismo M6: la presa queda `Paralyzed`.
@@ -281,6 +308,8 @@ struct SpeciesInfo {
     JumpSpec jump;                      // [being.jump]
     ContractionSpec contraction;        // [being.contraction]
     ToxicystSpec toxicysts;             // [being.toxicysts]
+    ReleaseSpec release;                // [being.release]
+    MorphSpec morph;                    // [being.morph]
     bool histophagous = false;          // come células dañadas (paralizadas, atrapadas, moribundas)
     StalkSpec stalk;                    // [being.stalk] (o las claves viejas sessile/stalk_length/spasmoneme)
     LightDamageSpec lightDamage;        // [being.light_damage]
@@ -406,6 +435,13 @@ struct Contraction {
 struct Paralyzed {
     float hours;       // [h biológicas] que le quedan
     bool lethal = true; // al terminar, muere
+};
+
+// Componente: cuánto avanzó el morfo inducido (0: forma de la especie, 1: el morfo) y qué estiramiento
+// de la forma de reposo ya está aplicado.
+struct Morph {
+    float progress = 0.0f;
+    float sx = 1.0f, sy = 1.0f;
 };
 
 struct Neck {

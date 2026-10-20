@@ -1,0 +1,48 @@
+# Tetrahymena vorax: ciliado polimórfico. La forma microstoma (~60 µm) come bacterias con su boca chica;
+# con lo que sueltan otros ciliados (la "estomatina" de T. thermophila: hierro ferroso, hipoxantina y
+# uracilo; Smith-Somerville, Hardman-Mixon & Buhse 2000, J. Eukaryot. Microbiol. 47: 296) se transforma en
+# horas en macrostoma, más ancha, con una boca grande, y caza esos mismos ciliados (Buhse 1966). Tiempo
+# de la transformación, umbral, forma y boca del macrostoma: estimados.
+[[being]]
+id = "tetrahymena_vorax"
+name = "Tetrahymena vorax"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Ciliado que cambia de forma: come bacterias, pero si huele a otros ciliados se vuelve un macrostoma de boca enorme y se los come."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "oral_groove"
+relative_speed = 0.8
+initial_count = 2
+handling_hours = 1.0
+cyclosis = 2.0
+ph = [6.0, 9.5]
+temperature = [5.0, 32.0]
+storage = "glycogen"
+wall = "none"
+genome = { trichocysts = 0.0 }
+[being.shape]
+semi_major_axis = 30.0
+semi_minor_axis = 15.0
+shape_memory = 8.0
+color = [196, 194, 176]
+nucleus = 0.3
+
+[being.morph]
+name = "macrostoma"
+signal = "tetrahymena_cues"
+threshold = 0.05
+hours = 6.0
+width_scale = 1.6
+length_scale = 1.2
+feeding = "raptorial"
+prey = ["tetrahymena", "colpidium"]
+mouth_width = 45.0
+
+[physiology.tetrahymena_vorax.max_growth]
+# Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en
+# °C, V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 30, 15 y 15 µm: 28274 µm³).
+value = 1.41
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 28274 µm³). No es una medición de la especie."
+estimate = true
