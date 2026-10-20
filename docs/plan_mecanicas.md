@@ -30,30 +30,30 @@ Estado: ⬜ pendiente · 🟡 en curso · ✅ hecho.
 | 3 | *Pediastrum* | cuernos como prolongaciones del cuerpo | — | ✅ |
 | 4 | *Halteria* | saltos espontáneos y de escape | M1, M2 | ✅ |
 | 5 | *Blepharisma* (+ *Euglena*, *Chlamydomonas*) | fotofobia y daño fotodinámico | M1 | ✅ |
-| 6 | *Colpoda* | quiste reproductivo (2–4 hijas) | autosporas, `Cyst` | ⬜ |
+| 6 | *Colpoda* | quiste reproductivo (2–4 hijas) | autosporas, `Cyst` | ✅ |
 | 7 | *Haematococcus* | pigmento por estrés que fotoprotege | 5 | ✅ |
 | 8 | *Stentor* → *Spirostomum* | contracción del cuerpo entero | M2 | ✅ |
 | 8b | sésiles | pie y tallo realistas | M2, 8 | ✅ |
 | 9 | *Dileptus* (+ *Didinium*, *Litonotus*) | toxicistos y presa paralizada | M6 | ✅ |
 | 10 | *Coleps* | histofagia: células dañadas, comida en grupo | M6 | ✅ |
-| 11 | *Trachelomonas* | lórica que toma Fe del agua | balance | ⬜ |
-| 12 | *Dolichospermum* | acinetos | cianobacterias | ⬜ |
-| 13 | *Spirillum volutans* (+ *E. coli*) | aerotaxis en bandas | M8 | ⬜ |
+| 11 | *Trachelomonas* | lórica que toma Fe del agua | balance | ✅ |
+| 12 | *Dolichospermum* | acinetos | cianobacterias | ✅ |
+| 13 | *Spirillum volutans* (+ *E. coli*) | aerotaxis en bandas | M8 | ✅ |
 | 14 | depredadores | apertura bucal: los cuernos protegen | M5 | ✅ |
 | 15 | *Lembadion* + *Euplotes* | kairomona y alas inducidas | M3, M4, M5 | ✅ |
 | 16 | *Tetrahymena vorax* | microstoma → macrostoma | M3, M4, M5 | ✅ |
 | 17 | *Ochromonas* (+ colonias de *Chlorella*) | mixotrofia; colonias inducidas | M3, M5 | 🟡 |
-| 18 | *Actinophrys* | axopodios que atrapan al contacto | `Captured`, M6 | ⬜ |
-| 19 | *Vampyrella* | perfora la pared de *Spirogyra* | `Captured` | ⬜ |
-| 20 | *Salpingoeca* (+ espermatozoide) | collar filtrador, flagelo posterior | M7, M3 | ⬜ |
-| 21 | *Lingulodinium* | bioluminiscencia por corte y reloj | M2, lente oscura | ⬜ |
-| 22 | *Mesodinium rubrum* | kleptoplastia y saltos | 4 | ⬜ |
-| 23 | *Paramecium bursaria* | *Chlorella* endosimbionte heredable | — | ⬜ |
-| 24 | *P. tetraurelia* killer | cuerpos R | M3 | ⬜ |
-| 25 | *Zoothamnium* / *Carchesium* | colonia ramificada con espasmonema | 8b | ⬜ |
-| 26 | *Bacillaria* | colonia que se desliza coordinada | glider | ⬜ |
-| 27 | tecamebas | testa rígida, seudópodos por la abertura | plasticidad por partícula | ⬜ |
-| 28 | *Dictyostelium* | relevo de AMPc | M3, división de amebas chicas | ⬜ |
+| 18 | *Actinophrys* | axopodios que atrapan al contacto | `Captured`, M6 | ✅ |
+| 19 | *Vampyrella* | perfora la pared de *Spirogyra* | `Captured` | ✅ |
+| 20 | *Salpingoeca* (+ espermatozoide) | collar filtrador, flagelo posterior | M7, M3 | 🟡 |
+| 21 | *Lingulodinium* | bioluminiscencia por corte y reloj | M2, lente oscura | ✅ |
+| 22 | *Mesodinium rubrum* | kleptoplastia y saltos | 4 | ✅ |
+| 23 | *Paramecium bursaria* | *Chlorella* endosimbionte heredable | — | ✅ |
+| 24 | *P. tetraurelia* killer | cuerpos R | M3 | ✅ |
+| 25 | *Zoothamnium* / *Carchesium* | colonia ramificada con espasmonema | 8b | ✅ |
+| 26 | *Bacillaria* | colonia que se desliza coordinada | glider | ✅ |
+| 27 | tecamebas | testa rígida, seudópodos por la abertura | plasticidad por partícula | ✅ |
+| 28 | *Dictyostelium* | relevo de AMPc | M3, división de amebas chicas | ✅ |
 
 Fuera por ahora: reticulopodios (*Allogromia*), *Mixotricha*, parásitos intracelulares, crecimiento
 apical, *Acetabularia*.
@@ -149,19 +149,24 @@ de lejos. Primera etapa sin contactos célula–tallo.
 8. M7 + M8: 13, 20.
 9. 21–28, cada uno con su plan.
 
-## Avance (19/10/2026)
+## Avance (20/10/2026)
 
-Hechas las etapas 1 a 6 (un commit cada una). La 17 quedó a medias: Ochromonas es mixótrofa, pero las
-colonias de Chlorella de Boraas et al. (1998) aparecen por selección, no por una señal, y esperan un gen
-de colonialidad. Spirostomum se divide con la forma contraída (simplificación).
+Hechas las etapas 1 a 9, un commit cada una (en la 9, uno por punto). Quedaron parciales:
 
-**Tests:** escritos en `tests/test_mechanics.cpp` (y los de reproducción en `test_candidates.cpp`), pero a
-pedido del usuario las etapas 3b a 6 **no se corrieron**: hay que correr `rapidos`, `largos` y
-`validacion` al terminar el plan y arreglar lo que falle. En los largos ya fallaban antes las divisiones
-de Ceratium y Staurastrum.
+- **17:** Ochromonas es mixótrofa, pero las colonias de Chlorella de Boraas et al. (1998) aparecen por
+  selección en ~100 generaciones, no por una señal: esperan un gen de colonialidad.
+- **20:** Salpingoeca tiene el flagelo posterior y el collar; las rosetas inducidas por Algoriphagus no
+  (las bacterias no liberan señales) y el espermatozoide tampoco.
+- **27:** la testa es el cuerpo blando rígido y los seudópodos son locomoción y dibujo (no plasticidad
+  por partícula en el solver). Difflugia, con la testa de granos del sedimento, sigue pendiente.
+- **M8:** Spirillum es una cepa más con masa propia; pasar las cepas a datos sigue pendiente.
+- **8b:** los tallos todavía no chocan con las células.
 
-**Pendiente:** etapa 7 (6 Colpoda, 11 Trachelomonas, 12 Dolichospermum, 18 Actinophrys, 19 Vampyrella),
-etapa 8 (13, 20) y 21–28.
+Se arregló de paso la división de las amebas plásticas chicas (se destrabaron Acanthamoeba y
+Naegleria): remallado fino y relajación polar durante la citocinesis.
+
+**Tests:** escritos en `tests/test_mechanics.cpp` y `test_candidates.cpp`; a pedido del usuario se corren
+al terminar el plan.
 
 ## Riesgos
 
