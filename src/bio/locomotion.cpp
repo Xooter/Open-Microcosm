@@ -80,8 +80,16 @@ void applyLocomotion(const RingBody& body, BodyParticles& bp, Locomotion& loco,
             const Vec2 u = normalized(to);
             const float delta = std::atan2(cross(h, u), dot(h, u));
             omega = std::clamp(3.0f * delta, -p.flagellumTurnRate, p.flagellumTurnRate);
-            const float wobble = p.wobble * std::sin(6.2831853f * p.wobbleHz * simTime);
-            linear = (h + side * wobble) * loco.speed;
+            if (loco.gliding) {
+                linear = h * loco.speed; // apoyado en el vidrio: sin bamboleo
+            } else if (loco.helixRadius > 0.0f && loco.helixPeriod > 0.0f) {
+                // Hélice proyectada: desplazamiento lateral R·sin(ωt), velocidad R·ω·cos(ωt).
+                const float w = 6.2831853f / loco.helixPeriod;
+                linear = h * loco.speed + side * (loco.helixRadius * w * std::cos(w * simTime + loco.phase));
+            } else {
+                const float wobble = p.wobble * std::sin(6.2831853f * p.wobbleHz * simTime);
+                linear = (h + side * wobble) * loco.speed;
+            }
         }
         break;
     }
@@ -149,7 +157,8 @@ void applySwimmerForces(const RingBody& body, const BodyParticles& bp, const Loc
     const Vec2 h = bodyHeading(body);
     const float half = halfLength(body);
 
-    if (loco.type == LocomotionType::Flagellum && loco.speed > 0.0f) {
+    // Deslizándose, el flagelo empuja contra el vidrio, no contra el agua: no hay dipolo.
+    if (loco.type == LocomotionType::Flagellum && loco.speed > 0.0f && !loco.gliding) {
         // "Puller" (como Chlamydomonas): el flagelo anterior empuja agua hacia atrás y el
         // cuerpo arrastra agua hacia adelante. Fuerzas opuestas, fuerza neta cero.
         const float r = std::max(4.0f, 0.4f * half);

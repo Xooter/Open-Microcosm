@@ -673,8 +673,11 @@ void World::beginBodies(float dt) {
         if (registry_.all_of<Rock>(static_cast<entt::entity>(body.id)))
             continue; // el grano está apoyado en el vidrio: ni el agua ni la compresión lo mueven
         // Los nadadores sienten solo el flujo de fondo; una célula adherida al fondo, ninguno.
-        const bool swimmer = registry_.all_of<Locomotion>(static_cast<entt::entity>(body.id));
-        const bool adherent = registry_.all_of<Adherent>(static_cast<entt::entity>(body.id));
+        const Locomotion* bodyLoco = registry_.try_get<Locomotion>(static_cast<entt::entity>(body.id));
+        const bool swimmer = bodyLoco != nullptr;
+        // Deslizándose (Peranema), el flagelo la tiene apoyada en el vidrio: el agua no la lleva.
+        const bool adherent = registry_.all_of<Adherent>(static_cast<entt::entity>(body.id)) ||
+                              (bodyLoco && bodyLoco->gliding);
         std::function<void(std::uint32_t)> external = [&](std::uint32_t s) {
             const Vec2 p = {bodies_.x[s], bodies_.y[s]};
             const Vec2 v = (adherent ? Vec2{} : swimmer ? fluid_.backgroundAt(p) : fluid_.velocityAt(p)) + push;
@@ -1421,6 +1424,11 @@ void World::applyTraits(entt::entity e) {
     const SpeciesInfo& info = cellInfo(registry_, e);
     Locomotion& loco = registry_.get<Locomotion>(e);
     loco.power = h.traits.speed * info.speedScale * viscositySpeed_;
+    loco.helixRadius = info.helixRadius;
+    loco.helixPeriod = info.helixPeriod;
+    loco.gliding = info.flagellarGliding;
+    if (const RingBody* rb = registry_.try_get<RingBody>(e)) // fase propia, estable por célula
+        loco.phase = 6.2831853f * static_cast<float>((rb->id * 2654435761u) >> 8 & 0xFFFF) / 65536.0f;
     registry_.get<Digestion>(e).rateScale = h.traits.digestion;
     Metabolism& meta = registry_.get<Metabolism>(e);
     meta.photosynthetic = h.traits.photosynthesis > 0.0f;

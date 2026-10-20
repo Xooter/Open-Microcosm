@@ -1,5 +1,8 @@
 # Pediastrum: colonia plana (cenobio) de 16 células en estrella, inmóvil; cada ciclo libera
 # una colonia hija formada por zoosporas. Es una placa de una célula de espesor (~10 µm).
+# Las 11 células del borde llevan dos cuernos cortos cada una (P. boryanum, P. duplex; Kreutz): son
+# prolongaciones de la pared con citoplasma, parte del contorno de la colonia. Largo y ancho estimados
+# por las figuras (~1/2 de la célula marginal).
 
 [[being]]
 id = "pediastrum"
@@ -27,3 +30,20 @@ nucleus = 0.15
 
 [being.appearance]
 style = "flat_colony"
+
+# Dos cuernos por célula marginal, a cada lado de su eje radial (11 células a 360°/11).
+[[being.process]]
+kind = "horn"
+at = 7.0
+length = 5.0
+base_width = 3.5
+tip_width = 1.0
+count = 11
+
+[[being.process]]
+kind = "horn"
+at = -7.0
+length = 5.0
+base_width = 3.5
+tip_width = 1.0
+count = 11

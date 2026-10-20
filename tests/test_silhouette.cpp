@@ -173,3 +173,23 @@ TEST_CASE("silueta: Ceratium se divide en dos hijas con cuernos" * doctest::test
         CHECK(reach == doctest::Approx(speciesInfo(*id).outlineReach * k).epsilon(0.1));
     }
 }
+
+TEST_CASE("silueta: Pediastrum lleva los 22 cuernos de sus células marginales en el contorno") {
+    const auto id = findSpecies("pediastrum");
+    REQUIRE(id);
+    const SpeciesInfo& info = speciesInfo(*id);
+    REQUIRE(info.processes.size() == 2);
+    CHECK(simpleOutline(info.outline));
+    // Las puntas llegan a ~5 µm del disco: el alcance es el radio más el cuerno.
+    CHECK(info.outlineReach == doctest::Approx(info.spec.radiusX + 5.0f).epsilon(0.1));
+    // 22 puntas: máximos locales del radio que sobresalen del disco.
+    const std::size_t n = info.outline.size();
+    int tips = 0;
+    for (std::size_t i = 0; i < n; ++i) {
+        const float r = length(info.outline[i] - info.outlineBodyCenter);
+        const float a = length(info.outline[(i + n - 1) % n] - info.outlineBodyCenter);
+        const float b = length(info.outline[(i + 1) % n] - info.outlineBodyCenter);
+        tips += r > info.spec.radiusX + 3.0f && r >= a && r > b ? 1 : 0;
+    }
+    CHECK(tips == 22);
+}

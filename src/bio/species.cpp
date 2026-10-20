@@ -77,7 +77,7 @@ constexpr std::pair<const char*, CellWall> kWall[] = {{"none", CellWall::None},
 // Claves conocidas de un [[being]] y de su [being.shape]: una clave que no esté acá es casi siempre un
 // error de tipeo, y se avisa (no se ignora en silencio).
 constexpr const char* kBeingKeys[] = {
-    "id", "legacy_ids", "name", "description", "body_plan", "tags", "locomotion", "feeding", "relative_speed", "prey", "mouth_prey",
+    "id", "legacy_ids", "name", "description", "body_plan", "tags", "locomotion", "feeding", "relative_speed", "helix_radius", "helix_period", "flagellar_gliding", "prey", "mouth_prey",
     "flees_from", "chemokinesis", "acid_trap", "phototaxis", "relative_photosynthesis", "fissions_per_cycle",
     "encysts", "conjugation", "initial_count", "sessile", "stalk_length", "spasmoneme", "walks", "tentacle_reach",
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
@@ -123,6 +123,9 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
     r.choice("locomotion", kLocomotion, s.locomotion, true);
     r.choice("feeding", kFeeding, s.feeding);
     r.num("relative_speed", s.speedScale);
+    r.count("helix_radius", s.helixRadius);
+    r.count("helix_period", s.helixPeriod);
+    r.flag("flagellar_gliding", s.flagellarGliding);
     r.strings("prey", e.prey);
     r.strings("mouth_prey", e.mouthPrey);
     r.strings("flees_from", e.flee);

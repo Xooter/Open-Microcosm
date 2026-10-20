@@ -1,0 +1,36 @@
+# Peridinium cinctum: dinoflagelado tecado de agua dulce, casi esférico y algo aplanado, de 45–60 µm,
+# con placas de celulosa, cloroplastos pardos, un surco ecuatorial (cíngulo) con el flagelo transversal y
+# el longitudinal hacia atrás (Kreutz). El flagelo del cíngulo lo hace girar sobre su eje mientras el
+# longitudinal lo empuja: avanza en hélice (Fenchel 2001, Protist 152: 329). Radio y período de la hélice
+# y velocidad: órdenes de magnitud de los dinoflagelados de este tamaño (~100 µm/s, una vuelta por
+# segundo; Levandowsky & Kaneta 1987, en Taylor, The Biology of Dinoflagellates), a verificar para la
+# especie. Sin µmax publicado: usa el general.
+[[being]]
+id = "peridinium"
+name = "Peridinium"
+tags = ["protist", "flagellate", "dinoflagellate", "phototroph"]
+description = "Dinoflagelado de ~50 um con una teca de placas de celulosa y un surco en la cintura. El flagelo del surco lo hace girar mientras avanza: nada en helice."
+locomotion = "flagellum"
+body_plan = "dinoflagellate"
+relative_speed = 1.25
+helix_radius = 8.0
+helix_period = 1.0
+phototaxis = true
+encysts = true
+initial_count = 3
+chloroplasts = true
+ph = [5.5, 9.5]
+temperature = [4.0, 28.0]
+storage = "starch"
+wall = "cellulose"
+[being.shape]
+semi_major_axis = 26.0
+semi_minor_axis = 23.0
+thickness = 18.0
+# Teca de placas de celulosa: rígida, como Ceratium.
+shape_memory = 60.0
+color = [196, 176, 120]
+nucleus = 0.25
+
+[being.appearance]
+plastid_color = [168, 130, 50]

@@ -52,6 +52,10 @@ struct Locomotion {
     Vec2 target;          // hacia dónde gira el flagelado o se estira el pseudópodo
     float speed = 0.0f;   // velocidad de nado actual [µm/s] (para el agua y el render)
     float power = 1.0f;   // multiplicador genético de la velocidad
+    float helixRadius = 0.0f; // nado helicoidal (de la especie) [µm]; 0 = bamboleo genérico
+    float helixPeriod = 0.0f; // [s]
+    float phase = 0.0f;       // fase propia de la hélice [rad] (cada célula gira a su tiempo)
+    bool gliding = false;     // se desliza sobre el vidrio con el flagelo (no nada)
     std::uint32_t mouthRing = 0; // índice del anillo con el citostoma (boca)
 };
 

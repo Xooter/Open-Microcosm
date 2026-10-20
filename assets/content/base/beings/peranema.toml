@@ -1,6 +1,10 @@
 # Peranema trichophorum: euglenoide incoloro y fagótrofo de 22–81 µm (metabólico; Kreutz), con un
 # flagelo grueso hacia adelante del que solo bate la punta (se desliza) y un aparato de ingestión de
 # dos varillas con el que traga Euglena, levaduras y algas enteras. Ancho estimado (~40 %).
+# Deslizamiento: el flagelo, rígido y apoyado en el vidrio, lleva a la célula pegada al sustrato y solo
+# bate la punta (Saito, Suetomo, Kikuchi, Iwata & Shimizu 2003, Cell Motil. Cytoskeleton 55: 244: la
+# motilidad es de la superficie del flagelo). Velocidad: ~20 µm/s, orden de magnitud a verificar en esa
+# fuente. Sin estigma (incoloro).
 [[being]]
 id = "peranema"
 name = "Peranema"
@@ -9,7 +13,8 @@ description = "Euglenoide incoloro de ~50 um que avanza deslizandose con un flag
 locomotion = "flagellum"
 body_plan = "colorless_euglenid"
 feeding = "raptorial"
-relative_speed = 0.4
+relative_speed = 0.25
+flagellar_gliding = true
 prey = ["euglena", "chlamydomonas", "cryptomonas", "candida", "saccharomyces", "chlorella"]
 initial_count = 4
 handling_hours = 1.0

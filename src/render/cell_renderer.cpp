@@ -584,24 +584,28 @@ void drawFlagellum(const BodyParticles& bp, const RingBody& body, const Locomoti
     const Vec2 base = ringPos(bp, body, front);
     const float length = 2.2f * halfLength; // Euglena: flagelo de ~1 largo corporal
     const float beating = loco.speed > 0.0f ? 1.0f : 0.2f;
-    const int copies = loco.speed > 0.0f ? 3 : 1;
-    const float width = std::max(0.5f, px);
+    const int copies = loco.speed > 0.0f && !loco.gliding ? 3 : 1;
+    // Deslizándose, el flagelo es grueso, rígido y recto hacia adelante: solo bate el último cuarto.
+    const float width = std::max(0.5f, (loco.gliding ? 2.0f : 1.0f) * px);
     for (int c = 0; c < copies; ++c) {
         const float phase0 = 2.0f * kPi * (25.0f * time + static_cast<float>(c) / 3.0f);
         Vec2 prev = base;
         constexpr int kSegments = 24;
         for (int k = 1; k <= kSegments; ++k) {
             const float t = static_cast<float>(k) / kSegments;
-            const float amp = 4.0f * beating * t;
+            const float amp = loco.gliding ? 6.0f * beating * std::max(0.0f, t - 0.75f) : 4.0f * beating * t;
             const float wave = amp * std::sin(3.0f * kPi * t - phase0);
             const Vec2 p = base + h * (t * length) + side * wave;
             fastLine({prev.x, prev.y}, {p.x, p.y}, width, kFlagellum);
             prev = p;
         }
     }
-    // Mancha ocular (estigma) junto a la base del flagelo.
-    const Vec2 eye = base - h * 4.0f + side * 2.0f;
-    fastCircleV({eye.x, eye.y}, 1.6f, kEyespot);
+    // Mancha ocular (estigma) junto a la base del flagelo: solo la tienen las que se orientan a la luz
+    // (Peranema, incoloro, no tiene).
+    if (info.phototaxis) {
+        const Vec2 eye = base - h * 4.0f + side * 2.0f;
+        fastCircleV({eye.x, eye.y}, 1.6f, kEyespot);
+    }
 }
 
 // Marco del cuerpo: eje largo, lado, semilargo y semiancho de la forma de reposo.
@@ -780,19 +784,17 @@ void drawVolvocineColony(const RingBody& body, CellStyle style, int cells, float
     }
 }
 
-// Pediastrum: cenobio plano de 16 células; las del borde llevan dos cuernos.
-void drawPediastrum(const RingBody& body, float px) {
-    const Frame f = frameOf(body);
+// Pediastrum: cenobio plano de 16 células. Los cuernos de las 11 del borde son parte del contorno
+// (prolongaciones del cuerpo en los datos); acá van las células, alineadas con ellos.
+void drawPediastrum(const RingBody& body, const SpeciesInfo& info) {
+    Frame f = frameOf(body);
+    if (!info.outline.empty() && info.outlineArea > 0.0f) // el radio del disco, sin los cuernos
+        f.half = info.spec.radiusX * std::sqrt(std::abs(body.restArea) / info.outlineArea);
     const float cell = 0.2f * f.half;
     for (int k = 0; k < 11; ++k) {
         const float a = 6.2831853f * static_cast<float>(k) / 11.0f;
         const Vec2 d = rotate(f.h, std::cos(a), std::sin(a));
-        const Vec2 c = f.c + d * (0.72f * f.half);
-        fastCircleV(toRay(c), cell, kColonyCell);
-        const Vec2 t = {-d.y, d.x};
-        for (float s : {-1.0f, 1.0f})
-            fastLine(toRay(c + d * cell + t * (0.5f * cell * s)), toRay(c + d * (1.9f * cell) + t * (0.8f * cell * s)),
-                       std::max(0.6f, px), kColonyCell);
+        fastCircleV(toRay(f.c + d * (0.72f * f.half)), cell, kColonyCell);
     }
     for (int k = 0; k < 5; ++k) {
         const float a = 6.2831853f * static_cast<float>(k) / 5.0f + 0.3f;
@@ -1069,7 +1071,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 const float growth = vm && vm->birthBiomass > 0.0f ? vm->biomass / vm->birthBiomass - 1.0f : 0.0f;
                 drawVolvox(bp, body, growth, speciesInfo(sid).colonyDaughters, time, px);
             } else if (style == CellStyle::PlateColony) {
-                drawPediastrum(body, px);
+                drawPediastrum(body, speciesInfo(sid));
             } else if (style == CellStyle::PlateCells || style == CellStyle::PackedCells || style == CellStyle::HollowCells) {
                 const Metabolism* vm = reg.try_get<Metabolism>(e);
                 const float growth = vm && vm->birthBiomass > 0.0f ? vm->biomass / vm->birthBiomass - 1.0f : 0.0f;

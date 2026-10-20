@@ -139,6 +139,14 @@ struct SpeciesInfo {
     LocomotionType locomotion = LocomotionType::Cilia;
     CellSpec spec;                  // forma, tamaño y color típicos
     float speedScale = 1.0f;        // respecto de la velocidad de su tipo de locomoción
+    // Nado helicoidal (dinoflagelados: el flagelo transversal del cíngulo hace girar la célula mientras
+    // el longitudinal la empuja). Vista desde arriba, la hélice es una oscilación lateral de este radio
+    // y período; 0 = el bamboleo genérico del flagelo.
+    float helixRadius = 0.0f;       // [µm]
+    float helixPeriod = 0.0f;       // [s]
+    // Deslizamiento flagelar (Peranema): el flagelo, rígido y hacia adelante, se apoya en el vidrio y
+    // solo bate la punta; la célula avanza pegada al sustrato, sin nadar.
+    bool flagellarGliding = false;
     FeedingMode feeding = FeedingMode::None;
     SpeciesSet prey;                // especies que caza, fagocita o atrapa
     SpeciesSet flee;                // especies de las que huye (reacción de evitación)
