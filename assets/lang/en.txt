@@ -1820,3 +1820,5 @@ Paramecium bursaria	Paramecium bursaria
 Paramecio verde lleno de algas Chlorella que viven adentro y le pasan azucar con la luz: con luz puede crecer casi sin comer.	Green paramecium full of Chlorella algae that live inside it and pass it sugar in the light: in light it can grow almost without eating.
 Mesodinium rubrum	Mesodinium rubrum
 Ciliado rojo de ~30 um que roba los cloroplastos de las criptofitas que come y fotosintetiza con ellos unas semanas. Se mueve a saltos.	Red ciliate of ~30 um that steals the chloroplasts of the cryptophytes it eats and photosynthesises with them for a few weeks. It moves in jumps.
+Paramecium tetraurelia (killer)	Paramecium tetraurelia (killer)
+Paramecio 'killer': sus bacterias endosimbiontes sueltan cuerpos R al agua que matan a los paramecios sensibles que los comen.	'Killer' paramecium: its endosymbiotic bacteria release R bodies into the water that kill the sensitive paramecia that eat them.

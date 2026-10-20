@@ -18,6 +18,7 @@ struct CellSurroundings {
     float salinity = 0.0f;    // [PSU]
     float light = 0.0f;       // irradiancia relativa [0, 1]
     float pigment = 0.0f;     // pigmento de estrés de la célula [0, 1] (filtra la luz)
+    float signalToxin = 0.0f; // señal tóxica de otros (cuerpos R) [µM] (ver SignalToxicitySpec)
 };
 
 // µmax y medias saturaciones de la especie ([physiology.<id>.*], con su fuente) y los multiplicadores

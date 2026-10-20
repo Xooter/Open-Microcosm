@@ -1,5 +1,7 @@
 # Paramecium aurelia: ~130 × 40 µm, más chico que P. caudatum; mismo modo de vida (bacterívoro
-# por surco oral). En el cultivo mixto de Gause (1934) excluye a P. caudatum.
+# por surco oral). En el cultivo mixto de Gause (1934) excluye a P. caudatum. Es sensible a los cuerpos R
+# de los killer (P. tetraurelia): los come con las bacterias y muere en horas (Sonneborn 1938). Dosis
+# estimada.
 
 [[being]]
 id = "paramecium_aurelia"
@@ -25,6 +27,10 @@ semi_minor_axis = 20.0
 shape_memory = 8.0
 color = [168, 180, 142]
 nucleus = 0.32
+
+[being.signal_toxicity]
+signal = "kappa_r_bodies"
+ec50 = 0.05
 
 [physiology.paramecium_aurelia.max_growth]
 # Ajuste logístico (r) al monocultivo de P. aurelia de la fig. 22 (datos en gauseR):

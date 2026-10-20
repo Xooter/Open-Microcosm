@@ -69,7 +69,11 @@ const char* applyEnvironmentStress(const SpeciesInfo& info, const CellSurroundin
         ingested = *violacein;
         *violacein *= std::exp(-kViolaceinDetoxPerHour * bioDt / 3600.0f);
     }
-    in.toxin = microcystin + ingested;
+    // Cuerpos R de los Paramecium killer (u otra señal tóxica): como la microcistina, en dosis de referencia.
+    const float killer = info.signalToxicity.ec50 > 0.0f ? std::max(0.0f, around.signalToxin) / info.signalToxicity.ec50 : 0.0f;
+    in.toxin = microcystin + ingested + killer;
+    if (killer > 1.0f && killer >= microcystin && killer >= ingested)
+        return "intoxicada por cuerpos R (killer)";
     if (microcystin > 1.0f && microcystin >= ingested)
         return "intoxicada por microcistina";
     if (ingested > 1.0f)

@@ -218,7 +218,8 @@ TEST_CASE("sandbox: cada ser del catálogo cae en la categoría que le correspon
                        *findSpecies("litonotus"), *findSpecies("acineta"), *findSpecies("halteria"),
                        *findSpecies("epistylis"), *findSpecies("spirostomum"), *findSpecies("dileptus"),
                        *findSpecies("lembadion"), *findSpecies("euplotes_octocarinatus"), *findSpecies("tetrahymena_vorax"),
-                       *findSpecies("paramecium_bursaria"), *findSpecies("mesodinium")}},
+                       *findSpecies("paramecium_bursaria"), *findSpecies("mesodinium"),
+                       *findSpecies("paramecium_tetraurelia")}},
         {C::Flagellates, {SpeciesId::Euglena, SpeciesId::Trichonympha, *findSpecies("peranema"),
                           *findSpecies("ochromonas"), *findSpecies("salpingoeca")}}, // Ochromonas, mixótrofa: come, así que no es alga
         {C::Amoebae, {SpeciesId::Amoeba, SpeciesId::Arcella, SpeciesId::Naegleria, *findSpecies("chaos"),

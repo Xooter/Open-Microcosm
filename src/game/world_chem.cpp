@@ -123,6 +123,8 @@ const char* World::applyEnvironmentStress(entt::entity e, const RingBody& body, 
     around.salinity = medium_.salinity;
     around.light = in.light;
     around.pigment = registry_.get<Metabolism>(e).pigment;
+    if (!info.signalToxicity.signal.empty())
+        around.signalToxin = signalAt(signalIndex(info.signalToxicity.signal), body.centroid);
     Digestion* d = registry_.try_get<Digestion>(e);
     return ::applyEnvironmentStress(info, around, d ? &d->toxin : nullptr, bioDt, in);
 }

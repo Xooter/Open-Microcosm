@@ -84,7 +84,7 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "bioluminescence", "photosymbiont", "stalk", "toxicysts", "histophagous", "release", "morph", "light_damage",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "morph", "light_damage",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
@@ -383,6 +383,16 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         tr.flag("lethal", s.toxicysts.lethal);
         if (s.toxicysts.reach <= 0.0f || s.toxicysts.paralysisHours <= 0.0f)
             tr.errors.push_back(tr.where + ": 'reach' y 'paralysis_hours' tienen que ser positivos");
+        r.errors.insert(r.errors.end(), tr.errors.begin(), tr.errors.end());
+    }
+    if (const toml::table* tt = r.table("signal_toxicity")) {
+        constexpr const char* kKeys[] = {"signal", "ec50"};
+        toml_io::warnUnknown(*tt, kKeys, r.where + " [signal_toxicity]", warnings);
+        Reader tr{*tt, r.where + " [signal_toxicity]", {}};
+        tr.text("signal", s.signalToxicity.signal);
+        tr.count("ec50", s.signalToxicity.ec50);
+        if (s.signalToxicity.signal.empty() || s.signalToxicity.ec50 <= 0.0f)
+            tr.errors.push_back(tr.where + ": hace falta 'signal' y 'ec50' positivo");
         r.errors.insert(r.errors.end(), tr.errors.begin(), tr.errors.end());
     }
     if (const toml::table* st = r.table("photosymbiont")) {

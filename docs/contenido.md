@@ -121,6 +121,8 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   nace la silvestre), `growth_per_hour` (las algas con luz), `decay_per_hour` (los cleptoplastos
   siempre; las algas a oscuras) y `photosynthesis` (azúcar que pasan con la carga completa, respecto
   de un alga de la biomasa del huésped). Se reparten en la división.
+- `[being.signal_toxicity]`: sensibilidad a una señal tóxica de otro ser (los cuerpos R de un killer).
+  `signal` y `ec50` [µM]: la dosis tóxica de referencia; mata si la pasa.
 - `[being.light_damage]`: daño fotodinámico. Arriba de `threshold` (irradiancia relativa) se paga
   como estrés, `stress` con la lámpara al máximo; necesita O₂.
 - `[being.stress_pigment]`: pigmento de estrés (astaxantina). `rate_per_hour` con luz arriba de

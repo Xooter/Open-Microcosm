@@ -742,3 +742,20 @@ TEST_CASE("mecánicas: los cleptoplastos de Mesodinium se gastan y se reponen co
     CHECK(m.symbionts > before);
     CHECK_FALSE(acquireSymbionts(meso, *findSpecies("chlorella"), m)); // de otra presa no los toma
 }
+
+TEST_CASE("mecánicas: los cuerpos R de un Paramecium killer matan a P. aurelia sensible y no a otros killer") {
+    World world = emptyWorld();
+    world.bioTimeScale() = 3600.0f;
+    const Vec2 c = center(world);
+    for (int k = 0; k < 6; ++k) {
+        const entt::entity killer = spawn(world, "paramecium_tetraurelia", c + Vec2{30.0f * k, -40.0f});
+        world.registry().get<Locomotion>(killer).power = 0.0f;
+    }
+    const entt::entity sensitive = spawn(world, "paramecium_aurelia", c + Vec2{60.0f, 40.0f});
+    const entt::entity other = spawn(world, "paramecium_tetraurelia", c + Vec2{100.0f, 40.0f});
+    world.registry().get<Locomotion>(sensitive).power = 0.0f;
+    world.registry().get<Locomotion>(other).power = 0.0f;
+    run(world, 30.0f); // ~30 h biológicas
+    CHECK_FALSE(world.registry().valid(sensitive));
+    CHECK(world.registry().valid(other));
+}

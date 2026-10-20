@@ -195,6 +195,14 @@ struct ToxicystSpec {
     bool lethal = true;          // al terminar la parálisis, la presa muere (lisis)
 };
 
+// Sensibilidad a una señal tóxica que liberan otros (los cuerpos R de los Paramecium killer, Sonneborn
+// 1938): con la señal en `ec50` [µM] el daño equivale a la dosis tóxica de referencia (como la
+// microcistina), y mata si la pasa.
+struct SignalToxicitySpec {
+    std::string signal;
+    float ec50 = 0.0f; // 0: no es sensible
+};
+
 // Fotosimbiontes dentro de un heterótrofo: endosimbiontes (las Chlorella de Paramecium bursaria, que se
 // dividen con luz dentro del huésped y le pasan azúcar; Karakashian 1963) o cleptoplastos (los
 // cloroplastos que Mesodinium rubrum roba a las criptofitas y usa unas semanas; Johnson et al. 2007). Se
@@ -344,6 +352,7 @@ struct SpeciesInfo {
     ContractionSpec contraction;        // [being.contraction]
     BioluminescenceSpec bioluminescence; // [being.bioluminescence]
     PhotosymbiontSpec photosymbiont;     // [being.photosymbiont]
+    SignalToxicitySpec signalToxicity;   // [being.signal_toxicity]
     ToxicystSpec toxicysts;             // [being.toxicysts]
     ReleaseSpec release;                // [being.release]
     MorphSpec morph;                    // [being.morph]

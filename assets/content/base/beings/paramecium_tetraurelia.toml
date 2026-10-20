@@ -1,0 +1,45 @@
+# Paramecium tetraurelia killer (cepa 51): del complejo P. aurelia, ~120 × 40 µm. Lleva en el citoplasma
+# bacterias endosimbiontes Caedibacter taeniospiralis (partículas kappa); las que forman cuerpos R (cintas
+# enrolladas) salen al agua y matan a los paramecios sensibles que las comen, que se vacuolizan y mueren
+# en horas; los killer son inmunes (Sonneborn 1938; Preer, Preer & Jurand 1974, Bacteriol. Rev. 38: 113).
+# Los cuerpos R son partículas (difunden muy poco) que persisten días. Tasa de liberación, difusión y vida
+# media: órdenes de magnitud, a verificar. La toxicidad para los sensibles está en P. aurelia.
+[[being]]
+id = "paramecium_tetraurelia"
+name = "Paramecium tetraurelia (killer)"
+tags = ["protist", "ciliate", "bacterivore"]
+description = "Paramecio 'killer': sus bacterias endosimbiontes sueltan cuerpos R al agua que matan a los paramecios sensibles que los comen."
+locomotion = "cilia"
+body_plan = "ciliate"
+feeding = "oral_groove"
+flees_from = ["didinium", "lacrymaria"]
+conjugation = true
+chemokinesis = true
+acid_trap = true
+initial_count = 0
+cyclosis = 4.0
+ph = [6.0, 9.5]
+temperature = [5.0, 35.0]
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 60.0
+semi_minor_axis = 20.0
+shape_memory = 8.0
+color = [168, 176, 146]
+nucleus = 0.32
+
+[being.release]
+signal = "kappa_r_bodies"
+rate = 0.001
+diffusion = 1.0
+half_life_hours = 72.0
+
+[physiology.paramecium_tetraurelia.max_growth]
+# Sin medición de la cepa: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en °C,
+# V en µm³) a 20 °C, con el volumen del esferoide de [being.shape] (semiejes 60, 20 y 20 µm: 100531 µm³).
+value = 1.00
+unit = "1/day"
+temperature = 20.0
+source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 100531 µm³). No es una medición de la especie."
+estimate = true

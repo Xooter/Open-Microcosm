@@ -125,3 +125,4 @@ TEST_CASE("candidatos: Salpingoeca se divide" * doctest::test_suite("largos")) {
 TEST_CASE("candidatos: Lingulodinium se divide" * doctest::test_suite("largos")) { reproduces("lingulodinium"); }
 TEST_CASE("candidatos: Paramecium bursaria se divide" * doctest::test_suite("largos")) { reproduces("paramecium_bursaria"); }
 TEST_CASE("candidatos: Mesodinium se divide" * doctest::test_suite("largos")) { reproduces("mesodinium"); }
+TEST_CASE("candidatos: Paramecium tetraurelia se divide" * doctest::test_suite("largos")) { reproduces("paramecium_tetraurelia"); }
