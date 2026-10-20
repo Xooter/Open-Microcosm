@@ -453,6 +453,10 @@ struct SpeciesInfo {
     // Desmidias: al dividirse cada hija conserva una semicélula y la otra brota del istmo y crece en
     // estas horas biológicas (0: las hijas nacen enteras).
     float semicellRegrowthHours = 0.0f;
+    // Volteretas (Closterium): fija una punta con mucílago, se para sobre ella y cae del otro lado; cada
+    // `somersaultInterval` [s] en promedio, en `somersaultSeconds` [s]. 0: no da volteretas.
+    float somersaultInterval = 0.0f;
+    float somersaultSeconds = 30.0f;
     float cvPeriod = 0.0f;
     float cvCytosol = 60.0f;
     // Tecameba (Arcella, Euglypha): el cuerpo blando es la testa, rígida; solo el citoplasma que sale por
@@ -579,6 +583,18 @@ struct SemicellGrowth {
     float isthmus = 1.0f;  // medio ancho del istmo [µm, en la escala de `full`]
     float areaScale = 1.0f;
     std::vector<Vec2> full;
+};
+
+// Componente: voltereta en curso (o la espera hasta la próxima). `pivot` y `other` son índices del
+// anillo de las puntas: la fija y la que se levanta.
+struct Somersault {
+    float wait = -1.0f;   // [s] hasta la próxima (negativo: sin sortear)
+    float t = -1.0f;      // 0–1 durante la voltereta (negativo: no hay)
+    std::size_t pivot = 0, other = 0;
+    bool frontNext = false; // qué punta fija la próxima vez (alternan)
+    Vec2 hold, axis;      // punto de apoyo y eje de la célula al empezar, en el mundo
+    float areaScale = 1.0f;
+    std::vector<Vec2> base;
 };
 
 // Componente: fase del ciclo de la vacuola contráctil (0–1: diástole hasta 0,9, sístole después).

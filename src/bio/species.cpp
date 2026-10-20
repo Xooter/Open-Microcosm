@@ -246,6 +246,16 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         if (s.testate == 0)
             r.errors.push_back(r.where + ": 'testate' es \"lobose\" o \"filose\"");
     }
+    if (const toml::table* so = r.table("somersault")) {
+        constexpr const char* kKeys[] = {"interval_s", "duration_s"};
+        toml_io::warnUnknown(*so, kKeys, r.where + " [somersault]", warnings);
+        Reader cr{*so, r.where + " [somersault]", {}};
+        cr.count("interval_s", s.somersaultInterval);
+        cr.count("duration_s", s.somersaultSeconds);
+        if (s.somersaultInterval <= 0.0f || s.somersaultSeconds <= 0.0f)
+            cr.errors.push_back(cr.where + ": 'interval_s' y 'duration_s' tienen que ser positivos");
+        r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
     if (const toml::table* sc = r.table("semicell")) {
         constexpr const char* kKeys[] = {"regrowth_hours"};
         toml_io::warnUnknown(*sc, kKeys, r.where + " [semicell]", warnings);

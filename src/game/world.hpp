@@ -606,6 +606,9 @@ class World {
     void foundStarColony(entt::entity root, Rng& rng, bool randomStage);
     bool joinStarColony(entt::entity mother, entt::entity child);
     void applyStarColonies(float dt);
+    // Volteretas de Closterium (game/world_somersault.cpp).
+    void updateSomersault(entt::entity e, RingBody& body, Locomotion& loco, float dt);
+    void stopSomersault(entt::entity e, RingBody& body);
     // Semicélula nueva de las desmidias (game/world_semicell.cpp).
     void startSemicell(entt::entity e, entt::entity sibling);
     void updateSemicells(float dt);

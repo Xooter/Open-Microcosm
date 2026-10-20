@@ -143,6 +143,8 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   de un alga de la biomasa del huésped). Se reparten en la división.
 - `[being.signal_toxicity]`: sensibilidad a una señal tóxica de otro ser (los cuerpos R de un killer).
   `signal` y `ec50` [µM]: la dosis tóxica de referencia; mata si la pasa.
+- `[being.somersault]`: volteretas (*Closterium*): cada `interval_s` [s] en promedio fija una punta, se para
+  sobre ella y cae del otro lado en `duration_s` [s], alternando las puntas.
 - `[being.semicell]`: desmidias (con silueta): `regrowth_hours` [h biológicas] en que la semicélula nueva
   brota del istmo y toma su forma después de la división.
 - `[being.contractile_vacuole]`: ciclo de la vacuola contráctil. `period_s` [s] en agua dulce (~16

@@ -29,5 +29,12 @@ bend = 100.0
 taper = 0.6
 taper_front = 0.6
 
+# Volteretas: fija una punta con mucílago, se para sobre ella y cae del otro lado, alternando las
+# puntas; entre volteretas se desliza (Yeh & Gibor 1970, Planta 93: 316). Intervalo y duración
+# estimados, a verificar en esa fuente.
+[being.somersault]
+interval_s = 90.0
+duration_s = 40.0
+
 [being.appearance]
 style = "coccoid"

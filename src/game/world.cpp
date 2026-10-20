@@ -2081,6 +2081,8 @@ void World::applyMotion(float dt) {
         loco.aboralFirst = cellInfo(registry_, e).contraction.aboralFirst && registry_.all_of<Telotroch>(e);
         if (cellInfo(registry_, e).shapeWave.kind != ShapeWaveKind::None)
             updateShapeWave(e, body, loco, dt);
+        if (cellInfo(registry_, e).somersaultInterval > 0.0f)
+            updateSomersault(e, body, loco, dt);
         // Sésiles: no nadan; el tallo las sostiene (la corona ciliar solo hace corriente).
         if (anchored) {
             loco.forward = loco.turn = 0.0f;
@@ -3107,6 +3109,7 @@ void World::updateLifecycle(float dt) {
             relaxShapeWave(e, body);
             finishSemicell(e, body);
             retractNeck(e, body);
+            stopSomersault(e, body);
             // Ameba chica: con pocos puntos de membrana (una de ~10 µm tiene ~24) el surco no tiene de dónde
             // estrangular ni quedan 12 por hija; y la corteza se relaja en los polos durante la citocinesis
             // (relajación polar), si no su tensión redondea la célula contra el surco. En una grande (Chaos)
