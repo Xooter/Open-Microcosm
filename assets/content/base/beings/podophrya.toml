@@ -13,8 +13,6 @@ feeding = "tentacles"
 relative_speed = 0.5
 prey = ["paramecium", "vorticella", "euplotes", "paramecium_aurelia", "tetrahymena", "colpidium"]
 initial_count = 2
-sessile = true
-stalk_length = 40.0
 tentacle_reach = 45.0
 handling_hours = 4.0
 ph = [6.0, 9.5]
@@ -31,3 +29,11 @@ nucleus = 0.32
 
 [being.appearance]
 style = "capitate_tentacles"
+
+# Tallo rígido, fino y refringente secretado por la escópula (Rudzinska). Ancho estimado.
+[being.stalk]
+kind = "rigid"
+length = 40.0
+width = 2.5
+bending_rate = 20.0
+growth_hours = 3.0

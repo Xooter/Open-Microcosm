@@ -275,6 +275,8 @@ class World {
 
     // Herramientas de desarrollo.
     void setStir(Vec2 position, Vec2 velocity, float radius);
+    // Punto del anillo en el polo anterior o posterior de la forma de reposo.
+    static std::size_t poleIndex(const RingBody& body, bool anterior);
     void clearStir() { stirActive_ = false; }
     void dropInk(Vec2 position, float radius, int count);
     void dropDetritus(Vec2 position);
@@ -570,8 +572,12 @@ class World {
     bool repelledByTrichocysts(entt::entity predator, entt::entity prey);
     void hunt(entt::entity predator, const RingBody& body);
     void swallow(entt::entity predator, entt::entity prey);
-    void applyAnchor(entt::entity e, RingBody& body, Anchored& anchor, bool disturbed, float dt);
-    void anchorHere(entt::entity e);
+    void applyAnchor(entt::entity e, RingBody& body, Anchored& anchor, float dt);
+    // Fija la célula al vidrio: con un tallo adulto (`grown`) o con el muñón que secreta al asentarse.
+    void anchorHere(entt::entity e, bool grown = true);
+    // Tallos (game/world_stalk.cpp): física de la varilla, crecimiento, contracción, tallo vacío.
+    void stepStalks(float dt);
+    void contractStalk(Anchored& anchor, float dt);
     void trapWithTentacles(entt::entity e, const RingBody& body);
     void strikeWithNeck(entt::entity e, const RingBody& body, float dt);
     // Contracción del cuerpo entero (game/world_contraction.cpp).
@@ -785,6 +791,10 @@ class World {
         float halfLength, speed, radius;
     };
     std::vector<ContractionKick> contractionKicks_;
+    std::vector<Vec2> stalkFlow_;         // agua en cada nodo de un tallo (buffer reusado)
+    std::vector<entt::entity> stalkGone_; // tallos vacíos degradados en este paso
+    std::vector<entt::entity> detaching_; // zooides que se sueltan en este paso
+    std::uint32_t nextStalkId_ = 1;
     std::vector<std::size_t> eatenBacteria_, eatenAmbient_;
     std::vector<std::uint8_t> takenBacteria_, takenAmbient_;
     std::vector<float> bacterialDemand_;

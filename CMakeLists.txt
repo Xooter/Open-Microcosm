@@ -134,6 +134,7 @@ add_library(biosim STATIC
     src/bio/organelles.cpp
     src/bio/species.cpp
     src/bio/silhouette.cpp
+    src/bio/stalk.cpp
     src/bio/physiology.cpp
     src/bio/cyanobacteria.cpp
     src/bio/fungi.cpp
@@ -148,6 +149,7 @@ add_library(biosim STATIC
     src/game/world_animal.cpp
     src/game/world_tissue.cpp
     src/game/world_contraction.cpp
+    src/game/world_stalk.cpp
     src/game/inspect.cpp
     src/game/world_chem.cpp
     src/game/world_program.cpp

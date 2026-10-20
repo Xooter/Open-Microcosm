@@ -83,7 +83,7 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "light_damage",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "stalk", "light_damage",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
@@ -96,6 +96,13 @@ constexpr std::pair<const char*, ResponseKind> kResponseKind[] = {
 constexpr std::pair<const char*, ResponseAction> kResponseAction[] = {
     {"avoid", ResponseAction::Avoid}, {"jump", ResponseAction::Jump}, {"contract", ResponseAction::Contract}};
 constexpr const char* kContractionKeys[] = {"extension", "extension_s"};
+constexpr const char* kStalkKeys[] = {"kind",        "length",         "width",          "bending_rate",
+                                      "growth_hours", "decay_hours",   "contracted_fraction", "extension_s",
+                                      "spontaneous_per_min", "detaches"};
+constexpr std::pair<const char*, StalkKind> kStalkKind[] = {{"spasmoneme", StalkKind::Spasmoneme},
+                                                            {"rigid", StalkKind::Rigid},
+                                                            {"mucilage", StalkKind::Mucilage},
+                                                            {"foot", StalkKind::Foot}};
 constexpr const char* kJumpKeys[] = {"speed", "duration", "interval"};
 constexpr const char* kLightDamageKeys[] = {"threshold", "stress"};
 constexpr const char* kPigmentKeys[] = {"rate_per_hour", "decay_per_hour", "light_threshold", "protection", "color"};
@@ -299,6 +306,40 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         if (s.contraction.extension < 1.0f || s.contraction.extensionSeconds <= 0.0f)
             cr.errors.push_back(cr.where + ": 'extension' tiene que ser al menos 1 y 'extension_s' positivo");
         r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
+    // Tallo: las claves viejas (sessile, stalk_length, spasmoneme) dan un tallo con los valores por
+    // omisión de su tipo; [being.stalk] lo describe entero.
+    if (s.sessile) {
+        s.stalk.kind = s.contractileStalk ? StalkKind::Spasmoneme : StalkKind::Rigid;
+        s.stalk.length = s.stalkLength;
+        if (s.contractileStalk) {
+            s.stalk.contractedFraction = 0.35f;
+            s.stalk.bendingRate = 3.0f;
+        }
+    }
+    if (const toml::table* st = r.table("stalk")) {
+        toml_io::warnUnknown(*st, kStalkKeys, r.where + " [stalk]", warnings);
+        Reader sr{*st, r.where + " [stalk]", {}};
+        StalkSpec& sp = s.stalk;
+        sr.choice("kind", kStalkKind, sp.kind, true);
+        sr.count("length", sp.length);
+        sr.count("width", sp.width);
+        sr.count("bending_rate", sp.bendingRate);
+        sr.count("growth_hours", sp.growthHours);
+        sr.count("decay_hours", sp.decayHours);
+        sr.count("contracted_fraction", sp.contractedFraction);
+        sr.count("extension_s", sp.extensionSeconds);
+        sr.count("spontaneous_per_min", sp.spontaneousPerMinute);
+        sr.flag("detaches", sp.detaches);
+        if (sp.kind != StalkKind::Foot && sp.length <= 0.0f)
+            sr.errors.push_back(sr.where + ": un tallo necesita 'length' positivo");
+        if (sp.contractedFraction <= 0.0f || sp.contractedFraction > 1.0f || sp.extensionSeconds <= 0.0f)
+            sr.errors.push_back(sr.where + ": 'contracted_fraction' va de 0 a 1 y 'extension_s' es positivo");
+        // El tallo implica ser sésil; los campos viejos quedan en sincronía (exportación, ficha).
+        s.sessile = true;
+        s.stalkLength = sp.kind == StalkKind::Foot ? 0.0f : sp.length;
+        s.contractileStalk = sp.kind == StalkKind::Spasmoneme;
+        r.errors.insert(r.errors.end(), sr.errors.begin(), sr.errors.end());
     }
     if (const toml::table* lt = r.table("light_damage")) {
         toml_io::warnUnknown(*lt, kLightDamageKeys, r.where + " [light_damage]", warnings);

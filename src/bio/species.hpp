@@ -3,6 +3,7 @@
 #include "bio/cell.hpp"
 #include "bio/genome.hpp"
 #include "bio/locomotion.hpp"
+#include "bio/stalk.hpp"
 
 #include <entt/entity/entity.hpp>
 
@@ -270,6 +271,7 @@ struct SpeciesInfo {
     std::vector<ResponseSpec> responses; // [[being.response]]
     JumpSpec jump;                      // [being.jump]
     ContractionSpec contraction;        // [being.contraction]
+    StalkSpec stalk;                    // [being.stalk] (o las claves viejas sessile/stalk_length/spasmoneme)
     LightDamageSpec lightDamage;        // [being.light_damage]
     StressPigmentSpec stressPigment;    // [being.stress_pigment]
     // Contorno de la célula entera cuando tiene prolongaciones en el cuerpo (bio/silhouette): denso,
@@ -335,11 +337,23 @@ struct Cyst {
     float age = 0.0f; // [s]
 };
 
-// Componente: célula sésil fija por un tallo a un punto (`holdfast`).
+// Componente: célula sésil fija al vidrio, por un tallo (`rod`, una entidad con Stalk) o por el pie
+// (sin tallo: el polo posterior sobre `holdfast`).
 struct Anchored {
     Vec2 holdfast;
-    float stalk;          // largo actual del tallo [µm]
-    float contracted = 0.0f; // 1 = recién contraída (espasmonema); vuelve a 0 en segundos
+    float stalk = 0.0f;      // largo actual del tallo [µm] (copia para la ficha)
+    float contracted = 0.0f; // 1 = recién contraído (espasmonema); vuelve a 0 en segundos (copia)
+    entt::entity rod = entt::null;
+};
+
+// Componente de una entidad tallo (no es una célula: no tiene cuerpo blando). Sigue ahí cuando el
+// zooide se va (telotroco) o muere, hasta degradarse.
+struct Stalk {
+    StalkRod rod;
+    SpeciesId species{};
+    entt::entity zooid = entt::null; // null: tallo vacío
+    float emptyHours = 0.0f;         // [h biológicas] sin zooide
+    std::uint32_t id = 0;            // estable (dibujo de la hélice)
 };
 
 // Componente: hija nadadora de una especie sésil (telotroco), antes de fijarse.

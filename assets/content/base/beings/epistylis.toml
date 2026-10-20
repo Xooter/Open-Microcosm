@@ -12,8 +12,6 @@ feeding = "oral_groove"
 relative_speed = 0.4
 conjugation = true
 initial_count = 3
-sessile = true
-stalk_length = 200.0
 cyclosis = 2.0
 ph = [6.0, 9.5]
 temperature = [5.0, 30.0]
@@ -29,6 +27,16 @@ nucleus = 0.3
 
 [being.appearance]
 style = "peristomal_crown"
+
+# Tallo rígido y grueso, sin espasmonema, con estrías longitudinales (Kreutz); se contrae el zooide, no el
+# tallo. Ancho estimado por las figuras.
+[being.stalk]
+kind = "rigid"
+length = 200.0
+width = 8.0
+bending_rate = 30.0
+growth_hours = 6.0
+detaches = true
 
 [physiology.epistylis.max_growth]
 # Sin medición de la especie: estimación alométrica ln r = 1,52 ln T − 0,27 ln V − 1,44 (r en 1/día, T en

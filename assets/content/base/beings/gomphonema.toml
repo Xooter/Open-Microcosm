@@ -12,8 +12,6 @@ relative_photosynthesis = 1.5
 initial_count = 4
 chloroplasts = true
 frustule = true
-sessile = true
-stalk_length = 40.0
 ph = [6.0, 9.5]
 temperature = [2.0, 30.0]
 storage = "chrysolaminarin"
@@ -30,3 +28,12 @@ taper = 0.5
 [being.appearance]
 style = "frustule"
 plastid_color = [176, 140, 50]
+
+# Tallo de mucílago (polisacáridos) que secreta por los poros del polo basal: hialino, flexible, se mece
+# con la corriente (Kreutz; Wang et al. 1997). Ancho, flexión y crecimiento estimados.
+[being.stalk]
+kind = "mucilage"
+length = 40.0
+width = 4.0
+bending_rate = 0.8
+growth_hours = 12.0

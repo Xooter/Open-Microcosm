@@ -1930,6 +1930,7 @@ void World::buildPerceptionGrid() {
 
 void World::applyMotion(float dt) {
     PROFILE_SCOPE("World::applyMotion");
+    stepStalks(dt);
     buildPerceptionGrid();
     // La percepción de cada piloto automático lee solo estado de este momento (centroides, cajas y
     // contornos de los vecinos, química, luz) y se calcula en paralelo antes del bucle. En el
@@ -2009,14 +2010,17 @@ void World::applyMotion(float dt) {
             if (loco.burst > 0.0f) // el golpe de los cirros también lo frena la viscosidad del medio
                 if (const Heredity* hh = registry_.try_get<Heredity>(e))
                     loco.burst *= hh->traits.speed * viscositySpeed_;
-            // Perturbación mecánica: un choque, una amenaza cerca o una corriente fuerte.
-            disturbed = sense.bumped || (sense.hasThreat && sense.threatDistance < 40.0f) ||
-                        length(fluid_.velocityAt(body.centroid)) > 40.0f;
-        } else {
-            continue;
+            // Perturbación mecánica: un choque o una amenaza que la toca (la corriente la miden las
+            // respuestas de la especie, [[being.response]] con campo `shear`).
+            disturbed = sense.bumped || (sense.hasThreat && sense.threatDistance < 40.0f);
+        } else if (!registry_.all_of<Anchored>(e)) {
+            continue; // sin piloto ni tallo: nada que mover (las fijas inmóviles, como Gomphonema, siguen)
         }
+        Anchored* anchored = registry_.try_get<Anchored>(e);
+        if (anchored && (contract || disturbed)) // el espasmonema y el zooide se contraen juntos
+            contractStalk(*anchored, dt);
         if (cellInfo(registry_, e).contraction.extension > 1.0f) {
-            updateContraction(e, body, contract, dt);
+            updateContraction(e, body, contract || (anchored && disturbed), dt);
             // Recién contraída no nada: los cilios se detienen y vuelven a batir al re-extenderse.
             if (const Contraction* c = registry_.try_get<Contraction>(e); c && c->state > 0.8f) {
                 loco.forward = loco.turn = 0.0f;
@@ -2025,10 +2029,10 @@ void World::applyMotion(float dt) {
             }
         }
         // Sésiles: no nadan; el tallo las sostiene (la corona ciliar solo hace corriente).
-        if (Anchored* anchor = registry_.try_get<Anchored>(e)) {
+        if (anchored) {
             loco.forward = loco.turn = 0.0f;
             loco.active = false;
-            applyAnchor(e, body, *anchor, disturbed, dt);
+            applyAnchor(e, body, *anchored, dt);
         }
         // Atrapada por un suctorio: los tentáculos la sujetan y no puede nadar.
         if (const Captured* cap = registry_.try_get<Captured>(e); cap && registry_.valid(cap->by)) {
@@ -3085,7 +3089,7 @@ void World::updateLifecycle(float dt) {
     released_.clear();
     for (entt::entity e : settling_) {
         registry_.remove<Telotroch>(e);
-        anchorHere(e);
+        anchorHere(e, false); // el telotroco se asienta y secreta su tallo
     }
     settling_.clear();
     for (const auto& [e, cause] : dying_)
@@ -3997,53 +4001,67 @@ bool World::smallPrey(const RingBody& prey) const {
 // Sésiles, suctorios y Lacrymaria
 // ---------------------------------------------------------------------------
 
-namespace {
-std::size_t poleIndex(const RingBody& body, bool anterior) {
+std::size_t World::poleIndex(const RingBody& body, bool anterior) {
     std::size_t best = 0;
     for (std::size_t i = 1; i < body.restRing.size(); ++i)
         if (anterior ? body.restRing[i].x > body.restRing[best].x : body.restRing[i].x < body.restRing[best].x)
             best = i;
     return best;
 }
-} // namespace
 
-void World::anchorHere(entt::entity e) {
-    // El tallo sale del polo posterior hacia atrás y se fija al vidrio.
+void World::anchorHere(entt::entity e, bool grown) {
+    // El tallo sale del polo posterior hacia atrás y se fija al vidrio con su disco adhesivo. Recién
+    // fijado (telotroco que se asienta) el tallo es un muñón que la célula secreta en unas horas.
     const RingBody& body = registry_.get<RingBody>(e);
     const SpeciesInfo& info = cellInfo(registry_, e);
+    const StalkSpec& spec = info.stalk;
     const std::uint32_t base = body.ring[poleIndex(body, false)];
+    const Vec2 pole = {bodies_.x[base], bodies_.y[base]};
     const Vec2 h = bodyHeading(body);
-    const Vec2 hold = Vec2{bodies_.x[base], bodies_.y[base]} - h * info.stalkLength;
-    registry_.emplace_or_replace<Anchored>(e, Anchored{{wrapCoord(hold.x, width_), wrapCoord(hold.y, height_)},
-                                                       info.stalkLength});
+    if (spec.kind == StalkKind::Foot || spec.length <= 0.0f) { // pie: el polo posterior, pegado
+        registry_.emplace_or_replace<Anchored>(e, Anchored{{wrapCoord(pole.x, width_), wrapCoord(pole.y, height_)}});
+        return;
+    }
+    const float length = grown ? spec.length : std::max(1.0f, 0.05f * spec.length);
+    const Vec2 hold = pole - h * length;
+    const entt::entity rod = registry_.create();
+    Stalk& st = registry_.emplace<Stalk>(rod);
+    layStalk(st.rod, hold, h, length, stalkNodeCount(spec.length));
+    st.species = speciesOfEntity(registry_, e);
+    st.zooid = e;
+    st.id = nextStalkId_++;
+    registry_.emplace_or_replace<Anchored>(e, Anchored{hold, length, 0.0f, rod});
 }
 
-void World::applyAnchor(entt::entity e, RingBody& body, Anchored& anchor, bool disturbed, float dt) {
+void World::applyAnchor(entt::entity e, RingBody& body, Anchored& anchor, float dt) {
     PROFILE_SCOPE("World::applyAnchor");
-    const SpeciesInfo& info = cellInfo(registry_, e);
-    // Espasmonema: ante una perturbación el tallo se enrolla en ~10 ms y se re-extiende en
-    // unos segundos.
-    if (info.contractileStalk && disturbed)
-        anchor.contracted = 1.0f;
-    anchor.contracted = std::max(0.0f, anchor.contracted - dt / 4.0f);
-    anchor.stalk = info.stalkLength * (1.0f - 0.85f * anchor.contracted);
-
+    (void)e;
+    (void)dt;
     const std::size_t n = body.ring.size();
     const std::size_t back = poleIndex(body, false), front = poleIndex(body, true);
     const Vec2 base = {bodies_.x[body.ring[back]], bodies_.y[body.ring[back]]};
-    const Vec2 hold = base + Vec2{minImage(anchor.holdfast.x - base.x, width_), minImage(anchor.holdfast.y - base.y, height_)};
-    const Vec2 out = base - hold;
-    const float dist = std::max(1e-3f, length(out));
-    const Vec2 dir = out * (1.0f / dist);
-    // El tallo tira del polo posterior hasta su largo actual (rápido al contraerse).
-    const Vec2 target = hold + dir * anchor.stalk;
+    // A dónde va el polo posterior: la punta del tallo (resuelto en stepStalks) o, con pie, el punto
+    // de fijación. La dirección para mantenerse erguida es la del último tramo del tallo.
+    Vec2 target, dir = bodyHeading(body);
+    const Stalk* st = registry_.valid(anchor.rod) ? registry_.try_get<Stalk>(anchor.rod) : nullptr;
+    if (st && st->rod.nodes.size() >= 2) {
+        const Vec2 tip = st->rod.nodes.back(), prev = st->rod.nodes[st->rod.nodes.size() - 2];
+        target = base + Vec2{minImage(tip.x - base.x, width_), minImage(tip.y - base.y, height_)};
+        const Vec2 d = tip - prev;
+        const float len = length(d);
+        if (len > 1e-3f)
+            dir = d * (1.0f / len);
+    } else {
+        target = base + Vec2{minImage(anchor.holdfast.x - base.x, width_), minImage(anchor.holdfast.y - base.y, height_)};
+    }
+    // Rápido al contraerse el espasmonema (lo arrastra en ms).
     const float rate = anchor.contracted > 0.9f ? 60.0f : 6.0f;
     for (int k = -2; k <= 2; ++k) {
         const std::uint32_t s = body.ring[(back + n + static_cast<std::size_t>(k + static_cast<int>(n))) % n];
         bodies_.vx[s] += (target.x - base.x) * rate;
         bodies_.vy[s] += (target.y - base.y) * rate;
     }
-    // El tallo mantiene la célula erguida: el polo anterior se aleja del punto de fijación.
+    // El tallo la mantiene erguida: el polo anterior sigue la dirección del tallo.
     const std::uint32_t tip = body.ring[front];
     bodies_.vx[tip] += dir.x * 3.0f;
     bodies_.vy[tip] += dir.y * 3.0f;

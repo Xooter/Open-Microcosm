@@ -13,9 +13,6 @@ body_plan = "ciliate"
 feeding = "oral_groove"
 relative_speed = 0.4
 initial_count = 8
-sessile = true
-stalk_length = 150.0
-spasmoneme = true
 cyclosis = 2.0
 ph = [6.0, 9.5]
 temperature = [5.0, 32.0]
@@ -31,3 +28,27 @@ nucleus = 0.32
 
 [being.appearance]
 style = "peristomal_crown"
+
+# Tallo: vaina elástica de unos µm de ancho con el espasmonema en hélice, descentrado. Se enrolla a ~1/3
+# de su largo en ~5 ms (Ca²⁺, sin ATP: Amos 1971; Moriyama, Hiyama & Asai 1998, Biophys. J. 74: 487;
+# Upadhyaya et al. 2008, PNAS 105: 18466), se re-extiende en ~1–2 s y también se contrae sola cada tanto.
+# Con hambre el zooide arma el telotroco y deja el tallo. Ancho, flexión, crecimiento y frecuencia de las
+# contracciones espontáneas: estimados.
+[being.stalk]
+kind = "spasmoneme"
+length = 150.0
+width = 3.0
+bending_rate = 3.0
+growth_hours = 4.0
+contracted_fraction = 0.35
+extension_s = 2.0
+spontaneous_per_min = 0.5
+detaches = true
+
+# Mecanorrecepción: una corriente brusca (más de ~2/s de deformación) dispara la contracción.
+[[being.response]]
+field = "shear"
+kind = "above"
+threshold = 2.0
+action = "contract"
+refractory = 2.0

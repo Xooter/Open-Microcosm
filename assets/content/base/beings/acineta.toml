@@ -12,8 +12,6 @@ relative_speed = 0.5
 prey = ["tetrahymena", "colpidium", "colpoda", "paramecium", "paramecium_aurelia", "euplotes"]
 conjugation = true
 initial_count = 1
-sessile = true
-stalk_length = 60.0
 tentacle_reach = 70.0
 handling_hours = 4.0
 ph = [6.0, 9.5]
@@ -30,3 +28,11 @@ nucleus = 0.3
 
 [being.appearance]
 style = "capitate_tentacles"
+
+# Tallo rígido, corto y grueso (Kreutz). Ancho estimado.
+[being.stalk]
+kind = "rigid"
+length = 60.0
+width = 6.0
+bending_rate = 40.0
+growth_hours = 3.0

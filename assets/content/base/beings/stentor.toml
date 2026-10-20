@@ -18,8 +18,6 @@ feeding = "oral_groove"
 relative_speed = 0.5
 mouth_prey = ["euglena", "chlamydomonas", "navicula", "asterionella", "cyclotella", "chlorella", "raphidocelis", "desmodesmus", "cryptomonas"]
 initial_count = 2
-sessile = true
-stalk_length = 20.0
 handling_hours = 0.5
 cyclosis = 3.0
 ph = [6.0, 9.5]
@@ -64,3 +62,9 @@ min_level = 0.3
 memory = 2.0
 action = "contract"
 refractory = 5.0
+
+# Sin tallo: se fija al vidrio por el pie (una secreción adhesiva y seudópodos del polo posterior) y,
+# con hambre, lo suelta, nada y se vuelve a fijar (Tartar 1961, The Biology of Stentor).
+[being.stalk]
+kind = "foot"
+detaches = true

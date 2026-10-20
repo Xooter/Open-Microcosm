@@ -87,6 +87,12 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   entra en el agua y lo sienten las vecinas.
 - `[being.jump]`: saltos. `speed` [µm/s], `duration` [s], `interval` [s] medio entre saltos
   espontáneos (0: solo de escape, con una respuesta `jump` o una amenaza a menos de 40 µm).
+- `[being.stalk]`: pie o tallo de un ser fijo (lo hace sésil). `kind`: `spasmoneme` (se enrolla) |
+  `rigid` | `mucilage` (hialino y flexible) | `foot` (sin tallo, el polo posterior pegado). `length`
+  y `width` [µm], `bending_rate` [1/s] (rigidez frente al arrastre del agua), `growth_hours` (en
+  secretarlo después de fijarse), `decay_hours` (lo que dura vacío), `contracted_fraction` y
+  `extension_s` (espasmonema), `spontaneous_per_min`, `detaches` (con hambre el zooide se suelta y
+  deja el tallo). Las claves viejas `sessile`, `stalk_length` y `spasmoneme` se siguen leyendo.
 - `[being.light_damage]`: daño fotodinámico. Arriba de `threshold` (irradiancia relativa) se paga
   como estrés, `stress` con la lámpara al máximo; necesita O₂.
 - `[being.stress_pigment]`: pigmento de estrés (astaxantina). `rate_per_hour` con luz arriba de

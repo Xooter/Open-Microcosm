@@ -1560,7 +1560,11 @@ fagosomas con bacterias	phagosomes with bacteria
 fermenta	ferments
 fermenta, sin O2	ferments, without O2
 fermentan	ferment
-fija al vidrio por un tallo de %.0f um%s	attached to the glass by a %.0f um stalk%s
+fija al vidrio por un tallo con espasmonema de %.0f um%s	attached to the glass by a %.0f um stalk with a spasmoneme%s
+fija al vidrio por un tallo de mucilago de %.0f um%s	attached to the glass by a %.0f um mucilage stalk%s
+fija al vidrio por un tallo rigido de %.0f um%s	attached to the glass by a rigid %.0f um stalk%s
+ (todavia lo secreta)	 (still secreting it)
+fija al vidrio por el pie (una secrecion adhesiva del polo posterior)	attached to the glass by its foot (an adhesive secretion of the posterior pole)
 fijación de nitrógeno	nitrogen fixation
 fijación de n₂	n₂ fixation
 fijado y tenido	fixed and stained

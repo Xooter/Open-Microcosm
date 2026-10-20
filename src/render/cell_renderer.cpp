@@ -56,6 +56,13 @@ constexpr Color kMitoticHalo = {252, 252, 244, 170};   // la célula redondeada 
 constexpr Color kChromosome = {58, 44, 70, 230};       // cromosomas condensados
 constexpr Color kPyknotic = {48, 40, 58, 235};          // núcleo condensado de la apoptosis
 constexpr Color kBleb = {224, 221, 210, 210};           // burbujas de membrana de la apoptosis
+// Tallos: vaina refringente (borde oscuro como la membrana), interior casi transparente, espasmonema
+// más oscuro (proteína densa) y mucílago hialino de bajo contraste.
+constexpr Color kStalkEdge = {66, 68, 56, 200};
+constexpr Color kStalkFill = {226, 226, 214, 80};
+constexpr Color kSpasmoneme = {74, 80, 64, 170};
+constexpr Color kMucilageEdge = {120, 128, 116, 90};
+constexpr Color kMucilageFill = {232, 234, 226, 50};
 constexpr float kRimMicrometers = 5.0f;
 constexpr float kPi = 3.14159265f;
 
@@ -948,6 +955,101 @@ void drawBud(const RingBody& body, float growth, float px) {
     fastRing(toRay(c), r - std::max(0.4f, px), r, 0, 360, 24, kYeastWall);
 }
 
+// Tallos (bio/stalk, game/world_stalk): uno por entidad Stalk, también los vacíos. Un tubo con el borde
+// óptico de la vaina; el espasmonema es una línea oscura en hélice adentro, y contraído el tallo entero
+// se enrolla como un resorte (en la vista, una hélice proyectada). El rígido grueso lleva estrías; el
+// mucilaginoso es ancho, hialino y de poco contraste. En la base, el disco adhesivo.
+void drawStalks(const entt::registry& reg, float px, Rectangle view) {
+    thread_local std::vector<Vec2> path, normal;
+    thread_local std::vector<float> arc;
+    for (const auto [se, st] : reg.view<Stalk>().each()) {
+        const std::vector<Vec2>& nodes = st.rod.nodes;
+        if (nodes.size() < 2)
+            continue;
+        const StalkSpec& spec = speciesInfo(st.species).stalk;
+        Vec2 lo = nodes[0], hi = nodes[0];
+        for (const Vec2& q : nodes) {
+            lo = {std::min(lo.x, q.x), std::min(lo.y, q.y)};
+            hi = {std::max(hi.x, q.x), std::max(hi.y, q.y)};
+        }
+        const float margin = 3.0f * spec.width + 10.0f;
+        if (hi.x + margin < view.x || lo.x - margin > view.x + view.width || hi.y + margin < view.y ||
+            lo.y - margin > view.y + view.height)
+            continue;
+        const float w = spec.width;
+        const float c = st.rod.contracted;
+        const bool spasm = spec.kind == StalkKind::Spasmoneme;
+        const bool mucilage = spec.kind == StalkKind::Mucilage;
+        const float phase = 0.37f * static_cast<float>(st.id % 17u);
+        // Línea central muestreada fino, con el enrollado del espasmonema contraído.
+        path.clear();
+        arc.clear();
+        float s = 0.0f;
+        const float step = std::max(0.5f, std::min(2.0f, 0.5f * w));
+        for (std::size_t i = 0; i + 1 < nodes.size(); ++i) {
+            const Vec2 a = nodes[i], b = nodes[i + 1];
+            const float len = length(b - a);
+            const int parts = std::max(1, static_cast<int>(len / step));
+            for (int k = 0; k < parts; ++k) {
+                path.push_back(a + (b - a) * (static_cast<float>(k) / static_cast<float>(parts)));
+                arc.push_back(s + len * static_cast<float>(k) / static_cast<float>(parts));
+            }
+            s += len;
+        }
+        path.push_back(nodes.back());
+        arc.push_back(s);
+        const std::size_t m = path.size();
+        normal.resize(m);
+        for (std::size_t i = 0; i < m; ++i) {
+            const Vec2 t = path[std::min(m - 1, i + 1)] - path[i == 0 ? 0 : i - 1];
+            const float len = length(t);
+            normal[i] = len > 1e-6f ? Vec2{-t.y / len, t.x / len} : Vec2{0.0f, 1.0f};
+        }
+        if (spasm && c > 0.0f) { // resorte: vueltas de ~1,5 anchos, amplitud de un ancho
+            const float pitch = 1.5f * w;
+            for (std::size_t i = 0; i < m; ++i)
+                path[i] = path[i] + normal[i] * (c * w * std::sin(6.2831853f * arc[i] / pitch + phase));
+        }
+        const bool thin = w < 2.5f * px;
+        if (thin) { // de lejos, una línea
+            for (std::size_t i = 0; i + 1 < m; ++i)
+                fastLine(toRay(path[i]), toRay(path[i + 1]), std::max(1.0f, 1.2f * px), mucilage ? kMucilageEdge : kStalkEdge);
+            continue;
+        }
+        const Color fill = mucilage ? kMucilageFill : kStalkFill;
+        const Color edge = mucilage ? kMucilageEdge : kStalkEdge;
+        const float edgeWidth = std::max(0.8f * px, std::min(0.4f, 0.12f * w));
+        for (std::size_t i = 0; i + 1 < m; ++i)
+            fastLine(toRay(path[i]), toRay(path[i + 1]), w, fill);
+        for (float side : {-0.5f, 0.5f})
+            for (std::size_t i = 0; i + 1 < m; ++i)
+                fastLine(toRay(path[i] + normal[i] * (side * w)), toRay(path[i + 1] + normal[i + 1] * (side * w)),
+                         edgeWidth, edge);
+        if (spasm) { // el espasmonema, descentrado, en hélice dentro de la vaina
+            const float pitch = 6.0f * w;
+            auto inner = [&](std::size_t i) {
+                return path[i] + normal[i] * (0.28f * w * std::sin(6.2831853f * arc[i] / pitch + phase));
+            };
+            for (std::size_t i = 0; i + 1 < m; ++i)
+                fastLine(toRay(inner(i)), toRay(inner(i + 1)), std::max(px, 0.3f * w), kSpasmoneme);
+        } else if (spec.kind == StalkKind::Rigid && w >= 5.0f) { // estrías longitudinales
+            for (float side : {-0.17f, 0.17f})
+                for (std::size_t i = 0; i + 1 < m; ++i)
+                    fastLine(toRay(path[i] + normal[i] * (side * w)), toRay(path[i + 1] + normal[i + 1] * (side * w)),
+                             std::max(0.6f * px, 0.06f * w), Fade(kStalkEdge, 0.35f));
+        } else if (mucilage) { // capas del mucílago
+            for (float side : {-0.3f, 0.3f})
+                for (std::size_t i = 0; i + 1 < m; ++i)
+                    fastLine(toRay(path[i] + normal[i] * (side * w)), toRay(path[i + 1] + normal[i + 1] * (side * w)),
+                             std::max(0.6f * px, 0.05f * w), Fade(kMucilageEdge, 0.6f));
+        }
+        // Disco adhesivo.
+        const float disc = 0.9f * w;
+        fastCircleV(toRay(nodes[0]), disc, fill);
+        drawRingFast(toRay(nodes[0]), disc - edgeWidth, disc, 36, edge, px);
+    }
+}
+
 } // namespace
 
 void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Rectangle view) {
@@ -972,6 +1074,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
         return;
     }
     setActiveBatch(&batch_); // membranas, gránulos y apéndices: una sola llamada (ver TriangleBatch)
+    drawStalks(reg, px, view);
 
     for (const auto [e, body, anatomy] : reg.view<RingBody, CellAnatomy>().each()) {
         const Locomotion* loco = reg.try_get<Locomotion>(e);
@@ -988,28 +1091,6 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             level = static_cast<DetailLevel>(static_cast<int>(level) + 1);
         forEachImage(world, body, view, [&] {
             const std::size_t n = body.poly.size();
-            // Tallo: del punto de fijación al polo posterior; enrollado si el espasmonema se contrajo.
-            if (const Anchored* anchor = reg.try_get<Anchored>(e)) {
-                std::size_t back = 0;
-                for (std::size_t i = 1; i < body.restRing.size(); ++i)
-                    if (body.restRing[i].x < body.restRing[back].x)
-                        back = i;
-                const Vec2 base = ringPos(bp, body, back);
-                const Vec2 hold = base + Vec2{minImage(anchor->holdfast.x - base.x, world.width()),
-                                              minImage(anchor->holdfast.y - base.y, world.height())};
-                const Vec2 along = base - hold;
-                const Vec2 side = Vec2{-along.y, along.x} * (1.0f / std::max(1e-3f, length(along)));
-                Vec2 prev = hold;
-                constexpr int kTurns = 16;
-                for (int k = 1; k <= kTurns; ++k) {
-                    const float t = static_cast<float>(k) / kTurns;
-                    const float coil = (k % 2 ? 1.0f : -1.0f) * 6.0f * anchor->contracted; // zigzag del resorte
-                    const Vec2 p = hold + along * t + side * (k < kTurns ? coil : 0.0f);
-                    fastLine(toRay(prev), toRay(p), std::max(1.0f, 1.2f * px), kMembrane);
-                    prev = p;
-                }
-                drawCircleFast(toRay(hold), std::max(2.0f, 2.0f * px), kMouth, px);
-            }
             for (auto [pe, cap] : reg.view<Captured>().each()) { // tentáculo succionando a la presa
                 if (cap.by != e || !reg.valid(pe))
                     continue;

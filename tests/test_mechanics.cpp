@@ -302,3 +302,139 @@ TEST_CASE("mecánicas: la contracción de un Spirostomum deforma el agua a cient
     CHECK(calm < 0.1f);
     CHECK(maxStrainAround(250.0f) > 1.0f);
 }
+
+namespace {
+
+const Stalk* stalkOf(const World& world, entt::entity zooid) {
+    const Anchored* an = world.registry().try_get<Anchored>(zooid);
+    return an && world.registry().valid(an->rod) ? world.registry().try_get<Stalk>(an->rod) : nullptr;
+}
+
+float polyLength(const std::vector<Vec2>& p) {
+    float l = 0.0f;
+    for (std::size_t i = 1; i < p.size(); ++i)
+        l += length(p[i] - p[i - 1]);
+    return l;
+}
+
+// Desvío máximo de los nodos respecto de la recta disco–punta [µm].
+float bend(const std::vector<Vec2>& p) {
+    const Vec2 a = p.front(), b = p.back();
+    const Vec2 u = (b - a) * (1.0f / std::max(1e-3f, length(b - a)));
+    float worst = 0.0f;
+    for (const Vec2& q : p)
+        worst = std::max(worst, std::abs(cross(u, q - a)));
+    return worst;
+}
+
+entt::entity wild(World& world, const char* key, Vec2 at) {
+    Rng rng(9, 1, 0, 0);
+    return world.spawnWild(*findSpecies(key), at, rng, false);
+}
+
+} // namespace
+
+TEST_CASE("mecánicas: el tallo de Vorticella es una varilla inextensible que el agua dobla (M9)") {
+    World world = emptyWorld();
+    const entt::entity e = wild(world, "vorticella", center(world));
+    const Stalk* st = stalkOf(world, e);
+    REQUIRE(st);
+    const float adult = speciesInfo(*findSpecies("vorticella")).stalk.length;
+    CHECK(polyLength(st->rod.nodes) == doctest::Approx(adult).epsilon(0.02));
+    run(world, 1.0f);
+    const float calmBend = bend(stalkOf(world, e)->rod.nodes);
+    // Una corriente lateral a la mitad del tallo (sin tocar al zooide) lo dobla; el largo no cambia.
+    auto pushMiddle = [&](float seconds) {
+        for (int s = 0; s < static_cast<int>(seconds / kDt); ++s) {
+            const std::vector<Vec2>& n = stalkOf(world, e)->rod.nodes;
+            const Vec2 mid = n[n.size() / 2], axis = n.back() - n.front();
+            const Vec2 side = Vec2{-axis.y, axis.x} * (1.0f / std::max(1e-3f, length(axis)));
+            world.setStir(mid, side * 150.0f, 25.0f);
+            world.step(kDt);
+        }
+        world.clearStir();
+    };
+    pushMiddle(0.5f);
+    const Stalk* bent = stalkOf(world, e);
+    CHECK(bend(bent->rod.nodes) > calmBend + 5.0f);
+    CHECK(polyLength(bent->rod.nodes) == doctest::Approx(stalkRestLength(bent->rod, speciesInfo(bent->species).stalk)).epsilon(0.03));
+    // Sin corriente vuelve a quedar derecho.
+    run(world, 3.0f);
+    CHECK(bend(stalkOf(world, e)->rod.nodes) < calmBend + 3.0f);
+}
+
+TEST_CASE("mecánicas: el espasmonema se enrolla al instante y se re-extiende; el tallo de Epistylis no se contrae") {
+    auto shake = [](World& world, entt::entity e) {
+        for (int s = 0; s < 4; ++s) { // una sacudida fuerte junto al zooide (lo deforma)
+            const RingBody& rb = world.registry().get<RingBody>(e);
+            const Vec2 h = bodyHeading(rb);
+            world.setStir(rb.centroid + Vec2{-h.y, h.x} * 30.0f, h * 1500.0f, 30.0f);
+            world.step(kDt);
+        }
+        world.clearStir();
+    };
+    World world = emptyWorld();
+    const entt::entity e = wild(world, "vorticella", center(world));
+    run(world, 1.0f);
+    const Anchored& an = world.registry().get<Anchored>(e);
+    const float adult = speciesInfo(*findSpecies("vorticella")).stalk.length;
+    shake(world, e);
+    CHECK(stalkOf(world, e)->rod.contracted > 0.9f);
+    run(world, 0.2f);
+    // El zooide cayó hacia el disco: el tallo mide ~1/3.
+    const RingBody& rb = world.registry().get<RingBody>(e);
+    const Vec2 pole = Vec2{world.bodies().x[rb.ring[World::poleIndex(rb, false)]],
+                           world.bodies().y[rb.ring[World::poleIndex(rb, false)]]};
+    CHECK(length(pole - an.holdfast) < 0.6f * adult);
+    run(world, 5.0f);
+    CHECK(polyLength(stalkOf(world, e)->rod.nodes) > 0.9f * adult);
+
+    World other = emptyWorld();
+    const entt::entity ep = wild(other, "epistylis", center(other));
+    run(other, 1.0f);
+    shake(other, ep);
+    CHECK(stalkOf(other, ep)->rod.contracted == doctest::Approx(0.0f));
+    CHECK(polyLength(stalkOf(other, ep)->rod.nodes) > 0.98f * speciesInfo(*findSpecies("epistylis")).stalk.length);
+}
+
+TEST_CASE("mecánicas: el telotroco secreta su tallo al fijarse; muerto el zooide, el tallo queda y se degrada") {
+    World world = emptyWorld();
+    world.bioTimeScale() = 3600.0f; // 1 s = 1 h biológica
+    const entt::entity e = spawn(world, "vorticella", center(world));
+    world.registry().emplace<Telotroch>(e, Telotroch{0.05f});
+    run(world, 0.2f);
+    const Stalk* st = stalkOf(world, e);
+    REQUIRE(st);
+    const StalkSpec& spec = speciesInfo(*findSpecies("vorticella")).stalk;
+    CHECK(st->rod.length < 0.2f * spec.length);
+    run(world, spec.growthHours + 0.5f);
+    CHECK(stalkOf(world, e)->rod.length == doctest::Approx(spec.length));
+    // Muere el zooide: queda el tallo vacío en el vidrio.
+    const entt::entity rod = world.registry().get<Anchored>(e).rod;
+    world.removeCellAt(world.registry().get<RingBody>(e).centroid);
+    world.step(kDt);
+    REQUIRE(world.registry().valid(rod));
+    CHECK((world.registry().get<Stalk>(rod).zooid == entt::null));
+    run(world, spec.decayHours + 1.0f);
+    CHECK_FALSE(world.registry().valid(rod));
+}
+
+TEST_CASE("mecánicas: Stentor se fija por el pie y con hambre lo suelta, nada y se vuelve a fijar") {
+    World world = emptyWorld();
+    world.bioTimeScale() = 3600.0f;
+    const entt::entity e = wild(world, "stentor", center(world));
+    REQUIRE(world.registry().all_of<Anchored>(e));
+    CHECK_FALSE(world.registry().valid(world.registry().get<Anchored>(e).rod)); // sin tallo
+    // Sin bacterias pasa hambre: en algunas horas biológicas se suelta.
+    world.registry().get<Metabolism>(e).reserves = 0.0f;
+    bool released = false, reattached = false;
+    for (int s = 0; s < 60 * 60 && !reattached; ++s) {
+        world.step(kDt);
+        if (!world.registry().valid(e))
+            break;
+        released = released || world.registry().all_of<Telotroch>(e);
+        reattached = released && world.registry().all_of<Anchored>(e);
+    }
+    CHECK(released);
+    CHECK(reattached);
+}

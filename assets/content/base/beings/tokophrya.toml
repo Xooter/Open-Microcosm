@@ -13,8 +13,6 @@ relative_speed = 0.5
 prey = ["tetrahymena", "colpidium", "paramecium", "paramecium_aurelia"]
 conjugation = true
 initial_count = 2
-sessile = true
-stalk_length = 25.0
 tentacle_reach = 40.0
 handling_hours = 4.0
 ph = [6.0, 9.5]
@@ -31,3 +29,11 @@ nucleus = 0.3
 
 [being.appearance]
 style = "capitate_tentacles"
+
+# Tallo rígido corto (Rudzinska; ficha ATCC 30297). Ancho estimado.
+[being.stalk]
+kind = "rigid"
+length = 25.0
+width = 3.0
+bending_rate = 30.0
+growth_hours = 3.0

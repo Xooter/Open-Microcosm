@@ -74,5 +74,6 @@ inline constexpr std::uint64_t kOrganelles = 13;
 inline constexpr std::uint64_t kDefense = 14;
 inline constexpr std::uint64_t kCyano = 15;
 inline constexpr std::uint64_t kFungi = 16;
+inline constexpr std::uint64_t kStalk = 17;
 inline constexpr std::uint64_t kCulture = 1000; // cultivo bien mezclado (sus sub-streams: + 0..99)
 } // namespace rng_stream

@@ -278,8 +278,19 @@ Inspection inspectCell(const World& w, entt::entity e) {
         now(fmt("nada como telotroco; se fija en %.0f s", tel->timer));
     if (const Zoospore* zs = reg.try_get<Zoospore>(e))
         now(fmt("zoospora: nada con su corona de flagelos ~%.1f h bio y despues se fija", zs->hoursLeft));
-    if (const Anchored* an = reg.try_get<Anchored>(e))
-        now(fmt("fija al vidrio por un tallo de %.0f um%s", an->stalk, an->contracted > 0.3f ? " (contraido)" : ""));
+    if (const Anchored* an = reg.try_get<Anchored>(e)) {
+        const StalkSpec& sk = info.stalk;
+        if (!reg.valid(an->rod)) {
+            now("fija al vidrio por el pie (una secrecion adhesiva del polo posterior)");
+        } else {
+            const char* text = sk.kind == StalkKind::Spasmoneme ? "fija al vidrio por un tallo con espasmonema de %.0f um%s"
+                               : sk.kind == StalkKind::Mucilage ? "fija al vidrio por un tallo de mucilago de %.0f um%s"
+                                                                : "fija al vidrio por un tallo rigido de %.0f um%s";
+            const Stalk* st = reg.try_get<Stalk>(an->rod);
+            const bool growing = st && st->rod.length < 0.98f * sk.length;
+            now(fmt(text, an->stalk, an->contracted > 0.3f ? " (contraido)" : growing ? " (todavia lo secreta)" : ""));
+        }
+    }
     if (reg.all_of<Discharge>(e))
         now("disparo tricocistos: el depredador retrocede");
     if (const Neck* neck = reg.try_get<Neck>(e); neck && neck->length > 5.0f)
