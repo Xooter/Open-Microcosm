@@ -446,6 +446,12 @@ struct SpeciesInfo {
     // División longitudinal (peritricos: el plano pasa por el eje, de la boca a la escópula; Lynn 2008)
     // en vez de la transversal de la mayoría de los ciliados.
     bool divisionLongitudinal = false;
+    // Vacuola contráctil (osmorregulación de los protistas de agua dulce): se llena despacio con el agua
+    // que entra por ósmosis y se vacía de golpe. `cvPeriod` [s] es el ciclo en agua dulce (~16 mOsm); el
+    // agua que entra, y así la frecuencia, es proporcional a la diferencia entre la osmolaridad del
+    // citosol (`cvCytosol`, mOsm) y la del medio. 0: sin ciclo (se dibuja quieta).
+    float cvPeriod = 0.0f;
+    float cvCytosol = 60.0f;
     // Tecameba (Arcella, Euglypha): el cuerpo blando es la testa, rígida; solo el citoplasma que sale por
     // la abertura forma seudópodos, lobosos (dedos) o filosos (finos). 0: no; 1: lobosos; 2: filosos.
     std::uint8_t testate = 0;
@@ -560,6 +566,11 @@ struct Stalk {
 struct StarMember {
     entt::entity root;
     int slot;
+};
+
+// Componente: fase del ciclo de la vacuola contráctil (0–1: diástole hasta 0,9, sístole después).
+struct ContractileCycle {
+    float phase = 0.0f;
 };
 
 struct Telotroch {

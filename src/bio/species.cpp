@@ -246,6 +246,16 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         if (s.testate == 0)
             r.errors.push_back(r.where + ": 'testate' es \"lobose\" o \"filose\"");
     }
+    if (const toml::table* cv = r.table("contractile_vacuole")) {
+        constexpr const char* kKeys[] = {"period_s", "cytosol_mosm"};
+        toml_io::warnUnknown(*cv, kKeys, r.where + " [contractile_vacuole]", warnings);
+        Reader cr{*cv, r.where + " [contractile_vacuole]", {}};
+        cr.count("period_s", s.cvPeriod);
+        cr.count("cytosol_mosm", s.cvCytosol);
+        if (s.cvPeriod <= 0.0f || s.cvCytosol <= 16.0f)
+            cr.errors.push_back(cr.where + ": 'period_s' es positivo y 'cytosol_mosm' mayor que el del agua dulce (16)");
+        r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
     if (const toml::table* sc = r.table("star_colony")) {
         constexpr const char* kKeys[] = {"max_cells"};
         toml_io::warnUnknown(*sc, kKeys, r.where + " [star_colony]", warnings);

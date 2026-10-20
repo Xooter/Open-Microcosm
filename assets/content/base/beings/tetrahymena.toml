@@ -52,3 +52,10 @@ value = 0.22
 unit = "1/h"
 temperature = 25.0
 source = "Curds, C. R. & Cockburn, A. (1968). Studies on the growth and feeding of Tetrahymena pyriformis in axenic and monoxenic culture. J. Gen. Microbiol. 54: 343-358: tasa máxima de crecimiento 0,22/h (monoxénico, con Klebsiella aerogenes) y 0,20/h (axénico) a 25 °C."
+
+# Vacuola contráctil: se llena con el agua que entra por ósmosis y se vacía de golpe. Período en agua
+# dulce estimado; osmolaridad del citosol del orden de la de Paramecium (~60 mOsm; Stock et al. 2002), a
+# verificar para la especie.
+[being.contractile_vacuole]
+period_s = 10.0
+cytosol_mosm = 60.0

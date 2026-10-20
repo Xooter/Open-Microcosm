@@ -1530,9 +1530,13 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 drawRingFast(c, r - std::max(0.8f, px), r, 40, rimN, px);
                 drawCircleFast({c.x + 0.2f * r, c.y - 0.15f * r}, 0.3f * r, kNucleolus, px);
             };
+            // Diástole: se llena despacio; sístole (el último décimo del ciclo): se vacía de golpe.
+            float cvFill = 1.0f;
+            if (const ContractileCycle* cc = reg.try_get<ContractileCycle>(e))
+                cvFill = cc->phase < 0.9f ? 0.15f + 0.85f * cc->phase / 0.9f : 1.0f - 0.85f * (cc->phase - 0.9f) / 0.1f;
             auto contractile = [&](std::uint32_t slot) {
                 const Vector2 c = {bp.x[slot], bp.y[slot]};
-                const float r = bp.radius[slot];
+                const float r = bp.radius[slot] * cvFill;
                 drawCircleFast(c, r, kVacuole, px);
                 drawRingFast(c, r - std::max(0.6f, px), r, 32, kVacuoleRim, px);
             };

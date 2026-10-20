@@ -72,3 +72,10 @@ unit = "uL/h"
 temperature = 20.0
 source = "Escala de volúmenes corporales (~10^5 por hora en ciliados; Hansen et al. 1997, Limnol. Oceanogr. 42: 687-704; Kiørboe 2011, Biol. Rev. 86: 311-339) con el volumen de P. caudatum. Medido a alta densidad: 106 nL/h a ~2,5·10^8 bacterias/mL (Applied Water Science 2013, doi:10.1007/s13201-013-0130-1)."
 estimate = true
+
+# Vacuola contráctil: se llena con el agua que entra por ósmosis y se vacía de golpe. Período en agua
+# dulce del orden de los 5–10 s de Kitching 1938; osmolaridad del citosol del orden de la de Paramecium (~60 mOsm; Stock et al. 2002), a
+# verificar para la especie.
+[being.contractile_vacuole]
+period_s = 6.0
+cytosol_mosm = 60.0

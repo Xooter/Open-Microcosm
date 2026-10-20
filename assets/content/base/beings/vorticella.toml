@@ -70,3 +70,10 @@ kind = "above"
 threshold = 2.0
 action = "contract"
 refractory = 2.0
+
+# Vacuola contráctil: se llena con el agua que entra por ósmosis y se vacía de golpe. Período en agua
+# dulce estimado; osmolaridad del citosol del orden de la de Paramecium (~60 mOsm; Stock et al. 2002), a
+# verificar para la especie.
+[being.contractile_vacuole]
+period_s = 10.0
+cytosol_mosm = 60.0

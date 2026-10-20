@@ -36,3 +36,10 @@ value = 13.3
 unit = "h"
 temperature = 20.0
 source = "Laybourn, J. E. M. (1973). The energetics of Colpidium campylum Stokes. Tesis doctoral, University of Stirling, tabla 5: 1,81 generaciones por día a 20 °C con Moraxella sp. (también Laybourn & Stewart 1974, J. Zool. 174: 277-283, doi 10.1111/j.1469-7998.1974.tb03157.x)."
+
+# Vacuola contráctil: se llena con el agua que entra por ósmosis y se vacía de golpe. Período en agua
+# dulce estimado; osmolaridad del citosol del orden de la de Paramecium (~60 mOsm; Stock et al. 2002), a
+# verificar para la especie.
+[being.contractile_vacuole]
+period_s = 10.0
+cytosol_mosm = 60.0

@@ -53,3 +53,10 @@ unit = "1/day"
 temperature = 20.0
 source = "Estimación alométrica con la regresión de Müller, H. & Geller, W. (1993). Maximum growth rates of aquatic ciliated protozoa: the dependence on body size and temperature reconsidered. Arch. Hydrobiol. 126: 315-327 (r a 20 °C para un ciliado de 28274 µm³). No es una medición de la especie."
 estimate = true
+
+# Vacuola contráctil: se llena con el agua que entra por ósmosis y se vacía de golpe. Período en agua
+# dulce estimado; osmolaridad del citosol del orden de la de Paramecium (~60 mOsm; Stock et al. 2002), a
+# verificar para la especie.
+[being.contractile_vacuole]
+period_s = 10.0
+cytosol_mosm = 60.0

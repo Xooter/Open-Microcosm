@@ -28,3 +28,10 @@ value = 44.0
 unit = "h"
 temperature = 20.0
 source = "Rogerson, A. (1980). Can. J. Zool.: tiempo de generación de Amoeba proteus alimentada con Tetrahymena pyriformis, 44 h a 20 °C (tesis de Rogerson 1978, Univ. of Stirling: 44-84 h a 20 °C)."
+
+# Vacuola contráctil: se llena con el agua que entra por ósmosis y se vacía de golpe. Período en agua
+# dulce estimado; osmolaridad del citosol del orden de la de Paramecium (~60 mOsm; Stock et al. 2002), a
+# verificar para la especie.
+[being.contractile_vacuole]
+period_s = 120.0
+cytosol_mosm = 60.0

@@ -604,6 +604,8 @@ class World {
     void foundStarColony(entt::entity root, Rng& rng, bool randomStage);
     bool joinStarColony(entt::entity mother, entt::entity child);
     void applyStarColonies(float dt);
+    // Ciclo de la vacuola contráctil (game/world_osmoregulation.cpp).
+    void updateContractileVacuoles(float dt);
     // Colonia: la hija se queda en una rama nueva del tallo de la madre. false si no corresponde.
     bool branchColony(entt::entity mother, entt::entity child);
     void trapWithTentacles(entt::entity e, const RingBody& body, FeedingMode mode);

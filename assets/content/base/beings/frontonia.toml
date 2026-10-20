@@ -32,3 +32,10 @@ semi_minor_axis = 69.0
 shape_memory = 8.0
 color = [172, 176, 150]
 nucleus = 0.25
+
+# Vacuola contráctil: se llena con el agua que entra por ósmosis y se vacía de golpe. Período en agua
+# dulce estimado; osmolaridad del citosol del orden de la de Paramecium (~60 mOsm; Stock et al. 2002), a
+# verificar para la especie.
+[being.contractile_vacuole]
+period_s = 15.0
+cytosol_mosm = 60.0

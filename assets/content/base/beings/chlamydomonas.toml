@@ -54,3 +54,10 @@ unit = "h"
 temperature = 25.0
 source = "PNAS (1997), tabla de crecimiento y fotosíntesis de cepas de C. reinhardtii: duplicación de la clorofila ~20 h a ~70 µmol fotones m⁻² s⁻¹. Temperatura sin verificar."
 estimate = true
+
+# Vacuola contráctil: se llena con el agua que entra por ósmosis y se vacía de golpe. Período en agua
+# dulce estimado; osmolaridad del citosol del orden de la de Paramecium (~60 mOsm; Stock et al. 2002), a
+# verificar para la especie.
+[being.contractile_vacuole]
+period_s = 12.0
+cytosol_mosm = 60.0

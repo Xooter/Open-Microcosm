@@ -323,6 +323,7 @@ void World::step(float dt) {
             measureAnimalContacts();
     }
     updateLifecycle(dt);     // metabolismo, división y muerte
+    updateContractileVacuoles(dt);
     tickDefenses(dt);
     excludeFromCells();
 
