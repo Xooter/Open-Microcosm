@@ -99,6 +99,7 @@ constexpr BodyPlan kBacteriaPlans[] = {
     {"bacilo gramnegativo (tipo E. coli)", Morphology::Rod, kEcoli},
     {"Chromobacterium violaceum", Morphology::Rod, kViolaceum},
     {"Bacillus subtilis", Morphology::Rod, kBacillus},
+    {"Spirillum volutans", Morphology::Vibrio, kEcoli}, // hélice gigante: el cuerpo lo dibuja el render
 };
 constexpr BodyPlan kBdelloPlan = {"Bdellovibrio bacteriovorus", Morphology::Vibrio, kBdello};
 constexpr BodyPlan kVirusPlans[] = {
@@ -144,7 +145,7 @@ const char* structureName(StructureKind kind) {
     return "?";
 }
 
-const BodyPlan& bacteriumPlan(std::uint8_t strain) { return kBacteriaPlans[strain < 3 ? strain : 0]; }
+const BodyPlan& bacteriumPlan(std::uint8_t strain) { return kBacteriaPlans[strain < 4 ? strain : 0]; }
 
 const BodyPlan& bdellovibrioPlan() { return kBdelloPlan; }
 

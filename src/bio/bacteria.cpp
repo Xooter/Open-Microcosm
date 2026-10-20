@@ -42,6 +42,10 @@ void Bacteria::spawn(std::size_t count, float width, float height, std::uint64_t
             Rng gram(seed, rng_stream::kInit + 900, i, 0);
             strain[i] = gram.uniform() < params.bacillusFraction ? 2 : 0;
         }
+        if (strain[i] == 0) { // y otro para Spirillum
+            Rng giant(seed, rng_stream::kInit + 901, i, 0);
+            strain[i] = giant.uniform() < params.spirillumFraction ? kSpirillumStrain : 0;
+        }
     }
 }
 
@@ -70,7 +74,7 @@ void Bacteria::grow(const Grid2D& nutrients, float bioDt, std::vector<float>& de
     for (std::ptrdiff_t i = 0; i < n; ++i) {
         const float c = std::max(0.0f, nutrients.sample(x[i], y[i]));
         const float health = bacterialHealth(params, !(phage[i] < 0.0f && bdello[i] < 0.0f), resistant[i] != 0);
-        demand[i] = bacterialDemand(params, c, mass[i], health, hours);
+        demand[i] = bacterialDemand(params, c, mass[i], health, hours, strainInfo(strain[i]).pmolScale);
     }
 }
 
@@ -78,13 +82,23 @@ float bacterialHealth(const BacteriaParams& p, bool infected, bool resistant) {
     return infected ? 0.0f : (resistant ? 1.0f - p.resistanceCost : 1.0f);
 }
 
-float bacterialDemand(const BacteriaParams& p, float organic, float mass, float health, float hours) {
-    const float growth = health * p.growthPerHourMax * organic / (organic + p.halfSaturation) * mass * hours;
-    return growth / p.yield * kBacteriumPmol;
+const StrainInfo& strainInfo(std::uint8_t strain) {
+    static const StrainInfo kStrains[] = {
+        {"bacilo gramnegativo (tipo E. coli)", 1.0f, 25.0f, 2.0f, false, false, 0.0f},
+        {"Chromobacterium violaceum", 1.0f, 25.0f, 2.0f, false, false, 0.0f},
+        {"Bacillus subtilis", 1.0f, 25.0f, 3.0f, false, false, 0.0f},
+        {"Spirillum volutans", 40.0f, 50.0f, 25.0f, true, true, 10.0f},
+    };
+    return kStrains[strain < 4 ? strain : 0];
 }
 
-float bacterialMassChange(const BacteriaParams& p, float taken, float mass, float maintenance) {
-    const float gain = taken * p.yield / kBacteriumPmol;
+float bacterialDemand(const BacteriaParams& p, float organic, float mass, float health, float hours, float pmolScale) {
+    const float growth = health * p.growthPerHourMax * organic / (organic + p.halfSaturation) * mass * hours;
+    return growth / p.yield * kBacteriumPmol * pmolScale;
+}
+
+float bacterialMassChange(const BacteriaParams& p, float taken, float mass, float maintenance, float pmolScale) {
+    const float gain = taken * p.yield / (kBacteriumPmol * pmolScale);
     const float full = maintenance * mass;
     const float cost = gain >= full ? full : std::max(gain, p.starvationMaintenance * full);
     return gain - cost;
@@ -92,8 +106,16 @@ float bacterialMassChange(const BacteriaParams& p, float taken, float mass, floa
 
 // E. coli responde al logaritmo de la concentración (ley de Weber): detecta gradientes
 // relativos a lo largo de varios órdenes de magnitud.
-float Bacteria::signal(const Grid2D& nutrients, float px, float py) const {
-    const float c = std::max(0.0f, nutrients.sample(px, py));
+float Bacteria::signal(const Grid2D& nutrients, const Grid2D& oxygen, std::size_t i) const {
+    const StrainInfo& si = strainInfo(strain[i]);
+    if (si.aerotaxis) {
+        // Aerotaxis hacia un óptimo: la señal es mayor cuanto más cerca (en escala logarítmica) está el O₂
+        // del preferido, así que suprime los giros al acercarse desde arriba o desde abajo y se junta en
+        // una banda (Spirillum: microaerófila).
+        const float o2 = std::max(0.0f, oxygen.sample(x[i], y[i]));
+        return -std::abs(std::log((o2 + 1.0f) / (si.o2Optimum + 1.0f)));
+    }
+    const float c = std::max(0.0f, nutrients.sample(x[i], y[i]));
     return std::log1p(c / params.sensingKd);
 }
 
@@ -129,12 +151,12 @@ void Bacteria::remove(std::size_t i) {
     tumbling.pop_back();
 }
 
-void Bacteria::resetMemory(const Grid2D& nutrients) {
+void Bacteria::resetMemory(const Grid2D& nutrients, const Grid2D& oxygen) {
     for (std::size_t i = 0; i < size(); ++i)
-        memory[i] = signal(nutrients, x[i], y[i]);
+        memory[i] = signal(nutrients, oxygen, i);
 }
 
-void Bacteria::step(const Fluid& fluid, const Grid2D& nutrients, float dt, std::uint64_t seed,
+void Bacteria::step(const Fluid& fluid, const Grid2D& nutrients, const Grid2D& oxygen, float dt, std::uint64_t seed,
                     std::uint64_t stepIndex, float width, float height) {
     PROFILE_SCOPE("Bacteria::step");
     const BacteriaParams p = params;
@@ -152,17 +174,21 @@ void Bacteria::step(const Fluid& fluid, const Grid2D& nutrients, float dt, std::
         Rng rng(seed, rng_stream::kBacteria, static_cast<std::uint64_t>(i), stepIndex);
         float vx = 0.0f, vy = 0.0f;
         // Bdeloplasto: la presa se redondea y deja de nadar. En agregado, nada menos.
-        const float speed = bdello[i] >= 0.0f ? 0.0f : (quorum[i] ? p.speed * p.quorumSpeed : p.speed);
+        const StrainInfo& si = strainInfo(strain[i]);
+        const float base = si.speed * p.speed / 25.0f; // la de la cepa, escalada con la del medio
+        const float speed = bdello[i] >= 0.0f ? 0.0f : (quorum[i] ? base * p.quorumSpeed : base);
 
         if (tumbling[i]) {
             tumbleTimer[i] -= dt;
             if (tumbleTimer[i] <= 0.0f) {
                 tumbling[i] = 0;
-                const float angle = (p.tumbleAngleMean + p.tumbleAngleStd * rng.normal()) * degToRad;
+                // Flagelos bipolares (Spirillum): invierte el sentido; los demás giran ~68°.
+                const float angle = si.reverses ? units::kPi + 0.15f * rng.normal()
+                                                : (p.tumbleAngleMean + p.tumbleAngleStd * rng.normal()) * degToRad;
                 heading[i] += rng.uniform() < 0.5f ? angle : -angle;
             }
         } else {
-            const float s = signal(nutrients, x[i], y[i]);
+            const float s = signal(nutrients, oxygen, static_cast<std::size_t>(i));
             const float change = s - memory[i];
             memory[i] += change * memoryBlend;
             // Si la concentración sube, la bacteria suprime los giros y alarga la corrida.

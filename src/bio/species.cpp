@@ -78,7 +78,7 @@ constexpr std::pair<const char*, CellWall> kWall[] = {{"none", CellWall::None},
 // Claves conocidas de un [[being]] y de su [being.shape]: una clave que no esté acá es casi siempre un
 // error de tipeo, y se avisa (no se ignora en silencio).
 constexpr const char* kBeingKeys[] = {
-    "id", "legacy_ids", "name", "description", "body_plan", "tags", "locomotion", "feeding", "relative_speed", "helix_radius", "helix_period", "flagellar_gliding", "prey", "mouth_prey",
+    "id", "legacy_ids", "name", "description", "body_plan", "tags", "locomotion", "feeding", "relative_speed", "helix_radius", "helix_period", "flagellar_gliding", "flagellum", "prey", "mouth_prey",
     "flees_from", "chemokinesis", "acid_trap", "phototaxis", "relative_photosynthesis", "fissions_per_cycle",
     "encysts", "conjugation", "initial_count", "sessile", "stalk_length", "spasmoneme", "walks", "tentacle_reach",
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
@@ -169,6 +169,13 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
     r.count("helix_radius", s.helixRadius);
     r.count("helix_period", s.helixPeriod);
     r.flag("flagellar_gliding", s.flagellarGliding);
+    if (const toml::node* fl = t.get("flagellum")) {
+        const std::string where = fl->value<std::string>().value_or("");
+        if (where == "posterior")
+            s.flagellumPosterior = true;
+        else if (where != "anterior")
+            r.errors.push_back(r.where + ": 'flagellum' es \"anterior\" o \"posterior\"");
+    }
     r.strings("prey", e.prey);
     r.strings("mouth_prey", e.mouthPrey);
     r.strings("flees_from", e.flee);

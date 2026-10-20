@@ -308,8 +308,38 @@ void Renderer::drawPopulations(float zoom, const float* palette) {
     }
 }
 
+// Spirillum volutans: bacteria gigante (~25 µm) en hélice de unas pocas vueltas, que se ve en campo claro
+// como una espiral rígida. Son pocas: se recorren todas y se dibujan las que caen en la vista.
+static void drawGiantBacteria(const Bacteria& bac, Rectangle view, float zoom, float time) {
+    const float px = 1.0f / zoom;
+    for (std::size_t i = 0; i < bac.size(); ++i) {
+        if (bac.strain[i] != kSpirillumStrain)
+            continue;
+        const StrainInfo& si = strainInfo(bac.strain[i]);
+        const float len = si.length * (0.75f + 0.25f * std::clamp(bac.mass[i], 1.0f, 2.0f));
+        if (bac.x[i] + len < view.x || bac.x[i] - len > view.x + view.width || bac.y[i] + len < view.y ||
+            bac.y[i] - len > view.y + view.height)
+            continue;
+        const float c = std::cos(bac.heading[i]), s = std::sin(bac.heading[i]);
+        // Hélice proyectada: paso ~8 µm, radio ~2 µm; gira sobre su eje al nadar.
+        const float phase = 6.0f * time + 0.7f * static_cast<float>(bac.id[i] % 9u);
+        constexpr int kSegments = 40;
+        Vector2 prev{};
+        for (int k = 0; k <= kSegments; ++k) {
+            const float t = static_cast<float>(k) / kSegments - 0.5f;
+            const float along = t * len;
+            const float side = 2.0f * std::sin(6.2831853f * along / 8.0f + phase);
+            const Vector2 p = {bac.x[i] + c * along - s * side, bac.y[i] + s * along + c * side};
+            if (k > 0)
+                DrawLineEx(prev, p, std::max(1.4f, 1.2f * px), {58, 64, 60, 220}); // ~1,4 µm de grosor
+            prev = p;
+        }
+    }
+}
+
 void Renderer::drawDetailed(const World& world, Rectangle view, float zoom, const float* palette) {
     PROFILE_SCOPE("Renderer::drawDetailed");
+    drawGiantBacteria(world.bacteria(), view, zoom, world.simTime());
     PopulationPass& bp = populations_[static_cast<int>(Population::Bacteria)];
     PopulationPass& dp = populations_[static_cast<int>(Population::Bdellovibrio)];
     if (bp.detailed.empty() && dp.detailed.empty())

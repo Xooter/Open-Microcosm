@@ -1,9 +1,12 @@
 // Mecánicas de los seres (docs/plan_mecanicas.md): locomoción, reacciones y defensas que se eligen por
 // datos. Casos cortos (segundos de simulación) en una placa sin bacterias.
 #include "ai/autopilot.hpp"
+#include "bio/bacteria.hpp"
 #include "bio/cell_physiology.hpp"
 #include "bio/species.hpp"
 #include "game/world.hpp"
+#include "sim/fluid.hpp"
+#include "sim/grid2d.hpp"
 
 #include <doctest/doctest.h>
 
@@ -624,4 +627,51 @@ TEST_CASE("mecánicas: sin fósforo, Anabaena/Dolichospermum forma acinetos junt
     world.refreshMedium();
     run(world, 120.0f);
     CHECK(akinetes() < formed);
+}
+
+TEST_CASE("mecánicas: Spirillum volutans hace aerotaxis hacia su O₂ óptimo y forma una banda (M8)") {
+    // Gradiente de O₂ de 0 a 250 µM a lo ancho (sin agua en movimiento): cerca del 4 % de la saturación
+    // (~10 µM) está su óptimo.
+    constexpr int kN = 64;
+    constexpr float kCell = 8.0f, kSize = kN * kCell;
+    Grid2D oxygen(kN, kN, kCell), nutrients(kN, kN, kCell);
+    for (int y = 0; y < kN; ++y)
+        for (int x = 0; x < kN; ++x)
+            oxygen.at(x, y) = 250.0f * static_cast<float>(x) / (kN - 1);
+    Fluid fluid(kN, kN, kCell);
+    Bacteria bac;
+    Rng rng(3, 1, 0, 0);
+    for (int i = 0; i < 300; ++i)
+        bac.add(rng.uniform(0.0f, kSize), rng.uniform(0.0f, kSize), rng.uniform(0.0f, 6.2831853f), 1.0f, kSpirillumStrain);
+    bac.resetMemory(nutrients, oxygen);
+    auto meanDistance = [&] { // a su óptimo, en escala logarítmica
+        double d = 0.0;
+        for (std::size_t i = 0; i < bac.size(); ++i)
+            d += std::abs(std::log((oxygen.sample(bac.x[i], bac.y[i]) + 1.0f) / 11.0f));
+        return d / static_cast<double>(bac.size());
+    };
+    const double before = meanDistance();
+    for (int s = 0; s < 60 * 120; ++s)
+        bac.step(fluid, nutrients, oxygen, kDt, 3, static_cast<std::uint64_t>(s), kSize, kSize);
+    CHECK(meanDistance() < 0.6 * before);
+}
+
+TEST_CASE("mecánicas: Salpingoeca nada con el flagelo atrás y deja en el agua el par de un pusher (M7)") {
+    // Puller (Chlamydomonas): delante de la célula el agua va hacia atrás. Pusher: delante va hacia adelante.
+    auto aheadFlow = [](const char* key) {
+        World world = emptyWorld();
+        const entt::entity e = spawn(world, key, center(world));
+        float along = 0.0f;
+        for (int s = 0; s < 120; ++s) {
+            world.step(kDt);
+            const RingBody& b = world.registry().get<RingBody>(e);
+            const Vec2 h = bodyHeading(b);
+            if (world.registry().get<Locomotion>(e).speed > 0.0f)
+                along += dot(world.fluid().velocityAt(b.centroid + h * 12.0f) - world.fluid().backgroundAt(b.centroid + h * 12.0f), h);
+        }
+        return along;
+    };
+    CHECK(aheadFlow("salpingoeca") > 0.0f);
+    CHECK(aheadFlow("chlamydomonas") < 0.0f);
+    CHECK(speciesInfo(*findSpecies("salpingoeca")).flagellumPosterior);
 }

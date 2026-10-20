@@ -165,9 +165,12 @@ void applySwimmerForces(const RingBody& body, const BodyParticles& bp, const Loc
     if (loco.type == LocomotionType::Flagellum && loco.speed > 0.0f && !loco.gliding) {
         // "Puller" (como Chlamydomonas): el flagelo anterior empuja agua hacia atrás y el
         // cuerpo arrastra agua hacia adelante. Fuerzas opuestas, fuerza neta cero.
+        // "Pusher" (flagelo posterior: coanoflagelados, espermatozoides): el flagelo empuja agua hacia
+        // atrás desde la cola y el cuerpo la arrastra hacia adelante por delante: el par al revés.
         const float r = std::max(4.0f, 0.4f * half);
-        pushWater(fluid, c + h * (half + r), h * -1.0f, 0.5f * loco.speed, r);
-        pushWater(fluid, c - h * (half + r), h, 0.5f * loco.speed, r);
+        const float sign = loco.pusher ? -1.0f : 1.0f;
+        pushWater(fluid, c + h * (sign * (half + r)), h * -1.0f, 0.5f * loco.speed, r);
+        pushWater(fluid, c - h * (sign * (half + r)), h, 0.5f * loco.speed, r);
     }
     if (oralCurrent && !body.ring.empty()) {
         // Corriente oral: los cilios del surco oral llevan agua (y bacterias) a la boca.

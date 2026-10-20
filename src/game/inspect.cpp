@@ -643,10 +643,13 @@ Inspection inspectBacterium(const World& w, const Picked& picked) {
     ins.valid = true;
     ins.at = {b.x[i], b.y[i]};
     ins.radius = 6.0f;
-    const bool vio = b.strain[i] == 1, bacillus = b.strain[i] == 2;
-    ins.title = vio ? "Chromobacterium violaceum" : (bacillus ? "Bacillus subtilis" : "Bacteria (bacilo)");
+    const bool vio = b.strain[i] == 1, bacillus = b.strain[i] == 2, spirillum = b.strain[i] == kSpirillumStrain;
+    ins.title = vio ? "Chromobacterium violaceum"
+                    : (bacillus ? "Bacillus subtilis" : (spirillum ? "Spirillum volutans" : "Bacteria (bacilo)"));
     ins.subtitle = "Bacteria";
-    ins.blurb = otherBlurb(vio ? OtherOrganism::Violaceum : (bacillus ? OtherOrganism::Bacillus : OtherOrganism::Bacteria));
+    ins.blurb = spirillum ? "Bacteria gigante en helice (~25 um), con un haz de flagelos en cada polo: invierte el sentido "
+                            "en vez de girar. Es microaerofila: se junta en una banda donde el O2 es bajo (aerotaxis)."
+                          : otherBlurb(vio ? OtherOrganism::Violaceum : (bacillus ? OtherOrganism::Bacillus : OtherOrganism::Bacteria));
     std::string state;
     if (b.bdello[i] >= 0.0f)
         state = fmt("bdeloplasto: un Bdellovibrio crece adentro (%.1f h bio)", b.bdello[i]);

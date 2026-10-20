@@ -579,7 +579,8 @@ void drawTwinFlagella(const RingBody& body, const Locomotion& loco, float time, 
 
 void drawFlagellum(const BodyParticles& bp, const RingBody& body, const Locomotion& loco, const SpeciesInfo& info,
                    float time, float px) {
-    const Vec2 h = bodyHeading(body);
+    // Flagelo posterior (coanoflagelado): sale del polo de atrás y ondula detrás de la célula.
+    const Vec2 h = bodyHeading(body) * (loco.pusher ? -1.0f : 1.0f);
     const Vec2 side = {-h.y, h.x};
     // Base: el punto de membrana más adelantado.
     std::size_t front = 0;

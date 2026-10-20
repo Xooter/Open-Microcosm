@@ -242,6 +242,9 @@ struct SpeciesInfo {
     // Deslizamiento flagelar (Peranema): el flagelo, rígido y hacia adelante, se apoya en el vidrio y
     // solo bate la punta; la célula avanza pegada al sustrato, sin nadar.
     bool flagellarGliding = false;
+    // Flagelo posterior (coanoflagelados, espermatozoides): la célula avanza empujada desde atrás
+    // ("pusher"): el par de fuerzas sobre el agua tiene el signo opuesto al de Chlamydomonas ("puller").
+    bool flagellumPosterior = false;
     FeedingMode feeding = FeedingMode::None;
     SpeciesSet prey;                // especies que caza, fagocita o atrapa
     SpeciesSet flee;                // especies de las que huye (reacción de evitación)

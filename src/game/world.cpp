@@ -163,7 +163,7 @@ World::World(const WorldConfig& config)
     if (config.tissue.enabled) // preparado: las paredes del tejido y sus protoplastos
         buildTissue(config.tissue);
     seedBlood(); // glóbulos rojos y plaquetas de un preparado de sangre
-    bacteria_.resetMemory(nutrients_.grid());
+    bacteria_.resetMemory(nutrients_.grid(), oxygen_.grid());
     fluid_.solve(fft_);
     computeLight();
 }
@@ -306,7 +306,7 @@ void World::step(float dt) {
     computeLight();
     computePH();
 
-    bacteria_.step(fluid_, nutrients_.grid(), dt, config_.seed, step_, width_, height_);
+    bacteria_.step(fluid_, nutrients_.grid(), oxygen_.grid(), dt, config_.seed, step_, width_, height_);
     growBacteria(dt);
     stepCyanobacteria(dt);
     stepFungi(dt);
@@ -1439,6 +1439,7 @@ void World::applyTraits(entt::entity e) {
     loco.helixRadius = info.helixRadius;
     loco.helixPeriod = info.helixPeriod;
     loco.gliding = info.flagellarGliding;
+    loco.pusher = info.flagellumPosterior;
     if (const RingBody* rb = registry_.try_get<RingBody>(e)) // fase propia, estable por célula
         loco.phase = 6.2831853f * static_cast<float>((rb->id * 2654435761u) >> 8 & 0xFFFF) / 65536.0f;
     registry_.get<Digestion>(e).rateScale = h.traits.digestion;
@@ -2310,7 +2311,7 @@ void World::engulf(entt::entity predator, const Closure& closure, entt::entity p
             takenBacteria_[i] = 1;
             eatenBacteria_.push_back(i);
             extraArea += kBacteriumArea;
-            extraPmol += kBacteriumPmol * bacteria_.mass[i];
+            extraPmol += bacterialPmol(bacteria_.strain[i], bacteria_.mass[i]);
             ++bacteriaInside;
         }
     }
@@ -2390,6 +2391,8 @@ void World::feedAtMouth(entt::entity e, RingBody& body, const Locomotion& loco, 
         // La corriente oral no despega a las de la biopelícula (refugio contra los filtradores).
         if (takenBacteria_[k] || dig.mouthBudget < 1.0f || bacteria_.attached[k])
             return;
+        if (strainInfo(bacteria_.strain[k]).length > 2.0f * maxParticle) // más larga que el diámetro de la boca
+            return; // demasiado larga para la boca (Spirillum: ~25 µm)
         const float dx = minImage(bacteria_.x[k] - m.x, width_);
         const float dy = minImage(bacteria_.y[k] - m.y, height_);
         if (dx * dx + dy * dy < capture * capture &&
@@ -2400,7 +2403,7 @@ void World::feedAtMouth(entt::entity e, RingBody& body, const Locomotion& loco, 
             ++dig.bacteriaEaten;
             if (bacteria_.quorum[k]) // violaceína: tóxica para el protista que la come
                 dig.toxin += kViolaceinDose;
-            ingest(dig, body, bodies_, site, kBacteriumArea, kBacteriumPmol * bacteria_.mass[k], 170, 150, 140, false,
+            ingest(dig, body, bodies_, site, kBacteriumArea, bacterialPmol(bacteria_.strain[k], bacteria_.mass[k]), 170, 150, 140, false,
                    0.0f, bioScale());
         }
     });
@@ -2487,7 +2490,7 @@ void World::feedByContact(RingBody& body, Digestion& dig, float dt) {
             ++dig.bacteriaEaten;
             if (bacteria_.quorum[k]) // violaceína: tóxica para el protista que la come
                 dig.toxin += kViolaceinDose;
-            ingest(dig, body, bodies_, site, kBacteriumArea, kBacteriumPmol * bacteria_.mass[k], 170, 150, 140, false,
+            ingest(dig, body, bodies_, site, kBacteriumArea, bacterialPmol(bacteria_.strain[k], bacteria_.mass[k]), 170, 150, 140, false,
                    0.0f, bioScale());
         }
     });
@@ -2639,8 +2642,8 @@ MassBudget World::massBudget() const {
     add(Element::C, Pool::Plasmodium, kC * plasmo_.biomass());
     double bacteria = 0.0;
     for (std::size_t i = 0; i < bacteria_.size(); ++i)
-        bacteria += bacteria_.mass[i];
-    add(Element::C, Pool::Bacteria, kC * kBacteriumPmol * bacteria);
+        bacteria += bacterialPmol(bacteria_.strain[i], bacteria_.mass[i]);
+    add(Element::C, Pool::Bacteria, kC * bacteria);
     for (std::size_t i = 0; i < ambient_.size(); ++i) {
         if (ambient_.kind[i] == ParticleKind::Detritus)
             add(Element::C, Pool::Detritus, kC * ambient_.mass[i]);
@@ -2763,7 +2766,8 @@ void World::growBacteria(float dt) {
         const float taken = std::min(bacterialDemand_[i], std::max(0.0f, c) / k);
         c -= taken * k;
         float& m = bacteria_.mass[i];
-        const float change = bacterialMassChange(bp, taken, m, maintenance);
+        const float scale = strainInfo(bacteria_.strain[i]).pmolScale;
+        const float change = bacterialMassChange(bp, taken, m, maintenance, scale);
         // Reactivo (antibiótico): la muerte que agrega con lo que crece ahora (Regoes et al. 2004).
         if (reagentIndex_ >= 0) {
             const float a = reagent_.grid().sample(bacteria_.x[i], bacteria_.y[i]);
@@ -2773,14 +2777,14 @@ void World::growBacteria(float dt) {
             if (kill > 0.0 &&
                 Rng(config_.seed, rng_stream::kBacteria + 510, bacteria_.id[i], step_).uniform() <
                     1.0 - std::exp(-kill * bioDt / 3600.0)) {
-                c += m * kBacteriumPmol * k; // la pared revienta: lisis
+                c += bacterialPmol(bacteria_.strain[i], m) * k; // la pared revienta: lisis
                 eatenBacteria_.push_back(i);
                 continue;
             }
         }
         m += change;
         if (m < 0.5f) { // muere de hambre: su materia vuelve al agua
-            c += m * kBacteriumPmol * k;
+            c += bacterialPmol(bacteria_.strain[i], m) * k;
             eatenBacteria_.push_back(i);
         } else if (m >= 2.0f && bacteria_.size() < bp.maxCount) {
             // Fisión binaria: la hija sale al lado, con otra orientación. En la biopelícula queda
@@ -3626,8 +3630,8 @@ Census World::census() const {
             ++c.otherCells;
         }
     }
-    for (float m : bacteria_.mass)
-        c.totalBiomass += m * kBacteriumPmol;
+    for (std::size_t i = 0; i < bacteria_.size(); ++i)
+        c.totalBiomass += bacterialPmol(bacteria_.strain[i], bacteria_.mass[i]);
     c.totalBiomass += cyano_.biomass();
     c.cyanoCells = static_cast<int>(cyano_.cellCount());
     c.totalBiomass += fungi_.biomass();

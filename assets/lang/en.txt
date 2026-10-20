@@ -1810,3 +1810,7 @@ Vampyrella	Vampyrella
 Ameba anaranjada de ~40 um que se pega a las algas filamentosas, les abre un agujero en la pared y les sorbe el contenido.	Orange amoeba of ~40 um that clings to filamentous algae, opens a hole in their wall and sucks out their contents.
 Acinetos	Akinetes
 %zu: celulas de resistencia (se forman sin fosforo y germinan cuando vuelve)	%zu: resting cells (formed without phosphorus, germinate when it returns)
+Spirillum volutans	Spirillum volutans
+Bacteria gigante en helice (~25 um), con un haz de flagelos en cada polo: invierte el sentido en vez de girar. Es microaerofila: se junta en una banda donde el O2 es bajo (aerotaxis).	Giant helical bacterium (~25 um) with a tuft of flagella at each pole: it reverses instead of tumbling. It is microaerophilic: it gathers in a band where O2 is low (aerotaxis).
+Salpingoeca	Salpingoeca
+Coanoflagelado de ~6 um: un flagelo rodeado por un collar de microvellosidades que filtra bacterias. Pariente unicelular de los animales.	Choanoflagellate of ~6 um: one flagellum surrounded by a collar of microvilli that filters bacteria. A unicellular relative of animals.

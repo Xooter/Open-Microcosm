@@ -121,3 +121,4 @@ TEST_CASE("candidatos: Tetrahymena vorax se divide" * doctest::test_suite("largo
 TEST_CASE("candidatos: Ochromonas se divide" * doctest::test_suite("largos")) { reproduces("ochromonas"); }
 TEST_CASE("candidatos: Actinophrys se divide" * doctest::test_suite("largos")) { reproduces("actinophrys"); }
 TEST_CASE("candidatos: Vampyrella se divide" * doctest::test_suite("largos")) { reproduces("vampyrella"); }
+TEST_CASE("candidatos: Salpingoeca se divide" * doctest::test_suite("largos")) { reproduces("salpingoeca"); }

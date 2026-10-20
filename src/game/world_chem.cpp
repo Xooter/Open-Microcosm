@@ -175,7 +175,7 @@ void World::microbialInteractions(float dt) {
             bacteria_.phage[i] += hours;
             if (bacteria_.phage[i] >= bp.phageLatentHours) {
                 v += static_cast<float>(bp.phageBurst) / cellVolume;
-                food.at(cx, cy) += bacteria_.mass[i] * kBacteriumPmol * k; // el contenido se derrama
+                food.at(cx, cy) += bacterialPmol(bacteria_.strain[i], bacteria_.mass[i]) * k; // el contenido se derrama
                 eatenBacteria_.push_back(i);
                 ++observed_.phageLyses;
                 continue;
@@ -188,7 +188,7 @@ void World::microbialInteractions(float dt) {
                 Rng rng(config_.seed, rng_stream::kBacteria + 300, i, step_);
                 for (int c = 0; c < bp.bdelloProgeny; ++c)
                     bdello_.push(bacteria_.x[i], bacteria_.y[i], rng.uniform(0.0f, 2.0f * units::kPi));
-                food.at(cx, cy) += 0.3f * bacteria_.mass[i] * kBacteriumPmol * k;
+                food.at(cx, cy) += 0.3f * bacterialPmol(bacteria_.strain[i], bacteria_.mass[i]) * k;
                 eatenBacteria_.push_back(i);
                 ++observed_.bdelloBursts;
             }

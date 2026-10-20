@@ -1,0 +1,40 @@
+# Salpingoeca rosetta: coanoflagelado de ~6 µm, el pariente unicelular más cercano de los animales. Un
+# solo flagelo rodeado por un collar de ~40 microvellosidades; el flagelo bate y empuja agua a través del
+# collar, donde quedan retenidas las bacterias, que la célula fagocita en su base (Dayel & King 2014,
+# PLoS ONE 9: e95577). La forma nadadora avanza con el flagelo atrás (empujadora, "pusher"), así que el
+# collar y la boca quedan en el polo trasero. Las colonias en roseta las induce una molécula de la
+# bacteria Algoriphagus (Alegado et al. 2012, eLife 1: e00013): sin modelar (las bacterias no liberan
+# señales todavía). Velocidad estimada. Sin µmax publicado: usa el general.
+[[being]]
+id = "salpingoeca"
+name = "Salpingoeca"
+tags = ["protist", "flagellate", "choanoflagellate", "bacterivore"]
+description = "Coanoflagelado de ~6 um: un flagelo rodeado por un collar de microvellosidades que filtra bacterias. Pariente unicelular de los animales."
+locomotion = "flagellum"
+flagellum = "posterior"
+body_plan = "flagellate_chlorophyte"
+feeding = "anterior_pole"
+posterior_mouth = true
+relative_speed = 0.25
+initial_count = 8
+ph = [6.5, 9.0]
+temperature = [5.0, 30.0]
+max_salinity = 40.0
+storage = "glycogen"
+wall = "none"
+[being.shape]
+semi_major_axis = 3.5
+semi_minor_axis = 2.8
+shape_memory = 6.0
+color = [214, 212, 196]
+nucleus = 0.3
+
+# El collar: microvellosidades finas (~0,1 µm, menos que la membrana) en abanico alrededor del flagelo.
+[[being.process]]
+kind = "seta"
+at = 180.0
+length = 4.0
+base_width = 0.4
+tip_width = 0.2
+count = 12
+spread = 70.0
