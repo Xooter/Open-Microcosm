@@ -235,7 +235,7 @@ void run(World& world, float seconds) {
 
 } // namespace
 
-TEST_CASE("mecánicas: Stentor se extiende, se contrae entero ante una sacudida y se vuelve a extender") {
+TEST_CASE("mecánicas: Stentor se extiende, se contrae entero ante una sacudida y se vuelve a extender" * doctest::test_suite("largos")) {
     World world = emptyWorld();
     Rng rng(7, 1, 0, 0);
     const entt::entity e = world.spawnWild(*findSpecies("stentor"), center(world), rng, false); // fija por el pie
@@ -401,7 +401,7 @@ TEST_CASE("mecánicas: el espasmonema se enrolla al instante y se re-extiende; e
     CHECK(polyLength(stalkOf(other, ep)->rod.nodes) > 0.98f * speciesInfo(*findSpecies("epistylis")).stalk.length);
 }
 
-TEST_CASE("mecánicas: el telotroco secreta su tallo al fijarse; muerto el zooide, el tallo queda y se degrada") {
+TEST_CASE("mecánicas: el telotroco secreta su tallo al fijarse; muerto el zooide, el tallo queda y se degrada" * doctest::test_suite("largos")) {
     World world = emptyWorld();
     world.bioTimeScale() = 3600.0f; // 1 s = 1 h biológica
     const entt::entity e = spawn(world, "vorticella", center(world));
@@ -423,7 +423,7 @@ TEST_CASE("mecánicas: el telotroco secreta su tallo al fijarse; muerto el zooid
     CHECK_FALSE(world.registry().valid(rod));
 }
 
-TEST_CASE("mecánicas: Stentor se fija por el pie y con hambre lo suelta, nada y se vuelve a fijar") {
+TEST_CASE("mecánicas: Stentor se fija por el pie y con hambre lo suelta, nada y se vuelve a fijar" * doctest::test_suite("largos")) {
     World world = emptyWorld();
     world.bioTimeScale() = 3600.0f;
     const entt::entity e = wild(world, "stentor", center(world));
@@ -501,7 +501,7 @@ TEST_CASE("mecánicas: la apertura bucal deja afuera a Staurastrum por sus brazo
     CHECK_FALSE(fitsMouth(frontonia, 0.5f, cosmarium, 1.0f));
 }
 
-TEST_CASE("mecánicas: la kairomona de Lembadion le arma alas a Euplotes y lo deja fuera de su boca (M3, M4)") {
+TEST_CASE("mecánicas: la kairomona de Lembadion le arma alas a Euplotes y lo deja fuera de su boca (M3, M4)" * doctest::test_suite("largos")) {
     auto induced = [](bool withPredator) {
         World world = emptyWorld();
         world.bioTimeScale() = 3600.0f; // 1 s = 1 h biológica
@@ -524,7 +524,7 @@ TEST_CASE("mecánicas: la kairomona de Lembadion le arma alas a Euplotes y lo de
     CHECK_FALSE(induced(false));
 }
 
-TEST_CASE("mecánicas: Tetrahymena vorax pasa a macrostoma junto a Tetrahymena y cambia de dieta") {
+TEST_CASE("mecánicas: Tetrahymena vorax pasa a macrostoma junto a Tetrahymena y cambia de dieta" * doctest::test_suite("largos")) {
     World world = emptyWorld();
     world.bioTimeScale() = 3600.0f;
     const Vec2 c = center(world);
@@ -541,7 +541,7 @@ TEST_CASE("mecánicas: Tetrahymena vorax pasa a macrostoma junto a Tetrahymena y
     CHECK(world.preyOf(v).test(static_cast<std::size_t>(*findSpecies("tetrahymena"))));
 }
 
-TEST_CASE("mecánicas: Colpoda se divide en cuatro dentro de su quiste reproductivo, quieta y sin comer") {
+TEST_CASE("mecánicas: Colpoda se divide en cuatro dentro de su quiste reproductivo, quieta y sin comer" * doctest::test_suite("largos")) {
     World world = emptyWorld();
     const entt::entity e = spawn(world, "colpoda", center(world));
     REQUIRE(world.forceReproduction(e));
@@ -557,7 +557,7 @@ TEST_CASE("mecánicas: Colpoda se divide en cuatro dentro de su quiste reproduct
     CHECK(count == 4);
 }
 
-TEST_CASE("mecánicas: la lórica de Trachelomonas toma hierro del agua y la hija nace con la suya vacía") {
+TEST_CASE("mecánicas: la lórica de Trachelomonas toma hierro del agua y la hija nace con la suya vacía" * doctest::test_suite("largos")) {
     World world = emptyWorld();
     world.bioTimeScale() = 3600.0f;
     const entt::entity e = spawn(world, "trachelomonas", center(world));
@@ -608,7 +608,7 @@ TEST_CASE("mecánicas: Vampyrella perfora una célula de Spirogyra y después le
     CHECK((!world.registry().valid(alga) || world.registry().get<Metabolism>(alga).biomass < 0.7f * before));
 }
 
-TEST_CASE("mecánicas: sin fósforo, Anabaena/Dolichospermum forma acinetos junto a los heterocistos y germinan al volver") {
+TEST_CASE("mecánicas: sin fósforo, Anabaena/Dolichospermum forma acinetos junto a los heterocistos y germinan al volver" * doctest::test_suite("largos")) {
     WorldConfig config;
     config.bacteria = 0;
     config.detritus = 0;
@@ -682,7 +682,7 @@ TEST_CASE("mecánicas: Salpingoeca nada con el flagelo atrás y deja en el agua 
     CHECK(speciesInfo(*findSpecies("salpingoeca")).flagellumPosterior);
 }
 
-TEST_CASE("mecánicas: Lingulodinium destella al agitar el agua, y de noche mucho más que de día") {
+TEST_CASE("mecánicas: Lingulodinium destella al agitar el agua, y de noche mucho más que de día" * doctest::test_suite("largos")) {
     World world = emptyWorld();
     const entt::entity e = spawn(world, "lingulodinium", center(world));
     world.registry().get<Locomotion>(e).power = 0.0f;
@@ -707,7 +707,7 @@ TEST_CASE("mecánicas: Lingulodinium destella al agitar el agua, y de noche much
     CHECK(day < 0.1f * night);
 }
 
-TEST_CASE("mecánicas: Paramecium bursaria vive de sus Chlorella con luz; a oscuras las pierde") {
+TEST_CASE("mecánicas: Paramecium bursaria vive de sus Chlorella con luz; a oscuras las pierde" * doctest::test_suite("largos")) {
     auto biomassAfter = [](float light, float& symbionts) {
         WorldConfig config;
         config.bacteria = 0;
@@ -749,7 +749,7 @@ TEST_CASE("mecánicas: los cleptoplastos de Mesodinium se gastan y se reponen co
     CHECK_FALSE(acquireSymbionts(meso, *findSpecies("chlorella"), m)); // de otra presa no los toma
 }
 
-TEST_CASE("mecánicas: los cuerpos R de un Paramecium killer matan a P. aurelia sensible y no a otros killer") {
+TEST_CASE("mecánicas: los cuerpos R de un Paramecium killer matan a P. aurelia sensible y no a otros killer" * doctest::test_suite("largos")) {
     World world = emptyWorld();
     world.bioTimeScale() = 3600.0f;
     const Vec2 c = center(world);
@@ -801,7 +801,7 @@ TEST_CASE("mecánicas: Zoothamnium arma una colonia ramificada que se contrae en
     CHECK(carContracted >= 1);
 }
 
-TEST_CASE("mecánicas: la colonia de Bacillaria se estira y se cierra como una regla de carpintero") {
+TEST_CASE("mecánicas: la colonia de Bacillaria se estira y se cierra como una regla de carpintero" * doctest::test_suite("largos")) {
     World world = emptyWorld();
     const entt::entity e = spawn(world, "bacillaria", center(world));
     REQUIRE(world.forceReproduction(e));
@@ -826,7 +826,7 @@ TEST_CASE("mecánicas: la colonia de Bacillaria se estira y se cierra como una r
     CHECK(hi - lo > 40.0f);
 }
 
-TEST_CASE("mecánicas: la testa de Arcella no se deforma; avanza arrastrada por los seudópodos de la abertura") {
+TEST_CASE("mecánicas: la testa de Arcella no se deforma; avanza arrastrada por los seudópodos de la abertura" * doctest::test_suite("largos")) {
     World world = emptyWorld();
     const entt::entity e = spawn(world, "arcella", center(world));
     CHECK(world.registry().get<RingBody>(e).membraneReservoirRate <= 0.0f); // no es plástica
@@ -845,7 +845,7 @@ TEST_CASE("mecánicas: la testa de Arcella no se deforma; avanza arrastrada por 
     CHECK(worst < 0.15f * mean);
 }
 
-TEST_CASE("mecánicas: con hambre, Dictyostelium releva pulsos de AMPc y se agrega hacia un centro") {
+TEST_CASE("mecánicas: con hambre, Dictyostelium releva pulsos de AMPc y se agrega hacia un centro" * doctest::test_suite("largos")) {
     World world = emptyWorld(13);
     world.bioTimeScale() = 600.0f; // horas de hambre en segundos, sin apurar demasiado la migración
     const Vec2 c = center(world);

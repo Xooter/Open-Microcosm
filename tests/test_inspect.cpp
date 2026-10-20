@@ -220,7 +220,9 @@ TEST_CASE("fichas: la intención del piloto explica por qué se mueve (evitació
     World world(emptyWorld());
     const Vec2 c = world.dish().center;
     const entt::entity para = spawn(world, SpeciesId::Paramecium, c);
-    spawn(world, SpeciesId::Didinium, c + Vec2{130.0f, 0.0f}, 3.14159265f);
+    // A 130 µm la punta del paramecio ya tocaba la boca de Didinium y sus toxicistos lo paralizaban
+    // antes de que pudiera retroceder: lejos, la amenaza se percibe antes del contacto.
+    spawn(world, SpeciesId::Didinium, c + Vec2{180.0f, 0.0f}, 3.14159265f);
     world.registry().emplace<Autopilot>(para);
     bool avoided = false;
     for (int s = 0; s < 30 && !avoided; ++s) {
@@ -233,7 +235,9 @@ TEST_CASE("fichas: la intención del piloto explica por qué se mueve (evitació
     MESSAGE("Movimiento: " << move);
     CHECK(move.find("evitacion") != std::string::npos);
     CHECK(valueOf(ins, "Comportamiento", "Huye de").find("Didinium") != std::string::npos);
-    CHECK(ins.headline.find("evitacion") != std::string::npos);
+    // El titular es lo más saliente: la evitación o, si en el mismo paso los toxicistos la tocaron, la
+    // descarga de sus tricocistos.
+    CHECK((ins.headline.find("evitacion") != std::string::npos || ins.headline.find("tricocistos") != std::string::npos));
 }
 
 TEST_CASE("fichas: estado de la división, el jugador y el medio fuera de rango") {

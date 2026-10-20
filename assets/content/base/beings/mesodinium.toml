@@ -20,7 +20,7 @@ cyclosis = 1.0
 ph = [7.0, 9.5]
 temperature = [2.0, 25.0]
 max_salinity = 40.0
-storage = "starch"
+storage = "glycogen"
 wall = "none"
 genome = { trichocysts = 0.0 }
 [being.shape]

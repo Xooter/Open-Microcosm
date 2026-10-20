@@ -1833,3 +1833,8 @@ Ameba de ~30 um del suelo y el agua, con seudopodos finos en espina. Come bacter
 agregacion: sigue el frente de la onda de AMPc hacia el centro	aggregation: follows the front of the cAMP wave towards the centre
 Dictyostelium	Dictyostelium
 Ameba social de ~10 um. Cuando se queda sin bacterias, se comunica con pulsos de AMPc que se propagan en ondas y miles de amebas se juntan en corrientes hacia un centro.	Social amoeba of ~10 um. When it runs out of bacteria it signals with pulses of cAMP that spread in waves, and thousands of amoebae gather in streams towards a centre.
+coanoflagelado	choanoflagellate
+membrana	membrane
+vacuolas digestivas (bacterias)	food vacuoles (bacteria)
+reticulo endoplasmico	endoplasmic reticulum
+aparato de Golgi	Golgi apparatus
