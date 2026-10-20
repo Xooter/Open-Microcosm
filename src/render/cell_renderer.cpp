@@ -22,6 +22,7 @@
 #include <rlgl.h>
 
 #include <algorithm>
+#include <array>
 #include <vector>
 
 namespace {
@@ -643,6 +644,49 @@ Frame frameOf(const RingBody& body) {
     return f;
 }
 
+// Bandas de gránulos de pigmento (la stentorina de Stentor, la blefarismina de Blepharisma): franjas
+// longitudinales entre las hileras de cilios, que son las que dan el color (Tartar 1961). Siguen el
+// contorno de reposo: se abren en la campana de Stentor y se juntan en el pie.
+void drawPigmentStripes(const RingBody& body, Color tint, int stripes, float px) {
+    constexpr int kStations = 24;
+    const Frame f = frameOf(body);
+    float x0 = 1e9f, x1 = -1e9f;
+    for (const Vec2& q : body.restRing) {
+        x0 = std::min(x0, q.x);
+        x1 = std::max(x1, q.x);
+    }
+    std::array<float, kStations> lo{}, hi{}, xs{};
+    const std::size_t n = body.restRing.size();
+    for (int j = 0; j < kStations; ++j) {
+        const float x = x0 + (x1 - x0) * (static_cast<float>(j) + 0.5f) / kStations;
+        float l = 1e9f, h = -1e9f;
+        for (std::size_t i = 0; i < n; ++i) {
+            const Vec2 a = body.restRing[i], b = body.restRing[(i + 1) % n];
+            if ((a.x - x) * (b.x - x) > 0.0f || a.x == b.x)
+                continue;
+            const float y = a.y + (b.y - a.y) * (x - a.x) / (b.x - a.x);
+            l = std::min(l, y);
+            h = std::max(h, y);
+        }
+        xs[static_cast<std::size_t>(j)] = x;
+        lo[static_cast<std::size_t>(j)] = h >= l ? l : 0.0f;
+        hi[static_cast<std::size_t>(j)] = h >= l ? h : 0.0f;
+    }
+    const Color band = {static_cast<unsigned char>(tint.r * 0.6f), static_cast<unsigned char>(tint.g * 0.6f),
+                        static_cast<unsigned char>(tint.b * 0.75f), 110};
+    const float width = std::max(0.8f * px, std::min(4.0f, 0.35f * 2.0f * f.width / static_cast<float>(stripes + 1)));
+    auto at = [&](int j, float t) {
+        const std::size_t k = static_cast<std::size_t>(j);
+        const float y = lo[k] + (hi[k] - lo[k]) * t;
+        return f.c + f.h * xs[k] + f.side * y;
+    };
+    for (int s = 1; s <= stripes; ++s) {
+        const float t = static_cast<float>(s) / static_cast<float>(stripes + 1);
+        for (int j = 0; j + 1 < kStations; ++j)
+            fastLine(toRay(at(j, t)), toRay(at(j + 1, t)), width, band);
+    }
+}
+
 // Spirogyra: cloroplasto en cinta helicoidal (vista de costado: una onda que recorre la célula).
 void drawSpiralPlastid(const RingBody& body, float time) {
     const Frame f = frameOf(body);
@@ -1233,6 +1277,9 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
 
             const SpeciesId sid = species ? species->id : SpeciesId::Paramecium;
             const CellStyle style = styleOf(sid);
+            if (species && speciesInfo(sid).pigmentStripes > 0 && level >= DetailLevel::Normal)
+                if (const CellLook* lk = reg.try_get<CellLook>(e))
+                    drawPigmentStripes(body, {lk->r, lk->g, lk->b, 255}, speciesInfo(sid).pigmentStripes, px);
             if (loco && style == CellStyle::RostrumFlagella) {
                 drawCilia(bp, body, time, px, CiliaPattern::Rostrum, 2.4f); // miles de flagelos
                 drawCilia(bp, body, time, px, CiliaPattern::Rostrum, 1.5f);

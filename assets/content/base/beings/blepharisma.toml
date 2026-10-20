@@ -28,6 +28,10 @@ temperature = [5.0, 30.0]
 storage = "glycogen"
 wall = "none"
 genome = { trichocysts = 0.0 }
+[being.appearance]
+# Bandas de blefarismina (el pigmento rosa, en gránulos entre las hileras de cilios; Giese 1973).
+pigment_stripes = 8
+
 [being.shape]
 semi_major_axis = 115.0
 semi_minor_axis = 40.0

@@ -32,7 +32,11 @@ void main() {
     if (c.a > 0.5) {
         float edge = 1.0 - around; // 0 en el centro, ~0.5 sobre la membrana
         float lens = smoothstep(0.0, 0.5, edge);
-        finalColor = vec4(c.rgb * (1.0 - 0.45 * lens), 0.30 + 0.45 * lens);
+        // Un pigmento absorbe (Beer–Lambert): cuanto más saturado el tinte, más opaco el citoplasma
+        // (Stentor azul, Blepharisma rosa, las algas verdes); el incoloro sigue casi transparente.
+        float sat = max(max(c.r, c.g), c.b) - min(min(c.r, c.g), c.b);
+        float body = 0.30 + 0.8 * max(0.0, sat - 0.15);
+        finalColor = vec4(c.rgb * (1.0 - 0.45 * lens), min(0.75, body + 0.45 * lens));
     } else {
         finalColor = vec4(1.0, 1.0, 0.97, 0.55 * around);
     }

@@ -132,7 +132,7 @@ constexpr std::pair<const char*, ProcessKind> kProcessKind[] = {
 constexpr const char* kAnimalCellKeys[] = {"adherent", "rounded_radius", "contact_inhibition_locomotion",
                                            "contact_inhibition_proliferation", "min_serum",
                                            "apoptosis_without_serum_h", "divides", "fmlp_chemotaxis"};
-constexpr const char* kLookKeys[] = {"style", "plastid_color"};
+constexpr const char* kLookKeys[] = {"style", "plastid_color", "pigment_stripes"};
 constexpr const char* kShapeKeys[] = {"semi_major_axis", "semi_minor_axis", "shape_memory", "color",
                                       "nucleus",        "squareness",    "taper",  "taper_front", "bend", "thickness"};
 
@@ -611,6 +611,11 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
                 warnings.push_back(r.where + ": estilo de dibujo desconocido '" + e.style + "' (se usa el de su locomoción)");
                 e.style.clear();
             }
+        }
+        if (const toml::node* ps = look->get("pigment_stripes")) {
+            s.pigmentStripes = static_cast<int>(ps->value<std::int64_t>().value_or(0));
+            if (s.pigmentStripes < 0 || s.pigmentStripes > 40)
+                r.errors.push_back(r.where + ": 'pigment_stripes' va de 0 a 40");
         }
         if (const toml::node* c = look->get("plastid_color")) {
             const toml::array* a = c->as_array();

@@ -37,6 +37,8 @@ nucleus = 0.32
 taper = 0.5
 
 [being.appearance]
+# Bandas de stentorina (el pigmento azul, en gránulos entre las hileras de cilios; Tartar 1961).
+pigment_stripes = 10
 style = "membranelle_crown"
 
 [being.contraction]

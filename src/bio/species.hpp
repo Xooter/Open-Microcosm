@@ -405,6 +405,9 @@ struct SpeciesInfo {
     const char* style = "";
     bool plastidColorSet = false;
     std::uint8_t plastidColor[3] = {0, 0, 0};
+    // Bandas de gránulos de pigmento a lo largo del cuerpo (stentorina de Stentor, blefarismina de
+    // Blepharisma): cuántas se ven de un lado (0: sin bandas).
+    int pigmentStripes = 0;
     AnimalCellInfo animalCell;
     std::vector<ProcessSpec> processes; // [[being.process]]
     std::vector<ResponseSpec> responses; // [[being.response]]

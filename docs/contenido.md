@@ -158,7 +158,9 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   `peristomal_crown`, `membranelle_crown`, `capitate_tentacles`, `cirri`, `extensible_neck`,
   `two_flagella`, `yeast`, `adherent_cell`, `neutrophil`, `plant_protoplast`, `elodea_leaf`,
   `squamous_cell`, `lymphocyte`, `monocyte`, `coccoid`, `plate_colony`, `compact_colony`,
-  `hollow_colony`; por omisión, el de su locomoción) y `plastid_color` [r, g, b].
+  `hollow_colony`; por omisión, el de su locomoción) , `plastid_color` [r, g, b] y `pigment_stripes`
+  (bandas de gránulos de pigmento a lo largo del cuerpo: Stentor, Blepharisma). El citoplasma de color
+  saturado se ve más opaco (el pigmento absorbe).
 - `[being.cell]`: mecanismos de una célula de organismo pluricelular: `adherent`, `rounded_radius`
   [µm], `contact_inhibition_locomotion`, `contact_inhibition_proliferation`, `min_serum`
   [fracción], `apoptosis_without_serum_h`, `divides`, `fmlp_chemotaxis`. `relative_dry_mass`: la
