@@ -149,6 +149,8 @@ add_library(biosim STATIC
     src/game/world_animal.cpp
     src/game/world_tissue.cpp
     src/game/world_contraction.cpp
+    src/game/rest_shape.cpp
+    src/game/world_shape_wave.cpp
     src/game/world_stalk.cpp
     src/game/world_signals.cpp
     src/game/world_sliding.cpp

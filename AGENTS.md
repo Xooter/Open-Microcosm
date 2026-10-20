@@ -252,6 +252,11 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   mitosis): `reshapeRestEven` reparte la forma de reposo por longitud de arco. La proyección radial
   de `reshapeRest` amontona los puntos y deja la forma cruzada; con flexión de ventanas eso hace que
   la célula se empuje sola.
+- **Forma de reposo que cambia en vida** (`game/rest_shape`): la contracción (`[being.contraction]`:
+  trompeta de Stentor, campana de los peritricos) y la onda de forma (`[being.shape_wave]`: metabolia de
+  los euglenoides, vaivén de la probóscide) escriben la forma de reposo punto a punto con
+  `rest_shape::apply`, que la centra en el promedio de sus puntos (si no, la memoria de forma empuja al
+  cuerpo entero) y lleva los organelos.
 - **Topología:** `replaceRing` / `resizeRing` cambian el anillo (fusión, inserción de membrana).
   Los eventos de topología se aplican al final del paso.
 

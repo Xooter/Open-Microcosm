@@ -34,6 +34,14 @@ nucleus = 0.2
 taper_front = 0.7
 taper = 0.3
 
+# La probóscide va y viene de un lado al otro mientras nada, tanteando el agua en busca de presas
+# (Kreutz). Desvío y período estimados.
+[being.shape_wave]
+kind = "sway"
+amplitude = 0.2
+period_s = 4.0
+reach = 0.4
+
 [being.toxicysts]
 reach = 60.0
 paralysis_hours = 1.0

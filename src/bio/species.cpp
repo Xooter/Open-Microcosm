@@ -84,7 +84,7 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "sliding_colony", "testate", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "shape_wave", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
@@ -102,6 +102,10 @@ constexpr const char* kSymbiontKeys[] = {"kind",           "source",          "p
 constexpr const char* kBiolumKeys[] = {"flash_s", "recharge_s", "circadian", "day_capacity", "color"};
 constexpr const char* kContractionKeys[] = {"extension",          "extension_s",        "profile", "foot_width",
                                            "flare",              "swimming_extension", "spontaneous_per_min"};
+constexpr const char* kShapeWaveKeys[] = {"kind",  "amplitude",         "period_s",       "wavelength",
+                                         "reach", "episodes_per_min", "episode_s"};
+constexpr std::pair<const char*, ShapeWaveKind> kShapeWaveKind[] = {{"metaboly", ShapeWaveKind::Metaboly},
+                                                                    {"sway", ShapeWaveKind::Sway}};
 constexpr std::pair<const char*, ContractionProfile> kContractionProfile[] = {{"uniform", ContractionProfile::Uniform},
                                                                               {"trumpet", ContractionProfile::Trumpet},
                                                                               {"bell", ContractionProfile::Bell}};
@@ -506,6 +510,25 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
             cr.errors.push_back(cr.where + ": 'foot_width' va de 0 a 1, 'flare' no es negativo, 'swimming_extension' de 0 a 1 y "
                                            "'spontaneous_per_min' no es negativo");
         r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
+    if (const toml::table* wt = r.table("shape_wave")) {
+        toml_io::warnUnknown(*wt, kShapeWaveKeys, r.where + " [shape_wave]", warnings);
+        Reader wr{*wt, r.where + " [shape_wave]", {}};
+        ShapeWaveSpec& w = s.shapeWave;
+        wr.choice("kind", kShapeWaveKind, w.kind, true);
+        wr.count("amplitude", w.amplitude);
+        wr.count("period_s", w.periodSeconds);
+        wr.count("wavelength", w.wavelength);
+        wr.count("reach", w.reach);
+        wr.count("episodes_per_min", w.episodesPerMinute);
+        wr.count("episode_s", w.episodeSeconds);
+        if (w.amplitude < 0.0f || w.amplitude > 1.0f || w.periodSeconds <= 0.0f || w.wavelength <= 0.0f ||
+            w.reach <= 0.0f || w.reach > 1.0f || w.episodesPerMinute < 0.0f || w.episodeSeconds <= 0.0f)
+            wr.errors.push_back(wr.where + ": 'amplitude' y 'reach' van de 0 a 1; 'period_s', 'wavelength' y "
+                                           "'episode_s' son positivos");
+        if (w.kind != ShapeWaveKind::None && s.contraction.extension > 1.0f)
+            wr.errors.push_back(wr.where + ": un ser con [being.contraction] no puede tener onda de forma");
+        r.errors.insert(r.errors.end(), wr.errors.begin(), wr.errors.end());
     }
     // Tallo: las claves viejas (sessile, stalk_length, spasmoneme) dan un tallo con los valores por
     // omisión de su tipo; [being.stalk] lo describe entero.

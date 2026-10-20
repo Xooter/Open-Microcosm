@@ -96,6 +96,11 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   0,5 campana). El zooide de un peritrico se contrae también con su espasmonema. `swimming_extension` (0–1): cuánto se
   extiende mientras nada suelta. `spontaneous_per_min`: contracciones sin estímulo. La dispara una
   respuesta `contract`; el remolino de la contracción entra en el agua y lo sienten las vecinas.
+- `[being.shape_wave]`: la forma de reposo cambia en el tiempo, sin cambiar de área. `kind`:
+  `metaboly` (movimiento euglenoide: una onda de ensanchamiento corre del polo anterior al posterior;
+  `amplitude` relativa, `period_s` [s], `wavelength` relativa al largo; en episodios de `episode_s` [s],
+  `episodes_per_min`, durante los que no nada) | `sway` (la parte anterior, la fracción `reach`, se dobla
+  de lado a lado: `amplitude` es el desvío sobre el semieje mayor). No se combina con `[being.contraction]`.
 - `[being.jump]`: saltos. `speed` [µm/s], `duration` [s], `interval` [s] medio entre saltos
   espontáneos (0: solo de escape, con una respuesta `jump` o una amenaza a menos de 40 µm).
 - `[being.stalk]`: pie o tallo de un ser fijo (lo hace sésil). `kind`: `spasmoneme` (se enrolla) |

@@ -30,6 +30,18 @@ nucleus = 0.32
 # Respuesta fotofóbica: con luz ya intensa, un aumento brusco la hace detenerse, girar y salir en otra
 # dirección (Diehn 1973, Science 181: 1009). Con la fototaxis, eso la deja en la luz moderada. Umbrales
 # relativos a la lámpara, estimados.
+# Metabolia (movimiento euglenoide): la película de bandas helicoidales se desliza y una onda de
+# ensanchamiento corre del polo anterior al posterior; mientras, no avanza. Se ve sobre todo en células
+# frenadas o apretadas (Arroyo, Heltai, Millán & DeSimone 2012, PNAS 109: 17874). Amplitud y período del
+# orden de esas figuras; frecuencia y duración de los episodios: estimadas.
+[being.shape_wave]
+kind = "metaboly"
+amplitude = 0.6
+period_s = 10.0
+wavelength = 1.0
+episodes_per_min = 0.5
+episode_s = 20.0
+
 [[being.response]]
 field = "light"
 kind = "step_up"

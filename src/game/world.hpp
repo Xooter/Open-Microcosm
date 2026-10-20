@@ -606,6 +606,9 @@ class World {
     void applyContractionKicks();
     void contractForDivision(entt::entity e, RingBody& body);
     float contractionAreaScale(entt::entity e) const; // área de la silueta / la contraída
+    // Onda de forma: metabolia y vaivén (game/world_shape_wave.cpp).
+    void updateShapeWave(entt::entity e, RingBody& body, Locomotion& loco, float dt);
+    void relaxShapeWave(entt::entity e, RingBody& body);
     void setupSignals(const WorldConfig& config);
     void updateSignals(float dt);
     void updateMorphs(float dt);

@@ -178,6 +178,24 @@ struct ContractionSpec {
     float spontaneousPerMinute = 0.0f; // contracciones sin estímulo
 };
 
+// Onda de forma (game/world_shape_wave.cpp): la forma de reposo cambia en el tiempo, sin cambiar de área.
+//  - metabolia (`metaboly`): el movimiento euglenoide de Euglena y Peranema. La película de bandas
+//    helicoidales que se deslizan entre sí deja que una onda de ensanchamiento corra del polo anterior al
+//    posterior; mientras, la célula no nada (Arroyo, Heltai, Millán & DeSimone 2012, PNAS 109: 17874).
+//    Viene en episodios (`episodesPerMinute`, `episodeSeconds`);
+//  - vaivén (`sway`): la parte anterior se dobla de lado a lado mientras nada (la probóscide de Dileptus
+//    que busca presas).
+enum class ShapeWaveKind : std::uint8_t { None, Metaboly, Sway };
+struct ShapeWaveSpec {
+    ShapeWaveKind kind = ShapeWaveKind::None;
+    float amplitude = 0.5f;      // metabolia: ensanchamiento máximo relativo; vaivén: desvío / semieje mayor
+    float periodSeconds = 10.0f; // [s]
+    float wavelength = 1.0f;     // metabolia: largo de la onda / largo de la célula
+    float reach = 0.4f;          // vaivén: fracción anterior del cuerpo que se dobla
+    float episodesPerMinute = 0.0f; // metabolia
+    float episodeSeconds = 20.0f;   // [s]
+};
+
 // Señal química que libera la célula (M3): una kairomona del depredador (Lembadion), lo que suelta la
 // presa (la "estomatina" de Tetrahymena)… Un campo por señal, que difunde solo si alguien la liberó.
 struct ReleaseSpec {
@@ -391,6 +409,7 @@ struct SpeciesInfo {
     std::vector<ResponseSpec> responses; // [[being.response]]
     JumpSpec jump;                      // [being.jump]
     ContractionSpec contraction;        // [being.contraction]
+    ShapeWaveSpec shapeWave;            // [being.shape_wave]
     BioluminescenceSpec bioluminescence; // [being.bioluminescence]
     PhotosymbiontSpec photosymbiont;     // [being.photosymbiont]
     SignalToxicitySpec signalToxicity;   // [being.signal_toxicity]
@@ -554,6 +573,13 @@ struct Relay {
 struct Luminescence {
     float glow = 0.0f;
     float charge = 1.0f;
+};
+
+// Componente: estado de la onda de forma (ShapeWaveSpec). `base` es la forma de reposo sin deformar.
+struct ShapeWave {
+    float time = 0.0f; // [s] desde que empezó el episodio (o desde siempre, el vaivén)
+    float left = 0.0f; // [s] que le quedan al episodio de metabolia (0: ninguno)
+    std::vector<Vec2> base;
 };
 
 // Componente: estado de la contracción del cuerpo (ContractionSpec). 1 = contraída, 0 = extendida.

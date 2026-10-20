@@ -32,3 +32,13 @@ color = [200, 198, 184]
 nucleus = 0.3
 # Angosta adelante, de donde sale el flagelo, y ancha y truncada atrás (Kreutz).
 taper_front = 0.5
+
+# Metabolia: muy metabólica (Kreutz); cambia de forma cuando deja de deslizarse. Mismo mecanismo que
+# Euglena; frecuencia, duración, amplitud y período estimados.
+[being.shape_wave]
+kind = "metaboly"
+amplitude = 0.5
+period_s = 6.0
+wavelength = 1.0
+episodes_per_min = 1.0
+episode_s = 15.0
