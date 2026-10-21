@@ -1659,7 +1659,7 @@ bool World::placeIsFree(Vec2 p, float clearance) const {
     return true;
 }
 
-int World::inoculate(Being being, int count, Vec2 center, float radius) {
+int World::inoculate(Being being, int count, Vec2 center, float radius, const std::vector<Vec2>& area) {
     PROFILE_SCOPE("World::inoculate");
     // Como con la pipeta: `count` individuos repartidos al azar en toda la placa (radius <= 0) o
     // en un círculo. Las células no caen encima de otra; las bacterias van de a una.
@@ -1673,11 +1673,26 @@ int World::inoculate(Being being, int count, Vec2 center, float radius) {
         reach = size * 1.5f + 10.0f;
         clearance = size + 6.0f;
     }
+    // Caja de la zona dibujada: se sortea adentro y se descarta lo que cae fuera del polígono.
+    const bool inArea = area.size() >= 3;
+    Vec2 lo{0.0f, 0.0f}, hi{0.0f, 0.0f};
+    if (inArea) {
+        lo = hi = area[0];
+        for (const Vec2& q : area) {
+            lo = {std::min(lo.x, q.x), std::min(lo.y, q.y)};
+            hi = {std::max(hi.x, q.x), std::max(hi.y, q.y)};
+        }
+    }
     int placed = 0;
     for (int attempts = 0; placed < count && attempts < 50 * count + 50; ++attempts) {
         Rng rng(config_.seed, rng_stream::kTools, toolCounter_++, step_);
         Vec2 p;
-        if (radius <= 0.0f) {
+        if (inArea) {
+            p = {rng.uniform(lo.x, hi.x), rng.uniform(lo.y, hi.y)};
+            if (!polygon::contains(area.data(), static_cast<int>(area.size()), p) || !dish_.contains(p, reach))
+                continue;
+            p = wrapped(p);
+        } else if (radius <= 0.0f) {
             p = randomPoint(rng, reach);
         } else {
             const float a = rng.uniform(0.0f, 2.0f * units::kPi), r = radius * std::sqrt(rng.uniform());

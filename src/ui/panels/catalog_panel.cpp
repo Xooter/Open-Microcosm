@@ -1,6 +1,7 @@
 // Catálogo: todos los seres y el sedimento. Un click arma el spawn (herramienta Spawnear).
 #include "app/app.hpp"
 #include "game/glossary.hpp"
+#include "sim/polygon.hpp"
 #include "ui/being_icons.hpp"
 #include "ui/panels/panel_classes.hpp"
 #include "ui/widgets.hpp"
@@ -97,13 +98,22 @@ class CatalogPanel : public Panel {
         if (!cells || !app.world || !ImGui::TreeNode("##inocular", "%s", tr("Inocular...")))
             return;
         checkbox("Por densidad", &st.byDensity, "Individuos por cm² del área donde se inocula (como se siembra un cultivo).");
-        checkbox("Alrededor del centro de la vista", &st.spot, "Si no, en toda la placa.");
-        if (st.spot)
+        // Dónde: la región es la que se dibuja con la herramienta Región (G).
+        const std::vector<Vec2>& region = app.session.region();
+        const bool hasRegion = region.size() >= 3;
+        static const char* const kWhere[] = {"En toda la placa", "Alrededor del centro de la vista", "En la región dibujada"};
+        if (!hasRegion && st.where == 2)
+            st.where = 0;
+        combo("Dónde", &st.where, kWhere, hasRegion ? 3 : 2,
+              "La región se dibuja con la herramienta Región (G); hasta que haya una, la opción no aparece.");
+        if (st.where == 1)
             slider("Radio [µm]", &st.spotRadius, 20.0f, 2000.0f, "%.0f");
         const World& w = *app.world;
         float areaCm2 = w.width() * w.height() * 1e-8f;
-        if (st.spot)
+        if (st.where == 1)
             areaCm2 = 3.14159265f * st.spotRadius * st.spotRadius * 1e-8f;
+        else if (st.where == 2)
+            areaCm2 = std::abs(polygon::signedArea(region.data(), static_cast<int>(region.size()))) * 1e-8f;
         else if (w.dish().active())
             areaCm2 = 3.14159265f * w.dish().radius * w.dish().radius * 1e-8f;
         int count = st.inoculateCount;
@@ -134,7 +144,9 @@ class CatalogPanel : public Panel {
             iv.index = static_cast<int>(b.kind);
             iv.v[0] = static_cast<float>(static_cast<int>(b.species));
             iv.v[1] = static_cast<float>(count);
-            iv.v[2] = st.spot ? st.spotRadius : 0.0f;
+            iv.v[2] = st.where == 1 ? st.spotRadius : 0.0f;
+            if (st.where == 2)
+                iv.area = region; // el polígono va en la intervención: la escena lo repite
             const Vector2 c = GetScreenToWorld2D({app.viewport.x + 0.5f * app.viewport.width, app.viewport.y + 0.5f * app.viewport.height},
                                                  app.camera);
             iv.pos = {c.x, c.y};

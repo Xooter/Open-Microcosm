@@ -76,7 +76,7 @@ bool applyIntervention(World& world, const Intervention& iv) {
         if (iv.index < 0 || iv.index >= static_cast<int>(BeingKind::Count) || species < 0 || species >= speciesCount())
             return false;
         return world.inoculate({static_cast<BeingKind>(iv.index), static_cast<SpeciesId>(species)},
-                               static_cast<int>(iv.v[1]), iv.pos, iv.v[2]) > 0;
+                               static_cast<int>(iv.v[1]), iv.pos, iv.v[2], iv.area) > 0;
     }
     case InterventionKind::Atmosphere:
         world.medium().co2Atmosphere = iv.v[0];
@@ -280,6 +280,16 @@ std::string serializeInterventions(const std::vector<Intervention>& list) {
             out += ' ';
             out += iv.key;
         }
+        if (!iv.area.empty()) {
+            out += " area=";
+            for (std::size_t k = 0; k < iv.area.size(); ++k) {
+                if (k > 0)
+                    out += ';';
+                putFloat(out, iv.area[k].x);
+                out += ',';
+                putFloat(out, iv.area[k].y);
+            }
+        }
         out += '\n';
     }
     return out;
@@ -313,8 +323,24 @@ std::vector<Intervention> parseInterventions(const std::string& text, std::vecto
         iv.active = active != 0;
         iv.pos = {f[0], f[1]};
         std::copy(f + 2, f + 8, iv.v);
-        if (tok.size() > 12)
-            iv.key = tok[12];
+        for (std::size_t k = 12; k < tok.size(); ++k) {
+            if (tok[k].rfind("area=", 0) == 0) {
+                // Puntos "x,y" separados por ';'.
+                const std::string& a = tok[k];
+                for (std::size_t p = 5; p < a.size();) {
+                    const std::size_t end = std::min(a.find(';', p), a.size());
+                    const std::size_t comma = a.find(',', p);
+                    Vec2 q;
+                    if (comma < end &&
+                        std::from_chars(a.data() + p, a.data() + comma, q.x).ec == std::errc{} &&
+                        std::from_chars(a.data() + comma + 1, a.data() + end, q.y).ec == std::errc{})
+                        iv.area.push_back(q);
+                    p = end + 1;
+                }
+            } else if (iv.key.empty()) {
+                iv.key = tok[k];
+            }
+        }
         // Una clave de parámetro vieja (en español) se lee y se vuelve a escribir con la actual.
         if (const std::string_view current = currentParameterKey(iv.key); !current.empty())
             iv.key = current;

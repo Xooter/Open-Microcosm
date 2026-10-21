@@ -109,7 +109,7 @@ Small or already decided items, before adding anything new.
   `observations()` stay (Statistics panel and tests).
 - ✅ Numeric values of the inspector (`game/inspect`) in English (done on 21/10/2026,
   [bug](bugs/inspector-values-untranslated.md)).
-- ⬜ Inoculation inside a drawn region ([bug](bugs/inoculation-ignores-region.md)).
+- ✅ Inoculation inside a drawn region (done on 21/10/2026, [bug](bugs/inoculation-ignores-region.md)).
 - ⬜ Stains: hyphae, cyanobacteria and oat flakes do not respond to Lugol/Gram
   ([bug](bugs/stains-missing-targets.md)).
 - ⬜ Position of organelles (anterior or posterior flagellum) is not modelled for every being.

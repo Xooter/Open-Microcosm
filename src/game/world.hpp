@@ -352,9 +352,10 @@ class World {
     entt::entity setPlayerSpecies(SpeciesId species, Vec2 fallback);
     // Sandbox: spawnea un ser del catálogo en `at` (silvestre, linaje 0).
     void spawnBeing(Being being, Vec2 at);
-    // Inoculación: `count` individuos de un ser del catálogo al azar en toda la placa (radius <= 0)
-    // o en un círculo de `radius` alrededor de `center`, sin encimar células. Devuelve cuántos puso.
-    int inoculate(Being being, int count, Vec2 center, float radius);
+    // Inoculación: `count` individuos de un ser del catálogo al azar en toda la placa (radius <= 0),
+    // en un círculo de `radius` alrededor de `center` o, si `area` tiene 3 puntos o más, adentro de
+    // ese polígono [µm] (una región dibujada), sin encimar células. Devuelve cuántos puso.
+    int inoculate(Being being, int count, Vec2 center, float radius, const std::vector<Vec2>& area = {});
     // Ubica al azar (sin superponerse) las células de una gota de muestra con su estado. Sus cuotas
     // de nutrientes entran de afuera (la gota trae lo que tenían en el cultivo).
     int placeSampled(const std::vector<SampledCell>& cells);

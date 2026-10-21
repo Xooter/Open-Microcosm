@@ -4,14 +4,14 @@
 |---|---|
 | **ID** | `inoculation-ignores-region` |
 | **Type** | `bug` |
-| **Status** | `open` |
+| **Status** | `fixed` |
 | **Severity** | `minor` |
 | **Area** | [`reproducibility`](../mechanics/reproducibility.md) |
 | **Affects** | Catalogue > Inoculate… with a region drawn |
 | **Code** | `src/game/intervention.hpp` (`Inoculate`: `v[0]` species, `v[1]` count, `v[2]` radius) |
 | **Reported** | 17/10/2026 |
 | **Last verified** | 21/10/2026, commit `ae4affb` |
-| **Fixed in** | — |
+| **Fixed in** | commit "Inocular en la región dibujada" (21/10/2026) |
 
 ## Summary
 
@@ -44,9 +44,17 @@ Confirmed: the intervention format has no room for a polygon.
 Reference the region stored in `Run` (it is already part of the scene) or serialise the polygon in
 the event line; keep old scenes readable.
 
+## Fix
+
+The intervention carries the polygon (`Intervention::area`, serialised as `area=x,y;...` at the end
+of the event line; old scenes are read as before). `World::inoculate` samples inside the polygon's
+bounding box and keeps the points inside it and inside the dish. Catalogue > Inoculate… > *Where*:
+whole plate, around the centre of the view or in the drawn region (the option appears once a region
+exists). Test: `tests/test_scene.cpp` ("inocular en la región dibujada").
+
 ## Workaround
 
-Inoculate with a radius centred on the region.
+None needed.
 
 ## References
 
@@ -56,3 +64,4 @@ Inoculate with a radius centred on the region.
 
 - 17/10/2026: noted in the roadmap.
 - 21/10/2026: documented here.
+- 21/10/2026: fixed.

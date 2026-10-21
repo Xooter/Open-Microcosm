@@ -109,7 +109,7 @@ struct CatalogState {
     float suspensionPerMl = 1e5f;
     float inoculumUl = 1.0f;
     std::uint64_t draws = 0;
-    bool spot = false;
+    int where = 0;             // 0: toda la placa; 1: alrededor del centro de la vista; 2: en la región dibujada
     float spotRadius = 300.0f; // [µm]
 };
 

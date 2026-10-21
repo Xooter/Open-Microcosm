@@ -55,6 +55,9 @@ struct Intervention {
     Vec2 pos;
     float v[6] = {};
     std::string key;
+    // Zona dibujada [µm] (Inoculate: se siembra adentro del polígono). En el texto, un campo
+    // `area=x,y;x,y;...` al final de la línea (las escenas sin él se leen igual).
+    std::vector<Vec2> area;
 };
 
 // Campo de cada soluto que se puede gotear o fijar: 0 P, 1 N, 2 Si, 3 Fe, 4 B12, 5 materia orgánica,

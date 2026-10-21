@@ -23,7 +23,9 @@ being, fixing, LOD focus, engine) goes through `App::intervene` / `interveneStat
 `Run::interventions()`: it is applied between steps and recorded with its step. **Never call `World`
 directly from the interface.** What is held down (ink, dropper) is a brush that
 `InterventionLog::beforeStep` applies **once per step**, not per frame: the result cannot depend on
-the FPS.
+the FPS. An intervention can carry a drawn polygon (`Intervention::area`, written at the end of the
+event line as `area=x,y;x,y;...`; lines without it are still read): inoculating inside the region
+drawn with the Region tool (Catalogue > Inoculate… > Where) replays with the same shape.
 
 ## Scenes
 

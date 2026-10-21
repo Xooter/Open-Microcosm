@@ -3,6 +3,7 @@
 // vuelve sin cambios.
 #include "game/scene.hpp"
 #include "game/world.hpp"
+#include "sim/polygon.hpp"
 
 #include <doctest/doctest.h>
 #include <omp.h>
@@ -252,4 +253,40 @@ TEST_CASE("escena: un cultivo de DMEM con una levadura inoculada se repite bit a
     omp_set_num_threads(threads);
     CHECK(one == live);
     CHECK(four == live);
+}
+
+TEST_CASE("inocular en la región dibujada: todos caen adentro del polígono y la escena lo repite") {
+    WorldConfig c;
+    c.gridX = c.gridY = 128;
+    c.bacteria = 0;
+    c.detritus = 0;
+    c.cyanoFilaments = 0;
+    c.saprolegnia = c.chytridClusters = 0;
+    World w(c);
+    const Vec2 o = w.dish().center;
+    Intervention iv;
+    iv.kind = InterventionKind::Inoculate;
+    iv.index = static_cast<int>(BeingKind::Bacterium);
+    iv.v[1] = 300.0f;
+    iv.area = {o + Vec2{-200.0f, -150.0f}, o + Vec2{250.0f, -150.0f}, o + Vec2{0.0f, 200.0f}}; // un triángulo
+    REQUIRE(applyIntervention(w, iv));
+    REQUIRE(w.bacteria().size() == 300);
+    int inside = 0;
+    for (std::size_t i = 0; i < w.bacteria().size(); ++i)
+        inside += polygon::contains(iv.area.data(), 3, {w.bacteria().x[i], w.bacteria().y[i]}) ? 1 : 0;
+    CHECK(inside == 300);
+
+    // El polígono va en la línea del evento y vuelve igual (y una línea sin él se sigue leyendo).
+    const std::string text = serializeInterventions({iv});
+    CHECK(text.find(" area=") != std::string::npos);
+    const std::vector<Intervention> read = parseInterventions(text);
+    REQUIRE(read.size() == 1);
+    REQUIRE(read[0].area.size() == 3);
+    for (int k = 0; k < 3; ++k) {
+        CHECK(read[0].area[static_cast<std::size_t>(k)].x == iv.area[static_cast<std::size_t>(k)].x);
+        CHECK(read[0].area[static_cast<std::size_t>(k)].y == iv.area[static_cast<std::size_t>(k)].y);
+    }
+    Intervention plain = iv;
+    plain.area.clear();
+    CHECK(parseInterventions(serializeInterventions({plain}))[0].area.empty());
 }

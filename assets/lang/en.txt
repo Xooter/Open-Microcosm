@@ -1260,7 +1260,6 @@ Sesión recuperada (en pausa).	Session recovered (paused).
 Shift+	Shift+
 Si	Si
 Si la simulación se atrasa, cuántos pasos de recuperación se hacen por cuadro. Más: tiempo real a costa de fluidez; menos: imagen fluida y la simulación va más lenta que el reloj.	If the simulation falls behind, how many catch-up steps are taken per frame. More: real time at the expense of smoothness; fewer: smooth image and the simulation runs slower than the clock.
-Si no, en toda la placa.	Otherwise, over the whole plate.
 Si: diatomeas | Fe: fotosíntesis | B12: Euglena y diatomeas	Si: diatoms | Fe: photosynthesis | B12: Euglena and diatoms
 Si: media saturación	Si: half-saturation
 Siguiente paso	Next step
@@ -2004,3 +2003,7 @@ Raleo periódico: apagado.	Periodic thinning: off.
 Raleo	Thinning
 Raleo periódico activo (panel Placa > Raleo): se detiene desde ahí.	Periodic thinning on (Plate panel > Thinning): stop it there.
 %s %.0f %% %s %.1f h bio	%s %.0f %% %s %.1f bio h
+Dónde	Where
+En la región dibujada	In the drawn region
+En toda la placa	Over the whole plate
+La región se dibuja con la herramienta Región (G); hasta que haya una, la opción no aparece.	The region is drawn with the Region tool (G); until there is one, the option does not appear.
