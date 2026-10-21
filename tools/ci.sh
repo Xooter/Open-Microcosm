@@ -41,6 +41,10 @@ compilar release
 paso "traducciones (formatos iguales en assets/lang/*.txt)"
 for f in assets/lang/*.txt; do python3 tools/claves_tr.py --check "$f"; done
 
+paso "documentación (fichas de los seres y links)"
+python3 tools/gen_being_docs.py --check
+python3 tools/check_doc_links.py
+
 paso "tests rápidos"
 ctest --test-dir build/release -L rapidos --output-on-failure
 
