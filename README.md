@@ -12,7 +12,9 @@
 </p>
 
 <p align="center">
-  <img src="docs/img/demo.gif" alt="A drop of pond water in Open Microcosm: ciliates, algae and bacteria swimming under a bright-field microscope" width="800">
+  <img src="docs/img/demo.gif" alt="A tour of Open Microcosm: a puddle drop with ciliates, algae and bacteria, live plots and the catalogue" width="800">
+  <br>
+  <sub>Tour of the laboratory at 3× speed. <a href="docs/img/demo-small.mp4">Full video (MP4)</a>.</sub>
 </p>
 
 Open Microcosm simulates microscopic life **as it is seen through a laboratory microscope**: drops of water
@@ -33,28 +35,25 @@ plate, observe it and intervene.
 
 <table>
   <tr>
-    <td><img src="docs/img/drop.png" alt="A pond drop with ciliates, diatoms and algae"></td>
-    <td><img src="docs/img/cell-culture.png" alt="Human fibroblasts and HeLa cells in a cell culture"></td>
+    <td><img src="docs/img/pond.jpg" alt="A drop with Stentor, ciliates, algae, diatoms and amoebae"></td>
+    <td><img src="docs/img/red-onion.jpg" alt="Red onion epidermis: rows of cells with their cellulose walls and protoplasts"></td>
+    <td><img src="docs/img/sperm.jpg" alt="Human sperm in a fresh semen preparation with the CASA panel"></td>
   </tr>
   <tr>
-    <td align="center">A pond drop: ciliates, diatoms, algae and bacteria</td>
-    <td align="center">Cell culture: human fibroblasts migrating in DMEM</td>
+    <td align="center">A drop: <i>Stentor</i>, ciliates, algae, diatoms and amoebae</td>
+    <td align="center">Red onion epidermis, ready for plasmolysis</td>
+    <td align="center">Fresh semen with CASA kinematics (WHO 2021)</td>
   </tr>
   <tr>
-    <td><img src="docs/img/plasmolysis.png" alt="Red onion epidermis plasmolysing in salt water"></td>
-    <td><img src="docs/img/sperm-casa.png" alt="Human sperm with CASA kinematics"></td>
+    <td colspan="3"><img src="docs/img/lab-interface.jpg" alt="The laboratory interface with dockable panels"></td>
   </tr>
   <tr>
-    <td align="center">Onion epidermis plasmolysing in salt water</td>
-    <td align="center">Semen analysis with CASA kinematics</td>
-  </tr>
-  <tr>
-    <td colspan="2"><img src="docs/img/interface.png" alt="The laboratory interface with dockable panels"></td>
-  </tr>
-  <tr>
-    <td colspan="2" align="center">The laboratory: dockable panels for the plate, catalogue, stains, statistics and plots</td>
+    <td colspan="3" align="center">The laboratory: plate, environment and nutrients, measurement, live plots, mass budget and preferences</td>
   </tr>
 </table>
+
+The captures above use the *model view* (a teaching diagram with every structure drawn); the
+default view is the bright-field microscope image.
 
 ## Features
 
