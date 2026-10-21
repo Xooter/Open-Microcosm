@@ -185,9 +185,12 @@ void applySwimmerForces(const RingBody& body, const BodyParticles& bp, const Loc
         // cuerpo arrastra agua hacia adelante. Fuerzas opuestas, fuerza neta cero.
         // "Pusher" (flagelo posterior: coanoflagelados, espermatozoides): el flagelo empuja agua hacia
         // atrás desde la cola y el cuerpo la arrastra hacia adelante por delante: el par al revés.
+        // Con un flagelo largo (la cola del espermatozoide, ~10 cabezas) el empuje se reparte a lo largo
+        // de la cola: su fuerza va a la mitad del flagelo, no junto al cuerpo.
         const float r = std::max(4.0f, 0.4f * half);
         const float sign = loco.pusher ? -1.0f : 1.0f;
-        pushWater(fluid, c + h * (sign * (half + r)), h * -1.0f, 0.5f * loco.speed, r);
+        const float thrustAt = loco.flagellumLength > 0.0f ? half + 0.5f * loco.flagellumLength : half + r;
+        pushWater(fluid, c + h * (sign * thrustAt), h * -1.0f, 0.5f * loco.speed, r);
         pushWater(fluid, c - h * (sign * (half + r)), h, 0.5f * loco.speed, r);
     }
     if (oralCurrent && !body.ring.empty()) {

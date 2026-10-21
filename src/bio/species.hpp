@@ -326,6 +326,10 @@ struct AnimalCellInfo {
     float apoptosisWithoutSerumHours = 0.0f;
     bool cycles = true;                // prolifera (el neutrófilo maduro ya no se divide)
     bool chemotaxisFmlp = false;       // sigue el gradiente de péptidos formilados bacterianos
+    // Muerte sin desarmarse (`death = "immotile"`): el espermatozoide casi no tiene citoplasma que partir
+    // en cuerpos apoptóticos; al morir deja de batir y queda entero e inmóvil, con la membrana dañada
+    // (por eso se tiñe con eosina). Por omisión, la apoptosis de las células somáticas.
+    bool immotileDeath = false;
 };
 
 struct SpeciesInfo {
@@ -348,6 +352,10 @@ struct SpeciesInfo {
     // Flagelo posterior (coanoflagelados, espermatozoides): la célula avanza empujada desde atrás
     // ("pusher"): el par de fuerzas sobre el agua tiene el signo opuesto al de Chlamydomonas ("puller").
     bool flagellumPosterior = false;
+    // Largo del flagelo [µm] cuando no es el de un flagelado típico (~1 largo corporal): la cola del
+    // espermatozoide mide ~45 µm, unas 10 veces la cabeza. Lo usan el dibujo y el dipolo que deja en el
+    // agua (el empuje se reparte a lo largo de la cola). 0: el de siempre.
+    float flagellumLength = 0.0f;
     FeedingMode feeding = FeedingMode::None;
     SpeciesSet prey;                // especies que caza, fagocita o atrapa
     SpeciesSet flee;                // especies de las que huye (reacción de evitación)

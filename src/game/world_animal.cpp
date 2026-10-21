@@ -22,6 +22,7 @@ const char* cellPhaseName(CellPhase phase) {
     case CellPhase::G2: return "G2";
     case CellPhase::M: return "M (mitosis)";
     case CellPhase::Apoptotic: return "apoptosis";
+    case CellPhase::Dead: return "muerta";
     }
     return "";
 }
@@ -305,6 +306,8 @@ bool World::updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, f
     if (!acp)
         return false;
     AnimalCell& ac = *acp;
+    if (ac.phase == CellPhase::Dead)
+        return true;
     const SpeciesId sid = speciesOfEntity(registry_, e);
     const SpeciesInfo& info = speciesInfo(sid);
     const SpeciesPhysiology& phys = speciesPhysiology(sid);
@@ -344,12 +347,29 @@ bool World::updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, f
     ac.starvedHours = meta.starving ? ac.starvedHours + hours : 0.0f;
     const bool serum = medium_.serum >= info.animalCell.serumMinimum;
     ac.serumlessHours = serum ? 0.0f : ac.serumlessHours + hours;
-    bool apoptosis = ac.starvedHours > kStarvationApoptosisHours ||
-                     (info.animalCell.apoptosisWithoutSerumHours > 0.0f &&
-                      ac.serumlessHours > info.animalCell.apoptosisWithoutSerumHours);
+    const bool starved = ac.starvedHours > kStarvationApoptosisHours;
+    bool apoptosis = starved || (info.animalCell.apoptosisWithoutSerumHours > 0.0f &&
+                                 ac.serumlessHours > info.animalCell.apoptosisWithoutSerumHours);
     if (phys.lifespan.present) { // muerte por edad: riesgo constante con la vida media publicada
         Rng rng(config_.seed, rng_stream::kCells + 60, body.id, step_);
         apoptosis = apoptosis || rng.uniform() < 1.0f - std::exp(-std::log(2.0f) * hours / phys.lifespan.value);
+    }
+    if (apoptosis && info.animalCell.immotileDeath && !registry_.all_of<Dividing>(e)) {
+        // El espermatozoide no se parte en cuerpos apoptóticos: deja de batir y queda entero, inmóvil
+        // (en un espermiograma se cuenta como inmóvil, y la eosina lo tiñe porque su membrana ya no
+        // la excluye). Sin metabolismo: lo que tiene queda en el cuerpo (el balance no cambia).
+        const char* cause = starved ? "inanicion" : "edad (pierde la motilidad)";
+        ac.phase = CellPhase::Dead;
+        ac.phaseHours = 0.0f;
+        registry_.remove<Adherent>(e);
+        recordDeath(e, cause);
+        if (e == player_) {
+            registry_.remove<Player>(e);
+            player_ = entt::null;
+            lastDeathCause_ = cause;
+            events_.push_back({WorldEvent::Type::PlayerDied, e, entt::null, cause});
+        }
+        return true;
     }
     if (apoptosis && !registry_.all_of<Dividing>(e)) {
         ac.phase = CellPhase::Apoptotic;
@@ -478,7 +498,8 @@ bool World::updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, f
             splits_.push_back({e, ta, tb});
         break;
     }
-    case CellPhase::Apoptotic: break;
+    case CellPhase::Apoptotic:
+    case CellPhase::Dead: break;
     }
     return true;
 }

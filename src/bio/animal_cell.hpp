@@ -10,8 +10,9 @@
 // mueren por apoptosis (un suicidio ordenado, sin reventar) cuando les falta lo que necesitan.
 
 // Fases del ciclo celular. G0: quiescente (fuera del ciclo: sin factores de crecimiento o con la
-// periferia ocupada por vecinas). Apoptotic: ejecutando la apoptosis.
-enum class CellPhase : std::uint8_t { G0, G1, S, G2, M, Apoptotic };
+// periferia ocupada por vecinas). Apoptotic: ejecutando la apoptosis. Dead: muerta sin desarmarse
+// (`AnimalCellInfo::immotileDeath`: el espermatozoide queda entero e inmóvil, sin metabolismo).
+enum class CellPhase : std::uint8_t { G0, G1, S, G2, M, Apoptotic, Dead };
 const char* cellPhaseName(CellPhase phase);
 
 // Componente: estado de una célula animal.

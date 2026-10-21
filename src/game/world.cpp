@@ -1450,6 +1450,7 @@ void World::applyTraits(entt::entity e) {
     loco.helixPeriod = info.helixPeriod;
     loco.gliding = info.flagellarGliding;
     loco.pusher = info.flagellumPosterior;
+    loco.flagellumLength = info.flagellumLength;
     loco.testate = info.testate != 0;
     if (const RingBody* rb = registry_.try_get<RingBody>(e)) // fase propia, estable por célula
         loco.phase = 6.2831853f * static_cast<float>((rb->id * 2654435761u) >> 8 & 0xFFFF) / 65536.0f;
@@ -2014,6 +2015,13 @@ void World::applyMotion(float dt) {
         bool disturbed = false;
         bool contract = false;
         loco.burst = 0.0f; // el salto lo pone el piloto paso a paso
+        const AnimalCell* animal = registry_.try_get<AnimalCell>(e);
+        if (animal && animal->phase == CellPhase::Dead) { // muerta e inmóvil: el agua la lleva
+            loco.forward = loco.turn = 0.0f;
+            loco.active = false;
+            loco.speed = 0.0f;
+            continue;
+        }
         if (e == player_) {
             loco.forward = playerInput_.forward;
             loco.turn = playerInput_.turn;
@@ -2062,7 +2070,9 @@ void World::applyMotion(float dt) {
                     loco.active = false;
                     break;
                 }
-        if (registry_.all_of<Paralyzed>(e) || inDivisionCyst(e)) { // sin cilios que batan
+        // En apoptosis, una célula animal que nada deja de batir (la que se arrastra la frena steerCrawler).
+        const bool dying = animal && animal->phase == CellPhase::Apoptotic && loco.type != LocomotionType::Crawl;
+        if (registry_.all_of<Paralyzed>(e) || inDivisionCyst(e) || dying) { // sin cilios que batan
             loco.forward = loco.turn = loco.burst = 0.0f;
             loco.active = false;
             contract = disturbed = false;
@@ -2882,6 +2892,9 @@ void World::updateLifecycle(float dt) {
         if (registry_.all_of<EmptyWall>(e))
             continue;
         if (const AlgalPair* ap = registry_.try_get<AlgalPair>(e); ap && ap->donor && ap->progress > 0.0f)
+            continue;
+        // Espermatozoide muerto: queda entero, sin metabolismo (world_animal, CellPhase::Dead).
+        if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e); ac && ac->phase == CellPhase::Dead)
             continue;
         Digestion* dig = registry_.try_get<Digestion>(e);
         const Locomotion* loco = registry_.try_get<Locomotion>(e);
@@ -3710,6 +3723,8 @@ void World::lyse(entt::entity cell, const char* cause, bool apoptotic) {
 void World::setPlayer(entt::entity cell) {
     if (!registry_.valid(cell) || !registry_.all_of<Locomotion>(cell))
         return;
+    if (const AnimalCell* ac = registry_.try_get<AnimalCell>(cell); ac && ac->phase == CellPhase::Dead)
+        return; // un espermatozoide muerto no se mueve
     if (registry_.valid(player_) && player_ != cell) {
         registry_.remove<Player>(player_);
         registry_.emplace_or_replace<Autopilot>(player_);
@@ -3736,7 +3751,9 @@ Census World::census() const {
         const Metabolism* m = registry_.try_get<Metabolism>(e);
         const float mass = m ? m->biomass : cellMassPmol(body.restArea / cellInfo(registry_, e).outlineAreaFactor);
         c.totalBiomass += mass;
-        if (const Species* sp = registry_.try_get<Species>(e); sp && !registry_.all_of<EmptyWall>(e))
+        const AnimalCell* ac = registry_.try_get<AnimalCell>(e);
+        const bool dead = ac && ac->phase == CellPhase::Dead; // espermatozoide muerto (entero)
+        if (const Species* sp = registry_.try_get<Species>(e); sp && !registry_.all_of<EmptyWall>(e) && !dead)
             ++c.species[static_cast<int>(sp->id)]; // una pared vacía no es una célula viva
         const Lineage* lin = registry_.try_get<Lineage>(e);
         if (lin && lin->run == run_) {
@@ -4197,7 +4214,8 @@ bool World::isDamaged(entt::entity e) const {
     // de la biomasa con que nació (la membrana deja salir citoplasma que atrae a los histófagos).
     if (registry_.any_of<Paralyzed, Captured>(e))
         return true;
-    if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e); ac && ac->phase == CellPhase::Apoptotic)
+    if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e);
+        ac && (ac->phase == CellPhase::Apoptotic || ac->phase == CellPhase::Dead))
         return true;
     const Metabolism* m = registry_.try_get<Metabolism>(e);
     return m && m->birthBiomass > 0.0f && m->biomass < 0.6f * m->birthBiomass;
