@@ -8,7 +8,6 @@ namespace ui {
 
 std::unique_ptr<Panel> makePlatePanel();
 std::unique_ptr<Panel> makeCatalogPanel();
-std::unique_ptr<Panel> makeEncyclopediaPanel();
 std::unique_ptr<Panel> makeInspectorPanel();
 std::unique_ptr<Panel> makeToolsPanel();
 std::unique_ptr<Panel> makeStainPanel();

@@ -7,7 +7,6 @@
 
 #include "game/biome.hpp"
 #include "game/content.hpp"
-#include "game/progress.hpp"
 #include "game/run.hpp"
 #include "game/sandbox.hpp"
 #include "game/world.hpp"
@@ -504,7 +503,7 @@ std::string speciesJson() {
 
 std::string defaultExportsDir() {
     namespace fs = std::filesystem;
-    return (fs::path(defaultProgressPath()).parent_path() / "exports").string();
+    return (fs::path(userDataDir()) / "exports").string();
 }
 
 std::string defaultPhotosDir() { return userDataSubdir("photos", "fotos"); }

@@ -582,7 +582,6 @@ En el tubo hay 5 Paramecium caudatum y 5 P. aurelia. Cada dia se cambia el medio
 En los ciliados, dos células de tipos de apareamiento distintos se unen e intercambian micronúcleos haploides; las dos salen con el mismo genotipo recombinado. Es sexo sin reproducción: no aumenta el número de células.	In ciliates, two cells of different mating types join and exchange haploid micronuclei; both come out with the same recombined genotype. It is sex without reproduction: the number of cells does not increase.
 En un medio más concentrado que su jugo celular, el protoplasto de una célula vegetal pierde agua y se despega de la pared de celulosa, que queda en su lugar. En agua pura se recupera (deplasmólisis).	In a medium more concentrated than its cell sap, the protoplast of a plant cell loses water and pulls away from the cellulose wall, which stays in place. In pure water it recovers (deplasmolysis).
 En vez de spawnear, el ícono transforma al ser controlado en esa especie (solo especies).	Instead of spawning, the icon turns the controlled being into that species (species only).
-Enciclopedia	Encyclopedia
 Energía (comida o luz)	Energy (food or light)
 Energía: a las heterótrofas les falta comida; a las fotótrofas, luz. P y N limitan solo a las fotótrofas; Si, a las diatomeas; B12, a las auxótrofas.	Energy: heterotrophs lack food; phototrophs, light. P and N limit only phototrophs; Si, diatoms; B12, auxotrophs.
 English	English

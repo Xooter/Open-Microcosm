@@ -50,7 +50,8 @@ User stains in `<data>/openmicrocosm/stains/*.stain`: versioned `key=value` text
 
 `<data>` is the platform's data folder (`userDataDir`, `core/paths`). Inside `<data>/openmicrocosm/`:
 `packs/`, `plates/`, `cultures/`, `experiments/`, `stains/`, `photos/`, `exports/`,
-`autosave.plate`, `layout.ini`, `options.txt` and `progress.txt`. The folder of the project's
+`autosave.plate`, `layout.ini` and `options.txt` (a `progress.txt` left by older versions is
+no longer read). The folder of the project's
 previous name (`<data>/biogame/`) is renamed to `openmicrocosm/` the first time. Folders and files
 with the old Spanish names (`paquetes/`, `cultivos/`, `experimentos/`, `fotos/`, `autoguardado.plate`) are renamed
 automatically the first time, and the saved panel layout is migrated to the new ids.

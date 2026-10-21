@@ -1,7 +1,7 @@
 #include "game/plate_spec.hpp"
 
 #include "game/content.hpp"
-#include "game/progress.hpp"
+#include "core/paths.hpp"
 
 #include <algorithm>
 #include <cctype>
@@ -338,7 +338,7 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
 
 std::string defaultPlatesDir() {
     namespace fs = std::filesystem;
-    return (fs::path(defaultProgressPath()).parent_path() / "plates").string();
+    return (fs::path(userDataDir()) / "plates").string();
 }
 
 bool savePlate(const PlateSpec& spec, const std::string& path) {

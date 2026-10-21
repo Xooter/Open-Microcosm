@@ -104,10 +104,9 @@ and osmosis. What is missing is in phase B below. Details in
 
 Small or already decided items, before adding anything new.
 
-- ⬜ **Remove the encyclopedia** (decided on 17/10/2026): panel, `game/encyclopedia`, "the
-  encyclopedia fills with what the camera sees", its part of `Progress` and its strings and
-  translation keys. Decide whether `deathTally()` and `observations()` stay (used by Statistics or
-  the export) or go with it. Update `AGENTS.md`.
+- ✅ **Remove the encyclopedia** (done on 21/10/2026): panel, discovery by camera and
+  `progress.txt` are gone; the card's texts moved to `game/organism_text`. `deathTally()` and
+  `observations()` stay (Statistics panel and tests).
 - ⬜ Numeric values of the inspector (`game/inspect`) in English
   ([bug](bugs/inspector-values-untranslated.md)).
 - ⬜ Inoculation inside a drawn region ([bug](bugs/inoculation-ignores-region.md)).
@@ -231,7 +230,7 @@ What `Culture::supports` still rejects.
 
 ## 4. Proposed order
 
-1. **A** (clean-up: encyclopedia and small debt).
+1. **A** (clean-up: small debt).
 2. **B** (validation and packages) → **release**.
 3. **C** (lenses: phase contrast first, for the cultures).
 4. **H** (bindings) and **G** (analysis), which build on what already exists.

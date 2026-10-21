@@ -70,7 +70,7 @@ struct Inspection {
     bool hasGenome = false;  // se puede dibujar su genoma
     std::string title;       // nombre
     std::string subtitle;    // tipo y origen
-    std::string blurb;       // qué es (texto de la enciclopedia)
+    std::string blurb;       // qué es (game/organism_text)
     std::string headline;    // una línea: lo que está haciendo (tooltip)
     std::vector<InspectSection> sections;
     Vec2 at;                 // posición [µm]

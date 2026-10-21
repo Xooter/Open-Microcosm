@@ -100,22 +100,6 @@ TEST_CASE("las hijas en piloto automático nadan y comen solas" * doctest::test_
     CHECK(eaten > 5);
 }
 
-TEST_CASE("el registro de la enciclopedia se guarda y se carga") {
-    const auto path = (std::filesystem::temp_directory_path() / "openmicrocosm_test_progress.txt").string();
-    std::remove(path.c_str());
-    Progress p = loadProgress(path);
-    CHECK(p.seenSpecies == 0);
-    p.seenSpecies = 0b101;
-    p.biomesPlayed = 0b10;
-    p.behaviors.insert("fagocitosis");
-    REQUIRE(saveProgress(p, path));
-    const Progress q = loadProgress(path);
-    CHECK(q.seenSpecies == 0b101);
-    CHECK(q.biomesPlayed == 0b10);
-    CHECK(q.behaviors.count("fagocitosis") == 1);
-    std::remove(path.c_str());
-}
-
 namespace {
 std::uint64_t runRun(int threads) {
     omp_set_num_threads(threads);

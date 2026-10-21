@@ -98,8 +98,6 @@ struct App {
     // --- Estado ---
     Options options;
     std::string optionsPath = defaultOptionsPath();
-    Progress progress;
-    std::string progressPath = defaultProgressPath();
     PlateSpec plate;
     PlateSpec runPlate;                    // la placa con la que se creó el mundo en pantalla
     std::vector<Intervention> plateScript; // intervenciones de la escena cargada (se repiten al crear)
@@ -143,7 +141,7 @@ struct App {
     float monitorUiScale() const;
     void requestUiScale() { uiScaleDirty_ = true; }
     void requestLayoutReset() { layoutReset_ = true; }
-    // Avisos breves (descubrimientos de la enciclopedia).
+    // Avisos breves (exportaciones, fotos, paquetes).
     std::vector<std::string> toasts;
     float toastTimer = 0.0f;
     void notify(const std::string& text);
@@ -166,7 +164,6 @@ struct App {
     void controlInput(bool mouseFree, const Vec2& pos);
     void updateCamera(bool mouseFree);
     void stepSimulation(float dt);
-    void discover(float dt);
     void drawWorldOverlays();
     void drawMeasurements();
     void takePhotos(); // las fotos pedidas y el cuadro del time-lapse que toque
@@ -187,7 +184,6 @@ struct App {
     std::uint64_t recoveryStep_ = 0;   // paso guardado
     std::uint64_t recoverTarget_ = 0;  // > 0: re-simulando hasta este paso (sin dibujar ni registrar)
     float accumulator_ = 0.0f;
-    float discoveryTimer_ = 0.0f;
     std::uint32_t runCounter_ = 0;
     std::string layoutPath_;
     bool layoutReset_ = false;

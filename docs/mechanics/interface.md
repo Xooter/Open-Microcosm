@@ -27,7 +27,7 @@ Plate, Catalogue (any being, with icons), Inspector, Tools, Simulation, Preferen
 smoothness and performance), Processes (rates of chemistry, microbiology and fungi), Statistics
 (census, conserved totals of P, N, Si and Fe, and the controlled being), Graphs, Measurement,
 Content (loaded packs, data warnings, `.biopack` import and export), Cultures, Experiment, Lesson,
-Glossary, Notes, Stains, CASA, Help and Encyclopedia (to be removed, roadmap phase A). Plate, Catalogue, Stains, Inspector, Statistics, Tools,
+Glossary, Notes, Stains, CASA and Help. Plate, Catalogue, Stains, Inspector, Statistics, Tools,
 Simulation and Measurement start open; the rest open from *View* (a panel closed by default sets
 `open = false` in its constructor).
 

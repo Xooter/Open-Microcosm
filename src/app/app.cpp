@@ -9,7 +9,6 @@
 #include "core/units.hpp"
 #include "game/biome.hpp"
 #include "game/content.hpp"
-#include "game/encyclopedia.hpp"
 #include "game/export.hpp"
 #include "game/region.hpp"
 #include "game/scene.hpp"
@@ -102,7 +101,6 @@ App::App() {
     tools.modelView = options.modelView;
     if (options.tool < static_cast<int>(Tool::Spawn)) // Spawn necesita un ser armado en el catálogo
         tools.tool = static_cast<Tool>(options.tool);
-    progress = loadProgress(progressPath);
     plate.seed = std::random_device{}() & 0x7fffffffu;
     plate.rebuild();
     reloadStains();
@@ -270,8 +268,6 @@ void App::createPlate() {
     worldSeed = config.seed;
     worldBiome = plate.biome;
     world = std::make_unique<World>(config);
-    if (plate.biome < 32) // los de fábrica (la enciclopedia guarda una máscara de 32 bits)
-        progress.biomesPlayed |= 1u << static_cast<unsigned>(plate.biome);
     const RunConfig rc = plateRunConfig(plate);
     catalog.armed = -1;
     selection = SelectionState{}; // las entidades del mundo anterior ya no existen
@@ -1245,27 +1241,6 @@ void App::stepSimulation(float frameDt) {
         accumulator_ = 0.0f; // evita la "espiral de la muerte" si la sim no da abasto
 }
 
-// Enciclopedia: lo que se ve se cataloga (dos veces por segundo).
-void App::discover(float dt) {
-    discoveryTimer_ -= dt;
-    if (discoveryTimer_ <= 0.0f) {
-        discoveryTimer_ = 0.5f;
-        const Vector2 a = GetScreenToWorld2D({viewport.x, viewport.y}, camera);
-        const Vector2 b = GetScreenToWorld2D({viewport.x + viewport.width, viewport.y + viewport.height}, camera);
-        auto fresh = discoverVisible(progress, *world, {a.x, a.y}, {b.x, b.y});
-        for (std::string& f : recordBehaviors(progress, *world))
-            fresh.push_back(std::move(f));
-        if (!fresh.empty()) {
-            for (const std::string& f : fresh)
-                notify(std::string(ui::tr("Enciclopedia")) + ": " + f);
-            saveProgress(progress, progressPath);
-        }
-    }
-    toastTimer = std::max(0.0f, toastTimer - dt);
-    if (toastTimer <= 0.0f)
-        toasts.clear();
-}
-
 // Resaltados en el mundo: lo elegido (grueso), lo que está bajo el cursor (fino) y el alcance de la herramienta.
 void App::drawWorldOverlays() {
     BeginMode2D(camera);
@@ -1561,7 +1536,9 @@ int App::run() {
             player.entity = world->player();
             followPicked(camera, *world, player, viewport, frameDt);
         }
-        discover(frameDt);
+        toastTimer = std::max(0.0f, toastTimer - frameDt);
+        if (toastTimer <= 0.0f)
+            toasts.clear();
 
         renderer->setStain(activeStain());
         renderer->setLimitationMap(tools.limitationMap);
@@ -1582,7 +1559,6 @@ int App::run() {
     }
 
     autosave(true); // cierre limpio: no se ofrece recuperar
-    saveProgress(progress, progressPath);
     if (!options.fullscreen)
         options.maximized = IsWindowMaximized();
     saveOptions();

@@ -27,7 +27,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LITERAL = re.compile(r'"((?:[^"\\]|\\.)*)"')
 SPEC = re.compile(r"%[-+#0]*[0-9*]*(?:\.[0-9*]+)?(?:hh|h|ll|l|z|j|t)?[diouxXeEfgGcspn%]")
 SOURCES = ["src/ui/**/*.cpp", "src/app/*.cpp", "src/game/parameters.cpp", "src/game/mass_budget.cpp",
-           "src/bio/metabolism.cpp", "src/game/inspect.cpp", "src/game/encyclopedia.cpp", "src/game/scale_path.cpp",
+           "src/bio/metabolism.cpp", "src/game/inspect.cpp", "src/game/organism_text.cpp", "src/game/scale_path.cpp",
            "src/game/stain.cpp", "src/game/biome.cpp"]
 # Campos de texto de los paquetes que se muestran.
 TEXT_FIELDS = {"name", "description", "title", "goal", "text", "explanation", "reason", "definition",

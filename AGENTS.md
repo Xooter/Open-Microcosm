@@ -48,7 +48,7 @@ and intervenes.
 - **Dockable panels** (Dear ImGui, see "Interface"): Plate, Catalogue (any being, with icons),
   Inspector, Tools, Simulation, Preferences (image, smoothness and performance), Processes (rates of
   chemistry, microbiology and fungi), Statistics (census, conserved totals of P, N, Si and Fe, and the
-  controlled being), Encyclopedia and Graphs, Measurement, Content (loaded packs, data warnings,
+  controlled being), Graphs, Measurement, Content (loaded packs, data warnings,
   `.biopack` import and export), Cultures, Experiment, Lesson, Glossary, Notes, CASA and Help. Plate,
   Catalogue, Stains, Inspector, Statistics, Tools, Simulation and Measurement start open; the rest are
   opened from *View* (a panel closed by default sets `open = false` in its constructor).
@@ -59,7 +59,7 @@ and intervenes.
   Reynolds number** is respected: there is no inertia. On division the camera follows the mother; if
   the being dies, another one can be controlled.
 - **Select** (default tool, no modes): a click on anything picks the being and opens its card (what
-  it is, what it does and why). The encyclopedia fills with what the camera sees.
+  it is, what it does and why).
 - **Eating is physical:** the prey is wrapped with the membrane until a vacuole closes.
 - **Real metabolism:** respiration with O₂, fermentation without O₂ and photosynthesis with light,
   limited by P, N and, depending on the species, **silica** (diatoms), **iron** (phototrophs) and
@@ -369,7 +369,7 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
   matter and avoid slime (`World::slime_`) and light; anastomosis; oat flakes (`OatFlakes`) and
   sclerotia. The phosphorus of the plasmodium, flakes and sclerotia is part of `totalPhosphorus()`.
 - `World::deathTally()` and `World::observations()` record causes of death and observed behaviours
-  (base of the encyclopedia).
+  (Statistics panel, tests).
 
 ### Well-mixed culture (`game/culture`, phase P1)
 
@@ -437,7 +437,7 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
   is replayed), a place or an instant. They live in `Run::notes()`, go into the scene (`nota=`) and
   the export, and **are not interventions**: they do not change the world or the fingerprint.
 
-### Environment, biomes and encyclopedia (`game/biome`, `game/encyclopedia`)
+### Environment and biomes (`game/biome`)
 
 - `MediumParams` (in `WorldConfig::medium`): temperature (Q10 = 2 in everything biological via
   `World::bioScale()`, viscosity and O₂ saturation), salinity, anoxia, alkalinity, P, N. Tolerances
@@ -449,8 +449,8 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
   culture media), the sediment is a count per mineral and weights go by being id. An obligate
   symbiont (tag `obligate_symbiont`) only appears where the biome names it. Pack readers use
   `core/toml_reader` (errors with a location, unknown keys warned).
-- The encyclopedia fills with what the camera sees and with `deathTally`/`observations` (to be
-  removed: roadmap phase A).
+- The card's "what it is" text of each being is its `description`; the environmental organisms
+  (bacteria, fungi, phages, *Physarum*) take theirs from `game/organism_text`.
 
 ### Render (`render/`)
 
@@ -603,8 +603,8 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
   `Locomotion`; the controlled being only differs in where its controls come from.
 - Feeding of many mouths uses a bacteria grid; what is eaten is marked and removed together at the
   end of the step. Phagocytoses (which destroy entities) are applied after traversing the EnTT view.
-- `Progress` only saves the encyclopedia (seen species, behaviours, biomes) as key=value text in
-  `defaultProgressPath()`. The whole catalogue is available from the start.
+- Nothing is unlocked or recorded between sessions: the whole catalogue is available from the
+  start. `game/progress` only holds the program `Options`.
 
 ### Controlled being (`bio/locomotion`, `bio/feeding`, `bio/phagocytosis`)
 

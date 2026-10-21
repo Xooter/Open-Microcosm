@@ -2,7 +2,7 @@
 #include "bio/fungi.hpp"
 #include "bio/plasmodium.hpp"
 #include "game/biome.hpp"
-#include "game/encyclopedia.hpp"
+#include "game/organism_text.hpp"
 #include "game/inspect.hpp"
 #include "game/world.hpp"
 
@@ -348,7 +348,7 @@ TEST_CASE("fichas de Physarum, copo, esporangio y esclerocio: se eligen, se arma
     sc.kind = Picked::Kind::Sclerotium;
     sc.index = 0;
     CHECK(asciiOnly(buildInspection(world, sc)));
-    // Nombres de enciclopedia de los hongos nuevos.
+    // Nombres y descripciones de los hongos nuevos (ficha).
     CHECK(std::string(otherName(otherOf(FungusKind::Allomyces))).find("Allomyces") != std::string::npos);
     CHECK_FALSE(std::string(otherBlurb(OtherOrganism::Physarum)).empty());
     CHECK(std::string(otherBlurb(OtherOrganism::Physarum)).find("NO es un hongo") != std::string::npos);

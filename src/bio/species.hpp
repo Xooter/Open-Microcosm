@@ -422,7 +422,7 @@ struct AnimalCellInfo {
 struct SpeciesInfo {
     const char* key = "";  // id estable de los datos ("paramecium"): lo guardan las escenas
     const char* name = ""; // el que se muestra
-    const char* description = ""; // qué es y qué hace (ficha y enciclopedia)
+    const char* description = ""; // qué es y qué hace (ficha)
     const char* plan = "";        // plan corporal (bio/body_plan, body_plans/)
     LocomotionType locomotion = LocomotionType::Cilia;
     CellSpec spec;                  // forma, tamaño y color típicos

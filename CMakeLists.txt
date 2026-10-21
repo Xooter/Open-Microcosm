@@ -185,7 +185,7 @@ add_library(biosim STATIC
     src/game/intervention.cpp
     src/game/scene.cpp
     src/game/stain.cpp
-    src/game/encyclopedia.cpp
+    src/game/organism_text.cpp
     src/game/mass_budget.cpp
     src/game/timeseries.cpp
     src/game/growth_fit.cpp
@@ -260,7 +260,6 @@ add_executable(microcosm
     src/ui/panels/graphs_panel.cpp
     src/ui/panels/measure_panel.cpp
     src/ui/panels/casa_panel.cpp
-    src/ui/panels/encyclopedia_panel.cpp
     src/ui/panels/help_panel.cpp
     src/ui/panels/culture_panel.cpp
     src/ui/panels/experiment_panel.cpp

@@ -19,7 +19,7 @@ inline constexpr const char* kPackFolders[] = {"body_plans", "minerals", "beings
 
 // Los .toml de una carpeta del paquete, en su orden de carga: primero los que el manifiesto lista
 // en `[pack.order]` (los índices de los seres, biomas y minerales de fábrica son su orden de
-// carga: las escenas y la enciclopedia guardada dependen de él), después el resto por nombre.
+// carga: las escenas guardadas dependen de él), después el resto por nombre.
 std::vector<std::filesystem::path> packFolderFiles(const std::filesystem::path& pack, std::string_view folder);
 
 // La carpeta del paquete de fábrica (assets/content/base).

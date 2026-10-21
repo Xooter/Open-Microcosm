@@ -4,28 +4,9 @@
 #include "bio/locomotion.hpp"
 
 #include <cstdint>
-#include <set>
 #include <string>
-#include <vector>
 
-// Registro del usuario entre sesiones, guardado en disco (texto clave=valor, fácil de
-// inspeccionar): lo que ya vio en la enciclopedia. No hay desbloqueos ni puntajes: todo el
-// catálogo está disponible desde el primer momento.
-struct Progress {
-    // Enciclopedia: especies vistas (bit por SpeciesId), otros organismos (bit por
-    // OtherOrganism), comportamientos observados y biomas usados (bit por BiomeId).
-    std::uint64_t seenSpecies = 0;
-    std::uint32_t seenOthers = 0;
-    std::set<std::string> behaviors;
-    std::uint32_t biomesPlayed = 0;
-};
-
-// Ruta por defecto: $XDG_DATA_HOME/openmicrocosm/progress.txt (o ~/.local/share/openmicrocosm/...).
-std::string defaultProgressPath();
-Progress loadProgress(const std::string& path);
-bool saveProgress(const Progress& progress, const std::string& path);
-
-// Opciones del programa (se guardan junto al progreso, en options.txt).
+// Opciones del programa (<datos>/openmicrocosm/options.txt).
 // Calidad gráfica de un toque (fase 19). Solo toca opciones de imagen: ningún preset cambia la
 // simulación.
 enum class GraphicsPreset : int { Custom, Low, Medium, High };

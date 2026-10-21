@@ -1,7 +1,5 @@
-// Fase 11: ambiente, biomas y enciclopedia.
+// Fase 11: ambiente y biomas.
 #include "game/biome.hpp"
-#include "game/encyclopedia.hpp"
-#include "game/progress.hpp"
 #include "game/world.hpp"
 
 #include <doctest/doctest.h>
@@ -75,21 +73,3 @@ TEST_CASE("gotas procedurales: la seed cambia la gota y el bioma fija su ambient
     CHECK(a2.speciesWeight[3] == a.speciesWeight[3]);
 }
 
-TEST_CASE("enciclopedia: lo que se ve se cataloga y se guarda") {
-    World world(bare(20.0f));
-    const entt::entity p = world.spawnOrganism(SpeciesId::Paramecium, {1000.0f, 500.0f}, speciesGenome(SpeciesId::Paramecium), 0);
-    Progress progress;
-    discoverVisible(progress, world, {100.0f, 100.0f}, {300.0f, 300.0f}); // fuera de la vista
-    CHECK((progress.seenSpecies & (1ull << static_cast<unsigned>(SpeciesId::Paramecium))) == 0);
-    discoverVisible(progress, world, {800.0f, 400.0f}, {1200.0f, 600.0f});
-    CHECK((progress.seenSpecies & (1ull << static_cast<unsigned>(SpeciesId::Paramecium))) != 0);
-    world.lyseAt(world.registry().get<RingBody>(p).centroid);
-    CHECK_FALSE(recordBehaviors(progress, world).empty());
-
-    const std::string path = "test_progress_encyclopedia.txt";
-    REQUIRE(saveProgress(progress, path));
-    const Progress loaded = loadProgress(path);
-    CHECK(loaded.seenSpecies == progress.seenSpecies);
-    CHECK(loaded.behaviors == progress.behaviors);
-    std::remove(path.c_str());
-}

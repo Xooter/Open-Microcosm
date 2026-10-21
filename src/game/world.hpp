@@ -211,7 +211,7 @@ struct WorldConfig {
     }
 };
 
-// Comportamientos e interacciones vistos en la partida (enciclopedia).
+// Comportamientos e interacciones ocurridos en la placa (panel Estadísticas, tests).
 struct Observations {
     int apoptoses = 0; // células animales que murieron por apoptosis
     int chytridInfections = 0;
@@ -388,7 +388,7 @@ class World {
     float oxygenSaturation() const { return o2Saturation_; }
     float co2Saturation() const { return co2Saturation_; } // CO₂ disuelto en equilibrio con el aire [µM]
     const char* lastDeathCause() const { return lastDeathCause_; }
-    // Muertes por especie y causa desde el comienzo (enciclopedia, balance).
+    // Muertes por especie y causa desde el comienzo (balance).
     const std::map<std::pair<SpeciesId, std::string>, int>& deathTally() const { return deathTally_; }
     // Las últimas muertes de individuos (las más viejas se olvidan). nullptr si no está.
     const DeathRecord* deathOf(entt::entity e) const;

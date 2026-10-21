@@ -1,6 +1,6 @@
 #include "game/stain.hpp"
 
-#include "game/progress.hpp"
+#include "core/paths.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -374,7 +374,7 @@ bool parseStain(const std::string& text, StainSpec& spec) {
 
 std::string defaultStainsDir() {
     namespace fs = std::filesystem;
-    return (fs::path(defaultProgressPath()).parent_path() / "stains").string();
+    return (fs::path(userDataDir()) / "stains").string();
 }
 
 bool saveStain(const StainSpec& spec, const std::string& path) {

@@ -5,7 +5,7 @@
 #include "bio/physiology.hpp"
 #include "core/profiling.hpp"
 #include "core/units.hpp"
-#include "game/encyclopedia.hpp"
+#include "game/organism_text.hpp"
 #include "game/world.hpp"
 #include "sim/polygon.hpp"
 
