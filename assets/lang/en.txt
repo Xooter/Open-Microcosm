@@ -1848,6 +1848,121 @@ vaina mitocondrial de la pieza intermedia (~50-75 mitocondrias en helice)	mitoch
 flagelo: pieza intermedia, principal y terminal (axonema 9+2)	flagellum: midpiece, principal piece and end piece (9+2 axoneme)
 acrosoma	acrosome
 Plasma seminal	Seminal plasma
-La parte liquida del semen: fructosa (la energia de los espermatozoides), sales y citrato. Ligeramente alcalino (pH ~7,8) e isotonico.	The liquid part of semen: fructose (the energy source of the sperm), salts and citrate. Slightly alkaline (pH ~7.8) and isotonic.
 Preparado: semen fresco (espermiograma)	Preparation: fresh semen (semen analysis)
 Una gota de semen licuado bajo el cubreobjetos, en una platina a 37 °C, como en un espermiograma: espermatozoides que nadan empujados por la cola, cada uno a su velocidad. Con las horas pierden la motilidad y quedan quietos.	A drop of liquefied semen under the coverslip, on a stage at 37 °C, as in a semen analysis: sperm swimming pushed by their tails, each at its own speed. Over the hours they lose motility and stay still.
+ (normal segun los criterios estrictos)	 (normal by strict criteria)
+%.1f Hz	%.1f Hz
+ALH	ALH
+Acrosoma	Acrosome
+Activalo y esperá un segundo: cada espermatozoide necesita su trayectoria completa.	Turn it on and wait a second: each sperm needs its full track.
+Analizados	Analyzed
+Análisis de semen asistido por computadora: sigue la cabeza de cada espermatozoide cuadro a cuadro y mide su rapidez curvilínea (VCL), rectilínea (VSL) y media (VAP), sus cocientes (LIN, STR, WOB), el desplazamiento lateral de la cabeza (ALH) y la frecuencia de cruce del batido (BCF).	Computer-assisted semen analysis: follows the head of each sperm frame by frame and measures its curvilinear (VCL), straight-line (VSL) and average-path (VAP) velocities, their ratios (LIN, STR, WOB), the amplitude of lateral head displacement (ALH) and the beat-cross frequency (BCF).
+Azul tripano (viabilidad)	Trypan blue (viability)
+BCF	BCF
+Baja la platina a 22 °C (boton de la leccion) y espera unos segundos.	Lower the stage to 22 °C (lesson button) and wait a few seconds.
+Baten sin avanzar: dan vueltas en el lugar.	They beat without moving forward: they turn in place.
+CASA	CASA
+Cambios que el espermatozoide sufre en el tracto femenino (o en un medio con bicarbonato y albúmina a 37 °C) durante horas: la albúmina le saca colesterol a la membrana, el bicarbonato activa la adenilato ciclasa soluble y suben el pH y el calcio (canal CatSper). Solo capacitado puede hiperactivarse y hacer la reacción acrosómica.	Changes the sperm undergoes in the female tract (or in a medium with bicarbonate and albumin at 37 °C) over hours: albumin removes cholesterol from the membrane, bicarbonate activates soluble adenylyl cyclase, and pH and calcium rise (CatSper channel). Only a capacitated sperm can become hyperactivated and undergo the acrosome reaction.
+Capacitacion de espermatozoides (HTF + albumina, incubadora)	Sperm capacitation (HTF + albumin, incubator)
+Capacitación	Capacitation
+Cinemática media (móviles)	Mean kinematics (motile)
+Citrato de sodio y fructosa en agua, ~150 mOsm: la mitad de lo isotonico. A los espermatozoides vivos les entra agua y la cola se hincha y se enrolla; los muertos no cambian.	Sodium citrate and fructose in water, ~150 mOsm: half of isotonic. Water enters living sperm and their tails swell and coil; dead ones do not change.
+Clases (OMS 2021)	Grades (WHO 2021)
+Clases de la OMS: progresivos (nadan avanzando), no progresivos (baten sin avanzar) e inmóviles. Límites inferiores de referencia (OMS 2021): 30 % de progresivos y 42 % de motilidad total. La vitalidad (membrana intacta) siempre es mayor o igual.	WHO grades: progressive (swim forward), non-progressive (beat without moving forward) and immotile. Lower reference limits (WHO 2021): 30 % progressive and 42 % total motility. Vitality (intact membrane) is always equal or higher.
+Colorante de exclusión: las células vivas no lo dejan entrar y las muertas (membrana dañada) se tiñen de azul. Se mezcla con la suspensión de un cultivo para contar la viabilidad en la cámara de Neubauer; con el tiempo es tóxico, así que se cuenta en pocos minutos.	Exclusion dye: living cells keep it out and dead ones (damaged membrane) stain blue. It is mixed with a culture suspension to count viability in a Neubauer chamber; it becomes toxic with time, so counting is done within a few minutes.
+Como se distingue un espermatozoide inmovil vivo de uno muerto?	How do you tell a living immotile sperm from a dead one?
+Concentración [millones/mL]	Concentration [million/mL]
+Criterios estrictos (OMS 2021: límite inferior de referencia 4 %). Las anormales conservan sus proporciones (cabeza amorfa, afinada, piriforme, cuello doblado, cola enrollada…).	Strict criteria (WHO 2021: lower reference limit 4 %). Abnormal forms keep their proportions (amorphous, tapered, pyriform head, bent neck, coiled tail…).
+Cuánto de la trayectoria de cada uno se analiza (los equipos usan ~0,5–1 s).	How much of each track is analyzed (instruments use ~0.5–1 s).
+Células por mL de la muestra (espermiograma: el límite inferior de referencia de la OMS 2021 es 16 millones/mL).	Cells per mL of the sample (semen analysis: the WHO 2021 lower reference limit is 16 million/mL).
+Densidad [células/cm²]	Density [cells/cm²]
+Distribución de la VCL	VCL distribution
+El agua fria es mas viscosa y nada mas	Cold water is more viscous, nothing else
+El batido lo mueve la dineina, una ATPasa: con menos temperatura hidroliza ATP mas despacio y el flagelo bate con menos frecuencia	The beat is driven by dynein, an ATPase: at lower temperature it hydrolyzes ATP more slowly and the flagellum beats less often
+En el campo	In the field
+Eosina–nigrosina (vitalidad)	Eosin–nigrosin (vitality)
+Espermatozoide	Spermatozoon
+Espermatozoides en una solucion de 150 mOsm a 37 °C: a los vivos les entra agua y la cola se hincha y se enrolla en minutos; los muertos quedan rectos. Separa a los inmoviles vivos de los muertos sin tenir.	Sperm in a 150 mOsm solution at 37 °C: water enters the living ones and their tails swell and coil within minutes; dead ones stay straight. It separates living immotile sperm from dead ones without staining.
+Espermatozoides lavados en un medio con bicarbonato y albumina a 37 °C y 5 % de CO2: en unas horas se capacitan. Algunos se hiperactivan (nadan en estrella). Con progesterona en el gotero, la siguen y hacen la reaccion acrosomica.	Washed sperm in a medium with bicarbonate and albumin at 37 °C and 5 % CO2: within a few hours they capacitate. Some become hyperactivated (they swim in star-shaped paths). With progesterone in the dropper, they follow it and undergo the acrosome reaction.
+Espermiograma: motilidad y temperatura	Semen analysis: motility and temperature
+Evaluar la motilidad de una muestra de semen como en el laboratorio (clases de la OMS) y ver por que la OMS pide hacerlo a 37 °C: el batido del flagelo es una ATPasa (dineina) y se acelera con el calor.	Assess the motility of a semen sample as in the laboratory (WHO grades) and see why the WHO asks to do it at 37 °C: the flagellar beat is driven by an ATPase (dynein) and speeds up with heat.
+Fluido tubario humano: sales, glucosa, lactato, piruvato y bicarbonato 25 mM, con albumina. En la incubadora (37 °C, 5 % de CO2) capacita a los espermatozoides en unas horas.	Human tubal fluid: salts, glucose, lactate, pyruvate and 25 mM bicarbonate, with albumin. In the incubator (37 °C, 5 % CO2) it capacitates sperm within a few hours.
+Formas normales [%]	Normal forms [%]
+Frotis de semen con eosina y nigrosina, secado: los espermatozoides vivos excluyen la eosina y quedan blancos sobre el fondo oscuro; los muertos se tinen de rosa. Se cuentan 200 y la vitalidad es el porcentaje de blancos.	Semen smear with eosin and nigrosin, dried: living sperm exclude eosin and stay white on the dark background; dead ones stain pink. 200 are counted and vitality is the percentage of white ones.
+Gameto masculino: una cabeza con el núcleo haploide y el acrosoma, y un flagelo de ~50 µm que lo empuja desde atrás. No come ni se divide: vive de la fructosa del semen hasta que pierde la motilidad y muere.	Male gamete: a head with the haploid nucleus and the acrosome, and a ~50 µm flagellum that pushes it from behind. It neither eats nor divides: it lives on the fructose of semen until it loses motility and dies.
+HTF + albumina (capacitacion)	HTF + albumin (capacitation)
+Hormona esteroide que liberan las celulas que rodean al ovulo. Al espermatozoide capacitado le abre el canal de calcio CatSper: lo atrae (quimiotaxis, desde picomolar) y en micromolar le dispara la reaccion acrosomica.	Steroid hormone released by the cells surrounding the egg. In a capacitated sperm it opens the CatSper calcium channel: it attracts it (chemotaxis, from picomolar) and at micromolar triggers the acrosome reaction.
+Inmóviles	Immotile
+Inmóviles = vivos que no baten + muertos: para separarlos, eosina–nigrosina o la prueba hiposmótica.	Immotile = living that do not beat + dead: to tell them apart, eosin–nigrosin or the hypo-osmotic test.
+Inmóviles con la membrana dañada (la eosina los tiñe). Vitalidad = 100 − muertos (OMS: ≥ 54 %).	Immotile with a damaged membrane (eosin stains them). Vitality = 100 − dead (WHO: ≥ 54 %).
+Inmóviles vivos [%]	Living immotile [%]
+LIN	LIN
+La exportación (Ctrl+E) suma la tabla de cada uno (_casa.csv).	Export (Ctrl+E) adds the table of each one (_casa.csv).
+La muestra esta en la platina a 37 °C. Abri el panel CASA (Ver > CASA) y activa la medicion: cuenta cuantos son progresivos, no progresivos e inmoviles.	The sample is on the stage at 37 °C. Open the CASA panel (View > CASA) and turn the measurement on: count how many are progressive, non-progressive and immotile.
+La osmolaridad del medio cambia la forma de la cola (prueba hiposmotica): se deja fija para que solo cambie la temperatura.	The osmolarity of the medium changes the shape of the tail (hypo-osmotic test): it is kept fixed so that only the temperature changes.
+La parte liquida del semen: fructosa (la energia de los espermatozoides), sales y citrato. Ligeramente alcalino (pH ~7,6) e isotonico.	The liquid part of semen: fructose (the energy source of the sperm), salts and citrate. Slightly alkaline (pH ~7.6) and isotonic.
+La rapidez cae con un Q10 de ~1,3 y la frecuencia del batido con ~1,15 (medidos con CASA): es la quimica del motor, no solo la viscosidad (que con un Q10 de 2 y la viscosidad del agua daria el triple de caida). Por eso la OMS pide medir la motilidad a 37 °C, o informar la temperatura.	Speed falls with a Q10 of ~1.3 and the beat frequency with ~1.15 (measured with CASA): it is the chemistry of the motor, not just viscosity (a Q10 of 2 plus the viscosity of water would give three times the drop). That is why the WHO asks to measure motility at 37 °C, or to report the temperature.
+La vitalidad se mide por la integridad de la membrana: eosina-nigrosina (los muertos se tinen de rosa) o la prueba hiposmotica (los vivos hinchan la cola). La vitalidad de una muestra siempre es mayor o igual que su motilidad total.	Vitality is measured by membrane integrity: eosin-nigrosin (dead ones stain pink) or the hypo-osmotic test (living ones swell their tails). The vitality of a sample is always greater than or equal to its total motility.
+Membrana dañada (células muertas)	Damaged membrane (dead cells)
+Mira la rapidez media de los progresivos a 37 °C (VAP en el panel CASA).	Look at the mean speed of the progressive ones at 37 °C (VAP in the CASA panel).
+Motilidad espermática	Sperm motility
+Muertos [%]	Dead [%]
+Muestra (al crear)	Sample (on create)
+Muestra típica	Typical sample
+Nadan avanzando (OMS 2021: límite inferior 30 %).	They swim forward (WHO 2021: lower limit 30 %).
+No baten pero tienen la membrana intacta (excluyen la eosina; se hinchan en la prueba hiposmótica).	They do not beat but have an intact membrane (they exclude eosin; they swell in the hypo-osmotic test).
+No progresivos	Non-progressive
+No progresivos [%]	Non-progressive [%]
+No se puede distinguir	They cannot be told apart
+Platina a 22 °C (temperatura ambiente)	Stage at 22 °C (room temperature)
+Platina a 37 °C	Stage at 37 °C
+Por la forma de la cabeza	By the shape of the head
+Por que nadan mas despacio a 22 °C?	Why do they swim more slowly at 22 °C?
+Por su membrana: la del vivo esta intacta y excluye la eosina, y en un medio hipotonico le entra agua y se le enrolla la cola; la del muerto no	By its membrane: a living one's is intact and excludes eosin, and in a hypotonic medium water enters and its tail coils; a dead one's does not
+Preparado: prueba hiposmotica (HOS)	Preparation: hypo-osmotic swelling test (HOS)
+Preparado: semen con eosina-nigrosina (vitalidad)	Preparation: semen with eosin-nigrosin (vitality)
+Preparado: semen con leucocitos (leucocitospermia)	Preparation: semen with leukocytes (leukocytospermia)
+Progesterona	Progesterone
+Progresivos [%]	Progressive [%]
+Progresivos lentos	Slow progressive
+Progresivos rápidos	Rapid progressive
+Prueba de vitalidad del espermiograma (OMS 2021; Björndahl et al. 2003): la eosina no atraviesa una membrana intacta, así que los espermatozoides vivos quedan blancos y los muertos, rosados; la nigrosina oscurece el fondo para verlos mejor. Se extiende y se seca en un portaobjetos: fija. Vitalidad = % de cabezas blancas (límite inferior de referencia: 54 %).	Vitality test of the semen analysis (WHO 2021; Björndahl et al. 2003): eosin does not cross an intact membrane, so living sperm stay white and dead ones turn pink; nigrosin darkens the background to see them better. It is spread and dried on a slide: it fixes. Vitality = % of white heads (lower reference limit: 54 %).
+Que fraccion de los espermatozoides de una muestra normal nada avanzando (progresivos)?	What fraction of the sperm in a normal sample swims forward (progressive)?
+STR	STR
+Se mueren de frio	They die of cold
+Se reparten en proporción a lo que suman.	They are distributed in proportion to their sum.
+Semen con muchos neutrofilos (mas de 1 millon por mL: leucocitospermia), a 37 °C. Los neutrofilos se arrastran por el vidrio y fagocitan a los espermatozoides que tocan, sobre todo a los inmoviles y a los muertos.	Semen with many neutrophils (more than 1 million per mL: leukocytospermia), at 37 °C. The neutrophils crawl on the glass and phagocytose the sperm they touch, above all the immotile and dead ones.
+Si la platina se enfria a 22 °C, ¿a que rapidez nadan los progresivos (µm/s)?	If the stage cools to 22 °C, how fast do the progressive ones swim (µm/s)?
+Sigue la cabeza de cada espermatozoide cuadro a cuadro y mide su cinemática (VCL, VSL, VAP, LIN, STR, WOB, ALH, BCF), como un equipo CASA. Solo mide: no cambia la placa.	Follows the head of each sperm frame by frame and measures its kinematics (VCL, VSL, VAP, LIN, STR, WOB, ALH, BCF), like a CASA instrument. It only measures: it does not change the plate.
+Solucion hiposmotica (HOS)	Hypo-osmotic solution (HOS)
+Suman	Sum
+Trayectoria [s]	Track [s]
+VAP	VAP
+VCL	VCL
+VCL [µm/s]	VCL [µm/s]
+VSL	VSL
+Vesícula que cubre la mitad anterior de la cabeza del espermatozoide, con enzimas (acrosina, hialuronidasa) que digieren la cubierta del óvulo. Se libera en la reacción acrosómica, que disparan la zona pelúcida y la progesterona.	Vesicle covering the front half of the sperm head, with enzymes (acrosin, hyaluronidase) that digest the egg's coat. It is released in the acrosome reaction, triggered by the zona pellucida and by progesterone.
+Volve a 37 °C. Los inmoviles, ¿estan muertos? El CASA no lo sabe: hace falta una prueba de vitalidad (placas de eosina-nigrosina y de prueba hiposmotica).	Go back to 37 °C. Are the immotile ones dead? CASA cannot tell: a vitality test is needed (eosin-nigrosin and hypo-osmotic test plates).
+WOB	WOB
+cabeza afinada	tapered head
+cabeza amorfa	amorphous head
+cabeza chica	small head
+cabeza grande	large head
+cabeza piriforme	pyriform head
+cabeza redonda (sin acrosoma)	round head (no acrosome)
+capacitado (puede hacer la reaccion acrosomica)	capacitated (can undergo the acrosome reaction)
+capacitado e hiperactivado: batido amplio y asimetrico, trayectoria en estrella	capacitated and hyperactivated: wide, asymmetric beat, star-shaped path
+capacitandose (%.0f%%): el bicarbonato y la albumina cambian su membrana	capacitating (%.0f%%): bicarbonate and albumin change its membrane
+cola enrollada	coiled tail
+cuello doblado	bent neck
+forma: %s%s	form: %s%s
+gota citoplasmatica	cytoplasmic droplet
+hiperactivación	hyperactivation
+inmóviles	immotile
+no progresivo: bate pero no avanza (da vueltas en el lugar)	non-progressive: beats but does not move forward (turns in place)
+no progresivos	non-progressive
+progresivo: nada a %.0f%% de la rapidez media de la muestra	progressive: swims at %.0f%% of the sample's mean speed
+reaccion acrosomica hecha: libero las enzimas del acrosoma	acrosome reaction done: it released the acrosome's enzymes
+reacción acrosómica	acrosome reaction
+sin energia (sin fructosa ni reservas): deja de batir; vuelve a nadar si recupera sustrato	no energy (no fructose or reserves): it stops beating; it swims again if it recovers substrate
+viva pero inmovil: no bate (la membrana sigue intacta: excluye la eosina)	alive but immotile: does not beat (the membrane is still intact: it excludes eosin)
