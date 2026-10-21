@@ -18,6 +18,8 @@ struct SourcedValue {
     float temperature = 20.0f; // de la medición [°C]
     std::string source;
     bool estimate = false;
+    // Q10 propio de la medición (nado y batido: `q10` en la entrada). 0: el general del modelo.
+    float q10 = 0.0f;
 };
 
 struct SpeciesPhysiology {
@@ -43,7 +45,16 @@ struct SpeciesPhysiology {
     // con el aclaramiento a baja densidad de presas y la ingestión máxima a saturación (a 20 °C).
     SourcedValue maxIngestion; // bacterias por hora [1/h]
     SourcedValue clearance;    // agua que filtra por hora [µm³/h]
+    // Nado con un motor de dineína medido en función de la temperatura (espermatozoide): la rapidez
+    // media de la trayectoria [µm/s] y la frecuencia del batido [Hz], a la temperatura de la medición
+    // y con su Q10 propio (`q10`), que ya incluye el cambio de viscosidad del medio. Sin conversión a
+    // 20 °C: World los lleva a la temperatura del medio (swimSpeedAt, beatFrequencyAt).
+    SourcedValue swimSpeed;
+    SourcedValue beatFrequency;
 };
+
+// Valor de una medición con su Q10 propio a la temperatura `t` [°C] (0 si no está).
+float atTemperature(const SourcedValue& v, float t);
 
 // Las claves de cada valor ([physiology.<id>.<clave>]), para listarlos (ficha, exportación).
 struct PhysiologyKey {

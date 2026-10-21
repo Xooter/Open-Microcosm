@@ -65,7 +65,7 @@ SourcedValue readRate(const toml::table& t, const std::string& species, const ch
     return s;
 }
 
-enum class Kind { Speed, Time, Density, Flux, Concentration, Ratio, Ingestion, Clearance };
+enum class Kind { Speed, Time, Density, Flux, Concentration, Ratio, Ingestion, Clearance, SwimSpeed, Frequency };
 
 // Rapidez [µm/h], tiempo [h] o densidad [1/cm²] en la unidad publicada; las dos primeras,
 // llevadas a 20 °C con Q10 (una rapidez escala como una tasa; un tiempo, al revés).
@@ -85,8 +85,13 @@ SourcedValue readScaled(const toml::table& t, const std::string& species, const 
     s.temperature = static_cast<float>((*e)["temperature"].value_or(static_cast<double>(kReferenceTemperature)));
     s.source = (*e)["source"].value_or(std::string());
     s.estimate = (*e)["estimate"].value_or(false);
+    s.q10 = static_cast<float>((*e)["q10"].value_or(0.0));
     float factor = 0.0f;
-    if (kind == Kind::Speed)
+    if (kind == Kind::SwimSpeed) // física con su Q10 medido: queda a la temperatura de la medición
+        factor = s.unit == "um/s" ? 1.0f : 0.0f;
+    else if (kind == Kind::Frequency)
+        factor = s.unit == "Hz" ? 1.0f : 0.0f;
+    else if (kind == Kind::Speed)
         factor = s.unit == "um/h" ? 1.0f : s.unit == "um/min" ? 60.0f : 0.0f;
     else if (kind == Kind::Time)
         factor = s.unit == "h" ? 1.0f : s.unit == "min" ? 1.0f / 60.0f : s.unit == "day" ? 24.0f : 0.0f;
@@ -178,6 +183,11 @@ void loadTables(const toml::table& doc) {
         ph.oxygenUptake = readScaled(*t, sp, "o2_uptake", Kind::Flux);
         ph.maxIngestion = readScaled(*t, sp, "max_ingestion", Kind::Ingestion);
         ph.clearance = readScaled(*t, sp, "clearance", Kind::Clearance);
+        ph.swimSpeed = readScaled(*t, sp, "swim_speed", Kind::SwimSpeed);
+        ph.beatFrequency = readScaled(*t, sp, "beat_frequency", Kind::Frequency);
+        for (const SourcedValue* v : {&ph.swimSpeed, &ph.beatFrequency})
+            if (v->present && v->q10 <= 0.0f)
+                gWarnings.push_back(sp + ": el nado y el batido llevan su 'q10' medido");
         gSource[id] = toml_io::tableSnippet("physiology", name.str(), *t);
     }
 }
@@ -301,6 +311,14 @@ const std::vector<PhysiologyKey>& physiologyKeys() {
         {"o2_uptake", &P::oxygenUptake, "fmol/h", "Consumo de O2"},
         {"max_ingestion", &P::maxIngestion, "bacteria/h", "Ingestion maxima de bacterias"},
         {"clearance", &P::clearance, "um3/h", "Aclaramiento (agua filtrada)"},
+        {"swim_speed", &P::swimSpeed, "um/s", "Rapidez de nado (VAP)"},
+        {"beat_frequency", &P::beatFrequency, "Hz", "Frecuencia del batido (BCF)"},
     };
     return keys;
+}
+
+float atTemperature(const SourcedValue& v, float t) {
+    if (!v.present)
+        return 0.0f;
+    return v.q10 > 0.0f ? v.value * std::pow(v.q10, (t - v.temperature) / 10.0f) : v.value;
 }

@@ -219,6 +219,10 @@ metabolismo (`metabolism.max_growth`).
   `phase_s`, `phase_g2`, `phase_m`, `lifespan` (`"h"`, `"min"`, `"day"`), `confluence` (`"1/cm2"`),
   `glucose_vmax`, `glutamine_vmax`, `o2_uptake` (`"fmol/h"`, `"amol/s"`, `"pmol/h"`),
   `glucose_km`, `glutamine_km` (`"uM"`, `"mM"`), `lactate_per_glucose` (`"mol/mol"`).
+- Nado con un Q10 medido (espermatozoide): `swim_speed` (`"um/s"`, la rapidez media de la trayectoria)
+  y `beat_frequency` (`"Hz"`), cada uno con su `q10` (obligatorio): no se llevan a 20 °C, sino a la
+  temperatura del medio desde la de la medición. Con `swim_speed` no se usa `relative_speed` ni la
+  viscosidad (el Q10 medido ya la incluye); con `beat_frequency`, el período de la hélice es su inversa.
 
 ## Planes corporales: `body_plans/<id>.toml`
 

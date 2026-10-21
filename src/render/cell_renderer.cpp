@@ -997,7 +997,7 @@ void drawAnimalNucleus(Vector2 c, float r, const AnimalCell& ac, const Dividing*
 // Cola del espermatozoide (OMS 2021; Fawcett 1975): sale del polo trasero de la cabeza; la pieza
 // intermedia (~4,5 µm, con la vaina de mitocondrias) es más gruesa y oscura que la pieza principal, que
 // se afina hacia la punta. Bate con una onda plana que crece hacia la punta (~1,5 longitudes de onda a lo
-// largo de la cola) a la frecuencia del batido de la especie (el período de su hélice). Muerto: recta,
+// largo de la cola) a la frecuencia del batido del individuo (sube con la temperatura). Muerto: recta,
 // apenas curvada, quieta.
 void drawSpermTail(const BodyParticles& bp, const RingBody& body, const Locomotion& loco, const SpeciesInfo& info,
                    bool dead, float time, float px) {
@@ -1016,7 +1016,7 @@ void drawSpermTail(const BodyParticles& bp, const RingBody& body, const Locomoti
     const float length = info.flagellumLength > 0.0f ? info.flagellumLength : 2.2f * f.half;
     constexpr float kMidpiece = 4.5f; // [µm]
     const bool beating = !dead && loco.speed > 0.0f;
-    const float freq = info.helixPeriod > 0.0f ? 1.0f / info.helixPeriod : 12.0f;
+    const float freq = loco.helixPeriod > 0.0f ? 1.0f / loco.helixPeriod : 12.0f; // el batido del individuo
     const float phase0 = 6.2831853f * freq * time + loco.phase;
     const float wavenumber = 6.2831853f * 1.5f / length;
     const float bend = (body.id & 1u) ? 1.0f : -1.0f; // la curva quieta del muerto, fija por célula

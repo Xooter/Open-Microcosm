@@ -1448,6 +1448,15 @@ void World::applyTraits(entt::entity e) {
     loco.power = h.traits.speed * info.speedScale * viscositySpeed_;
     loco.helixRadius = info.helixRadius;
     loco.helixPeriod = info.helixPeriod;
+    // Nado medido en función de la temperatura (espermatozoide): la rapidez y el batido de los datos,
+    // llevados a la del medio con su Q10 propio, que ya incluye el cambio de viscosidad (la dineína es
+    // una ATPasa: el batido se acelera con el calor; García-Molina et al. 2023).
+    const SpeciesPhysiology& phys = speciesPhysiology(speciesOfEntity(registry_, e));
+    if (phys.swimSpeed.present)
+        loco.power = h.traits.speed * atTemperature(phys.swimSpeed, medium_.temperature) /
+                     maxSpeedOf(locomotionParams_, loco.type);
+    if (phys.beatFrequency.present)
+        loco.helixPeriod = 1.0f / atTemperature(phys.beatFrequency, medium_.temperature);
     loco.gliding = info.flagellarGliding;
     loco.pusher = info.flagellumPosterior;
     loco.flagellumLength = info.flagellumLength;

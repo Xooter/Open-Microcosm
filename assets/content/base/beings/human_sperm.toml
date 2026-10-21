@@ -4,10 +4,9 @@
 # (flagelo posterior, "pusher"), con una onda plana que hace oscilar la cabeza a los lados.
 #
 # Simplificaciones: el cuerpo blando es solo la cabeza; la cola se dibuja y su empuje va al agua a lo
-# largo de ella (`flagellum_length`), pero no choca con otras colas. La hiperactivación, la capacitación
-# y la quimiotaxis (progesterona) no se simulan. El batido real depende de la temperatura por la
-# dineína (una ATPasa); acá, como en los demás nadadores, el nado es física y solo cambia con la
-# viscosidad del agua. No come: vive de la fructosa del plasma seminal (fructólisis, Mann 1964), no se
+# largo de ella (`flagellum_length`), pero no choca con otras colas. El batido lo mueve la dineína (una
+# ATPasa): con calor la rapidez y la frecuencia suben, con el Q10 medido de cada una (no el general de la
+# biología, que daría el triple de lo medido). No come: vive de la fructosa del plasma seminal (fructólisis, Mann 1964), no se
 # divide y al morir queda entero e inmóvil (no se parte en cuerpos apoptóticos).
 [[being]]
 id = "human_sperm"
@@ -19,14 +18,10 @@ locomotion = "flagellum"
 flagellum = "posterior"
 flagellum_length = 50.0
 feeding = "none"
-# 0,4 × 80 µm/s = 32 µm/s a 20 °C; con la viscosidad del agua a 37 °C, ~46 µm/s: la velocidad media de
-# la trayectoria (VAP) de un espermatozoide progresivo medida con CASA es de ~30–60 µm/s y la rectilínea
-# (VSL) de ~25–50 µm/s (Mortimer 2000, Hum. Reprod. Update 6:136; OMS 2021).
-relative_speed = 0.4
-# Desplazamiento lateral de la cabeza (ALH ~2–5 µm de amplitud, acá ±1,2 µm) a la frecuencia de cruce
-# del batido (BCF ~10–15 Hz) (Mortimer 2000, Hum. Reprod. Update 6:136).
-helix_radius = 1.2
-helix_period = 0.08
+# La rapidez y el batido van en [physiology.human_sperm.swim_speed] y [...beat_frequency], medidos a dos
+# temperaturas. Desplazamiento lateral de la cabeza: ALH 2,15 µm a 37 °C (de pico a pico; acá ±1,08 µm;
+# García-Molina et al. 2023, Rev. Int. Androl. 21(2)).
+helix_radius = 1.08
 # La cabeza es casi toda cromatina compactada por protaminas (mucha más materia seca por volumen que
 # una célula común) y la masa de la cola (~10 µm³: axonema, fibras densas, mitocondrias) no está en el
 # cuerpo blando. Estimación: ~10 pg de materia seca en total (ADN haploide 3,3 pg + protaminas y la
@@ -55,6 +50,20 @@ divides = false
 death = "immotile"
 [being.appearance]
 style = "spermatozoon"
+
+[physiology.human_sperm.swim_speed]
+value = 54.5
+unit = "um/s"
+temperature = 37.0
+q10 = 1.31
+source = "VAP con CASA, semen incubado y analizado a 37 °C: 54,5 µm/s; a 23 °C, 37,4 µm/s (García-Molina et al. 2023, Rev. Int. Androl. 21(2), tabla 2). El Q10 sale de las dos: (54,5/37,4)^(10/14) = 1,31; incluye el cambio de viscosidad del plasma seminal."
+
+[physiology.human_sperm.beat_frequency]
+value = 15.3
+unit = "Hz"
+temperature = 37.0
+q10 = 1.15
+source = "BCF con CASA: 15,3 Hz a 37 °C y 12,6 Hz a 23 °C (García-Molina et al. 2023, Rev. Int. Androl. 21(2), tabla 2): Q10 = (15,3/12,6)^(10/14) = 1,15."
 
 [physiology.human_sperm.lifespan]
 value = 24.0
