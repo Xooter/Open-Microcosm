@@ -83,7 +83,7 @@ entt::entity createCell(entt::registry& registry, BodyParticles& bodies, const C
 
     // Gránulos citoplasmáticos libres (con browniano); más adelante, ciclosis.
     const float cellArea = units::kPi * rx * ry;
-    const int granules = std::clamp(static_cast<int>(cellArea / 120.0f), 15, 120);
+    const int granules = spec.granules ? std::clamp(static_cast<int>(cellArea / 120.0f), 15, 120) : 0;
     for (int k = 0; k < granules; ++k) {
         const float rr = 0.8f * std::sqrt(rng.uniform());
         const float a = rng.uniform(0.0f, 2.0f * units::kPi);

@@ -22,6 +22,9 @@ struct CellSpec {
     float squareness = 2.0f;                // superelipse: 2 = elipse, ~6 = cilindro (Spirogyra)
     Taper taper;                            // afinamiento de los polos (sim/taper.hpp)
     float bend = 0.0f;                      // arco del eje [rad] (media luna de Closterium; solo la silueta)
+    // Gránulos libres en el citoplasma. El espermatozoide maduro casi no tiene citoplasma (lo pierde en la
+    // gota citoplasmática): su cabeza es el núcleo y el acrosoma.
+    bool granules = true;
     std::uint8_t r = 180, g = 185, b = 160; // tinte del citoplasma
     // Con prolongaciones en el cuerpo, el contorno de la especie (bio/silhouette, para el tamaño típico)
     // reemplaza a la superelipse: `outlineScale` es el tamaño respecto del típico y `outlineBodyCenter`,

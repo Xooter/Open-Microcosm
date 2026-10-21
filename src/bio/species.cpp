@@ -135,7 +135,7 @@ constexpr const char* kAnimalCellKeys[] = {"adherent", "rounded_radius", "contac
                                            "apoptosis_without_serum_h", "divides", "fmlp_chemotaxis", "death"};
 constexpr const char* kLookKeys[] = {"style", "plastid_color", "pigment_stripes"};
 constexpr const char* kShapeKeys[] = {"semi_major_axis", "semi_minor_axis", "shape_memory", "color",
-                                      "nucleus",        "squareness",    "taper",  "taper_front", "bend", "thickness"};
+                                      "nucleus",        "squareness",    "taper",  "taper_front", "bend", "thickness", "cytoplasm_granules"};
 
 using toml_io::known;
 using toml_io::Reader;
@@ -717,6 +717,7 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         f.num("bend", bendDeg);
         s.spec.bend = bendDeg * units::kPi / 180.0f;
         f.num("thickness", s.thickness);
+        f.flag("cytoplasm_granules", s.spec.granules);
         if (const toml::node* c = shape->get("color")) {
             const toml::array* a = c->as_array();
             if (!a || a->size() != 3)

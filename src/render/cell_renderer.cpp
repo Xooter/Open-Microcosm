@@ -919,7 +919,8 @@ void drawAnimalSurface(const BodyParticles& bp, const RingBody& body, const Anim
         }
         return;
     }
-    if (!loco || !loco->active || loco->speed <= 0.0f)
+    // El lamelipodio es de las que se arrastran; el espermatozoide nada con la cola.
+    if (!loco || loco->type != LocomotionType::Crawl || !loco->active || loco->speed <= 0.0f)
         return;
     const Vec2 u = loco->target - body.centroid;
     const float l = length(u);
@@ -1315,13 +1316,17 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
             {
                 int m = 0;
                 const Vec2* ring = outline(body, camera.zoom, m);
+                // En una célula de pocos µm (la cabeza de un espermatozoide) el trazo de 1 µm la taparía:
+                // a lo sumo ~1/8 de su ancho.
+                const float small = 0.12f * std::min(body.aabbMax.x - body.aabbMin.x, body.aabbMax.y - body.aabbMin.y);
+                const float rim = std::min(membraneWidth, std::max(1.2f * px, small));
                 for (int i = 0; i < m; ++i)
-                    fastLine(toRay(ring[i]), toRay(ring[(i + 1) % m]), membraneWidth, kMembrane);
+                    fastLine(toRay(ring[i]), toRay(ring[(i + 1) % m]), rim, kMembrane);
                 // De cerca el trazo tiene varios píxeles de ancho: sin unir los segmentos, cada
                 // vértice deja una muesca y la membrana se ve punteada.
-                if (membraneWidth > 3.0f * px)
+                if (rim > 3.0f * px)
                     for (int i = 0; i < m; ++i)
-                        drawCircleFast(toRay(ring[i]), 0.5f * membraneWidth, kMembrane, px);
+                        drawCircleFast(toRay(ring[i]), 0.5f * rim, kMembrane, px);
             }
             if (species) // prolongaciones rígidas: su borde (lo fino, de menos de un píxel, como una línea)
                 forEachProcess(body, speciesInfo(species->id), shellOffset(reg, e), [&](const Vec2* l, const Vec2* r, int m) {

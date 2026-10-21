@@ -45,6 +45,7 @@ thickness = 0.75
 shape_memory = 15.0
 color = [222, 220, 210]
 nucleus = 0.8
+cytoplasm_granules = false
 [being.cell]
 adherent = false
 rounded_radius = 1.7
