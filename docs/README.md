@@ -9,6 +9,7 @@ the documentation policy that every contribution follows.
 | Folder / file | What it holds |
 |---|---|
 | [`roadmap.md`](roadmap.md) | Where the project is going: phases, "done" criteria and decisions. |
+| [`todo/`](todo/genetics-evolution-resistance.md) | Detailed plans of large features while they are being built (deleted when done). |
 | [`mechanics/`](mechanics/README.md) | One file per important mechanism of the simulator (physics, biology, laboratory tools). |
 | [`content/`](content/README.md) | Content packs: the TOML format of each content type. |
 | [`content/beings/`](content/beings/README.md) | One file per being in the catalogue: description, literature, what is not implemented, unique mechanics. |
@@ -32,8 +33,8 @@ the documentation policy that every contribution follows.
 
 ## Conventions
 
-- Documents describe what the code **does today**. Plans go in the roadmap; known defects go in
-  `bugs/`.
+- Documents describe what the code **does today**. Plans go in the roadmap (the detailed plan of a
+  large feature being built may live in `todo/` until it is done); known defects go in `bugs/`.
 - Code identifiers are written as `code` and link to their file when useful
   (`src/game/world.cpp`). Units are always stated (µm, s, pmol, µM).
 - Biological claims cite their source (author, year, journal). Simplifications say what the real

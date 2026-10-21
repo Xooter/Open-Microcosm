@@ -205,6 +205,14 @@ What `Culture::supports` still rejects.
 - **Done when:** 60 FPS with 540+ cells and the GPU on mid-range desktop hardware, with identical
   checksums.
 
+### Phase K — Mutation, evolution and drug resistance
+
+Detailed plan in [`todo/genetics-evolution-resistance.md`](todo/genetics-evolution-resistance.md):
+sources (phase 0), realistic quantitative mutation (1), ciliate genetics (2), bacterial genotypes (3),
+antibiotic resistance (4), horizontal transfer (5), measuring evolution (6), classic experiments (7).
+- **Done when:** mutation rates come from published data, a clone keeps its size, Luria–Delbrück and
+  the resistance validations pass, and the user can raise the rates on purpose.
+
 ### Phase J — Interface and teaching
 
 - ⬜ Graphical preview of the plate before creating it.

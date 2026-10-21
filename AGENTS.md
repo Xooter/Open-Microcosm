@@ -758,8 +758,9 @@ changes behaviour without updating its documentation is incomplete.
   following [`docs/bugs/TEMPLATE.md`](docs/bugs/TEMPLATE.md), and a line in the index. When fixed,
   the file stays with `Status: fixed` and the commit. A test marked `should_fail` or `skip` must have
   its bug file.
-- **The roadmap** ([`docs/roadmap.md`](docs/roadmap.md)) is the only place for plans and the project's
-  direction. Plans of a single feature live in the conversation or the pull request; once done, what
+- **The roadmap** ([`docs/roadmap.md`](docs/roadmap.md)) is the place for plans and the project's
+  direction; the detailed plan of a large feature being built may live in `docs/todo/` (linked from
+  the roadmap) and is deleted when done. Plans of a single feature live in the conversation or the pull request; once done, what
   matters moves to the mechanics documents and the plan is deleted (no stale plan files in `docs/`).
 - **Describe what the code does today.** Mark estimates as estimates, cite sources (author, year,
   journal) and never invent a reference: check it.
