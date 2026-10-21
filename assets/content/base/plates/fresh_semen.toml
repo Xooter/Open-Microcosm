@@ -1,0 +1,18 @@
+# Preparado húmedo del espermiograma (OMS 2021): 10 µL de semen licuado bajo un cubreobjetos de 22 × 22 mm
+# (una capa de ~20 µm), en una platina a 37 °C. Con 32 millones por mL (normal: la OMS da 16 millones como
+# límite inferior de referencia) son 32·10⁶ × 0,002 cm ≈ 64 000 por cm².
+[[plate]]
+id = "fresh_semen"
+name = "Preparado: semen fresco (espermiograma)"
+description = "Una gota de semen licuado bajo el cubreobjetos, en una platina a 37 °C, como en un espermiograma: espermatozoides que nadan empujados por la cola, cada uno a su velocidad. Con las horas pierden la motilidad y quedan quietos."
+kind = "slide"
+medium = "seminal_plasma"
+vessel = "slide"
+field_um = 512.0
+[plate.environment]
+temperature = 37.0
+co2 = 0.00042
+light = 1.0
+[[plate.seeding]]
+being = "human_sperm"
+density_cm2 = 64000.0
