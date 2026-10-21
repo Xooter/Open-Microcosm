@@ -270,7 +270,8 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
     }
     if (const toml::table* sp = r.table("swim_path")) {
-        constexpr const char* kKeys[] = {"curvature_radius", "rotational_diffusion", "noise_s"};
+        constexpr const char* kKeys[] = {"curvature_radius", "rotational_diffusion", "noise_s", "rheotaxis_alignment",
+                                         "rheotaxis_chirality"};
         toml_io::warnUnknown(*sp, kKeys, r.where + " [swim_path]", warnings);
         Reader cr{*sp, r.where + " [swim_path]", {}};
         SwimPathSpec& p = s.swimPath;
@@ -278,6 +279,8 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         cr.count("curvature_radius", p.curvatureRadius);
         cr.count("rotational_diffusion", p.rotationalDiffusion);
         cr.count("noise_s", p.noiseSeconds);
+        cr.count("rheotaxis_alignment", p.rheotaxisAlignment);
+        cr.num("rheotaxis_chirality", p.rheotaxisChirality);
         if (p.noiseSeconds <= 0.0f)
             cr.errors.push_back(cr.where + ": 'noise_s' tiene que ser positivo");
         if (s.locomotion != LocomotionType::Flagellum)

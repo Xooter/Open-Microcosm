@@ -189,7 +189,8 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
 - `[being.swim_path]`: recorrido pasivo de un nadador con flagelo que no elige rumbo (espermatozoide: sin
   sentidos ni reacción de evitación; no pasa por el piloto automático). `curvature_radius` [µm] (0: recto
   en promedio; el sentido de la curva es de cada individuo), `rotational_diffusion` [rad²/s] y `noise_s`
-  [s] (correlación del giro que fluctúa).
+  [s] (correlación del giro que fluctúa). `rheotaxis_alignment` (α) y `rheotaxis_chirality` (β·χ): reotaxis
+  positiva de Kantsler et al. (2014), el giro contra la corriente con la cizalla en el vidrio (6·u/h).
 - `[being.motility]`: una muestra de nadadores por clases de la OMS (espermiograma): `progressive`,
   `non_progressive`, `immotile` (vivos que no baten) y `dead` (llegan muertos), que suman 1; `speed_cv`
   (variación de la rapidez entre individuos), `non_progressive_speed` (fracción) y `non_progressive_radius`

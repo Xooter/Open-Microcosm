@@ -325,6 +325,11 @@ struct SwimPathSpec {
     float curvatureRadius = 0.0f;     // 0: recto en promedio
     float rotationalDiffusion = 0.0f;
     float noiseSeconds = 0.3f;
+    // Reotaxis positiva (Kantsler et al. 2014, eLife 3: e02403): junto al vidrio la cola siente más
+    // corriente que la cabeza y el par la gira contra la corriente, con una tasa γ̇·α·sen θ (γ̇: la cizalla
+    // en la pared), más un giro quiral γ̇·β·χ. 0: sin reotaxis.
+    float rheotaxisAlignment = 0.0f; // α
+    float rheotaxisChirality = 0.0f; // β·χ
 };
 
 // Fracciones de una muestra según las clases de motilidad de la OMS (2021): progresivos, no progresivos

@@ -37,7 +37,19 @@ void World::steerSwimmer(entt::entity e, const RingBody& body, Locomotion& loco,
                              ? info.motility.nonProgressiveRadius
                              : spec.curvatureRadius;
     const float curve = radius > 0.0f ? st->chirality * speed / radius : 0.0f;
-    const float omega = curve + st->turnNoise; // [rad/s]
+    float omega = curve + st->turnNoise; // [rad/s]
+    if (spec.rheotaxisAlignment > 0.0f) {
+        // Reotaxis: la corriente de fondo (la que siente, sin su propio dipolo) es la media de la película;
+        // en un flujo de Poiseuille entre dos vidrios la cizalla en la pared es 6·u/h.
+        const Vec2 u = fluid_.backgroundAt(body.centroid);
+        const float flow = length(u);
+        if (flow > 1e-3f) {
+            const float shear = 6.0f * flow / std::max(1.0f, fluid_.gapHeight);
+            const Vec2 up = u * (-1.0f / flow);
+            const Vec2 h = {std::cos(body.angle), std::sin(body.angle)};
+            omega += shear * (spec.rheotaxisAlignment * cross(h, up) + spec.rheotaxisChirality);
+        }
+    }
     // El flagelo gira el cuerpo con ω = 3·Δ hacia el objetivo (bio/locomotion): el objetivo va a ω/3 del
     // rumbo actual, así el giro es el del batido y no depende de adónde quedó apuntando tras un choque.
     const float a = body.angle + omega / 3.0f;

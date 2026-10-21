@@ -68,6 +68,10 @@ roll_hz = 6.0
 curvature_radius = 60.0
 rotational_diffusion = 0.3
 noise_s = 0.3
+# Reotaxis positiva (Kantsler et al. 2014, eLife 3: e02403): en su modelo α = 0,2–0,4, β = 0,05–0,1 con
+# χ = +1 para el humano a baja viscosidad, y ruido angular 0,2–0,3 rad/s (el de arriba).
+rheotaxis_alignment = 0.3
+rheotaxis_chirality = 0.075
 # Una muestra normal (la mediana de los hombres de las tablas de referencia de la OMS 2021; Campbell et al.
 # 2021, Hum. Reprod. Update): progresivos ~55 % y vitalidad ~78 % (22 % muertos). Los no progresivos
 # (~5 %) y, con ellos, los inmóviles vivos son estimación. La rapidez varía entre individuos con un CV de
