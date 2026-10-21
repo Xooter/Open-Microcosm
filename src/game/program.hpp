@@ -52,6 +52,8 @@ struct Program {
 bool programValue(const ProgramEntry& e, double hours, float& value);
 // Cuántas veces ocurre la acción en (from, to] [h].
 int programEvents(const ProgramEntry& e, double from, double to);
+// Hora de la próxima ocurrencia de la acción después de `hours` [h]; < 0 si ya no hay más.
+double nextProgramEvent(const ProgramEntry& e, double hours);
 
 // Texto: una línea por entrada, `programa=objetivo forma inicio fin desde hasta periodo ciclo
 // cantidad` (fin "inf" si no termina). Los floats con precisión de ida y vuelta.

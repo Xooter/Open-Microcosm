@@ -93,6 +93,13 @@ bool applyIntervention(World& world, const Intervention& iv) {
             world.program().entries.clear();
             return true;
         }
+        if (iv.index == 2) {
+            auto& entries = world.program().entries;
+            entries.erase(std::remove_if(entries.begin(), entries.end(),
+                                         [&](const ProgramEntry& e) { return e.target == iv.key; }),
+                          entries.end());
+            return true;
+        }
         std::string text = iv.key;
         std::replace(text.begin(), text.end(), ',', ' ');
         ProgramEntry e;

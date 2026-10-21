@@ -82,6 +82,18 @@ int programEvents(const ProgramEntry& e, double from, double to) {
     return static_cast<int>(upTo(hi) - upTo(from));
 }
 
+double nextProgramEvent(const ProgramEntry& e, double hours) {
+    if (!e.isAction())
+        return -1.0;
+    double next = e.start;
+    if (hours >= e.start) {
+        if (!(e.period > 0.0f))
+            return -1.0;
+        next = e.start + (std::floor((hours - e.start) / e.period) + 1.0) * e.period;
+    }
+    return next <= e.end ? next : -1.0;
+}
+
 std::string programEntryText(const ProgramEntry& e) {
     std::ostringstream out;
     out << e.target << ' ' << programShapeKey(e.shape) << ' ' << number(e.start) << ' ' << number(e.end) << ' '

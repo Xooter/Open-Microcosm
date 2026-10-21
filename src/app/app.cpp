@@ -671,6 +671,14 @@ void App::drawStatusBar() {
             ImGui::TextDisabled("|");
             ImGui::SameLine();
             ImGui::Text("%zu %s", world->cellCount(), ui::tr("células"));
+            // El raleo periódico (entrada "dilution" del programa) se ve siempre, aunque el panel esté cerrado.
+            for (const ProgramEntry& e : world->program().entries)
+                if (e.target == "dilution") {
+                    ImGui::SameLine();
+                    ImGui::Text("| %s %.0f %% / %.0f h", ui::tr("Raleo"), 100.0 * e.amount, static_cast<double>(e.period));
+                    ui::tooltip("Raleo periódico activo (panel Placa > Raleo): se detiene desde ahí.");
+                    break;
+                }
             if (world->fixed()) {
                 ImGui::SameLine();
                 ImGui::TextColored({0.92f, 0.60f, 0.25f, 1.0f}, "| %s", ui::tr("Muestra fijada (Ctrl+N: placa nueva)"));

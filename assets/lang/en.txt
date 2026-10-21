@@ -1995,3 +1995,12 @@ Biovolumen	Biovolume
 Ralear la placa	Thin the plate
 Placa raleada	Plate thinned
 Ralear ahora (T)	Thin now (T)
+Cambiar el raleo periódico	Change the periodic thinning
+Detener	Stop
+Activo:	Active:
+cada	every
+Próximo raleo en	Next thinning in
+Raleo periódico: apagado.	Periodic thinning: off.
+Raleo	Thinning
+Raleo periódico activo (panel Placa > Raleo): se detiene desde ahí.	Periodic thinning on (Plate panel > Thinning): stop it there.
+%s %.0f %% %s %.1f h bio	%s %.0f %% %s %.1f bio h

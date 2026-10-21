@@ -5,6 +5,7 @@
 #include "bio/osmosis.hpp"
 #include "game/scene.hpp"
 #include "ui/panels/panel_classes.hpp"
+#include "ui/theme.hpp"
 #include "ui/widgets.hpp"
 #include "ui/i18n.hpp"
 
@@ -71,6 +72,14 @@ class PlatePanel : public Panel {
 
     static void dirtyIf(App& app, bool changed) { app.plateDirty |= changed; }
 
+    static void stopPeriodicThinning(App& app) {
+        Intervention iv;
+        iv.kind = InterventionKind::Program;
+        iv.index = 2;
+        iv.key = "dilution";
+        app.intervene(iv);
+    }
+
     // Raleo: sacar una fracción de la gota revuelta y reponerla con medio nuevo (World::thin), una
     // vez o cada tanto (una entrada "dilution" del programa de la placa).
     void drawThinning(App& app) {
@@ -86,13 +95,19 @@ class PlatePanel : public Panel {
         }
         sliderLog("Cada [h bio]", &thinEveryHours_, 0.5f, 240.0f, "%.1f",
                   "Período del raleo programado, en horas biológicas (Gause sacaba la décima parte cada 24 h).");
-        if (ImGui::Button(tr("Ralear periódicamente"))) {
+        // El raleo periódico es la entrada "dilution" del programa de la placa: se muestra su estado.
+        const ProgramEntry* active = nullptr;
+        for (const ProgramEntry& e : app.world->program().entries)
+            if (e.target == "dilution")
+                active = &e;
+        if (ImGui::Button(tr(active ? "Cambiar el raleo periódico" : "Ralear periódicamente"))) {
             ProgramEntry e;
             e.target = "dilution";
             e.shape = ProgramShape::Event;
-            e.start = static_cast<double>(app.world->programHours()) + thinEveryHours_;
+            e.start = app.world->programHours() + thinEveryHours_;
             e.period = thinEveryHours_;
             e.amount = fraction;
+            stopPeriodicThinning(app); // reemplaza al que hubiera
             Intervention iv;
             iv.kind = InterventionKind::Program;
             iv.key = programEntryText(e);
@@ -100,6 +115,18 @@ class PlatePanel : public Panel {
             app.intervene(iv);
         }
         tooltip("Agrega el raleo al programa de la placa (panel Simulación): se repite cada período.");
+        if (active) {
+            ImGui::SameLine();
+            if (ImGui::Button(tr("Detener")))
+                stopPeriodicThinning(app);
+            const double next = nextProgramEvent(*active, app.world->programHours());
+            ImGui::TextColored(col(palette().good), tr("%s %.0f %% %s %.1f h bio"), tr("Activo:"), 100.0 * active->amount, tr("cada"),
+                               static_cast<double>(active->period));
+            if (next >= 0.0)
+                readout("Próximo raleo en", "%.1f h bio", next - app.world->programHours());
+        } else {
+            note("Raleo periódico: apagado.");
+        }
     }
 
     void drawBase(App& app, PlateSpec& p) {

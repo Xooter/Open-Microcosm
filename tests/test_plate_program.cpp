@@ -122,3 +122,20 @@ TEST_CASE("raleo de la placa: el programa lo repite cada período (\"dilution\")
     REQUIRE(control > 200);
     CHECK(static_cast<double>(thinned) / static_cast<double>(control) == doctest::Approx(0.25).epsilon(0.4));
 }
+
+TEST_CASE("programa en la placa: se quitan las entradas de un objetivo y se sabe cuándo es el próximo evento") {
+    const ProgramEntry thin{"dilution", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 0.1f};
+    CHECK(nextProgramEvent(thin, 0.0) == doctest::Approx(24.0));
+    CHECK(nextProgramEvent(thin, 24.0) == doctest::Approx(48.0));
+    CHECK(nextProgramEvent(thin, 30.0) == doctest::Approx(48.0));
+    World w(small());
+    w.program().entries.push_back(thin);
+    w.program().entries.push_back({"light", ProgramShape::Cycle, 0.0, kProgramForever, 0.0f, 1.0f, 24.0f, 0.5f, 0.0f});
+    Intervention iv;
+    iv.kind = InterventionKind::Program;
+    iv.index = 2;
+    iv.key = "dilution";
+    REQUIRE(applyIntervention(w, iv));
+    REQUIRE(w.program().entries.size() == 1);
+    CHECK(w.program().entries[0].target == "light");
+}
