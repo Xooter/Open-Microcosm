@@ -1457,6 +1457,8 @@ void World::applyTraits(entt::entity e) {
                      maxSpeedOf(locomotionParams_, loco.type);
     if (phys.beatFrequency.present)
         loco.helixPeriod = 1.0f / atTemperature(phys.beatFrequency, medium_.temperature);
+    if (phys.lateralAmplitude.present) // de pico a pico: la hélice proyectada tiene la mitad de radio
+        loco.helixRadius = 0.5f * atTemperature(phys.lateralAmplitude, medium_.temperature);
     // Cada nadador de una muestra tiene su rapidez; los no progresivos baten sin avanzar casi.
     if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e); ac && info.motility.present) {
         loco.power *= ac->vigor;

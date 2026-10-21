@@ -6,6 +6,7 @@
 #include "game/lineage.hpp"
 #include "game/mass_budget.hpp"
 #include "game/notes.hpp"
+#include "game/casa.hpp"
 #include "game/region.hpp"
 #include "game/timeseries.hpp"
 
@@ -49,6 +50,9 @@ class Run {
     void clearRegion();
     const std::vector<Vec2>& region() const { return region_; }
     const RegionStats& regionStats() const { return regionStats_; }
+    // CASA (game/casa): la cinemática de los nadadores, muestreada en cada paso si está activo.
+    Casa& casa() { return casa_; }
+    const Casa& casa() const { return casa_; }
     // Toma una muestra ya (además de las periódicas).
     void sample(const World& world);
     float elapsed() const { return elapsed_; }
@@ -67,6 +71,7 @@ class Run {
   private:
     std::vector<Note> notes_;
     InterventionLog interventions_;
+    Casa casa_;
     void buildColumns();
 
     RunConfig config_;

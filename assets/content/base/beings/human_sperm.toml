@@ -18,10 +18,8 @@ locomotion = "flagellum"
 flagellum = "posterior"
 flagellum_length = 50.0
 feeding = "none"
-# La rapidez y el batido van en [physiology.human_sperm.swim_speed] y [...beat_frequency], medidos a dos
-# temperaturas. Desplazamiento lateral de la cabeza: ALH 2,15 µm a 37 °C (de pico a pico; acá ±1,08 µm;
-# García-Molina et al. 2023, Rev. Int. Androl. 21(2)).
-helix_radius = 1.08
+# La rapidez, el batido y el desplazamiento lateral de la cabeza van en [physiology.human_sperm.swim_speed],
+# [...beat_frequency] y [...lateral_amplitude], medidos a dos temperaturas.
 # La cabeza es casi toda cromatina compactada por protaminas (mucha más materia seca por volumen que
 # una célula común) y la masa de la cola (~10 µm³: axonema, fibras densas, mitocondrias) no está en el
 # cuerpo blando. Estimación: ~10 pg de materia seca en total (ADN haploide 3,3 pg + protaminas y la
@@ -72,7 +70,7 @@ non_progressive = 0.05
 immotile = 0.18
 dead = 0.22
 speed_cv = 0.3
-non_progressive_speed = 0.2
+non_progressive_speed = 0.08
 non_progressive_radius = 6.0
 
 [physiology.human_sperm.swim_speed]
@@ -95,6 +93,13 @@ unit = "h"
 temperature = 37.0
 source = "In vitro a 37 °C la motilidad de una muestra cae a la mitad en horas (la OMS pide evaluarla antes de 1 h de la eyaculación). Estimación: ~12 h."
 estimate = true
+
+[physiology.human_sperm.lateral_amplitude]
+value = 2.15
+unit = "um"
+temperature = 37.0
+q10 = 1.20
+source = "ALH con CASA: 2,15 µm a 37 °C y 1,67 µm a 23 °C (García-Molina et al. 2023, Rev. Int. Androl. 21(2), tabla 2): Q10 = (2,15/1,67)^(10/14) = 1,20."
 
 [physiology.human_sperm.lifespan]
 value = 30.0

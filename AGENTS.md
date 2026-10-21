@@ -81,6 +81,11 @@ e interviene.
   `flagellum_length` = 50 µm que se dibuja y empuja el agua a lo largo de ella), vive de la fructosa
   y al morir queda entero e inmóvil (`[being.cell] death = "immotile"` → `CellPhase::Dead`: sin
   metabolismo, sin propulsión y fuera del censo). Placa preparada `fresh_semen` (espermiograma).
+  El nado sigue a la temperatura con su Q10 medido (`swim_speed`, `beat_frequency`, `lateral_amplitude`
+  en `[physiology.*]`), el recorrido es pasivo (`[being.swim_path]`, `World::steerSwimmer`) y la muestra
+  viene por clases de la OMS (`[being.motility]`, configurable en el panel Placa). **CASA**
+  (`game/casa`, panel CASA, `bio_bench --casa`): VCL, VSL, VAP, LIN, STR, WOB, ALH y BCF de cada uno; es
+  medición (vive en `Run`, no cambia la huella).
 - **Preparados** (`bio/osmosis`, `bio/tissue`, `bio/erythrocytes`, `game/world_tissue.cpp`,
   `render/tissue_renderer`): epidermis de cebolla, hoja de *Elodea*, papa con Lugol, punta de raíz
   con mitosis, epidermis de hoja con estomas, mucosa bucal, frotis de sangre con Giemsa, sangre
@@ -174,7 +179,7 @@ del usuario en la carpeta de la plataforma (`userDataDir`). `tools/ci.sh` es el 
 (`--todo`, `--paquetes`); `ctest -L rapidos` es la verificación rápida.
 
 **Medir:** `bio_bench` corre una gota fija sin ventana y da ms/paso, el censo y un checksum del
-estado (`--wildlife 3` ≈ 700 células, `--gpu` usa el resolvedor de GPU como la app; con el preset
+estado (`--casa`: la cinemática de los espermatozoides; `--wildlife 3` ≈ 700 células, `--gpu` usa el resolvedor de GPU como la app; con el preset
 `lite` desglosa por `PROFILE_SCOPE`; `--shot` guarda el cuadro dibujado; `--timelapse <min_bio>` guarda una foto cada tantos minutos biológicos; por defecto usa un hilo por
 núcleo físico, como la app: con SMT, 16 hilos son más lentos que 8). `BIO_GPU_TIMING=1` da el tiempo
 de cada kernel de la GPU con marcas de tiempo. Una optimización que no debe cambiar resultados se verifica

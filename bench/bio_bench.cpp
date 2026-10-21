@@ -77,6 +77,7 @@ struct Args {
     std::vector<std::string> packs; // paquetes de contenido a cargar (carpeta o .biopack)
     std::string functionalResponse; // id de un filtrador: calibración placa ↔ cultivo
     std::string shot;  // con --render: guarda el último cuadro (PNG) para comparar dibujos
+    bool casa = false; // mide la cinemática de los espermatozoides (game/casa) e imprime el resumen
     int soak = 0;      // > 0: cada `soak` pasos verifica posiciones finitas, balance y memoria
     double timelapseMinutes = 0.0; // > 0: una foto cada tantos minutos biológicos
     std::string timelapseDir = "timelapse";
@@ -140,6 +141,8 @@ bool parse(int argc, char** argv, Args& a) {
             a.soak = std::atoi(argv[++i]);
         else if (k == "--respuesta-funcional" && hasValue)
             a.functionalResponse = argv[++i];
+        else if (k == "--casa")
+            a.casa = true;
         else if (k == "--shot" && hasValue)
             a.shot = argv[++i];
         else if (k == "--timelapse" && hasValue) {
@@ -167,7 +170,7 @@ bool parse(int argc, char** argv, Args& a) {
             a.threads = std::atoi(argv[++i]);
         else {
             std::fprintf(stderr, "uso: bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] "
-                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate] [--paquete ruta] [--soak N] [--shot cuadro.png] [--timelapse min_bio] [--timelapse-dir carpeta]\n");
+                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate] [--paquete ruta] [--soak N] [--shot cuadro.png] [--casa] [--timelapse min_bio] [--timelapse-dir carpeta]\n");
             return false;
         }
     }
@@ -301,6 +304,7 @@ int main(int argc, char** argv) {
     }
     Run run;
     run.start(world, rc, 1);
+    run.casa().enabled = a.casa;
     run.interventions().schedule(events);
     // Foco como el de la app con una ventana de 1600 × 900 px a zoom 2 (el LOD clasifica el resto).
     // Una escena trae su propio foco.
@@ -391,6 +395,15 @@ int main(int argc, char** argv) {
                 world.nearBodies(), world.bacteria().size());
     std::printf("paso %.2f ms (%.1f pasos/s)  checksum %016llx\n", ms / a.steps, 1000.0 * a.steps / ms,
                 static_cast<unsigned long long>(checksum(world)));
+    if (a.casa) {
+        const CasaSummary& s = run.casa().summary();
+        std::printf("CASA: %d analizados  rápidos %.0f%%  lentos %.0f%%  no progresivos %.0f%%  inmóviles %.0f%%\n",
+                    s.tracked, 100.0 * s.fraction(CasaGrade::Rapid), 100.0 * s.fraction(CasaGrade::Slow),
+                    100.0 * s.fraction(CasaGrade::NonProgressive), 100.0 * s.fraction(CasaGrade::Immotile));
+        std::printf("      VCL %.1f  VSL %.1f  VAP %.1f µm/s  LIN %.2f  STR %.2f  WOB %.2f  ALH %.2f µm  BCF %.1f Hz\n",
+                    static_cast<double>(s.vcl), static_cast<double>(s.vsl), static_cast<double>(s.vap), static_cast<double>(s.lin),
+                    static_cast<double>(s.str), static_cast<double>(s.wob), static_cast<double>(s.alh), static_cast<double>(s.bcf));
+    }
     if (a.timelapseMinutes > 0.0)
         std::printf("time-lapse: %d cuadros en %s\n", timelapse.frame, a.timelapseDir.c_str());
     if (renderer)

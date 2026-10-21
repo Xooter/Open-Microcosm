@@ -65,7 +65,7 @@ SourcedValue readRate(const toml::table& t, const std::string& species, const ch
     return s;
 }
 
-enum class Kind { Speed, Time, Density, Flux, Concentration, Ratio, Ingestion, Clearance, SwimSpeed, Frequency };
+enum class Kind { Speed, Time, Density, Flux, Concentration, Ratio, Ingestion, Clearance, SwimSpeed, Frequency, Length };
 
 // Rapidez [µm/h], tiempo [h] o densidad [1/cm²] en la unidad publicada; las dos primeras,
 // llevadas a 20 °C con Q10 (una rapidez escala como una tasa; un tiempo, al revés).
@@ -91,6 +91,8 @@ SourcedValue readScaled(const toml::table& t, const std::string& species, const 
         factor = s.unit == "um/s" ? 1.0f : 0.0f;
     else if (kind == Kind::Frequency)
         factor = s.unit == "Hz" ? 1.0f : 0.0f;
+    else if (kind == Kind::Length)
+        factor = s.unit == "um" || s.unit == "µm" ? 1.0f : 0.0f;
     else if (kind == Kind::Speed)
         factor = s.unit == "um/h" ? 1.0f : s.unit == "um/min" ? 60.0f : 0.0f;
     else if (kind == Kind::Time)
@@ -186,7 +188,8 @@ void loadTables(const toml::table& doc) {
         ph.clearance = readScaled(*t, sp, "clearance", Kind::Clearance);
         ph.swimSpeed = readScaled(*t, sp, "swim_speed", Kind::SwimSpeed);
         ph.beatFrequency = readScaled(*t, sp, "beat_frequency", Kind::Frequency);
-        for (const SourcedValue* v : {&ph.swimSpeed, &ph.beatFrequency})
+        ph.lateralAmplitude = readScaled(*t, sp, "lateral_amplitude", Kind::Length);
+        for (const SourcedValue* v : {&ph.swimSpeed, &ph.beatFrequency, &ph.lateralAmplitude})
             if (v->present && v->q10 <= 0.0f)
                 gWarnings.push_back(sp + ": el nado y el batido llevan su 'q10' medido");
         gSource[id] = toml_io::tableSnippet("physiology", name.str(), *t);
@@ -315,6 +318,7 @@ const std::vector<PhysiologyKey>& physiologyKeys() {
         {"clearance", &P::clearance, "um3/h", "Aclaramiento (agua filtrada)"},
         {"swim_speed", &P::swimSpeed, "um/s", "Rapidez de nado (VAP)"},
         {"beat_frequency", &P::beatFrequency, "Hz", "Frecuencia del batido (BCF)"},
+        {"lateral_amplitude", &P::lateralAmplitude, "um", "Desplazamiento lateral de la cabeza (ALH)"},
     };
     return keys;
 }

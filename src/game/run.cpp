@@ -8,8 +8,13 @@
 
 void Run::start(World& world, const RunConfig& config, std::uint32_t runId) {
     const float interval = sampleInterval_;
+    Casa casa; // la configuración del CASA sigue de una placa a otra; sus trayectorias no
+    casa.enabled = casa_.enabled;
+    casa.trackSeconds = casa_.trackSeconds;
+    casa.thresholds = casa_.thresholds;
     *this = Run{};
     sampleInterval_ = interval;
+    casa_ = std::move(casa);
     config_ = config;
     world.setRun(runId);
     world.populateEcosystem(config.wildlife);
@@ -42,6 +47,7 @@ void Run::update(World& world, float dt) {
         }
     }
     elapsed_ += dt;
+    casa_.sample(world, dt);
     censusTimer_ -= dt;
     if (censusTimer_ <= 0.0f) { // el censo recorre todas las células: una vez por intervalo
         censusTimer_ += sampleInterval_;

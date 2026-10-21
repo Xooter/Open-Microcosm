@@ -190,6 +190,7 @@ add_library(biosim STATIC
     src/game/timeseries.cpp
     src/game/growth_fit.cpp
     src/game/region.cpp
+    src/game/casa.cpp
     src/game/scale_path.cpp
     src/game/population_density.cpp
     src/game/export.cpp)
@@ -258,6 +259,7 @@ add_executable(bio
     src/ui/panels/stats_panel.cpp
     src/ui/panels/graphs_panel.cpp
     src/ui/panels/measure_panel.cpp
+    src/ui/panels/casa_panel.cpp
     src/ui/panels/encyclopedia_panel.cpp
     src/ui/panels/help_panel.cpp
     src/ui/panels/culture_panel.cpp

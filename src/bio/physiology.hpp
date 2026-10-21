@@ -52,6 +52,7 @@ struct SpeciesPhysiology {
     // 20 °C: World los lleva a la temperatura del medio (swimSpeedAt, beatFrequencyAt).
     SourcedValue swimSpeed;
     SourcedValue beatFrequency;
+    SourcedValue lateralAmplitude; // ALH: desplazamiento lateral de la cabeza, de pico a pico [µm]
 };
 
 // Valor de una medición con su Q10 propio a la temperatura `t` [°C] (0 si no está).

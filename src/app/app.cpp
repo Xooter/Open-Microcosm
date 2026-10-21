@@ -366,7 +366,8 @@ void App::exportData() {
                     saveScene(base + ".plate", runPlate, session.interventions().entries(), session.notes()) &&
                     (session.notes().empty() || writeTextFile(base + "_notas.md", "# " + std::string(ui::tr("Notas")) + "\n\n" +
                                                                                        notesMarkdown(session.notes()))) &&
-                    writeTextFile((std::filesystem::path(exportsDir) / "especies.json").string(), speciesJson());
+                    writeTextFile((std::filesystem::path(exportsDir) / "especies.json").string(), speciesJson()) &&
+                    (session.casa().results().empty() || writeTextFile(base + "_casa.csv", casaCsv(session.casa())));
     lastExport = ok ? base : std::string();
     notify(ok ? std::string(ui::tr("Datos exportados: ")) + base + ".csv/.json/.plate" : ui::tr("No se pudo exportar"));
 }
