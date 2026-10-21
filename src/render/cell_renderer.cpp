@@ -1012,9 +1012,11 @@ void drawAnimalNucleus(Vector2 c, float r, const AnimalCell& ac, const Dividing*
 // largo de la cola) a la frecuencia del batido del individuo (sube con la temperatura). Muerto: recta,
 // apenas curvada, quieta.
 void drawSpermTail(const BodyParticles& bp, const RingBody& body, const Locomotion& loco, const SpeciesInfo& info,
-                   bool dead, float coil, float time, float px) {
-    const Frame f = frameOf(body);
-    const Vec2 back = f.h * -1.0f;
+                   bool dead, float coil, const MorphotypeSpec* form, float time, float px) {
+    Frame f = frameOf(body);
+    Vec2 back = f.h * -1.0f;
+    if (form && form->coiledTail) // cola enrollada (defecto de la cola; criterios estrictos)
+        coil = std::max(coil, 0.85f);
     std::size_t rear = 0;
     float best = -1e9f;
     for (std::size_t i = 0; i < body.ring.size(); ++i) {
@@ -1025,6 +1027,12 @@ void drawSpermTail(const BodyParticles& bp, const RingBody& body, const Locomoti
         }
     }
     const Vec2 base = ringPos(bp, body, rear);
+    if (form && form->neckBend != 0.0f) { // cuello doblado: la cola sale torcida
+        const float a = (body.id & 2u) ? form->neckBend : -form->neckBend;
+        back = rotate(back, std::cos(a), std::sin(a));
+        f.side = {-back.y, back.x};
+        f.side = f.side * -1.0f;
+    }
     const float length = info.flagellumLength > 0.0f ? info.flagellumLength : 2.2f * f.half;
     constexpr float kMidpiece = 4.5f; // [µm]
     const bool beating = !dead && loco.speed > 0.0f;
@@ -1059,6 +1067,8 @@ void drawSpermTail(const BodyParticles& bp, const RingBody& body, const Locomoti
         fastLine(toRay(prev), toRay(p), width, mid ? midpiece : kFlagellum);
         prev = p;
     }
+    if (form && form->droplet) // gota citoplasmática: un resto de citoplasma en la pieza intermedia
+        drawCircleFast(toRay(base + back * 2.5f), 0.9f, {226, 222, 206, 200}, px);
 }
 
 // Cabeza del espermatozoide: el núcleo, denso y homogéneo (cromatina compactada, sin nucléolos), ocupa
@@ -1569,8 +1579,9 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 drawTwinFlagella(body, *loco, time, px);
             } else if (loco && style == CellStyle::Spermatozoon) {
                 const AnimalCell* ac = reg.try_get<AnimalCell>(e);
-                drawSpermTail(bp, body, *loco, speciesInfo(sid), ac && ac->phase == CellPhase::Dead,
-                              ac ? ac->swelling : 0.0f, time, px);
+                const SpeciesInfo& si = speciesInfo(sid);
+                const MorphotypeSpec* form = ac && ac->morphotype < si.morphotypes.size() ? &si.morphotypes[ac->morphotype] : nullptr;
+                drawSpermTail(bp, body, *loco, si, ac && ac->phase == CellPhase::Dead, ac ? ac->swelling : 0.0f, form, time, px);
             } else if (loco && style == CellStyle::Ciliate) {
                 drawCilia(bp, body, time, px);
                 // Citostoma: la boca al final del surco oral.
@@ -1763,7 +1774,10 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                         roll = std::sqrt(std::cos(phi) * std::cos(phi) + thin * thin * std::sin(phi) * std::sin(phi));
                     }
                     drawSpermHead(bp, body, {bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus],
-                                  fillN, rimN, roll, !animal->acrosomeReacted, px);
+                                  fillN, rimN, roll,
+                                  !animal->acrosomeReacted && (animal->morphotype >= si.morphotypes.size() ||
+                                                               si.morphotypes[animal->morphotype].acrosome),
+                                  px);
                 } else {
                     drawAnimalNucleus({bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus], *animal,
                                       dividing, bodyHeading(body), style == CellStyle::Neutrophil, fillN, rimN, px);

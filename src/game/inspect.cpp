@@ -330,6 +330,9 @@ Inspection inspectCell(const World& w, entt::entity e) {
         else
             now(fmt("ciclo celular: fase %s (%.1f h en la fase)", asciiFold(cellPhaseName(ac->phase)).c_str(),
                     ac->phaseHours * w.bioTimeScale() / w.bioScale())); // horas a su temperatura (sin el Q10)
+        if (ac->morphotype < info.morphotypes.size())
+            now(fmt("forma: %s%s", info.morphotypes[ac->morphotype].name.c_str(),
+                    info.morphotypes[ac->morphotype].normal ? " (normal segun los criterios estrictos)" : ""));
         if (info.capacitation.present && ac->phase != CellPhase::Dead) {
             if (ac->capacitation >= 1.0f)
                 now(ac->hyperactive ? "capacitado e hiperactivado: batido amplio y asimetrico, trayectoria en estrella"

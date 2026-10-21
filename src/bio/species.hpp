@@ -385,6 +385,23 @@ struct CapacitationSpec {
     float chemotaxisThreshold = 0.0f;    // [µg/mL] lo mínimo que detecta (0: sin quimiotaxis)
 };
 
+// Morfología de una población (espermatozoide: criterios estrictos de Tygerberg, OMS 2021): cada individuo
+// sale con una forma; la normal es la minoría (límite inferior de referencia: 4 %). Cambian la cabeza
+// (largo, ancho y afinamiento relativos), el cuello (doblado), la cola (enrollada) o dejan una gota
+// citoplasmática, y algunas nadan peor.
+struct MorphotypeSpec {
+    std::string id, name;
+    float fraction = 0.0f;
+    float lengthScale = 1.0f, widthScale = 1.0f;
+    float taper = -1.0f;       // afinamiento del polo posterior de la cabeza (−1: el de la especie)
+    float neckBend = 0.0f;     // ángulo de la cola respecto de la cabeza [rad]
+    bool coiledTail = false;
+    bool droplet = false;      // gota citoplasmática en la pieza intermedia
+    bool acrosome = true;      // la cabeza redonda (globozoospermia) no tiene acrosoma
+    float speedScale = 1.0f;
+    bool normal = false;
+};
+
 struct AnimalCellInfo {
     bool present = false;
     bool adherent = true;              // adherida al fondo por adhesiones focales: el agua no la lleva
@@ -511,6 +528,7 @@ struct SpeciesInfo {
     MotilitySpec motility;              // [being.motility]
     OsmoticSwellingSpec osmoticSwelling; // [being.osmotic_swelling]
     CapacitationSpec capacitation;       // [being.capacitation]
+    std::vector<MorphotypeSpec> morphotypes; // [[being.morphotype]]
     MorphSpec morph;                    // [being.morph]
     bool histophagous = false;
     // Se divide dentro de un quiste reproductivo (Colpoda): mientras dura el ciclo de divisiones no nada

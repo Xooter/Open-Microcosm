@@ -136,6 +136,45 @@ void World::setupAnimalCell(entt::entity e, Rng& rng) {
         }
         ac.vigor = std::max(0.2f, 1.0f + info.motility.speedCv * rng.normal());
     }
+    // Morfología: la forma de cada uno (criterios estrictos). La muestra puede tener otra fracción de
+    // formas normales (WorldConfig::normalForms): las anormales conservan sus proporciones.
+    if (!info.morphotypes.empty()) {
+        float normal = 0.0f, total = 0.0f;
+        for (const MorphotypeSpec& m : info.morphotypes) {
+            total += m.fraction;
+            normal += m.normal ? m.fraction : 0.0f;
+        }
+        const float wantNormal = config_.normalForms >= 0.0f ? std::min(1.0f, config_.normalForms) : normal / std::max(1e-6f, total);
+        const float abnormalScale = total - normal > 1e-6f ? (1.0f - wantNormal) / (total - normal) : 0.0f;
+        const float normalScale = normal > 1e-6f ? wantNormal / normal : 0.0f;
+        float u = rng.uniform();
+        for (std::size_t k = 0; k < info.morphotypes.size(); ++k) {
+            const MorphotypeSpec& m = info.morphotypes[k];
+            u -= m.fraction * (m.normal ? normalScale : abnormalScale);
+            if (u < 0.0f || k + 1 == info.morphotypes.size()) {
+                ac.morphotype = static_cast<std::uint8_t>(k);
+                break;
+            }
+        }
+        const MorphotypeSpec& m = info.morphotypes[ac.morphotype];
+        if (CellShape* shape = registry_.try_get<CellShape>(e); shape && (m.lengthScale != 1.0f || m.widthScale != 1.0f || m.taper >= 0.0f)) {
+            shape->radiusX *= m.lengthScale;
+            shape->radiusY *= m.widthScale;
+            if (m.taper >= 0.0f)
+                shape->taper.back = m.taper;
+            if (RingBody* body = registry_.try_get<RingBody>(e))
+                soft_body::reshapeRestEven(*body, bodies_, shape->radiusX, shape->radiusY, shape->squareness, shape->taper);
+            // El área de reposo sigue a la biomasa: una cabeza más chica o más grande tiene menos o más masa.
+            if (Metabolism* meta = registry_.try_get<Metabolism>(e)) {
+                const float k = m.lengthScale * m.widthScale;
+                meta->biomass *= k;
+                meta->birthBiomass *= k;
+                meta->reserves *= k;
+            }
+        }
+        if (m.speedScale != 1.0f)
+            ac.vigor *= m.speedScale;
+    }
     registry_.emplace_or_replace<AnimalCell>(e, ac);
     if (info.animalCell.adherent)
         registry_.emplace_or_replace<Adherent>(e);

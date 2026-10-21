@@ -206,6 +206,10 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   reacción acrosómica (`spontaneous_reaction_per_hour`; con el reactivo `inducer`, hasta
   `induced_reaction_per_hour` con media saturación en `inducer_ec50` [µg/mL]). `chemotaxis_threshold`
   [µg/mL]: sigue al inductor comparando en el tiempo (0: sin quimiotaxis).
+- `[[being.morphotype]]` (una por forma): morfología de una población (criterios estrictos): `id`, `name`,
+  `fraction` (suman 1), `length` y `width` (de la cabeza, relativos), `taper`, `neck_bend` [°],
+  `coiled_tail`, `droplet` (gota citoplasmática), `acrosome` (false: cabeza redonda), `speed` (relativa) y
+  `normal`. El panel Placa cambia la fracción de normales (`normal_forms=` en el .plate).
 - `[[being.process]]` (una por prolongación): **prolongaciones** de la célula o de su cubierta.
   `kind`: `horn` | `spine` | `arm` | `seta` | `notch`; `at`: dirección desde el polo anterior del cuerpo [°];
   `length` desde la superficie, `base_width` y `tip_width` [µm], para el tamaño típico (escalan con la

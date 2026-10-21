@@ -184,6 +184,9 @@ struct WorldConfig {
     // al sembrar (espermiograma). Sin `motilitySet`, las de la especie.
     bool motilitySet = false;
     MotilityMix motility;
+    // Formas normales de la muestra ([[being.morphotype]]): fracción; las anormales se reparten en la
+    // proporción de la especie. Negativo: la de la especie.
+    float normalForms = -1.0f;
     // Células con su estado (gota de muestra de un cultivo); las ubica Run::start.
     std::vector<SampledCell> sampled;
     // Programa temporal de la placa (game/program): fotoperíodo, rampas, pulsos; se aplica una vez

@@ -151,6 +151,8 @@ std::string serializePlate(const PlateSpec& s) {
         << "erythrocytes_cm2=" << c.erythrocytesPerCm2 << '\n' << "platelets_cm2=" << c.plateletsPerCm2 << '\n';
     for (const auto& [sp, count] : c.seeding)
         out << "seeding=" << speciesInfo(sp).key << ' ' << count << '\n';
+    if (c.normalForms >= 0.0f)
+        out << "normal_forms=" << c.normalForms << '\n';
     if (c.motilitySet)
         out << "motility=" << c.motility.progressive << ' ' << c.motility.nonProgressive << ' ' << c.motility.immotile
             << ' ' << c.motility.dead << '\n';
@@ -274,6 +276,7 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
                 lack("ser '" + id + "'");
         }
         else if (k == "rock_max") c.sediment.rockMax = static_cast<float>(x);
+        else if (k == "normal_forms") c.normalForms = static_cast<float>(x);
         else if (k == "motility") { // calidad de la muestra: progresivos, no progresivos, inmóviles, muertos
             std::istringstream fields(v);
             MotilityMix& m = c.motility;

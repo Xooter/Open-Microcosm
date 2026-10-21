@@ -84,7 +84,7 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "sliding_colony", "testate", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "shape_wave", "star_colony", "contractile_vacuole", "semicell", "somersault", "algal_conjugation", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage", "swim_path", "motility", "osmotic_swelling", "capacitation",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "shape_wave", "star_colony", "contractile_vacuole", "semicell", "somersault", "algal_conjugation", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage", "swim_path", "motility", "osmotic_swelling", "capacitation", "morphotype",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
@@ -345,6 +345,43 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         if (c.hyperactivatedFraction > 1.0f || c.hyperBeatScale <= 0.0f || c.inducerEc50 <= 0.0f)
             cr.errors.push_back(cr.where + ": 'hyperactivated_fraction' es una fracción; 'hyper_beat_scale' e 'inducer_ec50' > 0");
         r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
+    if (const toml::node* mn = t.get("morphotype")) {
+        constexpr const char* kKeys[] = {"id", "name", "fraction", "length", "width", "taper", "neck_bend",
+                                         "coiled_tail", "droplet", "acrosome", "speed", "normal"};
+        const toml::array* arr = mn->as_array();
+        if (!arr)
+            r.errors.push_back(r.where + ": 'morphotype' es una lista de [[being.morphotype]]");
+        float sum = 0.0f;
+        for (std::size_t i = 0; arr && i < arr->size(); ++i) {
+            const toml::table* mt = (*arr)[i].as_table();
+            if (!mt)
+                continue;
+            toml_io::warnUnknown(*mt, kKeys, r.where + " [morphotype]", warnings);
+            Reader cr{*mt, r.where + " [morphotype]", {}};
+            MorphotypeSpec m;
+            cr.text("id", m.id);
+            cr.text("name", m.name);
+            cr.count("fraction", m.fraction);
+            cr.count("length", m.lengthScale);
+            cr.count("width", m.widthScale);
+            cr.num("taper", m.taper);
+            float bendDeg = 0.0f;
+            cr.num("neck_bend", bendDeg);
+            m.neckBend = bendDeg * units::kPi / 180.0f;
+            cr.flag("coiled_tail", m.coiledTail);
+            cr.flag("droplet", m.droplet);
+            cr.flag("acrosome", m.acrosome);
+            cr.count("speed", m.speedScale);
+            cr.flag("normal", m.normal);
+            if (m.id.empty() || m.lengthScale <= 0.0f || m.widthScale <= 0.0f)
+                cr.errors.push_back(cr.where + ": cada forma lleva 'id' y escalas positivas");
+            sum += m.fraction;
+            r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+            s.morphotypes.push_back(std::move(m));
+        }
+        if (arr && std::abs(sum - 1.0f) > 0.01f)
+            r.errors.push_back(r.where + ": las fracciones de [[being.morphotype]] tienen que sumar 1");
     }
     if (const toml::table* sc = r.table("semicell")) {
         constexpr const char* kKeys[] = {"regrowth_hours"};

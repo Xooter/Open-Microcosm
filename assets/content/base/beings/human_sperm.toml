@@ -76,6 +76,73 @@ inducer = "progesterone"
 induced_reaction_per_hour = 0.5
 inducer_ec50 = 0.03
 chemotaxis_threshold = 3e-6
+# Morfología con los criterios estrictos (Tygerberg; OMS 2021: límite inferior de referencia 4 % de formas
+# normales). Una muestra típica con ~14 % de normales (la mediana de los hombres fértiles de la OMS 2010 es
+# ~15 %); el reparto de los defectos (cabeza amorfa la más común), su forma y lo que les cuesta nadar son
+# estimación. El panel Placa cambia la fracción de normales.
+[[being.morphotype]]
+id = "normal"
+name = "normal"
+fraction = 0.14
+normal = true
+[[being.morphotype]]
+id = "amorphous"
+name = "cabeza amorfa"
+fraction = 0.3
+length = 0.95
+width = 1.2
+taper = 0.3
+speed = 0.9
+[[being.morphotype]]
+id = "tapered"
+name = "cabeza afinada"
+fraction = 0.12
+length = 1.15
+width = 0.7
+[[being.morphotype]]
+id = "pyriform"
+name = "cabeza piriforme"
+fraction = 0.1
+taper = 0.45
+[[being.morphotype]]
+id = "round"
+name = "cabeza redonda (sin acrosoma)"
+fraction = 0.04
+length = 0.75
+width = 1.1
+acrosome = false
+speed = 0.8
+[[being.morphotype]]
+id = "small"
+name = "cabeza chica"
+fraction = 0.06
+length = 0.75
+width = 0.75
+[[being.morphotype]]
+id = "large"
+name = "cabeza grande"
+fraction = 0.04
+length = 1.25
+width = 1.25
+speed = 0.9
+[[being.morphotype]]
+id = "bent_neck"
+name = "cuello doblado"
+fraction = 0.08
+neck_bend = 60.0
+speed = 0.7
+[[being.morphotype]]
+id = "coiled_tail"
+name = "cola enrollada"
+fraction = 0.07
+coiled_tail = true
+speed = 0.2
+[[being.morphotype]]
+id = "droplet"
+name = "gota citoplasmatica"
+fraction = 0.05
+droplet = true
+speed = 0.9
 [being.appearance]
 style = "spermatozoon"
 # La cabeza gira sobre su eje largo al nadar: ~6 Hz (6,0 ± 2,1 Hz en espermatozoides humanos sujetos con una

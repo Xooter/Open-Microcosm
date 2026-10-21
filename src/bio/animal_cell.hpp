@@ -41,6 +41,7 @@ struct AnimalCell {
     float capacitation = 0.0f;   // avance de la capacitación (0–1)
     bool hyperactive = false;    // capacitado e hiperactivado
     bool acrosomeReacted = false; // hizo la reacción acrosómica (el acrosoma se liberó)
+    std::uint8_t morphotype = 0;  // índice en SpeciesInfo::morphotypes
 };
 
 // Componente marcador: adherida al sustrato por adhesiones focales. El agua no la arrastra (una

@@ -254,8 +254,21 @@ class PlatePanel : public Panel {
         readout("Suman", "%.0f %%", static_cast<double>(sum));
         if (std::abs(sum - 100.0f) > 0.5f)
             note("Se reparten en proporción a lo que suman.");
-        if (c.motilitySet && ImGui::Button(tr("Muestra típica"))) {
+        if (!swimmer->morphotypes.empty()) {
+            float typical = 0.0f;
+            for (const MorphotypeSpec& f : swimmer->morphotypes)
+                typical += f.normal ? f.fraction : 0.0f;
+            float normal = 100.0f * (c.normalForms >= 0.0f ? c.normalForms : typical);
+            if (slider("Formas normales [%]", &normal, 0.0f, 100.0f, "%.0f",
+                       "Criterios estrictos (OMS 2021: límite inferior de referencia 4 %). Las anormales conservan "
+                       "sus proporciones (cabeza amorfa, afinada, piriforme, cuello doblado, cola enrollada…).")) {
+                c.normalForms = normal / 100.0f;
+                app.plateDirty = true;
+            }
+        }
+        if ((c.motilitySet || c.normalForms >= 0.0f) && ImGui::Button(tr("Muestra típica"))) {
             c.motilitySet = false;
+            c.normalForms = -1.0f;
             app.plateDirty = true;
         }
     }
