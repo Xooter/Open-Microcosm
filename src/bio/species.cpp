@@ -84,7 +84,7 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "sliding_colony", "testate", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "shape_wave", "star_colony", "contractile_vacuole", "semicell", "somersault", "algal_conjugation", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "shape_wave", "star_colony", "contractile_vacuole", "semicell", "somersault", "algal_conjugation", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage", "swim_path",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
@@ -267,6 +267,21 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         cr.count("duration_s", s.somersaultSeconds);
         if (s.somersaultInterval <= 0.0f || s.somersaultSeconds <= 0.0f)
             cr.errors.push_back(cr.where + ": 'interval_s' y 'duration_s' tienen que ser positivos");
+        r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
+    if (const toml::table* sp = r.table("swim_path")) {
+        constexpr const char* kKeys[] = {"curvature_radius", "rotational_diffusion", "noise_s"};
+        toml_io::warnUnknown(*sp, kKeys, r.where + " [swim_path]", warnings);
+        Reader cr{*sp, r.where + " [swim_path]", {}};
+        SwimPathSpec& p = s.swimPath;
+        p.present = true;
+        cr.count("curvature_radius", p.curvatureRadius);
+        cr.count("rotational_diffusion", p.rotationalDiffusion);
+        cr.count("noise_s", p.noiseSeconds);
+        if (p.noiseSeconds <= 0.0f)
+            cr.errors.push_back(cr.where + ": 'noise_s' tiene que ser positivo");
+        if (s.locomotion != LocomotionType::Flagellum)
+            cr.errors.push_back(cr.where + ": el recorrido pasivo es de los que nadan con un flagelo");
         r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
     }
     if (const toml::table* sc = r.table("semicell")) {

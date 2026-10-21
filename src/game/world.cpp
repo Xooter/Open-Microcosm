@@ -2043,6 +2043,8 @@ void World::applyMotion(float dt) {
         } else if (loco.type == LocomotionType::Crawl) {
             // Célula animal: paseo persistente, contacto y quimiotaxis (game/world_animal.cpp).
             steerCrawler(e, body, loco, dt, false);
+        } else if (cellInfo(registry_, e).swimPath.present) {
+            steerSwimmer(e, body, loco, dt); // espermatozoide: recorrido pasivo (game/world_swim.cpp)
         } else if (Autopilot* pilot = registry_.try_get<Autopilot>(e)) {
             if (registry_.all_of<Cyst>(e))
                 continue; // el quiste no se mueve

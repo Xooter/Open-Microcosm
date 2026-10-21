@@ -50,6 +50,13 @@ divides = false
 death = "immotile"
 [being.appearance]
 style = "spermatozoon"
+# Recorrido pasivo: sin sentidos ni reacción de evitación. En una cámara de ~20 µm los progresivos van en
+# arcos amplios (Woolley 2003, Reproduction 126: 259); estimación: radio ~60 µm y una difusión rotacional
+# que deja la rectitud (VSL/VAP) en ~0,8, la medida a 37 °C (García-Molina et al. 2023: 43,1/54,5).
+[being.swim_path]
+curvature_radius = 60.0
+rotational_diffusion = 0.3
+noise_s = 0.3
 
 [physiology.human_sperm.swim_speed]
 value = 54.5

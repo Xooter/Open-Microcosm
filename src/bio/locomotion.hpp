@@ -64,6 +64,13 @@ struct Locomotion {
     std::uint32_t mouthRing = 0; // índice del anillo con el citostoma (boca)
 };
 
+// Estado del recorrido pasivo (SwimPathSpec): el giro que fluctúa y el sentido de la curva de cada
+// individuo.
+struct SwimState {
+    float turnNoise = 0.0f; // [rad/s]
+    float chirality = 1.0f; // +1: curva a la izquierda; −1: a la derecha
+};
+
 // Componente marcador de la célula controlada por el jugador.
 struct Player {};
 

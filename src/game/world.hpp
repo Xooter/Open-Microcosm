@@ -718,6 +718,8 @@ class World {
     // Células animales (game/world_animal.cpp).
     void setupAnimalCell(entt::entity e, Rng& rng);
     void steerCrawler(entt::entity e, const RingBody& body, Locomotion& loco, float dt, bool player);
+    // Nadador sin sentidos ([being.swim_path]): curva y difunde, no elige rumbo (game/world_swim.cpp).
+    void steerSwimmer(entt::entity e, const RingBody& body, Locomotion& loco, float dt);
     void measureAnimalContacts();
     float animalUptake(entt::entity e, const RingBody& body, const Metabolism& meta, float bioDt);
     float animalTargetArea(entt::entity e, const AnimalCell& ac, float spreadArea) const;

@@ -79,5 +79,6 @@ inline constexpr std::uint64_t kContraction = 19;
 inline constexpr std::uint64_t kShapeWave = 20;
 inline constexpr std::uint64_t kSomersault = 21;
 inline constexpr std::uint64_t kMatingType = 22; // (18 es kStalk + 1: contracciones espontáneas del tallo)
+inline constexpr std::uint64_t kSwim = 23;       // recorrido pasivo de los nadadores sin sentidos
 inline constexpr std::uint64_t kCulture = 1000; // cultivo bien mezclado (sus sub-streams: + 0..99)
 } // namespace rng_stream

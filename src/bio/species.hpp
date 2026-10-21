@@ -315,6 +315,18 @@ struct StressPigmentSpec {
     std::uint8_t color[3] = {170, 40, 30};
 };
 
+// Recorrido pasivo de un nadador que no elige rumbo (espermatozoide: no tiene con qué ver ni esquivar).
+// El batido, apenas asimétrico, curva la trayectoria con radio `curvatureRadius` [µm] (cerca del vidrio
+// nadan en arcos y círculos; Woolley 2003, Reproduction 126: 259) y sus fluctuaciones la hacen difundir:
+// el giro es un proceso de Ornstein–Uhlenbeck con tiempo de correlación `noiseSeconds` [s] y difusión
+// rotacional efectiva `rotationalDiffusion` [rad²/s]. Los choques solo los desvía la mecánica.
+struct SwimPathSpec {
+    bool present = false;
+    float curvatureRadius = 0.0f;     // 0: recto en promedio
+    float rotationalDiffusion = 0.0f;
+    float noiseSeconds = 0.3f;
+};
+
 struct AnimalCellInfo {
     bool present = false;
     bool adherent = true;              // adherida al fondo por adhesiones focales: el agua no la lleva
@@ -434,6 +446,7 @@ struct SpeciesInfo {
     ReleaseSpec release;                // [being.release]
     RelaySpec relay;                    // [being.relay]
     ChemotaxisSpec chemotaxis;          // [being.chemotaxis]
+    SwimPathSpec swimPath;              // [being.swim_path]
     MorphSpec morph;                    // [being.morph]
     bool histophagous = false;
     // Se divide dentro de un quiste reproductivo (Colpoda): mientras dura el ciclo de divisiones no nada
