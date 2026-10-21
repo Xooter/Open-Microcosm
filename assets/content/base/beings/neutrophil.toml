@@ -1,6 +1,7 @@
 # Neutrófilo: el leucocito más abundante de la sangre (~8 µm redondo, ~330 µm³; ~15 × 8 µm al
 # migrar). No se divide; vive horas y muere por apoptosis. Sigue los péptidos formilados de las
-# bacterias (fMLP) y las fagocita.
+# bacterias (fMLP) y las fagocita. También fagocita espermatozoides (en el semen con leucocitos, y en el tracto
+# femenino después del coito; los inmóviles, que no se le escapan, son los que caen).
 [[being]]
 id = "neutrophil"
 legacy_ids = ["neutrofilo"]
@@ -10,7 +11,7 @@ description = "Globulo blanco que caza bacterias: sigue el rastro quimico que el
 body_plan = "neutrophil"
 locomotion = "crawl"
 feeding = "phagocytosis"
-prey = ["yeast"]
+prey = ["yeast", "human_sperm"]
 relative_dry_mass = 0.0775
 ph = [6.8, 7.8]
 temperature = [30.0, 40.0]

@@ -7,13 +7,13 @@
 [[medium]]
 id = "seminal_plasma"
 name = "Plasma seminal"
-description = "La parte liquida del semen: fructosa (la energia de los espermatozoides), sales y citrato. Ligeramente alcalino (pH ~7,8) e isotonico."
+description = "La parte liquida del semen: fructosa (la energia de los espermatozoides), sales y citrato. Ligeramente alcalino (pH ~7,6) e isotonico."
 source = "OMS, Laboratory manual for the examination and processing of human semen, 6ª ed. (2021): pH ≥ 7,2 (típico 7,2–8,0) y fructosa ≥ 13 µmol por eyaculado; Mann 1964 (The Biochemistry of Semen): fructosa ~2 mg/mL (~11–15 mM). Osmolalidad del semen ~300–380 mOsm/kg."
 [medium.composition]
 glucose = 13000.0      # fructosa ~13 mM, como glucosa equivalente
 salinity = 9.0         # sales como NaCl equivalente (~286 mOsm)
 osmolytes = 50.0       # fructosa, citrato y lo demás (estimación): total ~336 mOsm
-alkalinity = 500.0     # con el CO2 del aire a 37 °C da pH ~7,8 (ver arriba)
+alkalinity = 320.0     # con el CO2 del aire a 37 °C da pH ~7,6 (ver arriba)
 carbonate_pka = 6.1
 phosphate = 0.0
 nitrogen = 0.0

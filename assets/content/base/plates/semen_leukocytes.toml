@@ -1,0 +1,22 @@
+# Leucocitospermia: semen con más de 1 millón de leucocitos (casi todos neutrófilos) por mL (OMS 2021), por una
+# infección o una inflamación del tracto genital. Acá 3 millones por mL junto con 32 millones de espermatozoides
+# (en el campo, unos 16 neutrófilos), en la platina a 37 °C: los neutrófilos se arrastran por el vidrio y
+# fagocitan a los espermatozoides que tocan, sobre todo a los inmóviles.
+[[plate]]
+id = "semen_leukocytes"
+name = "Preparado: semen con leucocitos (leucocitospermia)"
+description = "Semen con muchos neutrofilos (mas de 1 millon por mL: leucocitospermia), a 37 °C. Los neutrofilos se arrastran por el vidrio y fagocitan a los espermatozoides que tocan, sobre todo a los inmoviles y a los muertos."
+kind = "slide"
+medium = "seminal_plasma"
+vessel = "slide"
+field_um = 512.0
+[plate.environment]
+temperature = 37.0
+co2 = 0.00042
+light = 1.0
+[[plate.seeding]]
+being = "human_sperm"
+density_cm2 = 64000.0
+[[plate.seeding]]
+being = "neutrophil"
+density_cm2 = 6200.0
