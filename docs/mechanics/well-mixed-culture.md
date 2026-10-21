@@ -21,7 +21,7 @@ What emerges from space on the plate comes here from encounter theory:
   73–82) with the swimming speeds and radii from the data.
 - The medium is well mixed: the concentration is the same in the whole volume.
 
-The plate and the culture are **cross-calibrated**: `bio_bench --respuesta-funcional paramecium`
+The plate and the culture are **cross-calibrated**: `microcosm_bench --respuesta-funcional paramecium`
 compares what *Paramecium* eats in both ([validation](../validation/README.md#plate--culture-cross-calibration-phase-p1-step-2)).
 
 ## Time

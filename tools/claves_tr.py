@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Claves de traducción de BioGame (fase P1, paso 9).
+"""Claves de traducción de Open Microcosm (fase P1, paso 9).
 
 Junta los textos que la interfaz pasa por `ui::tr` (las claves son el texto en español): los
 literales de src/ui y src/app, los rótulos del registro de parámetros y de la ficha, y los textos de
@@ -10,7 +10,7 @@ los paquetes de fábrica (seres, medios, recipientes, placas, biomas, minerales,
         avisa las claves sin traducir y las traducciones que no conservan los especificadores de
         formato (%d, %.1f, %s...): esas romperían el texto. Sale con 1 si hay alguna de estas.
 
-Para encontrar lo que se arma en tiempo de ejecución: BIO_TR_FALTANTES=faltantes.txt ./bio, recorrer
+Para encontrar lo que se arma en tiempo de ejecución: BIO_TR_FALTANTES=faltantes.txt ./microcosm, recorrer
 los paneles y cerrar; quedan en el archivo las que `tr` no encontró.
 """
 import glob

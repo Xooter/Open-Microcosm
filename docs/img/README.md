@@ -12,7 +12,7 @@ Screenshots and videos used by the project [`README.md`](../../README.md) and th
 | `interface.png` | README | The whole laboratory with its panels. |
 
 Bug evidence goes in `bugs/` inside this folder. Photos taken with the app (Photo command or
-`bio_bench --shot`) already carry a scale bar and a JSON with their metadata; keep the JSON next to the
+`microcosm_bench --shot`) already carry a scale bar and a JSON with their metadata; keep the JSON next to the
 image when it documents a result.
 
 GitHub does not play videos referenced by a relative path in a README: use a GIF (or an animated

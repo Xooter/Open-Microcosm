@@ -98,7 +98,7 @@ const std::vector<StainSpec>& builtinStains();
 // Texto clave=valor versionado (`stain_version=1`).
 std::string serializeStain(const StainSpec& spec);
 bool parseStain(const std::string& text, StainSpec& spec);
-// Carpeta de tinciones del usuario: <datos>/biogame/stains.
+// Carpeta de tinciones del usuario: <datos>/openmicrocosm/stains.
 std::string defaultStainsDir();
 bool saveStain(const StainSpec& spec, const std::string& path);
 bool loadStain(const std::string& path, StainSpec& spec);

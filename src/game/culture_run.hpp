@@ -107,4 +107,4 @@ class CultureRun {
 // (`programa=`) y las operaciones (`evento=paso op valor [clave]`).
 std::string serializeCultureScene(const CultureSpec& spec, const std::vector<CultureEvent>& events);
 bool parseCultureScene(const std::string& text, CultureSpec& spec, std::vector<CultureEvent>& events);
-std::string defaultCulturesDir(); // <datos>/biogame/cultures
+std::string defaultCulturesDir(); // <datos>/openmicrocosm/cultures

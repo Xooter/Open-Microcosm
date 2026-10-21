@@ -432,7 +432,7 @@ organic_inflow = 200.0
 )";
 
 std::string writeTemp(const std::string& name, const std::string& text) {
-    const auto dir = std::filesystem::temp_directory_path() / "biogame_tests_packs";
+    const auto dir = std::filesystem::temp_directory_path() / "openmicrocosm_tests_packs";
     std::filesystem::create_directories(dir);
     const auto path = dir / name;
     std::ofstream(path, std::ios::binary) << text;
@@ -543,7 +543,7 @@ TEST_CASE("contenido: los paquetes inválidos se rechazan sin cerrar el programa
 
 TEST_CASE("contenido: un paquete en carpetas trae un archivo por definición" * doctest::test_suite("paquetes")) {
     namespace fs = std::filesystem;
-    const fs::path dir = fs::temp_directory_path() / "biogame_tests_packs" / "charca";
+    const fs::path dir = fs::temp_directory_path() / "openmicrocosm_tests_packs" / "charca";
     fs::remove_all(dir);
     auto write = [&](const std::string& rel, const std::string& text) {
         fs::create_directories((dir / rel).parent_path());

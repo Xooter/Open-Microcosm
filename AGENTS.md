@@ -1,10 +1,10 @@
-# AGENTS.md — BioGame
+# AGENTS.md — Open Microcosm
 
 Guide for agents (and humans) working on this repository. Read it entirely before touching code.
 
 ## Vision
 
-BioGame is an **open-source research and teaching tool** that simulates **real** microscopic life as
+Open Microcosm is an **open-source research and teaching tool** that simulates **real** microscopic life as
 it is seen through a laboratory microscope: drops of water with their microorganisms, **cell
 cultures** (human and animal cells on a dish) and **plant preparations** (tissues with cell walls).
 Cells are gelatinous, semi-transparent bodies with visible organelles. They swim or crawl, eat, grow,
@@ -13,7 +13,7 @@ animations.
 
 Two uses share the same simulation core:
 - **Research:** complex, reproducible and measurable simulations (series, budgets, export with
-  provenance, replicates), also **headless** (`biosim`, `bio_bench`; in the future, Python
+  provenance, replicates), also **headless** (`biosim`, `microcosm_bench`; in the future, Python
   bindings). Graphics are optional: nothing in the simulation depends on the render.
 - **Teaching:** show students what happens, with the microscope image, cards that explain what each
   thing is and why, and guided lessons.
@@ -38,7 +38,7 @@ and intervenes.
   lifeless or empty content —`DropContent`, `applyDropContent`—, environment, nutrients, sediment,
   populations and geometry) and created with *Create plate* (Ctrl+N). Environment and nutrients are
   applied **live** to the running plate; the rest, when it is created. Plates are saved in
-  `<data>/biogame/plates/*.plate`.
+  `<data>/openmicrocosm/plates/*.plate`.
 - **Prepared plates** (`game/prepared`; data in `media/`, `vessels/` and `plates/`): besides the
   water drop, plate types as in a real laboratory: the **cell culture** (DMEM in an incubator at
   37 °C and 10 % CO₂: a circular field of the bottom of a vessel, with that vessel's medium depth,
@@ -85,7 +85,7 @@ and intervenes.
   Swimming follows temperature with its measured Q10 (`swim_speed`, `beat_frequency`,
   `lateral_amplitude` in `[physiology.*]`), the path is passive (`[being.swim_path]`,
   `World::steerSwimmer`) and the sample comes by WHO classes (`[being.motility]`, configurable in the
-  Plate panel). **CASA** (`game/casa`, CASA panel, `bio_bench --casa`): VCL, VSL, VAP, LIN, STR, WOB,
+  Plate panel). **CASA** (`game/casa`, CASA panel, `microcosm_bench --casa`): VCL, VSL, VAP, LIN, STR, WOB,
   ALH and BCF of each one; it is measurement (it lives in `Run`, it does not change the fingerprint).
   Vitality plates: eosin–nigrosin (`semen_eosin_nigrosin`) and the hypo-osmotic test (`semen_hos`,
   `[being.osmotic_swelling]`); capacitation (`sperm_capacitation`) and leukocytospermia
@@ -152,7 +152,7 @@ Use **only** these. To add another one, propose it first and wait for approval. 
 | EnTT | 3.14 | ECS for organisms and high-level entities |
 | OpenMP | system | Parallelism of the simulation loops |
 | Tracy | 0.11 | Profiling (`profile` preset) |
-| doctest | 2.4.11 | Tests of physical invariants (`tests/`, target `bio_tests`) |
+| doctest | 2.4.11 | Tests of physical invariants (`tests/`, target `microcosm_tests`) |
 | toml++ | 3.4.0 | Content as data, with its sources (`assets/content/`, [`docs/content/`](docs/content/README.md)) |
 
 Approvable candidate when its phase requires it: **FastNoiseLite** (procedural generation).
@@ -164,7 +164,7 @@ standard library.
 ## Build
 
 ```sh
-cmake --preset release && cmake --build --preset release && ./build/release/bio
+cmake --preset release && cmake --build --preset release && ./build/release/microcosm
 ```
 
 There are `debug`, `release`, `profile` (Tracy) and `lite` (per-scope timings without Tracy)
@@ -182,7 +182,7 @@ user data in the platform's folder (`userDataDir`). `tools/ci.sh` is the local C
 `--paquetes`); `ctest -L rapidos` is the quick check. macOS is not tested (community supported, see
 the README).
 
-**Measuring:** `bio_bench` runs a fixed drop headless and gives ms/step, the census and a checksum
+**Measuring:** `microcosm_bench` runs a fixed drop headless and gives ms/step, the census and a checksum
 of the state (`--casa`: sperm kinematics; `--wildlife 3` ≈ 700 cells, `--gpu` uses the GPU solver
 like the app; with the `lite` preset it breaks down by `PROFILE_SCOPE`; `--shot` saves the drawn
 frame; `--timelapse <bio_min>` saves a photo every so many biological minutes; by default it uses one
@@ -396,7 +396,7 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
 - **Culture session** (`game/culture_run`): like `Run` for the plate: every operation goes through
   `CultureRun::apply`, is recorded with its step and the `.culture` scene replays it. The sample drop
   (`sampleDrop`) builds a v3 `PlateSpec` with the cells and their state (`WorldConfig::sampled`).
-- **Batch experiments** (`game/experiment`, `bio_lote`, Experiment panel): TOML with replicates and
+- **Batch experiments** (`game/experiment`, `microcosm_batch`, Experiment panel): TOML with replicates and
   factors; one run per thread (OpenMP at 1, preloaded registries); long format, summary with mean, SD
   and 95 % CI and JSON with the provenance.
 - What is not yet simulated well mixed is not seeded (`Culture::supports`): animal cells, filaments,
@@ -465,8 +465,8 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
   field without the interface, with a scale bar and a JSON with the field width in µm (there is no
   "magnification": there are no simulated objectives), the time, the seed, the plate, the stain and
   the provenance. The time-lapse takes a frame per interval of BIOLOGICAL time (`TimelapseClock`),
-  never per screen frame; headless, `bio_bench --timelapse <bio_min>`. Photos go in
-  `<data>/biogame/photos`.
+  never per screen frame; headless, `microcosm_bench --timelapse <bio_min>`. Photos go in
+  `<data>/openmicrocosm/photos`.
 - **Semantic zoom** (`render/lod.hpp`, `RenderLodSettings`: all configuration in one place): each
   being chooses its level (`DetailLevel`: density, simplified, normal, detail, subcellular) by its real
   projected size in pixels, not by the zoom. Bacteria and *Bdellovibrio*: a linear pass clips by the
@@ -501,7 +501,7 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
   `lang/<code>.txt`. `readout` formats are translated too: the translation keeps the specifiers
   (checked by `tools/claves_tr.py --check`, which runs in `tools/ci.sh`). A new text is added with
   `tools/claves_tr.py --check assets/lang/en.txt --faltantes`; what is built at run time comes out
-  with `BIO_TR_FALTANTES=file ./bio`. If the Spanish of a key changes, its translation no longer
+  with `BIO_TR_FALTANTES=file ./microcosm`. If the Spanish of a key changes, its translation no longer
   matches and it is shown in Spanish (never a stale translation). Series and CSV columns go by id
   (they do not change with the language). The card translates titles, labels, names and
   descriptions; the values `game/inspect` builds with numbers stay in Spanish (pending).
@@ -512,12 +512,12 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
   (`core/palette`: limitation map, plot series, the theme's good/warning/dead); continuous maps, from
   viridis. The UI scale (`Options::uiScale`, 0 = the monitor's) is used by `ui::uiScale()`: a new
   pixel size in the UI is multiplied by it.
-- **Options** (`Options` in `game/progress`, `<data>/biogame/options.txt`): applied by
+- **Options** (`Options` in `game/progress`, `<data>/openmicrocosm/options.txt`): applied by
   `App::applyOptions` (post-process, render scale, detail, VSync, threads, LOD, GPU) and the FPS cap
   by `App::applyFrameCap`; MSAA only when creating the window. Quality presets
   (`applyGraphicsPreset`) touch only the image, never the simulation. The render scale lives in
   `Renderer`: the scene is drawn smaller with the scaled camera and rescaled at the end.
-- The panel layout is saved in `<data>/biogame/layout.ini` (*View > Reset layout* rebuilds it).
+- The panel layout is saved in `<data>/openmicrocosm/layout.ini` (*View > Reset layout* rebuilds it).
   Catalogue icons are drawn once with raylib into an atlas (`ui/being_icons`).
 - `PlateSpec` (`game/plate_spec`, without raylib) is the source of truth for what is preconfigured;
   `parsePlate`/`serializePlate` are versioned key=value text (`plate_version`) and what is missing
@@ -542,7 +542,7 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
 - **Region:** `quantifyRegion` counts individuals by centroid and averages the water cells with
   their centre inside. The region lives in `Run` (`setRegion`) and enters the series.
 - **Export** (Ctrl+E): `seriesCsv`, `runJson` (parameters: the plate with the current environment,
-  metabolism, time scale; series; budget) and `speciesJson`, in `<data>/biogame/exports`. Numbers
+  metabolism, time scale; series; budget) and `speciesJson`, in `<data>/openmicrocosm/exports`. Numbers
   with `std::to_chars` (decimal point regardless of the locale).
 - **Limitation map:** `Metabolism::limiting` (Liebig: the factor that left the investment in biomass
   lowest) is only read by the render (`CellRenderer::setLimitationMap`, key L).
@@ -570,7 +570,7 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
   `Renderer` as the plate (`Renderer::drawWorldTo` into a texture), unstained and stained, in cell,
   detail and bacteria views. Adding a target: a value of `StainTarget`, its evaluation in the render
   and, if needed, a datum in `SpeciesChemistry`.
-- User stains are saved in `<data>/biogame/stains/*.stain` (versioned key=value text,
+- User stains are saved in `<data>/openmicrocosm/stains/*.stain` (versioned key=value text,
   `stain_version`).
 
 ### Reproducibility (`game/parameters`, `game/intervention`, `game/scene`)
@@ -617,7 +617,7 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
   flagellate through the anterior pole (slowly) and the amoeba by contact. Bacteria have a **height
   in the film** (`World::filmHeight`): the mouth only swallows those passing at its height (the view
   is 2D, but the film is not). The bacterial capture radius is calibrated with the measured clearance
-  (`bio_bench --respuesta-funcional`: the plate and the culture must eat the same). What is ingested
+  (`microcosm_bench --respuesta-funcional`: the plate and the culture must eat the same). What is ingested
   forms **food vacuoles** (organelles) that close, are digested and are expelled.
 - **Phagocytosis of cells** (amoeba, component `PhagocyticCup`): contact with an eligible prey starts
   the cup; the prey is held (ligand–receptor binding); the front of each lip advances and membrane is
@@ -637,8 +637,8 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
 - **Stable handles:** particles move in memory (swap-and-pop, reordering by cell), so references
   between systems use stable IDs with an indirection table, never raw indices kept between frames.
 - **Content packs** (`game/content`): the factory one (`assets/content/base/`) and the user's
-  (`<data>/biogame/packs/`, a folder or a single `.biopack`), loaded at start-up; imported and
-  exported from the Content panel and `bio_bench --paquete` loads them headless. They are data only,
+  (`<data>/openmicrocosm/packs/`, a folder or a single `.biopack`), loaded at start-up; imported and
+  exported from the Content panel and `microcosm_bench --paquete` loads them headless. They are data only,
   bounded (8 MB, ids `[a-z0-9_]`); each registry keeps the source TOML of each definition to export
   it unchanged. Plates and scenes name everything by text id and list the packs (`pack=`), and
   `runJson` records their fingerprints.
@@ -684,7 +684,7 @@ src/
   game/             world, sandbox session, culture, experiments, lessons, content, biomes, measurement
   gpu/              GPU XPBD solver (compute shaders)
   render/           renderer, membrane shaders, microscope post-process, photo
-bench/              bio_bench and bio_lote (headless)
+bench/              microcosm_bench and microcosm_batch (headless)
 assets/
   content/base/     factory content pack (TOML)
   fonts/            UI font (Roboto, Apache 2.0)

@@ -1,12 +1,12 @@
 # Batch experiments
 
-Replicates with different seeds and swept factors, headless (`game/experiment`, `bio_lote`,
+Replicates with different seeds and swept factors, headless (`game/experiment`, `microcosm_batch`,
 Experiment panel). Without replicates there are no statistics, and between machines the promised
 reproducibility is statistical ([reproducibility](reproducibility.md)).
 
 ## File
 
-An experiment is a TOML file ([user files](../content/user-files.md#experiment-databiogameexperimentstoml)):
+An experiment is a TOML file ([user files](../content/user-files.md#experiment-dataopenmicrocosmexperimentstoml)):
 
 ```toml
 [experiment]
@@ -39,7 +39,7 @@ from the experiment's seed. Time is laboratory time.
 
 ## Running
 
-- `bio_lote <file> [--salida <dir>] [--hilos N] [--replicas N] [--paquete <pack>]`.
+- `microcosm_batch <file> [--salida <dir>] [--hilos N] [--replicas N] [--paquete <pack>]`.
 - The Experiment panel runs the same thing inside the app.
 - One run per thread (OpenMP with 1 thread inside each run); registries are preloaded.
 
@@ -56,7 +56,7 @@ computes the IC50 and `minimumInhibitory` the MIC ([reagents](reagents.md)).
 
 ## Code
 
-`src/game/experiment.*`, `src/game/dose_fit.*`, `bench/bio_lote.cpp`,
+`src/game/experiment.*`, `src/game/dose_fit.*`, `bench/microcosm_batch.cpp`,
 `src/ui/panels/experiment_panel.cpp`.
 
 ## Tests

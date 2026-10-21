@@ -12,7 +12,7 @@
 ## Two clocks
 
 Real microorganisms live on very different time scales: water flows and a ciliate swims in
-milliseconds to seconds, while a *Paramecium* divides about once a day. BioGame keeps physics in
+milliseconds to seconds, while a *Paramecium* divides about once a day. Open Microcosm keeps physics in
 real time and compresses biology with **a single constant**, so the proportions between processes
 and between species are respected.
 

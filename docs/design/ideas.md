@@ -11,7 +11,7 @@ Proposing a new idea: open an issue or a pull request that adds it here.
 - [x] 2. **Timeline with replays:** record the session by seed and events and rewind or skip to any
       instant (the simulation is already deterministic).
 - [ ] 3. **Batch experiments:** run N drops with a swept parameter (for example Si from 0 to
-      300 µM) headless and export the results. *(Done for cultures and plates: `bio_lote`.)*
+      300 µM) headless and export the results. *(Done for cultures and plates: `microcosm_batch`.)*
 - [ ] 4. **Ramps and programs:** vary temperature, light or nutrients over time (day/night cycle,
       phosphate pulse, season). *(Done: programs.)*
 - [ ] 5. **Controls and replicates:** two drops side by side with the same seed, changing a single

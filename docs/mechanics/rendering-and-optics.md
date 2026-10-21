@@ -49,9 +49,9 @@ cell by its limiting factor ([measurement](measurement.md)).
 - **Photo** (`render/photo`): the central field without the interface, with a scale bar of a round
   length in µm and a JSON with the field width in µm (no "magnification": there are no simulated
   objectives), µm per pixel, time, seed, plate, stain and provenance. Saved in
-  `<data>/biogame/photos`.
+  `<data>/openmicrocosm/photos`.
 - **Time-lapse** (`game/timelapse`): one frame per interval of **biological** time
-  (`TimelapseClock`), never per screen frame. Headless: `bio_bench --timelapse <bio_min>`.
+  (`TimelapseClock`), never per screen frame. Headless: `microcosm_bench --timelapse <bio_min>`.
 
 ## Performance
 

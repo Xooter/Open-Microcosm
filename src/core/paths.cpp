@@ -69,7 +69,13 @@ std::string userDataDir() {
 #endif
     if (base.empty())
         base = ".";
-    return (base / "biogame").string();
+    // El proyecto se llamaba BioGame: la carpeta vieja se renombra la primera vez (placas, escenas,
+    // paquetes y opciones siguen ahí).
+    const fs::path dir = base / "openmicrocosm";
+    std::error_code ec;
+    if (const fs::path old = base / "biogame"; !fs::exists(dir, ec) && fs::is_directory(old, ec))
+        fs::rename(old, dir, ec);
+    return dir.string();
 }
 
 std::string userDataSubdir(const char* name, const char* legacyName) {

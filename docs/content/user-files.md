@@ -13,7 +13,7 @@ the biome's value. Floats are written with round-trip precision.
 A **scene** is a `.plate` plus `event=step type …` lines (interventions) and `nota=` lines (notes).
 Loading it and creating the plate replays the run ([reproducibility](../mechanics/reproducibility.md)).
 
-## Culture scene (`.culture`, `<data>/biogame/cultures/`)
+## Culture scene (`.culture`, `<data>/openmicrocosm/cultures/`)
 
 `key=value` lines: `culture_version`, `name`, `vessel`, `medium`, `temperature`, `light`, `seed`,
 `program=` and `event=step op value [key]`. Operations: `inoculate`, `bacteria`, `medium`,
@@ -31,7 +31,7 @@ Loading it and creating the plate replays the run ([reproducibility](../mechanic
 
 See [programs](../mechanics/programs.md).
 
-## Experiment (`<data>/biogame/experiments/*.toml`)
+## Experiment (`<data>/openmicrocosm/experiments/*.toml`)
 
 - `[experiment]`: `name`, `kind` (`culture` or `plate`), `replicates`, `seed`, `hours`, `sample_h`,
   `threads`.
@@ -43,15 +43,16 @@ See [batch experiments](../mechanics/batch-experiments.md).
 
 ## Stains (`.stain`)
 
-User stains in `<data>/biogame/stains/*.stain`: versioned `key=value` text (`stain_version`). See
+User stains in `<data>/openmicrocosm/stains/*.stain`: versioned `key=value` text (`stain_version`). See
 [stains](../mechanics/stains.md).
 
 ## User data folder
 
-`<data>` is the platform's data folder (`userDataDir`, `core/paths`). Inside `<data>/biogame/`:
+`<data>` is the platform's data folder (`userDataDir`, `core/paths`). Inside `<data>/openmicrocosm/`:
 `packs/`, `plates/`, `cultures/`, `experiments/`, `stains/`, `photos/`, `exports/`,
-`autosave.plate`, `layout.ini`, `options.txt` and `progress.txt`. Folders and files with the old
-Spanish names (`paquetes/`, `cultivos/`, `experimentos/`, `fotos/`, `autoguardado.plate`) are renamed
+`autosave.plate`, `layout.ini`, `options.txt` and `progress.txt`. The folder of the project's
+previous name (`<data>/biogame/`) is renamed to `openmicrocosm/` the first time. Folders and files
+with the old Spanish names (`paquetes/`, `cultivos/`, `experimentos/`, `fotos/`, `autoguardado.plate`) are renamed
 automatically the first time, and the saved panel layout is migrated to the new ids.
 
 Data saved with the old (Spanish) names is still read (`game/legacy_names`, `legacy_ids`) and saved

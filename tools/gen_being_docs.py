@@ -217,7 +217,7 @@ TODO: what the organism is, where it lives and how it looks under the microscope
 <!-- GENERATED:presence -->
 <!-- /GENERATED -->
 
-TODO: how BioGame simulates it (shape, locomotion, feeding, reproduction).
+TODO: how Open Microcosm simulates it (shape, locomotion, feeding, reproduction).
 
 ## Literature
 

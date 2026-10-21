@@ -21,7 +21,7 @@ take over. A real pond drop sustains its community for days.
 
 ## Steps to reproduce
 
-1. `./build/release/bio_tests -tc="*30 min*" --no-skip` (very slow: hours).
+1. `./build/release/microcosm_tests -tc="*30 min*" --no-skip` (very slow: hours).
 2. Or create a `puddle` plate with seed 66 and watch the Statistics panel for 6 biological hours.
 
 ## Expected behaviour

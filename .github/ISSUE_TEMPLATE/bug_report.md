@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Something in BioGame does not work, or a result differs from the biology
+about: Something in Open Microcosm does not work, or a result differs from the biology
 title: ""
 labels: bug
 ---
@@ -30,4 +30,4 @@ labels: bug
 
 ## Evidence
 
-<!-- Screenshots, exported CSV/JSON (Ctrl+E), bio_bench output, test output. -->
+<!-- Screenshots, exported CSV/JSON (Ctrl+E), microcosm_bench output, test output. -->

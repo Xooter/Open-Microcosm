@@ -283,7 +283,7 @@ Today they are particles with a strain (`Bacteria::strain`: a generic gram-negat
 | 8 | Long oscillations | Veilleux 1979 | *Didinium*, *Paramecium* | culture | Period and amplitude | Several coupled cycles | 🟡 | validation |
 | 9 | Metapopulations | Holyoak and Lawler 1996 | *Didinium*, *Colpidium* | several cultures | Persistence | Subdivision prolongs persistence | 🔴 connected cultures | research |
 | 10 | Paradox of enrichment | Rosenzweig 1971; Bohannan and Lenski 1997 | *E. coli*, phage T4 | culture | Amplitude | More nutrient gives larger oscillations | 🟡 named *E. coli* strain | lesson, validation |
-| 11 | Type II functional response | Holling 1959; Fenchel 1980 | *Paramecium*, bacteria | culture, plate | Ingestion vs prey density | Hyperbolic saturation | 🟢 (`bio_bench --respuesta-funcional`; roadmap B) | validation |
+| 11 | Type II functional response | Holling 1959; Fenchel 1980 | *Paramecium*, bacteria | culture, plate | Ingestion vs prey density | Hyperbolic saturation | 🟢 (`microcosm_bench --respuesta-funcional`; roadmap B) | validation |
 | 12 | Productivity and food-chain length | Kaunzinger and Morin 1998 | bacteria, *Colpidium*, *Didinium* | culture | Persisting levels | More nutrient supports longer chains | 🟢 | research |
 | 13 | Food-web architecture | Lawler and Morin 1993 | ciliates and bacteria | culture | Population variability | Changes with omnivory and number of prey | 🟡 more ciliates | research |
 | 14 | Warming in microcosms | Petchey et al. 1999 | protist community | culture, plate | Richness per trophic level | Warming loses more predators and herbivores | 🟢 with temperature programs | research |
@@ -362,7 +362,7 @@ Today they are particles with a strain (`Bacteria::strain`: a generic gram-negat
 | 67 | Disc-diffusion antibiogram | Bauer et al. 1966 | bacteria | plate | Inhibition halo | Diameter vs log dose | 🟢 the reagent already diffuses from the dropper | lesson |
 | 68 | Antibiotic from a fungus | Fleming 1929 | *Penicillium*, *S. aureus* | plate | Halo next to the hyphae | Inhibition around the fungus | 🔴 secretion by hyphae | lesson |
 | 69 | Persistence | Bigger 1944; Balaban et al. 2004 | *E. coli* | culture | Survival over time | Biphasic killing | 🔴 phenotypic dormant state | research |
-| 70 | Fluctuation test | Luria and Delbrück 1943 | bacteria, phages | batch of cultures | Resistants per replicate | Variance much larger than Poisson (prior mutation) | 🟢 phage-resistant mutants, `bio_lote` | lesson, validation |
+| 70 | Fluctuation test | Luria and Delbrück 1943 | bacteria, phages | batch of cultures | Resistants per replicate | Variance much larger than Poisson (prior mutation) | 🟢 phage-resistant mutants, `microcosm_batch` | lesson, validation |
 | 71 | Phage one-step curve | Ellis and Delbrück 1939 | bacteria, phages | culture | Free phages over time | Latency and step (burst size) | 🟡 explicit latency | lesson |
 | 72 | Phage and bacterium in a chemostat | Chao et al. 1977 | *E. coli*, phage | culture | Densities | Coexistence with resistants | 🟢 | validation |
 | 73 | Quorum sensing | Nealson et al. 1970 | *C. violaceum* (*V. fischeri*) | plate, culture | Violacein (light) vs density | On only above the threshold | 🟢 with *C. violaceum*; 🟡 in the culture (roadmap E) | lesson |

@@ -1,4 +1,4 @@
-# BioGame: English translation. Key = the Spanish text (the base language); \n = line break.
+# Open Microcosm: English translation. Key = the Spanish text (the base language); \n = line break.
 # Keys come from tools/claves_tr.py; check with: tools/claves_tr.py --check assets/lang/en.txt
  (contraido)	 (collapsed)
  (hacia atras)	 (backwards)
@@ -265,9 +265,9 @@ Bdellovibrio bacteriovorus	Bdellovibrio bacteriovorus
 Bdellovibrio sale de un bdeloplasto con sus hijas	Bdellovibrio leaves a bdelloplast with its daughters
 Bicarbonato	Bicarbonate
 Bicarbonato: fija el pH junto con el CO2 (agua dulce ~1000; DMEM 44 000).	Bicarbonate: sets the pH together with CO2 (fresh water ~1000; DMEM 44 000).
-BioGame 	BioGame 
-BioGame es software libre: podés redistribuirlo y modificarlo bajo la Licencia Pública General de GNU, versión 3 o posterior (archivo LICENSE). Se distribuye SIN NINGUNA GARANTÍA.	BioGame is free software: you can redistribute it and modify it under the GNU General Public License, version 3 or later (LICENSE file). It is distributed WITHOUT ANY WARRANTY.
-BioGame: contenido de fábrica	BioGame: built-in content
+Open Microcosm 	Open Microcosm 
+Open Microcosm es software libre: podés redistribuirlo y modificarlo bajo la Licencia Pública General de GNU, versión 3 o posterior (archivo LICENSE). Se distribuye SIN NINGUNA GARANTÍA.	Open Microcosm is free software: you can redistribute it and modify it under the GNU General Public License, version 3 or later (LICENSE file). It is distributed WITHOUT ANY WARRANTY.
+Open Microcosm: contenido de fábrica	Open Microcosm: built-in content
 Bioma	Biome
 Biomas	Biomes
 Biomasa	Biomass
@@ -562,7 +562,7 @@ El crecimiento lo limita el recurso más escaso respecto de lo que se necesita, 
 El cultivo como se preparó, su programa y todo lo que se le hizo con su paso: cargarlo lo repite.	The culture as it was prepared, its program and everything done to it with its step: loading it repeats it.
 El esclerocio desperto	The sclerotium woke up
 El esporangio germino	The sporangium germinated
-El experimento como archivo TOML: lo corre este panel o `bio_lote` sin ventana.	The experiment as a TOML file: this panel or `bio_lote` without a window can run it.
+El experimento como archivo TOML: lo corre este panel o `microcosm_batch` sin ventana.	The experiment as a TOML file: this panel or `microcosm_batch` without a window can run it.
 El filamento se fragmento o murio	The filament fragmented or died
 El globulo blanco mas grande (~15 um): nucleo en forma de rinon y citoplasma gris azulado con vacuolas. En los tejidos se vuelve macrofago.	The largest white blood cell (~15 um): kidney-shaped nucleus and bluish-gray cytoplasm with vacuoles. In tissues it becomes a macrophage.
 El grano se borro	The grain was erased

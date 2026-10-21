@@ -17,7 +17,7 @@
 // `[[mineral]]`, `[[biome]]`, `[physiology.<id del ser>]`, `[[medium]]`, `[[vessel]]`, `[[plate]]`,
 // `[[scene]]`, `[[lesson]]`, `[[reagent]]`, `[[term]]`). Son solo datos: nada ejecutable, con
 // tamaños y cantidades acotados. El de fábrica es "base" (assets/content/base/); los del usuario
-// viven en <datos>/biogame/packs/ y se cargan al empezar.
+// viven en <datos>/openmicrocosm/packs/ y se cargan al empezar.
 struct PackInfo {
     std::string id, name, version, author, license;
     std::string path;              // carpeta o archivo de donde se cargó
@@ -32,7 +32,7 @@ std::string fingerprintHex(std::uint64_t fingerprint);
 
 // Carga un paquete (carpeta o .biopack). Lo que no se pudo cargar queda en `messages`; devuelve
 // false si se rechaza entero (manifiesto inválido, ya cargado, demasiado grande, programa viejo).
-// Las escenas que trae se copian a la carpeta de placas (<datos>/biogame/plates).
+// Las escenas que trae se copian a la carpeta de placas (<datos>/openmicrocosm/plates).
 bool loadPack(const std::string& path, std::vector<std::string>& messages);
 std::string userPacksDir();
 // Todos los paquetes de la carpeta del usuario, en orden alfabético.

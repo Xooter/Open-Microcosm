@@ -266,7 +266,7 @@ class LessonPanel : public Panel {
     void report(App& app, const Lesson& l) {
         namespace fs = std::filesystem;
         std::ostringstream prov;
-        prov << "BioGame " << tr("lección") << ' ' << l.key << ", " << tr("idioma") << ' ' << currentLanguage();
+        prov << "Open Microcosm " << tr("lección") << ' ' << l.key << ", " << tr("idioma") << ' ' << currentLanguage();
         if (app.world && !culture_)
             prov << ", seed " << app.runPlate.seed;
         if (culture_)

@@ -336,9 +336,9 @@ std::string machineDescription() {
 std::string runJson(const World& world, const Run& run, const PlateSpec& plate, const RunProvenance& provenance) {
     Json j;
     j.beginObject();
-    j.string("formato", "biogame-run");
+    j.string("formato", "openmicrocosm-run");
     j.number("version", 2);
-    j.string("programa", "BioGame: sandbox de vida microscopica");
+    j.string("programa", "Open Microcosm: laboratorio de vida microscopica");
 
     // Procedencia: con el mismo binario, máquina, motor y opciones, la corrida se repite bit a
     // bit; entre máquinas (otra CPU, otra GPU o driver) solo estadísticamente, con réplicas.
@@ -491,7 +491,7 @@ std::string runJson(const World& world, const Run& run, const PlateSpec& plate, 
 std::string speciesJson() {
     Json j;
     j.beginObject();
-    j.string("formato", "biogame-species");
+    j.string("formato", "openmicrocosm-species");
     j.number("version", 2); // 2: fisiología con fuentes
     j.beginArray("especies");
     for (int s = 0; s < speciesCount(); ++s)

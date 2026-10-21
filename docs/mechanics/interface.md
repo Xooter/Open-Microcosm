@@ -55,7 +55,7 @@ stable (`title###key`) so the saved layout does not depend on the language.
 - `readout` formats are translated too: the translation keeps the specifiers (checked by
   `tools/claves_tr.py --check`, run by `tools/ci.sh`).
 - A new text: `tools/claves_tr.py --check assets/lang/en.txt --faltantes`; texts built at run time:
-  `BIO_TR_FALTANTES=file ./bio`.
+  `BIO_TR_FALTANTES=file ./microcosm`.
 - If the Spanish of a key changes, its translation no longer matches and Spanish is shown (never a
   stale translation).
 - Numeric values built by `game/inspect` stay in Spanish ([bug](../bugs/inspector-values-untranslated.md)).
@@ -69,11 +69,11 @@ multiplied by it.
 
 ## Options
 
-`Options` (in `game/progress`, `<data>/biogame/options.txt`) are applied by `App::applyOptions`
+`Options` (in `game/progress`, `<data>/openmicrocosm/options.txt`) are applied by `App::applyOptions`
 (post-process, render scale, detail, VSync, threads, LOD, GPU) and the FPS cap by
 `App::applyFrameCap`; MSAA only when creating the window. Quality presets
 (`applyGraphicsPreset`) touch only the image, never the simulation. The panel layout is saved in
-`<data>/biogame/layout.ini` (*View > Reset layout* rebuilds it). Catalogue icons are drawn once with
+`<data>/openmicrocosm/layout.ini` (*View > Reset layout* rebuilds it). Catalogue icons are drawn once with
 raylib into an atlas (`ui/being_icons`).
 
 ## Code

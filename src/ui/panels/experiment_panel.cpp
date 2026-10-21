@@ -1,6 +1,6 @@
 // Experimento (fase P1): réplicas con seeds distintas y un factor barrido, en segundo plano, con la
 // media y su intervalo de confianza. Sale del cultivo elegido, de la placa en pantalla (su escena)
-// o de un experimento guardado (.toml, el mismo formato que corre `bio_lote`).
+// o de un experimento guardado (.toml, el mismo formato que corre `microcosm_batch`).
 #include "app/app.hpp"
 #include "core/paths.hpp"
 #include "game/experiment.hpp"
@@ -247,7 +247,7 @@ class ExperimentPanel : public Panel {
             const std::string path = (std::filesystem::path(experimentsDir()) / (r.spec.name + ".toml")).string();
             message_ = writeTextFile(path, serializeExperiment(r.spec)) ? path : tr("No se pudo guardar.");
         }
-        tooltip("El experimento como archivo TOML: lo corre este panel o `bio_lote` sin ventana.");
+        tooltip("El experimento como archivo TOML: lo corre este panel o `microcosm_batch` sin ventana.");
     }
 };
 

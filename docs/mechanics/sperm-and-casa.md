@@ -30,7 +30,7 @@ WHO semen analysis (spermiogram) and its classic tests.
 
 ## CASA (computer-assisted semen analysis)
 
-`game/casa`, CASA panel, `bio_bench --casa`: it follows each swimmer's head frame by frame and
+`game/casa`, CASA panel, `microcosm_bench --casa`: it follows each swimmer's head frame by frame and
 measures its kinematics like laboratory equipment (WHO 2021; Mortimer 1997, Hum. Reprod. Update 3:
 403). It is **measurement**: it lives in `Run`, only reads the world and does not change the
 fingerprint.

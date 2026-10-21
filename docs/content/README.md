@@ -1,6 +1,6 @@
 # Content packs
 
-BioGame's content is data (`game/content`): beings, body plans, minerals, biomes, media, vessels,
+Open Microcosm's content is data (`game/content`): beings, body plans, minerals, biomes, media, vessels,
 prepared plates, lessons, reagents and the glossary. Machine names (folders, files, keys, ids and
 named values) are in **English**. Human-readable text (`name`, `description`, `source`,
 definitions, lesson steps, comments) is in Spanish today and is translated by `assets/lang`; new
@@ -50,8 +50,8 @@ assets/content/base/
   reordered** and new items are appended at the end.
 - A `.biopack` is the same thing in a single file: the `[pack]` table and the concatenation of the
   definitions, plus `[[scene]]` (`id`, `plate`: the text of a plate).
-- User packs live in `<data>/biogame/packs/` (folder or `.biopack`). They are imported and
-  exported from the Content panel; `bio_bench --paquete` loads them headless.
+- User packs live in `<data>/openmicrocosm/packs/` (folder or `.biopack`). They are imported and
+  exported from the Content panel; `microcosm_bench --paquete` loads them headless.
 - Packs are data only and bounded (8 MB, ids `[a-z0-9_]`). Each registry keeps the source TOML of
   every definition so it can be exported unchanged.
 - **Renamed ids:** `legacy_ids = ["old_id"]` keeps a previous id valid (saved plates, scenes and

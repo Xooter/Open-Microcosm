@@ -1436,7 +1436,7 @@ int App::run() {
     if (options.msaa)
         flags |= FLAG_MSAA_4X_HINT;
     SetConfigFlags(flags);
-    InitWindow(kScreenW, kScreenH, "bio");
+    InitWindow(kScreenW, kScreenH, "Open Microcosm");
     SetExitKey(KEY_NULL); // Esc no cierra el programa
     if (options.fullscreen)
         ToggleBorderlessWindowed();
@@ -1445,7 +1445,7 @@ int App::run() {
     ui::setUiScale(effectiveUiScale());
     ui::initBackend(layoutPath_.c_str(), kFontSize * ui::uiScale());
     ui::applyTheme();
-    // Paquetes de contenido del usuario (<datos>/biogame/packs): antes del catálogo y de la
+    // Paquetes de contenido del usuario (<datos>/openmicrocosm/packs): antes del catálogo y de la
     // primera placa, así sus seres tienen ícono y las placas que los nombran se leen.
     {
         std::vector<std::string> messages;

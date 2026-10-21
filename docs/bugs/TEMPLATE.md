@@ -26,8 +26,8 @@ One or two sentences: what happens and why it matters.
 
 ## Steps to reproduce
 
-1. Exact commands, plate, seed and parameters (`bio_bench --biome pond --seed 66 ...`, a scene
-   file, or the test name: `bio_tests -tc="..."`).
+1. Exact commands, plate, seed and parameters (`microcosm_bench --biome pond --seed 66 ...`, a scene
+   file, or the test name: `microcosm_tests -tc="..."`).
 2. What to look at.
 
 ## Expected behaviour
@@ -40,7 +40,7 @@ What happens instead, with numbers when possible.
 
 ## Evidence
 
-Test output, `bio_bench` lines, checksums, screenshots in `docs/img/bugs/`.
+Test output, `microcosm_bench` lines, checksums, screenshots in `docs/img/bugs/`.
 
 ## Cause
 

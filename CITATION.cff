@@ -1,7 +1,7 @@
 cff-version: 1.2.0
-message: "If you use BioGame in research or teaching, please cite it as below."
+message: "If you use Open Microcosm in research or teaching, please cite it as below."
 type: software
-title: "BioGame: a virtual microscope laboratory of real microscopic life"
+title: "Open Microcosm: a virtual microscope laboratory of real microscopic life"
 abstract: >-
   An open-source simulator of real microscopic life as seen through a laboratory microscope
   (water drops, cell cultures and plant preparations). Cells are soft bodies in a low-Reynolds

@@ -37,7 +37,7 @@ std::string serializePlate(const PlateSpec& spec);
 // mismo) va a `missing`, si se pide; la placa se lee igual con lo que hay.
 bool parsePlate(const std::string& text, PlateSpec& spec, std::vector<std::string>* missing = nullptr);
 
-// Carpeta de placas del usuario: <datos>/biogame/plates.
+// Carpeta de placas del usuario: <datos>/openmicrocosm/plates.
 std::string defaultPlatesDir();
 bool savePlate(const PlateSpec& spec, const std::string& path);
 bool loadPlate(const std::string& path, PlateSpec& spec);

@@ -57,7 +57,7 @@ Sperm kinematics: [sperm and CASA](sperm-and-casa.md).
 
 ## Export
 
-Ctrl+E writes to `<data>/biogame/exports`:
+Ctrl+E writes to `<data>/openmicrocosm/exports`:
 
 - `seriesCsv`: the time series;
 - `runJson`: parameters (the plate with the current environment, metabolism, time scale, the whole

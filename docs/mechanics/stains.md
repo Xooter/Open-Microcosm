@@ -50,7 +50,7 @@ A value of `StainTarget`, its evaluation in the render and, if needed, a datum i
 
 ## User stains
 
-Saved in `<data>/biogame/stains/*.stain` (versioned `key=value` text, `stain_version`).
+Saved in `<data>/openmicrocosm/stains/*.stain` (versioned `key=value` text, `stain_version`).
 
 ## Code
 

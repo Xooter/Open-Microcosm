@@ -27,7 +27,7 @@ used.
 
 ## Measuring
 
-- `bio_bench` runs a fixed drop headless and prints ms/step, the census and a state checksum.
+- `microcosm_bench` runs a fixed drop headless and prints ms/step, the census and a state checksum.
   Options: `--wildlife 3` (~700 cells), `--gpu`, `--biome`, `--seed`, `--steps`, `--threads`,
   `--shot`, `--timelapse <bio_min>`, `--casa`, `--respuesta-funcional <id>`, `--paquete`,
   `--scene`. By default one thread per physical core, like the app (with SMT, 16 threads are slower
@@ -49,7 +49,7 @@ used.
 ## Reference numbers
 
 - Phase 19: 551 cells in 16.1 ms per frame; `limitApproach` 8.5× faster.
-- `bio_bench --wildlife 3`, 300 steps (19/10/2026): puddle 43.1 ms/step (875 cells), pond
+- `microcosm_bench --wildlife 3`, 300 steps (19/10/2026): puddle 43.1 ms/step (875 cells), pond
   46.7 ms/step (927 cells).
 
 ## Pending

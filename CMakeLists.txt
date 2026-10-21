@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.24)
-project(bio VERSION 0.1.0 LANGUAGES C CXX)
+project(open_microcosm VERSION 0.1.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,8 +10,8 @@ option(BIO_NATIVE    "Compilar con -march=native (SIMD de la CPU local)" ON)
 # Distribución: sin native, una base de CPU que corra en cualquier máquina de la última década.
 set(BIO_ARCH "" CACHE STRING "Arquitectura base si BIO_NATIVE=OFF (p. ej. x86-64-v2)")
 option(BIO_PROFILING "Habilitar el profiler Tracy" OFF)
-option(BIO_PROFILE_LITE "Tiempos por PROFILE_SCOPE sin Tracy (bio_bench los imprime)" OFF)
-option(BIO_STRICT_FP "IEEE estricto (sin -ffast-math ni FMA): checksums de bio_bench comparables" OFF)
+option(BIO_PROFILE_LITE "Tiempos por PROFILE_SCOPE sin Tracy (microcosm_bench los imprime)" OFF)
+option(BIO_STRICT_FP "IEEE estricto (sin -ffast-math ni FMA): checksums de microcosm_bench comparables" OFF)
 option(BIO_BUILD_TESTS "Compilar los tests (doctest)" ON)
 
 # ---------------------------------------------------------------------------
@@ -231,7 +231,7 @@ endif()
 # ---------------------------------------------------------------------------
 # Ejecutable
 # ---------------------------------------------------------------------------
-add_executable(bio
+add_executable(microcosm
     src/main.cpp
     src/app/app.cpp
     src/app/tools.cpp
@@ -291,27 +291,27 @@ target_include_directories(imgui_lib SYSTEM PUBLIC ${imgui_SOURCE_DIR} ${implot_
 
 # Fase 19: medición del paso de simulación (ms/paso, desglose, checksum; --gpu como la app) y
 # del dibujo (--render).
-add_executable(bio_bench bench/bio_bench.cpp src/gpu/gpu_substep_solver.cpp
+add_executable(microcosm_bench bench/microcosm_bench.cpp src/gpu/gpu_substep_solver.cpp
     src/render/renderer.cpp src/render/photo.cpp src/render/minerals.cpp src/render/tissue_renderer.cpp src/render/field_overlay.cpp
     src/render/cell_renderer.cpp src/render/instanced_particles.cpp src/render/population_layer.cpp src/render/structure_renderer.cpp
     src/render/triangle_batch.cpp)
-target_link_libraries(bio_bench PRIVATE biosim raylib)
+target_link_libraries(microcosm_bench PRIVATE biosim raylib)
 # Experimentos por lote sin ventana (fase P1): solo biosim.
-add_executable(bio_lote bench/bio_lote.cpp)
-target_link_libraries(bio_lote PRIVATE biosim)
+add_executable(microcosm_batch bench/microcosm_batch.cpp)
+target_link_libraries(microcosm_batch PRIVATE biosim)
 
 # SYSTEM: los warnings de headers de terceros no son nuestros.
-target_link_libraries(bio PRIVATE biosim raylib imgui_lib)
+target_link_libraries(microcosm PRIVATE biosim raylib imgui_lib)
 
 if(ipo_ok)
-    set_property(TARGET biosim bio PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+    set_property(TARGET biosim microcosm PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 endif()
 
 # ---------------------------------------------------------------------------
 # Instalación y paquetes (MVP: distribución). El ejecutable busca assets/ a su lado
 # (core/paths), así que se instala todo en la misma carpeta.
 # ---------------------------------------------------------------------------
-install(TARGETS bio RUNTIME DESTINATION .)
+install(TARGETS microcosm RUNTIME DESTINATION .)
 install(DIRECTORY assets DESTINATION .)
 install(FILES README.md LICENSE DESTINATION . OPTIONAL)
 # Las licencias de lo que va enlazado en el ejecutable (zlib y MIT piden acompañar el aviso).
@@ -341,11 +341,11 @@ if(WIN32 AND CMAKE_CXX_COMPILER_ID MATCHES "GNU")
     # destino.
     target_link_options(bio_options INTERFACE -static -static-libgcc -static-libstdc++)
 endif()
-set(CPACK_PACKAGE_NAME "BioGame")
-set(CPACK_PACKAGE_VENDOR "BioGame")
+set(CPACK_PACKAGE_NAME "OpenMicrocosm")
+set(CPACK_PACKAGE_VENDOR "OpenMicrocosm")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Laboratorio de vida microscópica: simulación y medición")
 set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
-set(CPACK_PACKAGE_FILE_NAME "BioGame-${PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}")
+set(CPACK_PACKAGE_FILE_NAME "OpenMicrocosm-${PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}")
 set(CPACK_INCLUDE_TOPLEVEL_DIRECTORY ON)
 if(WIN32)
     set(CPACK_GENERATOR ZIP)
@@ -360,16 +360,16 @@ include(CPack)
 if(BIO_BUILD_TESTS)
     enable_testing()
     set(BIO_TEST_SOURCES tests/test_main.cpp tests/test_medium.cpp tests/test_cells.cpp tests/test_player.cpp tests/test_lifecycle.cpp tests/test_run.cpp tests/test_genome.cpp tests/test_ecosystem.cpp tests/test_interactions.cpp tests/test_biomes.cpp tests/test_dish.cpp tests/test_minerals.cpp tests/test_algae.cpp tests/test_inspect.cpp tests/test_nutrients.cpp tests/test_plasmodium.cpp tests/test_plate_spec.cpp tests/test_stain.cpp tests/test_measure.cpp tests/test_budget.cpp tests/test_render_lod.cpp tests/test_body_plan.cpp tests/test_parameters.cpp tests/test_scene.cpp tests/test_physiology.cpp tests/test_validation.cpp tests/test_content.cpp tests/test_animal_cells.cpp tests/test_preparations.cpp tests/test_cell_physiology.cpp tests/test_culture.cpp tests/test_program.cpp tests/test_culture_run.cpp tests/test_gause.cpp tests/test_experiment.cpp tests/test_chemostat.cpp tests/test_lessons.cpp tests/test_reagents.cpp tests/test_plate_program.cpp tests/test_timelapse.cpp tests/test_glossary.cpp tests/test_candidates.cpp tests/test_silhouette.cpp tests/test_mechanics.cpp tests/test_sperm.cpp)
-    add_executable(bio_tests ${BIO_TEST_SOURCES})
-    target_link_libraries(bio_tests PRIVATE biosim doctest::doctest)
+    add_executable(microcosm_tests ${BIO_TEST_SOURCES})
+    target_link_libraries(microcosm_tests PRIVATE biosim doctest::doctest)
     # Rápidos (~1 min): la verificación de cada cambio. Largos: ecosistemas, conservación en
     # corridas largas, determinismo con muchos pasos. Validación: contra resultados publicados.
-    add_test(NAME bio_tests_rapidos COMMAND bio_tests --test-suite-exclude=largos,validacion,paquetes)
+    add_test(NAME bio_tests_rapidos COMMAND microcosm_tests --test-suite-exclude=largos,validacion,paquetes)
     set_tests_properties(bio_tests_rapidos PROPERTIES LABELS rapidos)
     # Paquetes de contenido: en su propio proceso (cargar seres de prueba cambia el registro global).
     # Corre junto a los rápidos (ctest -j): con pocos hilos y espera pasiva, así los dos procesos no
     # se pisan girando en las barreras de OpenMP (se volvían 10 veces más lentos).
-    add_test(NAME bio_tests_paquetes COMMAND bio_tests --test-suite=paquetes)
+    add_test(NAME bio_tests_paquetes COMMAND microcosm_tests --test-suite=paquetes)
     set_tests_properties(bio_tests_paquetes PROPERTIES LABELS rapidos
                          ENVIRONMENT "OMP_NUM_THREADS=2;OMP_WAIT_POLICY=passive")
     # Largos y validación: un proceso por caso (el k-ésimo por nombre), para correrlos en paralelo
@@ -394,8 +394,8 @@ if(BIO_BUILD_TESTS)
             else()
                 set(range --first=${k} --last=${k})
             endif()
-            add_test(NAME bio_${suite}_${k} COMMAND bio_tests --test-suite=${suite} --order-by=name ${range})
-            set_tests_properties(bio_${suite}_${k} PROPERTIES LABELS ${suite}
+            add_test(NAME microcosm_${suite}_${k} COMMAND microcosm_tests --test-suite=${suite} --order-by=name ${range})
+            set_tests_properties(microcosm_${suite}_${k} PROPERTIES LABELS ${suite}
                                  ENVIRONMENT "OMP_NUM_THREADS=4;OMP_WAIT_POLICY=passive")
         endforeach()
     endforeach()

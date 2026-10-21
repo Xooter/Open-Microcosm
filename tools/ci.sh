@@ -49,7 +49,7 @@ paso "tests rápidos"
 ctest --test-dir build/release -L rapidos --output-on-failure
 
 paso "prueba larga corta (finitos, balance de masa, memoria)"
-./build/release/bio_bench --threads 4 --wildlife 1 --steps 1200 --warmup 0 --soak 300
+./build/release/microcosm_bench --threads 4 --wildlife 1 --steps 1200 --warmup 0 --soak 300
 
 if [ "$todo" = 1 ]; then
     paso "tests largos y validación"

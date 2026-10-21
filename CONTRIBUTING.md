@@ -1,6 +1,6 @@
-# Contributing to BioGame
+# Contributing to Open Microcosm
 
-Thank you for wanting to help. BioGame is a GPL-3.0-or-later research and teaching tool, and every
+Thank you for wanting to help. Open Microcosm is a GPL-3.0-or-later research and teaching tool, and every
 kind of contribution is welcome: organisms, mechanisms, lessons, validation against published
 experiments, translations, bug reports, documentation and performance work.
 
@@ -25,7 +25,7 @@ defect, in [`docs/bugs/`](docs/bugs/README.md)) until the real mechanism is foun
 | Add a lesson, plate, medium or reagent | A TOML file in its folder ([formats](docs/content/README.md)); lessons carry a tested `solution`. |
 | Validate against a published experiment | A test labelled `validacion` and its entry in [`docs/validation/`](docs/validation/README.md). |
 | Translate the interface | `assets/lang/<code>.txt` (`key<TAB>translation`), checked with `tools/claves_tr.py --check`. |
-| Distribute your own content | A content pack (folder or `.biopack`) in `<data>/biogame/packs/`; no C++ needed. |
+| Distribute your own content | A content pack (folder or `.biopack`) in `<data>/openmicrocosm/packs/`; no C++ needed. |
 
 ## Workflow
 
@@ -42,7 +42,7 @@ defect, in [`docs/bugs/`](docs/bugs/README.md)) until the real mechanism is foun
    `AGENTS.md`, no warnings with `-Wall -Wextra -Wpedantic`.
 4. Respect determinism and reproducibility: randomness only from `Rng` with a new stream for a new
    mechanism; every change to the world through an intervention; no allocations in hot loops.
-5. An optimisation must not change results: compare `bio_bench` checksums of the old and new
+5. An optimisation must not change results: compare `microcosm_bench` checksums of the old and new
    versions built with `-DBIO_STRICT_FP=ON`.
 6. Update the documentation in the same change (see the policy in `AGENTS.md`). `tools/ci.sh` runs
    `tools/gen_being_docs.py --check` and `tools/check_doc_links.py`.

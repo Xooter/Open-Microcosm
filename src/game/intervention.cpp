@@ -156,7 +156,7 @@ bool applyIntervention(World& world, const Intervention& iv) {
         return true;
     case InterventionKind::Fix: world.fix(); return true;
     case InterventionKind::Focus: world.setFocus(iv.pos, {iv.v[0], iv.v[1]}); return true;
-    case InterventionKind::Engine: return true; // el motor lo elige quien reproduce (App, bio_bench)
+    case InterventionKind::Engine: return true; // el motor lo elige quien reproduce (App, microcosm_bench)
     case InterventionKind::Count: break;
     }
     return false;

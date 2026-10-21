@@ -34,7 +34,7 @@ The formatted value rows are in Spanish.
 
 ## Evidence
 
-Run with `BIO_TR_FALTANTES=missing.txt ./build/release/bio` and open a card: the value strings are
+Run with `BIO_TR_FALTANTES=missing.txt ./build/release/microcosm` and open a card: the value strings are
 not listed as keys because they never go through `tr`.
 
 ## Cause

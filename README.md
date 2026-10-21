@@ -1,4 +1,4 @@
-<h1 align="center">BioGame</h1>
+<h1 align="center">Open Microcosm</h1>
 
 <p align="center">
   <strong>An open-source virtual microscope laboratory where real microscopic life emerges from physics.</strong>
@@ -12,10 +12,10 @@
 </p>
 
 <p align="center">
-  <img src="docs/img/demo.gif" alt="A drop of pond water in BioGame: ciliates, algae and bacteria swimming under a bright-field microscope" width="800">
+  <img src="docs/img/demo.gif" alt="A drop of pond water in Open Microcosm: ciliates, algae and bacteria swimming under a bright-field microscope" width="800">
 </p>
 
-BioGame simulates microscopic life **as it is seen through a laboratory microscope**: drops of water
+Open Microcosm simulates microscopic life **as it is seen through a laboratory microscope**: drops of water
 with their microorganisms, **cell cultures** (human and animal cells on a dish) and **plant
 preparations** (tissues with cell walls). Cells are gelatinous, semi-transparent bodies with visible
 organelles. They swim or crawl, eat, grow, divide, conjugate, die and lyse, and **all of it emerges
@@ -25,7 +25,7 @@ It is a **research and teaching tool**, not a game: there is no score and no vic
 plate, observe it and intervene.
 
 - **Research:** complex, reproducible and measurable simulations (time series, mass budgets, export
-  with provenance, replicates), also **headless** (`bio_bench`, `bio_lote`).
+  with provenance, replicates), also **headless** (`microcosm_bench`, `microcosm_batch`).
 - **Teaching:** show students what happens, with the microscope image, inspector cards that explain
   what each thing is and why, and guided lessons.
 
@@ -114,11 +114,11 @@ sudo pacman -S base-devel cmake ninja git libx11 libxrandr libxinerama libxcurso
 Then:
 
 ```sh
-git clone <repository-url> bio
-cd bio
+git clone <repository-url> open-microcosm
+cd open-microcosm
 cmake --preset release
 cmake --build --preset release
-./build/release/bio
+./build/release/microcosm
 ```
 
 ### Windows
@@ -129,7 +129,7 @@ The Windows package is **cross-compiled from Linux** with MinGW-w64 (this is the
 sudo apt install mingw-w64          # on the Linux build machine
 cmake --preset windows
 cmake --build --preset windows
-cd build/windows && cpack           # BioGame-<version>-Windows.zip
+cd build/windows && cpack           # OpenMicrocosm-<version>-Windows.zip
 ```
 
 Building natively on Windows uses the same compiler through [MSYS2](https://www.msys2.org/). In the
@@ -137,11 +137,11 @@ Building natively on Windows uses the same compiler through [MSYS2](https://www.
 
 ```sh
 pacman -S --needed git mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja
-git clone <repository-url> bio
-cd bio
+git clone <repository-url> open-microcosm
+cd open-microcosm
 cmake --preset release
 cmake --build --preset release
-./build/release/bio.exe
+./build/release/microcosm.exe
 ```
 
 MSVC is not tested.
@@ -152,7 +152,7 @@ macOS has **not been tested** by the maintainers, who have no Mac to test on. It
 best-effort basis by the community: reports and pull requests are very welcome. Known obstacles:
 
 - **OpenMP:** Apple clang does not ship it. Use Homebrew's LLVM, or Apple clang with `libomp`.
-- **OpenGL:** macOS stops at OpenGL 4.1, while BioGame requests a 4.3 context for its GPU compute
+- **OpenGL:** macOS stops at OpenGL 4.1, while Open Microcosm requests a 4.3 context for its GPU compute
   shaders (`OPENGL_VERSION` in `CMakeLists.txt`). Without compute shaders the CPU engine is used, but
   the window may fail to open until a 3.3 fallback is added.
 - **`-march=native`:** may not be accepted on Apple Silicon; configure with `-DBIO_NATIVE=OFF`.
@@ -161,13 +161,13 @@ Expected steps:
 
 ```sh
 brew install cmake ninja git llvm libomp
-git clone <repository-url> bio
-cd bio
+git clone <repository-url> open-microcosm
+cd open-microcosm
 cmake --preset release -DBIO_NATIVE=OFF \
     -DCMAKE_C_COMPILER="$(brew --prefix llvm)/bin/clang" \
     -DCMAKE_CXX_COMPILER="$(brew --prefix llvm)/bin/clang++"
 cmake --build --preset release
-./build/release/bio
+./build/release/microcosm
 ```
 
 ### Build presets
@@ -177,11 +177,11 @@ cmake --build --preset release
 | `release` | Optimised build for your machine (`-march=native`, `-ffast-math`). |
 | `debug` | Debug build. |
 | `profile` | RelWithDebInfo with the Tracy profiler. |
-| `lite` | Per-scope timings without Tracy (`bio_bench` prints them). |
+| `lite` | Per-scope timings without Tracy (`microcosm_bench` prints them). |
 | `dist` | Linux distribution build (x86-64-v2, static runtime); `cpack` builds the `.tar.gz`. `tools/paquete-linux.sh` builds it in a Docker container with glibc 2.35. |
 | `windows` | Cross-compiled Windows build with MinGW-w64. |
 
-`-DBIO_STRICT_FP=ON` disables `-ffast-math` so that `bio_bench` checksums of two versions can be
+`-DBIO_STRICT_FP=ON` disables `-ffast-math` so that `microcosm_bench` checksums of two versions can be
 compared.
 
 ## Usage
@@ -203,15 +203,15 @@ and create it with **Create plate** (Ctrl+N). Environment and nutrients change l
 | Save a scene (plate + interventions) | Plate panel > *Save scene* |
 
 The interface is in Spanish and English (Preferences). User data lives in the platform's data folder
-under `biogame/` (plates, scenes, cultures, experiments, stains, photos, exports, packs).
+under `openmicrocosm/` (plates, scenes, cultures, experiments, stains, photos, exports, packs).
 
 ### Headless
 
 ```sh
-./build/release/bio_bench --biome pond --seed 66 --steps 600    # ms/step, census, checksum
-./build/release/bio_bench --timelapse 10 --steps 36000          # a photo every 10 biological minutes
-./build/release/bio_bench --casa                                # sperm kinematics
-./build/release/bio_lote experiment.toml --salida results/      # replicates and factors
+./build/release/microcosm_bench --biome pond --seed 66 --steps 600    # ms/step, census, checksum
+./build/release/microcosm_bench --timelapse 10 --steps 36000          # a photo every 10 biological minutes
+./build/release/microcosm_bench --casa                                # sperm kinematics
+./build/release/microcosm_batch experiment.toml --salida results/      # replicates and factors
 ```
 
 ## Testing
@@ -259,16 +259,16 @@ Saying in the pull request that an AI helped is appreciated but optional.
 
 ## Citing
 
-If you use BioGame in research or teaching, please cite it: see [`CITATION.cff`](CITATION.cff) (GitHub
+If you use Open Microcosm in research or teaching, please cite it: see [`CITATION.cff`](CITATION.cff) (GitHub
 shows a "Cite this repository" button).
 
 ## License
 
-BioGame is free software: you can redistribute it and/or modify it under the terms of the **GNU
+Open Microcosm is free software: you can redistribute it and/or modify it under the terms of the **GNU
 General Public License, version 3 or (at your option) any later version** (`GPL-3.0-or-later`). The
 full text is in [`LICENSE`](LICENSE).
 
-This is a **copyleft** licence: anyone who distributes BioGame or a modified version must offer the
+This is a **copyleft** licence: anyone who distributes Open Microcosm or a modified version must offer the
 complete corresponding source code under the same licence. Contributions are accepted under the same
 terms.
 
@@ -277,5 +277,5 @@ executable: raylib and GLFW (zlib), Dear ImGui, ImPlot, EnTT and toml++ (MIT), d
 (BSD-3-Clause, only in the `profile` preset) and the Roboto font (Apache 2.0). A new dependency or
 asset must have a GPLv3-compatible licence.
 
-BioGame is distributed in the hope that it will be useful, but **without any warranty**; it is a
+Open Microcosm is distributed in the hope that it will be useful, but **without any warranty**; it is a
 research and teaching simulator and must not be used for medical diagnosis.

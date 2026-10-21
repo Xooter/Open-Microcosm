@@ -1,4 +1,4 @@
-# BioGame — Roadmap
+# Open Microcosm — Roadmap
 
 Status as of 17/10/2026. This document collects in one place what used to be spread across the old
 roadmap, the per-phase plans, the validation notes, the idea list, the gameplay document and the
@@ -75,7 +75,7 @@ with `tools/migrate_content.py`.
 
 Individual-based well-mixed culture with plate ↔ culture cross-calibration; programs (ramps, cycles,
 events) in culture and plate; Cultures panel with sample drop; Gause (plateaus, exclusion,
-*Didinium*); replicates and batches (`bio_lote`, Experiment panel, 95 % CI); chemostat (Monod and
+*Didinium*); replicates and batches (`microcosm_batch`, Experiment panel, 95 % CI); chemostat (Monod and
 Tilman with complete exclusion) and perfusion; seeding by density, passages and serial dilutions;
 English; lessons as protocols with a tested solution (Jennings, Tilman, Gause, plasmolysis, osmotic
 fragility, semen analysis); reagents with pharmacodynamics and an emergent MIC; photo and time-lapse
@@ -195,7 +195,7 @@ What `Culture::supports` still rejects.
 
 ### Phase H — Headless core and bindings (rest of phase 18)
 
-- ✅ `biosim` without raylib, `bio_bench`, `bio_lote`.
+- ✅ `biosim` without raylib, `microcosm_bench`, `microcosm_batch`.
 - ⬜ Minimal C or Python interface (propose the bindings library before adding it).
 - **Done when:** a notebook sweeps a parameter over N runs and plots the result.
 

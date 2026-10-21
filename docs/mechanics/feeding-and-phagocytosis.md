@@ -27,7 +27,7 @@ swim across): the mouth only swallows those passing at its height (the view is 2
 not); an amoeba, those at the height of its body and those in the biofilm. Attached bacteria
 (biofilm) cannot be reached by filter feeders. The bacterial capture radius of the mouth
 (`bacteriaCaptureRadius` = 75 µm) is **calibrated** with the measured clearance
-(`bio_bench --respuesta-funcional paramecium`): the plate and the culture must eat the same.
+(`microcosm_bench --respuesta-funcional paramecium`): the plate and the culture must eat the same.
 
 A species with a measured `max_ingestion` eats at that rate, on the plate and in the culture.
 Feeding of many mouths uses a bacteria grid; eaten bacteria are marked and removed together at the

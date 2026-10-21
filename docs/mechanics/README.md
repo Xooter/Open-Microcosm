@@ -1,6 +1,6 @@
 # Mechanics
 
-One document per important mechanism of BioGame. Each one explains **what is simulated**, the
+One document per important mechanism of Open Microcosm. Each one explains **what is simulated**, the
 **real biology or physics** behind it (with sources), the **data** that parametrise it, **where the
 code lives**, which **tests** cover it and its **known limitations**.
 
@@ -16,7 +16,7 @@ policy in `AGENTS.md`). A new mechanism gets a new file and a line in this index
 | [Chemistry and light](chemistry-and-light.md) | Dissolved fields, diffusion and advection, carbonate system and pH, gases, Beer–Lambert light. |
 | [Soft bodies](soft-bodies.md) | Inertia-free XPBD, constraints, contacts, plastic membrane, topology. |
 | [Shape changes](shape-changes.md) | Silhouettes and processes, rest shapes that change in life (contraction, metaboly, semicells, neck, somersaults). |
-| [Performance and GPU](performance-and-gpu.md) | LOD, GPU solver, profiling, `bio_bench`, performance rules. |
+| [Performance and GPU](performance-and-gpu.md) | LOD, GPU solver, profiling, `microcosm_bench`, performance rules. |
 
 ## Cell biology
 
@@ -61,7 +61,7 @@ policy in `AGENTS.md`). A new mechanism gets a new file and a line in this index
 |---|---|
 | [Well-mixed culture](well-mixed-culture.md) | Individual-based culture, encounter theory, chemostat, passages, sample drop. |
 | [Programs](programs.md) | Ramps, cycles, sines and events by laboratory time. |
-| [Batch experiments](batch-experiments.md) | Replicates and factors, `bio_lote`, statistics, provenance. |
+| [Batch experiments](batch-experiments.md) | Replicates and factors, `microcosm_batch`, statistics, provenance. |
 | [Reagents](reagents.md) | Pharmacodynamic antibiotics, emergent MIC, signal reagents. |
 | [Stains](stains.md) | Rule-based stains, Gram retention, vital and fixing stains, preview. |
 | [Lessons, glossary and notes](lessons-glossary-notes.md) | Protocols with steps and tested solutions, glossary chips, anchored notes. |

@@ -1,6 +1,6 @@
 # Prepared plates and tissues
 
-Besides the water drop, BioGame offers plate types like a real laboratory (`game/prepared`; data in
+Besides the water drop, Open Microcosm offers plate types like a real laboratory (`game/prepared`; data in
 `media/`, `vessels/` and `plates/`, see [plates](../content/plates.md)).
 
 ## Cell culture

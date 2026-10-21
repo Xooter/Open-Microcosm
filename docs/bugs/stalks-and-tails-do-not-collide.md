@@ -45,7 +45,7 @@ tail is a line of forces, not a body.
 ## Proposed fix
 
 Add stalk nodes and tail segments as point–edge contact sources (CPU and `solve.comp` on the GPU),
-keeping determinism. Measure the cost with `bio_bench`.
+keeping determinism. Measure the cost with `microcosm_bench`.
 
 ## Workaround
 

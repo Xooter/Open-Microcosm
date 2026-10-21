@@ -377,7 +377,7 @@ std::string experimentSummaryCsv(const ExperimentResult& r) {
 
 std::string experimentJson(const ExperimentResult& r) {
     std::ostringstream j;
-    j << "{\n  \"formato\": \"biogame-experimento\",\n  \"version\": 1,\n";
+    j << "{\n  \"formato\": \"openmicrocosm-experimento\",\n  \"version\": 1,\n";
     j << "  \"nombre\": " << quoted(r.spec.name) << ",\n";
     j << "  \"tipo\": \"" << (r.spec.kind == ExperimentSpec::Kind::Culture ? "culture" : "plate") << "\",\n";
     j << "  \"procedencia\": {\"version_programa\": " << quoted(BIO_VERSION) << ", \"commit\": " << quoted(BIO_GIT)

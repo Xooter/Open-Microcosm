@@ -22,7 +22,7 @@ result is not reproduced.
 ## Steps to reproduce
 
 1. `ctest --test-dir build/release -L validacion -R gause` or
-   `./build/release/bio_tests -tc="*aurelia*"`.
+   `./build/release/microcosm_tests -tc="*aurelia*"`.
 2. The test is marked `should_fail`: it "passes" while the bug exists and fails when it is fixed.
 
 ## Expected behaviour

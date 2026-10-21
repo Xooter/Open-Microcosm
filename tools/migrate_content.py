@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Migra un paquete de contenido de BioGame al formato de carpetas.
+"""Migra un paquete de contenido de Open Microcosm al formato de carpetas.
 
 El formato viejo es un archivo por tipo (seres.toml, biomas.toml...) o un .biopack con todo
 adentro. El nuevo es `pack.toml` y una carpeta por tipo con un archivo por definición

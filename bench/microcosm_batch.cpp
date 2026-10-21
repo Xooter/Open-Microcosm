@@ -1,8 +1,8 @@
-// bio_lote: corre un experimento por lote sin ventana (fase P1): réplicas con seeds distintas y
+// microcosm_batch: corre un experimento por lote sin ventana (fase P1): réplicas con seeds distintas y
 // factores barridos, en paralelo, y guarda el formato largo, el resumen (media, DE, IC 95 %) y el
 // JSON con la procedencia.
 //
-//   bio_lote experimento.toml [--salida carpeta] [--hilos N] [--replicas N] [--paquete ruta]
+//   microcosm_batch experimento.toml [--salida carpeta] [--hilos N] [--replicas N] [--paquete ruta]
 #include "game/content.hpp"
 #include "game/experiment.hpp"
 #include "game/export.hpp"
@@ -33,12 +33,12 @@ int main(int argc, char** argv) {
         else if (file.empty() && k.rfind("--", 0) != 0)
             file = k;
         else {
-            std::fprintf(stderr, "uso: bio_lote experimento.toml [--salida carpeta] [--hilos N] [--replicas N] [--paquete ruta]\n");
+            std::fprintf(stderr, "uso: microcosm_batch experimento.toml [--salida carpeta] [--hilos N] [--replicas N] [--paquete ruta]\n");
             return 1;
         }
     }
     if (file.empty()) {
-        std::fprintf(stderr, "uso: bio_lote experimento.toml [--salida carpeta] [--hilos N] [--replicas N]\n");
+        std::fprintf(stderr, "uso: microcosm_batch experimento.toml [--salida carpeta] [--hilos N] [--replicas N]\n");
         return 1;
     }
     for (const std::string& pack : packs) {

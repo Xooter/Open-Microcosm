@@ -122,7 +122,7 @@ bool readManifest(const toml::table& doc, const std::string& where, PackInfo& p,
     if (p.license.empty())
         messages.push_back(where + ": el paquete no declara su licencia");
     if (!minimum.empty() && versionNumbers(minimum) > versionNumbers(BIO_VERSION)) {
-        messages.push_back(where + ": el paquete '" + p.id + "' necesita BioGame " + minimum + " o más nuevo (este es " +
+        messages.push_back(where + ": el paquete '" + p.id + "' necesita Open Microcosm " + minimum + " o más nuevo (este es " +
                            BIO_VERSION + ")");
         return false;
     }
@@ -455,7 +455,7 @@ std::string biopackText(const BiopackSpec& spec, std::vector<std::string>& messa
         return {};
     }
     std::ostringstream out;
-    out << "# Paquete de contenido de BioGame (.biopack): solo datos. Se importa desde el panel Contenido.\n";
+    out << "# Paquete de contenido de Open Microcosm (.biopack): solo datos. Se importa desde el panel Contenido.\n";
     toml::table manifest;
     toml::table head;
     head.insert("id", spec.id);

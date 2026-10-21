@@ -39,9 +39,9 @@ std::string runJson(const World& world, const Run& run, const PlateSpec& plate, 
 // Ficha de cada especie (los datos de `SpeciesInfo` con sus unidades) como JSON.
 std::string speciesJson();
 
-// Carpeta de exportaciones: <datos>/biogame/exports.
+// Carpeta de exportaciones: <datos>/openmicrocosm/exports.
 std::string defaultExportsDir();
-// Carpeta de las fotos y los time-lapses: <datos>/biogame/photos.
+// Carpeta de las fotos y los time-lapses: <datos>/openmicrocosm/photos.
 std::string defaultPhotosDir();
 // Escribe `text` en `path` creando la carpeta. false si falla.
 bool writeTextFile(const std::string& path, const std::string& text);

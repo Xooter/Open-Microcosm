@@ -1,10 +1,10 @@
-# Paquete de fábrica de BioGame (fase 20.0). Un paquete es una carpeta con archivos TOML (o un
+# Paquete de fábrica de Open Microcosm (fase 20.0). Un paquete es una carpeta con archivos TOML (o un
 # solo archivo .biopack con todo adentro): seres, minerales, medios, biomas y placas preparadas.
 [pack]
 id = "base"
-name = "BioGame: contenido de fábrica"
+name = "Open Microcosm: contenido de fábrica"
 version = "1"
-author = "BioGame"
+author = "Open Microcosm"
 license = "GPL-3.0-or-later"
 
 # Orden de carga de cada carpeta (los índices de los seres, biomas y minerales

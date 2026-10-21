@@ -1,6 +1,6 @@
-# BioGame documentation
+# Open Microcosm documentation
 
-All documentation is in English. Start with the project [`README.md`](../README.md) for what BioGame
+All documentation is in English. Start with the project [`README.md`](../README.md) for what Open Microcosm
 is and how to build it, and with [`AGENTS.md`](../AGENTS.md) for the architecture, the rules and
 the documentation policy that every contribution follows.
 

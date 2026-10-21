@@ -77,7 +77,7 @@ TEST_CASE("opciones: van y vuelven, con la vista de modelo y la herramienta") {
     o.renderScale = 0.75f;
     o.uiScale = 1.5f;
     o.opticFlaws = false;
-    const std::string path = (std::filesystem::temp_directory_path() / "biogame_test_options.txt").string();
+    const std::string path = (std::filesystem::temp_directory_path() / "openmicrocosm_test_options.txt").string();
     REQUIRE(saveOptions(o, path));
     const Options back = loadOptions(path);
     std::filesystem::remove(path);

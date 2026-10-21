@@ -1,4 +1,4 @@
-// bio_bench: mide el costo de World::step sin ventana, con una gota fija (fase 19).
+// microcosm_bench: mide el costo de World::step sin ventana, con una gota fija (fase 19).
 // Imprime ms/paso, el censo y un checksum del estado: una optimización "exacta" no debe
 // cambiarlo (verificarlo con -DBIO_STRICT_FP=ON: con -ffast-math cualquier cambio de código puede
 // reasociar operaciones y alterar los últimos bits). Con -DBIO_PROFILE_LITE=ON (preset `lite`)
@@ -6,7 +6,7 @@
 // como la app. Con --render dibuja cada paso medido en una textura de 1600 × 900 (la placa entera,
 // o --zoom Z) y mide el dibujo en la GPU real (esperando con glFinish).
 //
-//   bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] [--warmup N] [--threads N]
+//   microcosm_bench [--biome N] [--seed S] [--wildlife W] [--steps N] [--warmup N] [--threads N]
 //             [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate]
 //             [--paquete ruta] [--soak N] [--respuesta-funcional id_del_ser]
 //             [--timelapse minutos_bio [--timelapse-dir carpeta]]
@@ -169,7 +169,7 @@ bool parse(int argc, char** argv, Args& a) {
         else if (k == "--threads" && hasValue)
             a.threads = std::atoi(argv[++i]);
         else {
-            std::fprintf(stderr, "uso: bio_bench [--biome N] [--seed S] [--wildlife W] [--steps N] "
+            std::fprintf(stderr, "uso: microcosm_bench [--biome N] [--seed S] [--wildlife W] [--steps N] "
                                  "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate] [--paquete ruta] [--soak N] [--shot cuadro.png] [--casa] [--timelapse min_bio] [--timelapse-dir carpeta]\n");
             return false;
         }
@@ -255,7 +255,7 @@ int main(int argc, char** argv) {
     if (window) {
         SetTraceLogLevel(LOG_WARNING);
         SetConfigFlags(FLAG_WINDOW_HIDDEN);
-        InitWindow(64, 64, "bio_bench");
+        InitWindow(64, 64, "microcosm_bench");
     }
     if (a.gpu) {
         if (!gpu.init()) {

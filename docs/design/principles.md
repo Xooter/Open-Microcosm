@@ -2,10 +2,10 @@
 
 The design decisions that still hold. They come from the original gameplay document, whose
 "game" choices (roguelite run, victory by biomass, encyclopedia) were discarded on 15/10/2026 and
-17/10/2026, when BioGame became a laboratory. What was discarded is listed in the
+17/10/2026, when Open Microcosm became a laboratory. What was discarded is listed in the
 [roadmap](../roadmap.md#3-discarded-).
 
-## What BioGame is
+## What Open Microcosm is
 
 A **sandbox laboratory**: there is no run, score or victory. The user prepares a plate, observes it
 and intervenes. Every behaviour emerges from a physical particle simulation, not from animations.

@@ -122,7 +122,7 @@ threshold ESTIMATED) and is compared with the MIC the same work measured by dilu
 
 ## Plate ↔ culture cross-calibration (phase P1, step 2)
 
-`measureFunctionalResponse` (`game/calibration`, `bio_bench --respuesta-funcional paramecium`)
+`measureFunctionalResponse` (`game/calibration`, `microcosm_bench --respuesta-funcional paramecium`)
 measures how many bacteria *Paramecium* eats on a 0.86 mm plate at 20 °C and compares it with the
 culture's functional response (type II with the data). Three validation tests (~10⁵, ~10⁶ and ~10⁹
 bacteria/mL) require agreement within a factor of 2.
@@ -145,7 +145,7 @@ What showed up when measuring:
    and detritus and **calibrated** with that functional response: `bacteriaCaptureRadius` = 75 µm
    (the oral current drags the water around the body).
 
-Result (`bio_bench --respuesta-funcional paramecium`):
+Result (`microcosm_bench --respuesta-funcional paramecium`):
 
 | bacteria/mL | plate [1/h] | culture [1/h] | ratio |
 |---|---|---|---|
@@ -210,7 +210,7 @@ measured at several densities (today there is a single published point).
    as mass: ~1 % error). With the mean almost zero the factor was ~10⁶, the sign alternated every
    step and after 220 steps phosphate was NaN (with NaN uptake never limits). Now it touches only
    the water, clips negatives and, if no distribution remains, fills evenly.
-10. **Filament joints** (FIXED, 15/10/2026): the 0.7–0.8 of `bio_bench` was not from the solver. A
+10. **Filament joints** (FIXED, 15/10/2026): the 0.7–0.8 of `microcosm_bench` was not from the solver. A
     filament that grew longer than its room buckled by bending **at the joints**: they were two
     links near the rounded tip (a ~5 µm pin that rotated like a hinge) and fragmentation cut loose
     links (half walls). Now the joint is the entire cross wall (5 links across and 2 diagonal) and
@@ -297,7 +297,7 @@ batches:
 - ***Closterium*** and ***Ceratium***: without `taper`, which narrowed only the posterior pole and
   crossed the ring when dividing. *Closterium* is now a crescent silhouette with `bend` and both
   tips tapered, and divides with the silhouette.
-- **Performance** (`bio_bench --wildlife 3`, 300 steps, vs 52ca0f0): puddle 31.7 → 43.1 ms/step
+- **Performance** (`microcosm_bench --wildlife 3`, 300 steps, vs 52ca0f0): puddle 31.7 → 43.1 ms/step
   (+36 %, 848 → 875 cells), pond 40.6 → 46.7 ms/step (+15 %). Large new beings (*Chaos*,
   *Micrasterias*, *Stylonychia*, *Frontonia*, *Closterium*, *Blepharisma*) have long membrane rings;
   their weights in the default drops were lowered afterwards.

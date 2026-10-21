@@ -64,7 +64,7 @@ bool savePhoto(Renderer& renderer, const World& world, const Camera2D& view, Ove
     char date[32];
     const std::time_t now = std::time(nullptr);
     std::strftime(date, sizeof date, "%Y-%m-%dT%H:%M:%S", std::localtime(&now));
-    json << "{\n  \"formato\": \"biogame-foto\",\n  \"fecha\": " << quoted(date) << ",\n  \"imagen\": " << quoted(pngPath)
+    json << "{\n  \"formato\": \"openmicrocosm-foto\",\n  \"fecha\": " << quoted(date) << ",\n  \"imagen\": " << quoted(pngPath)
          << ",\n  \"ancho_campo\": {\"valor\": " << number(width * umPerPixel) << ", \"unidad\": \"µm\"},\n"
          << "  \"um_por_pixel\": " << number(umPerPixel) << ",\n  \"barra_de_escala\": {\"valor\": " << number(bar)
          << ", \"unidad\": \"µm\"},\n  \"tiempo_biologico_h\": " << number(hours) << ",\n  \"tiempo_simulado_s\": "

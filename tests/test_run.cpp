@@ -101,7 +101,7 @@ TEST_CASE("las hijas en piloto automático nadan y comen solas" * doctest::test_
 }
 
 TEST_CASE("el registro de la enciclopedia se guarda y se carga") {
-    const auto path = (std::filesystem::temp_directory_path() / "biogame_test_progress.txt").string();
+    const auto path = (std::filesystem::temp_directory_path() / "openmicrocosm_test_progress.txt").string();
     std::remove(path.c_str());
     Progress p = loadProgress(path);
     CHECK(p.seenSpecies == 0);

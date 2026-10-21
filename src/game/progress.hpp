@@ -20,7 +20,7 @@ struct Progress {
     std::uint32_t biomesPlayed = 0;
 };
 
-// Ruta por defecto: $XDG_DATA_HOME/biogame/progress.txt (o ~/.local/share/biogame/...).
+// Ruta por defecto: $XDG_DATA_HOME/openmicrocosm/progress.txt (o ~/.local/share/openmicrocosm/...).
 std::string defaultProgressPath();
 Progress loadProgress(const std::string& path);
 bool saveProgress(const Progress& progress, const std::string& path);
