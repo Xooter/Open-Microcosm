@@ -3,6 +3,7 @@
 
 #include "bio/body_plan.hpp"
 #include "bio/physiology.hpp"
+#include "core/localize.hpp"
 #include "core/profiling.hpp"
 #include "core/units.hpp"
 #include "game/organism_text.hpp"
@@ -25,14 +26,18 @@ __attribute__((format(gnu_printf, 1, 2))) // con __USE_MINGW_ANSI_STDIO, printf 
 __attribute__((format(printf, 1, 2)))
 #endif
 #endif
+// El formato se traduce entero (claves_tr --check vigila que la traducción conserve los
+// especificadores); los fragmentos que van por %s, con L().
 std::string fmt(const char* f, ...) {
     char buf[320];
     va_list args;
     va_start(args, f);
-    std::vsnprintf(buf, sizeof buf, f, args);
+    std::vsnprintf(buf, sizeof buf, localize(f), args);
     va_end(args);
     return buf;
 }
+
+const char* L(const char* text) { return localize(text); }
 
 InspectSection& section(Inspection& ins, const char* title) {
     ins.sections.push_back({title, {}});
@@ -95,8 +100,8 @@ void addStructures(Inspection& ins, const BodyPlan& plan, const char* title = "E
         }
         // Lo simulado tiene estado propio; lo declarado existe en el organismo real pero el modelo
         // lo ubica sin simularlo.
-        const std::string seen = std::string(st.source == StructureSource::Simulated ? "simulada; " : "declarada; ") +
-                                 (visibleInBrightfield(st) ? "se ve al microscopio" : "solo en la vista de modelo");
+        const std::string seen = std::string(L(st.source == StructureSource::Simulated ? "simulada; " : "declarada; ")) +
+                                 L(visibleInBrightfield(st) ? "se ve al microscopio" : "solo en la vista de modelo");
         std::string value = size.empty() ? seen : size + ", " + seen;
         if (st.count > 1)
             value = fmt("%d, ", st.count) + value;
@@ -112,7 +117,7 @@ std::string speciesNames(const SpeciesSet& mask) {
         if (mask.test(static_cast<std::size_t>(k))) {
             if (!out.empty())
                 out += ", ";
-            out += speciesInfo(static_cast<SpeciesId>(k)).name;
+            out += L(speciesInfo(static_cast<SpeciesId>(k)).name);
         }
     return out;
 }
@@ -222,7 +227,7 @@ Inspection inspectGone(const World& w, entt::entity e) {
         add(s, "Causa", "desconocida (solo se recuerdan las ultimas 64 muertes)");
         return ins;
     }
-    ins.title = fmt("%s (muerta)", speciesInfo(d->species).name);
+    ins.title = fmt("%s (muerta)", L(speciesInfo(d->species).name));
     ins.subtitle = kindName(speciesInfo(d->species));
     ins.blurb = speciesBlurb(d->species);
     ins.at = d->at;
@@ -256,7 +261,7 @@ Inspection inspectCell(const World& w, entt::entity e) {
     ins.title = info.name;
     const bool isPlayer = e == w.player();
     const bool mine = lin && lin->run > 0 && lin->run == w.run();
-    ins.subtitle = fmt("%s - %s, generacion %u", kindName(info), isPlayer ? "tu celula" : mine ? "tu linaje" : "silvestre",
+    ins.subtitle = fmt("%s - %s, generacion %u", L(kindName(info)), L(isPlayer ? "tu celula" : mine ? "tu linaje" : "silvestre"),
                        lin ? lin->generation : 0u);
     ins.blurb = speciesBlurb(sid);
     ins.hasGenome = her && loco;
@@ -267,7 +272,7 @@ Inspection inspectCell(const World& w, entt::entity e) {
     if (meta && meta->starving)
         now("en ayuno: consume sus reservas (autofagia)");
     if (const Dividing* dv = reg.try_get<Dividing>(e))
-        now(fmt("%s (%.0f%%)", info.filament ? "formando un tabique para dividirse" : "dividiendose: el surco estrangula la celula",
+        now(fmt("%s (%.0f%%)", L(info.filament ? "formando un tabique para dividirse" : "dividiendose: el surco estrangula la celula"),
                 100.0f * std::min(1.0f, dv->progress)));
     if (const Conjugating* cj = reg.try_get<Conjugating>(e))
         now(fmt("conjugando con otra celula (%.0f%%): intercambian material genetico", 100.0f * cj->progress));
@@ -297,7 +302,7 @@ Inspection inspectCell(const World& w, entt::entity e) {
         }
     }
     if (const Morph* mo = reg.try_get<Morph>(e); mo && info.morph.present && mo->progress > 0.0f)
-        now(fmt("forma inducida: %s (%.0f%%)", info.morph.name.c_str(), 100.0f * mo->progress));
+        now(fmt("forma inducida: %s (%.0f%%)", L(info.morph.name.c_str()), 100.0f * mo->progress));
     if (const Paralyzed* par = reg.try_get<Paralyzed>(e))
         now(fmt("paralizada por toxicistos (%.1f h bio)", par->hours));
     if (reg.all_of<Discharge>(e))
@@ -328,11 +333,11 @@ Inspection inspectCell(const World& w, entt::entity e) {
                 : ac->contact >= 0.5f && ai.contactProliferation ? "quiescente (G0): rodeada de vecinas (inhibicion por contacto)"
                                                                    : "quiescente (G0)");
         else
-            now(fmt("ciclo celular: fase %s (%.1f h en la fase)", asciiFold(cellPhaseName(ac->phase)).c_str(),
+            now(fmt("ciclo celular: fase %s (%.1f h en la fase)", L(asciiFold(cellPhaseName(ac->phase)).c_str()),
                     ac->phaseHours * w.bioTimeScale() / w.bioScale())); // horas a su temperatura (sin el Q10)
         if (ac->morphotype < info.morphotypes.size())
-            now(fmt("forma: %s%s", info.morphotypes[ac->morphotype].name.c_str(),
-                    info.morphotypes[ac->morphotype].normal ? " (normal segun los criterios estrictos)" : ""));
+            now(fmt("forma: %s%s", L(info.morphotypes[ac->morphotype].name.c_str()),
+                    info.morphotypes[ac->morphotype].normal ? L(" (normal segun los criterios estrictos)") : ""));
         if (info.capacitation.present && ac->phase != CellPhase::Dead) {
             if (ac->capacitation >= 1.0f)
                 now(ac->hyperactive ? "capacitado e hiperactivado: batido amplio y asimetrico, trayectoria en estrella"
@@ -347,7 +352,7 @@ Inspection inspectCell(const World& w, entt::entity e) {
             now("sin energia (sin fructosa ni reservas): deja de batir; vuelve a nadar si recupera sustrato");
         if (ac->contact > 0.05f)
             now(fmt("toca a otras celulas en el %.0f%% de su borde%s", 100.0f * ac->contact,
-                    ai.contactLocomotion ? ": se repolariza hacia el lado libre (Abercrombie)" : ""));
+                    ai.contactLocomotion ? L(": se repolariza hacia el lado libre (Abercrombie)") : ""));
         if (reg.all_of<Adherent>(e))
             now("adherida al fondo por adhesiones focales");
     }
@@ -378,7 +383,7 @@ Inspection inspectCell(const World& w, entt::entity e) {
         std::string prey = speciesNames(info.prey | info.mouthPrey);
         if (info.feeding == FeedingMode::OralGroove || info.feeding == FeedingMode::Anterior ||
             info.feeding == FeedingMode::Phagocytosis)
-            prey = prey.empty() ? "bacterias y detritos" : "bacterias, detritos, " + prey;
+            prey = prey.empty() ? L("bacterias y detritos") : L("bacterias, detritos, ") + prey;
         if (!prey.empty())
             add(s, "Presas", prey);
         if (info.flee.any())
@@ -404,10 +409,9 @@ Inspection inspectCell(const World& w, entt::entity e) {
                     continue;
                 if (!text.empty())
                     text += ", ";
-                text += std::to_string(count[k]) + " " + (count[k] == 1 ? kOne[k] : kMany[k]) + " de hasta " +
-                        std::to_string(static_cast<int>(std::lround(longest[k]))) + " um";
+                text += fmt("%d %s de hasta %ld um", count[k], L(count[k] == 1 ? kOne[k] : kMany[k]), std::lround(longest[k]));
             }
-            add(s, "Prolongaciones", text + " (rigidas, de la pared)");
+            add(s, "Prolongaciones", text + L(" (rigidas, de la pared)"));
         }
         const char* repro = info.budding                ? "gemacion: una yema crece y se separa"
                             : info.colonyDaughters > 0  ? "libera colonias hijas"
@@ -427,7 +431,7 @@ Inspection inspectCell(const World& w, entt::entity e) {
         if (info.anaerobe)
             add(s, "Respiracion", "anaerobia estricta: el O2 la danha");
         else
-            add(s, "Respiracion", fmt("%s (%.0f%% aerobico)", meta->aerobic > 0.5f ? "respira O2" : "fermenta, sin O2", 100.0f * meta->aerobic));
+            add(s, "Respiracion", fmt("%s (%.0f%% aerobico)", L(meta->aerobic > 0.5f ? "respira O2" : "fermenta, sin O2"), 100.0f * meta->aerobic));
         add(s, "O2 local", fmt("%.0f uM", meta->o2));
         if (meta->photosynthetic)
             add(s, "Luz local", fmt("%.0f%% (fotosintetiza)", 100.0f * meta->light));
@@ -461,7 +465,7 @@ Inspection inspectCell(const World& w, entt::entity e) {
         }
         add(s, "Tamano", fmt("%.0f x %.0f um (area %.0f um2)", 2.0f * half, 2.0f * width, std::abs(body.restArea)));
         if (loco)
-            add(s, "Velocidad", fmt("%.0f um/s%s", std::abs(loco->speed), loco->speed < -1.0f ? " (hacia atras)" : ""));
+            add(s, "Velocidad", fmt("%.0f um/s%s", std::abs(loco->speed), loco->speed < -1.0f ? L(" (hacia atras)") : ""));
         if (her && info.conjugates)
             add(s, "Apareamiento", her->genome[Gene::MatingType] > 0.5f ? "tipo II" : "tipo I");
     }
@@ -488,7 +492,7 @@ Inspection inspectCell(const World& w, entt::entity e) {
         const SpeciesPhysiology& phys = speciesPhysiology(sid);
         auto cite = [](InspectSection& s, const SourcedValue& v) {
             add(s, "", fmt("publicado: %g %s a %.0f C%s", v.published, asciiFold(v.unit).c_str(), v.temperature,
-                           v.estimate ? " - ESTIMACION (sin verificar)" : ""));
+                           v.estimate ? L(" - ESTIMACION (sin verificar)") : ""));
             add(s, "", asciiFold(v.source));
         };
         bool any = false;
@@ -520,9 +524,9 @@ Inspection inspectCell(const World& w, entt::entity e) {
         const float ph = w.ph().sample(body.centroid.x, body.centroid.y);
         const bool hot = temp < info.tMin || temp > info.tMax, acid = ph < info.phMin || ph > info.phMax;
         const bool salty = w.medium().salinity > info.salinityMax;
-        add(s, "Temperatura", fmt("%.0f C (tolera %.0f a %.0f)%s", temp, info.tMin, info.tMax, hot ? " - FUERA DE RANGO" : ""));
-        add(s, "pH", fmt("%.1f (tolera %.1f a %.1f)%s", ph, info.phMin, info.phMax, acid ? " - FUERA DE RANGO" : ""));
-        add(s, "Salinidad", fmt("%.1f PSU (maximo %.0f)%s", w.medium().salinity, info.salinityMax, salty ? " - FUERA DE RANGO" : ""));
+        add(s, "Temperatura", fmt("%.0f C (tolera %.0f a %.0f)%s", temp, info.tMin, info.tMax, hot ? L(" - FUERA DE RANGO") : ""));
+        add(s, "pH", fmt("%.1f (tolera %.1f a %.1f)%s", ph, info.phMin, info.phMax, acid ? L(" - FUERA DE RANGO") : ""));
+        add(s, "Salinidad", fmt("%.1f PSU (maximo %.0f)%s", w.medium().salinity, info.salinityMax, salty ? L(" - FUERA DE RANGO") : ""));
         if (hot || acid || salty)
             add(s, "", "el estres se paga como mantenimiento extra");
     }
@@ -606,7 +610,7 @@ Inspection inspectParticle(const World& w, const Picked& p) {
         // Stokes: v = 2/9 * (rho_p - rho_w) * g * r^2 / mu  ->  0,00218 * delta_rho * r^2 [um/s, r en um].
         const float fall = 0.002182f * mineralInfo(k).densityGap * r * r;
         add(s, "Estado", settled ? "asentada en el fondo: solo la mueven las celulas" : "en suspension: sigue el agua con browniano");
-        add(s, "Sedimentacion", fmt("caeria a ~%.1f um/s (ley de Stokes)%s", fall, settled ? ": toca el vidrio en segundos" : ""));
+        add(s, "Sedimentacion", fmt("caeria a ~%.1f um/s (ley de Stokes)%s", fall, settled ? L(": toca el vidrio en segundos") : ""));
         add(s, "No se descompone", "no se come ni se descompone; hace sombra solo si es opaca");
     }
     return ins;
@@ -649,7 +653,7 @@ Inspection inspectCyano(const World& w, const Picked& p) {
     add(s, "Biomasa", fmt("%.3f pmol", mass * cp.cellPmol));
     add(s, "Fosforo y N", fmt("%.4f y %.4f pmol", f.phosphorus, f.nitrogen));
     add(s, "Deslizamiento", fmt("%.1f um/s, %s", f.oscillatoria ? cp.oscillatoriaGlide : cp.glideSpeed,
-                                f.direction > 0.0f ? "hacia la ultima celula" : "hacia la primera celula"));
+                                L(f.direction > 0.0f ? "hacia la ultima celula" : "hacia la primera celula")));
     add(s, "Al morir", "libera microcistina, toxica para quien la come");
     return ins;
 }
@@ -742,7 +746,7 @@ Inspection inspectSpore(const World& w, const Picked& p) {
     ins.valid = true;
     ins.at = {z.x[p.index], z.y[p.index]};
     ins.radius = 6.0f;
-    ins.title = fmt("Zoospora de %s", fungusName(kind));
+    ins.title = fmt("Zoospora de %s", L(fungusName(kind)));
     ins.subtitle = "Hongo - zoospora nadadora";
     const FungusInfo& info = fungusInfo(kind);
     ins.blurb = otherBlurb(otherOf(kind));
@@ -784,7 +788,7 @@ Inspection inspectHypha(const World& w, const Picked& p) {
         sporangia += m->sporangium[k] > 0.0f ? 1 : 0;
     }
     ins.radius = 0.5f * std::max(hi - lo, hi2 - lo2) + 10.0f;
-    ins.title = fmt("Micelio de %s", fungusName(m->kind));
+    ins.title = fmt("Micelio de %s", L(fungusName(m->kind)));
     ins.subtitle = fungusInfo(m->kind).group;
     ins.blurb = otherBlurb(otherOf(m->kind));
     ins.headline = fmt("%zu nodos, %zu puntas", m->x.size(), tips);

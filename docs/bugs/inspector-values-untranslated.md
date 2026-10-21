@@ -4,14 +4,14 @@
 |---|---|
 | **ID** | `inspector-values-untranslated` |
 | **Type** | `bug` |
-| **Status** | `open` |
+| **Status** | `fixed` |
 | **Severity** | `cosmetic` |
 | **Area** | [`interface`](../mechanics/interface.md) |
 | **Affects** | Inspector (Ficha) panel in English and any other language |
 | **Code** | `src/game/inspect.cpp` |
 | **Reported** | 17/10/2026 |
-| **Last verified** | 21/10/2026, commit `ae4affb` |
-| **Fixed in** | — |
+| **Last verified** | 21/10/2026, commit `c8b0bc3` |
+| **Fixed in** | commit "La ficha traduce sus valores con números" (21/10/2026) |
 
 ## Summary
 
@@ -46,9 +46,17 @@ Confirmed: `game/inspect` is part of `biosim` (no UI) and formats text directly.
 Return structured values (number, unit, format key) and format them in the UI with `ui::tr`, whose
 translations keep the format specifiers (`tools/claves_tr.py --check`).
 
+## Fix
+
+`biosim` cannot call `ui::tr`, so `core/localize` holds a translation hook that the app installs
+with `setLocalizer(&ui::tr)` after loading the language. In `game/inspect`, `fmt` translates the
+whole format string (`tools/claves_tr.py --check` checks that the translation keeps the
+specifiers) and `L()` translates the fixed fragments passed through `%s` and the pieces joined by
+concatenation. The hover tooltip translates the card's title and headline too.
+
 ## Workaround
 
-None.
+None needed.
 
 ## References
 
@@ -58,3 +66,4 @@ None.
 
 - 17/10/2026: noted in the roadmap.
 - 21/10/2026: documented here.
+- 21/10/2026: fixed with `core/localize` (test in `tests/test_inspect.cpp`).

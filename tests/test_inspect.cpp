@@ -1,10 +1,12 @@
 // Inspección: elegir lo que hay bajo el cursor y armar la ficha.
+#include "core/localize.hpp"
 #include "game/inspect.hpp"
 #include "game/world.hpp"
 
 #include <doctest/doctest.h>
 
 #include <cmath>
+#include <cstring>
 #include <string>
 #include <vector>
 
@@ -238,6 +240,26 @@ TEST_CASE("fichas: la intención del piloto explica por qué se mueve (evitació
     // El titular es lo más saliente: la evitación o, si en el mismo paso los toxicistos la tocaron, la
     // descarga de sus tricocistos.
     CHECK((ins.headline.find("evitacion") != std::string::npos || ins.headline.find("tricocistos") != std::string::npos));
+}
+
+// La ficha se arma en biosim, que no conoce la UI: sus valores con números se traducen con el
+// traductor que instala la interfaz (los formatos enteros y los fragmentos que van por %s).
+TEST_CASE("fichas: los valores con números salen en el idioma de la interfaz") {
+    World world(emptyWorld());
+    const entt::entity e = spawn(world, SpeciesId::Paramecium, world.dish().center);
+    world.setPlayer(e);
+    setLocalizer([](const char* key) -> const char* {
+        if (std::strcmp(key, "%s - %s, generacion %u") == 0)
+            return "%s - %s, generation %u";
+        if (std::strcmp(key, "tu celula") == 0)
+            return "your cell";
+        return key;
+    });
+    const Inspection ins = buildInspection(world, cell(e));
+    setLocalizer(nullptr);
+    MESSAGE("subtítulo: " << ins.subtitle);
+    CHECK(ins.subtitle.find("your cell, generation") != std::string::npos);
+    CHECK(buildInspection(world, cell(e)).subtitle.find("tu celula, generacion") != std::string::npos);
 }
 
 TEST_CASE("fichas: estado de la división, el jugador y el medio fuera de rango") {

@@ -504,7 +504,9 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
   with `BIO_TR_FALTANTES=file ./microcosm`. If the Spanish of a key changes, its translation no longer
   matches and it is shown in Spanish (never a stale translation). Series and CSV columns go by id
   (they do not change with the language). The card translates titles, labels, names and
-  descriptions; the values `game/inspect` builds with numbers stay in Spanish (pending).
+  descriptions; the values `game/inspect` builds with numbers too: `biosim` does not know the UI,
+  so the UI installs `ui::tr` with `setLocalizer` (`core/localize`) and `fmt` translates the whole
+  format and `L()` the fragments that go through `%s`.
 - **Style:** every colour and spacing comes from `ui/theme`. The font carries Latin-1 (accents, ñ,
   µ, °), Greek, punctuation and operators; superscripts and subscripts (O₂, 10⁻⁵) are derived from
   Roboto's digits and the arrow → is drawn (`ui/imgui_raylib`).

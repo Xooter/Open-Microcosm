@@ -4,6 +4,7 @@
 #include "build_info.hpp"
 
 #include "bio/locomotion.hpp"
+#include "core/localize.hpp"
 #include "core/paths.hpp"
 #include "core/profiling.hpp"
 #include "core/units.hpp"
@@ -913,13 +914,13 @@ void App::selectionInput(float dt, const Vector2&, const Vec2& pos) {
         st.hoverText.clear();
         if (st.hover) {
             const Inspection h = buildInspection(*world, st.hover);
-            st.hoverText = h.title;
+            st.hoverText = ui::tr(h.title.c_str());
             // De cerca, además, la estructura que se está apuntando.
             const float viewMicrons = std::min(viewport.width, viewport.height) / camera.zoom;
             if (const std::string part = structureAt(*world, st.hover, pos, viewMicrons, tools.modelView); !part.empty())
                 st.hoverText += std::string(" > ") + ui::tr(part.c_str());
             if (!h.headline.empty())
-                st.hoverText += " - " + h.headline;
+                st.hoverText += std::string(" - ") + ui::tr(h.headline.c_str());
         }
     }
 
@@ -1450,6 +1451,7 @@ int App::run() {
         MaximizeWindow();
 
     ui::loadLanguage(options.language);
+    setLocalizer(&ui::tr); // la ficha (game/inspect) arma sus valores en el idioma elegido
     ui::setUiScale(effectiveUiScale());
     ui::initBackend(layoutPath_.c_str(), kFontSize * ui::uiScale());
     ui::applyTheme();

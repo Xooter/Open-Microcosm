@@ -1965,3 +1965,14 @@ reaccion acrosomica hecha: libero las enzimas del acrosoma	acrosome reaction don
 reacción acrosómica	acrosome reaction
 sin energia (sin fructosa ni reservas): deja de batir; vuelve a nadar si recupera sustrato	no energy (no fructose or reserves): it stops beating; it swims again if it recovers substrate
 viva pero inmovil: no bate (la membrana sigue intacta: excluye la eosina)	alive but immotile: does not beat (the membrane is still intact: it excludes eosin)
+ (rigidas, de la pared)	 (rigid, of the wall)
+%d %s de hasta %ld um	%d %s up to %ld um
+cuerno	horn
+cuernos	horns
+espina	spine
+espinas	spines
+brazo	arm
+brazos	arms
+seta	seta
+setas	setae
+con alas	winged

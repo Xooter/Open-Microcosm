@@ -107,8 +107,8 @@ Small or already decided items, before adding anything new.
 - ✅ **Remove the encyclopedia** (done on 21/10/2026): panel, discovery by camera and
   `progress.txt` are gone; the card's texts moved to `game/organism_text`. `deathTally()` and
   `observations()` stay (Statistics panel and tests).
-- ⬜ Numeric values of the inspector (`game/inspect`) in English
-  ([bug](bugs/inspector-values-untranslated.md)).
+- ✅ Numeric values of the inspector (`game/inspect`) in English (done on 21/10/2026,
+  [bug](bugs/inspector-values-untranslated.md)).
 - ⬜ Inoculation inside a drawn region ([bug](bugs/inoculation-ignores-region.md)).
 - ⬜ Stains: hyphae, cyanobacteria and oat flakes do not respond to Lugol/Gram
   ([bug](bugs/stains-missing-targets.md)).

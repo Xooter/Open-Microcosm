@@ -24,7 +24,6 @@ here.
 | [`inoculation-ignores-region`](inoculation-ignores-region.md) | bug | minor | Inoculating into a drawn region ignores its shape. |
 | [`stains-missing-targets`](stains-missing-targets.md) | bug | minor | Hyphae, cyanobacteria and oat flakes do not respond to stains. |
 | [`ciliate-ring-crossed-after-division`](ciliate-ring-crossed-after-division.md) | bug (needs reproduction) | minor | Swimming ciliates sometimes have a crossed ring after dividing. |
-| [`inspector-values-untranslated`](inspector-values-untranslated.md) | bug | cosmetic | Numeric values in the inspector stay in Spanish. |
 
 ## Fixed
 
@@ -33,4 +32,4 @@ existed are recorded in [validation](../validation/README.md#model-problems-foun
 
 | ID | Fixed in | Summary |
 |---|---|---|
-| — | — | — |
+| [`inspector-values-untranslated`](inspector-values-untranslated.md) | 21/10/2026 | Numeric values in the inspector stayed in Spanish. |

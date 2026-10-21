@@ -66,7 +66,11 @@ stable (`title###key`) so the saved layout does not depend on the language.
   `BIO_TR_FALTANTES=file ./microcosm`.
 - If the Spanish of a key changes, its translation no longer matches and Spanish is shown (never a
   stale translation).
-- Numeric values built by `game/inspect` stay in Spanish ([bug](../bugs/inspector-values-untranslated.md)).
+- Values with numbers built by `game/inspect` (part of `biosim`, without the UI) are translated
+  through `core/localize`: the app installs `ui::tr` with `setLocalizer` when it loads the
+  language; `fmt` translates the whole format (whose translation keeps the specifiers) and `L()` the
+  fragments that go through `%s`. Without a localizer (tests, bench) the card stays in Spanish.
+  Tested in `tests/test_inspect.cpp` ("los valores con números salen en el idioma de la interfaz").
 
 ## Accessibility
 
