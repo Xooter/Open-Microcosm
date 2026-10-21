@@ -896,7 +896,7 @@ const std::vector<std::string>& drawingStyles() {
         "extensible_neck", "two_flagella",        "yeast",          "adherent_cell",
         "neutrophil",       "plant_protoplast", "elodea_leaf",      "squamous_cell",
         "lymphocyte",        "monocyte",            "coccoid",          "plate_colony",
-        "compact_colony", "hollow_colony"};
+        "compact_colony", "hollow_colony", "spermatozoon"};
     return styles;
 }
 

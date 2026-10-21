@@ -1,0 +1,17 @@
+# Espermatozoide humano: cabeza aplanada (~4 × 3 µm) con un núcleo haploide de cromatina compactada por
+# protaminas y el acrosoma encima (40–70 % de la cabeza); cuello con el centríolo proximal; pieza
+# intermedia (~4–5 µm) con la vaina de ~50–75 mitocondrias en hélice alrededor del axonema; pieza
+# principal (~45 µm) con la vaina fibrosa, y pieza terminal. Casi sin citoplasma, sin ribosomas
+# activos ni retículo (los pierde al madurar: la gota citoplasmática). OMS, Laboratory manual for the
+# examination and processing of human semen, 6ª ed. (2021); Fawcett 1975, Dev. Biol. 44:394.
+[[body_plan]]
+id = "spermatozoon"
+name = "espermatozoide"
+morphology = "eukaryote"
+structures = [
+    { kind = "plasma_membrane", source = "simulated", arrangement = "envelope", brightfield = true, name = "membrana plasmatica" },
+    { kind = "nucleus", source = "simulated", arrangement = "interior", count = 1, brightfield = true, name = "nucleo haploide (cromatina compactada por protaminas)" },
+    { kind = "acrosome", source = "declared", arrangement = "anterior", length = 3.0, width = 0.5, count = 1, brightfield = true, name = "acrosoma (enzimas para atravesar la zona pelucida)" },
+    { kind = "mitochondrion", source = "declared", arrangement = "polar", length = 1.0, width = 0.4, count = 60, brightfield = false, name = "vaina mitocondrial de la pieza intermedia (~50-75 mitocondrias en helice)" },
+    { kind = "flagellum", source = "simulated", arrangement = "polar", length = 50.0, width = 0.5, count = 1, brightfield = true, name = "flagelo: pieza intermedia, principal y terminal (axonema 9+2)" },
+]

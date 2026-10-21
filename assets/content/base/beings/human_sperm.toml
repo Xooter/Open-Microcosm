@@ -1,0 +1,84 @@
+# Espermatozoide humano: el gameto masculino. Cabeza oval aplanada de ~4,2 × 2,8 µm (OMS 2021: largo
+# 3,7–4,7 µm, ancho 2,5–3,2 µm) con el acrosoma encima del núcleo, y una cola de ~50 µm (pieza
+# intermedia de ~4–5 µm con las mitocondrias, pieza principal de ~45 µm). Nada empujado por la cola
+# (flagelo posterior, "pusher"), con una onda plana que hace oscilar la cabeza a los lados.
+#
+# Simplificaciones: el cuerpo blando es solo la cabeza; la cola se dibuja y su empuje va al agua a lo
+# largo de ella (`flagellum_length`), pero no choca con otras colas. La hiperactivación, la capacitación
+# y la quimiotaxis (progesterona) no se simulan. El batido real depende de la temperatura por la
+# dineína (una ATPasa); acá, como en los demás nadadores, el nado es física y solo cambia con la
+# viscosidad del agua. No come: vive de la fructosa del plasma seminal (fructólisis, Mann 1964), no se
+# divide y al morir queda entero e inmóvil (no se parte en cuerpos apoptóticos).
+[[being]]
+id = "human_sperm"
+name = "Espermatozoide humano"
+tags = ["human_cell", "animal_cell", "gamete"]
+description = "Gameto masculino: una cabeza oval de ~4 um con el nucleo haploide y el acrosoma, y una cola de ~50 um que lo empuja desde atras. No come ni se divide: vive de la fructosa del semen. Al morir deja de nadar y queda entero e inmovil."
+body_plan = "spermatozoon"
+locomotion = "flagellum"
+flagellum = "posterior"
+flagellum_length = 50.0
+feeding = "none"
+# 0,4 × 80 µm/s = 32 µm/s a 20 °C; con la viscosidad del agua a 37 °C, ~46 µm/s: la velocidad media de
+# la trayectoria (VAP) de un espermatozoide progresivo medida con CASA es de ~30–60 µm/s y la rectilínea
+# (VSL) de ~25–50 µm/s (Mortimer 2000, Hum. Reprod. Update 6:136; OMS 2021).
+relative_speed = 0.4
+# Desplazamiento lateral de la cabeza (ALH ~2–5 µm de amplitud, acá ±1,2 µm) a la frecuencia de cruce
+# del batido (BCF ~10–15 Hz) (Mortimer 2000, Hum. Reprod. Update 6:136).
+helix_radius = 1.2
+helix_period = 0.08
+# La cabeza es casi toda cromatina compactada por protaminas (mucha más materia seca por volumen que
+# una célula común) y la masa de la cola (~10 µm³: axonema, fibras densas, mitocondrias) no está en el
+# cuerpo blando. Estimación: ~10 pg de materia seca en total (ADN haploide 3,3 pg + protaminas y la
+# cola), unas 3 veces el esferoide de la cabeza.
+relative_dry_mass = 3.2
+ph = [6.5, 8.5]
+temperature = [15.0, 40.0]
+max_salinity = 16.0
+storage = "none"
+wall = "none"
+[being.shape]
+semi_major_axis = 2.1
+semi_minor_axis = 1.4
+# La cabeza es aplanada como una paleta: ~1,5 µm de espesor (OMS 2021).
+thickness = 0.75
+shape_memory = 15.0
+color = [222, 220, 210]
+nucleus = 0.8
+[being.cell]
+adherent = false
+rounded_radius = 1.7
+contact_inhibition_locomotion = false
+contact_inhibition_proliferation = false
+divides = false
+death = "immotile"
+[being.appearance]
+style = "spermatozoon"
+
+[physiology.human_sperm.lifespan]
+value = 24.0
+unit = "h"
+temperature = 37.0
+source = "In vitro a 37 °C la motilidad cae en horas a un día (la OMS pide evaluarla antes de 1 h de la eyaculación); en el moco cervical sobreviven varios días. Vida media de la motilidad estimada en ~1 día."
+estimate = true
+
+[physiology.human_sperm.glucose_vmax]
+value = 11.0
+unit = "fmol/h"
+temperature = 37.0
+source = "Índice de fructólisis de Mann: ~1,5–2 mg de fructosa por 10⁹ espermatozoides por hora a 37 °C, ~8–11 fmol por célula (Mann 1964, The Biochemistry of Semen and of the Male Reproductive Tract). La fructosa entra a la glucólisis como la glucosa."
+estimate = true
+
+[physiology.human_sperm.glucose_km]
+value = 6.0
+unit = "mM"
+temperature = 37.0
+source = "Km de GLUT5 por la fructosa: ~6–11 mM (Burant et al. 1992, J. Biol. Chem. 267:14523); el espermatozoide humano expresa GLUT5 y GLUT3."
+estimate = true
+
+[physiology.human_sperm.lactate_per_glucose]
+value = 1.8
+unit = "mol/mol"
+temperature = 37.0
+source = "La fructólisis del espermatozoide termina en ácido láctico, que se acumula en el semen (Mann 1964)."
+estimate = true

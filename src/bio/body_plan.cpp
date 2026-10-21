@@ -134,6 +134,7 @@ const char* structureName(StructureKind kind) {
     case K::FoodVacuole: return "vacuola digestiva";
     case K::Lysosome: return "lisosoma";
     case K::StorageGranule: return "granulo de reserva";
+    case K::Acrosome: return "acrosoma";
     case K::Capsid: return "capside";
     case K::ViralGenome: return "genoma viral";
     case K::ViralEnvelope: return "envoltura viral";
@@ -188,6 +189,7 @@ constexpr std::pair<const char*, StructureKind> kKinds[] = {
     {"endoplasmic_reticulum", K::EndoplasmicReticulum}, {"golgi", K::Golgi},
     {"contractile_vacuole", K::ContractileVacuole}, {"food_vacuole", K::FoodVacuole},
     {"lysosome", K::Lysosome},                  {"storage_granule", K::StorageGranule},
+    {"acrosome", K::Acrosome},
     {"capsid", K::Capsid},                     {"viral_genome", K::ViralGenome},
     {"viral_envelope", K::ViralEnvelope},      {"tail", K::Tail},
     {"baseplate", K::Baseplate},              {"tail_fibers", K::TailFibers}};

@@ -45,6 +45,7 @@ enum class StructureKind : std::uint8_t {
     FoodVacuole,
     Lysosome,
     StorageGranule,
+    Acrosome, // vesícula del espermatozoide sobre el núcleo, con las enzimas que digieren la zona pelúcida
     // Virus
     Capsid,
     ViralGenome,
