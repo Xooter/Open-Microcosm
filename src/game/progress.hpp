@@ -32,6 +32,7 @@ enum class GraphicsPreset : int { Custom, Low, Medium, High };
 
 struct Options {
     bool fullscreen = false;
+    bool maximized = true;    // ventana maximizada (de fábrica; se recuerda al cerrar)
     bool postProcess = true;  // óptica del microscopio (viñeta, grano, aberración)
     bool opticFlaws = true;   // iluminación despareja y polvo en la óptica (con postProcess)
     bool lod = true;          // células lejanas simplificadas

@@ -81,8 +81,10 @@ multiplied by it.
 (post-process, render scale, detail, VSync, threads, LOD, GPU) and the FPS cap by
 `App::applyFrameCap`; MSAA only when creating the window. Quality presets
 (`applyGraphicsPreset`) touch the image and the catch-up steps per frame (Low: 1, so the image stays
-fluid and the simulation runs slower than the clock), never the simulation's results. In a window, the
-first size is 1600 × 900 capped at 85 % of the monitor and centred. The panel layout is saved in
+fluid and the simulation runs slower than the clock), never the simulation's results. The window opens
+maximized the first time (`Options::maximized`, remembered on exit; the system fits it to the work
+area with its title bar). Unmaximized, it is 1600 × 900 capped at 85 % of the monitor and centred.
+Fullscreen (F11) is borderless; leaving it maximizes the window again if it was maximized. The panel layout is saved in
 `<data>/openmicrocosm/layout.ini` (*View > Reset layout* rebuilds it). Catalogue icons are drawn once with
 raylib into an atlas (`ui/being_icons`).
 

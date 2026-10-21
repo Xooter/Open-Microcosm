@@ -194,9 +194,19 @@ void App::reloadStains() {
 // Pantalla completa sin bordes: la ventana toma el tamaño del monitor y la interfaz se acomoda.
 // (ToggleFullscreen de raylib es exclusiva a la resolución de la ventana —1600 × 900— y mientras
 // dura no actualiza el tamaño de pantalla: la UI quedaba chica.)
+// Desde una ventana maximizada se restaura antes (raylib mueve y estira la ventana, y en Windows
+// eso sobre una maximizada la deja corrida) y al salir se vuelve a maximizar.
 void App::setFullscreen(bool on) {
-    if (IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE) != on)
+    if (IsWindowState(FLAG_BORDERLESS_WINDOWED_MODE) != on) {
+        if (on) {
+            options.maximized = IsWindowMaximized();
+            if (options.maximized)
+                RestoreWindow();
+        }
         ToggleBorderlessWindowed();
+        if (!on && options.maximized)
+            MaximizeWindow();
+    }
     options.fullscreen = on;
 }
 
@@ -1444,11 +1454,9 @@ int App::run() {
         UnloadImage(icon);
     }
     SetExitKey(KEY_NULL); // Esc no cierra el programa
-    if (options.fullscreen) {
-        ToggleBorderlessWindowed();
-    } else {
-        // En ventana, que entre en el monitor: en una notebook (1366 × 768) o con la escala de
-        // Windows al 150 %, 1600 × 900 lo tapaba entero y parecía pantalla completa.
+    {
+        // Tamaño de la ventana sin maximizar, que entre en el monitor: en una notebook
+        // (1366 × 768), 1600 × 900 lo tapaba entero.
         const int monitor = GetCurrentMonitor();
         const int mw = GetMonitorWidth(monitor), mh = GetMonitorHeight(monitor);
         if (mw > 0 && mh > 0) {
@@ -1458,6 +1466,13 @@ int App::run() {
             SetWindowPosition(static_cast<int>(origin.x) + (mw - w) / 2, static_cast<int>(origin.y) + (mh - h) / 2);
         }
     }
+    // De fábrica, maximizada: el sistema la acomoda al área de trabajo con su barra de título. raylib
+    // centra la ventana en el área de trabajo pero, si no entra, la pega arriba con la barra de título
+    // fuera de la pantalla (en Windows quedaba sin marco ni botones).
+    if (options.fullscreen)
+        ToggleBorderlessWindowed();
+    else if (options.maximized)
+        MaximizeWindow();
 
     ui::loadLanguage(options.language);
     ui::setUiScale(effectiveUiScale());
@@ -1568,6 +1583,8 @@ int App::run() {
 
     autosave(true); // cierre limpio: no se ofrece recuperar
     saveProgress(progress, progressPath);
+    if (!options.fullscreen)
+        options.maximized = IsWindowMaximized();
     saveOptions();
     world.reset();
     renderer.reset();

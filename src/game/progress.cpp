@@ -100,6 +100,7 @@ Options loadOptions(const std::string& path) {
         const std::string key = line.substr(0, eq);
         std::istringstream value(line.substr(eq + 1));
         if (key == "fullscreen") value >> o.fullscreen;
+        else if (key == "maximized") value >> o.maximized;
         else if (key == "post_process") value >> o.postProcess;
         else if (key == "optic_flaws") value >> o.opticFlaws;
         else if (key == "lod") value >> o.lod;
@@ -180,6 +181,7 @@ bool saveOptions(const Options& o, const std::string& path) {
     if (!out)
         return false;
     out << "fullscreen=" << o.fullscreen << '\n'
+        << "maximized=" << o.maximized << '\n'
         << "post_process=" << o.postProcess << '\n'
         << "optic_flaws=" << o.opticFlaws << '\n'
         << "lod=" << o.lod << '\n'
