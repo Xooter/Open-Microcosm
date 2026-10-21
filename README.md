@@ -114,7 +114,7 @@ sudo pacman -S base-devel cmake ninja git libx11 libxrandr libxinerama libxcurso
 Then:
 
 ```sh
-git clone <repository-url> open-microcosm
+git clone https://github.com/Xooter/Open-Microcosm.git open-microcosm
 cd open-microcosm
 cmake --preset release
 cmake --build --preset release
@@ -137,7 +137,7 @@ Building natively on Windows uses the same compiler through [MSYS2](https://www.
 
 ```sh
 pacman -S --needed git mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja
-git clone <repository-url> open-microcosm
+git clone https://github.com/Xooter/Open-Microcosm.git open-microcosm
 cd open-microcosm
 cmake --preset release
 cmake --build --preset release
@@ -161,7 +161,7 @@ Expected steps:
 
 ```sh
 brew install cmake ninja git llvm libomp
-git clone <repository-url> open-microcosm
+git clone https://github.com/Xooter/Open-Microcosm.git open-microcosm
 cd open-microcosm
 cmake --preset release -DBIO_NATIVE=OFF \
     -DCMAKE_C_COMPILER="$(brew --prefix llvm)/bin/clang" \
