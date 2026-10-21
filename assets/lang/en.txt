@@ -1847,3 +1847,7 @@ acrosoma (enzimas para atravesar la zona pelucida)	acrosome (enzymes to cross th
 vaina mitocondrial de la pieza intermedia (~50-75 mitocondrias en helice)	mitochondrial sheath of the midpiece (~50-75 mitochondria in a helix)
 flagelo: pieza intermedia, principal y terminal (axonema 9+2)	flagellum: midpiece, principal piece and end piece (9+2 axoneme)
 acrosoma	acrosome
+Plasma seminal	Seminal plasma
+La parte liquida del semen: fructosa (la energia de los espermatozoides), sales y citrato. Ligeramente alcalino (pH ~7,8) e isotonico.	The liquid part of semen: fructose (the energy source of the sperm), salts and citrate. Slightly alkaline (pH ~7.8) and isotonic.
+Preparado: semen fresco (espermiograma)	Preparation: fresh semen (semen analysis)
+Una gota de semen licuado bajo el cubreobjetos, en una platina a 37 °C, como en un espermiograma: espermatozoides que nadan empujados por la cola, cada uno a su velocidad. Con las horas pierden la motilidad y quedan quietos.	A drop of liquefied semen under the coverslip, on a stage at 37 °C, as in a semen analysis: sperm swimming pushed by their tails, each at its own speed. Over the hours they lose motility and stay still.
