@@ -434,14 +434,16 @@ enum class CellStyle : std::uint8_t {
     Ciliate, Flagellate, Amoeboid, RostrumFlagella, GirdlesProboscis, HelicalRibbon, AxialPlate,
     StellatePlastids, ReticulatePlastid, Frustule, SphericalColony, PlateColony, PeristomeCrown,
     MembranelleCrown, CapitateTentacles, Cirri, Neck, TwinFlagella, Yeast, AdherentCell, Neutrophil,
-    PlantProtoplast, ElodeaLeaf, Squamous, Lymphocyte, Monocyte, Coccoid, PlateCells, PackedCells, HollowCells
+    PlantProtoplast, ElodeaLeaf, Squamous, Lymphocyte, Monocyte, Coccoid, PlateCells, PackedCells, HollowCells,
+    Spermatozoon
 };
 
 // Células de organismos pluricelulares: sin vacuola contráctil (viven en un medio isotónico o dentro
 // de su pared).
 bool multicellular(CellStyle s) {
     return s == CellStyle::AdherentCell || s == CellStyle::Neutrophil || s == CellStyle::PlantProtoplast ||
-           s == CellStyle::ElodeaLeaf || s == CellStyle::Squamous || s == CellStyle::Lymphocyte || s == CellStyle::Monocyte;
+           s == CellStyle::ElodeaLeaf || s == CellStyle::Squamous || s == CellStyle::Lymphocyte || s == CellStyle::Monocyte ||
+           s == CellStyle::Spermatozoon;
 }
 
 CellStyle resolveStyle(SpeciesId sid) {
@@ -477,7 +479,8 @@ CellStyle resolveStyle(SpeciesId sid) {
         {"coccoid", CellStyle::Coccoid},
         {"plate_colony", CellStyle::PlateCells},
         {"compact_colony", CellStyle::PackedCells},
-        {"hollow_colony", CellStyle::HollowCells}};
+        {"hollow_colony", CellStyle::HollowCells},
+        {"spermatozoon", CellStyle::Spermatozoon}};
     for (const auto& [key, style] : kNames)
         if (name == key)
             return style;
@@ -603,7 +606,8 @@ void drawFlagellum(const BodyParticles& bp, const RingBody& body, const Locomoti
         halfLength = info.spec.radiusX * std::sqrt(std::abs(body.restArea) / info.outlineArea);
     }
     const Vec2 base = ringPos(bp, body, front);
-    const float length = 2.2f * halfLength; // Euglena: flagelo de ~1 largo corporal
+    // Euglena: flagelo de ~1 largo corporal; si la especie da el largo, ese.
+    const float length = info.flagellumLength > 0.0f ? info.flagellumLength : 2.2f * halfLength;
     const float beating = loco.speed > 0.0f ? 1.0f : 0.2f;
     const int copies = loco.speed > 0.0f && !loco.gliding ? 3 : 1;
     // Deslizándose, el flagelo es grueso, rígido y recto hacia adelante: solo bate el último cuarto.
@@ -986,6 +990,70 @@ void drawAnimalNucleus(Vector2 c, float r, const AnimalCell& ac, const Dividing*
     for (int k = 0; k < 3; ++k) {
         const float a = 2.1f * static_cast<float>(k) + 0.7f;
         drawCircleFast({c.x + 0.4f * r * std::cos(a), c.y + 0.4f * r * std::sin(a)}, 0.16f * r, kNucleolus, px);
+    }
+}
+
+// Cola del espermatozoide (OMS 2021; Fawcett 1975): sale del polo trasero de la cabeza; la pieza
+// intermedia (~4,5 µm, con la vaina de mitocondrias) es más gruesa y oscura que la pieza principal, que
+// se afina hacia la punta. Bate con una onda plana que crece hacia la punta (~1,5 longitudes de onda a lo
+// largo de la cola) a la frecuencia del batido de la especie (el período de su hélice). Muerto: recta,
+// apenas curvada, quieta.
+void drawSpermTail(const BodyParticles& bp, const RingBody& body, const Locomotion& loco, const SpeciesInfo& info,
+                   bool dead, float time, float px) {
+    const Frame f = frameOf(body);
+    const Vec2 back = f.h * -1.0f;
+    std::size_t rear = 0;
+    float best = -1e9f;
+    for (std::size_t i = 0; i < body.ring.size(); ++i) {
+        const float d = dot(ringPos(bp, body, i) - body.centroid, back);
+        if (d > best) {
+            best = d;
+            rear = i;
+        }
+    }
+    const Vec2 base = ringPos(bp, body, rear);
+    const float length = info.flagellumLength > 0.0f ? info.flagellumLength : 2.2f * f.half;
+    constexpr float kMidpiece = 4.5f; // [µm]
+    const bool beating = !dead && loco.speed > 0.0f;
+    const float freq = info.helixPeriod > 0.0f ? 1.0f / info.helixPeriod : 12.0f;
+    const float phase0 = 6.2831853f * freq * time + loco.phase;
+    const float wavenumber = 6.2831853f * 1.5f / length;
+    const float bend = (body.id & 1u) ? 1.0f : -1.0f; // la curva quieta del muerto, fija por célula
+    const Color midpiece = {60, 66, 52, 120};
+    Vec2 prev = base;
+    constexpr int kSegments = 48;
+    for (int k = 1; k <= kSegments; ++k) {
+        const float t = static_cast<float>(k) / kSegments;
+        const float s = t * length;
+        const float wave = beating ? (0.3f + 4.5f * t) * std::sin(wavenumber * s - phase0) : bend * 2.0f * t * t;
+        const Vec2 p = base + back * s + f.side * wave;
+        const bool mid = s <= kMidpiece;
+        const float width = mid ? std::max(0.8f, 1.2f * px) : std::max(0.5f - 0.3f * t, px);
+        fastLine(toRay(prev), toRay(p), width, mid ? midpiece : kFlagellum);
+        prev = p;
+    }
+}
+
+// Cabeza del espermatozoide: el núcleo, denso y homogéneo (cromatina compactada, sin nucléolos), ocupa
+// casi toda la cabeza; el acrosoma lo cubre por delante como un capuchón más claro (40–70 % de la
+// cabeza), con su borde (el segmento ecuatorial) marcado.
+void drawSpermHead(const BodyParticles& bp, const RingBody& body, Vector2 nucleusAt, float nucleusR, Color fill,
+                   Color rim, float px) {
+    drawCircleFast(nucleusAt, nucleusR, fill, px);
+    drawRingFast(nucleusAt, nucleusR - std::max(0.3f, px), nucleusR, 24, rim, px);
+    const Frame f = frameOf(body);
+    const Vec2 cap = f.c + f.h * (0.3f * f.half);
+    constexpr Color kAcrosome = {236, 238, 240, 120};
+    constexpr Color kAcrosomeRim = {120, 124, 130, 140};
+    const std::size_t n = body.ring.size();
+    for (std::size_t i = 0; i < n; ++i) {
+        const Vec2 a = ringPos(bp, body, i), b = ringPos(bp, body, i + 1);
+        // Solo la mitad delantera (un poco más: el acrosoma pasa del ecuador de la cabeza).
+        if (dot(a - f.c, f.h) < -0.1f * f.half || dot(b - f.c, f.h) < -0.1f * f.half)
+            continue;
+        const Vec2 ia = cap + (a - cap) * 0.85f, ib = cap + (b - cap) * 0.85f;
+        fastTriangle(toRay(cap), toRay(ia), toRay(ib), kAcrosome);
+        fastLine(toRay(ia), toRay(ib), std::max(0.15f, 0.6f * px), kAcrosomeRim);
     }
 }
 
@@ -1441,6 +1509,9 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 }
             } else if (loco && style == CellStyle::TwinFlagella) {
                 drawTwinFlagella(body, *loco, time, px);
+            } else if (loco && style == CellStyle::Spermatozoon) {
+                const AnimalCell* ac = reg.try_get<AnimalCell>(e);
+                drawSpermTail(bp, body, *loco, speciesInfo(sid), ac && ac->phase == CellPhase::Dead, time, px);
             } else if (loco && style == CellStyle::Ciliate) {
                 drawCilia(bp, body, time, px);
                 // Citostoma: la boca al final del surco oral.
@@ -1617,8 +1688,12 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     fillN = overColor(kNucleus, dye, 0.8f);
                     rimN = overColor(kNucleusRim, dye, 0.9f);
                 }
-                drawAnimalNucleus({bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus], *animal,
-                                  dividing, bodyHeading(body), style == CellStyle::Neutrophil, fillN, rimN, px);
+                if (style == CellStyle::Spermatozoon)
+                    drawSpermHead(bp, body, {bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus],
+                                  fillN, rimN, px);
+                else
+                    drawAnimalNucleus({bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus], *animal,
+                                      dividing, bodyHeading(body), style == CellStyle::Neutrophil, fillN, rimN, px);
             } else if (!colony) {
                 if (style == CellStyle::Monocyte) { // núcleo arriñonado
                     const Vector2 c = {bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]};
