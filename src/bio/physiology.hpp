@@ -34,6 +34,7 @@ struct SpeciesPhysiology {
     SourcedValue phaseG1, phaseS, phaseG2, phaseM; // duración de cada fase del ciclo [h]
     SourcedValue lifespan;       // vida media sin dividirse (neutrófilo) [h]
     SourcedValue motilityHalfLife; // vida media de la motilidad de los que nadan (espermatozoide) [h]
+    SourcedValue capacitationTime; // horas de un medio capacitante hasta capacitarse (espermatozoide)
     SourcedValue confluence;     // densidad de confluencia [células/cm²] (sin Q10)
     // Metabolismo de una célula animal (por célula; las tasas, a 20 °C por Q10).
     SourcedValue glucoseVmax;    // captación máxima de glucosa [fmol/h]

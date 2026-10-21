@@ -9,6 +9,7 @@
 #include "bio/osmosis.hpp"
 #include "bio/physiology.hpp"
 #include "core/finite.hpp"
+#include "game/reagent.hpp"
 #include "core/profiling.hpp"
 #include "sim/polygon.hpp"
 
@@ -392,6 +393,31 @@ bool World::updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, f
     if (phys.lifespan.present) { // muerte por edad: riesgo constante con la vida media publicada
         Rng rng(config_.seed, rng_stream::kCells + 60, body.id, step_);
         apoptosis = apoptosis || rng.uniform() < 1.0f - std::exp(-std::log(2.0f) * hours / phys.lifespan.value);
+    }
+    // Capacitación: horas en un medio con bicarbonato y albúmina a ~37 °C; se revierte fuera de él (Visconti
+    // et al. 2011). Capacitado, una fracción se hiperactiva y puede hacer la reacción acrosómica.
+    if (const CapacitationSpec& cp = info.capacitation; cp.present && phys.capacitationTime.present) {
+        const bool medium = medium_.alkalinity >= cp.minBicarbonate && medium_.serum >= cp.minAlbumin &&
+                            medium_.temperature >= cp.minTemperature;
+        const float before = ac.capacitation;
+        ac.capacitation = std::clamp(ac.capacitation + (medium ? 1.0f : -1.0f) * hours / phys.capacitationTime.value, 0.0f, 1.0f);
+        Rng rng(config_.seed, rng_stream::kCells + 63, body.id, step_);
+        if (before < 1.0f && ac.capacitation >= 1.0f && rng.uniform() < cp.hyperactivatedFraction) {
+            ac.hyperactive = true;
+            applyTraits(e);
+        } else if (ac.hyperactive && ac.capacitation < 0.5f) {
+            ac.hyperactive = false; // de vuelta en un medio que no capacita
+            applyTraits(e);
+        }
+        if (ac.capacitation >= 1.0f && !ac.acrosomeReacted) {
+            float rate = cp.spontaneousReactionPerHour; // [1/h]
+            if (!cp.inducer.empty() && reagentIndex_ >= 0 && reagent(reagentIndex_).key == cp.inducer) {
+                const float c = std::max(0.0f, reagent_.grid().sample(body.centroid.x, body.centroid.y));
+                rate += cp.inducedReactionPerHour * c / (c + cp.inducerEc50);
+            }
+            if (rng.uniform() < 1.0f - std::exp(-rate * hours))
+                ac.acrosomeReacted = true;
+        }
     }
     // Los que nadan pierden la motilidad antes que la vida (la vitalidad de una muestra siempre es mayor
     // que su motilidad; OMS 2021): un riesgo constante con la vida media de la motilidad.

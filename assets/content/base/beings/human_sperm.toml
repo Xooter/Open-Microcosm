@@ -56,6 +56,26 @@ isotonic = 290.0
 inactive = 0.4
 full_osmolarity = 150.0
 seconds = 60.0
+# Capacitación e hiperactivación (Visconti et al. 2011, Asian J. Androl. 13: 395): en un medio con
+# bicarbonato (~25 mM) y albúmina a 37 °C. Lo hiperactivado se reconoce por VCL ≥ 150 µm/s, LIN ≤ 50 % y
+# ALH ≥ 7 µm (los umbrales de CASA de Biol. Reprod. 2017, doi 10.1093/biolre/iox120); la fracción
+# hiperactivada (~15 %) y su forma de nadar son estimación. Reacción acrosómica: en capacitados, ~10 %
+# espontánea y ~22 % con progesterona (Zygote: de 10,5 % a 21,8 %); la tasa y la EC50 son estimación. La
+# quimiotaxis a la progesterona empieza a ~10 pM (~3·10⁻⁶ µg/mL; Teves et al. 2006, Fertil. Steril. 86: 745).
+[being.capacitation]
+min_bicarbonate = 15000.0
+min_albumin = 0.05
+min_temperature = 30.0
+hyperactivated_fraction = 0.15
+hyper_lateral_amplitude = 8.0
+hyper_beat_scale = 0.7
+hyper_curvature_radius = 12.0
+hyper_rotational_diffusion = 2.0
+spontaneous_reaction_per_hour = 0.03
+inducer = "progesterone"
+induced_reaction_per_hour = 0.5
+inducer_ec50 = 0.03
+chemotaxis_threshold = 3e-6
 [being.appearance]
 style = "spermatozoon"
 # La cabeza gira sobre su eje largo al nadar: ~6 Hz (6,0 ± 2,1 Hz en espermatozoides humanos sujetos con una
@@ -112,6 +132,13 @@ unit = "um"
 temperature = 37.0
 q10 = 1.20
 source = "ALH con CASA: 2,15 µm a 37 °C y 1,67 µm a 23 °C (García-Molina et al. 2023, Rev. Int. Androl. 21(2), tabla 2): Q10 = (2,15/1,67)^(10/14) = 1,20."
+
+[physiology.human_sperm.capacitation_time]
+value = 4.0
+unit = "h"
+temperature = 37.0
+source = "La capacitación humana in vitro tarda ~3–10 h en un medio con bicarbonato y albúmina a 37 °C (la fosforilación de tirosinas se completa en ~3 h y se revierte fuera del medio; Bedu-Addo et al. 2005, Mol. Hum. Reprod.). Estimación: 4 h."
+estimate = true
 
 [physiology.human_sperm.lifespan]
 value = 30.0

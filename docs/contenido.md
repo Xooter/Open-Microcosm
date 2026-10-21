@@ -199,6 +199,13 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
 - `[being.osmotic_swelling]`: la cola se hincha y se enrolla en un medio hipotónico si la membrana está
   intacta (prueba hiposmótica): `isotonic` y `full_osmolarity` [mOsm/L] (enrollada del todo), `inactive`
   (fracción de Boyle–van 't Hoff) y `seconds` (tiempo real hasta el equilibrio).
+- `[being.capacitation]`: capacitación (horas en `[physiology.<id>.capacitation_time]`) con
+  `min_bicarbonate` [µM], `min_albumin` (fracción de suero) y `min_temperature` [°C]; se revierte fuera de
+  ese medio. Capacitado: `hyperactivated_fraction` se hiperactiva (`hyper_lateral_amplitude` [µm],
+  `hyper_beat_scale`, `hyper_curvature_radius` [µm], `hyper_rotational_diffusion` [rad²/s]) y puede hacer la
+  reacción acrosómica (`spontaneous_reaction_per_hour`; con el reactivo `inducer`, hasta
+  `induced_reaction_per_hour` con media saturación en `inducer_ec50` [µg/mL]). `chemotaxis_threshold`
+  [µg/mL]: sigue al inductor comparando en el tiempo (0: sin quimiotaxis).
 - `[[being.process]]` (una por prolongación): **prolongaciones** de la célula o de su cubierta.
   `kind`: `horn` | `spine` | `arm` | `seta` | `notch`; `at`: dirección desde el polo anterior del cuerpo [°];
   `length` desde la superficie, `base_width` y `tip_width` [µm], para el tamaño típico (escalan con la
@@ -337,8 +344,9 @@ quieto: frotis, corte), `stain` (id de la tinción al crearla), `erythrocytes_cm
 
 ## Reactivos: `reagents/<id>.toml`
 
-`[[reagent]]`: `id`, `name`, `description`, `mechanism` (`pharmacodynamic`: Regoes et al. 2004),
-`targets` (por ahora `bacteria`), `growth_dependent`, `diffusion` [µm²/s];
+`[[reagent]]`: `id`, `name`, `description`, `mechanism` (`pharmacodynamic`: Regoes et al. 2004; `signal`:
+una señal sin muerte propia, con su `source`, cuyo efecto lo ponen los datos del ser que la recibe, como la
+progesterona en `[being.capacitation]`), `targets` (`bacteria` o ids de seres), `growth_dependent`, `diffusion` [µm²/s];
 `[reagent.pharmacodynamics]`: `psi_max` y `psi_min` [1/h], `zmic` [µg/mL], `kappa`, `source`;
 `[reagent.published_mic]`: `value` [µg/mL], `source` (solo valida la CIM que emerge).
 

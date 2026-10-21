@@ -1,0 +1,18 @@
+# Capacitación in vitro: espermatozoides lavados (swim-up) en HTF con albúmina, en la incubadora a 37 °C y 5 % de
+# CO2. En unas horas se capacitan: una parte se hiperactiva y, con progesterona (gotero), hacen la reacción
+# acrosómica y la siguen por quimiotaxis.
+[[plate]]
+id = "sperm_capacitation"
+name = "Capacitacion de espermatozoides (HTF + albumina, incubadora)"
+description = "Espermatozoides lavados en un medio con bicarbonato y albumina a 37 °C y 5 % de CO2: en unas horas se capacitan. Algunos se hiperactivan (nadan en estrella). Con progesterona en el gotero, la siguen y hacen la reaccion acrosomica."
+kind = "slide"
+medium = "htf_hsa"
+vessel = "slide"
+field_um = 512.0
+[plate.environment]
+temperature = 37.0
+co2 = 0.05
+light = 1.0
+[[plate.seeding]]
+being = "human_sperm"
+density_cm2 = 32000.0

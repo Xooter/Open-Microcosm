@@ -69,6 +69,8 @@ struct Locomotion {
 struct SwimState {
     float turnNoise = 0.0f; // [rad/s]
     float chirality = 1.0f; // +1: curva a la izquierda; −1: a la derecha
+    float signalMemory = 0.0f; // lo que sentía de la señal hace un momento (quimiotaxis temporal)
+    float turnBout = 0.0f;     // giro en curso [s] (quimiotaxis: la señal bajó)
 };
 
 // Componente marcador de la célula controlada por el jugador.

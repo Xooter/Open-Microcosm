@@ -16,8 +16,11 @@
 // ψmax − ψ(a). Con `depende_del_crecimiento` (los β-lactámicos rompen la pared mientras se sintetiza:
 // Tuomanen et al. 1986, J. Infect. Dis. 153: 312) esa muerte escala con lo que la bacteria crece
 // ahora respecto de ψmax: una bacteria que no crece no muere (tolerancia de la fase estacionaria).
+// Mecanismo "signal": una señal sin farmacodinamia propia (la progesterona para el espermatozoide). Su
+// efecto lo pone el ser que la recibe, con sus datos (CapacitationSpec): el reactivo solo difunde.
 struct Reagent {
     std::string key, name, description, pack;
+    bool signal = false; // mecanismo "signal" (sin muerte bacteriana)
     std::vector<std::string> legacyIds; // ids viejos (core/ids)
     std::vector<std::string> targets; // "bacteria" (los eucariotas no tienen pared de peptidoglicano)
     bool growthDependent = true;

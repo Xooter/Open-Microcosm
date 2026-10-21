@@ -11,8 +11,8 @@
 class World;
 
 // CASA (análisis de semen asistido por computadora): sigue la cabeza de cada nadador de una especie
-// cuadro a cuadro y mide su cinemática como los equipos de laboratorio (OMS 2021; Mortimer 2000, Hum.
-// Reprod. Update 6: 136). Es medición: solo lee el mundo, no es una intervención.
+// cuadro a cuadro y mide su cinemática como los equipos de laboratorio (OMS 2021; Mortimer 1997, Hum.
+// Reprod. Update 3: 403). Es medición: solo lee el mundo, no es una intervención.
 //  VCL: rapidez curvilínea (la trayectoria punto a punto); VSL: rectilínea (del primero al último);
 //  VAP: la de la trayectoria media (promedio móvil de 5 puntos); LIN = VSL/VCL, STR = VSL/VAP,
 //  WOB = VAP/VCL; ALH: amplitud del desplazamiento lateral de la cabeza (de pico a pico); BCF: frecuencia

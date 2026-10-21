@@ -1,0 +1,25 @@
+# HTF (fluido tubario humano, Quinn et al. 1985, Fertil. Steril. 44: 493) con albúmina sérica humana: el medio
+# de capacitación de los laboratorios de reproducción asistida. Simplificaciones: la albúmina (5 mg/mL) va como
+# `serum` (la fracción que la trae); el lactato y el piruvato, que el espermatozoide también usa, no son
+# fuente de energía en el modelo (solo la glucosa).
+[[medium]]
+id = "htf_hsa"
+name = "HTF + albumina (capacitacion)"
+description = "Fluido tubario humano: sales, glucosa, lactato, piruvato y bicarbonato 25 mM, con albumina. En la incubadora (37 °C, 5 % de CO2) capacita a los espermatozoides en unas horas."
+source = "Quinn, P., Kerin, J. F. & Warnes, G. M. (1985). Fertil. Steril. 44: 493 (NaCl 101,6 mM, KCl 4,69, CaCl2 2,04, MgSO4 0,2, KH2PO4 0,37, NaHCO3 25, glucosa 2,78, piruvato 0,33, lactato 21,4 mM)."
+[medium.composition]
+glucose = 2780.0
+salinity = 6.8          # sales como NaCl equivalente (~215 mOsm)
+osmolytes = 60.0        # lactato, piruvato, glucosa y lo demás: total ~275 mOsm
+alkalinity = 25000.0    # NaHCO3 25 mM: pH 7,4 con 5 % de CO2
+carbonate_pka = 6.1
+phosphate = 370.0
+nitrogen = 0.0
+silicate = 0.0
+iron = 0.0
+vitamin_b12 = 0.0
+serum = 0.10            # la albúmina (5 mg/mL)
+phages = 0.0
+organic_inflow = 0.0
+detritus_inflow = 0.0
+dust = 0.0

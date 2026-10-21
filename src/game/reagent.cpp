@@ -25,7 +25,7 @@ Registry& registry() {
 }
 
 constexpr const char* kKeys[] = {"id", "legacy_ids", "name", "description", "mechanism", "targets", "growth_dependent",
-                                 "pharmacodynamics", "published_mic", "diffusion"};
+                                 "pharmacodynamics", "published_mic", "diffusion", "source"};
 constexpr const char* kPdKeys[] = {"psi_max", "psi_min", "zmic", "kappa", "source"};
 constexpr const char* kMicKeys[] = {"value", "source"};
 
@@ -50,7 +50,8 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
         rd.flag("growth_dependent", r.growthDependent);
         rd.num("diffusion", r.diffusion);
         const std::string mechanism = (*t)["mechanism"].value_or(std::string("pharmacodynamic"));
-        if (mechanism != "pharmacodynamic")
+        r.signal = mechanism == "signal";
+        if (mechanism != "pharmacodynamic" && !r.signal)
             reg.warnings.push_back(where + ": mecanismo desconocido '" + mechanism + "'");
         if (const toml::array* b = (*t)["targets"].as_array())
             for (const toml::node& n : *b)
@@ -65,8 +66,10 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
             p.num("kappa", r.kappa);
             p.text("source", r.source);
             reg.warnings.insert(reg.warnings.end(), p.errors.begin(), p.errors.end());
-        } else {
+        } else if (!r.signal) {
             reg.warnings.push_back(where + ": falta [reagent.pharmacodynamics]");
+        } else {
+            r.source = (*t)["source"].value_or(std::string());
         }
         if (const toml::table* m = (*t)["published_mic"].as_table()) {
             toml_io::warnUnknown(*m, kMicKeys, where + " cim_publicada", reg.warnings);
@@ -75,8 +78,8 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
         }
         reg.warnings.insert(reg.warnings.end(), rd.errors.begin(), rd.errors.end());
         if (r.source.empty())
-            reg.warnings.push_back(where + ": la farmacodinamia necesita su 'source'");
-        if (r.key.empty() || r.name.empty() || !(r.psiMax > 0.0) || !(r.zMic > 0.0) || !(r.kappa > 0.0)) {
+            reg.warnings.push_back(where + (r.signal ? ": la señal necesita su 'source'" : ": la farmacodinamia necesita su 'source'"));
+        if (r.key.empty() || r.name.empty() || (!r.signal && (!(r.psiMax > 0.0) || !(r.zMic > 0.0) || !(r.kappa > 0.0)))) {
             reg.warnings.push_back(where + ": sin id, nombre o farmacodinamia válida: se saltea");
             continue;
         }

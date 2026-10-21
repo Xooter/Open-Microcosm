@@ -1464,6 +1464,10 @@ void World::applyTraits(entt::entity e) {
         loco.power *= ac->vigor;
         if (ac->grade == MotilityGrade::NonProgressive)
             loco.power *= info.motility.nonProgressiveSpeed;
+        if (ac->hyperactive) { // batido amplio y más lento (hiperactivación)
+            loco.helixRadius = 0.5f * info.capacitation.hyperLateralAmplitude;
+            loco.helixPeriod /= info.capacitation.hyperBeatScale;
+        }
     }
     loco.gliding = info.flagellarGliding;
     loco.pusher = info.flagellumPosterior;
@@ -2840,7 +2844,7 @@ void World::growBacteria(float dt) {
         const float scale = strainInfo(bacteria_.strain[i]).pmolScale;
         const float change = bacterialMassChange(bp, taken, m, maintenance, scale);
         // Reactivo (antibiótico): la muerte que agrega con lo que crece ahora (Regoes et al. 2004).
-        if (reagentIndex_ >= 0) {
+        if (reagentIndex_ >= 0 && !reagent(reagentIndex_).signal && reagent(reagentIndex_).affects("bacteria")) {
             const float a = reagent_.grid().sample(bacteria_.x[i], bacteria_.y[i]);
             const double kill = a > 0.0f ? reagentKillRate(reagent(reagentIndex_), a,
                                                            change / std::max(1e-6f, m) / std::max(1e-9f, bioDt / 3600.0f))

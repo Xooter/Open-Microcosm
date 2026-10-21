@@ -84,7 +84,7 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "sliding_colony", "testate", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "shape_wave", "star_colony", "contractile_vacuole", "semicell", "somersault", "algal_conjugation", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage", "swim_path", "motility", "osmotic_swelling",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "shape_wave", "star_colony", "contractile_vacuole", "semicell", "somersault", "algal_conjugation", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage", "swim_path", "motility", "osmotic_swelling", "capacitation",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
@@ -318,6 +318,32 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         cr.count("seconds", o.seconds);
         if (o.inactive >= 1.0f || o.fullOsmolarity >= o.isotonic || o.seconds <= 0.0f)
             cr.errors.push_back(cr.where + ": 'inactive' < 1, 'full_osmolarity' < 'isotonic' y 'seconds' > 0");
+        r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
+    if (const toml::table* ca = r.table("capacitation")) {
+        constexpr const char* kKeys[] = {"min_bicarbonate", "min_albumin", "min_temperature", "hyperactivated_fraction",
+                                         "hyper_lateral_amplitude", "hyper_beat_scale", "hyper_curvature_radius",
+                                         "hyper_rotational_diffusion", "spontaneous_reaction_per_hour", "inducer",
+                                         "induced_reaction_per_hour", "inducer_ec50", "chemotaxis_threshold"};
+        toml_io::warnUnknown(*ca, kKeys, r.where + " [capacitation]", warnings);
+        Reader cr{*ca, r.where + " [capacitation]", {}};
+        CapacitationSpec& c = s.capacitation;
+        c.present = true;
+        cr.count("min_bicarbonate", c.minBicarbonate);
+        cr.count("min_albumin", c.minAlbumin);
+        cr.num("min_temperature", c.minTemperature);
+        cr.count("hyperactivated_fraction", c.hyperactivatedFraction);
+        cr.count("hyper_lateral_amplitude", c.hyperLateralAmplitude);
+        cr.count("hyper_beat_scale", c.hyperBeatScale);
+        cr.count("hyper_curvature_radius", c.hyperCurvatureRadius);
+        cr.count("hyper_rotational_diffusion", c.hyperRotationalDiffusion);
+        cr.count("spontaneous_reaction_per_hour", c.spontaneousReactionPerHour);
+        cr.text("inducer", c.inducer);
+        cr.count("induced_reaction_per_hour", c.inducedReactionPerHour);
+        cr.count("inducer_ec50", c.inducerEc50);
+        cr.count("chemotaxis_threshold", c.chemotaxisThreshold);
+        if (c.hyperactivatedFraction > 1.0f || c.hyperBeatScale <= 0.0f || c.inducerEc50 <= 0.0f)
+            cr.errors.push_back(cr.where + ": 'hyperactivated_fraction' es una fracción; 'hyper_beat_scale' e 'inducer_ec50' > 0");
         r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
     }
     if (const toml::table* sc = r.table("semicell")) {

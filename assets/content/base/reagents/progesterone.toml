@@ -1,0 +1,12 @@
+# Progesterona: la secretan las células del cúmulo que rodean al óvulo. En el espermatozoide capacitado abre
+# el canal de calcio CatSper (Lishko et al. 2011, Nature 471: 387; Strünker et al. 2011, Nature 471: 382),
+# lo atrae por quimiotaxis desde concentraciones de picomolar y, en micromolar, dispara la reacción
+# acrosómica. Masa molar 314,5 g/mol: 1 µM = 0,31 µg/mL.
+[[reagent]]
+id = "progesterone"
+name = "Progesterona"
+description = "Hormona esteroide que liberan las celulas que rodean al ovulo. Al espermatozoide capacitado le abre el canal de calcio CatSper: lo atrae (quimiotaxis, desde picomolar) y en micromolar le dispara la reaccion acrosomica."
+mechanism = "signal"
+targets = ["human_sperm"]
+diffusion = 500.0
+source = "Lishko et al. 2011 (Nature 471: 387) y Strünker et al. 2011 (Nature 471: 382): CatSper activado por progesterona con EC50 de ~nM; Teves et al. 2006 (Fertil. Steril. 86: 745): quimiotaxis a ~10 pM. Difusión estimada para una molécula de ~315 g/mol."

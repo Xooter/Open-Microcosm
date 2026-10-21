@@ -187,7 +187,7 @@ alcanza a todas las células con pared o película).
 
 `human_sperm`: cabeza de 4,2 × 2,8 µm (el cuerpo blando) y cola de 50 µm (`flagellum_length`: se dibuja
 con su pieza intermedia y su empuje va al agua a lo largo de ella), nado empujado desde atrás a ~46 µm/s
-a 37 °C (VAP de CASA, Mortimer 2000) con la oscilación lateral de la cabeza (ALH y BCF como
+a 37 °C (VAP de CASA, Mortimer 1997) con la oscilación lateral de la cabeza (ALH y BCF como
 `helix_radius`/`helix_period`), fructólisis de Mann (11 fmol/h) y vida media de la motilidad de ~1 día
 (estimación). No come ni se divide; al morir queda entero e inmóvil (`[being.cell] death = "immotile"`,
 `CellPhase::Dead`: sin metabolismo y fuera del censo). Placa preparada `fresh_semen` (preparado húmedo

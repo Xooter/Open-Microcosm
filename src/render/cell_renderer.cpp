@@ -1069,7 +1069,7 @@ void drawSpermTail(const BodyParticles& bp, const RingBody& body, const Locomoti
 // desde arriba, el núcleo y el acrosoma se angostan y se oscurecen cuando queda de canto (`roll`: el
 // ancho aparente relativo, 1 de frente).
 void drawSpermHead(const BodyParticles& bp, const RingBody& body, Vector2 nucleusAt, float nucleusR, Color fill,
-                   Color rim, float roll, float px) {
+                   Color rim, float roll, bool acrosome, float px) {
     const Frame f = frameOf(body);
     const float edge = 1.0f - roll; // 0 de frente; ~0,5 de canto
     auto shade = [edge](Color c) {
@@ -1090,6 +1090,8 @@ void drawSpermHead(const BodyParticles& bp, const RingBody& body, Vector2 nucleu
             prev = p;
         }
     }
+    if (!acrosome) // reacción acrosómica: el capuchón se liberó y queda el núcleo al descubierto
+        return;
     const Vec2 cap = f.c + f.h * (0.3f * f.half);
     constexpr Color kAcrosome = {236, 238, 240, 120};
     constexpr Color kAcrosomeRim = {120, 124, 130, 140};
@@ -1761,7 +1763,7 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                         roll = std::sqrt(std::cos(phi) * std::cos(phi) + thin * thin * std::sin(phi) * std::sin(phi));
                     }
                     drawSpermHead(bp, body, {bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus],
-                                  fillN, rimN, roll, px);
+                                  fillN, rimN, roll, !animal->acrosomeReacted, px);
                 } else {
                     drawAnimalNucleus({bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus], *animal,
                                       dividing, bodyHeading(body), style == CellStyle::Neutrophil, fillN, rimN, px);

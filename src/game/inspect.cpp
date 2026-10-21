@@ -330,6 +330,15 @@ Inspection inspectCell(const World& w, entt::entity e) {
         else
             now(fmt("ciclo celular: fase %s (%.1f h en la fase)", asciiFold(cellPhaseName(ac->phase)).c_str(),
                     ac->phaseHours * w.bioTimeScale() / w.bioScale())); // horas a su temperatura (sin el Q10)
+        if (info.capacitation.present && ac->phase != CellPhase::Dead) {
+            if (ac->capacitation >= 1.0f)
+                now(ac->hyperactive ? "capacitado e hiperactivado: batido amplio y asimetrico, trayectoria en estrella"
+                                    : "capacitado (puede hacer la reaccion acrosomica)");
+            else if (ac->capacitation > 0.0f)
+                now(fmt("capacitandose (%.0f%%): el bicarbonato y la albumina cambian su membrana", 100.0f * ac->capacitation));
+            if (ac->acrosomeReacted)
+                now("reaccion acrosomica hecha: libero las enzimas del acrosoma");
+        }
         if (const Metabolism* fm = reg.try_get<Metabolism>(e);
             info.motility.present && ac->phase != CellPhase::Dead && fm && fm->starving)
             now("sin energia (sin fructosa ni reservas): deja de batir; vuelve a nadar si recupera sustrato");

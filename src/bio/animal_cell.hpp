@@ -38,6 +38,9 @@ struct AnimalCell {
     MotilityGrade grade = MotilityGrade::Progressive;
     float vigor = 1.0f;
     float swelling = 0.0f; // cola hinchada y enrollada por ósmosis (prueba hiposmótica), 0–1
+    float capacitation = 0.0f;   // avance de la capacitación (0–1)
+    bool hyperactive = false;    // capacitado e hiperactivado
+    bool acrosomeReacted = false; // hizo la reacción acrosómica (el acrosoma se liberó)
 };
 
 // Componente marcador: adherida al sustrato por adhesiones focales. El agua no la arrastra (una

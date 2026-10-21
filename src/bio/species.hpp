@@ -362,6 +362,29 @@ struct OsmoticSwellingSpec {
     float seconds = 60.0f;
 };
 
+// Capacitación (en el tracto femenino, o in vitro con bicarbonato y albúmina a 37 °C; Visconti et al.
+// 2011, Asian J. Androl. 13: 395): tarda horas (`capacitation_time` en la fisiología) y se revierte si el
+// medio deja de capacitar. Capacitado, una fracción se hiperactiva (batido amplio y asimétrico: trayectorias
+// en estrella, VCL ≥ 150 µm/s, LIN ≤ 50 %, ALH ≥ 7 µm) y puede hacer la reacción acrosómica, espontánea o
+// disparada por un inductor (la progesterona, por el canal CatSper), al que además sigue por quimiotaxis
+// (compara en el tiempo, como en el giro-y-avance de Alvarez et al. 2014).
+struct CapacitationSpec {
+    bool present = false;
+    float minBicarbonate = 15000.0f; // [µM] de alcalinidad del medio
+    float minAlbumin = 0.05f;        // fracción de suero (la albúmina que le saca colesterol a la membrana)
+    float minTemperature = 30.0f;    // [°C]
+    float hyperactivatedFraction = 0.15f;
+    float hyperLateralAmplitude = 8.0f;   // ALH [µm]
+    float hyperBeatScale = 0.7f;          // frecuencia del batido relativa
+    float hyperCurvatureRadius = 12.0f;   // [µm]
+    float hyperRotationalDiffusion = 2.0f; // [rad²/s]
+    float spontaneousReactionPerHour = 0.03f;
+    std::string inducer;                 // id del reactivo (progesterona)
+    float inducedReactionPerHour = 0.5f; // a saturación
+    float inducerEc50 = 0.03f;           // [µg/mL]
+    float chemotaxisThreshold = 0.0f;    // [µg/mL] lo mínimo que detecta (0: sin quimiotaxis)
+};
+
 struct AnimalCellInfo {
     bool present = false;
     bool adherent = true;              // adherida al fondo por adhesiones focales: el agua no la lleva
@@ -487,6 +510,7 @@ struct SpeciesInfo {
     SwimPathSpec swimPath;              // [being.swim_path]
     MotilitySpec motility;              // [being.motility]
     OsmoticSwellingSpec osmoticSwelling; // [being.osmotic_swelling]
+    CapacitationSpec capacitation;       // [being.capacitation]
     MorphSpec morph;                    // [being.morph]
     bool histophagous = false;
     // Se divide dentro de un quiste reproductivo (Colpoda): mientras dura el ciclo de divisiones no nada
