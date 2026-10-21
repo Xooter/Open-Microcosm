@@ -51,7 +51,7 @@ class PlatePanel : public Panel {
             drawEnvironment(app, p);
         if (section("Nutrientes (en vivo)", true))
             drawNutrients(app, p);
-        if (section("Raleo (en vivo)"))
+        if (section("Raleo (en vivo)", true))
             drawThinning(app);
         // Un cultivo es estéril: sin sedimento ni fauna silvestre (se inocula desde el Catálogo).
         if (p.kind() == PlateKind::Drop && section("Sedimento (al crear)"))
