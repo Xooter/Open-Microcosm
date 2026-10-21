@@ -308,6 +308,15 @@ if(WIN32)
     set(MICROCOSM_ICON_ICO ${CMAKE_SOURCE_DIR}/assets/icon/icon.ico)
     configure_file(assets/icon/microcosm.rc.in ${CMAKE_BINARY_DIR}/microcosm.rc @ONLY)
     target_sources(microcosm PRIVATE ${CMAKE_BINARY_DIR}/microcosm.rc)
+    # En Release, aplicación gráfica: sin la consola de logs al abrirla (Debug y profile la
+    # conservan). Se sigue entrando por main().
+    if(MSVC)
+        target_link_options(microcosm PRIVATE
+            $<$<CONFIG:Release,MinSizeRel>:/SUBSYSTEM:WINDOWS>
+            $<$<CONFIG:Release,MinSizeRel>:/ENTRY:mainCRTStartup>)
+    else()
+        target_link_options(microcosm PRIVATE $<$<CONFIG:Release,MinSizeRel>:-mwindows>)
+    endif()
 endif()
 
 if(ipo_ok)
