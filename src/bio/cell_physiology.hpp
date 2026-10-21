@@ -55,10 +55,10 @@ const char* applyEnvironmentStress(const SpeciesInfo& info, const CellSurroundin
 // divide al duplicarla.
 float targetBirthBiomass(SpeciesId species, float sizeScale);
 
-// Las dos hijas de una división: cada una con su copia del genoma y sus mutaciones (`rate`: 0 en
-// las células somáticas de un cultivo, que son clonales).
-void daughterGenomes(const Heredity& mother, LocomotionType type, Rng& ra, Rng& rb, float rate, Heredity& a,
-                     Heredity& b);
+// Las dos hijas de una división: cada una con su copia del genoma y sus mutaciones (mutateDivision:
+// la genética de la especie; `mutationScale` 0 en las células somáticas de un cultivo, clonales).
+void daughterGenomes(const Heredity& mother, LocomotionType type, const GeneticsSpec& genetics, float mutationScale,
+                     Rng& ra, Rng& rb, Heredity& a, Heredity& b);
 
 // Diatomeas: cada hija se queda con una valva de la madre y fabrica una nueva adentro, así que una
 // de ellas es más chica (regla de MacDonald–Pfitzer). Por debajo de ~75 % del tamaño forma una

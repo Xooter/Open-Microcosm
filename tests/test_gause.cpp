@@ -40,8 +40,9 @@ CultureRun gauseTube(std::uint64_t seed, float bacteriaPerMl = 5e7f, float thinn
 
 TEST_CASE("validación: Gause — cada Paramecium solo llega a una meseta" * doctest::test_suite("validacion")) {
     // En monocultivo las dos crecen hasta una capacidad de carga que fija la ración diaria (fig. 21):
-    // el biovolumen se estabiliza hacia el día 10. El número de individuos sigue subiendo porque las
-    // células hambrientas se dividen más chicas (docs/bugs/starved-cultures-keep-dividing.md).
+    // el biovolumen y el número de individuos se estabilizan hacia el día 10. Una línea pura no
+    // cambia de tamaño (antes la mutación, muy por encima de la publicada, la achicaba en semanas:
+    // docs/bugs/starved-cultures-keep-dividing.md).
     for (const char* id : {"paramecium", "paramecium_aurelia"}) {
         const int sp = static_cast<int>(*findSpecies(id));
         CultureRun r = gauseTube(22);
@@ -49,12 +50,28 @@ TEST_CASE("validación: Gause — cada Paramecium solo llega a una meseta" * doc
         const double start = r.culture().census().biovolume[sp];
         r.advance(16 * kDay);
         const double day16 = r.culture().census().biovolume[sp];
+        const int count16 = r.culture().count(static_cast<SpeciesId>(sp));
         r.advance(4 * kDay);
         const double day20 = r.culture().census().biovolume[sp];
+        const int count20 = r.culture().count(static_cast<SpeciesId>(sp));
         MESSAGE(id << ": biovolumen (10⁶ µm³) al empezar " << start * 1e-6 << ", día 16 " << day16 * 1e-6 << ", día 20 "
                    << day20 * 1e-6 << " (" << r.culture().count(static_cast<SpeciesId>(sp)) << " individuos)");
         CHECK(day16 > 20.0 * start);                  // creció
         CHECK(std::abs(day20 - day16) < 0.1 * day16); // meseta
+        // Los individuos oscilan alrededor del equilibrio (las cohortes se dividen juntas después de
+        // cada ración; Gause también describe oscilaciones "por causas accidentales"): sin tendencia
+        // entre la media de los días 11-20 y la de los días 21-30.
+        double early = 0.0, late = 0.0;
+        CultureRun q = gauseTube(23);
+        q.apply({0, CultureOp::Inoculate, id, 20});
+        q.advance(10 * kDay);
+        for (int d = 11; d <= 30; ++d) {
+            q.advance(kDay);
+            (d <= 20 ? early : late) += q.culture().count(static_cast<SpeciesId>(sp)) / 10.0;
+        }
+        MESSAGE("individuos (16 y 20: " << count16 << ", " << count20 << "): media de los días 11-20 " << early << ", 21-30 " << late);
+        CHECK(late / early > 0.8);
+        CHECK(late / early < 1.25);
     }
 }
 
@@ -100,11 +117,9 @@ TEST_CASE("validación: Gause — P. aurelia excluye a P. caudatum" * doctest::t
     CHECK(wins >= 4);
 }
 
-// DISCREPANCIA CONOCIDA (docs/bugs/gause-aurelia-does-not-win.md): el desplazamiento es más lento que
-// el de Gause (día 25: P. caudatum es 23 de 163 en volumen, 0,14). `should_fail` avisa cuando se
-// resuelva; no se ajustan parámetros.
-TEST_CASE("validación: Gause — el desplazamiento llega al de Gause al día 25" * doctest::test_suite("validacion") *
-          doctest::should_fail()) {
+// Gause (fig. 22): al día 25 P. caudatum es 23 de 163 en volumen (0,14). Con la mutación que la
+// achicaba en semanas, el desplazamiento era más lento (docs/bugs/gause-displacement-too-slow.md).
+TEST_CASE("validación: Gause — el desplazamiento llega al de Gause al día 25" * doctest::test_suite("validacion")) {
     double caudatumShare = 0.0;
     for (std::uint64_t seed = 1; seed <= 5; ++seed) {
         const auto [aurelia, caudatum] = mixed(seed, 25.0);

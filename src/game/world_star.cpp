@@ -34,7 +34,10 @@ void World::foundStarColony(entt::entity root, Rng& rng, bool randomStage) {
         const float a = 2.0f * units::kPi * static_cast<float>(k) / static_cast<float>(info.starColonyMax);
         const Vec2 d = rotated(h, a);
         const float angle = std::atan2(d.y, d.x);
-        const entt::entity e = spawnWildCell(id, dish_.clampInside(hub + d * (half + kPad), half), rng, randomStage, &angle);
+        // La colonia es un clon de la célula que la fundó.
+        const Genome founder = registry_.all_of<Heredity>(root) ? registry_.get<Heredity>(root).genome : speciesGenome(id);
+        const entt::entity e =
+            spawnWildCell(id, dish_.clampInside(hub + d * (half + kPad), half), rng, randomStage, &angle, 0.0f, &founder);
         registry_.emplace_or_replace<StarMember>(e, StarMember{root, k});
     }
 }

@@ -26,8 +26,7 @@ inline constexpr std::size_t kGeneCount = static_cast<std::size_t>(Gene::Count);
 
 struct GeneInfo {
     const char* name;
-    float min, max;
-    float sigma; // tamaño típico de una mutación
+    float min, max; // límites fisiológicos (relativos a la especie)
 };
 
 const GeneInfo& geneInfo(Gene gene);
@@ -41,9 +40,31 @@ struct Genome {
 Genome speciesGenome(LocomotionType type);
 bool geneAllowed(LocomotionType type, Gene gene);
 
-// Mitosis: cada gen permitido muta con probabilidad `rate`; el tipo de apareamiento a veces
-// cambia (variación entre cariónidas, como en Paramecium).
-void mutate(Genome& genome, LocomotionType type, Rng& rng, float rate = 0.25f);
+// Variación genética de una especie (datos: [being.genetics]). Los valores de fábrica salen de la
+// genética cuantitativa (docs/mechanics/genome-and-organelles.md):
+//  - `mutationalCv`: lo que la mutación agrega por generación a cada gen, como coeficiente de
+//    variación (≈0,5 % en rasgos morfológicos: Houle, Morikawa y Lynch 1996, Genetics 143: 1467).
+//    ESTIMACIÓN: no hay mediciones en protistas.
+//  - `standingCv`: la variación de una población silvestre. La varianza genética que se mantiene es
+//    ~100 generaciones de mutación en rasgos morfológicos (VG/VM ≈ 100, Houle et al. 1996):
+//    √100 × 0,5 % = 5 %.
+//  - `macronucleus`: ciliados. El fenotipo lo da el macronúcleo, amitótico y muy poliploide; las
+//    mutaciones nuevas quedan en el micronúcleo (línea germinal) y se expresan recién después del
+//    sexo, así que la fisión asexual no cambia el genoma expresado.
+struct GeneticsSpec {
+    float mutationalCv = 0.005f;
+    float standingCv = 0.05f;
+    bool macronucleus = false;
+};
+
+// División: cada gen permitido cambia por N(0, CVm²·escala) (relativo al valor 1 de la especie),
+// acotado a sus límites. `mutationScale` multiplica la varianza mutacional (1 = la publicada; más
+// es una evolución acelerada a propósito). El tipo de apareamiento no cambia en la fisión (en
+// Paramecium se fija al formarse el macronúcleo).
+void mutateDivision(Genome& genome, LocomotionType type, const GeneticsSpec& genetics, float mutationScale, Rng& rng);
+// Un individuo de una población silvestre: cada gen permitido se aparta de la especie por
+// N(0, cv²) (cv = standingCv × la escala que pida el usuario; 0 = un clon).
+void standingVariation(Genome& genome, LocomotionType type, float cv, Rng& rng);
 // Conjugación: cada gen viene de uno u otro progenitor. Los dos exconjugantes quedan con el
 // MISMO genotipo (intercambian pronúcleos haploides recíprocamente).
 Genome recombine(const Genome& a, const Genome& b, Rng& rng);

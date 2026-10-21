@@ -124,6 +124,10 @@ ReplicaResult runCultureReplica(const ExperimentSpec& spec, const ExperimentLeve
             cs.light = static_cast<float>(value);
         else if (key == "gas_transfer")
             cs.gasTransfer = static_cast<float>(value);
+        else if (key == "genetic_diversity")
+            cs.geneticDiversity = static_cast<float>(value);
+        else if (key == "mutation_scale")
+            cs.mutationScale = static_cast<float>(value);
         else if (key == "bacteria") {
             events.erase(std::remove_if(events.begin(), events.end(),
                                         [](const CultureEvent& e) { return e.step == 0 && e.op == CultureOp::Bacteria; }),
@@ -508,6 +512,8 @@ bool parseExperiment(const std::string& text, ExperimentSpec& spec, std::string*
         cs.temperature = static_cast<float>((*c)["temperature"].value_or(static_cast<double>(cs.temperature)));
         cs.light = static_cast<float>((*c)["light"].value_or(static_cast<double>(cs.light)));
         cs.gasTransfer = static_cast<float>((*c)["gas_transfer"].value_or(static_cast<double>(cs.gasTransfer)));
+        cs.geneticDiversity = static_cast<float>((*c)["genetic_diversity"].value_or(static_cast<double>(cs.geneticDiversity)));
+        cs.mutationScale = static_cast<float>((*c)["mutation_scale"].value_or(static_cast<double>(cs.mutationScale)));
         std::string scene = "culture_version=1\n";
         if (const toml::array* p = (*c)["program"].as_array())
             for (const toml::node& n : *p)

@@ -64,6 +64,11 @@ class ProcessesPanel : public Panel {
         }
         if (section("Microbiología"))
             parameterControls(app, ParamGroup::Microbiology);
+        if (section("Genética")) {
+            parameterControls(app, ParamGroup::Genetics);
+            if (app.world && app.world->mutationScale() > 1.0f)
+                note("Evolución acelerada: la mutación está por encima de la publicada (no realista).");
+        }
         if (section("Hongos y mohos")) {
             parameterControls(app, ParamGroup::Fungi);
             ImGui::Separator();

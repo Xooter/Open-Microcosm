@@ -6,7 +6,8 @@ the user data folder.
 ## Plates and scenes (`.plate`)
 
 `PlateSpec` (`game/plate_spec`) is the source of truth for what is preconfigured: biome and seed,
-content (`DropContent`), environment, nutrients, sediment, populations and geometry.
+content (`DropContent`), environment, nutrients, sediment, populations (with `genetic_diversity` and
+`mutation_scale`: [genome](../mechanics/genome-and-organelles.md#mutation-and-variation)) and geometry.
 `parsePlate`/`serializePlate` write versioned `key=value` text (`plate_version`); missing keys keep
 the biome's value. Floats are written with round-trip precision.
 
@@ -16,10 +17,11 @@ Loading it and creating the plate replays the run ([reproducibility](../mechanic
 ## Culture scene (`.culture`, `<data>/openmicrocosm/cultures/`)
 
 `key=value` lines: `culture_version`, `name`, `vessel`, `medium`, `temperature`, `light`, `seed`,
-`gas_transfer` (optional: cm/h, overrides the vessel's), `program=` and `event=step op value [key]`.
+`gas_transfer` (optional: cm/h, overrides the vessel's), `genetic_diversity` (optional: 0 = clone),
+`mutation_scale` (optional: 1 = published), `program=` and `event=step op value [key]`.
 Operations: `inoculate`, `bacteria`, `medium`, `dilution` (also the thinning), `concentration`,
 `phages`, `sample`, `withdraw`, `receive`, `inoculate_density`, `chemostat`, `inflow_medium`,
-`reagent`, `gas_transfer`.
+`reagent`, `gas_transfer`, `mutation_scale`.
 
 ## Program (`program=` in plates and cultures)
 

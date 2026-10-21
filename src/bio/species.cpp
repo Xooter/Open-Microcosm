@@ -85,7 +85,7 @@ constexpr const char* kBeingKeys[] = {
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "sliding_colony", "testate", "cyclosis", "ph",
     "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "shape_wave", "star_colony", "contractile_vacuole", "semicell", "somersault", "algal_conjugation", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage", "swim_path", "motility", "osmotic_swelling", "capacitation", "morphotype",
-    "stress_pigment"};
+    "stress_pigment", "genetics"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
 constexpr const char* kResponseKeys[] = {"field", "kind", "action", "threshold", "min_level", "memory", "refractory"};
@@ -428,6 +428,20 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
     r.num("max_salinity", s.salinityMax);
     r.choice("storage", kStorage, s.chemistry.storage);
     r.choice("wall", kWall, s.chemistry.wall);
+    // Genética: los ciliados expresan el macronúcleo (las mutaciones nuevas esperan al sexo).
+    s.genetics.macronucleus = std::find(s.tags.begin(), s.tags.end(), "ciliate") != s.tags.end();
+    if (const toml::table* ge = r.table("genetics")) {
+        constexpr const char* kKeys[] = {"mutational_cv", "standing_cv", "macronucleus", "source"};
+        toml_io::warnUnknown(*ge, kKeys, r.where + " [genetics]", warnings);
+        Reader cr{*ge, r.where + " [genetics]", {}};
+        cr.num("mutational_cv", s.genetics.mutationalCv);
+        cr.num("standing_cv", s.genetics.standingCv);
+        cr.flag("macronucleus", s.genetics.macronucleus);
+        cr.text("source", s.geneticsSource);
+        if (s.genetics.mutationalCv < 0.0f || s.genetics.standingCv < 0.0f)
+            cr.errors.push_back(cr.where + ": 'mutational_cv' y 'standing_cv' no pueden ser negativos");
+        r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
     if (const toml::node* g = t.get("genome")) {
         if (const toml::table* gt = g->as_table()) {
             for (const auto& [k, v] : *gt) {

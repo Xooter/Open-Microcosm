@@ -238,7 +238,7 @@ void run(World& world, float seconds) {
 TEST_CASE("mecánicas: Stentor se extiende, se contrae entero ante una sacudida y se vuelve a extender" * doctest::test_suite("largos")) {
     World world = emptyWorld();
     Rng rng(7, 1, 0, 0);
-    const entt::entity e = world.spawnWild(*findSpecies("stentor"), center(world), rng, false); // fija por el pie
+    const entt::entity e = world.spawnWild(*findSpecies("stentor"), center(world), rng, false, 1.0f); // fija por el pie
     const float contracted = restHalfLength(world, e);
     run(world, 20.0f); // nace contraída y se extiende en ~15 s
     const float extended = restHalfLength(world, e);
@@ -293,7 +293,7 @@ float bend(const std::vector<Vec2>& p) {
 
 entt::entity wild(World& world, const char* key, Vec2 at) {
     Rng rng(9, 1, 0, 0);
-    return world.spawnWild(*findSpecies(key), at, rng, false);
+    return world.spawnWild(*findSpecies(key), at, rng, false, 1.0f);
 }
 
 } // namespace
@@ -745,7 +745,7 @@ TEST_CASE("mecánicas: Zoothamnium arma una colonia ramificada que se contrae en
         World world = emptyWorld();
         world.bioTimeScale() = 3600.0f;
         Rng rng(9, 1, 0, 0);
-        const entt::entity e = world.spawnWild(*findSpecies(key), center(world), rng, false);
+        const entt::entity e = world.spawnWild(*findSpecies(key), center(world), rng, false, 1.0f);
         REQUIRE(world.forceReproduction(e));
         int zooids = 1;
         for (int s = 0; s < 60 * 120 && zooids < 2; ++s) {

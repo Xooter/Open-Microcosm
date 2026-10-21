@@ -147,12 +147,12 @@ float targetBirthBiomass(SpeciesId species, float size) {
            cellMassScale(speciesInfo(species));
 }
 
-void daughterGenomes(const Heredity& mother, LocomotionType type, Rng& ra, Rng& rb, float rate, Heredity& a,
-                     Heredity& b) {
+void daughterGenomes(const Heredity& mother, LocomotionType type, const GeneticsSpec& genetics, float mutationScale,
+                     Rng& ra, Rng& rb, Heredity& a, Heredity& b) {
     b = mother;
     a = mother;
-    mutate(a.genome, type, ra, rate);
-    mutate(b.genome, type, rb, rate);
+    mutateDivision(a.genome, type, genetics, mutationScale, ra);
+    mutateDivision(b.genome, type, genetics, mutationScale, rb);
     a.traits = traitsOf(a.genome, type);
     b.traits = traitsOf(b.genome, type);
 }

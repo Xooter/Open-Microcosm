@@ -4,14 +4,14 @@
 |---|---|
 | **ID** | `starved-cultures-keep-dividing` |
 | **Type** | `model-limitation` |
-| **Status** | `investigating` |
+| **Status** | `fixed` |
 | **Severity** | `minor` |
 | **Area** | [`genome-and-organelles`](../mechanics/genome-and-organelles.md) |
 | **Affects** | Well-mixed cultures at their carrying capacity (`paramecium`, `paramecium_aurelia`); probably the plate too |
 | **Code** | `src/bio/genome.cpp` (`mutate`, `kGenes`), `src/game/culture.cpp` (rate 0.25 per division, 0.5 on seeding), `src/game/world.cpp` |
 | **Reported** | 21/10/2026 |
 | **Last verified** | 21/10/2026 |
-| **Fixed in** | — |
+| **Fixed in** | commit "Mutación realista (fase 1)" (21/10/2026) |
 
 ## Summary
 
@@ -57,9 +57,17 @@ Make the mutation rate a parameter of the plate, the culture and the experiments
 within the published range, so that evolution experiments can still raise it on purpose; seed cultures
 as pure lines (no added variation) unless asked.
 
+## Fix
+
+Mutation per gene and per division is now N(0, CVm²) with CVm = 0.5 % (data per being), ciliates do
+not express new mutations at fission (macronucleus), and an inoculum is a pure line
+([genome](../mechanics/genome-and-organelles.md#mutation-and-variation)). In the Gause tube the
+individuals oscillate around a plateau (mean of days 11–20 and 21–30 within 25 %) and the size gene
+stays at 1. The user can still accelerate evolution on purpose (`genetics.mutation_scale`).
+
 ## Workaround
 
-Compare species by biovolume (series `biovolume:<id>`, condition `biovolume_fraction`).
+None needed.
 
 ## References
 
@@ -72,3 +80,4 @@ Compare species by biovolume (series `biovolume:<id>`, condition `biovolume_frac
 
 - 21/10/2026: seen while reproducing Gause's protocol with the daily thinning.
 - 21/10/2026: the cause is the size gene evolving down (mutation rate), not small divisions.
+- 21/10/2026: fixed (realistic mutation, phase 1 of the genetics plan).

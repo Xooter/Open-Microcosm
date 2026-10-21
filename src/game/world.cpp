@@ -88,7 +88,7 @@ float waterViscosity(float celsius) {
 }
 
 World::World(const WorldConfig& config)
-    : config_(config), medium_(config.medium), width_(config.gridX * config.cellSize),
+    : config_(config), medium_(config.medium), mutationScale_(config.mutationScale), width_(config.gridX * config.cellSize),
       height_(config.gridY * config.cellSize), fft_(config.gridX, config.gridY),
       fluid_(config.gridX, config.gridY, config.cellSize),
       oxygen_(config.gridX, config.gridY, config.cellSize, units::kDiffusionO2,
@@ -1626,7 +1626,7 @@ void World::populateEcosystem(float scale) {
                 // El filamento entero dentro de la placa: el inicio, a su largo de la pared.
                 const float length = static_cast<float>(info.filamentCells) * (2.0f * info.spec.radiusX + 4.0f);
                 const Vec2 start = randomPoint(rng, length + info.spec.radiusY + 4.0f);
-                spawnFilament(id, start, rng.uniform(0.0f, 6.2831853f), info.filamentCells, 0);
+                spawnFilament(id, start, rng.uniform(0.0f, 6.2831853f), info.filamentCells, 0, config_.geneticDiversity);
             }
             continue;
         }
@@ -1637,7 +1637,7 @@ void World::populateEcosystem(float scale) {
                 continue;
             if (!placeIsFree(p, speciesReach(info) + 6.0f))
                 continue;
-            spawnWild(id, p, rng, true);
+            spawnWild(id, p, rng, true, config_.geneticDiversity); // una población silvestre
             ++placed;
         }
     }
@@ -1659,7 +1659,7 @@ bool World::placeIsFree(Vec2 p, float clearance) const {
     return true;
 }
 
-int World::inoculate(Being being, int count, Vec2 center, float radius, const std::vector<Vec2>& area) {
+int World::inoculate(Being being, int count, Vec2 center, float radius, const std::vector<Vec2>& area, float diversity) {
     PROFILE_SCOPE("World::inoculate");
     // Como con la pipeta: `count` individuos repartidos al azar en toda la placa (radius <= 0) o
     // en un círculo. Las células no caen encima de otra; las bacterias van de a una.
@@ -1704,7 +1704,7 @@ int World::inoculate(Being being, int count, Vec2 center, float radius, const st
             bacteria_.add(p.x, p.y, rng.uniform(0.0f, 2.0f * units::kPi), rng.uniform(1.0f, 2.0f),
                           bacterialStrain(being.kind));
         else
-            spawnBeing(being, p);
+            spawnBeing(being, p, diversity);
         ++placed;
     }
     return placed;
@@ -1761,19 +1761,23 @@ int World::placeSampled(const std::vector<SampledCell>& cells) {
     return placed;
 }
 
-entt::entity World::spawnWild(SpeciesId id, Vec2 p, Rng& rng, bool randomStage) {
-    const entt::entity e = spawnWildCell(id, p, rng, randomStage, nullptr);
+entt::entity World::spawnWild(SpeciesId id, Vec2 p, Rng& rng, bool randomStage, float diversity) {
+    const entt::entity e = spawnWildCell(id, p, rng, randomStage, nullptr, diversity);
     if (speciesInfo(id).starColonyMax > 0) // Asterionella: se la encuentra en colonias
         foundStarColony(e, rng, randomStage);
     return e;
 }
 
-entt::entity World::spawnWildCell(SpeciesId id, Vec2 p, Rng& rng, bool randomStage, const float* angle) {
+entt::entity World::spawnWildCell(SpeciesId id, Vec2 p, Rng& rng, bool randomStage, const float* angle, float diversity,
+                                  const Genome* clone) {
     const SpeciesInfo& info = speciesInfo(id);
-    Genome g = speciesGenome(id);
-    // Las células somáticas de un cultivo son clonales: sin la variación genética de un protista.
-    mutate(g, info.locomotion, rng, info.animalCell.present ? 0.0f : 0.5f);
-    g[Gene::MatingType] = rng.uniform() < 0.5f ? 0.0f : 1.0f;
+    Genome g = clone ? *clone : speciesGenome(id);
+    if (!clone) {
+        // Las células somáticas de un cultivo celular son clonales: sin la variación de un protista.
+        if (!info.animalCell.present)
+            standingVariation(g, info.locomotion, info.genetics.standingCv * std::max(0.0f, diversity), rng);
+        g[Gene::MatingType] = rng.uniform() < 0.5f ? 0.0f : 1.0f;
+    }
     const entt::entity e = spawnOrganism(id, p, g, 0, angle ? *angle : rng.uniform(0.0f, 2.0f * units::kPi));
     if (randomStage) {
         // Población en distintas etapas del ciclo celular (si no, todas se dividirían juntas).
@@ -1793,7 +1797,7 @@ entt::entity World::spawnWildCell(SpeciesId id, Vec2 p, Rng& rng, bool randomSta
     return e;
 }
 
-void World::spawnBeing(Being being, Vec2 at) {
+void World::spawnBeing(Being being, Vec2 at, float diversity) {
     PROFILE_SCOPE("World::spawnBeing");
     Rng rng(config_.seed, rng_stream::kTools, toolCounter_++, step_);
     const float angle = rng.uniform(0.0f, 2.0f * units::kPi);
@@ -1803,10 +1807,10 @@ void World::spawnBeing(Being being, Vec2 at) {
         if (info.filament) { // el filamento arranca en el cursor y entra entero en la placa
             const float length = static_cast<float>(info.filamentCells) * (2.0f * info.spec.radiusX + 4.0f);
             spawnFilament(being.species, dish_.clampInside(at, length + info.spec.radiusY + 4.0f), angle,
-                          info.filamentCells, 0);
+                          info.filamentCells, 0, diversity);
         } else {
             const float reach = std::max(info.spec.radiusX, info.spec.radiusY) * 1.5f + 10.0f;
-            spawnWild(being.species, dish_.clampInside(at, reach), rng, false);
+            spawnWild(being.species, dish_.clampInside(at, reach), rng, false, diversity);
         }
         break;
     }
@@ -3610,8 +3614,8 @@ void World::divide(entt::entity cell, std::size_t tipA, std::size_t tipB) {
         Heredity ha, hb;
         Rng ra(config_.seed, rng_stream::kMutation, entt::to_integral(cell) * 2ull, step_);
         Rng rb(config_.seed, rng_stream::kMutation, entt::to_integral(cell) * 2ull + 1, step_);
-        const float rate = registry_.all_of<AnimalCell>(cell) ? 0.0f : 0.25f; // somáticas: clonales
-        daughterGenomes(*mh, type, ra, rb, rate, ha, hb);
+        const float scale = registry_.all_of<AnimalCell>(cell) ? 0.0f : mutationScale_; // somáticas: clonales
+        daughterGenomes(*mh, type, cellInfo(registry_, cell).genetics, scale, ra, rb, ha, hb);
         registry_.replace<Heredity>(cell, ha);
         registry_.emplace<Heredity>(child, hb);
         applyTraits(cell);
@@ -4534,17 +4538,19 @@ void World::strikeWithNeck(entt::entity e, const RingBody& body, float dt) {
 // Filamentos y colonias
 // ---------------------------------------------------------------------------
 
-std::vector<entt::entity> World::spawnFilament(SpeciesId species, Vec2 start, float angle, int cells, std::uint32_t run) {
+std::vector<entt::entity> World::spawnFilament(SpeciesId species, Vec2 start, float angle, int cells, std::uint32_t run,
+                                               float diversity) {
     const SpeciesInfo& info = speciesInfo(species);
     const Vec2 dir = {std::cos(angle), std::sin(angle)};
     std::vector<entt::entity> chain;
     Rng rng(config_.seed, rng_stream::kPopulate, 9000 + registry_.view<RingBody>().size(), 0);
     // Todo el filamento es un clon: un solo tipo de apareamiento (la conjugación es entre filamentos).
     const float mating = Rng(config_.seed, rng_stream::kMatingType, registry_.view<RingBody>().size(), 0).uniform() < 0.5f ? 0.0f : 1.0f;
+    Genome clone = speciesGenome(species);
+    standingVariation(clone, info.locomotion, info.genetics.standingCv * std::max(0.0f, diversity), rng);
+    clone[Gene::MatingType] = mating;
     for (int k = 0; k < cells; ++k) {
-        Genome g = speciesGenome(species);
-        mutate(g, info.locomotion, rng, 0.3f);
-        g[Gene::MatingType] = mating;
+        const Genome& g = clone;
         const Vec2 p = start + dir * (static_cast<float>(k) * (2.0f * info.spec.radiusX + 4.0f));
         chain.push_back(spawnOrganism(species, {wrapCoord(p.x, width_), wrapCoord(p.y, height_)}, g, run, angle));
         if (k > 0)
@@ -4715,7 +4721,7 @@ void World::releaseColonies(entt::entity mother) {
     for (int k = 0; k < info.colonyDaughters; ++k) {
         Rng rng(config_.seed, rng_stream::kMutation + 50, bodyId * 16ull + static_cast<std::uint64_t>(k), step_);
         Genome g = parent;
-        mutate(g, info.locomotion, rng);
+        mutateDivision(g, info.locomotion, info.genetics, mutationScale_, rng); // las hijas de la colonia son su descendencia asexual
         const float a = 6.2831853f * (static_cast<float>(k) + rng.uniform()) / static_cast<float>(info.colonyDaughters);
         const float dist = info.motherDiesAtRelease ? 0.5f * radius : (info.budding ? 1.7f * radius : 2.2f * radius);
         const Vec2 p = c + Vec2{std::cos(a), std::sin(a)} * dist;

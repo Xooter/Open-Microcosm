@@ -420,6 +420,12 @@ class PlatePanel : public Panel {
         ch |= sliderInt("Hongos liquenizantes", &c.lichens, 0, 30);
         ch |= sliderInt("Physarum", &c.physarum, 0, 10);
         ch |= slider("Manchas de materia orgánica", &c.patchiness, 0.0f, 1.0f, "%.2f");
+        ch |= slider("Diversidad genética", &c.geneticDiversity, 0.0f, 3.0f, "%.2f",
+                     "Variación genética de las poblaciones silvestres de la gota (1 = la publicada, ~5 % por gen; "
+                     "0 = clones). Una gota de un charco no es una línea pura.");
+        ch |= sliderLog("Escala de la mutación", &c.mutationScale, 0.001f, 10000.0f, "%.3g",
+                        "Multiplica la varianza que la mutación agrega en cada división (1 = la publicada). Más de 1 "
+                        "es una evolución acelerada, no realista. Se cambia también en vivo (Procesos > Genética).");
         ImGui::Separator();
         ImGui::TextUnformatted(tr("Peso inicial de cada especie"));
         helpMarker("Multiplica la población que le toca al bioma. 0 = ausente. Solo vale con contenido Completa.");

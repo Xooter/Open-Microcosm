@@ -147,6 +147,7 @@ std::string serializePlate(const PlateSpec& s) {
     for (const PackInfo& pack : loadedPacks())
         out << "pack=" << pack.id << ' ' << pack.version << ' ' << fingerprintHex(pack.fingerprint) << '\n';
     out << "depth=" << c.depth << '\n' << "cell_culture=" << c.cellCulture << '\n'
+        << "genetic_diversity=" << c.geneticDiversity << '\n' << "mutation_scale=" << c.mutationScale << '\n'
         << "fixed_slide=" << c.fixedSlide << '\n'
         << "erythrocytes_cm2=" << c.erythrocytesPerCm2 << '\n' << "platelets_cm2=" << c.plateletsPerCm2 << '\n';
     for (const auto& [sp, count] : c.seeding)
@@ -263,6 +264,8 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
         else if (k == "erythrocytes_cm2") c.erythrocytesPerCm2 = static_cast<float>(x);
         else if (k == "platelets_cm2") c.plateletsPerCm2 = static_cast<float>(x);
         else if (k == "depth") c.depth = static_cast<float>(std::max(1.0, x));
+        else if (k == "genetic_diversity") c.geneticDiversity = static_cast<float>(std::max(0.0, x));
+        else if (k == "mutation_scale") c.mutationScale = static_cast<float>(std::max(0.0, x));
         else if (k == "seeding") {
             // La siembra del archivo reemplaza a la de la placa preparada.
             if (!seedingRead)

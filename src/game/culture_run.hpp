@@ -25,6 +25,9 @@ struct CultureSpec {
     float light = 0.0f;         // irradiancia relativa de la lámpara
     // Velocidad de transferencia de gases por la superficie [cm/h]; < 0: la del recipiente (0: medio quieto).
     float gasTransfer = -1.0f;
+    // Genética: variación de lo que se siembra (0 = clon) y escala de la mutación (1 = publicada).
+    float geneticDiversity = 0.0f;
+    float mutationScale = 1.0f;
     std::uint64_t seed = 1;
     Program program;
     CultureConfig config() const; // el recipiente y el medio de los paquetes cargados
@@ -46,6 +49,7 @@ enum class CultureOp : std::uint8_t {
     Inflow,        // key = soluto, value = µM del medio que entra (reservorio del quimiostato)
     Reagent,       // key = id del reactivo, value = concentración [µg/mL]
     GasTransfer,   // value = velocidad de transferencia de gases por la superficie [cm/h] (0: medio quieto)
+    MutationScale, // value = escala de la varianza mutacional por división (1: la publicada)
     Count
 };
 const char* cultureOpKey(CultureOp op);

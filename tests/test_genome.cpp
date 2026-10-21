@@ -56,8 +56,9 @@ TEST_CASE("las mutaciones respetan los límites y no inventan organelos ajenos a
     Rng rng(1, 2, 3, 4);
     for (LocomotionType type : {LocomotionType::Cilia, LocomotionType::Flagellum, LocomotionType::Pseudopod}) {
         Genome g = speciesGenome(type);
+        const GeneticsSpec fast; // la escala grande lleva los genes contra sus límites
         for (int k = 0; k < 2000; ++k)
-            mutate(g, type, rng, 1.0f);
+            mutateDivision(g, type, fast, 1e4f, rng);
         for (std::size_t i = 0; i < kGeneCount; ++i) {
             const auto gene = static_cast<Gene>(i);
             CHECK(g.v[i] >= geneInfo(gene).min - 1e-6f);
@@ -209,4 +210,75 @@ TEST_CASE("conjugación: solo entre células de la misma especie") {
     // Una especie que no se conjuga (alga) tampoco busca pareja.
     const entt::entity alga = world.spawnOrganism(SpeciesId::Chlamydomonas, {400.0f, 400.0f}, speciesGenome(SpeciesId::Chlamydomonas), 0);
     CHECK((world.conjugationPartner(alga) == entt::null));
+}
+
+TEST_CASE("mutación por división: agrega la varianza publicada por generación") {
+    // Cada gen permitido cambia por N(0, CVm²) por división (CVm 0,5 %, Houle et al. 1996): después de
+    // n divisiones, la varianza entre linajes independientes es n·CVm².
+    const GeneticsSpec spec;
+    constexpr int kLines = 4000, kGenerations = 50;
+    double sum = 0.0, sum2 = 0.0;
+    for (int line = 0; line < kLines; ++line) {
+        Genome g = speciesGenome(LocomotionType::Flagellum);
+        Rng rng(7, 1, static_cast<std::uint64_t>(line), 0);
+        for (int k = 0; k < kGenerations; ++k)
+            mutateDivision(g, LocomotionType::Flagellum, spec, 1.0f, rng);
+        sum += g[Gene::Size];
+        sum2 += g[Gene::Size] * g[Gene::Size];
+    }
+    const double mean = sum / kLines, var = sum2 / kLines - mean * mean;
+    const double expected = kGenerations * spec.mutationalCv * spec.mutationalCv;
+    MESSAGE("varianza del tamaño tras " << kGenerations << " divisiones: " << var << " (esperada " << expected << ")");
+    CHECK(var == doctest::Approx(expected).epsilon(0.1));
+    CHECK(mean == doctest::Approx(1.0).epsilon(0.01));
+}
+
+TEST_CASE("mutación por división: el macronúcleo de un ciliado no expresa mutaciones nuevas; la escala acelera") {
+    GeneticsSpec ciliate;
+    ciliate.macronucleus = true;
+    Genome g = speciesGenome(LocomotionType::Cilia);
+    const Genome before = g;
+    Rng rng(3, 1, 0, 0);
+    for (int k = 0; k < 500; ++k)
+        mutateDivision(g, LocomotionType::Cilia, ciliate, 1.0f, rng);
+    CHECK(g.v == before.v);
+    // Escala 0: sin mutación; escala 100: desvío 10 veces mayor por división.
+    const GeneticsSpec spec;
+    Genome h = speciesGenome(LocomotionType::Flagellum);
+    mutateDivision(h, LocomotionType::Flagellum, spec, 0.0f, rng);
+    CHECK(h.v == speciesGenome(LocomotionType::Flagellum).v);
+    double d1 = 0.0, d100 = 0.0;
+    for (int k = 0; k < 2000; ++k) {
+        Genome a = speciesGenome(LocomotionType::Flagellum), b = a;
+        mutateDivision(a, LocomotionType::Flagellum, spec, 1.0f, rng);
+        mutateDivision(b, LocomotionType::Flagellum, spec, 100.0f, rng);
+        d1 += std::abs(a[Gene::Size] - 1.0f);
+        d100 += std::abs(b[Gene::Size] - 1.0f);
+    }
+    CHECK(d100 / d1 == doctest::Approx(10.0).epsilon(0.1));
+}
+
+TEST_CASE("siembra: un inóculo de laboratorio es un clon; una gota silvestre tiene variación") {
+    WorldConfig c;
+    c.bacteria = 0;
+    c.detritus = 0;
+    c.cyanoFilaments = 0;
+    c.saprolegnia = c.chytridClusters = 0;
+    World w(c);
+    REQUIRE(w.inoculate({BeingKind::Species, SpeciesId::Euglena}, 20, {}, 0.0f) == 20);
+    for (auto [e, h, sp] : w.registry().view<Heredity, Species>().each())
+        CHECK(h.genome[Gene::Size] == 1.0f);
+    World wild(c);
+    REQUIRE(wild.inoculate({BeingKind::Species, SpeciesId::Euglena}, 40, {}, 0.0f, {}, 1.0f) == 40);
+    double sum = 0.0, sum2 = 0.0;
+    int n = 0;
+    for (auto [e, h, sp] : wild.registry().view<Heredity, Species>().each()) {
+        sum += h.genome[Gene::Size];
+        sum2 += h.genome[Gene::Size] * h.genome[Gene::Size];
+        ++n;
+    }
+    const double sd = std::sqrt(sum2 / n - (sum / n) * (sum / n));
+    MESSAGE("desvío del tamaño en una población silvestre: " << sd << " (standing_cv " << speciesInfo(SpeciesId::Euglena).genetics.standingCv << ")");
+    CHECK(sd > 0.03);
+    CHECK(sd < 0.07);
 }

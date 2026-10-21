@@ -199,26 +199,34 @@ TEST_CASE("apoptosis: sin glucosa la célula se fragmenta en cuerpos apoptótico
 }
 
 TEST_CASE("neutrófilo: sigue el fMLP de las bacterias, las fagocita y no se divide") {
-    auto w = culture(64, 60.0f);
-    const Vec2 c = center(*w);
-    const Vec2 colony = c + Vec2{70.0f, 0.0f};
-    w->inoculate({BeingKind::Bacterium, SpeciesId::Paramecium}, 2000, colony, 15.0f);
-    const SpeciesId neu = id("neutrophil");
-    const entt::entity e = spawnAt(*w, neu, c - Vec2{20.0f, 0.0f});
-    REQUIRE(static_cast<bool>(e != entt::null));
-    float d0 = length(w->registry().get<RingBody>(e).centroid - colony);
-    run(*w, 0.05f);
-    MESSAGE("fMLP en la colonia " << w->fmlp().grid().sample(colony.x, colony.y) << " µM, junto al neutrófilo "
-                                  << w->fmlp().grid().sample(c.x, c.y) << " µM");
-    run(*w, 0.35f); // 24 min biológicos en total
-    REQUIRE(w->registry().valid(e));
-    const float d1 = length(w->registry().get<RingBody>(e).centroid - colony);
-    const Digestion& dig = w->registry().get<Digestion>(e);
-    MESSAGE("distancia a la colonia: " << d0 << " → " << d1 << " µm; vacuolas con bacterias: " << dig.vacuoles.size());
-    // Las bacterias nadan y la colonia se dispersa: se acerca a donde estaba y fagocitó alguna.
-    CHECK(d1 < 0.8f * d0);
-    CHECK(dig.vacuoles.size() >= 1);
-    CHECK(w->census().species[static_cast<int>(neu)] == 1);
+    // El paseo es aleatorio (persistente): en tres placas, se acerca a la colonia en todas y la
+    // alcanza y fagocita en la mayoría (una sola corrida dependía de la suerte del sorteo).
+    int closer = 0, fed = 0;
+    for (const std::uint64_t seed : {7ull, 8ull, 9ull}) {
+        auto w = culture(64, 60.0f, seed);
+        const Vec2 c = center(*w);
+        const Vec2 colony = c + Vec2{70.0f, 0.0f};
+        w->inoculate({BeingKind::Bacterium, SpeciesId::Paramecium}, 2000, colony, 15.0f);
+        const SpeciesId neu = id("neutrophil");
+        const entt::entity e = spawnAt(*w, neu, c - Vec2{20.0f, 0.0f});
+        REQUIRE(static_cast<bool>(e != entt::null));
+        const float d0 = length(w->registry().get<RingBody>(e).centroid - colony);
+        run(*w, 0.05f);
+        MESSAGE("fMLP en la colonia " << w->fmlp().grid().sample(colony.x, colony.y) << " µM, junto al neutrófilo "
+                                      << w->fmlp().grid().sample(c.x, c.y) << " µM");
+        run(*w, 0.35f); // 24 min biológicos en total
+        REQUIRE(w->registry().valid(e));
+        const float d1 = length(w->registry().get<RingBody>(e).centroid - colony);
+        const Digestion& dig = w->registry().get<Digestion>(e);
+        MESSAGE("seed " << seed << ": distancia a la colonia " << d0 << " → " << d1 << " µm; vacuolas con bacterias: "
+                        << dig.vacuoles.size());
+        // Las bacterias nadan y la colonia se dispersa: se acerca a donde estaba y fagocita.
+        closer += d1 < 0.8f * d0 ? 1 : 0;
+        fed += dig.vacuoles.size() >= 1 ? 1 : 0;
+        CHECK(w->census().species[static_cast<int>(neu)] == 1); // no se divide
+    }
+    CHECK(closer == 3);
+    CHECK(fed >= 2);
 }
 
 // --- Validación (suite "validacion"): contra los datos con fuente de [physiology.<id>.*] ------------

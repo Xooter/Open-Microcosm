@@ -11,6 +11,7 @@
 #include "game/program.hpp"
 #include "game/world.hpp"
 
+#include <algorithm>
 #include <cstdint>
 #include <map>
 #include <string>
@@ -57,6 +58,10 @@ struct CultureConfig {
     // mezclado la resistencia queda en la película de la superficie: tasa = k / profundidad.
     float depthUm = 5000.0f;
     float gasTransferCmH = 0.0f;
+    // Genética (bio/genome): variación de lo que se siembra (0 = un clon, línea pura; 1 = la de una
+    // población silvestre) y escala de la varianza mutacional por división (1 = la publicada).
+    float geneticDiversity = 0.0f;
+    float mutationScale = 1.0f;
     MediumParams medium;
     std::uint64_t seed = 1;
     // Superindividuos de bacterias: hasta este número, una cohorte por bacteria (exacto); más allá,
@@ -134,6 +139,8 @@ class Culture {
     void setDilutionRate(double perHour) { dilutionPerHour_ = std::max(0.0, perHour); }
     // Mezcla del medio: velocidad de transferencia de gases por la superficie [cm/h] (0: quieto).
     void setGasTransfer(float cmPerHour);
+    void setMutationScale(float scale) { config_.mutationScale = std::max(0.0f, scale); }
+    float mutationScale() const { return config_.mutationScale; }
     float gasTransfer() const { return config_.gasTransferCmH; }
     // Reactivos (game/reagent): concentración [µg/mL] de cada uno en el medio. El medio que entra no
     // trae (se diluyen con el cambio de medio, la dilución y el quimiostato).

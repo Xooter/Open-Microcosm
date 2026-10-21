@@ -93,10 +93,10 @@ estimate). Gause compares "volumes": the tests compare biovolume (`cellVolumeUm3
 
 | Test | Status | Note |
 |---|---|---|
-| Monocultures: plateau | **PASSES** | Biovolume levels off by day 8–12 (*P. caudatum* ~280·10⁶ µm³ per tube on days 16–20, *P. aurelia* ~290·10⁶), as in Gause (K = 203 and 222 in relative volume). The number of individuals keeps rising ([bug](../bugs/starved-cultures-keep-dividing.md)). |
-| Mixed culture: competitive exclusion | **PASSES** | By day 60 *P. caudatum* is below 1 % of the biovolume in 5 of 5 replicates (required: one species below 20 % in 4 of 5). |
+| Monocultures: plateau | **PASSES** | Biovolume levels off by day 8–12 (*P. caudatum* ~260·10⁶ µm³ per tube on days 16–20, *P. aurelia* ~270·10⁶), as in Gause (K = 203 and 222 in relative volume). The individuals oscillate around a plateau (cohorts divide together after each ration): mean of days 21–30 within 25 % of days 11–20. Inocula are pure lines and mutation is realistic ([fixed bug](../bugs/starved-cultures-keep-dividing.md)). |
+| Mixed culture: competitive exclusion | **PASSES** | By day 60 *P. caudatum* is below 0.5 % of the biovolume in 5 of 5 replicates (required: one species below 20 % in 4 of 5). |
 | *P. aurelia* wins | **PASSES** | Ahead on day 25 in 5 of 5 replicates. Without the daily thinning whichever got ahead early won ([fixed bug](../bugs/gause-aurelia-does-not-win.md)). |
-| Speed of displacement | **FAILS** (`should_fail`) | Day 25: *P. caudatum* holds 0.33 of the biovolume (Gause: 23 / 163 = 0.14). [Known bug](../bugs/gause-displacement-too-slow.md). |
+| Speed of displacement | **PASSES** | Day 25: *P. caudatum* holds 0.10 of the biovolume (Gause: 23 / 163 = 0.14; required < 0.3). It was 0.33 while the size gene evolved down ([fixed bug](../bugs/gause-displacement-too-slow.md)). |
 | *Didinium* without refuge | **PASSES** | Without thinning, 200 paramecia and 30 *Didinium* per tube (the former densities). *Didinium* multiplies by eating and exterminates the paramecia; afterwards none is active (it encysts: Beers 1927). Gause saw them die; with cysts the culture is also left without active predators. |
 | *Didinium* with immigration (oscillations) | pending | |
 

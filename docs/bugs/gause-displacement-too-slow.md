@@ -4,14 +4,14 @@
 |---|---|
 | **ID** | `gause-displacement-too-slow` |
 | **Type** | `validation-gap` |
-| **Status** | `open` |
+| **Status** | `fixed` |
 | **Severity** | `minor` |
 | **Area** | [`well-mixed-culture`](../mechanics/well-mixed-culture.md) |
 | **Affects** | `paramecium`, `paramecium_aurelia`; lesson `gause_competition`; test `tests/test_gause.cpp` |
 | **Code** | `src/game/culture.cpp`, `src/bio/cell_physiology.cpp`, `[physiology.*.max_growth]` of both beings |
 | **Reported** | 21/10/2026 |
-| **Last verified** | 21/10/2026 (the test carries `doctest::should_fail()`) |
-| **Fixed in** | — |
+| **Last verified** | 21/10/2026 |
+| **Fixed in** | commit "Mutación realista (fase 1)" (21/10/2026) |
 
 ## Summary
 
@@ -56,9 +56,17 @@ Suspected, not confirmed:
 - Find measured ingestion and clearance for *P. aurelia*.
 - Do **not** tune µmax or clearance to force the speed.
 
+## Fix
+
+Neither of the suspected causes: the size gene of both species evolved down during the experiment,
+because mutation was far above the published rates
+([bug](starved-cultures-keep-dividing.md)). With realistic mutation and pure-line inocula, the mean
+fraction of *P. caudatum* on day 25 is 0.10 (Gause: 0.14) and the test no longer carries
+`should_fail`. The µmax fitted to Gause's curves (net of the daily thinning) remain an estimate.
+
 ## Workaround
 
-None needed for the qualitative result (the winner is right).
+None needed.
 
 ## References
 
@@ -68,3 +76,4 @@ None needed for the qualitative result (the winner is right).
 ## History
 
 - 21/10/2026: split from `gause-aurelia-does-not-win` once the full protocol was in place.
+- 21/10/2026: fixed by the realistic mutation of phase 1 of the genetics plan.

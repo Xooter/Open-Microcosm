@@ -2007,3 +2007,17 @@ Dónde	Where
 En la región dibujada	In the drawn region
 En toda la placa	Over the whole plate
 La región se dibuja con la herramienta Región (G); hasta que haya una, la opción no aparece.	The region is drawn with the Region tool (G); until there is one, the option does not appear.
+1 = la mutación publicada; más es una evolución acelerada (no realista).	1 = the published mutation; more is an accelerated evolution (not realistic).
+Cambiar la mutación	Change the mutation
+Con la variación genética de una población natural (~5 % por gen). Si no, un clon: todos iguales, como el inóculo de un cultivo de laboratorio.	With the genetic variation of a natural population (~5 % per gene). Otherwise a clone: all alike, like the inoculum of a laboratory culture.
+Diversidad genética	Genetic diversity
+Escala de la mutación	Mutation scale
+Evolución acelerada: la mutación está por encima de la publicada (no realista).	Accelerated evolution: the mutation is above the published one (not realistic).
+Genética	Genetics
+Multiplica la varianza que la mutación agrega en cada división (1 = la publicada). Más de 1 es una evolución acelerada, no realista.	Multiplies the variance that mutation adds at each division (1 = the published one). More than 1 is an accelerated evolution, not realistic.
+Multiplica la varianza que la mutación agrega en cada división (1 = la publicada). Más de 1 es una evolución acelerada, no realista. Se cambia también en vivo (Procesos > Genética).	Multiplies the variance that mutation adds at each division (1 = the published one). More than 1 is an accelerated evolution, not realistic. It can also be changed live (Processes > Genetics).
+Multiplica la varianza que la mutación agrega en cada división (1 = la publicada: ~0,5 % por gen y por generación). Más de 1 es una evolución acelerada, útil para verla en una sesión pero no realista.	Multiplies the variance that mutation adds at each division (1 = the published one: ~0.5 % per gene and per generation). More than 1 is an accelerated evolution, useful to see it within a session but not realistic.
+Nueva escala	New scale
+Población silvestre	Wild population
+Variación genética de las poblaciones silvestres de la gota (1 = la publicada, ~5 % por gen; 0 = clones). Una gota de un charco no es una línea pura.	Genetic variation of the wild populations of the drop (1 = the published one, ~5 % per gene; 0 = clones). A drop of a puddle is not a pure line.
+Variación genética de lo que se siembra (0 = un clon, una línea pura como las de Gause; 1 = la de una población silvestre).	Genetic variation of what is seeded (0 = a clone, a pure line like Gause's; 1 = that of a wild population).

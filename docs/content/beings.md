@@ -80,6 +80,7 @@ literature, what is not implemented yet and its unique mechanics.
 | `storage` | `none` \| `starch` \| `glycogen` \| `paramylon` \| `chrysolaminarin` | Storage compound (used by stains: only true starch turns blue-black with Lugol). |
 | `wall` | `none` \| `cellulose` \| `silica` \| `yeast_glucan` | Cell wall. |
 | `genome` | inline table | Genes that differ from those of its locomotion: `size`, `motor`, `mitochondria`, `chloroplasts`, `lysosomes`, `trichocysts`, `armor`, `rigidity`, `mating_type` ([genome](../mechanics/genome-and-organelles.md)). |
+| `[being.genetics]` | table | Optional. `mutational_cv` (per gene and per generation, default 0.005), `standing_cv` (wild population, default 0.05), `macronucleus` (default true for the tag `ciliate`), `source` ([genome](../mechanics/genome-and-organelles.md#mutation-and-variation)). |
 
 ## Shape and appearance
 

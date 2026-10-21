@@ -170,6 +170,11 @@ struct WorldConfig {
     int oscillatoriaFilaments = 0; // tricomas de Oscillatoria al empezar
     int oscillatoriaCells = 20;
     std::uint64_t seed = 1;
+    // Genética (bio/genome): `geneticDiversity` escala la variación de las poblaciones silvestres de
+    // la gota (1 = la publicada; 0 = clones); `mutationScale`, la varianza mutacional por división
+    // (1 = la publicada; más = evolución acelerada, no realista).
+    float geneticDiversity = 1.0f;
+    float mutationScale = 1.0f;
     MediumParams medium;          // química y ambiente iniciales (bioma)
     // Profundidad del agua o del medio [µm] (`Fluid::gapHeight`): la película de una gota ~0,2 mm;
     // el medio de un recipiente de cultivo, ~2–3 mm. Fija el volumen sobre cada punto del fondo
@@ -326,7 +331,10 @@ class World {
     // Ecosistema silvestre: las especies con sus poblaciones iniciales (× scale).
     void populateEcosystem(float scale = 1.0f);
     // Filamento de `cells` células unidas extremo con extremo (Spirogyra).
-    std::vector<entt::entity> spawnFilament(SpeciesId species, Vec2 start, float angle, int cells, std::uint32_t run);
+    // Un filamento es un clon: todas sus células con el mismo genotipo (con la variación `diversity`
+    // de una población silvestre respecto de la especie).
+    std::vector<entt::entity> spawnFilament(SpeciesId species, Vec2 start, float angle, int cells, std::uint32_t run,
+                                            float diversity = 0.0f);
 
     // Uniones de adhesión entre membranas de cuerpos distintos (filamentos, colonias).
     struct AdhesionLink {
@@ -351,11 +359,14 @@ class World {
     // Sin jugador, aparece en `fallback`.
     entt::entity setPlayerSpecies(SpeciesId species, Vec2 fallback);
     // Sandbox: spawnea un ser del catálogo en `at` (silvestre, linaje 0).
-    void spawnBeing(Being being, Vec2 at);
+    // `diversity`: la variación genética de una población silvestre (0 = un clon, como un inóculo
+    // de un cultivo de laboratorio).
+    void spawnBeing(Being being, Vec2 at, float diversity = 0.0f);
     // Inoculación: `count` individuos de un ser del catálogo al azar en toda la placa (radius <= 0),
     // en un círculo de `radius` alrededor de `center` o, si `area` tiene 3 puntos o más, adentro de
     // ese polígono [µm] (una región dibujada), sin encimar células. Devuelve cuántos puso.
-    int inoculate(Being being, int count, Vec2 center, float radius, const std::vector<Vec2>& area = {});
+    int inoculate(Being being, int count, Vec2 center, float radius, const std::vector<Vec2>& area = {},
+                  float diversity = 0.0f);
     // Ubica al azar (sin superponerse) las células de una gota de muestra con su estado. Sus cuotas
     // de nutrientes entran de afuera (la gota trae lo que tenían en el cultivo).
     int placeSampled(const std::vector<SampledCell>& cells);
@@ -384,7 +395,9 @@ class World {
     std::size_t rockCount() const { return registry_.view<Rock>().size(); }
     // Organismo silvestre (linaje 0) con variación genética. `randomStage`: en una etapa al
     // azar del ciclo celular (población inicial).
-    entt::entity spawnWild(SpeciesId species, Vec2 at, Rng& rng, bool randomStage);
+    // Un individuo silvestre (gota de un bioma) o de un inóculo. `diversity` escala la variación
+    // genética de una población silvestre (GeneticsSpec::standingCv): 0 = un clon de la especie.
+    entt::entity spawnWild(SpeciesId species, Vec2 at, Rng& rng, bool randomStage, float diversity);
     // Micelio (o, para quitridios, un racimo de zoosporas) con el fósforo sacado del agua.
     void spawnFungus(FungusKind kind, Vec2 at, float heading, std::uint64_t salt);
     // Plasmodio de Physarum (el fósforo sale del agua) y copo de avena (cebo).
@@ -446,6 +459,7 @@ class World {
     // Punto al azar en el agua de la placa, a `margin` de la pared.
     Vec2 randomPoint(Rng& rng, float margin = 0.0f) const;
     float simTime() const { return simTime_; }
+    float& mutationScale() { return mutationScale_; }
     // Hora de laboratorio del programa de la placa: horas biológicas sin el Q10 (es el reloj).
     double programHours() const { return simTime_ * bioTimeScale_ / 3600.0; }
     // Pasos dados desde la creación (las intervenciones se anotan con el paso en que se aplican).
@@ -628,7 +642,10 @@ class World {
     void joinSlidingColony(entt::entity mother, entt::entity child);
     void applySlidingColonies(float dt);
     // Colonia en estrella (Asterionella), game/world_star.cpp.
-    entt::entity spawnWildCell(SpeciesId species, Vec2 at, Rng& rng, bool randomStage, const float* angle);
+    // `clone`: el genoma exacto (las células de una colonia son un clon); si no, el de la especie con
+    // la variación `diversity`.
+    entt::entity spawnWildCell(SpeciesId species, Vec2 at, Rng& rng, bool randomStage, const float* angle, float diversity,
+                               const Genome* clone = nullptr);
     void foundStarColony(entt::entity root, Rng& rng, bool randomStage);
     bool joinStarColony(entt::entity mother, entt::entity child);
     void applyStarColonies(float dt);
@@ -768,6 +785,7 @@ class World {
 
     WorldConfig config_;
     MediumParams medium_;
+    float mutationScale_ = 1.0f; // varianza mutacional por división (registro: genetics.mutation_scale)
     float width_, height_;
     Dish dish_;
     DishMask dishMask_;

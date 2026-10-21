@@ -119,9 +119,8 @@ Small or already decided items, before adding anything new.
 
 The P0 "done" criterion that is still open.
 
-- 🟡 **Gause:** *P. aurelia* wins with the full protocol (daily thinning, 5 cm³, mixed medium,
-  biovolume; done on 21/10/2026). Missing: the speed of displacement (`should_fail` test,
-  [bug](bugs/gause-displacement-too-slow.md)); do not tune parameters.
+- ✅ **Gause:** *P. aurelia* wins with the full protocol (daily thinning, 5 cm³, mixed medium,
+  biovolume) and the speed of displacement matches once mutation is realistic (done on 21/10/2026).
 - ⬜ *Didinium*–*Paramecium* with immigration (oscillations).
 - ⬜ µmax of *Amoeba proteus* (culture with *Tetrahymena* as prey).
 - ⬜ Load µmax with a source for the species that use the general value (0.15/h).

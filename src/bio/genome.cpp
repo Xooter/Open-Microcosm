@@ -6,15 +6,15 @@
 namespace {
 
 constexpr GeneInfo kGenes[kGeneCount] = {
-    {"tamano", 0.7f, 1.4f, 0.05f},
-    {"motor", 0.5f, 2.0f, 0.1f},
-    {"mitocondrias", 0.5f, 2.0f, 0.1f},
-    {"cloroplastos", 0.0f, 2.0f, 0.1f},
-    {"lisosomas", 0.5f, 2.0f, 0.1f},
-    {"tricocistos", 0.0f, 2.0f, 0.15f},
-    {"coraza", 0.0f, 1.0f, 0.1f},
-    {"rigidez", 0.3f, 2.0f, 0.1f},
-    {"apareamiento", 0.0f, 1.0f, 0.0f},
+    {"tamano", 0.7f, 1.4f},
+    {"motor", 0.5f, 2.0f},
+    {"mitocondrias", 0.5f, 2.0f},
+    {"cloroplastos", 0.0f, 2.0f},
+    {"lisosomas", 0.5f, 2.0f},
+    {"tricocistos", 0.0f, 2.0f},
+    {"coraza", 0.0f, 1.0f},
+    {"rigidez", 0.3f, 2.0f},
+    {"apareamiento", 0.0f, 1.0f},
 };
 
 } // namespace
@@ -42,20 +42,30 @@ Genome speciesGenome(LocomotionType type) {
     return g;
 }
 
-void mutate(Genome& genome, LocomotionType type, Rng& rng, float rate) {
+namespace {
+
+// Cada gen permitido (menos el tipo de apareamiento) se desplaza por N(0, sd²), acotado.
+void perturb(Genome& genome, LocomotionType type, float sd, Rng& rng) {
+    if (!(sd > 0.0f))
+        return;
     for (std::size_t i = 0; i < kGeneCount; ++i) {
         const auto gene = static_cast<Gene>(i);
-        if (gene == Gene::MatingType) {
-            if (rng.uniform() < 0.1f)
-                genome.v[i] = 1.0f - genome.v[i];
-            continue;
-        }
-        if (!geneAllowed(type, gene) || rng.uniform() >= rate)
+        if (gene == Gene::MatingType || !geneAllowed(type, gene))
             continue;
         const GeneInfo& info = geneInfo(gene);
-        genome.v[i] = std::clamp(genome.v[i] + info.sigma * rng.normal(), info.min, info.max);
+        genome.v[i] = std::clamp(genome.v[i] + sd * rng.normal(), info.min, info.max);
     }
 }
+
+} // namespace
+
+void mutateDivision(Genome& genome, LocomotionType type, const GeneticsSpec& genetics, float mutationScale, Rng& rng) {
+    if (genetics.macronucleus) // el macronúcleo no expresa las mutaciones nuevas hasta el sexo
+        return;
+    perturb(genome, type, genetics.mutationalCv * std::sqrt(std::max(0.0f, mutationScale)), rng);
+}
+
+void standingVariation(Genome& genome, LocomotionType type, float cv, Rng& rng) { perturb(genome, type, cv, rng); }
 
 Genome recombine(const Genome& a, const Genome& b, Rng& rng) {
     Genome child;

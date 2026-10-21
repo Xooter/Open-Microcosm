@@ -106,6 +106,7 @@ struct CatalogState {
     // De una suspensión de densidad conocida (como con la pipeta): `inoculumUl` µL de una suspensión
     // con `suspensionPerMl` individuos por mL; la cantidad es un sorteo de Poisson (fase P1).
     bool bySuspension = false;
+    bool wild = false; // población silvestre (con variación genética) en vez de un clon de laboratorio
     float suspensionPerMl = 1e5f;
     float inoculumUl = 1.0f;
     std::uint64_t draws = 0;

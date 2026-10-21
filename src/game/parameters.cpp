@@ -37,6 +37,11 @@ const ParamInfo kParams[] = {
      BIO_REAL(w.medium().vitaminDecayPerHour)},
     {"medium.frustule_dissolution", "Disolución de frústulas [1/h]", "1/h", G::Micronutrients, 0.0f, 0.05f, "%.4f", false,
      nullptr, BIO_REAL(w.medium().frustuleDissolutionPerHour)},
+    // --- Genética
+    {"genetics.mutation_scale", "Escala de la mutación", "×", G::Genetics, 0.001f, 10000.0f, "%.3g", true,
+     "Multiplica la varianza que la mutación agrega en cada división (1 = la publicada: ~0,5 % por gen y por "
+     "generación). Más de 1 es una evolución acelerada, útil para verla en una sesión pero no realista.",
+     BIO_REAL(w.mutationScale())},
     // --- Microbiología
     {"bacteria.chemotaxis", "Quimiotaxis", "", G::Microbiology, 0.0f, 20.0f, "%.1f", false, nullptr,
      BIO_REAL(w.bacteria().params.chemotaxisGain)},
@@ -214,6 +219,7 @@ const char* paramGroupName(ParamGroup group) {
     case ParamGroup::Metabolism: return "Metabolismo";
     case ParamGroup::Engine: return "Motor";
     case ParamGroup::Environment: return "Ambiente";
+    case ParamGroup::Genetics: return "Genética";
     }
     return "";
 }

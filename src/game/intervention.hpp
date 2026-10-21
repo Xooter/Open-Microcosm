@@ -39,7 +39,8 @@ enum class InterventionKind : std::uint8_t {
     Atmosphere,    // v[0] = fracción de CO₂ del aire (incubadora), v[1] = pK′ del carbonato del medio,
                    // v[2] = osmolitos agregados [mOsm/L] (sacarosa)
     Inoculate,     // index = BeingKind, v[0] = SpeciesId, key = su id, v[1] = cantidad, v[2] = radio
-                   // [µm] alrededor de pos (0: toda la placa)
+                   // [µm] alrededor de pos (0: toda la placa), v[3] = diversidad genética (0: un clon;
+                   // 1: la variación de una población silvestre)
     Program,       // index 0: agrega la entrada `key` (texto de game/program con comas en vez de
                    // espacios: la clave es una sola palabra) al programa de la placa; 1: lo vacía;
                    // 2: quita las entradas del objetivo `key` (p. ej. "dilution")

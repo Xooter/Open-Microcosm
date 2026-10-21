@@ -21,7 +21,7 @@
 namespace {
 constexpr const char* kOpKeys[] = {"inoculate", "bacteria", "medium",  "dilution",           "concentration",
                                    "phages",    "sample",   "withdraw", "receive", "inoculate_density",
-                                   "chemostat", "inflow_medium", "reagent", "gas_transfer"};
+                                   "chemostat", "inflow_medium", "reagent", "gas_transfer", "mutation_scale"};
 
 std::string currentVesselId(const std::string& id) {
     const Vessel* v = findVessel(id);
@@ -129,6 +129,8 @@ CultureConfig CultureSpec::config() const {
     }
     if (gasTransfer >= 0.0f)
         c.gasTransferCmH = gasTransfer;
+    c.geneticDiversity = geneticDiversity;
+    c.mutationScale = mutationScale;
     c.medium.temperature = temperature;
     c.medium.surfaceLight = light;
     c.seed = seed;
@@ -269,6 +271,7 @@ bool CultureRun::apply(CultureEvent ev) {
     }
     case CultureOp::Chemostat: c.setDilutionRate(ev.value); break;
     case CultureOp::GasTransfer: c.setGasTransfer(static_cast<float>(ev.value)); break;
+    case CultureOp::MutationScale: c.setMutationScale(static_cast<float>(ev.value)); break;
     case CultureOp::Inflow:
         ok = false;
         for (int k = 0; k < kSoluteCount; ++k)
@@ -379,6 +382,10 @@ std::string serializeCultureScene(const CultureSpec& s, const std::vector<Cultur
         << "seed=" << s.seed << '\n';
     if (s.gasTransfer >= 0.0f)
         out << "gas_transfer=" << s.gasTransfer << '\n';
+    if (s.geneticDiversity != 0.0f)
+        out << "genetic_diversity=" << s.geneticDiversity << '\n';
+    if (s.mutationScale != 1.0f)
+        out << "mutation_scale=" << s.mutationScale << '\n';
     out << serializeProgram(s.program);
     for (const CultureEvent& e : events)
         out << "event=" << e.step << ' ' << cultureOpKey(e.op) << ' ' << e.value << (e.key.empty() ? "" : " ") << e.key
@@ -413,6 +420,10 @@ bool parseCultureScene(const std::string& text, CultureSpec& s, std::vector<Cult
             s.light = std::stof(v);
         else if (k == "gas_transfer")
             s.gasTransfer = std::stof(v);
+        else if (k == "genetic_diversity")
+            s.geneticDiversity = std::max(0.0f, std::stof(v));
+        else if (k == "mutation_scale")
+            s.mutationScale = std::max(0.0f, std::stof(v));
         else if (k == "seed")
             std::from_chars(v.data(), v.data() + v.size(), s.seed);
         else if (k == "program") {

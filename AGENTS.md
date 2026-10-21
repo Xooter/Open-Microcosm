@@ -315,8 +315,12 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
 - `geneAllowed` imposes biology: chloroplasts only in beings that have them, trichocysts only in
   ciliates, armour only in flagellates (lorica) and amoebae (test). Without endosymbiosis, an absent
   gene does not appear by mutation.
-- Mitosis: each daughter mutates its own copy. Conjugation (`Conjugating`): requires different mating
-  types; both exconjugants end with the same recombined genotype.
+- Mitosis: each daughter mutates its own copy with the published mutational variance
+  (`mutateDivision`, `[being.genetics]`: CVm 0.5 % per gene and generation; ciliates do not express
+  it until sex); a biome drop has the variation of a wild population, an inoculum is a clone
+  (`standingVariation`). `genetics.mutation_scale` accelerates it on purpose (marked as not
+  realistic). Conjugation (`Conjugating`): requires different mating types; both exconjugants end
+  with the same recombined genotype.
 - Organelles are interior particles with `BodyParticles::tag`; they take up space (`Traits::volume`
   enlarges the cell) and cost maintenance.
 - Defences: armour ≥ 0.5 prevents phagocytosis; trichocysts can reject a cup (component

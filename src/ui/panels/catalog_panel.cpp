@@ -102,6 +102,9 @@ class CatalogPanel : public Panel {
         const std::vector<Vec2>& region = app.session.region();
         const bool hasRegion = region.size() >= 3;
         static const char* const kWhere[] = {"En toda la placa", "Alrededor del centro de la vista", "En la región dibujada"};
+        checkbox("Población silvestre", &st.wild,
+                 "Con la variación genética de una población natural (~5 % por gen). Si no, un clon: todos iguales, "
+                 "como el inóculo de un cultivo de laboratorio.");
         if (!hasRegion && st.where == 2)
             st.where = 0;
         combo("Dónde", &st.where, kWhere, hasRegion ? 3 : 2,
@@ -145,6 +148,7 @@ class CatalogPanel : public Panel {
             iv.v[0] = static_cast<float>(static_cast<int>(b.species));
             iv.v[1] = static_cast<float>(count);
             iv.v[2] = st.where == 1 ? st.spotRadius : 0.0f;
+            iv.v[3] = st.wild ? 1.0f : 0.0f;
             if (st.where == 2)
                 iv.area = region; // el polígono va en la intervención: la escena lo repite
             const Vector2 c = GetScreenToWorld2D({app.viewport.x + 0.5f * app.viewport.width, app.viewport.y + 0.5f * app.viewport.height},

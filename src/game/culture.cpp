@@ -350,9 +350,10 @@ int Culture::inoculate(SpeciesId id, int count) {
         CultureCell c;
         c.id = nextId_++;
         c.species = id;
-        // Como en la placa (World::spawnWild): variación genética y tipos de apareamiento mezclados.
+        // Un inóculo de laboratorio es un clon (línea pura, como las de Gause); con `geneticDiversity` > 0,
+        // una población silvestre (bio/genome: standingVariation). Tipos de apareamiento mezclados.
         Genome g = speciesGenome(id);
-        mutate(g, info.locomotion, rng, 0.5f);
+        standingVariation(g, info.locomotion, info.genetics.standingCv * std::max(0.0f, config_.geneticDiversity), rng);
         g[Gene::MatingType] = rng.uniform() < 0.5f ? 0.0f : 1.0f;
         c.heredity = {g, traitsOf(g, info.locomotion)};
         applyTraits(c);
@@ -1031,7 +1032,7 @@ void Culture::divide(std::size_t index) {
     Rng ra(config_.seed, kStreamMutation, mother.id * 2ull, step_);
     Rng rb(config_.seed, kStreamMutation, mother.id * 2ull + 1, step_);
     Heredity ha, hb;
-    daughterGenomes(mother.heredity, info.locomotion, ra, rb, 0.25f, ha, hb);
+    daughterGenomes(mother.heredity, info.locomotion, info.genetics, config_.mutationScale, ra, rb, ha, hb);
     mother.heredity = ha;
     child.heredity = hb;
     if (info.frustule)

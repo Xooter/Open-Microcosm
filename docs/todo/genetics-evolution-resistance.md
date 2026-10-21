@@ -42,7 +42,12 @@ Three parts of the current model are far from the measured biology:
 | Cost of resistance | reviewed | Andersson & Hughes (2010) Nat. Rev. Microbiol. 8: 260–271 | citation verified, values pending |
 | To verify before their phase | rifampicin (*rpoB*) and streptomycin (*rpsL*) mutation rates; Lenski et al. (1991) fitness gain; Drlica (2003) mutant selection window; Balaban et al. (2004) persistence switching rates; plasmid transfer rates; macronuclear ploidy of *P. caudatum* | — | pending |
 
-## Phase 1 — Realistic quantitative mutation ✅ when committed
+## Phase 1 — Realistic quantitative mutation ✅ (21/10/2026)
+
+Built as planned; described in
+[genome and organelles](../mechanics/genome-and-organelles.md#mutation-and-variation). It also fixed
+the speed of Gause's displacement (0.10 vs 0.14 on day 25). Pending from it: deleterious mutations
+(mean effect not yet sourced) and the bacterial rates (phase 3).
 
 - One place for genetic change (`bio/genome`): `mutateDivision` (per division) and
   `standingVariation` (a wild population), replacing the six fixed rates in `world.cpp` and

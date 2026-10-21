@@ -76,7 +76,7 @@ bool applyIntervention(World& world, const Intervention& iv) {
         if (iv.index < 0 || iv.index >= static_cast<int>(BeingKind::Count) || species < 0 || species >= speciesCount())
             return false;
         return world.inoculate({static_cast<BeingKind>(iv.index), static_cast<SpeciesId>(species)},
-                               static_cast<int>(iv.v[1]), iv.pos, iv.v[2], iv.area) > 0;
+                               static_cast<int>(iv.v[1]), iv.pos, iv.v[2], iv.area, iv.v[3]) > 0;
     }
     case InterventionKind::Atmosphere:
         world.medium().co2Atmosphere = iv.v[0];

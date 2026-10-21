@@ -21,6 +21,7 @@ enum class ParamGroup : std::uint8_t {
     Engine,         // del motor; se controla desde Preferencias (LOD) y se exporta
     Environment,    // ambiente (temperatura, salinidad, luz, osmolitos): lo usan las lecciones y los
                     // programas; en la interfaz general está en el panel Placa
+    Genetics,       // Procesos > Genética (mutación)
 };
 
 struct ParamInfo {

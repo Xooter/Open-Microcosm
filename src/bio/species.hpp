@@ -499,6 +499,10 @@ struct SpeciesInfo {
     SpeciesChemistry chemistry;     // reserva y pared (tinciones)
     // Genes que difieren de los de su locomoción (p. ej. sin tricocistos, con testa).
     std::vector<std::pair<Gene, float>> genome;
+    // Cuánto varía genéticamente ([being.genetics]): mutación por generación, variación de una
+    // población silvestre y macronúcleo (ciliados). Ver GeneticsSpec.
+    GeneticsSpec genetics;
+    std::string geneticsSource;
     std::vector<std::string> tags;  // grupos (taxonómicos o funcionales): dietas, hospedadores
     // Apariencia: estilo de dibujo con nombre (los implementa el render; "" = el de su locomoción)
     // y color de los plastos (por omisión, el verde de la clorofila).

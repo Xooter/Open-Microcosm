@@ -70,7 +70,7 @@ class CulturePanel : public Panel {
     int species_ = 0;
     int inoculum_ = 5;
     float bacteriaPerMl_ = 1e7f, phagesPerMl_ = 1e5f;
-    float renew_ = 1.0f, dilute_ = 0.1f, gasTransfer_ = 2.07f;
+    float renew_ = 1.0f, dilute_ = 0.1f, gasTransfer_ = 2.07f, mutationScale_ = 1.0f;
     int solute_ = 2, reagent_ = 0;
     float dose_ = 8.0f;
     float soluteValue_ = 10.0f;
@@ -184,6 +184,12 @@ class CulturePanel : public Panel {
                                               : (vessel_ >= 0 && vessel_ < vesselCount() ? vessel(vessel_).gasTransferCmH : 0.0f);
         if (!vesselMixing)
             gasTransferSlider(&draft_.gasTransfer);
+        slider("Diversidad genética", &draft_.geneticDiversity, 0.0f, 3.0f, "%.2f",
+               "Variación genética de lo que se siembra (0 = un clon, una línea pura como las de Gause; 1 = la de una "
+               "población silvestre).");
+        sliderLog("Escala de la mutación", &draft_.mutationScale, 0.001f, 10000.0f, "%.3g",
+                  "Multiplica la varianza que la mutación agrega en cada división (1 = la publicada). Más de 1 es una "
+                  "evolución acelerada, no realista.");
         int seed = static_cast<int>(draft_.seed);
         if (ImGui::InputInt(tr("Seed"), &seed))
             draft_.seed = static_cast<std::uint64_t>(std::max(0, seed));
@@ -288,6 +294,13 @@ class CulturePanel : public Panel {
         gasTransferSlider(&gasTransfer_);
         if (ImGui::Button(tr("Cambiar la mezcla")))
             run.apply({0, CultureOp::GasTransfer, "", gasTransfer_});
+        readout("Escala de la mutación", "%.3g", static_cast<double>(run.culture().mutationScale()));
+        sliderLog("Nueva escala", &mutationScale_, 0.001f, 10000.0f, "%.3g",
+                  "1 = la mutación publicada; más es una evolución acelerada (no realista).");
+        if (ImGui::Button(tr("Cambiar la mutación")))
+            run.apply({0, CultureOp::MutationScale, "", mutationScale_});
+        if (run.culture().mutationScale() > 1.0f)
+            note("Evolución acelerada: la mutación está por encima de la publicada (no realista).");
         const char* solutes[kSoluteCount];
         for (int k = 0; k < kSoluteCount; ++k)
             solutes[k] = soluteLabel(static_cast<Solute>(k));

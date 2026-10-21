@@ -15,8 +15,6 @@ here.
 
 | ID | Type | Severity | Summary |
 |---|---|---|---|
-| [`gause-displacement-too-slow`](gause-displacement-too-slow.md) | validation-gap | minor | *P. aurelia* wins Gause's competition but displaces *P. caudatum* more slowly than Gause saw. |
-| [`starved-cultures-keep-dividing`](starved-cultures-keep-dividing.md) | model-limitation | minor | The size gene evolves down within weeks: mutation far above the published rates. |
 | [`drop-bacteria-collapse`](drop-bacteria-collapse.md) | model-limitation | major | Bacteria in a drop collapse within a few biological hours; the 30-min test is skipped. |
 | [`bdellovibrio-no-prey-resistance`](bdellovibrio-no-prey-resistance.md) | model-limitation | major | *Bdellovibrio* can exterminate its prey: no phenotypic resistance. |
 | [`organic-matter-after-lysis`](organic-matter-after-lysis.md) | model-limitation | minor | Organic matter reaches hundreds of mM after a lysis in a small plate. |
@@ -31,6 +29,8 @@ existed are recorded in [validation](../validation/README.md#model-problems-foun
 
 | ID | Fixed in | Summary |
 |---|---|---|
+| [`starved-cultures-keep-dividing`](starved-cultures-keep-dividing.md) | 21/10/2026 | The size gene evolved down within weeks: mutation far above the published rates. |
+| [`gause-displacement-too-slow`](gause-displacement-too-slow.md) | 21/10/2026 | *P. aurelia* displaced *P. caudatum* more slowly than Gause saw (the same cause). |
 | [`stains-missing-targets`](stains-missing-targets.md) | 21/10/2026 | Hyphae, cyanobacteria and oat flakes did not respond to stains. |
 | [`inoculation-ignores-region`](inoculation-ignores-region.md) | 21/10/2026 | Inoculating into a drawn region ignored its shape. |
 | [`gause-aurelia-does-not-win`](gause-aurelia-does-not-win.md) | 21/10/2026 | In Gause's competition whichever *Paramecium* got ahead won: the daily thinning of his protocol was missing. |
