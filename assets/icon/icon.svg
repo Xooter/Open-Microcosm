@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Open Microcosm icon (provisional). A Paramecium in a glass well under bright-field light.
+     GPL-3.0-or-later, like the rest of the project. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <defs>
+    <radialGradient id="field" cx="46%" cy="42%" r="60%">
+      <stop offset="0" stop-color="#fbf6e6"/>
+      <stop offset="0.7" stop-color="#ece2c4"/>
+      <stop offset="1" stop-color="#cdbf98"/>
+    </radialGradient>
+    <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#5b6670"/>
+      <stop offset="0.5" stop-color="#2d343b"/>
+      <stop offset="1" stop-color="#1a1f24"/>
+    </linearGradient>
+    <radialGradient id="cyto" cx="40%" cy="38%" r="70%">
+      <stop offset="0" stop-color="#e3ecd8" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#9fb48e" stop-opacity="0.95"/>
+    </radialGradient>
+    <clipPath id="well"><circle cx="512" cy="512" r="420"/></clipPath>
+  </defs>
+
+  <!-- Glass well: dark rim with a light Becke line inside -->
+  <circle cx="512" cy="512" r="488" fill="url(#glass)"/>
+  <circle cx="512" cy="512" r="432" fill="#dfe6ea" opacity="0.55"/>
+  <circle cx="512" cy="512" r="420" fill="url(#field)"/>
+
+  <g clip-path="url(#well)">
+    <!-- Detritus and bacteria -->
+    <g fill="#8a7c5a" opacity="0.55">
+      <circle cx="250" cy="330" r="9"/><circle cx="300" cy="760" r="7"/><circle cx="770" cy="300" r="8"/>
+      <circle cx="805" cy="690" r="10"/><circle cx="215" cy="560" r="6"/><circle cx="650" cy="840" r="7"/>
+      <rect x="700" y="210" width="26" height="9" rx="4.5" transform="rotate(30 713 214)"/>
+      <rect x="230" y="680" width="24" height="8" rx="4" transform="rotate(-20 242 684)"/>
+      <rect x="840" y="520" width="24" height="8" rx="4" transform="rotate(70 852 524)"/>
+    </g>
+    <!-- A small green alga (Chlorella) -->
+    <circle cx="300" cy="290" r="46" fill="#7fae5a" stroke="#4d7a37" stroke-width="10"/>
+    <circle cx="288" cy="280" r="16" fill="#a9cf86"/>
+  </g>
+
+  <!-- Paramecium: slipper-shaped cell with cilia, oral groove, macronucleus and vacuoles -->
+  <g transform="rotate(-32 520 540)">
+    <!-- Cilia -->
+    <ellipse cx="520" cy="540" rx="308" ry="146" fill="none" stroke="#6f7f62" stroke-width="10"
+             stroke-dasharray="4 22" stroke-linecap="round" opacity="0.8"/>
+    <!-- Body with the optical edge -->
+    <path d="M 230 540 C 230 455, 360 400, 520 400 C 690 400, 815 455, 815 545
+             C 815 625, 700 680, 545 680 C 470 680, 455 620, 400 630 C 320 645, 230 620, 230 540 Z"
+          fill="url(#cyto)" stroke="#2f3b2a" stroke-width="18" stroke-linejoin="round"/>
+    <!-- Oral groove -->
+    <path d="M 400 630 C 440 600, 480 600, 520 640" fill="none" stroke="#2f3b2a" stroke-width="10"
+          stroke-linecap="round" opacity="0.7"/>
+    <!-- Macronucleus -->
+    <ellipse cx="540" cy="525" rx="78" ry="52" fill="#7b8f9e" stroke="#3e4c57" stroke-width="10"/>
+    <!-- Contractile vacuoles -->
+    <circle cx="350" cy="510" r="30" fill="#f4f8fb" stroke="#8aa0ad" stroke-width="7"/>
+    <circle cx="710" cy="520" r="30" fill="#f4f8fb" stroke="#8aa0ad" stroke-width="7"/>
+    <!-- Food vacuoles -->
+    <g fill="#b0763c" stroke="#6e4520" stroke-width="5">
+      <circle cx="440" cy="470" r="17"/><circle cx="625" cy="610" r="15"/><circle cx="650" cy="460" r="13"/>
+    </g>
+  </g>
+</svg>

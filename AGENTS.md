@@ -688,10 +688,12 @@ bench/              microcosm_bench and microcosm_batch (headless)
 assets/
   content/base/     factory content pack (TOML)
   fonts/            UI font (Roboto, Apache 2.0)
+  icon/             program icon (SVG source, PNG, ICO, Windows resource)
   lang/             UI languages (`<code>.txt`, lines key<TAB>translation)
   shaders/          GLSL 330 (and compute shaders)
 docs/               documentation (English): roadmap, mechanics, content, beings, validation, bugs,
                     design, img
+packaging/          desktop integration (Linux launcher)
 tests/              doctest
 tools/              CI, translations, content migration, documentation generators and checks
 ```

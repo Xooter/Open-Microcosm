@@ -302,6 +302,13 @@ target_link_libraries(microcosm_batch PRIVATE biosim)
 
 # SYSTEM: los warnings de headers de terceros no son nuestros.
 target_link_libraries(microcosm PRIVATE biosim raylib imgui_lib)
+# Ícono del .exe (Windows): un recurso con el .ico de assets/icon. En la ventana lo pone la app
+# (SetWindowIcon), en Linux también el lanzador (packaging/linux).
+if(WIN32)
+    set(MICROCOSM_ICON_ICO ${CMAKE_SOURCE_DIR}/assets/icon/icon.ico)
+    configure_file(assets/icon/microcosm.rc.in ${CMAKE_BINARY_DIR}/microcosm.rc @ONLY)
+    target_sources(microcosm PRIVATE ${CMAKE_BINARY_DIR}/microcosm.rc)
+endif()
 
 if(ipo_ok)
     set_property(TARGET biosim microcosm PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
@@ -314,6 +321,11 @@ endif()
 install(TARGETS microcosm RUNTIME DESTINATION .)
 install(DIRECTORY assets DESTINATION .)
 install(FILES README.md LICENSE DESTINATION . OPTIONAL)
+if(NOT WIN32)
+    # Lanzador del escritorio y su ícono (ver packaging/linux: se copian a ~/.local/share).
+    install(FILES packaging/linux/openmicrocosm.desktop DESTINATION .)
+    install(FILES assets/icon/icon-256.png DESTINATION . RENAME openmicrocosm.png)
+endif()
 # Las licencias de lo que va enlazado en el ejecutable (zlib y MIT piden acompañar el aviso).
 install(FILES ${raylib_SOURCE_DIR}/LICENSE DESTINATION licenses RENAME raylib.txt)
 install(FILES ${raylib_SOURCE_DIR}/src/external/glfw/LICENSE.md DESTINATION licenses RENAME glfw.txt)

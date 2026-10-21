@@ -210,6 +210,8 @@ What `Culture::supports` still rejects.
 
 - ⬜ Graphical preview of the plate before creating it.
 - ⬜ Vector icons in the toolbar; command palette.
+- ⬜ Definitive program icon (the current one is provisional) and the macOS `.icns`
+  ([`assets/icon`](../assets/icon/README.md)).
 - ⬜ Student mode / scientist mode (same simulation, different interface).
 - ⬜ Hypothesis and prediction outside the lessons.
 - ⬜ Historical scenarios (eutrophication, cyanobacterial bloom).

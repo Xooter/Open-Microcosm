@@ -4,6 +4,7 @@
 #include "build_info.hpp"
 
 #include "bio/locomotion.hpp"
+#include "core/paths.hpp"
 #include "core/profiling.hpp"
 #include "core/units.hpp"
 #include "game/biome.hpp"
@@ -1437,6 +1438,11 @@ int App::run() {
         flags |= FLAG_MSAA_4X_HINT;
     SetConfigFlags(flags);
     InitWindow(kScreenW, kScreenH, "Open Microcosm");
+    // Ícono de la ventana y de la barra de tareas (el del .exe de Windows va en un recurso).
+    if (Image icon = LoadImage(assetPath("icon/icon-256.png").c_str()); icon.data) {
+        SetWindowIcon(icon);
+        UnloadImage(icon);
+    }
     SetExitKey(KEY_NULL); // Esc no cierra el programa
     if (options.fullscreen)
         ToggleBorderlessWindowed();

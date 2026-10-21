@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Open Microcosm
+GenericName=Microscope laboratory simulator
+Comment=Real microscopic life emerging from physics
+Exec=microcosm
+Icon=openmicrocosm
+Terminal=false
+Categories=Education;Science;Biology;Simulation;
+Keywords=microscope;protist;cell;biology;simulation;

@@ -1,5 +1,13 @@
 # Interface
 
+## Program icon
+
+The window and taskbar icon is set by `App` after `InitWindow` (`SetWindowIcon` with
+`assets/icon/icon-256.png`); the Windows executable embeds `icon.ico` as a resource
+(`assets/icon/microcosm.rc.in`, configured by CMake); Linux packages carry the launcher
+`packaging/linux/openmicrocosm.desktop`. Sources and regeneration: [`assets/icon`](../../assets/icon/README.md)
+(the icon is provisional).
+
 ## A single workspace
 
 `App` (`app/app.cpp`) opens the window, creates the plate and runs the loop: UI → input on the plate

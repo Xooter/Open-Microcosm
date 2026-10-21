@@ -1,0 +1,3 @@
+// Ícono del ejecutable de Windows (Explorador, escritorio, barra de tareas). CMake lo configura con
+// la ruta absoluta del .ico, así windres lo encuentra sin importar la carpeta de compilación.
+IDI_ICON1 ICON "@MICROCOSM_ICON_ICO@"

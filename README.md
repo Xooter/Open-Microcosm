@@ -116,6 +116,14 @@ cmake --build --preset release
 ./build/release/microcosm
 ```
 
+To add it to the applications menu, edit `Exec=` in `packaging/linux/openmicrocosm.desktop` with
+the full path of `build/release/microcosm` and copy it, with its icon:
+
+```sh
+cp packaging/linux/openmicrocosm.desktop ~/.local/share/applications/
+cp assets/icon/icon-256.png ~/.local/share/icons/hicolor/256x256/apps/openmicrocosm.png
+```
+
 ### Windows
 
 The Windows package is **cross-compiled from Linux** with MinGW-w64 (this is the tested route):
