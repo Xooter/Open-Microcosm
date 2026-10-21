@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: "If you use BioGame in research or teaching, please cite it as below."
+type: software
+title: "BioGame: a virtual microscope laboratory of real microscopic life"
+abstract: >-
+  An open-source simulator of real microscopic life as seen through a laboratory microscope
+  (water drops, cell cultures and plant preparations). Cells are soft bodies in a low-Reynolds
+  Stokes–Brinkman fluid with diffusing chemistry; metabolism, growth, division, feeding and
+  behaviour emerge from the simulation, with measured parameters from the literature,
+  reproducible runs and data export with provenance.
+authors:
+  - family-names: Righetti
+    given-names: Joaquin
+version: 0.1.0
+license: GPL-3.0-or-later
+keywords:
+  - microscopy
+  - protists
+  - cell biology
+  - ecology
+  - simulation
+  - soft bodies
+  - education
