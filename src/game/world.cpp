@@ -1639,7 +1639,7 @@ int World::inoculate(Being being, int count, Vec2 center, float radius) {
     // Como con la pipeta: `count` individuos repartidos al azar en toda la placa (radius <= 0) o
     // en un círculo. Las células no caen encima de otra; las bacterias van de a una.
     const bool bacterium = being.kind == BeingKind::Bacterium || being.kind == BeingKind::Bacillus ||
-                           being.kind == BeingKind::Violaceum;
+                           being.kind == BeingKind::Violaceum || being.kind == BeingKind::Spirillum;
     float reach = 12.0f, clearance = 0.0f;
     if (being.kind == BeingKind::Species && !speciesInfo(being.species).filament) {
         const SpeciesInfo& info = speciesInfo(being.species);
@@ -1662,7 +1662,7 @@ int World::inoculate(Being being, int count, Vec2 center, float radius) {
             continue;
         if (bacterium)
             bacteria_.add(p.x, p.y, rng.uniform(0.0f, 2.0f * units::kPi), rng.uniform(1.0f, 2.0f),
-                          being.kind == BeingKind::Violaceum ? 1 : (being.kind == BeingKind::Bacillus ? 2 : 0));
+                          bacterialStrain(being.kind));
         else
             spawnBeing(being, p);
         ++placed;
@@ -1772,14 +1772,18 @@ void World::spawnBeing(Being being, Vec2 at) {
     }
     case BeingKind::Bacterium:
     case BeingKind::Bacillus:
-    case BeingKind::Violaceum: // un racimo: una sola bacteria apenas se ve
-        for (int k = 0; k < 30; ++k) {
-            const float a = rng.uniform(0.0f, 2.0f * units::kPi), r = 12.0f * std::sqrt(rng.uniform());
+    case BeingKind::Spirillum:
+    case BeingKind::Violaceum: { // un racimo: una sola bacteria apenas se ve
+        // Spirillum mide ~25 µm: unas pocas, más separadas.
+        const bool giant = being.kind == BeingKind::Spirillum;
+        for (int k = 0; k < (giant ? 6 : 30); ++k) {
+            const float a = rng.uniform(0.0f, 2.0f * units::kPi), r = (giant ? 40.0f : 12.0f) * std::sqrt(rng.uniform());
             const Vec2 p = dish_.clampInside({at.x + r * std::cos(a), at.y + r * std::sin(a)}, 2.0f);
             bacteria_.add(p.x, p.y, rng.uniform(0.0f, 2.0f * units::kPi), rng.uniform(1.0f, 2.0f),
-                          being.kind == BeingKind::Violaceum ? 1 : (being.kind == BeingKind::Bacillus ? 2 : 0));
+                          bacterialStrain(being.kind));
         }
         break;
+    }
     case BeingKind::Bdellovibrio:
         for (int k = 0; k < 10; ++k) {
             const float a = rng.uniform(0.0f, 2.0f * units::kPi), r = 10.0f * std::sqrt(rng.uniform());

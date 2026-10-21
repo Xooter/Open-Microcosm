@@ -6,8 +6,8 @@ name = "Estanque"
 description = "Agua quieta y templada con plantas acuáticas: Volvox, Spirogyra y Stentor."
 bacteria = 30000
 detritus = 60
-nitrogen_fixing_filaments = 15
-oscillatoria_filaments = 5
+nitrogen_fixing_filaments = 4
+oscillatoria_filaments = 2
 cyanobacteria_temperature = [10.0, 35.0]
 saprolegnia = 4
 chytrid_clusters = 2
@@ -15,8 +15,9 @@ allomyces = 3
 lichens = 1
 physarum = 0 # no vive en agua libre
 patchiness = 0.3
-base_weight = 1.0
-weights = { stentor = 1.5, spirogyra = 1.5, volvox = 2.0, candida = 0.3, naegleria = 0.0, oedogonium = 1.5, phaeodactylum = 0.0, thalassiosira = 0.0, fragilariopsis = 0.0, polarella = 0.0, lingulodinium = 0.0, mesodinium = 0.0 }
+base_weight = 0.15
+# Pesos bajos: una gota liviana (~100 células en la placa), con lugar entre los seres.
+weights = { stentor = 0.22, spirogyra = 0.22, volvox = 0.3, candida = 0.04, naegleria = 0.0, oedogonium = 0.22, phaeodactylum = 0.0, thalassiosira = 0.0, fragilariopsis = 0.0, polarella = 0.0, lingulodinium = 0.0, mesodinium = 0.0 }
 [biome.medium]
 temperature = 17.0
 phosphate = 20.0

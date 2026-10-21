@@ -5,8 +5,8 @@ name = "Charco"
 description = "Agua de lluvia sobre barro y hojas: tibia, luminosa y muy rica. Casi todo vive acá."
 bacteria = 50000
 detritus = 60
-nitrogen_fixing_filaments = 15
-oscillatoria_filaments = 8
+nitrogen_fixing_filaments = 4
+oscillatoria_filaments = 2
 cyanobacteria_temperature = [10.0, 35.0]
 saprolegnia = 4
 chytrid_clusters = 2
@@ -14,8 +14,9 @@ allomyces = 2 # sobre insectos y hojas muertas
 lichens = 1
 physarum = 1  # el moho de la hojarasca húmeda
 patchiness = 0.6
-base_weight = 1.0
-weights = { mougeotia = 0.5, zygnema = 0.5, oedogonium = 0.5, phaeodactylum = 0.0, thalassiosira = 0.0, fragilariopsis = 0.0, polarella = 0.0, lingulodinium = 0.0, mesodinium = 0.0 }
+base_weight = 0.15
+# Pesos bajos: una gota liviana (~100 células en la placa), con lugar entre los seres.
+weights = { mougeotia = 0.07, zygnema = 0.07, oedogonium = 0.07, phaeodactylum = 0.0, thalassiosira = 0.0, fragilariopsis = 0.0, polarella = 0.0, lingulodinium = 0.0, mesodinium = 0.0 }
 [biome.medium]
 temperature = 22.0
 organic_inflow = 300.0 # hojas y barro: una infusión natural

@@ -92,7 +92,8 @@ class CatalogPanel : public Panel {
     static void drawInoculate(App& app, CatalogState& st) {
         const Being b = beingAt(st.armed);
         const bool cells = b.kind == BeingKind::Species || b.kind == BeingKind::Bacterium ||
-                           b.kind == BeingKind::Bacillus || b.kind == BeingKind::Violaceum;
+                           b.kind == BeingKind::Bacillus || b.kind == BeingKind::Violaceum ||
+                           b.kind == BeingKind::Spirillum;
         if (!cells || !app.world || !ImGui::TreeNode("##inocular", "%s", tr("Inocular...")))
             return;
         checkbox("Por densidad", &st.byDensity, "Individuos por cm² del área donde se inocula (como se siembra un cultivo).");

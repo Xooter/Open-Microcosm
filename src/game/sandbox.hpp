@@ -1,5 +1,6 @@
 #pragma once
 
+#include "bio/bacteria.hpp"
 #include "bio/species.hpp"
 #include "game/mineral.hpp"
 #include "sim/particles.hpp"
@@ -32,6 +33,8 @@ enum class BeingKind : std::uint8_t {
     Frustule,
     Rock,
     Sediment,
+    // Al final: el índice va en las escenas guardadas (intervenciones Spawn e Inoculate).
+    Spirillum, // Spirillum volutans (bacteria gigante en hélice)
     Count
 };
 
@@ -47,6 +50,16 @@ inline Being beingAt(int index) {
     if (index < speciesCount())
         return {BeingKind::Species, static_cast<SpeciesId>(index)};
     return {static_cast<BeingKind>(index - speciesCount() + 1), SpeciesId::Paramecium};
+}
+
+// Cepa (`Bacteria::strain`) de una bacteria del catálogo.
+inline std::uint8_t bacterialStrain(BeingKind k) {
+    switch (k) {
+    case BeingKind::Violaceum: return 1;
+    case BeingKind::Bacillus: return 2;
+    case BeingKind::Spirillum: return kSpirillumStrain;
+    default: return 0;
+    }
 }
 
 // Mineral suelto que corresponde a un ser del catálogo (kNoMineral si no es uno).
@@ -109,6 +122,7 @@ inline BeingCategory categoryOf(Being b) {
     case BeingKind::Bacterium:
     case BeingKind::Violaceum:
     case BeingKind::Bacillus:
+    case BeingKind::Spirillum:
     case BeingKind::Bdellovibrio:
     case BeingKind::Cyanobacterium:
     case BeingKind::Oscillatoria:
@@ -148,6 +162,7 @@ inline const char* beingName(Being b) {
     case BeingKind::Bacterium: return "Bacterias";
     case BeingKind::Violaceum: return "C. violaceum";
     case BeingKind::Bacillus: return "B. subtilis";
+    case BeingKind::Spirillum: return "S. volutans";
     case BeingKind::Bdellovibrio: return "Bdellovibrio";
     case BeingKind::Cyanobacterium: return "Anabaena";
     case BeingKind::Oscillatoria: return "Oscillatoria";

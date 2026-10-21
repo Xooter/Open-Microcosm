@@ -111,6 +111,18 @@ void drawBeingIcon(Being b, Rectangle r, bool enabled) {
                              {6.0f, 2.75f}, 8.0f * static_cast<float>(k) - 8.0f, col);
         break;
     }
+    case BeingKind::Spirillum: { // hélice rígida de unas pocas vueltas, de lado a lado del ícono
+        const Color col = withAlpha({58, 64, 60, 255}, enabled);
+        Vector2 prev{};
+        for (int k = 0; k <= 24; ++k) {
+            const float t = static_cast<float>(k) / 24.0f - 0.5f;
+            const Vector2 p = {c.x + 34.0f * t - 4.0f * t, c.y - 6.0f * t + 4.5f * std::sin(6.2831853f * 3.0f * t)};
+            if (k > 0)
+                DrawLineEx(prev, p, 2.2f, col);
+            prev = p;
+        }
+        break;
+    }
     case BeingKind::Oscillatoria: // tricoma continuo con paredes transversales
         for (int k = 0; k < 8; ++k) {
             const float x = c.x - 16 + 4.0f * static_cast<float>(k), y = c.y + 6.0f * std::sin(0.5f * static_cast<float>(k));
