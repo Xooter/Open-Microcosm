@@ -28,7 +28,20 @@ compares what *Paramecium* eats in both ([validation](../validation/README.md#pl
 
 There is no real-time physics to compress, so there is no `bioTimeScale`: `step(dt)` advances `dt`
 seconds and biology `dt · Q10` (the same 20 °C reference as the plate). Gases exchange with the air at
-their real rate (D / depth², with the vessel's depth).
+their real rate, set by how mixed the medium is (`gasExchangeRate`):
+
+- **Still medium** (`gas_transfer = 0`): O₂ and CO₂ diffuse through the whole column, rate
+  D / depth². Right for a static dish, wrong for a deep tube: in a 2.8 cm column it takes ~4 days, and
+  a dense *Paramecium* culture runs out of O₂ within a day.
+- **Mixed medium** (`gas_transfer` = k > 0, cm/h): the bulk is uniform (swimmers, stirring) and the
+  resistance is the film at the surface (two-film theory), rate k / depth. Without wind a still water
+  surface has k ≈ 2.07 cm/h (k₆₀₀ of Cole and Caraco 1998, Limnol. Oceanogr. 43: 647–656, measured
+  in a small lake: an ESTIMATE for a tube); stirring or bubbling raise it.
+
+The vessel brings its value (`vessels/`, [format](../content/vessels.md)); the culture can override
+it when created (`CultureSpec::gasTransfer`, `gas_transfer=` in the scene) or change it live
+(operation `gas_transfer`, recorded in the scene); experiments take it in `[culture]` or as a
+factor.
 
 ## Light and phages
 
@@ -41,13 +54,17 @@ plate's parameters (infected cells are their own cohorts).
 | Operation | Effect |
 |---|---|
 | `renewMedium` | Centrifuged medium change: protists stay (Gause's protocol). |
-| Dilution | A fraction of the culture is replaced by fresh medium. |
+| Dilution or thinning | A fraction of the culture (cells drawn one by one) is taken out with everything in it and replaced by fresh medium ([thinning](thinning.md)). |
+| Gas transfer (`setGasTransfer`) | Mixing of the medium: surface transfer velocity [cm/h]; 0 = still. |
 | Chemostat (`setDilutionRate`) | Continuous dilution with binomial washout. Bacteria take the substrate with an **implicit step** (end-of-step concentration), otherwise the chemostat does not reach S*. |
 | Perfusion, inflow medium | Continuous supply. |
 | Sample drop, passages (`withdraw`, `receive`) | What leaves goes to the budget as `Flow::Washout`. |
 | Seeding by density, serial dilutions | |
 
-The mass budget (`massBudget`, `FluxLedger`) is the same as on the plate.
+The mass budget (`massBudget`, `FluxLedger`) is the same as on the plate. The census carries the
+**biovolume** of each species (`CultureCensus::biovolume`, `cellVolumeUm3`), which also goes into the
+series (`biovolume:<id>`, µm³/mL): the measure to compare species of different sizes, as Gause's
+"volume".
 
 ## Culture session
 

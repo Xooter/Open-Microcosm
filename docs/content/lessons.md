@@ -24,7 +24,9 @@ Step fields:
 - `prediction` = {`text`, `quantity` = {`kind`, `key`}, `unit`}.
 
 Condition kinds (`kind`): `time_h`, `population`, `bacteria`, `concentration`, `ph`, `plasmolysis`,
-`hemolysis`, `near_center`, `fraction`. A new condition is added in `lessonQuantity`
+`hemolysis`, `near_center`, `fraction` (individuals of the first being of `key = "a,b,..."` over all
+the named ones), `biovolume_fraction` (the same with biovolume, to compare beings of different sizes),
+`motility`, `vitality`, `swollen`, `swim_speed`. A new condition is added in `lessonQuantity`
 (`game/lesson.cpp`); the data choose which one to use.
 
 `tests/test_lessons.cpp` runs every lesson's `solution`: if a model change breaks a lesson, the test

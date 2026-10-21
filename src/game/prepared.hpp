@@ -25,6 +25,9 @@ struct Vessel {
     std::string key, name, pack, source;
     std::vector<std::string> legacyIds;
     float areaCm2 = 8.0f, volumeMl = 2.0f;
+    // Velocidad de transferencia de gases por la superficie [cm/h] cuando el medio está mezclado
+    // (nadadores, agitación). 0: medio quieto, el O₂ y el CO₂ difunden por toda la columna (D / h²).
+    float gasTransferCmH = 0.0f;
     // Profundidad del medio [µm] = volumen / área.
     float depthUm() const { return volumeMl / areaCm2 * 1e4f; }
 };

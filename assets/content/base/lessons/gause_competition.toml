@@ -13,18 +13,22 @@ medium=osterhout_gause
 temperature=26
 light=0
 seed=1934
+program=dilution event 24 inf 0 0 24 0.5 0.1
 program=medium event 24 inf 0 0 24 0.5 1
 program=bacteria event 24 inf 0 0 24 0.5 5e7
 event=0 bacteria 5e7
-event=0 inoculate 5 paramecium
-event=0 inoculate 5 paramecium_aurelia
+event=0 inoculate 20 paramecium
+event=0 inoculate 20 paramecium_aurelia
 """
 solution_hours = 720.0
+[[lesson.actions]]
+text = "Ralear la decima parte"
+event = "dilution 0.1"
 [[lesson.step]]
-text = "En el tubo hay 5 Paramecium caudatum y 5 P. aurelia. Cada dia se cambia el medio y se agrega la misma racion de bacterias (el protocolo de Gause)."
+text = "En el tubo de 5 mL hay 20 Paramecium caudatum y 20 P. aurelia. Cada dia se saca y se descarta la decima parte del cultivo (la muestra que Gause contaba), se cambia el medio y se agrega la misma racion de bacterias."
 goal = { kind = "time_h", op = ">=", value = 24.0 }
-prediction = { text = "Al dia 30, que fraccion de los paramecios va a ser P. aurelia?", quantity = { kind = "fraction", key = "paramecium_aurelia,paramecium" }, unit = "fraction" }
+prediction = { text = "Al dia 30, que fraccion del biovolumen de los paramecios va a ser de P. aurelia?", quantity = { kind = "biovolume_fraction", key = "paramecium_aurelia,paramecium" }, unit = "fraction" }
 [[lesson.step]]
-text = "Deja correr el cultivo 30 dias (subi la velocidad). Mira el grafico del panel Cultivos."
+text = "Deja correr el cultivo 30 dias (subi la velocidad). Mira el grafico del panel Cultivos: la serie de biovolumen compara especies de tamanos distintos, como el volumen de Gause."
 goal = { kind = "time_h", op = ">=", value = 720.0 }
-question = { text = "Que predice el principio de exclusion competitiva?", options = ["Que las dos conviven si hay comida para todas", "Que dos especies que dependen del mismo recurso limitante no pueden coexistir: la que lo aprovecha mejor desplaza a la otra", "Que gana siempre la que crece mas rapido"], correct = 1, explanation = "Gause vio que P. aurelia excluia a P. caudatum. En el modelo, la ventaja de P. aurelia (mas comida por biomasa) es chica y la que se adelanta al principio puede ganar: corre replicas en el panel Experimento y compara la proporcion de veces que gana cada una." }
+question = { text = "Que predice el principio de exclusion competitiva?", options = ["Que las dos conviven si hay comida para todas", "Que dos especies que dependen del mismo recurso limitante no pueden coexistir: la que lo aprovecha mejor desplaza a la otra", "Que gana siempre la que crece mas rapido"], correct = 1, explanation = "Gause vio que P. aurelia excluia a P. caudatum. Cuando la comida ya esta repartida, el raleo diario abre lugar cada dia y lo recupera primero la especie que se multiplica mas rapido (Gause: P. aurelia, por su coeficiente de multiplicacion). Sin el raleo, la que se adelanta al principio se queda con la comida. Proba quitar el raleo del programa y correr replicas en el panel Experimento." }

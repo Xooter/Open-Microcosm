@@ -1126,6 +1126,11 @@ Genome speciesGenome(SpeciesId id) {
     return g;
 }
 
+float cellVolumeUm3(const SpeciesInfo& info, float biomassPmol) {
+    // masa = materia seca · V · densidad seca / 180 (pmol de glucosa por µm³ de materia seca).
+    return std::max(0.0f, biomassPmol) * 180.0f / (units::kDryMassFraction * std::max(1e-3f, info.dryMassScale));
+}
+
 float cellMassScale(const SpeciesInfo& info) {
     // Esfera de la misma sección: 4/3·π·(a·b)^(3/2); esferoide: 4/3·π·a·b·c.
     const float c = info.thickness > 0.0f ? info.thickness : info.spec.radiusY;

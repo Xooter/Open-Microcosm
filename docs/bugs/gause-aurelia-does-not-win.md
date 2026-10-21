@@ -4,14 +4,14 @@
 |---|---|
 | **ID** | `gause-aurelia-does-not-win` |
 | **Type** | `validation-gap` |
-| **Status** | `open` |
+| **Status** | `fixed` |
 | **Severity** | `major` |
 | **Area** | [`well-mixed-culture`](../mechanics/well-mixed-culture.md) |
 | **Affects** | `paramecium`, `paramecium_aurelia`; lesson `gause_competition`; test `tests/test_gause.cpp` |
 | **Code** | `src/game/culture.cpp`, `src/bio/cell_physiology.cpp` |
 | **Reported** | 16/10/2026 |
 | **Last verified** | 21/10/2026, commit `bded214` (the test still carries `doctest::should_fail()`) |
-| **Fixed in** | — |
+| **Fixed in** | commit "Raleo, mezcla del medio y biovolumen; protocolo completo de Gause" (21/10/2026) |
 
 ## Summary
 
@@ -67,7 +67,7 @@ pyocyaneus* (footnote 1; Gause, Nastukova and Alpatov 1934). That paper also say
 the higher coefficient of geometric increase under its conditions, while *P. aurelia* resists
 waste products better.
 
-Trials on 21/10/2026 (not committed):
+Trials on 21/10/2026 (before the fix):
 
 - Adding the daily 10 % dilution before the medium change: *P. aurelia* ends up excluding
   *P. caudatum* in 5 of 5 replicates, but in 3 of them only after day 25 (day 25: 3/5).
@@ -76,9 +76,19 @@ Trials on 21/10/2026 (not committed):
   tubes did not do this, so oxygenation of a deep tube needs its own review before the vessel
   changes.
 
+## Fix
+
+The full protocol is now simulated with mechanisms that the rest of the program uses too:
+[thinning](../mechanics/thinning.md) (the daily `dilution` of 10 % before the medium change), the
+5 cm³ `gause_tube` with 20 + 20, gas exchange of a mixed medium (`gas_transfer`, without it a
+2.8 cm column runs out of O₂ every other day and the populations crash) and biovolume as the
+measure (`cellVolumeUm3`). *P. aurelia* is ahead on day 25 in 5 of 5 replicates and excludes
+*P. caudatum* by day 60 in all of them. The remaining difference in speed is
+[`gause-displacement-too-slow`](gause-displacement-too-slow.md).
+
 ## Workaround
 
-None. The lesson `gause_competition` shows exclusion without asserting the winner.
+None needed.
 
 ## References
 
@@ -95,3 +105,4 @@ None. The lesson `gause_competition` shows exclusion without asserting the winne
 - 21/10/2026: documented here.
 - 21/10/2026: protocol compared with the original text; daily thinning and vessel volume found
   missing.
+- 21/10/2026: fixed with the full protocol; the speed of displacement is a separate issue.

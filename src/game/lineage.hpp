@@ -30,6 +30,7 @@ struct Census {
     int otherCells = 0;
     std::uint32_t maxGeneration = 0;
     int species[kMaxSpecies] = {}; // individuos vivos por especie (silvestres y del linaje)
+    float biovolume[kMaxSpecies] = {}; // de esos individuos [µm³] (bio/species: cellVolumeUm3)
     int bacteria = 0;
     int cyanoCells = 0;
     int mycelia[kFungusKinds] = {}; // por FungusKind

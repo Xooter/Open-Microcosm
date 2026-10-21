@@ -35,7 +35,7 @@ constexpr const char* kCheckKeys[] = {"kind", "key", "op", "value"};
 constexpr const char* kQuestionKeys[] = {"text", "options", "correct", "explanation"};
 constexpr const char* kPredictionKeys[] = {"text", "quantity", "unit"};
 constexpr const char* kCheckKinds[] = {"time_h", "population",   "bacteria",    "concentration", "ph",
-                                       "plasmolysis", "hemolysis", "near_center", "fraction",
+                                       "plasmolysis", "hemolysis", "near_center", "fraction", "biovolume_fraction",
                                        "motility", "vitality", "swollen", "swim_speed"};
 
 void readCheck(const toml::table& t, const std::string& where, LessonCheck& c, std::vector<std::string>& warnings) {
@@ -227,6 +227,21 @@ double labHours(const World* world, const CultureRun* culture) {
     return world ? world->simTime() * world->bioTimeScale() / 3600.0 : 0.0;
 }
 
+// Fracción de la primera especie de `key` ("a,b,c") sobre la suma de todas las nombradas, con la
+// medida `q` (individuos o biovolumen).
+template <typename Q> double speciesFraction(const std::string& key, Q q) {
+    const std::size_t comma = key.find(',');
+    const std::optional<SpeciesId> a = findSpecies(key.substr(0, comma));
+    if (!a)
+        return 0.0;
+    double total = q(*a);
+    std::stringstream others(comma == std::string::npos ? "" : key.substr(comma + 1));
+    for (std::string tok; std::getline(others, tok, ',');)
+        if (const std::optional<SpeciesId> id = findSpecies(tok))
+            total += q(*id);
+    return total > 0.0 ? q(*a) / total : 0.0;
+}
+
 double lessonQuantity(const LessonCheck& c, const World* world, const CultureRun* culture) {
     if (c.kind == "time_h")
         return labHours(world, culture);
@@ -245,26 +260,19 @@ double lessonQuantity(const LessonCheck& c, const World* world, const CultureRun
             for (int k = 0; k < kSoluteCount; ++k)
                 if (c.key == soluteKey(static_cast<Solute>(k)))
                     return cu.concentration(static_cast<Solute>(k));
-        if (c.kind == "fraction") {
-            const std::size_t comma = c.key.find(',');
-            const std::optional<SpeciesId> a = findSpecies(c.key.substr(0, comma));
-            double total = 0.0;
-            std::stringstream others(comma == std::string::npos ? c.key : c.key.substr(comma + 1));
-            std::string tok;
-            while (std::getline(others, tok, ','))
-                if (const std::optional<SpeciesId> id = findSpecies(tok))
-                    total += cu.count(*id);
-            if (a && comma != std::string::npos)
-                total += cu.count(*a);
-            return a && total > 0.0 ? cu.count(*a) / total : 0.0;
+        if (c.kind == "fraction")
+            return speciesFraction(c.key, [&](SpeciesId id) { return static_cast<double>(cu.count(id)); });
+        if (c.kind == "biovolume_fraction") {
+            const CultureCensus census = cu.census();
+            return speciesFraction(c.key, [&](SpeciesId id) { return census.biovolume[static_cast<int>(id)]; });
         }
         return 0.0;
     }
     if (!world)
         return 0.0;
     const World& w = *world;
-    if (c.kind == "population" || c.kind == "fraction" || c.kind == "bacteria" || c.kind == "concentration" ||
-        c.kind == "ph") {
+    if (c.kind == "population" || c.kind == "fraction" || c.kind == "biovolume_fraction" || c.kind == "bacteria" ||
+        c.kind == "concentration" || c.kind == "ph") {
         const Census census = w.census();
         if (c.kind == "bacteria")
             return census.bacteria;
@@ -276,15 +284,9 @@ double lessonQuantity(const LessonCheck& c, const World* world, const CultureRun
             const std::optional<SpeciesId> id = findSpecies(c.key);
             return id ? census.species[static_cast<int>(*id)] : 0.0;
         }
-        const std::size_t comma = c.key.find(',');
-        const std::optional<SpeciesId> a = findSpecies(c.key.substr(0, comma));
-        double total = a ? census.species[static_cast<int>(*a)] : 0.0;
-        std::stringstream others(comma == std::string::npos ? "" : c.key.substr(comma + 1));
-        std::string tok;
-        while (std::getline(others, tok, ','))
-            if (const std::optional<SpeciesId> id = findSpecies(tok))
-                total += census.species[static_cast<int>(*id)];
-        return a && total > 0.0 ? census.species[static_cast<int>(*a)] / total : 0.0;
+        if (c.kind == "biovolume_fraction")
+            return speciesFraction(c.key, [&](SpeciesId id) { return static_cast<double>(census.biovolume[static_cast<int>(id)]); });
+        return speciesFraction(c.key, [&](SpeciesId id) { return static_cast<double>(census.species[static_cast<int>(id)]); });
     }
     if (c.kind == "plasmolysis") {
         int cells = 0, shrunk = 0;

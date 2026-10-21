@@ -1,10 +1,14 @@
-
-# Gause (1934, cap. V) cultivaba los paramecios en tubos chicos de fondo plano con 0,5 cm³ de medio.
-# El diámetro del tubo (~1 cm) es una ESTIMACIÓN: fija la profundidad (~0,6 cm) y el intercambio de gases.
+# Gause (1934, cap. V, sección II): tubos graduados de centrífuga de 10 c.c. llenos con 5 c.c. de
+# medio, tapados con algodón; cada día se contaba una muestra de 0,5 c.c. y se la destruía. El
+# diámetro interior (~1,5 cm: 1,8 cm² de superficie) es una ESTIMACIÓN: fija la profundidad (~2,8 cm).
+# Los paramecios nadan y mezclan el medio: el O₂ entra por la película de la superficie con la
+# velocidad de transferencia de un agua quieta sin viento, 2,07 cm/h (k600 de Cole y Caraco 1998,
+# Limnol. Oceanogr. 43: 647-656, medida en un lago: ESTIMACIÓN para un tubo).
 [[vessel]]
 id = "gause_tube"
 legacy_ids = ["tubo_gause"]
-name = "Tubo de Gause (0,5 mL)"
-area_cm2 = 0.8
-volume_ml = 0.5
-source = "Gause, G. F. (1934). The Struggle for Existence, cap. V (0,5 cm3 por tubo); diámetro estimado."
+name = "Tubo de Gause (5 mL)"
+area_cm2 = 1.8
+volume_ml = 5.0
+gas_transfer = 2.07
+source = "Gause, G. F. (1934). The Struggle for Existence, cap. V (5 cm3 en tubos de centrífuga de 10 c.c.); diámetro estimado. Transferencia de gases: Cole y Caraco (1998), Limnol. Oceanogr. 43: 647-656 (estimación)."

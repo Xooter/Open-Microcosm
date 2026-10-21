@@ -122,6 +122,8 @@ ReplicaResult runCultureReplica(const ExperimentSpec& spec, const ExperimentLeve
             cs.temperature = static_cast<float>(value);
         else if (key == "light")
             cs.light = static_cast<float>(value);
+        else if (key == "gas_transfer")
+            cs.gasTransfer = static_cast<float>(value);
         else if (key == "bacteria") {
             events.erase(std::remove_if(events.begin(), events.end(),
                                         [](const CultureEvent& e) { return e.step == 0 && e.op == CultureOp::Bacteria; }),
@@ -505,6 +507,7 @@ bool parseExperiment(const std::string& text, ExperimentSpec& spec, std::string*
             cs.medium = m->key;
         cs.temperature = static_cast<float>((*c)["temperature"].value_or(static_cast<double>(cs.temperature)));
         cs.light = static_cast<float>((*c)["light"].value_or(static_cast<double>(cs.light)));
+        cs.gasTransfer = static_cast<float>((*c)["gas_transfer"].value_or(static_cast<double>(cs.gasTransfer)));
         std::string scene = "culture_version=1\n";
         if (const toml::array* p = (*c)["program"].as_array())
             for (const toml::node& n : *p)

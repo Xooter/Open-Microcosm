@@ -37,7 +37,9 @@ and intervenes.
   **empty Petri dish**. It is preconfigured in the *Plate* panel (`PlateSpec`: biome + seed, full,
   lifeless or empty content —`DropContent`, `applyDropContent`—, environment, nutrients, sediment,
   populations and geometry) and created with *Create plate* (Ctrl+N). Environment and nutrients are
-  applied **live** to the running plate; the rest, when it is created. Plates are saved in
+  applied **live** to the running plate; the rest, when it is created. *Thinning (live)* takes out and
+  discards a fraction of what is in suspension, once or periodically (`World::thin`, intervention
+  `Thin`; in the culture, the `dilution` operation). Plates are saved in
   `<data>/openmicrocosm/plates/*.plate`.
 - **Prepared plates** (`game/prepared`; data in `media/`, `vessels/` and `plates/`): besides the
   water drop, plate types as in a real laboratory: the **cell culture** (DMEM in an incubator at
@@ -381,11 +383,12 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
   (`max_ingestion` and `clearance` in `[physiology.<id>.*]`; without data, the plate's oral current
   and cytostome) and hunters with the kernel of Gerritsen and Strickler (1977).
 - There is no `bioTimeScale`: `step(dt)` advances `dt` seconds and biology `dt · Q10`; gases exchange
-  with the air at their real rate (D / depth²). The budget (`massBudget`, `FluxLedger`) is the same
+  with the air at their real rate: D / depth² with a still medium, k / depth with a mixed one
+  (`gas_transfer` [cm/h] of the vessel, overridable and live: `gasExchangeRate`). The budget (`massBudget`, `FluxLedger`) is the same
   as the plate's.
 - Light: Beer–Lambert down the column from the phototrophic biomass (each cell receives the mean).
   Mass-action lytic phages with the plate's parameters (infected cells are their own cohorts).
-- Operations: centrifuged medium change (`renewMedium`: protists stay), dilution, chemostat
+- Operations: centrifuged medium change (`renewMedium`: protists stay), dilution or thinning, chemostat
   (`setDilutionRate`, binomial washout), sample drop and passages (`withdraw`, `receive`); what leaves
   goes to the budget as `Flow::Washout`. Bacteria take the substrate with an implicit step (the
   end-of-step concentration), otherwise the chemostat does not reach S*.
@@ -419,7 +422,8 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
   keys), the parameters it fixes (with their reason), named actions (an intervention or a culture
   operation) and steps with a goal, question or prediction.
 - Goals are **named conditions** (`time_h`, `population`, `bacteria`, `concentration`, `ph`,
-  `plasmolysis`, `hemolysis`, `near_center`, `fraction`): code provides the mechanism and the data
+  `plasmolysis`, `hemolysis`, `near_center`, `fraction`, `biovolume_fraction`...): code provides the
+  mechanism and the data
   choose which. A new condition is added in `lessonQuantity`.
 - No score: questions show their explanation when answered and the report (Markdown) is marked by
   the teacher. A fixed parameter is shown locked (`App::protocolLocks`, `parameterControl`); it can
@@ -536,7 +540,8 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
   `budgetResidual` = change of the total − external inputs. C has an open boundary (the air and the
   incoming organic matter are not accounted as closed): closure is not required for it.
 - **Time series:** sampled by `Run` (not `World`) every `sampleInterval` [simulation s] together with
-  the census: time, populations, chemical means (`Census::mean*`), budget and region. Named columns
+  the census: time, populations, chemical means (`Census::mean*`), budget, region and the biovolume
+  of each species (`biovolume:<id>`, `cellVolumeUm3`). Named columns
   with units, stored by column; with a row cap it decimates (1 of every 2). NaN marks what is missing
   (region not drawn): with `-ffast-math` use `finiteNumber`, never `std::isfinite`.
 - **Growth curve:** `fitGrowth` (µmax by sliding window over ln N, Pirt's lag, logistic K by golden

@@ -101,6 +101,8 @@ void Run::buildColumns() {
     c.push_back({"Región: O2", "µM", "Region"});
     c.push_back({"Región: fosfato", "µM", "Region"});
     c.push_back({"Región: nitrógeno", "µM", "Region"});
+    for (int s = 0; s < speciesCount(); ++s)
+        c.push_back({std::string("biovolume:") + speciesInfo(static_cast<SpeciesId>(s)).key, "µm³", "Biovolumen"});
     row_.assign(c.size(), 0.0f);
     series_.setColumns(std::move(c));
 }
@@ -145,5 +147,7 @@ void Run::sample(const World& world) {
     put(r ? regionStats_.oxygen : nan);
     put(r ? regionStats_.phosphate : nan);
     put(r ? regionStats_.nitrogen : nan);
+    for (int s = 0; s < speciesCount(); ++s)
+        put(census_.biovolume[s]);
     series_.push(row_.data());
 }

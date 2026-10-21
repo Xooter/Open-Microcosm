@@ -130,6 +130,12 @@ struct Sediment {
     int operator[](MineralKind k) const { return count[static_cast<int>(k)]; }
 };
 
+// Sedimentación de Stokes: v = 2/9·Δρ·g·r²/µ. Un grano de cuarzo (Δρ = 1650 kg/m³) de 2 µm de
+// radio cae a ~14 µm/s y toca el vidrio en segundos; la arcilla más fina tarda horas y sigue al
+// agua con browniano. Simplificación: las partículas minerales de este radio o más ya están en el
+// fondo (el agua no las lleva y el raleo no las saca).
+inline constexpr float kSettledRadius = 2.0f; // [µm]
+
 // Componente: grano de arena o piedra. Es un cuerpo con membrana inamovible (LOD "fijo": sin
 // XPBD ni arrastre), así los contactos, la exclusión de bacterias y la GPU lo tratan como a un
 // obstáculo. No es un organismo: no tiene metabolismo, no se come ni cuenta como biomasa.
@@ -296,6 +302,16 @@ class World {
     entt::entity spawnCell(const CellSpec& spec);
     void spawnTestScene(int count);      // grilla de células para pruebas de estrés
     void removeCellAt(Vec2 position);
+    // Quita una célula de la placa sin lisis (borrada o sacada con el líquido): suelta lo que la
+    // referencia (agarre, copa del jugador, ser controlado).
+    void removeCell(entt::entity e);
+    // Raleo: se revuelve la gota, se saca la fracción `fraction` y se repone con medio nuevo (como
+    // la muestra diaria que Gause sacaba y descartaba). Sale una fracción al azar de lo que está en
+    // suspensión (células, colonias y filamentos enteros, bacterias libres, Bdellovibrio, zoosporas,
+    // cianobacterias, detritos y partículas finas) y se renueva esa fracción de lo disuelto; lo
+    // pegado al vidrio se queda (sésiles, células adherentes, biopelícula, hifas, plasmodio,
+    // sedimento). Lo que sale va al balance como `Flow::Washout`. Devuelve cuántos seres salieron.
+    int thin(float fraction);
     // Compresión: empuja todos los cuerpos hacia un punto [µm/s].
     void setSqueeze(Vec2 center, float speed);
     void clearSqueeze() { squeezeActive_ = false; }
@@ -429,6 +445,8 @@ class World {
     // Punto al azar en el agua de la placa, a `margin` de la pared.
     Vec2 randomPoint(Rng& rng, float margin = 0.0f) const;
     float simTime() const { return simTime_; }
+    // Hora de laboratorio del programa de la placa: horas biológicas sin el Q10 (es el reloj).
+    double programHours() const { return simTime_ * bioTimeScale_ / 3600.0; }
     // Pasos dados desde la creación (las intervenciones se anotan con el paso en que se aplican).
     std::uint64_t stepIndex() const { return step_; }
     // Cuerpos rearmados por la red de seguridad numérica (posiciones no finitas). Debería ser 0.
@@ -668,6 +686,8 @@ class World {
     // una bacteria que se superpone con la boca de un ciliado puede estar más arriba o más abajo.
     float filmHeight(std::uint64_t id, float period) const;
     void perfuse(float dt); // cámara de perfusión (MediumParams::perfusionPerHour)
+    // Reemplaza la fracción `f` de lo disuelto por el medio con que se creó la placa (perfusión y raleo).
+    void renewDissolved(float f);
     void removeBacteria(std::vector<std::size_t>& indices);
     void removeAmbient(std::vector<std::size_t>& indices);
     void updateLifecycle(float dt);

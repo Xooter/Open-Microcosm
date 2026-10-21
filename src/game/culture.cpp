@@ -86,14 +86,24 @@ Culture::Culture(const CultureConfig& config) : config_(config), medium_(config.
     ph_ = std::clamp(medium_.carbonatePK + std::log10(medium_.alkalinity / std::max(0.05, static_cast<double>(co2Saturation_))), 4.0, 11.0);
 }
 
+double gasExchangeRate(float depthUm, float gasTransferCmH) {
+    const double depth = std::max(1.0f, depthUm);
+    if (gasTransferCmH > 0.0f)
+        return static_cast<double>(gasTransferCmH) * 1e4 / 3600.0 / depth; // [µm/s] / [µm]
+    return units::kDiffusionO2 / (depth * depth);
+}
+
+void Culture::setGasTransfer(float cmPerHour) {
+    config_.gasTransferCmH = std::max(0.0f, cmPerHour);
+    airExchange_ = gasExchangeRate(config_.depthUm, config_.gasTransferCmH);
+}
+
 void Culture::refreshMedium() {
     q10_ = std::pow(2.0f, (medium_.temperature - 20.0f) / 10.0f);
     viscositySpeed_ = waterViscosity(20.0f) / waterViscosity(medium_.temperature);
     o2Saturation_ = medium_.anoxic ? 0.0f : o2SaturationAt(medium_.temperature) * o2AirFraction(medium_);
     co2Saturation_ = co2SaturationAt(medium_);
-    // Intercambio por difusión a través de la capa de medio quieta (como el recipiente de una
-    // placa preparada). Simplificación: un cultivo agitado intercambia más rápido.
-    airExchange_ = units::kDiffusionO2 / (config_.depthUm * config_.depthUm);
+    airExchange_ = gasExchangeRate(config_.depthUm, config_.gasTransferCmH);
 }
 
 double Culture::exchange(Solute s, double pmol, Flow flow) {
@@ -431,6 +441,7 @@ CultureCensus Culture::census() const {
     CultureCensus c;
     for (const CultureCell& cell : cells_) {
         ++c.species[static_cast<int>(cell.species)];
+        c.biovolume[static_cast<int>(cell.species)] += cellVolumeUm3(speciesInfo(cell.species), cell.meta.biomass);
         c.cysts += cell.cyst ? 1 : 0;
         c.biomass += cell.meta.biomass;
     }

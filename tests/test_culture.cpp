@@ -1,6 +1,7 @@
 // Cultivo bien mezclado (fase P1, paso 1): la misma fisiología que la placa, sin espacio.
 #include "bio/physiology.hpp"
 #include "game/calibration.hpp"
+#include "core/units.hpp"
 #include "game/culture.hpp"
 
 #include <doctest/doctest.h>
@@ -195,4 +196,48 @@ TEST_CASE("validación: respuesta funcional de Paramecium, placa contra cultivo,
 
 TEST_CASE("validación: respuesta funcional de Paramecium, placa contra cultivo, 10⁹/mL" * doctest::test_suite("validacion")) {
     checkFunctionalResponse(100'000);
+}
+
+TEST_CASE("cultivo: la mezcla del medio fija cómo entra el O₂ por la superficie") {
+    // Medio quieto: el O₂ difunde por toda la columna (D / h²); mezclado: entra por la película de la
+    // superficie (k / h). En un tubo de 2,8 cm la diferencia es de ~30 veces.
+    const float depth = 28000.0f;
+    CHECK(gasExchangeRate(depth, 0.0f) == doctest::Approx(units::kDiffusionO2 / (depth * depth)));
+    CHECK(gasExchangeRate(depth, 2.07f) == doctest::Approx(2.07 * 1e4 / 3600.0 / depth));
+    for (const float k : {0.0f, 2.07f}) {
+        CultureConfig cfg = tube();
+        cfg.depthUm = depth;
+        cfg.gasTransferCmH = k;
+        Culture c(cfg);
+        const double sat = c.concentration(Solute::Oxygen);
+        c.setConcentration(Solute::Oxygen, 0.0);
+        for (int s = 0; s < 60; ++s) // 1 h
+            c.step(kStep);
+        const double expected = sat * (1.0 - std::exp(-gasExchangeRate(depth, k) * 3600.0));
+        MESSAGE("k = " << k << " cm/h: O2 " << c.concentration(Solute::Oxygen) << " µM al cabo de 1 h (esperado " << expected << ")");
+        CHECK(c.concentration(Solute::Oxygen) == doctest::Approx(expected).epsilon(0.02));
+    }
+    // En vivo: cambiar la mezcla cambia la tasa.
+    Culture c(tube());
+    c.setGasTransfer(5.0f);
+    CHECK(c.gasTransfer() == doctest::Approx(5.0f));
+}
+
+TEST_CASE("cultivo: el biovolumen de cada especie es la suma del de sus células") {
+    Culture c(tube());
+    c.inoculate(SpeciesId::Paramecium, 10);
+    c.inoculate(SpeciesId::ParameciumAurelia, 10);
+    const CultureCensus census = c.census();
+    for (const SpeciesId id : {SpeciesId::Paramecium, SpeciesId::ParameciumAurelia}) {
+        double sum = 0.0;
+        for (const CultureCell& cell : c.cells())
+            sum += cell.species == id ? cellVolumeUm3(speciesInfo(id), cell.meta.biomass) : 0.0;
+        CHECK(census.biovolume[static_cast<int>(id)] == doctest::Approx(sum));
+    }
+    // P. aurelia es más chico: por célula, ~0,4-0,5 del volumen de P. caudatum (Gause midió 0,39).
+    const double ratio = census.biovolume[static_cast<int>(SpeciesId::ParameciumAurelia)] /
+                         census.biovolume[static_cast<int>(SpeciesId::Paramecium)];
+    MESSAGE("volumen de P. aurelia / P. caudatum: " << ratio);
+    CHECK(ratio > 0.3);
+    CHECK(ratio < 0.6);
 }

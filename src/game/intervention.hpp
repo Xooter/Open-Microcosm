@@ -42,6 +42,7 @@ enum class InterventionKind : std::uint8_t {
                    // [µm] alrededor de pos (0: toda la placa)
     Program,       // index 0: agrega la entrada `key` (texto de game/program con comas en vez de
                    // espacios: la clave es una sola palabra) al programa de la placa; 1: lo vacía
+    Thin,          // v[0] = fracción de la gota que se saca y se repone con medio nuevo (World::thin)
     Count
 };
 

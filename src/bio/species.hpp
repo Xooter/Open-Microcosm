@@ -604,6 +604,10 @@ Genome speciesGenome(SpeciesId id);
 // semiejes mayor, menor y vertical, por la materia seca relativa. Una célula alargada pesa mucho
 // menos que la esfera de su silueta (un paramecio, ~0,5).
 float cellMassScale(const SpeciesInfo& info);
+// Biovolumen de una célula [µm³] por su biomasa seca [pmol]: el del esferoide que pesa eso con la
+// materia seca relativa de la especie (la inversa de la masa de `cellMassScale`). Es la medida con
+// que se comparan especies de tamaños distintos (Gause 1934 contaba el "volumen" de los paramecios).
+float cellVolumeUm3(const SpeciesInfo& info, float biomassPmol);
 // Radio que ocupa la célula del tamaño típico, con sus cuernos o brazos [µm] (para ubicarla en la placa).
 inline float speciesReach(const SpeciesInfo& info) {
     return std::max({info.spec.radiusX, info.spec.radiusY, info.outlineReach});

@@ -115,7 +115,7 @@ TEST_CASE("perfusión: la placa renueva lo disuelto y el balance lo registra afu
 
 TEST_CASE("pasaje: una transferencia lleva células con su estado y se repite al cargar la escena") {
     CultureSpec spec;
-    spec.vessel = "gause_tube";
+    spec.vessel = "well_24"; // 0,5 mL
     spec.medium = "osterhout_gause";
     spec.seed = 8;
     CultureRun a, b;

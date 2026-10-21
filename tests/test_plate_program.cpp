@@ -6,6 +6,7 @@
 
 #include <doctest/doctest.h>
 
+#include <cmath>
 #include <string>
 
 namespace {
@@ -71,4 +72,53 @@ TEST_CASE("programa en la placa: un pulso agrega soluto a la hora programada") {
     for (int s = 0; s < 60 * 60; ++s) // 1 h biológica
         w.step(1.0f / 60.0f);
     CHECK(w.meanConcentration(w.phosphateField()) == doctest::Approx(before + 3.0f).epsilon(0.02));
+}
+
+TEST_CASE("raleo de la placa: sale la fracción de lo suspendido, lo pegado se queda y el balance cierra") {
+    World w(small());
+    REQUIRE(w.inoculate({BeingKind::Species, SpeciesId::Paramecium}, 40, {}, 0.0f) == 40);
+    REQUIRE(w.inoculate({BeingKind::Bacterium, SpeciesId{}}, 2000, {}, 0.0f) == 2000);
+    for (std::size_t i = 0; i < 400; ++i) // biopelícula: pegadas al vidrio
+        w.bacteria().attached[i] = 1;
+    w.step(1.0f / 60.0f);
+    const MassBudget start = w.massBudget();
+    const int cells = w.census().species[static_cast<int>(SpeciesId::Paramecium)];
+    Intervention iv;
+    iv.kind = InterventionKind::Thin;
+    iv.v[0] = 0.5f;
+    REQUIRE(applyIntervention(w, iv));
+    const int left = w.census().species[static_cast<int>(SpeciesId::Paramecium)];
+    int attached = 0;
+    for (std::size_t i = 0; i < w.bacteria().size(); ++i)
+        attached += w.bacteria().attached[i];
+    const std::size_t freeLeft = w.bacteria().size() - static_cast<std::size_t>(attached);
+    MESSAGE("paramecios " << cells << " -> " << left << ", bacterias libres 1600 -> " << freeLeft << ", pegadas " << attached);
+    CHECK(left > 8); // binomial(40, 0,5): ±3 desvíos
+    CHECK(left < 32);
+    CHECK(attached == 400);
+    CHECK(std::abs(static_cast<double>(freeLeft) - 800.0) < 4.0 * std::sqrt(400.0));
+    for (Element e : {Element::P, Element::N})
+        CHECK(std::abs(budgetResidual(start, w.massBudget(), e)) < 1e-3 * std::max(1.0, start.total(e)));
+}
+
+TEST_CASE("raleo de la placa: el programa lo repite cada período (\"dilution\")") {
+    // Dos placas iguales, una con el raleo a la mitad cada hora biológica: después de dos raleos
+    // quedan ~1/4 de los detritos del control (los dos se descomponen igual).
+    auto run = [](bool thinning) {
+        WorldConfig c = small();
+        if (thinning)
+            c.program.entries.push_back({"dilution", ProgramShape::Event, 1.0, kProgramForever, 0.0f, 0.0f, 1.0f, 0.5f, 0.5f});
+        World w(c);
+        for (int k = 0; k < 400; ++k) {
+            Rng rng(7, 99, static_cast<std::uint64_t>(k), 0);
+            w.dropDetritus(w.randomPoint(rng, 20.0f));
+        }
+        while (w.programHours() < 2.05)
+            w.step(1.0f / 60.0f);
+        return w.ambient().size();
+    };
+    const std::size_t control = run(false), thinned = run(true);
+    MESSAGE("detritos: control " << control << ", raleada " << thinned);
+    REQUIRE(control > 200);
+    CHECK(static_cast<double>(thinned) / static_cast<double>(control) == doctest::Approx(0.25).epsilon(0.4));
 }

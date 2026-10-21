@@ -28,7 +28,9 @@ struct ProgramEntry {
     // se agregan), "medio" (fracción del medio que se renueva: el protocolo de Gause centrifuga y
     // cambia el medio; los protistas se quedan), "dilucion" (fracción del cultivo que se reemplaza
     // por medio nuevo, con todo lo que tiene), "agregar:<soluto>" (µM que se suman) o
-    // "inocular:<id del ser>" (individuos). En la placa no hay "medio" ni "dilucion" (está la perfusión).
+    // "inocular:<id del ser>" (individuos). En la placa no hay "medio" (está la perfusión) y
+    // "dilution" ralea la gota (World::thin: lo pegado al vidrio se queda). Las claves son las inglesas
+    // de game/world_program y game/culture ("temperature", "dilution"...).
     std::string target;
     ProgramShape shape = ProgramShape::Cycle;
     double start = 0.0;                                      // [h]
@@ -54,6 +56,8 @@ int programEvents(const ProgramEntry& e, double from, double to);
 // Texto: una línea por entrada, `programa=objetivo forma inicio fin desde hasta periodo ciclo
 // cantidad` (fin "inf" si no termina). Los floats con precisión de ida y vuelta.
 std::string serializeProgram(const Program& p);
+// Una entrada como texto (lo que va después de "program=", sin fin de línea).
+std::string programEntryText(const ProgramEntry& e);
 // Lee una línea (lo que va después de "programa="). false si está mal formada.
 bool parseProgramEntry(const std::string& text, ProgramEntry& out);
 const char* programShapeKey(ProgramShape s); // "ramp", "cycle", "sine", "event"

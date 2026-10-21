@@ -51,6 +51,8 @@ class PlatePanel : public Panel {
             drawEnvironment(app, p);
         if (section("Nutrientes (en vivo)", true))
             drawNutrients(app, p);
+        if (section("Raleo (en vivo)"))
+            drawThinning(app);
         // Un cultivo es estéril: sin sedimento ni fauna silvestre (se inocula desde el Catálogo).
         if (p.kind() == PlateKind::Drop && section("Sedimento (al crear)"))
             drawSediment(app, p);
@@ -65,7 +67,39 @@ class PlatePanel : public Panel {
     }
 
   private:
+    float thinFraction_ = 0.1f, thinEveryHours_ = 24.0f;
+
     static void dirtyIf(App& app, bool changed) { app.plateDirty |= changed; }
+
+    // Raleo: sacar una fracción de la gota revuelta y reponerla con medio nuevo (World::thin), una
+    // vez o cada tanto (una entrada "dilution" del programa de la placa).
+    void drawThinning(App& app) {
+        slider("Fracción", &thinFraction_, 0.01f, 0.9f, "%.2f",
+               "Lo que se saca al azar de lo que está en suspensión (seres, bacterias libres, detritos) y la misma "
+               "fracción de lo disuelto, que se repone con el medio de la placa. Lo pegado al vidrio se queda.");
+        if (ImGui::Button(tr("Ralear ahora"))) {
+            Intervention iv;
+            iv.kind = InterventionKind::Thin;
+            iv.v[0] = thinFraction_;
+            app.intervene(iv);
+        }
+        sliderLog("Cada [h bio]", &thinEveryHours_, 0.5f, 240.0f, "%.1f",
+                  "Período del raleo programado, en horas biológicas (Gause sacaba la décima parte cada 24 h).");
+        if (ImGui::Button(tr("Ralear periódicamente"))) {
+            ProgramEntry e;
+            e.target = "dilution";
+            e.shape = ProgramShape::Event;
+            e.start = static_cast<double>(app.world->programHours()) + thinEveryHours_;
+            e.period = thinEveryHours_;
+            e.amount = thinFraction_;
+            Intervention iv;
+            iv.kind = InterventionKind::Program;
+            iv.key = programEntryText(e);
+            std::replace(iv.key.begin(), iv.key.end(), ' ', ',');
+            app.intervene(iv);
+        }
+        tooltip("Agrega el raleo al programa de la placa (panel Simulación): se repite cada período.");
+    }
 
     void drawBase(App& app, PlateSpec& p) {
         if (!section("Base", true))

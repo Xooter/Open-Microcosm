@@ -70,7 +70,7 @@ class CulturePanel : public Panel {
     int species_ = 0;
     int inoculum_ = 5;
     float bacteriaPerMl_ = 1e7f, phagesPerMl_ = 1e5f;
-    float renew_ = 1.0f, dilute_ = 0.1f;
+    float renew_ = 1.0f, dilute_ = 0.1f, gasTransfer_ = 2.07f;
     int solute_ = 2, reagent_ = 0;
     float dose_ = 8.0f;
     float soluteValue_ = 10.0f;
@@ -177,6 +177,13 @@ class CulturePanel : public Panel {
         }
         slider("Temperatura [°C]", &draft_.temperature, 0.0f, 40.0f, "%.1f");
         slider("Luz", &draft_.light, 0.0f, 1.0f, "%.2f", "Irradiancia relativa de la lámpara sobre el cultivo.");
+        bool vesselMixing = draft_.gasTransfer < 0.0f;
+        if (checkbox("Mezcla del recipiente", &vesselMixing,
+                     "La transferencia de gases con el aire que trae el recipiente. Sin marcar, se elige a mano."))
+            draft_.gasTransfer = vesselMixing ? -1.0f
+                                              : (vessel_ >= 0 && vessel_ < vesselCount() ? vessel(vessel_).gasTransferCmH : 0.0f);
+        if (!vesselMixing)
+            gasTransferSlider(&draft_.gasTransfer);
         int seed = static_cast<int>(draft_.seed);
         if (ImGui::InputInt(tr("Seed"), &seed))
             draft_.seed = static_cast<std::uint64_t>(std::max(0, seed));
@@ -272,9 +279,15 @@ class CulturePanel : public Panel {
         if (ImGui::Button(tr("Cambiar el medio")))
             run.apply({0, CultureOp::Renew, "", renew_});
         slider("Fracción a diluir", &dilute_, 0.0f, 1.0f, "%.2f",
-               "Se saca esa fracción del cultivo con todo lo que tiene y se repone con medio nuevo.");
+               "Raleo o dilución: se revuelve, se saca esa fracción del cultivo con todo lo que tiene y se repone con "
+               "medio nuevo. Gause sacaba y descartaba la décima parte cada día: eso es lo que desplaza a la especie "
+               "que crece más lento.");
         if (ImGui::Button(tr("Diluir")))
             run.apply({0, CultureOp::Dilute, "", dilute_});
+        readout("Transferencia de gases", "%.2f cm/h", static_cast<double>(run.culture().gasTransfer()));
+        gasTransferSlider(&gasTransfer_);
+        if (ImGui::Button(tr("Cambiar la mezcla")))
+            run.apply({0, CultureOp::GasTransfer, "", gasTransfer_});
         const char* solutes[kSoluteCount];
         for (int k = 0; k < kSoluteCount; ++k)
             solutes[k] = soluteLabel(static_cast<Solute>(k));
@@ -319,7 +332,8 @@ class CulturePanel : public Panel {
         ImGui::SameLine();
         if (ImGui::SmallButton(tr("Protocolo de Gause")))
             gause(run);
-        tooltip("Cada 24 h se centrifuga, se cambia todo el medio y se agregan bacterias frescas (Gause 1934, cap. V).");
+        tooltip("Cada 24 h se saca y se descarta la décima parte del cultivo (la muestra que se cuenta), se centrifuga, se "
+                "cambia todo el medio y se agregan bacterias frescas (Gause 1934, cap. V).");
         ImGui::InputText(tr("Objetivo"), target_, sizeof target_);
         tooltip("temperature, light, solute:<phosphate|nitrogen|silicate|iron|b12|organic|co2>, o una acción: bacteria, "
                 "medium, dilution, inoculate:<id del ser>.");
@@ -348,7 +362,17 @@ class CulturePanel : public Panel {
         run.spec().program = run.culture().program();
     }
 
+    // Mezcla del medio: velocidad de transferencia de gases por la superficie (0: medio quieto).
+    static void gasTransferSlider(float* cmPerHour) {
+        slider("Transferencia de gases [cm/h]", cmPerHour, 0.0f, 30.0f, "%.2f",
+               "0: medio quieto, el O2 difunde por toda la columna (lento en un tubo hondo). Con el medio mezclado (nadadores, "
+               "agitación) entra por la película de la superficie: ~2 cm/h en agua quieta sin viento (Cole y Caraco 1998); "
+               "más con agitación.");
+    }
+
     static void gause(CultureRun& run) {
+        // La muestra contada y destruida (la décima parte) sale antes del cambio de medio.
+        add(run, {"dilution", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 0.1f});
         add(run, {"medium", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 1.0f});
         add(run, {"bacteria", ProgramShape::Event, 24.0, kProgramForever, 0.0f, 0.0f, 24.0f, 0.5f, 5e7f});
     }

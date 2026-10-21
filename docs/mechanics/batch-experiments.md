@@ -23,6 +23,7 @@ vessel = "erlenmeyer_250"
 medium = "wc_guillard"
 temperature = 20
 light = 1.0
+gas_transfer = 2.07     # optional: mixing of the medium [cm/h] (default: the vessel's)
 program = []
 events = ["0 inoculate 100 asterionella", "0 inoculate 100 cyclotella"]
 
@@ -31,7 +32,7 @@ key = "solute:silicate"
 values = [5, 20, 80]
 ```
 
-Factors: in a culture, `temperature`, `light`, `bacteria` (per mL at the start), `solute:<key>` (µM at
+Factors: in a culture, `temperature`, `light`, `gas_transfer` [cm/h], `bacteria` (per mL at the start), `solute:<key>` (µM at
 the start), `inoculate:<being id>` (individuals) or `reagent:<id>`; on a plate, `temperature`,
 `solute:<key>` or a key of the parameter registry. Keys saved with the old Spanish names are still
 read (`game/legacy_names`). Each combination of levels runs `replicates` times with seeds derived

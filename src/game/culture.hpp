@@ -51,9 +51,12 @@ const char* soluteLabel(Solute s); // en la interfaz (clave de traducción): "fo
 
 struct CultureConfig {
     float volumeMl = 0.5f;
-    // Profundidad del medio [µm]: el O₂ y el CO₂ se intercambian con el aire a través de la capa
-    // quieta, a una tasa D / profundidad² (como en un recipiente de cultivo de la placa preparada).
+    // Profundidad del medio [µm] y velocidad de transferencia de gases por la superficie [cm/h].
+    // Con el medio quieto (gasTransferCmH = 0) el O₂ y el CO₂ difunden por toda la columna, a una
+    // tasa D / profundidad² (como en un recipiente de cultivo de la placa preparada). Con el medio
+    // mezclado la resistencia queda en la película de la superficie: tasa = k / profundidad.
     float depthUm = 5000.0f;
+    float gasTransferCmH = 0.0f;
     MediumParams medium;
     std::uint64_t seed = 1;
     // Superindividuos de bacterias: hasta este número, una cohorte por bacteria (exacto); más allá,
@@ -84,10 +87,17 @@ struct BacterialCohort {
 
 struct CultureCensus {
     int species[kMaxSpecies] = {};
+    double biovolume[kMaxSpecies] = {}; // [µm³] (bio/species: cellVolumeUm3)
     int cysts = 0;
     std::uint64_t bacteria = 0;
     double biomass = 0.0; // viva [pmol]
 };
+
+// Tasa de intercambio de un gas con el aire [1/s] de una columna de medio de `depthUm`: con
+// `gasTransferCmH` > 0 el medio está mezclado y la resistencia es la película de la superficie
+// (teoría de las dos películas: flujo = k·(C* − C) por área, tasa = k / profundidad); con 0 está
+// quieto y el gas difunde por toda la columna (D / profundidad²).
+double gasExchangeRate(float depthUm, float gasTransferCmH);
 
 class Culture {
   public:
@@ -122,6 +132,9 @@ class Culture {
     // cambia). Cada célula y cada bacteria sale con probabilidad 1 − e^(−D·dt): el lavado (Monod 1950;
     // Novick y Szilard 1950). 0: cultivo en lote.
     void setDilutionRate(double perHour) { dilutionPerHour_ = std::max(0.0, perHour); }
+    // Mezcla del medio: velocidad de transferencia de gases por la superficie [cm/h] (0: quieto).
+    void setGasTransfer(float cmPerHour);
+    float gasTransfer() const { return config_.gasTransferCmH; }
     // Reactivos (game/reagent): concentración [µg/mL] de cada uno en el medio. El medio que entra no
     // trae (se diluyen con el cambio de medio, la dilución y el quimiostato).
     void setReagent(int index, double ugPerMl);

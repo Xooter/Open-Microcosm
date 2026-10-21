@@ -82,13 +82,19 @@ int programEvents(const ProgramEntry& e, double from, double to) {
     return static_cast<int>(upTo(hi) - upTo(from));
 }
 
-std::string serializeProgram(const Program& p) {
+std::string programEntryText(const ProgramEntry& e) {
     std::ostringstream out;
-    for (const ProgramEntry& e : p.entries)
-        out << "program=" << e.target << ' ' << programShapeKey(e.shape) << ' ' << number(e.start) << ' '
-            << number(e.end) << ' ' << number(e.from) << ' ' << number(e.to) << ' ' << number(e.period) << ' '
-            << number(e.duty) << ' ' << number(e.amount) << '\n';
+    out << e.target << ' ' << programShapeKey(e.shape) << ' ' << number(e.start) << ' ' << number(e.end) << ' '
+        << number(e.from) << ' ' << number(e.to) << ' ' << number(e.period) << ' ' << number(e.duty) << ' '
+        << number(e.amount);
     return out.str();
+}
+
+std::string serializeProgram(const Program& p) {
+    std::string out;
+    for (const ProgramEntry& e : p.entries)
+        out += "program=" + programEntryText(e) + '\n';
+    return out;
 }
 
 bool parseProgramEntry(const std::string& text, ProgramEntry& e) {

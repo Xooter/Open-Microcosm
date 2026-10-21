@@ -164,6 +164,7 @@ add_library(biosim STATIC
     src/game/inspect.cpp
     src/game/world_chem.cpp
     src/game/world_program.cpp
+    src/game/world_thin.cpp
     src/game/culture.cpp
     src/game/calibration.cpp
     src/game/program.cpp

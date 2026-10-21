@@ -14,13 +14,15 @@
 // estadística. Un experimento es un archivo TOML (como los paquetes):
 //
 //   [experiment]  name, kind ("culture" o "plate"), replicates, seed, hours, sample_h, threads
-//   [culture]     vessel, medium, temperature, light, program = ["linea", ...] (game/program),
+//   [culture]     vessel, medium, temperature, light, gas_transfer [cm/h], program = ["linea", ...]
+//                 (game/program),
 //                 events = ["paso op valor [clave]", ...] (como en la escena de cultivo)
 //   [plate]       scene = "texto de una escena .plate (placa + eventos)"
 //   [[factor]]    key, values = [...]
 //
-// Factores: en un cultivo, "temperature", "light", "bacteria" (por mL al empezar), "solute:<clave>"
-// (µM al empezar), "inoculate:<id del ser>" (individuos al empezar) o "reagent:<id>"; en una placa,
+// Factores: en un cultivo, "temperature", "light", "gas_transfer" [cm/h], "bacteria" (por mL al
+// empezar), "solute:<clave>" (µM al empezar), "inoculate:<id del ser>" (individuos al empezar) o
+// "reagent:<id>"; en una placa,
 // "temperature", "solute:<clave>" o una clave del registro de parámetros (game/parameters). Los
 // guardados con las claves viejas (en español) se leen igual (game/legacy_names).
 // Cada combinación de niveles corre `replicas` veces con seeds derivadas de la del experimento.

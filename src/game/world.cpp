@@ -51,10 +51,6 @@ constexpr float kLodMidMargin = 400.0f;
 
 constexpr float kViolaceinDose = 1e-3f;           // daño por bacteria violeta ingerida
 constexpr float kMinDetritusMass = 0.0003f; // [pmol] debajo de esto se disolvió del todo
-// Sedimentación de Stokes: v = 2/9·Δρ·g·r²/µ. Un grano de cuarzo (Δρ = 1650 kg/m³) de 2 µm de
-// radio cae a ~14 µm/s y toca el vidrio en segundos; la arcilla más fina tarda horas y sigue al
-// agua con browniano. Simplificación: las asentadas ya están en el fondo (el agua no las lleva).
-constexpr float kSettledRadius = 2.0f; // [µm]
 
 
 template <typename T> void hashVector(std::uint64_t& h, const std::vector<T>& v) {
@@ -390,7 +386,10 @@ void World::perfuse(float dt) {
     PROFILE_SCOPE("World::perfuse");
     // Cámara de perfusión: lo disuelto se reemplaza por el medio con que se creó la placa. Lo que
     // sale y lo que entra cruzan la frontera de la gota (entradas y salidas externas del balance).
-    const float f = 1.0f - std::exp(-medium_.perfusionPerHour * dt * bioTimeScale_ / 3600.0f);
+    renewDissolved(1.0f - std::exp(-medium_.perfusionPerHour * dt * bioTimeScale_ / 3600.0f));
+}
+
+void World::renewDissolved(float f) {
     const MediumParams& fresh = config_.medium;
     const std::pair<ChemField*, float> fields[] = {{&phosphate_, fresh.phosphate}, {&nitrogen_, fresh.nitrogen},
                                                    {&silicate_, fresh.silicate},   {&iron_, fresh.iron},
@@ -611,6 +610,10 @@ void World::removeCellAt(Vec2 position) {
         }
         return;
     }
+    removeCell(e);
+}
+
+void World::removeCell(entt::entity e) {
     if (grabSlot_ != kNoGrab && bodies_.owner[grabSlot_] == entt::to_integral(e))
         endGrab();
     if (e == player_)
@@ -3782,8 +3785,10 @@ Census World::census() const {
         c.totalBiomass += mass;
         const AnimalCell* ac = registry_.try_get<AnimalCell>(e);
         const bool dead = ac && ac->phase == CellPhase::Dead; // espermatozoide muerto (entero)
-        if (const Species* sp = registry_.try_get<Species>(e); sp && !registry_.all_of<EmptyWall>(e) && !dead)
+        if (const Species* sp = registry_.try_get<Species>(e); sp && !registry_.all_of<EmptyWall>(e) && !dead) {
             ++c.species[static_cast<int>(sp->id)]; // una pared vacía no es una célula viva
+            c.biovolume[static_cast<int>(sp->id)] += cellVolumeUm3(speciesInfo(sp->id), mass);
+        }
         const Lineage* lin = registry_.try_get<Lineage>(e);
         if (lin && lin->run == run_) {
             c.lineageBiomass += mass;

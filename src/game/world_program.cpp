@@ -41,11 +41,13 @@ void World::applyProgram(float dt) {
                     // Por mL de la gota: la placa tiene el volumen de su película.
                     const double ul = units::kPi * dish_.radius * dish_.radius * fluid_.gapHeight * 1e-9;
                     inoculate({BeingKind::Bacterium, SpeciesId{}}, static_cast<int>(e.amount * ul * 1e-3), {}, 0.0f);
+                } else if (e.target == "dilution") {
+                    thin(e.amount); // se saca la fracción y se repone con medio nuevo, como en el cultivo
                 } else if (e.target.rfind("add:", 0) == 0) {
                     if (ChemField* f = soluteByKey(e.target.substr(4)))
                         setMeanConcentration(*f, std::max(0.0f, meanConcentration(*f) + e.amount));
                 }
-                // "medio" y "dilucion" son del cultivo bien mezclado; en la placa está la perfusión.
+                // "medium" es del cultivo bien mezclado; en la placa está la perfusión.
             }
             continue;
         }

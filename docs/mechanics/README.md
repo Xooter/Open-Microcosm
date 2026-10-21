@@ -61,6 +61,7 @@ policy in `AGENTS.md`). A new mechanism gets a new file and a line in this index
 |---|---|
 | [Well-mixed culture](well-mixed-culture.md) | Individual-based culture, encounter theory, chemostat, passages, sample drop. |
 | [Programs](programs.md) | Ramps, cycles, sines and events by laboratory time. |
+| [Thinning](thinning.md) | Taking out and discarding a fraction of a stirred plate or culture (Gause's daily sample), by hand or programmed. |
 | [Batch experiments](batch-experiments.md) | Replicates and factors, `microcosm_batch`, statistics, provenance. |
 | [Reagents](reagents.md) | Pharmacodynamic antibiotics, emergent MIC, signal reagents. |
 | [Stains](stains.md) | Rule-based stains, Gram retention, vital and fixing stains, preview. |

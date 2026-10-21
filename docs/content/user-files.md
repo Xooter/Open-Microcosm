@@ -16,9 +16,10 @@ Loading it and creating the plate replays the run ([reproducibility](../mechanic
 ## Culture scene (`.culture`, `<data>/openmicrocosm/cultures/`)
 
 `key=value` lines: `culture_version`, `name`, `vessel`, `medium`, `temperature`, `light`, `seed`,
-`program=` and `event=step op value [key]`. Operations: `inoculate`, `bacteria`, `medium`,
-`dilution`, `concentration`, `phages`, `sample`, `withdraw`, `receive`, `inoculate_density`,
-`chemostat`, `inflow_medium`, `reagent`.
+`gas_transfer` (optional: cm/h, overrides the vessel's), `program=` and `event=step op value [key]`.
+Operations: `inoculate`, `bacteria`, `medium`, `dilution` (also the thinning), `concentration`,
+`phages`, `sample`, `withdraw`, `receive`, `inoculate_density`, `chemostat`, `inflow_medium`,
+`reagent`, `gas_transfer`.
 
 ## Program (`program=` in plates and cultures)
 
@@ -26,7 +27,8 @@ Loading it and creating the plate replays the run ([reproducibility](../mechanic
 
 - Shape: `ramp`, `cycle`, `sine`, `event`.
 - Target: `temperature`, `light`, `solute:<solute>`, `parameter:<key>` or an action (`bacteria`,
-  `medium`, `dilution`, `add:<solute>`, `inoculate:<id>`).
+  `medium` (culture only), `dilution` (in the culture and, as thinning, on the plate),
+  `add:<solute>`, `inoculate:<id>`).
 - Solutes: `o2`, `co2`, `phosphate`, `nitrogen`, `silicate`, `iron`, `b12`, `organic`.
 
 See [programs](../mechanics/programs.md).

@@ -83,16 +83,21 @@ compression is undone (`bioTimeScale`): with heat it respires faster, like the c
 
 ## Gause in the culture (phase P1, step 5)
 
-Gause's protocol (1934, ch. V): 0.5 cm³ tubes of Osterhout's saline medium at 26 °C; every day the
-tube is centrifuged, the medium changed and a fixed ration of bacteria added (in the model,
-5·10⁷/mL). Tests in `tests/test_gause.cpp`:
+Gause's protocol (1934, ch. V, section II): 10 c.c. centrifuge tubes with 5 cm³ of Osterhout's saline
+medium at 26 °C and 20 individuals of each species. Every day the culture is stirred, a 0.5 cm³
+sample is counted and destroyed (a tenth: [thinning](../mechanics/thinning.md)), the tube is
+centrifuged, the medium changed and a fixed ration of bacteria added (in the model, 5·10⁷/mL). The
+medium is mixed by the swimmers: O₂ enters through the surface film (`gas_transfer` = 2.07 cm/h,
+estimate). Gause compares "volumes": the tests compare biovolume (`cellVolumeUm3`). Tests in
+`tests/test_gause.cpp`:
 
 | Test | Status | Note |
 |---|---|---|
-| Monocultures: plateau | **PASSES** | *P. caudatum* ~220–250 per tube, *P. aurelia* ~550–620 (smaller: more individuals with the same food). Gause: K = 203 and 222 in relative volume. |
-| Mixed culture: competitive exclusion | **PASSES** | By day 60 one of the two is below 20 % in 4 of 5 replicates. |
-| *P. aurelia* wins | **FAILS** (`should_fail`) | Whichever gets ahead early wins (2 or 3 of 5 replicates). *P. aurelia*'s advantage comes only from feeding allometry (~20 % more clearance per biomass: Hansen et al. 1997) and is not enough against the higher µmax of *P. caudatum*. Gause attributed part of his result to *P. caudatum*'s sensitivity to waste products in the medium, which the model lacks. [Known bug](../bugs/gause-aurelia-does-not-win.md). |
-| *Didinium* without refuge | **PASSES** | *Didinium* multiplies by eating and exterminates the paramecia; afterwards none is active (it encysts: Beers 1927). Gause saw them die; with cysts the culture is also left without active predators. |
+| Monocultures: plateau | **PASSES** | Biovolume levels off by day 8–12 (*P. caudatum* ~280·10⁶ µm³ per tube on days 16–20, *P. aurelia* ~290·10⁶), as in Gause (K = 203 and 222 in relative volume). The number of individuals keeps rising ([bug](../bugs/starved-cultures-keep-dividing.md)). |
+| Mixed culture: competitive exclusion | **PASSES** | By day 60 *P. caudatum* is below 1 % of the biovolume in 5 of 5 replicates (required: one species below 20 % in 4 of 5). |
+| *P. aurelia* wins | **PASSES** | Ahead on day 25 in 5 of 5 replicates. Without the daily thinning whichever got ahead early won ([fixed bug](../bugs/gause-aurelia-does-not-win.md)). |
+| Speed of displacement | **FAILS** (`should_fail`) | Day 25: *P. caudatum* holds 0.33 of the biovolume (Gause: 23 / 163 = 0.14). [Known bug](../bugs/gause-displacement-too-slow.md). |
+| *Didinium* without refuge | **PASSES** | Without thinning, 200 paramecia and 30 *Didinium* per tube (the former densities). *Didinium* multiplies by eating and exterminates the paramecia; afterwards none is active (it encysts: Beers 1927). Gause saw them die; with cysts the culture is also left without active predators. |
 | *Didinium* with immigration (oscillations) | pending | |
 
 *P. aurelia* has no feeding measurements of its own: its maximum ingestion and clearance come from

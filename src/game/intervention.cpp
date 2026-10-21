@@ -102,6 +102,7 @@ bool applyIntervention(World& world, const Intervention& iv) {
         return true;
     }
     case InterventionKind::Erase: world.removeCellAt(iv.pos); return true;
+    case InterventionKind::Thin: world.thin(iv.v[0]); return true;
     case InterventionKind::Lyse: world.lyseAt(iv.pos); return true;
     case InterventionKind::Spawn: {
         const int species = static_cast<int>(iv.v[0]);

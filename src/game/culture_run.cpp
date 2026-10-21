@@ -21,7 +21,7 @@
 namespace {
 constexpr const char* kOpKeys[] = {"inoculate", "bacteria", "medium",  "dilution",           "concentration",
                                    "phages",    "sample",   "withdraw", "receive", "inoculate_density",
-                                   "chemostat", "inflow_medium", "reagent"};
+                                   "chemostat", "inflow_medium", "reagent", "gas_transfer"};
 
 std::string currentVesselId(const std::string& id) {
     const Vessel* v = findVessel(id);
@@ -125,7 +125,10 @@ CultureConfig CultureSpec::config() const {
     if (const Vessel* v = findVessel(vessel)) {
         c.volumeMl = v->volumeMl;
         c.depthUm = v->depthUm();
+        c.gasTransferCmH = v->gasTransferCmH;
     }
+    if (gasTransfer >= 0.0f)
+        c.gasTransferCmH = gasTransfer;
     c.medium.temperature = temperature;
     c.medium.surfaceLight = light;
     c.seed = seed;
@@ -155,6 +158,8 @@ void CultureRun::buildColumns() {
     c.push_back({"pH", "", "Quimica"});
     c.push_back({"light", "", "Quimica"});
     c.push_back({"volumen", "mL", "Quimica"});
+    for (int s = 0; s < speciesCount(); ++s)
+        c.push_back({std::string("biovolume:") + speciesInfo(static_cast<SpeciesId>(s)).key, "µm³/mL", "Biovolumen"});
     row_.assign(c.size(), 0.0f);
     series_.setColumns(std::move(c));
 }
@@ -177,6 +182,8 @@ void CultureRun::sample() {
     put(c.ph());
     put(c.light());
     put(c.volumeMl());
+    for (int s = 0; s < speciesCount(); ++s)
+        put(census.biovolume[s] / ml);
     series_.push(row_.data());
 }
 
@@ -261,6 +268,7 @@ bool CultureRun::apply(CultureEvent ev) {
         break;
     }
     case CultureOp::Chemostat: c.setDilutionRate(ev.value); break;
+    case CultureOp::GasTransfer: c.setGasTransfer(static_cast<float>(ev.value)); break;
     case CultureOp::Inflow:
         ok = false;
         for (int k = 0; k < kSoluteCount; ++k)
@@ -369,6 +377,8 @@ std::string serializeCultureScene(const CultureSpec& s, const std::vector<Cultur
         << "temperature=" << s.temperature << '\n'
         << "light=" << s.light << '\n'
         << "seed=" << s.seed << '\n';
+    if (s.gasTransfer >= 0.0f)
+        out << "gas_transfer=" << s.gasTransfer << '\n';
     out << serializeProgram(s.program);
     for (const CultureEvent& e : events)
         out << "event=" << e.step << ' ' << cultureOpKey(e.op) << ' ' << e.value << (e.key.empty() ? "" : " ") << e.key
@@ -401,6 +411,8 @@ bool parseCultureScene(const std::string& text, CultureSpec& s, std::vector<Cult
             s.temperature = std::stof(v);
         else if (k == "light")
             s.light = std::stof(v);
+        else if (k == "gas_transfer")
+            s.gasTransfer = std::stof(v);
         else if (k == "seed")
             std::from_chars(v.data(), v.data() + v.size(), s.seed);
         else if (k == "program") {

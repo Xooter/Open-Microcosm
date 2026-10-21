@@ -12,10 +12,11 @@
 
 namespace {
 
+// 0,5 mL de medio de Gause (un pocillo de placa de 24: los números de estos tests son por 0,5 mL).
 CultureSpec gauseTube(std::uint64_t seed) {
     CultureSpec s;
     s.name = "prueba";
-    s.vessel = "gause_tube";
+    s.vessel = "well_24";
     s.medium = "osterhout_gause";
     s.temperature = 26.0f;
     s.seed = seed;

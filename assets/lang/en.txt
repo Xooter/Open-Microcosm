@@ -146,7 +146,6 @@ Aire libre: 0,042 %. Una incubadora de cultivo: 5-10 %, para que el bicarbonato 
 Ajusta de un toque las opciones de imagen y los pasos por cuadro. No cambia los resultados de la simulación.	Adjusts the image options and the steps per frame in one go. Does not change the simulation results.
 Ajusta la curva de crecimiento: µmax, tiempo de duplicación, latencia (Pirt) y capacidad de carga (logística de Verhulst).	Fits the growth curve: µmax, doubling time, lag (Pirt) and carrying capacity (Verhulst logistic).
 Ajustar ejes	Fit axes
-Al dia 30, que fraccion de los paramecios va a ser P. aurelia?	On day 30, what fraction of the paramecia will be P. aurelia?
 Al final, que fraccion de las diatomeas va a ser Asterionella?	At the end, what fraction of the diatoms will be Asterionella?
 Al instante	To the instant
 Al instante: solo el tiempo. Al lugar: el centro de lo que se ve. Al ser elegido: lo sigue mientras viva.	To the instant: only the time. To the place: the center of what is seen. To the chosen being: it follows it while it lives.
@@ -289,7 +288,6 @@ CO2 del aire [%]	Air CO2 [%]
 CO2 disuelto	Dissolved CO2
 CPU	CPU
 Cada 24 h biológicas se agregan 10 µM de fosfato (un aporte de nutrientes).	Every 24 biological hours 10 µM of phosphate are added (a nutrient input).
-Cada 24 h se centrifuga, se cambia todo el medio y se agregan bacterias frescas (Gause 1934, cap. V).	Every 24 h the culture is centrifuged, all the medium is changed and fresh bacteria are added (Gause 1934, ch. V).
 Cada cuánto (en segundos de simulación) se toma una muestra. Con muchas muestras la serie se decima: guarda una de cada dos.	How often (in simulation seconds) a sample is taken. With many samples the series is decimated: it keeps one of every two.
 Cada célula toma el color de lo que limita su crecimiento ahora (ley del mínimo de Liebig) [L].	Each cell takes the color of what limits its growth now (Liebig's law of the minimum) [L].
 Cada globulo rojo puede hincharse hasta un volumen critico, que depende de cuanta membrana tiene de sobra. Con la edad pierde membrana y se vuelve mas fragil: la curva de fragilidad es una distribucion, no un umbral.	Each red blood cell can swell up to a critical volume, which depends on how much spare membrane it has. With age it loses membrane and becomes more fragile: the fragility curve is a distribution, not a threshold.
@@ -485,7 +483,6 @@ De qué sale cada réplica: el cultivo elegido desde que se creó (con su progra
 De una suspensión	From a suspension
 Decolorante / exposición [s]	Decolorizer / exposure [s]
 Defensa	Defense
-Deja correr el cultivo 30 dias (subi la velocidad). Mira el grafico del panel Cultivos.	Let the culture run for 30 days (raise the speed). Look at the graph in the Cultures panel.
 Deja correr el quimiostato 60 dias (subi la velocidad).	Let the chemostat run for 60 days (raise the speed).
 Del agua o del medio: la película de una gota ~200 µm; un recipiente de cultivo, 2-3 mm. Fija cuánto medio hay sobre cada punto y qué tan locales son las corrientes.	Of the water or the medium: the film of a drop ~200 µm; a culture vessel, 2-3 mm. It sets how much medium lies over each point and how local the currents are.
 Densidad	Density
@@ -578,7 +575,6 @@ Elegí un término. En la ficha y en las lecciones, los términos del glosario a
 Elegí una tinción para ver su vista previa y ajustarla.	Pick a stain to see its preview and adjust it.
 Eliminar	Delete
 Empezar	Start
-En el tubo hay 5 Paramecium caudatum y 5 P. aurelia. Cada dia se cambia el medio y se agrega la misma racion de bacterias (el protocolo de Gause).	The tube holds 5 Paramecium caudatum and 5 P. aurelia. Every day the medium is changed and the same ration of bacteria is added (Gause's protocol).
 En los ciliados, dos células de tipos de apareamiento distintos se unen e intercambian micronúcleos haploides; las dos salen con el mismo genotipo recombinado. Es sexo sin reproducción: no aumenta el número de células.	In ciliates, two cells of different mating types join and exchange haploid micronuclei; both come out with the same recombined genotype. It is sex without reproduction: the number of cells does not increase.
 En un medio más concentrado que su jugo celular, el protoplasto de una célula vegetal pierde agua y se despega de la pared de celulosa, que queda en su lugar. En agua pura se recupera (deplasmólisis).	In a medium more concentrated than its cell sap, the protoplast of a plant cell loses water and pulls away from the cellulose wall, which stays in place. In pure water it recovers (deplasmolysis).
 En vez de spawnear, el ícono transforma al ser controlado en esa especie (solo especies).	Instead of spawning, the icon turns the controlled being into that species (species only).
@@ -713,7 +709,6 @@ Fuente:	Source:
 Fuera de protocolo: se destrabó 	Out of protocol: unlocked 
 Física de células en la GPU	Cell physics on the GPU
 Fósforo	Phosphorus
-Gause vio que P. aurelia excluia a P. caudatum. En el modelo, la ventaja de P. aurelia (mas comida por biomasa) es chica y la que se adelanta al principio puede ganar: corre replicas en el panel Experimento y compara la proporcion de veces que gana cada una.	Gause saw that P. aurelia excluded P. caudatum. In the model, the advantage of P. aurelia (more food per biomass) is small and the one that gets ahead early can win: run replicates in the Experiment panel and compare how often each one wins.
 Gause: competencia entre dos paramecios	Gause: competition between two paramecia
 Gemacion de levaduras	Yeast budding
 Genoma	Genome
@@ -1241,7 +1236,6 @@ Saprolegnia	Saprolegnia
 Se come a Cyclotella	It eats Cyclotella
 Se copia a la carpeta de paquetes del usuario y se carga ya: sus seres aparecen en el catálogo, sus biomas en la placa y sus escenas entre las placas guardadas. Queda para las próximas sesiones.	It is copied to the user packs folder and loaded right away: its beings appear in the catalog, its biomes on the plate and its scenes among the saved plates. It stays for the next sessions.
 Se puede recuperar re-simulándola hasta donde quedó:	It can be recovered by re-simulating up to where it was:
-Se saca esa fracción del cultivo con todo lo que tiene y se repone con medio nuevo.	That fraction of the culture is removed with everything it contains and replaced with fresh medium.
 Se une a la subunidad 30S del ribosoma bacteriano (70S) e impide la sintesis de proteinas. Los ribosomas 80S de los eucariotas casi no la unen.	It binds the 30S subunit of the bacterial ribosome (70S) and blocks protein synthesis. The 80S ribosomes of eukaryotes barely bind it.
 Sedimentacion	Sedimentation
 Sedimento	Sediment
@@ -1360,7 +1354,6 @@ Transformar al ser controlado	Transform the controlled being
 Trichonympha	Trichonympha
 Tricoma sin heterocistos (no fija nitrogeno): se desliza rotando sobre su eje, asi que la punta que avanza oscila de lado a lado.	Trichome without heterocysts (does not fix nitrogen): it glides rotating on its axis, so the leading tip swings from side to side.
 Trompeta azul fija por el pie; su corona de membranelas crea un remolino que trae bacterias y algas.	Blue trumpet anchored by its foot; its crown of membranelles creates a vortex that brings in bacteria and algae.
-Tubo de Gause (0,5 mL)	Gause tube (0.5 mL)
 Tubo de ensayo (10 mL)	Test tube (10 mL)
 Tubo elegido	Chosen tube
 Tubos nuevos con el mismo medio: cada uno recibe la novena parte de su volumen del anterior (1:10).	New tubes with the same medium: each one receives a ninth of its volume from the previous one (1:10).
@@ -1976,3 +1969,27 @@ brazos	arms
 seta	seta
 setas	setae
 con alas	winged
+%.2f cm/h	%.2f cm/h
+0: medio quieto, el O2 difunde por toda la columna (lento en un tubo hondo). Con el medio mezclado (nadadores, agitación) entra por la película de la superficie: ~2 cm/h en agua quieta sin viento (Cole y Caraco 1998); más con agitación.	0: still medium, O2 diffuses through the whole column (slow in a deep tube). With a mixed medium (swimmers, stirring) it enters through the surface film: ~2 cm/h in still water without wind (Cole and Caraco 1998); more with stirring.
+Agrega el raleo al programa de la placa (panel Simulación): se repite cada período.	Adds the thinning to the plate's program (Simulation panel): it repeats every period.
+Al dia 30, que fraccion del biovolumen de los paramecios va a ser de P. aurelia?	On day 30, what fraction of the paramecia's biovolume will be P. aurelia?
+Cada 24 h se saca y se descarta la décima parte del cultivo (la muestra que se cuenta), se centrifuga, se cambia todo el medio y se agregan bacterias frescas (Gause 1934, cap. V).	Every 24 h a tenth of the culture is taken out and discarded (the sample that is counted), it is centrifuged, the whole medium is changed and fresh bacteria are added (Gause 1934, ch. V).
+Cada [h bio]	Every [bio h]
+Cambiar la mezcla	Change the mixing
+Deja correr el cultivo 30 dias (subi la velocidad). Mira el grafico del panel Cultivos: la serie de biovolumen compara especies de tamanos distintos, como el volumen de Gause.	Let the culture run for 30 days (raise the speed). Look at the plot in the Cultures panel: the biovolume series compares species of different sizes, like Gause's volume.
+En el tubo de 5 mL hay 20 Paramecium caudatum y 20 P. aurelia. Cada dia se saca y se descarta la decima parte del cultivo (la muestra que Gause contaba), se cambia el medio y se agrega la misma racion de bacterias.	The 5 mL tube holds 20 Paramecium caudatum and 20 P. aurelia. Every day a tenth of the culture is taken out and discarded (the sample Gause counted), the medium is changed and the same ration of bacteria is added.
+Fracción	Fraction
+Gause vio que P. aurelia excluia a P. caudatum. Cuando la comida ya esta repartida, el raleo diario abre lugar cada dia y lo recupera primero la especie que se multiplica mas rapido (Gause: P. aurelia, por su coeficiente de multiplicacion). Sin el raleo, la que se adelanta al principio se queda con la comida. Proba quitar el raleo del programa y correr replicas en el panel Experimento.	Gause saw P. aurelia exclude P. caudatum. Once the food is shared, the daily thinning frees room every day and the species that multiplies faster takes it first (Gause: P. aurelia, by its coefficient of multiplication). Without thinning, whichever gets ahead early keeps the food. Try removing the thinning from the program and running replicates in the Experiment panel.
+La transferencia de gases con el aire que trae el recipiente. Sin marcar, se elige a mano.	The gas transfer with the air that the vessel brings. Unchecked, it is chosen by hand.
+Lo que se saca al azar de lo que está en suspensión (seres, bacterias libres, detritos) y la misma fracción de lo disuelto, que se repone con el medio de la placa. Lo pegado al vidrio se queda.	What is taken out at random from what is in suspension (beings, free bacteria, detritus) and the same fraction of what is dissolved, which is replaced with the plate's medium. What is stuck to the glass stays.
+Mezcla del recipiente	Vessel's mixing
+Período del raleo programado, en horas biológicas (Gause sacaba la décima parte cada 24 h).	Period of the programmed thinning, in biological hours (Gause took out a tenth every 24 h).
+Ralear ahora	Thin now
+Ralear la decima parte	Thin out a tenth
+Ralear periódicamente	Thin periodically
+Raleo (en vivo)	Thinning (live)
+Raleo o dilución: se revuelve, se saca esa fracción del cultivo con todo lo que tiene y se repone con medio nuevo. Gause sacaba y descartaba la décima parte cada día: eso es lo que desplaza a la especie que crece más lento.	Thinning or dilution: it is stirred, that fraction of the culture is taken out with everything in it and replaced with fresh medium. Gause took out and discarded a tenth every day: that is what displaces the slower-growing species.
+Transferencia de gases	Gas transfer
+Transferencia de gases [cm/h]	Gas transfer [cm/h]
+Tubo de Gause (5 mL)	Gause tube (5 mL)
+Biovolumen	Biovolume

@@ -38,7 +38,7 @@ template <typename T> bool duplicate(const std::deque<T>& list, const std::strin
 }
 
 constexpr const char* kMediumKeys[] = {"id", "legacy_ids", "name", "description", "source", "composition"};
-constexpr const char* kVesselKeys[] = {"id", "legacy_ids", "name", "area_cm2", "volume_ml", "source"};
+constexpr const char* kVesselKeys[] = {"id", "legacy_ids", "name", "area_cm2", "volume_ml", "gas_transfer", "source"};
 constexpr const char* kPlateKeys[] = {"id", "legacy_ids",         "name",   "description", "kind",   "medium",  "vessel",
                                       "field_um",   "environment", "seeding",     "tissue", "fixed", "stain",
                                       "cell_um",   "erythrocytes_cm2", "platelets_cm2", "bacteria_cm2"};
@@ -119,8 +119,11 @@ void loadParsed(const toml::table& doc, const std::string& source, const std::st
         toml_io::warnUnknown(t, kVesselKeys, r.where, reg.warnings);
         r.count("area_cm2", v.areaCm2);
         r.count("volume_ml", v.volumeMl);
+        r.count("gas_transfer", v.gasTransferCmH);
         if (v.areaCm2 <= 0.0f || v.volumeMl <= 0.0f)
             r.errors.push_back(r.where + ": 'area_cm2' y 'volume_ml' tienen que ser positivos");
+        if (v.gasTransferCmH < 0.0f)
+            r.errors.push_back(r.where + ": 'gas_transfer' no puede ser negativo");
         v.pack = pack;
         if (!finish(r, reg.warnings, "el recipiente"))
             return;

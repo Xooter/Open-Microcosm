@@ -22,7 +22,9 @@ without requiring closure.
 ## Time series
 
 Sampled by `Run` (not `World`) every `sampleInterval` [simulation s] together with the census: time,
-populations, chemical means (`Census::mean*`), budget and region. Named columns with units, stored by
+populations, chemical means (`Census::mean*`), budget, region and the biovolume of each species
+(`biovolume:<id>`, µm³ on the plate and µm³/mL in the culture: `cellVolumeUm3`, the spheroid that
+weighs the cell's dry biomass with its species' relative dry matter). Named columns with units, stored by
 column; with a row cap it decimates (keeps 1 of every 2). NaN marks missing values (region not
 drawn): with `-ffast-math` use `finiteNumber`, never `std::isfinite`. Columns go by id (they do not
 change with the language). Graphs panel (ImPlot).

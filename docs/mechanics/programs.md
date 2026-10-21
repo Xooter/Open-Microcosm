@@ -25,9 +25,9 @@ One line per program: `target shape start end from to period cycle amount`
 
 Targets: `temperature`, `light`, `solute:<solute>` (`phosphate`, `nitrogen`, `silicate`, `iron`,
 `b12`, `organic`, `o2`, `co2`), `parameter:<registry key>`, or an action: `bacteria` (per mL added),
-`medium` (fraction renewed: culture only), `dilution` (fraction replaced: culture only), `add:<solute>`
-(µM added), `inoculate:<being id>` (individuals). On the plate there is no `medium` or `dilution`
-(there is perfusion).
+`medium` (fraction renewed: culture only), `dilution` (fraction taken out and replaced with fresh
+medium: in the culture and, as [thinning](thinning.md), on the plate), `add:<solute>` (µM added),
+`inoculate:<being id>` (individuals). On the plate there is no `medium` (there is perfusion).
 
 ## Where they live
 
