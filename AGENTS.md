@@ -77,10 +77,14 @@ e interviene.
   suero o por edad) que deja cuerpos apoptóticos sin lisis; el neutrófilo sigue el fMLP que liberan
   las bacterias y las fagocita. Glutamina, lactato y fMLP son campos que solo difunden si hay
   células animales.
+- **Espermatozoide humano** (`human_sperm`): célula animal que nada (`flagellum = "posterior"`, cola de
+  `flagellum_length` = 50 µm que se dibuja y empuja el agua a lo largo de ella), vive de la fructosa
+  y al morir queda entero e inmóvil (`[being.cell] death = "immotile"` → `CellPhase::Dead`: sin
+  metabolismo, sin propulsión y fuera del censo). Placa preparada `fresh_semen` (espermiograma).
 - **Preparados** (`bio/osmosis`, `bio/tissue`, `bio/erythrocytes`, `game/world_tissue.cpp`,
   `render/tissue_renderer`): epidermis de cebolla, hoja de *Elodea*, papa con Lugol, punta de raíz
-  con mitosis, epidermis de hoja con estomas, mucosa bucal, frotis de sangre con Giemsa y sangre
-  diluida. Un tejido (`[plate.tissue]`) son paredes de celulosa generadas por disposición
+  con mitosis, epidermis de hoja con estomas, mucosa bucal, frotis de sangre con Giemsa, sangre
+  diluida y semen fresco. Un tejido (`[plate.tissue]`) son paredes de celulosa generadas por disposición
   (hileras, poligonal, filas, rompecabezas) y un protoplasto vivo (cuerpo blando, componente
   `Protoplast`) en cada célula, encerrado por su pared (`confineProtoplasts`; los protoplastos no
   chocan entre sí) con los gránulos en la capa cortical. **Ósmosis** (Boyle–van 't Hoff, en tiempo

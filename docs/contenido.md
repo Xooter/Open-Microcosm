@@ -59,8 +59,10 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
     eje, de la boca a la escópula).
   - `helix_radius` [µm] y `helix_period` [s]: nado helicoidal (dinoflagelados, ciliados, euglenoides); vista desde arriba,
     una oscilación lateral de ese radio. Sin ellos, el flagelo tiene el bamboleo genérico.
-  - `flagellum = "posterior"`: el flagelo empuja desde atrás (coanoflagelados): el par de fuerzas en
-    el agua es el de un "pusher" y el flagelo se dibuja detrás.
+  - `flagellum = "posterior"`: el flagelo empuja desde atrás (coanoflagelados, espermatozoides): el par
+    de fuerzas en el agua es el de un "pusher" y el flagelo se dibuja detrás.
+  - `flagellum_length` [µm]: largo del flagelo cuando no es ~1 largo corporal (la cola del
+    espermatozoide, ~50 µm): se dibuja así y su empuje va al agua a la mitad del flagelo.
   - `flagellar_gliding`: se desliza sobre el vidrio con el flagelo rígido (*Peranema*): avanza
     recto, el agua no lo arrastra y no deja dipolo en el agua.
 - `feeding`: `oral_groove` | `anterior_pole` | `phagocytosis` | `raptorial` | `tentacles` | `neck` |
@@ -167,19 +169,21 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   menor), `shape_memory` [1/s], `color` RGB del citoplasma, `nucleus` (radio relativo),
   `squareness` (2 elipse, ~6 cilindro), `taper` (afinamiento del polo posterior) y `taper_front` (del anterior), de 0 a menos de 1;
   con los dos, un huso. `bend` [°]: el eje se curva en un arco de ese ángulo (la media luna de
-  *Closterium*; la célula pasa a ser una silueta).
+  *Closterium*; la célula pasa a ser una silueta). `cytoplasm_granules = false`: sin gránulos libres en el
+  citoplasma (el espermatozoide maduro casi no tiene citoplasma).
 - `[being.appearance]`: `style`, un dibujo con nombre (`ciliate`, `flagellate`, `amoeboid`,
   `flagellar_rostrum`, `girdles_and_proboscis`, `helical_ribbon`, `axial_plate`,
   `stellate_plastids`, `reticulate_plastid`, `frustule`, `spherical_colony`, `flat_colony`,
   `peristomal_crown`, `membranelle_crown`, `capitate_tentacles`, `cirri`, `extensible_neck`,
   `two_flagella`, `yeast`, `adherent_cell`, `neutrophil`, `plant_protoplast`, `elodea_leaf`,
   `squamous_cell`, `lymphocyte`, `monocyte`, `coccoid`, `plate_colony`, `compact_colony`,
-  `hollow_colony`; por omisión, el de su locomoción), `plastid_color` [r, g, b] y `pigment_stripes`
+  `hollow_colony`, `spermatozoon`; por omisión, el de su locomoción), `plastid_color` [r, g, b] y `pigment_stripes`
   (bandas de gránulos de pigmento a lo largo del cuerpo: Stentor, Blepharisma). El citoplasma de color
   saturado se ve más opaco (el pigmento absorbe).
 - `[being.cell]`: mecanismos de una célula de organismo pluricelular: `adherent`, `rounded_radius`
   [µm], `contact_inhibition_locomotion`, `contact_inhibition_proliferation`, `min_serum`
-  [fracción], `apoptosis_without_serum_h`, `divides`, `fmlp_chemotaxis`. `relative_dry_mass`: la
+  [fracción], `apoptosis_without_serum_h`, `divides`, `fmlp_chemotaxis`, `death` (`apoptosis`, por
+  omisión, o `immotile`: el espermatozoide muere sin desarmarse y queda entero e inmóvil). `relative_dry_mass`: la
   célula extendida es mucho más delgada que el esferoide de su silueta.
 - `[[being.process]]` (una por prolongación): **prolongaciones** de la célula o de su cubierta.
   `kind`: `horn` | `spine` | `arm` | `seta` | `notch`; `at`: dirección desde el polo anterior del cuerpo [°];
@@ -226,7 +230,7 @@ el organismo real. `id`, `name`, `morphology` (`eukaryote`, `rod`, `vibrio`, `ta
 - `kind`: `plasma_membrane`, `outer_membrane`, `peptidoglycan`, `cell_wall`, `capsule`,
   `nucleoid`, `ribosomes`, `flagellum`, `pili`, `nucleus`, `nucleolus`, `mitochondrion`,
   `hydrogenosome`, `chloroplast`, `pyrenoid`, `eyespot`, `endoplasmic_reticulum`, `golgi`,
-  `contractile_vacuole`, `food_vacuole`, `lysosome`, `storage_granule`, `capsid`, `viral_genome`,
+  `contractile_vacuole`, `food_vacuole`, `lysosome`, `storage_granule`, `acrosome`, `capsid`, `viral_genome`,
   `viral_envelope`, `tail`, `baseplate`, `tail_fibers`.
 - `source`: `simulated` (tiene estado en la simulación) o `declared` (existe pero no se simula: solo
   se dibuja en la vista de modelo, salvo `brightfield`).

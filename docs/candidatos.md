@@ -183,6 +183,22 @@ alcanza a todas las células con pared o película).
   abertura forma seudópodos; hoy todo el cuerpo es una membrana plástica con coraza, y con la gemación
   de *Euglypha* aparecen cuerdas rectas cruzando el contorno. Revisar.
 
+### Espermatozoide humano (21/10/2026)
+
+`human_sperm`: cabeza de 4,2 × 2,8 µm (el cuerpo blando) y cola de 50 µm (`flagellum_length`: se dibuja
+con su pieza intermedia y su empuje va al agua a lo largo de ella), nado empujado desde atrás a ~46 µm/s
+a 37 °C (VAP de CASA, Mortimer 2000) con la oscilación lateral de la cabeza (ALH y BCF como
+`helix_radius`/`helix_period`), fructólisis de Mann (11 fmol/h) y vida media de la motilidad de ~1 día
+(estimación). No come ni se divide; al morir queda entero e inmóvil (`[being.cell] death = "immotile"`,
+`CellPhase::Dead`: sin metabolismo y fuera del censo). Placa preparada `fresh_semen` (preparado húmedo
+del espermiograma de la OMS, 37 °C, 64 000/cm², ~170 por campo; ~4,6 ms/paso) con el medio
+`seminal_plasma`.
+
+**Pendiente:** test (nado a la VAP, muerte inmóvil con el balance cerrado); las colas no chocan entre sí;
+el batido no depende de la temperatura (solo la viscosidad); prueba hiposmótica (HOS, Jeyendran 1984: la
+cola de los vivos se enrolla a 150 mOsm), vitalidad con eosina–nigrosina, capacitación e hiperactivación,
+y la acumulación contra las superficies que en la placa ya aparece en la pared de vidrio.
+
 ## Validación de los lotes 2 a 4 (19/10/2026)
 
 Pasan las tres suites (`rapidos`, `largos` con un caso de reproducción por ser, y `validacion`).
@@ -442,7 +458,7 @@ Hoy son partículas con cepa (`Bacteria::strain`: un bacilo genérico, *C. viola
 | MDCK | 10–20 µm | celular | Epitelio en monocapa | Crawl, ciclo celular | Adhesión célula–célula | M |
 | Macrófago (RAW 264.7, o monocito diferenciado) | 10–20 µm | celular | Fagocitosis de bacterias y cuerpos apoptóticos | Crawl, Phagocytosis | Diferenciación del monocito | M |
 | Queratocito de pez | 20–40 µm | celular | Migración rápida en abanico; modelo de motilidad | Crawl | — | M |
-| Espermatozoide humano | 50 µm con cola | preparado | Nado flagelar y espermograma (movilidad) | Flagellum | Nado con flagelo posterior | M |
+| ✅ Espermatozoide humano | 50 µm con cola | preparado | Nado flagelar y espermograma (movilidad) | Flagellum | Nado con flagelo posterior | M |
 | Eosinófilo, basófilo, plaquetas | 2–15 µm | frotis | Leucograma completo con Giemsa | frotis | — | M |
 | Eritrocito de ave o anfibio | 10–20 µm | frotis | Eritrocito nucleado, para comparar | `bio/erythrocytes` | Núcleo | B |
 | Pelo estaminal de *Tradescantia* | células de ~100 µm | preparado | Ciclosis y mitosis en vivo | tejido | Ciclosis | M |
