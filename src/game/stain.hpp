@@ -31,6 +31,9 @@ enum class StainTarget : std::uint8_t {
     Nucleoid,     // ADN bacteriano
     Bacteria,     // toda la bacteria (colorantes que no distinguen)
     Hemoglobin,   // hemoglobina de los glóbulos rojos (acidófila: la tiñe la eosina)
+    // Célula muerta con la membrana dañada: los colorantes de exclusión (eosina, azul tripano) no entran
+    // a una célula viva, que los deja afuera, y sí a una muerta (o en apoptosis tardía).
+    DamagedMembrane,
     Count
 };
 const char* stainTargetName(StainTarget t);
@@ -88,7 +91,8 @@ Rgba stainOver(Rgba base, const StainResult& dye);
 Rgba stainBackground(const StainSpec& spec, Rgba natural);
 
 // Las tinciones de fábrica: ninguna, Gram, Lugol, DAPI, rojo neutro, azul de metileno, rojo Congo,
-// Giemsa (sangre) y orceína acética (cromosomas).
+// Giemsa (sangre), orceína acética (cromosomas), eosina–nigrosina (vitalidad de los espermatozoides) y
+// azul tripano (viabilidad de un cultivo).
 const std::vector<StainSpec>& builtinStains();
 
 // Texto clave=valor versionado (`stain_version=1`).

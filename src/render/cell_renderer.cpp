@@ -179,6 +179,13 @@ Color pigmentTint(Color c, const SpeciesInfo& info, float pigment) {
 }
 
 // Color con que entra la célula entera en la textura de cobertura.
+// Membrana dañada: los colorantes de exclusión entran. La célula muerta entera (espermatozoide) y la
+// apoptosis tardía (la apoptosis temprana conserva la membrana: excluye el azul tripano).
+bool membraneDamaged(const entt::registry& reg, entt::entity e) {
+    const AnimalCell* ac = reg.try_get<AnimalCell>(e);
+    return ac && (ac->phase == CellPhase::Dead || (ac->phase == CellPhase::Apoptotic && ac->apoptosis > 0.7f));
+}
+
 Color cellTint(const StainSpec* st, const entt::registry& reg, entt::entity e, const CellLook& look) {
     Color base = {look.r, look.g, look.b, 255};
     const Species* sp = reg.try_get<Species>(e);
@@ -206,6 +213,11 @@ Color cellTint(const StainSpec* st, const entt::registry& reg, entt::entity e, c
         const StainResult g = evaluateStain(*st, StainTarget::GramPositive);
         if (g.alpha > dye.alpha)
             dye = g;
+    }
+    if (membraneDamaged(reg, e)) {
+        const StainResult d = evaluateStain(*st, StainTarget::DamagedMembrane);
+        if (d.alpha > dye.alpha)
+            dye = d;
     }
     const float chlorophyll = 0.0f;
     (void)chlorophyll;
@@ -1714,7 +1726,12 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 drawAnimalSurface(bp, body, *animal, loco, px);
                 Color fillN = kNucleus, rimN = kNucleusRim;
                 if (stain_) {
-                    const StainResult dye = evaluateStain(*stain_, StainTarget::Nucleus);
+                    StainResult dye = evaluateStain(*stain_, StainTarget::Nucleus);
+                    if (membraneDamaged(reg, e)) { // el colorante de exclusión llena también el núcleo
+                        const StainResult d = evaluateStain(*stain_, StainTarget::DamagedMembrane);
+                        if (d.alpha > dye.alpha)
+                            dye = d;
+                    }
                     fillN = overColor(kNucleus, dye, 0.8f);
                     rimN = overColor(kNucleusRim, dye, 0.9f);
                 }

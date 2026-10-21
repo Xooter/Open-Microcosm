@@ -23,6 +23,7 @@ const char* stainTargetName(StainTarget t) {
     case StainTarget::Nucleoid: return "Nucleoide bacteriano";
     case StainTarget::Bacteria: return "Bacteria entera";
     case StainTarget::Hemoglobin: return "Hemoglobina";
+    case StainTarget::DamagedMembrane: return "Membrana dañada (células muertas)";
     case StainTarget::Count: break;
     }
     return "";
@@ -243,6 +244,26 @@ std::vector<StainSpec> makeBuiltins() {
         s.vital = false;
         s.rules.push_back(rule(StainTarget::Nucleus, rgb8(132, 24, 66), 0.95f));
         s.rules.push_back(rule(StainTarget::Cytoplasm, rgb8(230, 190, 200), 0.08f));
+        v.push_back(s);
+    }
+    {
+        StainSpec s;
+        s.id = "eosin_nigrosin";
+        s.name = "Eosina–nigrosina (vitalidad)";
+        s.note = "Prueba de vitalidad del espermiograma (OMS 2021; Björndahl et al. 2003): la eosina no atraviesa una membrana intacta, así que los espermatozoides vivos quedan blancos y los muertos, rosados; la nigrosina oscurece el fondo para verlos mejor. Se extiende y se seca en un portaobjetos: fija. Vitalidad = % de cabezas blancas (límite inferior de referencia: 54 %).";
+        s.vital = false;
+        s.background = rgb8(64, 54, 82);
+        s.backgroundStrength = 0.7f;
+        s.rules.push_back(rule(StainTarget::DamagedMembrane, rgb8(226, 74, 124), 0.92f));
+        v.push_back(s);
+    }
+    {
+        StainSpec s;
+        s.id = "trypan_blue";
+        s.name = "Azul tripano (viabilidad)";
+        s.note = "Colorante de exclusión: las células vivas no lo dejan entrar y las muertas (membrana dañada) se tiñen de azul. Se mezcla con la suspensión de un cultivo para contar la viabilidad en la cámara de Neubauer; con el tiempo es tóxico, así que se cuenta en pocos minutos.";
+        s.vital = true;
+        s.rules.push_back(rule(StainTarget::DamagedMembrane, rgb8(40, 64, 168), 0.88f));
         v.push_back(s);
     }
     return v;

@@ -547,7 +547,9 @@ cuerpo, medido una vez por sub-paso; dos pasadas por sub-paso (`SoftBodyTuning::
   `GramRetention` (pierde el colorante con el tiempo de decolorante: la pared fina en ~3 s, la
   gruesa en ~60 s; sobre-decolorar vuelve rosa a la grampositiva). De fábrica: Gram, Lugol,
   DAPI (fluorescencia, fondo oscuro), rojo neutro, azul de metileno, rojo Congo, Giemsa (sangre:
-  núcleos violeta, hemoglobina rosa) y orceína acética (cromosomas).
+  núcleos violeta, hemoglobina rosa), orceína acética (cromosomas) y los de exclusión, eosina–nigrosina
+  (vitalidad de los espermatozoides) y azul tripano (cultivos): `DamagedMembrane` tiñe las células
+  `Dead` y las de apoptosis tardía.
 - **Bioquímica real en la simulación:** `speciesChemistry(id)` da la reserva (`Storage`: almidón,
   glucógeno, paramilón, crisolaminarina) y la pared (`CellWall`) de cada especie; solo el almidón
   verdadero (clorofitas) vira a azul-negro con Lugol y *Euglena* (paramilón) no reacciona.

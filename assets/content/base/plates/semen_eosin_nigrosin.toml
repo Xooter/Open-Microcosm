@@ -1,0 +1,20 @@
+# Frotis de eosina–nigrosina del espermiograma (OMS 2021; Björndahl et al. 2003, Hum. Reprod. 18: 813): una
+# gota de semen con el colorante, extendida y secada. Los vivos (membrana intacta) excluyen la eosina y quedan
+# blancos sobre el fondo oscuro de la nigrosina; los muertos se tiñen de rosa.
+[[plate]]
+id = "semen_eosin_nigrosin"
+name = "Preparado: semen con eosina-nigrosina (vitalidad)"
+description = "Frotis de semen con eosina y nigrosina, secado: los espermatozoides vivos excluyen la eosina y quedan blancos sobre el fondo oscuro; los muertos se tinen de rosa. Se cuentan 200 y la vitalidad es el porcentaje de blancos."
+kind = "slide"
+medium = "seminal_plasma"
+vessel = "slide"
+field_um = 512.0
+fixed = true
+stain = "eosin_nigrosin"
+[plate.environment]
+temperature = 22.0
+co2 = 0.00042
+light = 1.0
+[[plate.seeding]]
+being = "human_sperm"
+density_cm2 = 64000.0
