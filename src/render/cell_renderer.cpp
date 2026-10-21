@@ -1,4 +1,5 @@
 #include "render/cell_renderer.hpp"
+#include "render/stain_color.hpp"
 
 #include "core/palette.hpp"
 #include "core/paths.hpp"
@@ -138,19 +139,6 @@ template <typename F> void forEachProcess(const RingBody& body, const SpeciesInf
 
 Vector2 toRay(Vec2 v) { return {v.x, v.y}; }
 
-Color dyeColor(Rgba c, float alpha) {
-    auto b = [](float v) { return static_cast<unsigned char>(std::clamp(v, 0.0f, 1.0f) * 255.0f + 0.5f); };
-    return {b(c.r), b(c.g), b(c.b), b(alpha)};
-}
-
-// El colorante encima del color natural: mezcla los canales y deja al menos la opacidad del colorante.
-Color overColor(Color base, const StainResult& dye, float opacity = 0.9f) {
-    const float t = std::clamp(dye.alpha, 0.0f, 1.0f);
-    auto mixc = [&](unsigned char a, float b) { return static_cast<unsigned char>(a + (std::clamp(b, 0.0f, 1.0f) * 255.0f - a) * t); };
-    Color o = {mixc(base.r, dye.color.r), mixc(base.g, dye.color.g), mixc(base.b, dye.color.b), base.a};
-    o.a = std::max<unsigned char>(base.a, static_cast<unsigned char>(255.0f * opacity * t));
-    return o;
-}
 
 // Cuánto almidón o glucógeno tiene la célula (0 a 1): sus reservas respecto de la biomasa.
 float storageAmount(const Metabolism* m) {

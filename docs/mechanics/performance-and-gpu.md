@@ -29,7 +29,7 @@ used.
 
 - `microcosm_bench` runs a fixed drop headless and prints ms/step, the census and a state checksum.
   Options: `--wildlife 3` (~700 cells), `--gpu`, `--biome`, `--seed`, `--steps`, `--threads`,
-  `--shot`, `--timelapse <bio_min>`, `--casa`, `--respuesta-funcional <id>`, `--paquete`,
+  `--shot`, `--stain <id>` (with `--render`: a factory stain), `--timelapse <bio_min>`, `--casa`, `--respuesta-funcional <id>`, `--paquete`,
   `--scene`. By default one thread per physical core, like the app (with SMT, 16 threads are slower
   than 8).
 - Preset `lite`: times per `PROFILE_SCOPE` without Tracy; preset `profile`: Tracy 0.11.

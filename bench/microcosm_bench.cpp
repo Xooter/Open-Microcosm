@@ -77,6 +77,7 @@ struct Args {
     std::vector<std::string> packs; // paquetes de contenido a cargar (carpeta o .biopack)
     std::string functionalResponse; // id de un filtrador: calibración placa ↔ cultivo
     std::string shot;  // con --render: guarda el último cuadro (PNG) para comparar dibujos
+    std::string stain; // con --render: tinción de fábrica con que se dibuja (id: gram, lugol, dapi...)
     bool casa = false; // mide la cinemática de los espermatozoides (game/casa) e imprime el resumen
     int soak = 0;      // > 0: cada `soak` pasos verifica posiciones finitas, balance y memoria
     double timelapseMinutes = 0.0; // > 0: una foto cada tantos minutos biológicos
@@ -145,6 +146,8 @@ bool parse(int argc, char** argv, Args& a) {
             a.casa = true;
         else if (k == "--shot" && hasValue)
             a.shot = argv[++i];
+        else if (k == "--stain" && hasValue)
+            a.stain = argv[++i];
         else if (k == "--timelapse" && hasValue) {
             a.timelapseMinutes = std::atof(argv[++i]);
             a.render = true;
@@ -170,7 +173,7 @@ bool parse(int argc, char** argv, Args& a) {
             a.threads = std::atoi(argv[++i]);
         else {
             std::fprintf(stderr, "uso: microcosm_bench [--biome N] [--seed S] [--wildlife W] [--steps N] "
-                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate] [--paquete ruta] [--soak N] [--shot cuadro.png] [--casa] [--timelapse min_bio] [--timelapse-dir carpeta]\n");
+                                 "[--warmup N] [--threads N] [--no-focus] [--gpu] [--render] [--zoom Z] [--cell-detail S] [--scene archivo.plate] [--paquete ruta] [--soak N] [--shot cuadro.png] [--stain id] [--casa] [--timelapse min_bio] [--timelapse-dir carpeta]\n");
             return false;
         }
     }
@@ -323,6 +326,7 @@ int main(int argc, char** argv) {
     // típica de la app. Se mide aparte del paso.
     std::unique_ptr<Renderer> renderer;
     RenderTexture2D target{};
+    std::string shotStain; // la tinción con que se dibuja (va al JSON de la foto)
     Camera2D camera{};
     if (a.render) {
         renderer = std::make_unique<Renderer>();
@@ -332,15 +336,21 @@ int main(int argc, char** argv) {
         camera.offset = {800.0f, 450.0f};
         camera.zoom = a.zoom > 0.0f ? a.zoom : 900.0f / world.height();
         // Un preparado se dibuja con su tinción (frotis con Giemsa, papa con Lugol…).
-        if (const PreparedPlate* pp = plate.prepared.empty() ? nullptr : findPreparedPlate(plate.prepared); pp && !pp->stain.empty())
-            for (const StainSpec& s : builtinStains())
-                if (s.id == pp->stain)
-                    renderer->setStain(&s);
+        // --stain manda sobre la del preparado.
+        std::string stainId = a.stain;
+        if (const PreparedPlate* pp = plate.prepared.empty() ? nullptr : findPreparedPlate(plate.prepared); pp && stainId.empty())
+            stainId = pp->stain;
+        for (const StainSpec& s : builtinStains())
+            if (!stainId.empty() && s.id == stainId) {
+                renderer->setStain(&s);
+                shotStain = s.id;
+            }
     }
     TimelapseClock timelapse;
     timelapse.intervalHours = a.timelapseMinutes / 60.0;
     timelapse.start(world.simTime() * world.bioTimeScale() / 3600.0);
     PhotoInfo photo;
+    photo.stain = shotStain;
     photo.plate = !plate.prepared.empty() ? plate.prepared : biome(static_cast<BiomeId>(a.biome)).key;
     photo.seed = a.seed;
     photo.provenance = std::string(BIO_VERSION) + " " + BIO_GIT;

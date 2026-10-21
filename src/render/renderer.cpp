@@ -1,4 +1,5 @@
 #include "render/renderer.hpp"
+#include "render/stain_color.hpp"
 #include "core/paths.hpp"
 #include "render/shapes.hpp"
 
@@ -491,8 +492,20 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
             // células, que se dibujan después).
             drawTissue(world, offX, offY, view, minSize, px, world.simTime(), stain_);
             drawBlood(world, offX, offY, view, minSize, px, stain_);
+            } // !fluor
+            // Cianobacterias e hifas sí se dibujan con fluorescencia: su color sale de la tinción
+            // (la clorofila de las cianobacterias emite roja; lo que no tiene blanco no se ve).
             // Cianobacterias filamentosas: cadenas de células verde-azuladas; los heterocistos,
-            // más grandes, pálidos y de pared gruesa.
+            // más grandes, pálidos y de pared gruesa. Con una tinción: envoltura gramnegativa,
+            // glucógeno ("almidón de las cianofíceas": pardo rojizo con Lugol), nucleoide (DAPI) y
+            // clorofila a (autofluorescencia roja).
+            const std::initializer_list<StainTarget> kCyanoTargets = {StainTarget::GramNegative, StainTarget::Glycogen,
+                                                                     StainTarget::Nucleoid, StainTarget::Chlorophyll};
+            auto cyano = [&](Color c) { return stainedColor(stain_, c, kCyanoTargets); };
+            const Color trichome = cyano({58, 104, 100, 215}), septum = cyano({36, 70, 68, 200});
+            const Color akinete = cyano({92, 112, 70, 235}), akineteWall = cyano({70, 82, 50, 240});
+            const Color heterocyst = cyano({214, 222, 180, 230}), heterocystWall = cyano({120, 140, 100, 230});
+            const Color vegetative = cyano({64, 128, 112, 210});
             for (const CyanoFilament& fil : world.cyanobacteria().filaments) {
                 if (fil.x.empty())
                     continue;
@@ -506,27 +519,27 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                     for (std::size_t k = 0; k + 1 < fil.x.size(); ++k) {
                         const Vector2 a = {fil.x[k] + fx + offX, fil.y[k] + fy + offY};
                         const Vector2 b = {fil.x[k + 1] + fx + offX, fil.y[k + 1] + fy + offY};
-                        DrawLineEx(a, b, std::max(5.5f, minSize), {58, 104, 100, 215});
+                        DrawLineEx(a, b, std::max(5.5f, minSize), trichome);
                         const Vector2 d = {b.x - a.x, b.y - a.y};
                         const float len = std::max(1e-3f, std::sqrt(d.x * d.x + d.y * d.y));
                         const Vector2 m = {0.5f * (a.x + b.x), 0.5f * (a.y + b.y)}, n = {-d.y / len * 2.6f, d.x / len * 2.6f};
-                        DrawLineEx({m.x - n.x, m.y - n.y}, {m.x + n.x, m.y + n.y}, std::max(0.4f, 0.5f * minSize), {36, 70, 68, 200});
+                        DrawLineEx({m.x - n.x, m.y - n.y}, {m.x + n.x, m.y + n.y}, std::max(0.4f, 0.5f * minSize), septum);
                     }
                     const Vector2 tip = {fil.x.back() + fx + offX, fil.y.back() + fy + offY};
-                    drawCircleFast(tip, std::max(2.75f, 0.5f * minSize), {58, 104, 100, 215}, px); // extremo redondeado
-                    drawCircleFast({fil.x[0] + fx + offX, fil.y[0] + fy + offY}, std::max(2.75f, 0.5f * minSize), {58, 104, 100, 215}, px);
+                    drawCircleFast(tip, std::max(2.75f, 0.5f * minSize), trichome, px); // extremo redondeado
+                    drawCircleFast({fil.x[0] + fx + offX, fil.y[0] + fy + offY}, std::max(2.75f, 0.5f * minSize), trichome, px);
                     continue;
                 }
                 for (std::size_t k = 0; k < fil.x.size(); ++k) {
                     const Vector2 p = {fil.x[k] + fx + offX, fil.y[k] + fy + offY};
                     if (fil.heterocyst[k] == kAkinete) { // acineto: grande, granular, de pared gruesa
-                        drawCircleFast(p, 4.2f, {92, 112, 70, 235}, px);
-                        drawRingFast(p, 3.3f, 4.2f, 18, {70, 82, 50, 240}, px);
+                        drawCircleFast(p, 4.2f, akinete, px);
+                        drawRingFast(p, 3.3f, 4.2f, 18, akineteWall, px);
                     } else if (fil.heterocyst[k] == kHeterocyst) {
-                        drawCircleFast(p, 3.0f, {214, 222, 180, 230}, px);
-                        drawRingFast(p, 2.4f, 3.0f, 16, {120, 140, 100, 230}, px);
+                        drawCircleFast(p, 3.0f, heterocyst, px);
+                        drawRingFast(p, 2.4f, 3.0f, 16, heterocystWall, px);
                     } else {
-                        drawCircleFast(p, std::max(2.2f, minSize), {64, 128, 112, 210}, px);
+                        drawCircleFast(p, std::max(2.2f, minSize), vegetative, px);
                     }
                 }
             }
@@ -536,9 +549,15 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                 const float fx = wrapCoord(m.x[0], w) - m.x[0], fy = wrapCoord(m.y[0], h) - m.y[0];
                 const FungusInfo& info = fungusInfo(m.kind);
                 const float width = info.hyphaWidth;
-                const Color hypha = {info.r, info.g, info.b, 120};
-                const Color wallColor = {static_cast<unsigned char>(info.r * 0.64f), static_cast<unsigned char>(info.g * 0.64f),
-                                         static_cast<unsigned char>(info.b * 0.64f), 170};
+                // Con una tinción: el citoplasma y, en los hongos verdaderos, el glucógeno de reserva
+                // (pardo rojizo con Lugol); el oomiceto guarda micolaminarina, que el yodo no tiñe.
+                auto dye = [&](Color c) {
+                    return info.glycogen ? stainedColor(stain_, c, {StainTarget::Cytoplasm, StainTarget::Glycogen})
+                                         : stainedColor(stain_, c, {StainTarget::Cytoplasm});
+                };
+                const Color hypha = dye({info.r, info.g, info.b, 120});
+                const Color wallColor = dye({static_cast<unsigned char>(info.r * 0.64f), static_cast<unsigned char>(info.g * 0.64f),
+                                             static_cast<unsigned char>(info.b * 0.64f), 170});
                 for (std::size_t k = 0; k < m.x.size(); ++k) {
                     const Vector2 p = {m.x[k] + fx + offX, m.y[k] + fy + offY};
                     if (!visible(m.x[k] + fx, m.y[k] + fy))
@@ -549,12 +568,13 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                         DrawLineEx(q, p, width + 1.2f, wallColor);
                         DrawLineEx(q, p, width - 0.6f, hypha);
                     }
-                    if (m.sporangium[k] > 0.0f) {
+                    if (!fluor && m.sporangium[k] > 0.0f) {
                         const float r = 0.5f * width + 6.0f * std::min(1.0f, m.sporangium[k]);
                         drawCircleFast(p, r, kSporangium, px);
                     }
                 }
             }
+            if (!fluor) {
             // Allomyces: esporangios de resistencia (pared gruesa y parda, con poros).
             const RestingSporangia& rs = world.fungi().resting;
             for (std::size_t i = 0; i < rs.size(); ++i) {
@@ -584,13 +604,16 @@ void Renderer::drawWorld(const World& world, const Camera2D& screenCamera, Overl
                             DrawRectangleV({static_cast<float>(cx) * slime.dx + offX, static_cast<float>(cy) * slime.dx + offY},
                                            {slime.dx, slime.dx}, kSlime);
             }
+            // Copo de avena: casi todo almidón del endosperma (azul negro con Lugol) y algo de proteína.
+            const Color flake = stainedColor(stain_, kFlake, {StainTarget::Starch, StainTarget::Cytoplasm});
+            const Color flakeEdge = stainedColor(stain_, kFlakeEdge, {StainTarget::Starch, StainTarget::Cytoplasm});
             for (std::size_t i = 0; i < ps.flakes.size(); ++i) {
                 if (!visible(ps.flakes.x[i], ps.flakes.y[i]))
                     continue;
                 const float s = 4.0f + 0.12f * ps.flakes.pmol[i];
                 const Vector2 p = {ps.flakes.x[i] + offX, ps.flakes.y[i] + offY};
-                DrawEllipse(static_cast<int>(p.x), static_cast<int>(p.y), s * 1.3f, s, kFlake);
-                DrawEllipseLines(static_cast<int>(p.x), static_cast<int>(p.y), s * 1.3f, s, kFlakeEdge);
+                DrawEllipse(static_cast<int>(p.x), static_cast<int>(p.y), s * 1.3f, s, flake);
+                DrawEllipseLines(static_cast<int>(p.x), static_cast<int>(p.y), s * 1.3f, s, flakeEdge);
             }
             for (const Plasmodium& pl : ps.plasmodia) {
                 if (pl.x.empty())

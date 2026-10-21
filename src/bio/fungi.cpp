@@ -10,18 +10,18 @@
 
 const FungusInfo& fungusInfo(FungusKind kind) {
     // name, grupo, vel. espora, sentido, ancho hifa, absorción, dicotómica, resistencia, germina,
-    // fotobionte, extensión, color.
+    // fotobionte, extensión, color, reserva de glucógeno.
     static const FungusInfo kTable[kFungusKinds] = {
         {"Rhizophydium", "Quitridio (Chytridiomycota)", 15.0f, SporeSense::Host, 4.0f, 1.0f, false, false, false, false,
-         0.0f, 130, 120, 95},
+         0.0f, 130, 120, 95, true},
         {"Saprolegnia", "Oomiceto (moho de agua)", 80.0f, SporeSense::Food, 11.0f, 1.0f, false, false, true, false, 200.0f,
-         150, 146, 128},
+         150, 146, 128, false},
         // Allomyces: hifas de ~9 µm que se bifurcan en dos; zoosporas de ~40 µm/s.
         {"Allomyces", "Blastocladiomycota", 40.0f, SporeSense::Food, 9.0f, 1.0f, true, true, true, false, 150.0f, 176, 150,
-         96},
+         96, true},
         // Liquen: crecimiento muy lento (los líquenes crecen mm por año) y casi sin absorción propia.
         {"Hongo liquenizante", "Ascomiceto (micobionte)", 0.0f, SporeSense::None, 5.0f, 0.12f, false, false, true, true,
-         25.0f, 120, 132, 104},
+         25.0f, 120, 132, 104, true},
     };
     return kTable[static_cast<int>(kind)];
 }

@@ -46,6 +46,9 @@ struct FungusInfo {
     bool photobiont;         // asocia algas verdes (liquen)
     float extensionPerHour;  // [µm/h] por punta
     std::uint8_t r, g, b;    // color de la hifa
+    // Reserva de glucógeno (los hongos verdaderos: pardo rojizo con Lugol). Los oomicetos
+    // (Saprolegnia) guardan micolaminarina, un β-glucano que el yodo no tiñe.
+    bool glycogen;
 };
 const FungusInfo& fungusInfo(FungusKind kind);
 inline const char* fungusName(FungusKind kind) { return fungusInfo(kind).name; }

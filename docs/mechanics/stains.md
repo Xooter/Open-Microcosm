@@ -43,6 +43,21 @@ The render asks `evaluateStain` for each target it draws; stains do not touch `W
 plate (`Renderer::drawWorldTo` into a texture), unstained and stained, in cell, detail and bacteria
 views.
 
+## Structures that are not soft-bodied cells
+
+Hyphae, cyanobacterial filaments and oat flakes take their colour from the stain too
+(`stainedColor` in `render/stain_color.hpp`): in bright field the strongest dye among their
+targets, in fluorescence the sum of their emissions (what has no target is not seen).
+
+| Structure | Targets | Real basis |
+|---|---|---|
+| Cyanobacteria (*Anabaena*, *Oscillatoria*) | gram-negative wall, glycogen, nucleoid, chlorophyll | Gram-negative envelope; "cyanophycean starch" is an α-glucan of the glycogen type (reddish brown with Lugol); chlorophyll *a* fluoresces red. |
+| Hyphae of true fungi (chytrid, *Allomyces*, mycobiont) | cytoplasm, glycogen | Fungi store glycogen (`FungusInfo::glycogen`). |
+| Hyphae of *Saprolegnia* | cytoplasm | An oomycete: it stores mycolaminarin, a β-glucan that iodine does not stain, and its cellulose wall does not turn blue with Lugol alone. |
+| Oat flakes | starch, cytoplasm | Endosperm starch: blue-black with Lugol. |
+
+`microcosm_bench --render --stain <id> --shot <png>` draws a headless frame with a factory stain.
+
 ## Adding a target
 
 A value of `StainTarget`, its evaluation in the render and, if needed, a datum in
@@ -54,7 +69,7 @@ Saved in `<data>/openmicrocosm/stains/*.stain` (versioned `key=value` text, `sta
 
 ## Code
 
-`src/game/stain.*`, `src/render/cell_renderer.cpp`, `src/render/tissue_renderer.cpp`,
+`src/game/stain.*`, `src/render/stain_color.hpp`, `src/render/renderer.cpp`, `src/render/cell_renderer.cpp`, `src/render/tissue_renderer.cpp`,
 `src/ui/panels/stain_panel.cpp`.
 
 ## Tests
@@ -63,5 +78,6 @@ Saved in `<data>/openmicrocosm/stains/*.stain` (versioned `key=value` text, `sta
 
 ## Limitations
 
-- [`stains-missing-targets`](../bugs/stains-missing-targets.md): hyphae, cyanobacteria and oat flakes.
+- Sporangia, resting sporangia, zoospores and the *Physarum* plasmodium keep their natural colour
+  (and are not drawn in fluorescence).
 - India ink for capsules and stains on the live plate with real-time exposure are pending (roadmap C).

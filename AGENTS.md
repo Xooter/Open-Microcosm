@@ -187,7 +187,7 @@ the README).
 **Measuring:** `microcosm_bench` runs a fixed drop headless and gives ms/step, the census and a checksum
 of the state (`--casa`: sperm kinematics; `--wildlife 3` ≈ 700 cells, `--gpu` uses the GPU solver
 like the app; with the `lite` preset it breaks down by `PROFILE_SCOPE`; `--shot` saves the drawn
-frame; `--timelapse <bio_min>` saves a photo every so many biological minutes; by default it uses one
+frame, `--stain <id>` draws it with a factory stain; `--timelapse <bio_min>` saves a photo every so many biological minutes; by default it uses one
 thread per physical core, like the app: with SMT, 16 threads are slower than 8). `BIO_GPU_TIMING=1`
 gives the time of each GPU kernel with timestamps. An optimisation that must not change results is
 verified by comparing checksums of the old and new versions built with `-DBIO_STRICT_FP=ON`: with
