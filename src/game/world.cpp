@@ -2038,7 +2038,8 @@ void World::applyMotion(float dt) {
         const Metabolism* fuel = animal && loco.type != LocomotionType::Crawl ? registry_.try_get<Metabolism>(e) : nullptr;
         if (animal && (animal->phase == CellPhase::Dead ||
                        (loco.type != LocomotionType::Crawl &&
-                        (animal->grade == MotilityGrade::Immotile || (fuel && fuel->starving))))) {
+                        (animal->grade == MotilityGrade::Immotile || (fuel && fuel->starving) ||
+                         animal->swelling > 0.6f)))) { // con la cola enrollada ya no avanza
             loco.forward = loco.turn = 0.0f;
             loco.active = false;
             loco.speed = 0.0f;

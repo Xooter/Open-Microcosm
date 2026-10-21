@@ -195,6 +195,9 @@ reproducción, ciclo de vida) y los parametriza. Las claves que faltan toman el 
   (variación de la rapidez entre individuos), `non_progressive_speed` (fracción) y `non_progressive_radius`
   [µm] (sus círculos). Con `[physiology.<id>.motility_half_life]` [h] los que nadan pasan a inmóviles antes
   de morir (`lifespan`). El panel Placa cambia la muestra al crear (concentración y fracciones).
+- `[being.osmotic_swelling]`: la cola se hincha y se enrolla en un medio hipotónico si la membrana está
+  intacta (prueba hiposmótica): `isotonic` y `full_osmolarity` [mOsm/L] (enrollada del todo), `inactive`
+  (fracción de Boyle–van 't Hoff) y `seconds` (tiempo real hasta el equilibrio).
 - `[[being.process]]` (una por prolongación): **prolongaciones** de la célula o de su cubierta.
   `kind`: `horn` | `spine` | `arm` | `seta` | `notch`; `at`: dirección desde el polo anterior del cuerpo [°];
   `length` desde la superficie, `base_width` y `tip_width` [µm], para el tamaño típico (escalan con la

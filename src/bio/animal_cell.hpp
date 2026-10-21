@@ -37,6 +37,7 @@ struct AnimalCell {
     // Las que nadan ([being.motility]): su clase y su rapidez respecto de la media de la especie.
     MotilityGrade grade = MotilityGrade::Progressive;
     float vigor = 1.0f;
+    float swelling = 0.0f; // cola hinchada y enrollada por ósmosis (prueba hiposmótica), 0–1
 };
 
 // Componente marcador: adherida al sustrato por adhesiones focales. El agua no la arrastra (una

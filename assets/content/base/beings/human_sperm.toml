@@ -48,6 +48,14 @@ contact_inhibition_locomotion = false
 contact_inhibition_proliferation = false
 divides = false
 death = "immotile"
+# Prueba hiposmótica (HOS; Jeyendran et al. 1984, J. Reprod. Fertil. 70: 219): en la solución de 150 mOsm la
+# cola de los vivos se hincha y se enrolla en minutos (la OMS la lee a los 5–30 min a 37 °C). Isotónico
+# ~290 mOsm; fracción osmóticamente inactiva y tiempo, estimación.
+[being.osmotic_swelling]
+isotonic = 290.0
+inactive = 0.4
+full_osmolarity = 150.0
+seconds = 60.0
 [being.appearance]
 style = "spermatozoon"
 # La cabeza gira sobre su eje largo al nadar: ~6 Hz (6,0 ± 2,1 Hz en espermatozoides humanos sujetos con una

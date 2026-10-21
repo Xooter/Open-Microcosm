@@ -1012,7 +1012,7 @@ void drawAnimalNucleus(Vector2 c, float r, const AnimalCell& ac, const Dividing*
 // largo de la cola) a la frecuencia del batido del individuo (sube con la temperatura). Muerto: recta,
 // apenas curvada, quieta.
 void drawSpermTail(const BodyParticles& bp, const RingBody& body, const Locomotion& loco, const SpeciesInfo& info,
-                   bool dead, float time, float px) {
+                   bool dead, float coil, float time, float px) {
     const Frame f = frameOf(body);
     const Vec2 back = f.h * -1.0f;
     std::size_t rear = 0;
@@ -1033,13 +1033,27 @@ void drawSpermTail(const BodyParticles& bp, const RingBody& body, const Locomoti
     const float wavenumber = 6.2831853f * 1.5f / length;
     const float bend = (body.id & 1u) ? 1.0f : -1.0f; // la curva quieta del muerto, fija por célula
     const Color midpiece = {60, 66, 52, 120};
+    // Prueba hiposmótica: la cola hinchada se enrolla desde la punta (Jeyendran et al. 1984): lo que queda
+    // de la cola después de `straight` da vueltas sobre un círculo de ~2,5 µm junto a la pieza intermedia.
+    const float straight = length * (1.0f - 0.9f * coil);
+    constexpr float kCoilRadius = 2.5f;
+    Vec2 coilStart{}, coilCenter{};
     Vec2 prev = base;
     constexpr int kSegments = 48;
     for (int k = 1; k <= kSegments; ++k) {
         const float t = static_cast<float>(k) / kSegments;
         const float s = t * length;
-        const float wave = beating ? (0.3f + 4.5f * t) * std::sin(wavenumber * s - phase0) : bend * 2.0f * t * t;
-        const Vec2 p = base + back * s + f.side * wave;
+        Vec2 p;
+        if (s <= straight || coil <= 0.0f) {
+            const float wave = beating ? (1.0f - coil) * (0.3f + 4.5f * t) * std::sin(wavenumber * s - phase0) : bend * 2.0f * t * t;
+            p = base + back * s + f.side * wave;
+            coilStart = p;
+            coilCenter = p + f.side * (bend * kCoilRadius);
+        } else { // enrollada: vuelve sobre sí misma
+            const float a = (s - straight) / kCoilRadius;
+            const Vec2 r0 = coilStart - coilCenter;
+            p = coilCenter + rotate(r0, std::cos(a * bend), std::sin(a * bend));
+        }
         const bool mid = s <= kMidpiece;
         const float width = mid ? std::max(0.8f, 1.2f * px) : std::max(0.5f - 0.3f * t, px);
         fastLine(toRay(prev), toRay(p), width, mid ? midpiece : kFlagellum);
@@ -1553,7 +1567,8 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                 drawTwinFlagella(body, *loco, time, px);
             } else if (loco && style == CellStyle::Spermatozoon) {
                 const AnimalCell* ac = reg.try_get<AnimalCell>(e);
-                drawSpermTail(bp, body, *loco, speciesInfo(sid), ac && ac->phase == CellPhase::Dead, time, px);
+                drawSpermTail(bp, body, *loco, speciesInfo(sid), ac && ac->phase == CellPhase::Dead,
+                              ac ? ac->swelling : 0.0f, time, px);
             } else if (loco && style == CellStyle::Ciliate) {
                 drawCilia(bp, body, time, px);
                 // Citostoma: la boca al final del surco oral.

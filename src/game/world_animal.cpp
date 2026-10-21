@@ -6,6 +6,7 @@
 
 #include "bio/animal_cell.hpp"
 #include "bio/division.hpp"
+#include "bio/osmosis.hpp"
 #include "bio/physiology.hpp"
 #include "core/finite.hpp"
 #include "core/profiling.hpp"
@@ -336,9 +337,18 @@ bool World::updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, f
         return false;
     AnimalCell& ac = *acp;
     if (ac.phase == CellPhase::Dead)
-        return true;
+        return true; // con la membrana rota ya no se hincha (por eso la prueba hiposmótica la separa)
     const SpeciesId sid = speciesOfEntity(registry_, e);
     const SpeciesInfo& info = speciesInfo(sid);
+    if (const OsmoticSwellingSpec& os = info.osmoticSwelling; os.present) {
+        // La cola se hincha con el agua que entra (Boyle–van 't Hoff) y se enrolla; física, en tiempo real.
+        const float osm = osmosis::mediumOsmolarity(medium_.salinity, medium_.osmolytes);
+        const float v = osmosis::equilibriumVolume(os.isotonic, osm, os.inactive);
+        const float full = osmosis::equilibriumVolume(os.isotonic, os.fullOsmolarity, os.inactive);
+        const float target = std::clamp((v - 1.0f) / std::max(1e-3f, full - 1.0f), 0.0f, 1.0f);
+        const float realDt = bioDt / bioScale();
+        ac.swelling += (target - ac.swelling) * (1.0f - std::exp(-realDt / os.seconds));
+    }
     const SpeciesPhysiology& phys = speciesPhysiology(sid);
     const float hours = bioDt / 3600.0f;
     ac.ageHours += hours;

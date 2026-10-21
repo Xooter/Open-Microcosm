@@ -1,0 +1,23 @@
+# Solución de la prueba hiposmótica (Jeyendran et al. 1984, J. Reprod. Fertil. 70: 219; OMS 2021): 7,35 g de
+# citrato de sodio dihidratado y 13,51 g de fructosa por litro de agua, ~150 mOsm/kg. Simplificación: el
+# citrato y la fructosa van como osmolitos (no como sal) y la fructosa, además, como glucosa equivalente.
+[[medium]]
+id = "hos_solution"
+name = "Solucion hiposmotica (HOS)"
+description = "Citrato de sodio y fructosa en agua, ~150 mOsm: la mitad de lo isotonico. A los espermatozoides vivos les entra agua y la cola se hincha y se enrolla; los muertos no cambian."
+source = "Jeyendran et al. 1984 (J. Reprod. Fertil. 70: 219): citrato de sodio 25 mM y fructosa 75 mM, ~150 mOsm/kg; OMS, Laboratory manual, 6ª ed. (2021)."
+[medium.composition]
+glucose = 75000.0      # fructosa 75 mM
+salinity = 0.0
+osmolytes = 150.0
+alkalinity = 500.0
+carbonate_pka = 6.1
+phosphate = 0.0
+nitrogen = 0.0
+silicate = 0.0
+iron = 0.0
+vitamin_b12 = 0.0
+phages = 0.0
+organic_inflow = 0.0
+detritus_inflow = 0.0
+dust = 0.0

@@ -1,0 +1,19 @@
+# Prueba hiposmótica (HOS) del espermiograma (Jeyendran et al. 1984; OMS 2021): semen en la solución de
+# 150 mOsm a 37 °C. Los vivos (también los inmóviles) tienen la membrana intacta: les entra agua y la cola se
+# hincha y se enrolla; los muertos no. Simplificación: la OMS diluye 0,1 mL de semen en 1 mL de solución; acá
+# se siembra la mitad de la densidad del preparado fresco para que haya bastantes por campo.
+[[plate]]
+id = "semen_hos"
+name = "Preparado: prueba hiposmotica (HOS)"
+description = "Espermatozoides en una solucion de 150 mOsm a 37 °C: a los vivos les entra agua y la cola se hincha y se enrolla en minutos; los muertos quedan rectos. Separa a los inmoviles vivos de los muertos sin tenir."
+kind = "slide"
+medium = "hos_solution"
+vessel = "slide"
+field_um = 512.0
+[plate.environment]
+temperature = 37.0
+co2 = 0.00042
+light = 1.0
+[[plate.seeding]]
+being = "human_sperm"
+density_cm2 = 32000.0

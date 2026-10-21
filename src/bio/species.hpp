@@ -343,6 +343,20 @@ struct MotilitySpec {
     float nonProgressiveRadius = 6.0f; // radio de sus círculos [µm]
 };
 
+// Hinchazón osmótica de la cola (prueba hiposmótica, HOS; Jeyendran et al. 1984, J. Reprod. Fertil. 70:
+// 219): en un medio hipotónico entra agua a la cola si la membrana está intacta, que se hincha y se
+// enrolla. El volumen sigue a Boyle–van 't Hoff con la osmolaridad isotónica y la fracción inactiva; la
+// cola está enrollada del todo con el volumen que tendría a `fullOsmolarity` (la solución de Jeyendran) y
+// se acerca a su equilibrio en `seconds` (física: agua por acuaporinas, en tiempo real). Los muertos no
+// se hinchan: por eso la prueba separa a los inmóviles vivos de los muertos.
+struct OsmoticSwellingSpec {
+    bool present = false;
+    float isotonic = 290.0f;       // [mOsm/L]
+    float inactive = 0.4f;         // fracción del volumen que no es agua libre
+    float fullOsmolarity = 150.0f; // [mOsm/L]
+    float seconds = 60.0f;
+};
+
 struct AnimalCellInfo {
     bool present = false;
     bool adherent = true;              // adherida al fondo por adhesiones focales: el agua no la lleva
@@ -467,6 +481,7 @@ struct SpeciesInfo {
     ChemotaxisSpec chemotaxis;          // [being.chemotaxis]
     SwimPathSpec swimPath;              // [being.swim_path]
     MotilitySpec motility;              // [being.motility]
+    OsmoticSwellingSpec osmoticSwelling; // [being.osmotic_swelling]
     MorphSpec morph;                    // [being.morph]
     bool histophagous = false;
     // Se divide dentro de un quiste reproductivo (Colpoda): mientras dura el ciclo de divisiones no nada

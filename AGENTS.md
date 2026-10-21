@@ -85,7 +85,8 @@ e interviene.
   en `[physiology.*]`), el recorrido es pasivo (`[being.swim_path]`, `World::steerSwimmer`) y la muestra
   viene por clases de la OMS (`[being.motility]`, configurable en el panel Placa). **CASA**
   (`game/casa`, panel CASA, `bio_bench --casa`): VCL, VSL, VAP, LIN, STR, WOB, ALH y BCF de cada uno; es
-  medición (vive en `Run`, no cambia la huella).
+  medición (vive en `Run`, no cambia la huella). Placas de vitalidad: eosina–nigrosina
+  (`semen_eosin_nigrosin`) y prueba hiposmótica (`semen_hos`, `[being.osmotic_swelling]`).
 - **Preparados** (`bio/osmosis`, `bio/tissue`, `bio/erythrocytes`, `game/world_tissue.cpp`,
   `render/tissue_renderer`): epidermis de cebolla, hoja de *Elodea*, papa con Lugol, punta de raíz
   con mitosis, epidermis de hoja con estomas, mucosa bucal, frotis de sangre con Giemsa, sangre

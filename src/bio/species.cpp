@@ -84,7 +84,7 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "sliding_colony", "testate", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "shape_wave", "star_colony", "contractile_vacuole", "semicell", "somersault", "algal_conjugation", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage", "swim_path", "motility",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "shape_wave", "star_colony", "contractile_vacuole", "semicell", "somersault", "algal_conjugation", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage", "swim_path", "motility", "osmotic_swelling",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
@@ -301,6 +301,20 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
         const float sum = m.mix.progressive + m.mix.nonProgressive + m.mix.immotile + m.mix.dead;
         if (std::abs(sum - 1.0f) > 0.01f)
             cr.errors.push_back(cr.where + ": las fracciones tienen que sumar 1");
+        r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
+    if (const toml::table* os = r.table("osmotic_swelling")) {
+        constexpr const char* kKeys[] = {"isotonic", "inactive", "full_osmolarity", "seconds"};
+        toml_io::warnUnknown(*os, kKeys, r.where + " [osmotic_swelling]", warnings);
+        Reader cr{*os, r.where + " [osmotic_swelling]", {}};
+        OsmoticSwellingSpec& o = s.osmoticSwelling;
+        o.present = true;
+        cr.count("isotonic", o.isotonic);
+        cr.count("inactive", o.inactive);
+        cr.count("full_osmolarity", o.fullOsmolarity);
+        cr.count("seconds", o.seconds);
+        if (o.inactive >= 1.0f || o.fullOsmolarity >= o.isotonic || o.seconds <= 0.0f)
+            cr.errors.push_back(cr.where + ": 'inactive' < 1, 'full_osmolarity' < 'isotonic' y 'seconds' > 0");
         r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
     }
     if (const toml::table* sc = r.table("semicell")) {
