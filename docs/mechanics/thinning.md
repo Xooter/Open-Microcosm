@@ -40,7 +40,11 @@ chemostat (Tilman's cultures were semi-continuous too).
 ## Controls
 
 - Plate: *Plate > Thinning (live)*, with the fraction, *Thin now* (an intervention; also
-  *Simulation > Thin the plate* or the **T** key, with the same fraction) and *Thin periodically* (adds a `dilution` event to the plate's program, every so many biological hours).
+  *Simulation > Thin the plate* or the **T** key, with the same fraction) and *Thin periodically*
+  (adds a `dilution` event to the plate's program, every so many biological hours, replacing any
+  previous one). While it is on, the section shows the fraction, the period and the time to the next
+  thinning (`nextProgramEvent`), with a *Stop* button (intervention `Program` with index 2: removes
+  the program entries of a target), and the status bar shows "Thinning 10 % / 24 h".
 - Culture: *Cultures > Medium*, "Fraction to dilute" and *Dilute*; the *Gause protocol* program
   button includes the daily 10 % thinning before the medium change.
 - Programs, lessons and experiments: the `dilution` action (fraction) in a program, on the plate and
