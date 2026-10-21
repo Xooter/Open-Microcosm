@@ -1,93 +1,281 @@
-# bio
+<h1 align="center">BioGame</h1>
 
-Herramienta de investigación y de estudio que simula vida microscópica real —gotas de agua,
-cultivos celulares y preparados vegetales— en C++20 (ver `AGENTS.md` y `docs/`).
-Estado actual: **fases 1–12** (la 12, parcial). Una gota con ~25 especies reales (ciliados,
-flagelados, amebas, algas, diatomeas, colonias, filamentos, levaduras, hongos, rotíferos, Hydra,
-nauplios), bacterias, cianobacterias, fagos y química (O₂, CO₂/pH, fósforo, nitrógeno, toxinas,
-señales de quorum), en seis biomas procedurales, con estética de microscopio de campo claro,
-enciclopedia y la partida roguelite con genoma de las fases 1–6.
+<p align="center">
+  <strong>An open-source virtual microscope laboratory where real microscopic life emerges from physics.</strong>
+</p>
 
-## Compilar, ejecutar y testear
+<p align="center">
+  <a href="LICENSE"><img alt="License: GPL-3.0-or-later" src="https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg"></a>
+  <img alt="C++20" src="https://img.shields.io/badge/C%2B%2B-20-informational.svg">
+  <img alt="Platforms" src="https://img.shields.io/badge/platforms-Linux%20%7C%20Windows%20%7C%20macOS%20(community)-lightgrey.svg">
+  <img alt="Vibe coding welcome" src="https://img.shields.io/badge/vibe%20coding-welcome-brightgreen.svg">
+</p>
+
+<p align="center">
+  <img src="docs/img/demo.gif" alt="A drop of pond water in BioGame: ciliates, algae and bacteria swimming under a bright-field microscope" width="800">
+</p>
+
+BioGame simulates microscopic life **as it is seen through a laboratory microscope**: drops of water
+with their microorganisms, **cell cultures** (human and animal cells on a dish) and **plant
+preparations** (tissues with cell walls). Cells are gelatinous, semi-transparent bodies with visible
+organelles. They swim or crawl, eat, grow, divide, conjugate, die and lyse, and **all of it emerges
+from a physical particle simulation, not from animations**.
+
+It is a **research and teaching tool**, not a game: there is no score and no victory. You prepare a
+plate, observe it and intervene.
+
+- **Research:** complex, reproducible and measurable simulations (time series, mass budgets, export
+  with provenance, replicates), also **headless** (`bio_bench`, `bio_lote`).
+- **Teaching:** show students what happens, with the microscope image, inspector cards that explain
+  what each thing is and why, and guided lessons.
+
+## Screenshots
+
+<table>
+  <tr>
+    <td><img src="docs/img/drop.png" alt="A pond drop with ciliates, diatoms and algae"></td>
+    <td><img src="docs/img/cell-culture.png" alt="Human fibroblasts and HeLa cells in a cell culture"></td>
+  </tr>
+  <tr>
+    <td align="center">A pond drop: ciliates, diatoms, algae and bacteria</td>
+    <td align="center">Cell culture: human fibroblasts migrating in DMEM</td>
+  </tr>
+  <tr>
+    <td><img src="docs/img/plasmolysis.png" alt="Red onion epidermis plasmolysing in salt water"></td>
+    <td><img src="docs/img/sperm-casa.png" alt="Human sperm with CASA kinematics"></td>
+  </tr>
+  <tr>
+    <td align="center">Onion epidermis plasmolysing in salt water</td>
+    <td align="center">Semen analysis with CASA kinematics</td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="docs/img/interface.png" alt="The laboratory interface with dockable panels"></td>
+  </tr>
+  <tr>
+    <td colspan="2" align="center">The laboratory: dockable panels for the plate, catalogue, stains, statistics and plots</td>
+  </tr>
+</table>
+
+## Features
+
+- **Real organisms only.** 92 beings in the factory pack: ciliates, flagellates, amoebae, diatoms,
+  desmids, colonial and filamentous algae, dinoflagellates, yeasts, human cell lines and blood cells,
+  plant cells and the human spermatozoon, plus bacteria, cyanobacteria, fungi, phages and *Physarum*.
+  Every measured value carries its published source. See the [catalogue](docs/content/beings/README.md).
+- **Physics first.** Inertia-free soft bodies (XPBD), exact Stokes–Brinkman water at low Reynolds
+  number, diffusing chemistry (O₂, CO₂/pH, P, N, Si, Fe, B₁₂…), Beer–Lambert light.
+- **Real biology.** Respiration, fermentation and photosynthesis with Droop quotas and Liebig's law;
+  physical phagocytosis; mitosis, conjugation, cysts and budding; a mutating genome; behaviour such as
+  the avoiding reaction, phototaxis, chemotaxis and jumps; induced defences and chemical signals.
+- **Laboratory plates.** Pond drops from six real biomes, cell culture in an incubator, slides
+  (onion, *Elodea*, potato with Lugol, root tip, blood smear, buccal mucosa, fresh semen) and a
+  well-mixed culture for millilitre-scale experiments (Gause, Tilman, chemostats).
+- **Measurement.** Live plots, mass budgets that close, growth-curve fitting, regions, CASA, CSV/JSON
+  export with provenance, photos with a scale bar and time-lapses by biological time.
+- **Reproducibility.** Deterministic by seed; every intervention is recorded, and a scene replays
+  bit for bit on the same binary and machine. Batch experiments with replicates and 95 % CIs.
+- **Teaching.** Lessons as protocols with tested solutions, a glossary, notes anchored to beings,
+  and real stains (Gram, Lugol, DAPI, Giemsa, neutral red, eosin–nigrosin, trypan blue…).
+- **Content as data.** Beings, biomes, media, plates and lessons are TOML files; anyone can add
+  organisms in a content pack without touching C++.
+- **Validated** against published results: see [validation](docs/validation/README.md).
+
+## Installation
+
+There are no published releases yet: build from source. Every dependency (raylib, Dear ImGui,
+ImPlot, EnTT, toml++, doctest, Tracy) is downloaded automatically by CMake (`FetchContent`) at a fixed
+version; only a C++20 compiler with **OpenMP**, **CMake ≥ 3.24**, **Ninja** and Git are needed. The
+first configuration needs an internet connection.
+
+Hardware: an OpenGL 4.3 GPU (for the optional GPU physics engine) and a multi-core CPU.
+
+### Linux
+
+Debian / Ubuntu:
 
 ```sh
-cmake --preset release && cmake --build --preset release && ./build/release/bio
-ctest --test-dir build/release        # o ./build/release/bio_tests
+sudo apt install build-essential cmake ninja-build git \
+    libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl1-mesa-dev
 ```
 
-Presets: `debug`, `release`, `profile` (RelWithDebInfo + Tracy).
-Las dependencias se descargan solas con FetchContent la primera vez.
+Fedora:
 
-## Controles
-
-- **Inicio:** Jugar → elegir bioma, especie fundadora y semilla (Euglena y Amoeba se desbloquean
-  jugando) · Enciclopedia · Opciones
-- Cilios: **W/S** avanzar/retroceder, **A/D** girar
-- Flagelo: **W** o click izquierdo para batir; gira hacia el mouse
-- Ameba: **click izquierdo** extiende un pseudópodo hacia el mouse; al tocar una célula más chica, la envuelve sola
-- **Al dividirte o morir:** Tab/flechas o click para elegir la célula, **Enter** para confirmar
-- **V** conjugar con un ciliado compatible cercano (otro tipo de apareamiento)
-- **N** nueva partida · **F** cámara que sigue al jugador · **H** ocultar el panel · rueda: zoom · Espacio: pausa
-- Microscopio: **J** tinción (rojo Congo, azul de metileno)
-- Laboratorio: **Ctrl+click** revolver · **Shift+click** estirar membrana · **T** tinta · **B** detrito ·
-  **C** célula · **K** 50 células · **X** borrar · **L** lisar · **Q** apretar
-- Overlays de depuración: **F1** velocidad · **F2** O₂ · **F3** nutrientes · **F4** luz · **F5** fosfato ·
-  **F6** nitrógeno · **F7** pH · **F8** microcistina · **F9** autoinductor · **F10** fagos
-
-## Estructura
-
-```
-src/
-  main.cpp              loop con timestep fijo, menús, cámara y herramientas
-  core/                 unidades físicas, RNG determinista, profiling, UI (panel, menús, enciclopedia)
-  sim/                  FFT, fluido Stokes–Brinkman, campos químicos, partículas, grilla espacial,
-                        cuerpos blandos (XPBD sin inercia), contactos, polígonos
-  bio/bacteria.*        run & tumble, quimiotaxis, cepas con quorum sensing, fagos, Bdellovibrio
-  bio/cyanobacteria.*   filamentos con heterocistos (fijación de N₂), muerte y microcistina
-  bio/fungi.*           quitridios, Saprolegnia y Zoophagus (zoosporas e hifas)
-  bio/cell.*            creación de células (membrana, núcleo, vacuola, gránulos)
-  bio/species.*         las especies como datos (dieta, reproducción, tolerancias, metazoos)
-  bio/locomotion.*      cilios, flagelo y pseudópodos; fuerzas del nadador sobre el agua
-  bio/feeding.*         vacuolas digestivas, ingestión, digestión y saciedad
-  bio/phagocytosis.*    copa fagocítica (cremallera) y fusión de membranas
-  bio/metabolism.*      respiración, fermentación, fotosíntesis, P y N, estrés, inanición
-  bio/division.*        mitosis: surco de división y forma de reposo de las hijas
-  bio/genome.*          genes, mutación, recombinación, herencia y rasgos fisiológicos
-  bio/organelles.*      organelos visibles según el genoma (mitocondrias, cloroplastos, lisosomas)
-  ai/autopilot.*        comportamiento por especie (quimiocinesis, trampa de ácido, caza, saltos)
-  game/world*.cpp       el mundo: medio, cuerpos, ciclo de vida, hongos, química, metazoos
-  game/biome.*          biomas y gotas procedurales
-  game/encyclopedia.*   descubrimientos y comportamientos observados
-  game/run.*            partida: elección de hija/heredero, censo de biomasa, victoria, extinción
-  game/progress.*       meta-progresión, enciclopedia y opciones persistentes
-  render/               campo claro, óptica del microscopio, instancing, overlays
-assets/shaders/         GLSL 330
-tests/                  doctest: medio, células, jugador, ciclo de vida, partida, genoma,
-                        ecosistema e interacciones
+```sh
+sudo dnf install gcc-c++ cmake ninja-build git \
+    libX11-devel libXrandr-devel libXinerama-devel libXcursor-devel libXi-devel mesa-libGL-devel
 ```
 
-## Reproducibilidad
+Arch:
 
-Una corrida se repite **bit a bit** con el mismo binario, la misma máquina, el mismo motor y las
-mismas opciones (escena = `.plate` + intervenciones; *Placa > Guardar escena*). Entre máquinas la
-reproducibilidad es **estadística** (réplicas): cambian el compilador, la `libm` y la GPU.
+```sh
+sudo pacman -S base-devel cmake ninja git libx11 libxrandr libxinerama libxcursor libxi mesa
+```
 
-Qué opciones de *Preferencias* cambian la trayectoria de la simulación:
+Then:
 
-| Opción | ¿Cambia la trayectoria? |
+```sh
+git clone <repository-url> bio
+cd bio
+cmake --preset release
+cmake --build --preset release
+./build/release/bio
+```
+
+### Windows
+
+The Windows package is **cross-compiled from Linux** with MinGW-w64 (this is the tested route):
+
+```sh
+sudo apt install mingw-w64          # on the Linux build machine
+cmake --preset windows
+cmake --build --preset windows
+cd build/windows && cpack           # BioGame-<version>-Windows.zip
+```
+
+Building natively on Windows uses the same compiler through [MSYS2](https://www.msys2.org/). In the
+*MSYS2 UCRT64* shell:
+
+```sh
+pacman -S --needed git mingw-w64-ucrt-x86_64-gcc mingw-w64-ucrt-x86_64-cmake mingw-w64-ucrt-x86_64-ninja
+git clone <repository-url> bio
+cd bio
+cmake --preset release
+cmake --build --preset release
+./build/release/bio.exe
+```
+
+MSVC is not tested.
+
+### macOS (not tested, community supported)
+
+macOS has **not been tested** by the maintainers, who have no Mac to test on. It is supported on a
+best-effort basis by the community: reports and pull requests are very welcome. Known obstacles:
+
+- **OpenMP:** Apple clang does not ship it. Use Homebrew's LLVM, or Apple clang with `libomp`.
+- **OpenGL:** macOS stops at OpenGL 4.1, while BioGame requests a 4.3 context for its GPU compute
+  shaders (`OPENGL_VERSION` in `CMakeLists.txt`). Without compute shaders the CPU engine is used, but
+  the window may fail to open until a 3.3 fallback is added.
+- **`-march=native`:** may not be accepted on Apple Silicon; configure with `-DBIO_NATIVE=OFF`.
+
+Expected steps:
+
+```sh
+brew install cmake ninja git llvm libomp
+git clone <repository-url> bio
+cd bio
+cmake --preset release -DBIO_NATIVE=OFF \
+    -DCMAKE_C_COMPILER="$(brew --prefix llvm)/bin/clang" \
+    -DCMAKE_CXX_COMPILER="$(brew --prefix llvm)/bin/clang++"
+cmake --build --preset release
+./build/release/bio
+```
+
+### Build presets
+
+| Preset | Use |
 |---|---|
-| Física de células en la GPU | **Sí**: el redondeo de la GPU difiere del de la CPU (cada motor es determinista por separado). |
-| LOD y sub-pasos lejanos | **Sí**: lo que está fuera de la vista se resuelve con menos sub-pasos (la biología no cambia). |
-| Hilos | No: el resultado no depende de la cantidad de hilos. |
-| Pasos por cuadro | No: solo cuánto se recupera por cuadro si la simulación se atrasa. |
-| Calidad, escala de render, óptica, detalle, VSync, tope de FPS, MSAA | No: solo la imagen. |
+| `release` | Optimised build for your machine (`-march=native`, `-ffast-math`). |
+| `debug` | Debug build. |
+| `profile` | RelWithDebInfo with the Tracy profiler. |
+| `lite` | Per-scope timings without Tracy (`bio_bench` prints them). |
+| `dist` | Linux distribution build (x86-64-v2, static runtime); `cpack` builds the `.tar.gz`. `tools/paquete-linux.sh` builds it in a Docker container with glibc 2.35. |
+| `windows` | Cross-compiled Windows build with MinGW-w64. |
 
-La exportación (Ctrl+E) anota el motor, el LOD, la versión y la máquina (`procedencia` en el JSON).
+`-DBIO_STRICT_FP=ON` disables `-ffast-math` so that `bio_bench` checksums of two versions can be
+compared.
 
-## Licencia
+## Usage
 
-BioGame es software libre bajo la **GNU General Public License, versión 3 o posterior**
-(`GPL-3.0-or-later`, texto completo en `LICENSE`). Quien distribuya el programa o una versión
-modificada tiene que ofrecer el código fuente con la misma licencia. Las dependencias (raylib y
-GLFW: zlib; Dear ImGui, ImPlot, EnTT y toml++: MIT; la fuente Roboto: Apache 2.0) son compatibles;
-sus licencias se instalan en `licenses/` junto al ejecutable.
+The program opens directly in the laboratory with an **empty Petri dish**. Prepare it in the
+**Plate** panel (biome and seed, content, environment, nutrients, populations or a prepared plate)
+and create it with **Create plate** (Ctrl+N). Environment and nutrients change live.
+
+| Action | How |
+|---|---|
+| Select a being and open its card | Click (Select tool, the default) |
+| Control a being | Control tool or `P` over a cell; flagellates and amoebae with the mouse, ciliates with W/A/S/D |
+| Tools | Left toolbar or keys 1–0, M and G: ink, detritus, erase, lyse, squeeze, stir, stretch, dropper, measure, region, spawn |
+| Inoculate any being | Catalogue > Inoculate… |
+| Stain or fix the sample | Stains panel |
+| Plots, budgets, CASA, lessons, cultures, experiments | *View* menu |
+| Zoom / pan / pause | Mouse wheel / right-button drag / Space |
+| Export data | Ctrl+E (CSV and JSON with provenance) |
+| Save a scene (plate + interventions) | Plate panel > *Save scene* |
+
+The interface is in Spanish and English (Preferences). User data lives in the platform's data folder
+under `biogame/` (plates, scenes, cultures, experiments, stains, photos, exports, packs).
+
+### Headless
+
+```sh
+./build/release/bio_bench --biome pond --seed 66 --steps 600    # ms/step, census, checksum
+./build/release/bio_bench --timelapse 10 --steps 36000          # a photo every 10 biological minutes
+./build/release/bio_bench --casa                                # sperm kinematics
+./build/release/bio_lote experiment.toml --salida results/      # replicates and factors
+```
+
+## Testing
+
+```sh
+ctest --test-dir build/release -L rapidos            # fast suite, ~2 min
+ctest --test-dir build/release -L largos -j8         # long cases, ~16 min
+ctest --test-dir build/release -L validacion -j4     # against published results, ~28 min
+tools/ci.sh                                          # local CI: build without warnings, docs, fast tests
+```
+
+## Documentation
+
+All documentation is in [`docs/`](docs/README.md):
+
+- [Mechanics](docs/mechanics/README.md): one document per mechanism of the simulator.
+- [Content format](docs/content/README.md) and [one document per being](docs/content/beings/README.md).
+- [Validation](docs/validation/README.md) against the literature.
+- [Known bugs](docs/bugs/README.md) and [roadmap](docs/roadmap.md).
+- [`AGENTS.md`](AGENTS.md): architecture, rules and the documentation policy, for humans and AI agents.
+
+## Contributing
+
+Contributions are welcome: new organisms, mechanisms, lessons, translations, validation against
+published experiments, bug reports and fixes. Read [`CONTRIBUTING.md`](CONTRIBUTING.md) and
+[`AGENTS.md`](AGENTS.md) first. The guiding principle is **strict realism**: only real species and
+mechanisms, and every measured value with its source.
+
+### Vibe-coding policy
+
+**Vibe coding is completely allowed.** You may write your contribution with AI assistants or coding
+agents (Claude Code, Copilot, Cursor, or any other), in whole or in part. `AGENTS.md` is written so
+that agents can work on the code base directly.
+
+AI-written contributions are held to exactly the same standard as any other:
+
+- the code builds **without warnings** and the tests pass (`tools/ci.sh`);
+- biological data and mechanisms are **real and sourced** (check the reference yourself: models do
+  invent citations);
+- the documentation is updated as `AGENTS.md` requires;
+- you understand and stand behind what you submit, and you have the right to license it under the
+  GPL.
+
+Saying in the pull request that an AI helped is appreciated but optional.
+
+## Citing
+
+If you use BioGame in research or teaching, please cite it: see [`CITATION.cff`](CITATION.cff) (GitHub
+shows a "Cite this repository" button).
+
+## License
+
+BioGame is free software: you can redistribute it and/or modify it under the terms of the **GNU
+General Public License, version 3 or (at your option) any later version** (`GPL-3.0-or-later`). The
+full text is in [`LICENSE`](LICENSE).
+
+This is a **copyleft** licence: anyone who distributes BioGame or a modified version must offer the
+complete corresponding source code under the same licence. Contributions are accepted under the same
+terms.
+
+Third-party components keep their own compatible licences, installed in `licenses/` next to the
+executable: raylib and GLFW (zlib), Dear ImGui, ImPlot, EnTT and toml++ (MIT), doctest (MIT), Tracy
+(BSD-3-Clause, only in the `profile` preset) and the Roboto font (Apache 2.0). A new dependency or
+asset must have a GPLv3-compatible licence.
+
+BioGame is distributed in the hope that it will be useful, but **without any warranty**; it is a
+research and teaching simulator and must not be used for medical diagnosis.

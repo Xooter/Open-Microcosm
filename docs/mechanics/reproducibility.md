@@ -28,7 +28,7 @@ the FPS.
 ## Scenes
 
 A scene = `.plate` + `event=step type …` lines. Loading it and creating the plate replays the run
-(`InterventionLog::schedule`); the export includes it. Plate > Save scene. Notes (`nota=`) follow the
+(`InterventionLog::schedule`); the export includes it. Plate panel > *Save scene*. Notes (`nota=`) follow the
 events and are not interventions. A scene names everything by text id and lists its packs (`pack=`);
 `missing` reports what it names and is not loaded. Floats in text files are written with round-trip
 precision (`max_digits10` or `std::to_chars`): with 6 digits a plate read back is no longer the same.
