@@ -37,8 +37,8 @@ int countOf(World& world, SpeciesId id) {
     return n;
 }
 
-// Siembra uno y fuerza su reproducción: en 3 min tiene que haber hijas, que al separarse son polígonos
-// simples; 20 s después siguen enteras, con un área parecida a la de reposo (no explotaron ni
+// Siembra uno y fuerza su reproducción: en 3 min tiene que haber hijas, que medio segundo después de
+// separarse son polígonos simples; 20 s después siguen enteras, con un área parecida a la de reposo (no explotaron ni
 // colapsaron).
 void reproduces(const char* key) {
     CAPTURE(std::string(key));
@@ -55,6 +55,10 @@ void reproduces(const char* key) {
     for (int s = 0; s < 60 * 180 && countOf(world, *id) < 2; ++s)
         world.step(kDt);
     REQUIRE(countOf(world, *id) >= 2);
+    // Medio segundo para que la costura del corte se acomode (en el paso del corte puede quedar un cruce
+    // de décimas de µm entre los dos puntos de la costura).
+    for (int s = 0; s < 30; ++s)
+        world.step(kDt);
     for (auto [cell, sp, body] : world.registry().view<Species, RingBody>().each())
         if (sp.id == *id)
             CHECK(simplePolygon(body, world.bodies()));

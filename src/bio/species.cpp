@@ -748,6 +748,25 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
                 s.outlineReach = std::max(s.outlineReach, length(q));
         }
     }
+    // Sin silueta pero afinada: el área de la forma es menor que la de su elipse (π·rx·ry), y la masa es
+    // la del esferoide (no depende del afinamiento): el factor de área lo descuenta, como en la silueta.
+    if (s.outline.empty() && (s.spec.taper.back > 0.0f || s.spec.taper.front > 0.0f)) {
+        constexpr int kSamples = 512;
+        float tapered = 0.0f, plain = 0.0f;
+        Vec2 pt = superellipsePoint(s.spec.radiusX, s.spec.radiusY, s.spec.squareness, 0.0f, s.spec.taper);
+        Vec2 pp = superellipsePoint(s.spec.radiusX, s.spec.radiusY, s.spec.squareness, 0.0f);
+        for (int k = 1; k <= kSamples; ++k) {
+            const float t = 2.0f * units::kPi * static_cast<float>(k) / kSamples;
+            const Vec2 qt = superellipsePoint(s.spec.radiusX, s.spec.radiusY, s.spec.squareness, t, s.spec.taper);
+            const Vec2 qp = superellipsePoint(s.spec.radiusX, s.spec.radiusY, s.spec.squareness, t);
+            tapered += cross(pt, qt);
+            plain += cross(pp, qp);
+            pt = qt;
+            pp = qp;
+        }
+        if (plain > 0.0f)
+            s.outlineAreaFactor = tapered / plain;
+    }
     s.minWidth = minimumWidth(s);
     return true;
 }

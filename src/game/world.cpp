@@ -3134,6 +3134,21 @@ void World::updateLifecycle(float dt) {
                 body.corticalTension = 0.0f;
                 body.bendScale = 0.0f; // la corteza se remodela: no vuelve a la curvatura del círculo
             }
+            // Simplificación: una célula afinada o de lados rectos (Euglena, Dileptus, Stylonychia) se divide
+            // desde la elipse equivalente; el surco de la división no cerraba sobre un polo afinado. Las hijas
+            // vuelven a la forma de su especie al separarse.
+            // La media luna de Closterium también: se endereza para partirse (el centro de los puntos de una
+            // media luna cae fuera del cuerpo y el surco no lo encontraba); y las desmidias de lóbulos
+            // recortados (Micrasterias), cuyos senos se cruzaban: cada hija recupera su contorno al separarse
+            // y regenera la semicélula nueva (startSemicell).
+            if (const CellShape* cs = registry_.try_get<CellShape>(e);
+                cs && !smallPlastic && (info.outline.empty() || info.spec.bend != 0.0f || info.semicellRegrowthHours > 0.0f) &&
+                !info.filament && body.membraneReservoirRate <= 0.0f &&
+                (cs->taper.back > 0.0f || cs->taper.front > 0.0f || cs->squareness > 2.2f || info.spec.bend != 0.0f ||
+                 info.semicellRegrowthHours > 0.0f)) {
+                const float k = std::sqrt(std::abs(body.restArea) / (units::kPi * cs->radiusX * cs->radiusY));
+                soft_body::reshapeRestEven(body, bodies_, cs->radiusX * k, cs->radiusY * k);
+            }
             // División longitudinal: la forma de reposo gira 90° en el marco de la célula (la forma en el
             // mundo es la misma) para que el surco, que corta en x = 0, corra a lo largo del eje.
             std::uint32_t poleSlot = ~0u;
@@ -3163,7 +3178,7 @@ void World::updateLifecycle(float dt) {
                 const float t = std::clamp((dv->progress - 0.2f) / 0.8f, 0.0f, 1.0f);
                 const float scale = std::sqrt(std::abs(body.restArea) / dv->motherArea);
                 const float smooth = t * t * (3.0f - 2.0f * t);
-                if (info.outline.empty() ||
+                if (info.outline.empty() || info.spec.bend != 0.0f || info.semicellRegrowthHours > 0.0f ||
                     !divisionRestShapeOutline(dv->motherRest, info.outline, info.outlineArea, scale, smooth, body.restRing))
                     divisionRestShape(dv->motherRest, scale, smooth, body.restRing);
                 const std::size_t rn = body.restRing.size();

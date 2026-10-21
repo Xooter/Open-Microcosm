@@ -24,13 +24,14 @@ color = [138, 182, 112]
 nucleus = 0.15
 
 # Seno: la escotadura profunda y angosta que separa las dos semicélulas, de cada lado del istmo (de
-# ~1/3 del ancho; Kreutz). Profundidad y abertura estimadas.
+# ~1/3 del ancho; Kreutz). Profundidad estimada; la abertura, algo más ancha que la real (un seno más
+# angosto que unos 3 puntos de membrana se cruza al dividirse).
 [[being.process]]
 kind = "notch"
 at = 90.0
 length = 23.0
-base_width = 4.0
-tip_width = 3.0
+base_width = 9.0
+tip_width = 8.0
 count = 2
 fillet = 2.0
 

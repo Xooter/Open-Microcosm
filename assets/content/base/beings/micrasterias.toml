@@ -26,23 +26,24 @@ nucleus = 0.1
 
 # Semicélulas de cinco lóbulos (Kreutz): el seno profundo y angosto del istmo y, en cada semicélula, las
 # incisiones entre el lóbulo polar y los laterales (±35° del polo) y las que parten cada lateral en dos
-# (±64°), en cuña; y el margen dentado de los lóbulos (escotaduras chicas alrededor). Profundidades y
-# aberturas estimadas sobre las figuras.
+# (±64°), en cuña. Profundidades y aberturas estimadas sobre las figuras; las incisiones, menos
+# profundas y algo más anchas que las reales: con paredes a menos de unos 3 puntos de membrana, el surco de la división las cruzaba. Sin el
+# margen dentado de los lóbulos (detalle más fino que la membrana).
 [[being.process]]
 kind = "notch"
 at = 90.0
 length = 95.0
-base_width = 6.0
-tip_width = 4.0
+base_width = 16.0
+tip_width = 14.0
 count = 2
 fillet = 2.0
 
 [[being.process]]
 kind = "notch"
 at = 0.0
-length = 45.0
-base_width = 12.0
-tip_width = 3.0
+length = 28.0
+base_width = 18.0
+tip_width = 10.0
 count = 2
 spread = 140.0
 fillet = 2.0
@@ -50,9 +51,9 @@ fillet = 2.0
 [[being.process]]
 kind = "notch"
 at = 180.0
-length = 45.0
-base_width = 12.0
-tip_width = 3.0
+length = 28.0
+base_width = 18.0
+tip_width = 10.0
 count = 2
 spread = 140.0
 fillet = 2.0
@@ -60,9 +61,9 @@ fillet = 2.0
 [[being.process]]
 kind = "notch"
 at = 0.0
-length = 30.0
-base_width = 9.0
-tip_width = 3.0
+length = 18.0
+base_width = 15.0
+tip_width = 10.0
 count = 2
 spread = 256.0
 fillet = 2.0
@@ -70,21 +71,12 @@ fillet = 2.0
 [[being.process]]
 kind = "notch"
 at = 180.0
-length = 30.0
-base_width = 9.0
-tip_width = 3.0
+length = 18.0
+base_width = 15.0
+tip_width = 10.0
 count = 2
 spread = 256.0
 fillet = 2.0
-
-[[being.process]]
-kind = "notch"
-at = 9.0
-length = 9.0
-base_width = 7.0
-tip_width = 2.5
-count = 20
-fillet = 1.5
 
 # Al dividirse, cada hija conserva una semicélula y la otra brota del istmo y se expande en unas horas
 # (Meindl 1993, Microbiol. Rev. 57: 415; tiempo estimado, a verificar).
