@@ -207,8 +207,9 @@ summary every change must respect.
   (radius = half the shorter side − `WorldConfig::dishMargin`); its wall is the limit of the world.
   The grids are still periodic inside (power-of-two sizes, the FFT needs them), but nothing lives or
   crosses outside the circle:
-  - soft bodies: `soft_body::confineToDish` in each XPBD iteration (also on the GPU, `solve.comp`);
-    statistical ones are moved whole (`pushIntoDish`);
+  - soft bodies: `soft_body::confineToDish` in each XPBD iteration (also on the GPU, `solve.comp`):
+    a pellicle, wall or theca is moved whole (it does not mould itself to the glass), a plastic
+    membrane point by point; statistical ones are moved whole (`pushIntoDish`);
   - particles (bacteria, detritus, spores, *Bdellovibrio*, cyanobacteria): `Dish::bounce`; hyphae do
     not grow towards the glass; spawns use `World::randomPoint`;
   - water: velocity mask (`DishMask::flow`), zero in the glass and a ramp next to the wall;

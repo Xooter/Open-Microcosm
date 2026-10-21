@@ -293,9 +293,42 @@ void wrap(RingBody& body, BodyParticles& bp, float width, float height) {
     refresh(body, bp);
 }
 
+namespace {
+
+// Aparta el cuerpo entero del vidrio con el desplazamiento de su punto más hundido. false si no
+// tocaba.
+bool rigidOutOfDish(RingBody& body, BodyParticles& bp, const Dish& dish) {
+    Vec2 shift;
+    float worst = 0.0f;
+    for (std::uint32_t s : body.ring) {
+        const Vec2 p = pos(bp, s);
+        const Vec2 d = dish.clampInside(p, bp.radius[s]) - p;
+        if (dot(d, d) > worst) {
+            worst = dot(d, d);
+            shift = d;
+        }
+    }
+    if (worst == 0.0f)
+        return false;
+    for (std::uint32_t s : body.ring)
+        move(bp, s, shift);
+    for (std::uint32_t s : body.interior)
+        move(bp, s, shift);
+    return true;
+}
+
+} // namespace
+
 void confineToDish(RingBody& body, BodyParticles& bp, const Dish& dish) {
     if (!dish.active())
         return;
+    // Una película, pared o teca no se amolda al vidrio: el cuerpo entero se aparta (proyectar
+    // punto por punto aplastaba la punta de un ciliado que retrocede contra la pared y la membrana
+    // quedaba plegada). La membrana plástica (ameba) sí se apoya y se amolda.
+    if (body.membraneReservoirRate <= 0.0f) {
+        rigidOutOfDish(body, bp, dish);
+        return;
+    }
     for (std::uint32_t s : body.ring) {
         const Vec2 p = pos(bp, s);
         const Vec2 q = dish.clampInside(p, bp.radius[s]);
@@ -309,25 +342,9 @@ void confineToDish(RingBody& body, BodyParticles& bp, const Dish& dish) {
 void pushIntoDish(RingBody& body, BodyParticles& bp, const Dish& dish) {
     if (!dish.active())
         return;
-    for (int pass = 0; pass < 2; ++pass) {
-        Vec2 shift;
-        float worst = 0.0f;
-        for (std::uint32_t s : body.ring) {
-            const Vec2 p = pos(bp, s);
-            const Vec2 q = dish.clampInside(p, bp.radius[s]);
-            const Vec2 d = q - p;
-            if (dot(d, d) > worst) {
-                worst = dot(d, d);
-                shift = d;
-            }
-        }
-        if (worst == 0.0f)
+    for (int pass = 0; pass < 2; ++pass)
+        if (!rigidOutOfDish(body, bp, dish))
             return;
-        for (std::uint32_t s : body.ring)
-            move(bp, s, shift);
-        for (std::uint32_t s : body.interior)
-            move(bp, s, shift);
-    }
 }
 
 float area(const RingBody& body, const BodyParticles& bp) {

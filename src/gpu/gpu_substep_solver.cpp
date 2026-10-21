@@ -306,7 +306,7 @@ bool GpuSubstepSolver::submit(const BodyParticles& bp, const SubstepInput& in) {
         g.intCount = static_cast<std::uint32_t>(body.interior.size());
         g.orgCount = body.organelleCount;
         g.lod = in.lod ? (*in.lod)[b] : 2u;
-        g.flags = body.edgeTensionOnly ? 1u : 0u;
+        g.flags = (body.edgeTensionOnly ? 1u : 0u) | (body.membraneReservoirRate > 0.0f ? 2u : 0u);
         g.restArea = body.restArea;
         g.shapeRate = body.shapeRate;
         g.edgeScale = body.edgeScale;

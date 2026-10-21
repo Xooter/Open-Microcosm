@@ -6,7 +6,7 @@
 
 struct Body {
     uint ringOff, ringCount, intOff, intCount;
-    uint orgCount, lod, flags, linkOff;   // flags: 1 = aristas solo a tensión
+    uint orgCount, lod, flags, linkOff;   // flags: 1 = aristas solo a tensión; 2 = membrana plástica
     float restArea, shapeRate, edgeScale, bendScale;
     float areaScale, cortical;
     uint linkCount, pad0;

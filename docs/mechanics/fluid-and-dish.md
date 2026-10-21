@@ -31,7 +31,7 @@ outside the circle:
 
 | Thing | How it is kept inside |
 |---|---|
-| Soft bodies | `soft_body::confineToDish` in each XPBD iteration (also on the GPU, `solve.comp`); statistical bodies are moved whole (`pushIntoDish`). |
+| Soft bodies | `soft_body::confineToDish` in each XPBD iteration (also on the GPU, `solve.comp`): a pellicle, wall or theca is moved whole by the displacement of its deepest point (it does not mould itself to the glass; projecting point by point flattened the posterior tip of a ciliate backing into the wall and left the membrane folded), a plastic membrane (amoeba) is projected point by point. Statistical bodies are moved whole too (`pushIntoDish`). Test: `tests/test_dish.cpp` ("un ciliado que retrocede contra el vidrio no se pliega"). |
 | Particles (bacteria, detritus, spores, *Bdellovibrio*, cyanobacteria) | `Dish::bounce`: they return and their heading reflects off the wall. |
 | Hyphae | Do not grow towards the glass. |
 | Spawns | `World::randomPoint`. |

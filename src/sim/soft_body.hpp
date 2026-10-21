@@ -71,7 +71,8 @@ void refresh(RingBody& body, const BodyParticles& bp);
 bool recoverNonFinite(RingBody& body, BodyParticles& bp);
 // Traslada el cuerpo entero si su centroide salió del mundo toroidal.
 void wrap(RingBody& body, BodyParticles& bp, float width, float height);
-// Pared de la placa (vidrio, no cede): cada punto de membrana que la cruza vuelve adentro.
+// Pared de la placa (vidrio, no cede). Una película, pared o teca se aparta entera con el
+// desplazamiento de su punto más hundido; la membrana plástica vuelve adentro punto por punto.
 void confineToDish(RingBody& body, BodyParticles& bp, const Dish& dish);
 // Igual, pero trasladando el cuerpo entero (sin deformarlo): cuerpos estadísticos del LOD.
 void pushIntoDish(RingBody& body, BodyParticles& bp, const Dish& dish);

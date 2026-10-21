@@ -1,6 +1,7 @@
 // Placa: el mundo es un pocillo circular con pared de vidrio.
 #include "core/finite.hpp"
 #include "game/world.hpp"
+#include "sim/polygon.hpp"
 
 #include <doctest/doctest.h>
 
@@ -115,3 +116,37 @@ TEST_CASE("el agua no fluye dentro del vidrio") {
     CHECK(length(water) > 1.0f);
 }
 
+
+TEST_CASE("pared: un ciliado que retrocede contra el vidrio no se pliega") {
+    // Una película no se amolda al vidrio: el cuerpo entero se aparta. Proyectando punto por punto,
+    // la punta posterior de un Paramecium que retrocede contra la pared (reacción de evitación) se
+    // aplastaba y la membrana quedaba plegada (docs/bugs/ciliate-ring-crossed-after-division.md).
+    for (const std::uint64_t seed : {17ull, 20ull}) {
+        WorldConfig c;
+        c.bacteria = 0;
+        c.detritus = 0;
+        c.cyanoFilaments = 0;
+        c.saprolegnia = c.chytridClusters = 0;
+        c.seed = seed;
+        World w(c);
+        REQUIRE(w.inoculate({BeingKind::Species, SpeciesId::Paramecium}, 1, {}, 0.0f) == 1);
+        int crossed = 0, samples = 0, nearWall = 0;
+        for (int s = 0; s < 60 * 40; ++s) {
+            w.step(1.0f / 60.0f);
+            if (s % 10)
+                continue;
+            for (auto [e, b, sp] : w.registry().view<RingBody, Species>().each()) {
+                ++samples;
+                crossed += polygon::selfIntersects(b.poly.data(), static_cast<int>(b.poly.size())) ? 1 : 0;
+                float wall = 1e9f;
+                for (const Vec2& p : b.poly)
+                    wall = std::min(wall, -w.dish().signedDistance(p));
+                nearWall += wall < 5.0f ? 1 : 0;
+            }
+        }
+        MESSAGE("seed " << seed << ": " << crossed << " de " << samples << " muestras con la membrana cruzada; " << nearWall
+                        << " contra la pared");
+        CHECK(nearWall > 0); // llegó a chocar
+        CHECK(crossed == 0);
+    }
+}

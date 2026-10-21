@@ -22,7 +22,7 @@ here.
 | [`organic-matter-after-lysis`](organic-matter-after-lysis.md) | model-limitation | minor | Organic matter reaches hundreds of mM after a lysis in a small plate. |
 | [`diatom-division-geometry`](diatom-division-geometry.md) | model-limitation | minor | Long or cylindrical diatoms cannot divide; diatoms divide by a waist furrow. |
 | [`stalks-and-tails-do-not-collide`](stalks-and-tails-do-not-collide.md) | model-limitation | minor | Stalks and sperm tails pass through cells. |
-| [`ciliate-ring-crossed-after-division`](ciliate-ring-crossed-after-division.md) | bug (needs reproduction) | minor | Swimming ciliates sometimes have a crossed ring after dividing. |
+| [`ciliate-ring-crossed-after-division`](ciliate-ring-crossed-after-division.md) | bug | minor | *Paramecium* folds its posterior pole in crowded contacts (the wall cause is fixed). |
 
 ## Fixed
 

@@ -286,10 +286,56 @@ void solveLinks(Body B, uint L, float h) {
     }
 }
 
-// Pared de la placa (vidrio, no cede): igual que soft_body::confineToDish.
+// La mayor penetración del grupo: |d|² en sA[0] y d en (sB[0], sC[0]).
+void reduceWorst(float d2, vec2 d) {
+    uint L = gl_LocalInvocationID.x;
+    sA[L] = d2;
+    sB[L] = d.x;
+    sC[L] = d.y;
+    barrier();
+    for (uint stride = kThreads / 2u; stride > 0u; stride >>= 1u) {
+        if (L < stride && sA[L + stride] > sA[L]) {
+            sA[L] = sA[L + stride];
+            sB[L] = sB[L + stride];
+            sC[L] = sC[L + stride];
+        }
+        barrier();
+    }
+}
+
+// Pared de la placa (vidrio, no cede): igual que soft_body::confineToDish. Una película, pared o
+// teca se aparta entera con el desplazamiento de su punto más hundido; la membrana plástica se
+// amolda punto por punto.
 void confineToDish(Body B, uint L, uint n) {
     if (uDish.z <= 0.0)
         return;
+    if ((B.flags & 2u) == 0u) {
+        float worst = 0.0;
+        vec2 shift = vec2(0.0);
+        for (uint i = L; i < n; i += kThreads) {
+            vec4 p = pos[ringSlot(B.ringOff + i)];
+            vec2 d = p.xy - uDish.xy;
+            float len = length(d), limit = uDish.z - p.z;
+            if (len > limit && len > 1e-6) {
+                vec2 m = uDish.xy + d * (limit / len) - p.xy;
+                if (dot(m, m) > worst) {
+                    worst = dot(m, m);
+                    shift = m;
+                }
+            }
+        }
+        reduceWorst(worst, shift);
+        bool touches = sA[0] > 0.0; // igual en todo el grupo
+        shift = vec2(sB[0], sC[0]);
+        barrier();
+        if (!touches)
+            return;
+        for (uint i = L; i < n; i += kThreads)
+            pos[ringSlot(B.ringOff + i)].xy += shift;
+        for (uint k = L; k < B.intCount; k += kThreads)
+            pos[intPts[B.intOff + k].slot].xy += shift;
+        return;
+    }
     for (uint i = L; i < n; i += kThreads) {
         uint s = ringSlot(B.ringOff + i);
         vec4 p = pos[s];
