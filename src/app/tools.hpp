@@ -49,6 +49,7 @@ struct ToolState {
     bool paused = false;
     float simSpeed = 1.0f;        // velocidad de la simulación (múltiplo del tiempo real)
     int stepRequests = 0;         // pasos sueltos pedidos con la simulación en pausa
+    float thinFraction = 0.1f;    // raleo de la placa (panel Placa y atajo T): fracción que se saca
     Overlay overlay = Overlay::None;
     // Gotero: suelta un soluto en el punto del cursor. `dropAmount` es relativo a una
     // concentración típica del soluto.

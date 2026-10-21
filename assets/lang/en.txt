@@ -1984,7 +1984,6 @@ La transferencia de gases con el aire que trae el recipiente. Sin marcar, se eli
 Lo que se saca al azar de lo que está en suspensión (seres, bacterias libres, detritos) y la misma fracción de lo disuelto, que se repone con el medio de la placa. Lo pegado al vidrio se queda.	What is taken out at random from what is in suspension (beings, free bacteria, detritus) and the same fraction of what is dissolved, which is replaced with the plate's medium. What is stuck to the glass stays.
 Mezcla del recipiente	Vessel's mixing
 Período del raleo programado, en horas biológicas (Gause sacaba la décima parte cada 24 h).	Period of the programmed thinning, in biological hours (Gause took out a tenth every 24 h).
-Ralear ahora	Thin now
 Ralear la decima parte	Thin out a tenth
 Ralear periódicamente	Thin periodically
 Raleo (en vivo)	Thinning (live)
@@ -1993,3 +1992,6 @@ Transferencia de gases	Gas transfer
 Transferencia de gases [cm/h]	Gas transfer [cm/h]
 Tubo de Gause (5 mL)	Gause tube (5 mL)
 Biovolumen	Biovolume
+Ralear la placa	Thin the plate
+Placa raleada	Plate thinned
+Ralear ahora (T)	Thin now (T)

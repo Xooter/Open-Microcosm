@@ -38,8 +38,8 @@ and intervenes.
   lifeless or empty content —`DropContent`, `applyDropContent`—, environment, nutrients, sediment,
   populations and geometry) and created with *Create plate* (Ctrl+N). Environment and nutrients are
   applied **live** to the running plate; the rest, when it is created. *Thinning (live)* takes out and
-  discards a fraction of what is in suspension, once or periodically (`World::thin`, intervention
-  `Thin`; in the culture, the `dilution` operation). Plates are saved in
+  discards a fraction of what is in suspension, once (also key T) or periodically (`World::thin`,
+  intervention `Thin`; in the culture, the `dilution` operation). Plates are saved in
   `<data>/openmicrocosm/plates/*.plate`.
 - **Prepared plates** (`game/prepared`; data in `media/`, `vessels/` and `plates/`): besides the
   water drop, plate types as in a real laboratory: the **cell culture** (DMEM in an incubator at

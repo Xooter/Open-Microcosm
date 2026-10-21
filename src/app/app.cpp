@@ -507,6 +507,13 @@ void App::registerCommands() {
         [this] { tools.simSpeed = std::max(0.125f, tools.simSpeed * 0.5f); });
     add("sim.faster", "Más rápida", "Simulación", ImGuiKey_Equal, false,
         [this] { tools.simSpeed = std::min(8.0f, tools.simSpeed * 2.0f); });
+    add("sim.thin", "Ralear la placa", "Simulación", ImGuiKey_T, false, [this] {
+        Intervention iv;
+        iv.kind = InterventionKind::Thin;
+        iv.v[0] = tools.thinFraction;
+        intervene(iv);
+        notify(std::string(ui::tr("Placa raleada")) + ": " + std::to_string(static_cast<int>(std::lround(100.0f * tools.thinFraction))) + " %");
+    });
 
     for (int i = 0; i < static_cast<int>(Tool::Count); ++i) {
         const Tool t = static_cast<Tool>(i);
