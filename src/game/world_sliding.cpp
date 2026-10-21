@@ -1,4 +1,4 @@
-// Colonia deslizante de Bacillaria paxillifer (punto 26 de docs/plan_mecanicas.md): células en aguja
+// Colonia deslizante de Bacillaria paxillifer (docs/mechanics/stalks-and-colonies.md): células en aguja
 // unidas lado a lado por el rafe, que se deslizan una sobre otra con la misma oscilación.
 #include "core/profiling.hpp"
 #include "game/world.hpp"

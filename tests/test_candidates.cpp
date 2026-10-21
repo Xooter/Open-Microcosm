@@ -1,4 +1,4 @@
-// Seres sumados desde docs/candidatos.md: cada uno se reproduce por su vía normal y sus hijas son
+// Seres sumados desde docs/design/candidates.md: cada uno se reproduce por su vía normal y sus hijas son
 // cuerpos válidos (un caso por ser: corren en paralelo con ctest -j).
 #include "bio/species.hpp"
 #include "game/world.hpp"

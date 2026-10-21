@@ -1,232 +1,237 @@
-# BioGame — Roadmap nuevo
+# BioGame — Roadmap
 
-Estado al 17/10/2026. Junta en un solo lugar lo que estaba repartido entre `roadmap.md`,
-`plan_fase20.md`, `plan_p1.md`, `validacion.md`, `ideas.md`, `gameplay.md` y
-`propuesta_laboratorio.md`. Lo hecho se resume (el detalle de diseño está en `AGENTS.md` y en los
-planes de cada fase); lo pendiente se ordena en fases nuevas.
+Status as of 17/10/2026. This document collects in one place what used to be spread across the old
+roadmap, the per-phase plans, the validation notes, the idea list, the gameplay document and the
+laboratory proposal. Finished work is only summarised (the design detail lives in `AGENTS.md` and in
+[`docs/mechanics/`](mechanics/README.md)); pending work is ordered into new phases.
 
-Leyenda: ✅ hecho · 🟡 en parte (se dice qué falta) · ⬜ por hacer · ❌ descartado.
-
----
-
-## 1. Lo hecho
-
-### Núcleo de simulación ✅
-
-- **Medio:** placa de Petri circular (o mundo toroidal); agua Stokes–Brinkman exacta con FFT, sin
-  inercia; química por difusión espectral + advección (O₂, CO₂/pH con carbonato y Henry, P, N, Si,
-  Fe, B₁₂, materia orgánica, toxinas, autoinductor, fagos, reactivo; glutamina, lactato y fMLP solo
-  con células animales); luz con Beer–Lambert; temperatura con Q10, salinidad, anoxia, alcalinidad,
-  CO₂ del aire variable, osmolitos.
-- **Cuerpos blandos:** XPBD sin inercia con tasas [1/s], membrana plástica de ameba, contactos
-  intercalados, LOD de tres niveles, cuerpos compuestos (colonias y filamentos con uniones rígidas a
-  la flexión), `reshapeRestEven` para cambios grandes de forma.
-- **Ciclo de vida:** una sola fisiología para placa y cultivo (`bio/cell_physiology`); respiración,
-  fermentación y fotosíntesis; Droop con Liebig (P, N, Si, Fe, B₁₂); masa por esferoide; punto de
-  control al tamaño de división; mitosis física, conjugación, quistes, gemación, lisis; genoma con
-  organelos físicos.
-- **Ecosistema de la gota:** cazadores, envolvedores, sésiles, suctorios, filtradores, raspadores,
-  mixótrofos; algas móviles, diatomeas, coloniales y filamentosas; cianobacterias con heterocistos
-  y microcistina; quitridios, levaduras, *Saprolegnia*, *Allomyces*, liquen, *Physarum*; fagos con
-  mutantes resistentes, *Bdellovibrio*, quorum sensing, biopelícula como refugio. 32 seres en el
-  paquete de fábrica.
-- **Tiempo:** física en tiempo real, biología ×`kBioTimeScale` (60), migración por arrastre en
-  tiempo biológico.
-
-### Contenido como datos (fase 20.0) ✅
-
-Registro con ids de texto; seres, planes corporales, fisiología con fuentes, minerales, biomas,
-medios, recipientes, placas preparadas, lecciones, glosario y reactivos en TOML; dietas por
-etiquetas; paquetes del usuario y `.biopack` con validación y topes; panel Contenido; compatibilidad
-con placas y escenas viejas; huellas de los paquetes en la procedencia.
-
-Un archivo por definición en la carpeta de su tipo (`beings/paramecium.toml`, con su fisiología;
-`docs/contenido.md`) y todos los nombres de máquina en inglés (contenido, escenas de cultivo,
-programas, experimentos, claves de parámetros, carpetas de datos). Decidido: el texto que se lee
-(nombres, descripciones, fuentes, comentarios) sigue en español y lo traduce `assets/lang`; lo
-guardado con los nombres viejos se sigue leyendo (`legacy_ids`, `game/legacy_names`) y los paquetes
-viejos se migran con `tools/migrate_content.py`.
-
-### Placas preparadas, cultivo celular y preparados (fase 20a–c) ✅
-
-- Cultivo celular en DMEM con incubadora (37 °C, 10 % CO₂), recipiente y campo separados,
-  inoculación reproducible y mezclas.
-- Células humanas: fibroblasto dérmico, HeLa y neutrófilo; arrastre con paseo persistente, ciclo
-  G1/S/G2/M con punto de restricción y G0, inhibición por contacto, Michaelis–Menten de glucosa y
-  glutamina, Warburg, apoptosis, quimiotaxis a fMLP y fagocitosis. Validadas (duplicación, MSD de
-  Fürth, meseta de confluencia, lactato/glucosa, rapidez del neutrófilo).
-- Preparados en portaobjetos: cebolla, *Elodea*, papa con Lugol, punta de raíz, estomas, mucosa
-  bucal, frotis con Giemsa y sangre diluida; ósmosis de Boyle–van 't Hoff, plasmólisis y hemólisis
-  validadas (Parpart).
-
-### Herramienta de laboratorio (P0) ✅
-
-- **Reproducibilidad:** registro único de parámetros, intervenciones por paso, escenas que se
-  repiten bit a bit con 1 y 4 hilos, procedencia completa en la exportación.
-- **Medición (fase 13):** gráficos en vivo, CSV/JSON, regla y área, región, curva de crecimiento,
-  balance de masa por compartimento y por proceso, mapa de limitación.
-- **Distribución:** presets `dist` y `windows`, CPack, GPL-3.0-or-later con licencias.
-- **Estabilidad:** autoguardado con recuperación, soak, `fallas_numericas`, CI local.
-- **Rendimiento (fase 19):** XPBD y contactos en GPU deterministas, `limitApproach` 8,5× más
-  rápido, render por lotes propios: 551 células en 16,1 ms por cuadro.
-
-### Experimentos y aula (P1) ✅
-
-Cultivo bien mezclado por individuos con calibración cruzada placa ↔ cultivo; programas (rampas,
-ciclos, eventos) en cultivo y placa; panel Cultivos con gota de muestra; Gause (mesetas, exclusión,
-*Didinium*); réplicas y lotes (`bio_lote`, panel Experimento, IC 95 %); quimiostato (Monod y Tilman
-con exclusión completa) y perfusión; siembra por densidad, pasajes y diluciones seriadas; inglés;
-lecciones como protocolos con solución testeada (Jennings, Tilman, Gause, plasmólisis, fragilidad
-osmótica); reactivos con farmacodinámica y CIM que emerge; foto y time-lapse por tiempo biológico;
-glosario y notas ancladas; accesibilidad (escala de interfaz, HiDPI, Okabe–Ito).
-
-### Óptica ✅ / 🟡
-
-- ✅ Campo claro con post-proceso (viñeta, aberración, grano), vidrio de la placa, zoom semántico
-  por tamaño proyectado, plan corporal y vista de modelo.
-- ✅ Tinciones por reglas: Gram, Lugol, DAPI, rojo neutro, azul de metileno, rojo Congo, Giemsa,
-  orceína; fijar la muestra; vista previa.
-- ✅ Óptica fase A: iluminación de Köhler despareja y polvo del ocular y la cámara.
-
-### Validación científica 🟡
-
-Pasan: µmax de *Paramecium* (placa y cultivo), Tilman (lote y quimiostato), Jennings, Monod/Droop,
-Monod en quimiostato, calibración de la respuesta funcional, CIM de ampicilina y tetraciclina,
-células humanas y ósmosis. Lo que falta está en la fase A de abajo.
+Legend: ✅ done · 🟡 partly done (what is missing is stated) · ⬜ to do · ❌ discarded.
 
 ---
 
-## 2. Por hacer
+## 1. Done
 
-### Fase A — Limpieza y deuda abierta
+### Simulation core ✅
 
-Lo chico o ya decidido, antes de sumar cosas.
+- **Medium:** circular Petri dish (or toroidal world); exact Stokes–Brinkman water solved with FFT,
+  without inertia; chemistry by spectral diffusion + advection (O₂, CO₂/pH with carbonate and Henry,
+  P, N, Si, Fe, B₁₂, organic matter, toxins, autoinducer, phages, reagent; glutamine, lactate and
+  fMLP only with animal cells); light with Beer–Lambert; temperature with Q10, salinity, anoxia,
+  alkalinity, variable air CO₂, osmolytes.
+- **Soft bodies:** inertia-free XPBD with rates [1/s], plastic amoeba membrane, interleaved contacts,
+  three-level LOD, compound bodies (colonies and filaments with bending-stiff links),
+  `reshapeRestEven` for large shape changes.
+- **Life cycle:** a single physiology for plate and culture (`bio/cell_physiology`); respiration,
+  fermentation and photosynthesis; Droop with Liebig (P, N, Si, Fe, B₁₂); spheroid mass; size
+  checkpoint before division; physical mitosis, conjugation, cysts, budding, lysis; genome with
+  physical organelles.
+- **Drop ecosystem:** hunters, engulfers, sessile feeders, suctorians, filter feeders, grazers,
+  mixotrophs; motile, diatom, colonial and filamentous algae; cyanobacteria with heterocysts and
+  microcystin; chytrids, yeasts, *Saprolegnia*, *Allomyces*, lichen, *Physarum*; phages with resistant
+  mutants, *Bdellovibrio*, quorum sensing, biofilm as a refuge. 92 beings in the factory pack.
+- **Time:** physics in real time, biology ×`kBioTimeScale` (60), crawling migration in biological
+  time.
 
-- ⬜ **Quitar la enciclopedia** (decidido el 17/10/2026): panel, `game/encyclopedia`, «la
-  enciclopedia se llena con lo que la cámara ve», su parte de `Progress` y sus textos y claves de
-  traducción. Decidir si `deathTally()` y `observations()` quedan (las usan Estadísticas o la
-  exportación) o se van con ella. Actualizar `AGENTS.md`.
-- ⬜ Valores con números de la ficha (`game/inspect`) en inglés.
-- ⬜ Inoculación en una región dibujada (la intervención no lleva el polígono).
-- ⬜ Tinciones: hifas, cianobacterias y copos de avena sin respuesta a Lugol/Gram.
-- ⬜ Posición de los organelos (flagelo anterior o posterior) sin modelar.
-- ⬜ Archivar los documentos superados (`gameplay.md` describe el juego anterior; `roadmap.md`,
-  `propuesta_laboratorio.md` e `ideas.md` quedan absorbidos por este).
+### Content as data (phase 20.0) ✅
 
-### Fase B — Cerrar la validación y el lanzamiento
+Registry with text ids; beings, body plans, physiology with sources, minerals, biomes, media,
+vessels, prepared plates, lessons, glossary and reagents in TOML; diets by tags; user packs and
+`.biopack` with validation and size limits; Content panel; compatibility with old plates and scenes;
+pack fingerprints in the provenance.
 
-El criterio de «hecho» del P0 que quedó abierto.
+One file per definition in the folder of its type (`beings/paramecium.toml`, with its physiology;
+see [`docs/content/`](content/README.md)) and every machine name in English (content, culture
+scenes, programs, experiments, parameter keys, data folders). Decided: human-readable text (names,
+descriptions, sources, comments) stays in Spanish and is translated by `assets/lang`; data saved
+with the old names can still be read (`legacy_ids`, `game/legacy_names`) and old packs are migrated
+with `tools/migrate_content.py`.
 
-- ⬜ **Gause:** que gane *P. aurelia* (hoy gana la que se adelanta; test `should_fail`). Buscar el
-  mecanismo real (sensibilidad de *P. caudatum* a los desechos), no ajustar parámetros.
-- ⬜ *Didinium*–*Paramecium* con inmigración (oscilaciones).
-- ⬜ µmax de *Amoeba proteus* (cultivo con *Tetrahymena* como presa).
-- ⬜ Cargar µmax con fuente para las especies que usan el valor general (0,15/h).
-- ⬜ Verificar contra las publicaciones las temperaturas de Gause y las constantes de Tilman y
-  Kilham (1976); revisar L = 1,5 de Droop para el P.
-- ⬜ Respuesta funcional de *P. caudatum* medida a varias densidades.
-- ⬜ **Gota sostenible:** resistencia fenotípica a *Bdellovibrio* (Shemesh y Jurkevitch 2004),
-  densidades iniciales realistas para el volumen; reactivar el test de 30 min.
-- ⬜ Revisar la materia orgánica de cientos de mM tras una lisis en volumen chico.
-- ⬜ **Paquetes:** probar el de Linux en otra distribución y el de Windows en una máquina limpia;
-  soak de varias horas sin fallas.
-- **Hecho cuando:** pasan todos los tests de `validacion` sin `should_fail` ni `skip` y los dos
-  paquetes corren en máquinas limpias. Después: **lanzamiento**.
+### Prepared plates, cell culture and slides (phase 20a–c) ✅
 
-### Fase C — Lentes
+- Cell culture in DMEM inside an incubator (37 °C, 10 % CO₂), separate vessel and field,
+  reproducible inoculation and mixtures.
+- Human cells: dermal fibroblast, HeLa and neutrophil; crawling with a persistent random walk,
+  G1/S/G2/M cycle with restriction point and G0, contact inhibition, Michaelis–Menten uptake of
+  glucose and glutamine, Warburg effect, apoptosis, chemotaxis to fMLP and phagocytosis. Validated
+  (doubling time, Fürth MSD, confluence plateau, lactate/glucose, neutrophil speed).
+- Slides: onion, *Elodea*, potato with Lugol, root tip, stomata, buccal mucosa, Giemsa smear and
+  diluted blood; Boyle–van 't Hoff osmosis, plasmolysis and haemolysis validated (Parpart).
+- Human sperm: fresh semen plate (WHO semen analysis), CASA kinematics, vitality stains
+  (eosin–nigrosin), hypo-osmotic swelling test, capacitation and hyperactivation, morphology by
+  strict criteria, leukocytospermia.
 
-Lo que hace falta para mirar de verdad los cultivos celulares (AGENTS.md: «contraste de fase,
-lente pendiente»).
+### Laboratory tool (P0) ✅
 
-- ⬜ **Contraste de fase:** grises con halo; la lente por defecto del cultivo celular.
-- ⬜ **Campo oscuro** (incluido el de Tyndall: partículas diminutas brillantes).
-- ⬜ **Fluorescencia** con la de clorofila (roja bajo luz azul, baja con la falta de hierro).
-- ⬜ Tinta china para cápsulas (regla nueva del motor de tinciones).
-- ⬜ Tinciones sobre la placa real con vista dividida y exposición en tiempo real.
-- ⬜ Después: objetivos 10×/40×/100× (cambian el campo y lo que se resuelve; la foto suma el
-  aumento), polarización (frústulas, almidón).
-- **Hecho cuando:** la misma placa se ve en las cuatro lentes y cada una muestra algo que las otras
-  no.
+- **Reproducibility:** single parameter registry, per-step interventions, scenes that replay bit
+  for bit with 1 and 4 threads, full provenance in the export.
+- **Measurement (phase 13):** live plots, CSV/JSON, ruler and area, region, growth curve, mass
+  budget per compartment and per process, limitation map.
+- **Distribution:** `dist` and `windows` presets, CPack, GPL-3.0-or-later with licences.
+- **Stability:** autosave with recovery, soak test, `fallas_numericas`, local CI.
+- **Performance (phase 19):** deterministic XPBD and contacts on the GPU, `limitApproach` 8.5×
+  faster, own batched rendering: 551 cells in 16.1 ms per frame.
 
-### Fase D — Química ampliada (fase 15 vieja)
+### Experiments and classroom (P1) ✅
 
-- ⬜ Ciclo del silicio completo (disolución con pH y temperatura, sedimentación de frústulas).
-- ⬜ Quelación del hierro (sideróforos, óxido a pH alto).
-- ⬜ Más micronutrientes (B₁, B₇, Zn, Co, Mo, Mn) con auxotrofías reales.
-- ⬜ Carbono inorgánico limitante y mecanismos concentradores.
-- ⬜ Biofilms con matriz (cambian el flujo, retienen nutrientes, gradientes internos, corte).
-- ⬜ Muestras reales: cargar T, pH, conductividad y nutrientes medidos.
-- ⬜ Temperatura, pH base y salinidad como campos (hoy globales; costo: `bioScale()` deja de ser un
-  escalar).
-- **Hecho cuando:** cada nutriente nuevo tiene un test de conservación y una especie limitada por él
-  de forma observable.
+Individual-based well-mixed culture with plate ↔ culture cross-calibration; programs (ramps, cycles,
+events) in culture and plate; Cultures panel with sample drop; Gause (plateaus, exclusion,
+*Didinium*); replicates and batches (`bio_lote`, Experiment panel, 95 % CI); chemostat (Monod and
+Tilman with complete exclusion) and perfusion; seeding by density, passages and serial dilutions;
+English; lessons as protocols with a tested solution (Jennings, Tilman, Gause, plasmolysis, osmotic
+fragility, semen analysis); reagents with pharmacodynamics and an emergent MIC; photo and time-lapse
+by biological time; glossary and anchored notes; accessibility (UI scale, HiDPI, Okabe–Ito).
 
-### Fase E — Cultivo bien mezclado completo
+### Optics ✅ / 🟡
 
-Lo que `Culture::supports` todavía rechaza.
+- ✅ Bright field with post-processing (vignette, aberration, grain), dish glass, semantic zoom by
+  projected size, body plan and model view.
+- ✅ Rule-based stains: Gram, Lugol, DAPI, neutral red, methylene blue, Congo red, Giemsa, aceto-orcein,
+  eosin–nigrosin, trypan blue; fixing the sample; preview.
+- ✅ Optics phase A: uneven Köhler illumination and dust on the eyepiece and camera.
 
-- ⬜ Células animales, filamentos, colonias y zoosporas en el cultivo.
-- ⬜ Conjugación, *Bdellovibrio*, quorum y liberación de B₁₂ por las bacterias.
-- ⬜ Reactivos con otros mecanismos: metales, sal y blancos eucariotas.
-- **Hecho cuando:** toda placa preparada tiene un equivalente bien mezclado con la misma fisiología.
+### Scientific validation 🟡
 
-### Fase F — Más biología celular
+Passing: *Paramecium* µmax (plate and culture), Tilman (batch and chemostat), Jennings, Monod/Droop,
+Monod in the chemostat, functional-response calibration, ampicillin and tetracycline MIC, human cells
+and osmosis. What is missing is in phase B below. Details in
+[`docs/validation/`](validation/README.md).
 
-- ⬜ Más tipos celulares reales con datos publicados (queratinocito, otras líneas).
-- ⬜ Apertura y cierre de estomas.
-- ⬜ Endosimbiosis y kleptoplastia como experimento (*P. bursaria* con *Chlorella*).
-- ⬜ Resistencia antimicrobiana con costo y transferencia horizontal (plásmidos, transducción).
-- ⬜ Lisogenia de los fagos.
+---
 
-### Fase G — Análisis
+## 2. To do
 
-- ⬜ Trayectorias, velocidad media y desplazamiento cuadrático medio de cualquier ser.
-- ⬜ Panel de cuotas celulares (cuántas veces Q₀ tiene la célula elegida).
-- ⬜ Árbol de linaje con mutaciones por rama.
-- ⬜ Dos placas lado a lado con la misma seed y una variable distinta.
-- ⬜ Línea de tiempo: rebobinar re-simulando desde un punto de control.
-- ⬜ Comparar con el modelo analítico (Monod, Lotka–Volterra) en el mismo gráfico.
-- ⬜ Unidades de laboratorio en la interfaz (mg/L, mmol/L).
+### Phase A — Clean-up and open debt
 
-### Fase H — Núcleo sin ventana y bindings (resto de la fase 18)
+Small or already decided items, before adding anything new.
 
-- ✅ `biosim` sin raylib, `bio_bench`, `bio_lote`.
-- ⬜ Interfaz mínima de C o Python (proponer la librería de bindings antes de agregarla).
-- **Hecho cuando:** un cuaderno barre un parámetro en N corridas y grafica el resultado.
+- ⬜ **Remove the encyclopedia** (decided on 17/10/2026): panel, `game/encyclopedia`, "the
+  encyclopedia fills with what the camera sees", its part of `Progress` and its strings and
+  translation keys. Decide whether `deathTally()` and `observations()` stay (used by Statistics or
+  the export) or go with it. Update `AGENTS.md`.
+- ⬜ Numeric values of the inspector (`game/inspect`) in English
+  ([bug](bugs/inspector-values-untranslated.md)).
+- ⬜ Inoculation inside a drawn region ([bug](bugs/inoculation-ignores-region.md)).
+- ⬜ Stains: hyphae, cyanobacteria and oat flakes do not respond to Lugol/Gram
+  ([bug](bugs/stains-missing-targets.md)).
+- ⬜ Position of organelles (anterior or posterior flagellum) is not modelled for every being.
+- ✅ Archive the superseded documents (done on 21/10/2026: documentation reorganised in `docs/`).
 
-### Fase I — Rendimiento (resto de la fase 19)
+### Phase B — Close validation and release
 
-- ⬜ `limitApproach` (~8 ms, serial), espera de la GPU (`collect`, kernel `pairs`), química + FFT,
+The P0 "done" criterion that is still open.
+
+- ⬜ **Gause:** *P. aurelia* should win (today whichever gets ahead wins; `should_fail` test). Find
+  the real mechanism (sensitivity of *P. caudatum* to waste products), do not tune parameters
+  ([bug](bugs/gause-aurelia-does-not-win.md)).
+- ⬜ *Didinium*–*Paramecium* with immigration (oscillations).
+- ⬜ µmax of *Amoeba proteus* (culture with *Tetrahymena* as prey).
+- ⬜ Load µmax with a source for the species that use the general value (0.15/h).
+- ⬜ Check the Gause temperatures and the Tilman and Kilham (1976) constants against the
+  publications; review Droop's L = 1.5 for P.
+- ⬜ Functional response of *P. caudatum* measured at several densities.
+- ⬜ **Sustainable drop:** phenotypic resistance to *Bdellovibrio* (Shemesh and Jurkevitch 2004),
+  realistic initial densities for the volume; re-enable the 30-min test
+  ([bug](bugs/drop-bacteria-collapse.md)).
+- ⬜ Review the hundreds of mM of organic matter after a lysis in a small volume
+  ([bug](bugs/organic-matter-after-lysis.md)).
+- ⬜ **Packages:** test the Linux package on another distribution and the Windows one on a clean
+  machine; multi-hour soak with no failures.
+- **Done when:** every `validacion` test passes without `should_fail` or `skip` and both packages run
+  on clean machines. Then: **release**.
+
+### Phase C — Lenses
+
+What is needed to really look at cell cultures (AGENTS.md: "phase contrast, pending lens").
+
+- ⬜ **Phase contrast:** greys with a halo; the default lens for cell culture.
+- ⬜ **Dark field** (including Tyndall: tiny bright particles).
+- ⬜ **Fluorescence**, with chlorophyll fluorescence (red under blue light, lower with iron
+  deficiency).
+- ⬜ India ink for capsules (new rule in the stain engine).
+- ⬜ Stains on the live plate with a split view and real-time exposure.
+- ⬜ Later: 10×/40×/100× objectives (they change the field and what is resolved; the photo records
+  the magnification), polarisation (frustules, starch).
+- **Done when:** the same plate can be seen through the four lenses and each shows something the
+  others do not.
+
+### Phase D — Extended chemistry (old phase 15)
+
+- ⬜ Complete silicon cycle (dissolution with pH and temperature, frustule sedimentation).
+- ⬜ Iron chelation (siderophores, oxide at high pH).
+- ⬜ More micronutrients (B₁, B₇, Zn, Co, Mo, Mn) with real auxotrophies.
+- ⬜ Limiting inorganic carbon and carbon-concentrating mechanisms.
+- ⬜ Biofilms with matrix (they change the flow, retain nutrients, internal gradients, shear).
+- ⬜ Real samples: load measured T, pH, conductivity and nutrients.
+- ⬜ Temperature, base pH and salinity as fields (global today; cost: `bioScale()` stops being a
+  scalar).
+- **Done when:** each new nutrient has a conservation test and a species visibly limited by it.
+
+### Phase E — Complete well-mixed culture
+
+What `Culture::supports` still rejects.
+
+- ⬜ Animal cells, filaments, colonies and zoospores in the culture.
+- ⬜ Conjugation, *Bdellovibrio*, quorum and B₁₂ release by bacteria.
+- ⬜ Reagents with other mechanisms: metals, salt and eukaryotic targets.
+- **Done when:** every prepared plate has a well-mixed equivalent with the same physiology.
+
+### Phase F — More cell biology
+
+- ⬜ More real cell types with published data (keratinocyte, other lines).
+- ⬜ Opening and closing of stomata.
+- ⬜ Endosymbiosis and kleptoplasty as an experiment (*P. bursaria* with *Chlorella*).
+- ⬜ Antimicrobial resistance with a cost and horizontal transfer (plasmids, transduction).
+- ⬜ Phage lysogeny.
+
+### Phase G — Analysis
+
+- ⬜ Trajectories, mean speed and mean squared displacement of any being.
+- ⬜ Cell quota panel (how many times Q₀ the selected cell holds).
+- ⬜ Lineage tree with mutations per branch.
+- ⬜ Two plates side by side with the same seed and one different variable.
+- ⬜ Timeline: rewind by re-simulating from a checkpoint.
+- ⬜ Compare with the analytical model (Monod, Lotka–Volterra) in the same plot.
+- ⬜ Laboratory units in the interface (mg/L, mmol/L).
+
+### Phase H — Headless core and bindings (rest of phase 18)
+
+- ✅ `biosim` without raylib, `bio_bench`, `bio_lote`.
+- ⬜ Minimal C or Python interface (propose the bindings library before adding it).
+- **Done when:** a notebook sweeps a parameter over N runs and plots the result.
+
+### Phase I — Performance (rest of phase 19)
+
+- ⬜ `limitApproach` (~8 ms, serial), GPU wait (`collect`, `pairs` kernel), chemistry + FFT,
   `applyMotion`, `resolvePenetrations`, `perceive`.
-- **Hecho cuando:** 60 FPS con 540+ células y GPU en hardware de escritorio medio, con checksums
-  iguales.
+- **Done when:** 60 FPS with 540+ cells and the GPU on mid-range desktop hardware, with identical
+  checksums.
 
-### Fase J — Interfaz y enseñanza
+### Phase J — Interface and teaching
 
-- ⬜ Vista previa gráfica de la placa antes de crearla.
-- ⬜ Íconos vectoriales en la barra de herramientas; paleta de comandos.
-- ⬜ Modo estudiante / modo científico (misma simulación, otra interfaz).
-- ⬜ Hipótesis y predicción fuera de las lecciones.
-- ⬜ Escenarios históricos (eutrofización, floración de cianobacterias).
-- ⬜ Fidelidad declarada por proceso (conceptual, cuantitativo, experimental) en la ficha.
+- ⬜ Graphical preview of the plate before creating it.
+- ⬜ Vector icons in the toolbar; command palette.
+- ⬜ Student mode / scientist mode (same simulation, different interface).
+- ⬜ Hypothesis and prediction outside the lessons.
+- ⬜ Historical scenarios (eutrophication, cyanobacterial bloom).
+- ⬜ Declared fidelity per process (conceptual, quantitative, experimental) in the inspector.
 
 ---
 
-## 3. Descartado ❌
+## 3. Discarded ❌
 
-- Partida, puntaje, victoria, roguelite y herencia entre partidas (visión del 15/10/2026: es un
-  laboratorio).
-- Enciclopedia y descubrimiento (17/10/2026).
-- Animales pluricelulares (rotíferos, *Hydra*) y *Zoophagus*, hasta que su simulación sea realista.
-- Plano focal: todo ocurre en un plano.
-- Vulkan: raylib 5.5 no lo tiene y el cuadro está limitado por la CPU.
-- Modo arcade, biología especulativa, realismo exagerado.
+- Game run, score, victory, roguelite and inheritance between runs (vision of 15/10/2026: it is a
+  laboratory).
+- Encyclopedia and discovery (17/10/2026).
+- Multicellular animals (rotifers, *Hydra*) and *Zoophagus*, until their simulation is realistic.
+- Focal plane: everything happens in one plane.
+- Vulkan: raylib 5.5 does not support it and the frame is CPU-bound.
+- Arcade mode, speculative biology, exaggerated realism.
 
-## 4. Orden propuesto
+## 4. Proposed order
 
-1. **A** (limpieza: enciclopedia y deuda chica).
-2. **B** (validación y paquetes) → **lanzamiento**.
-3. **C** (lentes: contraste de fase primero, para los cultivos).
-4. **H** (bindings) y **G** (análisis), que aprovechan lo que ya hay.
-5. **D**, **E** y **F** (biología y química nuevas), en el orden que pidan las lecciones.
-6. **I** y **J** cuando haga falta.
+1. **A** (clean-up: encyclopedia and small debt).
+2. **B** (validation and packages) → **release**.
+3. **C** (lenses: phase contrast first, for the cultures).
+4. **H** (bindings) and **G** (analysis), which build on what already exists.
+5. **D**, **E** and **F** (new biology and chemistry), in the order the lessons need.
+6. **I** and **J** when needed.

@@ -5,7 +5,7 @@
 #include <cstdint>
 #include <vector>
 
-// Pie y tallo de los seres fijos (mecanismo M9, docs/plan_mecanicas.md). Sin raylib ni EnTT: la
+// Pie y tallo de los seres fijos (mecanismo M9, docs/mechanics/stalks-and-colonies.md). Sin raylib ni EnTT: la
 // física del tallo como varilla; el mundo (game/world_stalk.cpp) le da el agua y el zooide.
 //
 // Tipos reales:

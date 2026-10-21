@@ -1,7 +1,7 @@
 // Validación contra resultados publicados (MVP). Suite "validacion": ctest -L validacion.
 //
 // Cada test reproduce un experimento real y compara con la fuente ([physiology.<id>.*] de cada ser,
-// docs/validacion.md). Son largos: la biología se acelera con la escala de tiempo biológico (600),
+// docs/validation/README.md). Son largos: la biología se acelera con la escala de tiempo biológico (600),
 // que no cambia las proporciones entre procesos.
 #include "bio/physiology.hpp"
 #include "game/intervention.hpp"
@@ -21,7 +21,7 @@ constexpr float kDt = 1.0f / 60.0f;
 WorldConfig cultureConfig(std::size_t bacteria) {
     WorldConfig c;
     // Placa de ~860 µm: en una de 350 µm, una decena de paramecios de ~180 µm terminaba aplastada
-    // contra el vidrio (ver docs/validacion.md).
+    // contra el vidrio (ver docs/validation/README.md).
     c.gridX = c.gridY = 128;
     c.bacteria = bacteria;
     c.detritus = 0;
@@ -34,7 +34,7 @@ WorldConfig cultureConfig(std::size_t bacteria) {
     // el cultivo deja de ser "sin limitación".
     c.medium.phage = 0.0f;
     // Ni Bdellovibrio: en una placa de 0,86 mm, nadando a 100 µm/s, encuentran a todas las
-    // bacterias y las extinguen (docs/validacion.md).
+    // bacterias y las extinguen (docs/validation/README.md).
     c.bdellovibrioFraction = 0.0f;
     c.seed = 2024;
     return c;
@@ -88,7 +88,7 @@ double cultureGrowthRate(SpeciesId id, float hours) {
 TEST_CASE("validación: µmax de las heterótrofas en cultivo sin limitación" * doctest::test_suite("validacion")) {
     // Amoeba proteus queda afuera: su µmax publicado (Rogerson 1980) es con Tetrahymena como
     // presa, cientos por división; en una placa de 0,5 mm no hay presas protistas suficientes para
-    // un cultivo sin limitación (ver docs/validacion.md).
+    // un cultivo sin limitación (ver docs/validation/README.md).
     for (const SpeciesId id : {SpeciesId::Paramecium}) {
         const SourcedValue& mu = speciesPhysiology(id).growthMax;
         REQUIRE(mu.present);

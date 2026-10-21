@@ -33,7 +33,7 @@ bool warned(const std::string& fragment) {
 
 TEST_CASE("contenido: el paquete de fábrica carga sus 92 seres en el orden de siempre, sin avisos" *
           doctest::test_suite("paquetes")) {
-    // 24 de la gota, 3 de cultivo (20b), 5 de los preparados (20c) 8 del lote 1 de candidatos, 7 del lote 2, 18 del lote 3, 7 del lote 4 Staurastrum y los de las mecánicas (docs/plan_mecanicas.md), sin Spirostomum (quitado), y el espermatozoide humano.
+    // 24 de la gota, 3 de cultivo (20b), 5 de los preparados (20c) 8 del lote 1 de candidatos, 7 del lote 2, 18 del lote 3, 7 del lote 4 Staurastrum y los de las mecánicas (docs/mechanics/README.md), sin Spirostomum (quitado), y el espermatozoide humano.
     CHECK(speciesCount() == 92);
     CHECK(speciesLoadWarnings().empty());
     // Ningún registro avisa nada con el paquete de fábrica (una clave mal escrita se avisa).

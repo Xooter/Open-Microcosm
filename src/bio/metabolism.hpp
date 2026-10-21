@@ -34,7 +34,7 @@ struct MetabolismParams {
     // (pmol por pmol de biomasa); la célula acumula hasta luxuryQuota·Q₀ y las medias saturaciones
     // son las de CRECIMIENTO (como se publican).
     float luxuryQuota = 1.5f;            // Qmax/Q₀ (consumo de lujo). SIN VERIFICAR: para el P de algas
-                                         // suele ser mayor (ver docs/validacion.md)
+                                         // suele ser mayor (ver docs/validation/README.md)
     float phosphorusRatio = 0.01f;       // pmol P por pmol de biomasa (Redfield, aprox.)
     float phosphorusHalfSaturation = 0.5f; // [µM]
     // Nitrógeno (amonio y nitrato): también lo toman las fotótrofas. N:P ≈ 16 (Redfield).

@@ -1,4 +1,4 @@
-// Pie y tallo de los seres fijos (mecanismo M9 de docs/plan_mecanicas.md): la varilla de bio/stalk con
+// Pie y tallo de los seres fijos (mecanismo M9 de docs/mechanics/stalks-and-colonies.md): la varilla de bio/stalk con
 // el agua de la placa, el zooide que sostiene, su crecimiento, el espasmonema y el tallo vacío.
 #include "core/profiling.hpp"
 #include "core/rng.hpp"

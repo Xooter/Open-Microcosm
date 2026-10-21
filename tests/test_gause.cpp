@@ -74,7 +74,7 @@ TEST_CASE("validación: Gause — en el cultivo mixto hay exclusión competitiva
     CHECK(excluded >= 4);
 }
 
-// DISCREPANCIA CONOCIDA (docs/validacion.md, «Gause en el cultivo»): Gause (1934, fig. 23; datos en
+// DISCREPANCIA CONOCIDA (docs/validation/README.md, «Gause en el cultivo»): Gause (1934, fig. 23; datos en
 // gauseR) vio que gana P. aurelia (día 25: 140 contra 23 en volumen relativo). En el modelo gana la
 // que se adelanta al principio: P. aurelia en 2 o 3 de 5 réplicas. La ventaja de P. aurelia sale solo
 // de la alometría de la alimentación (~20 % más aclaramiento por biomasa) y no alcanza contra el

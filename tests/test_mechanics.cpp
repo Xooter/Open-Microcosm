@@ -1,4 +1,4 @@
-// Mecánicas de los seres (docs/plan_mecanicas.md): locomoción, reacciones y defensas que se eligen por
+// Mecánicas de los seres (docs/mechanics/README.md): locomoción, reacciones y defensas que se eligen por
 // datos. Casos cortos (segundos de simulación) en una placa sin bacterias.
 #include "ai/autopilot.hpp"
 #include "bio/bacteria.hpp"

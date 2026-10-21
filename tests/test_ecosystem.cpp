@@ -133,7 +133,7 @@ TEST_CASE("ecosistema determinista sin importar la cantidad de hilos" * doctest:
 }
 
 // 30 min de gota sin jugador (30 h biológicas). FALLA HOY y tarda ~4 h, por eso está en skip
-// (correr con: bio_tests -tc="*30 min*" --no-skip). Diagnóstico (docs/validacion.md, «Colapso de
+// (correr con: bio_tests -tc="*30 min*" --no-skip). Diagnóstico (docs/validation/README.md, «Colapso de
 // las bacterias»): sin materia orgánica las bacterias no crecen; en una gota de bioma, los fagos
 // matan al 99,9 % en ~2 h y el pastoreo (protistas ~300 veces más densos que en un cultivo) supera
 // la tasa máxima de crecimiento de las resistentes. Después Candida y Naegleria llenan la placa.

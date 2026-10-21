@@ -8,7 +8,7 @@ struct MediumKey {
     bool nonNegative; // concentraciones y tasas; la temperatura puede ser bajo cero
 };
 
-// Claves con la unidad de cada una documentada en docs/contenido.md.
+// Claves con la unidad de cada una documentada en docs/content/.
 // Las que también son parámetros en vivo usan el mismo nombre que su clave en game/parameters
 // (sin el prefijo "medio.").
 constexpr MediumKey kMediumKeys[] = {

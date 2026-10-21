@@ -125,7 +125,7 @@ inline float processWidth(const ProcessSpec& p, float s, float scale) {
     return scale * (p.baseWidth + (p.tipWidth - p.baseWidth) * s);
 }
 
-// Respuesta fóbica temporal (mecanismo M1, docs/plan_mecanicas.md): la célula compara lo que siente
+// Respuesta fóbica temporal (mecanismo M1, docs/mechanics/behavioural-responses.md): la célula compara lo que siente
 // ahora con lo que sintió hace un momento (memoria de `memory` segundos) y reacciona a un cambio
 // brusco, como la reacción de evitación de los ciliados (Jennings) o la respuesta fotofóbica de los
 // flagelados (Diehn 1973). `StepUp`: subida relativa mayor que `threshold` con el nivel arriba de

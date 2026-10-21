@@ -1,4 +1,4 @@
-// Señales químicas entre seres (M3) y morfos inducidos (M4) de docs/plan_mecanicas.md: la kairomona de
+// Señales químicas entre seres (M3) y morfos inducidos (M4) de docs/mechanics/chemical-signals.md: la kairomona de
 // Lembadion hace que Euplotes octocarinatus arme alas; lo que suelta Tetrahymena hace que T. vorax pase
 // a macrostoma.
 #include "core/profiling.hpp"

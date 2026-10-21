@@ -1,4 +1,4 @@
-// Contracción del cuerpo entero (Stentor): mecanismo de docs/plan_mecanicas.md (punto 8).
+// Contracción del cuerpo entero (Stentor): mecanismo de docs/mechanics/shape-changes.md.
 #include "core/profiling.hpp"
 #include "core/rng.hpp"
 #include "game/rest_shape.hpp"

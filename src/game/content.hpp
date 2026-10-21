@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-// Paquetes de contenido (fase 20.0; formato en docs/contenido.md). Un paquete es una carpeta con
+// Paquetes de contenido (fase 20.0; formato en docs/content/). Un paquete es una carpeta con
 // `pack.toml` y una carpeta por tipo con un archivo por definición (core/pack_files:
 // beings/paramecium.toml, con la fisiología del ser en el mismo archivo; biomes/, minerals/,
 // body_plans/, media/, vessels/, plates/, lessons/, reagents/, glossary/), o un solo archivo
