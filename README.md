@@ -11,11 +11,7 @@
   <img alt="Vibe coding welcome" src="https://img.shields.io/badge/vibe%20coding-welcome-brightgreen.svg">
 </p>
 
-<p align="center">
-  <img src="docs/img/demo.gif" alt="A tour of Open Microcosm: a puddle drop with ciliates, algae and bacteria, live plots and the catalogue" width="800">
-  <br>
-  <sub>Tour of the laboratory at 3× speed. <a href="docs/img/demo-small.mp4">Full video (MP4)</a>.</sub>
-</p>
+https://github.com/user-attachments/assets/d68a8eea-01fe-4a2b-a4d1-f6426db19eb6
 
 Open Microcosm simulates microscopic life **as it is seen through a laboratory microscope**: drops of water
 with their microorganisms, **cell cultures** (human and animal cells on a dish) and **plant
