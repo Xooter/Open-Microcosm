@@ -172,8 +172,11 @@ void World::setupAnimalCell(entt::entity e, Rng& rng) {
                 meta->reserves *= k;
             }
         }
-        if (m.speedScale != 1.0f)
-            ac.vigor *= m.speedScale;
+        // Lo que nada cada forma es relativo a la media de la muestra (swim_speed es la media medida).
+        float meanSpeed = 0.0f;
+        for (const MorphotypeSpec& f : info.morphotypes)
+            meanSpeed += f.fraction * f.speedScale / std::max(1e-6f, total);
+        ac.vigor *= m.speedScale / std::max(1e-3f, meanSpeed);
     }
     registry_.emplace_or_replace<AnimalCell>(e, ac);
     if (info.animalCell.adherent)
@@ -376,10 +379,15 @@ bool World::updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, f
     if (!acp)
         return false;
     AnimalCell& ac = *acp;
-    if (ac.phase == CellPhase::Dead)
-        return true; // con la membrana rota ya no se hincha (por eso la prueba hiposmótica la separa)
     const SpeciesId sid = speciesOfEntity(registry_, e);
     const SpeciesInfo& info = speciesInfo(sid);
+    if (ac.phase == CellPhase::Dead) {
+        // Con la membrana rota el agua sale (ya no hay solutos retenidos): una cola hinchada se deshincha y
+        // un muerto no se hincha (por eso la prueba hiposmótica lo separa de un vivo inmóvil).
+        if (ac.swelling > 0.0f && info.osmoticSwelling.present)
+            ac.swelling *= std::exp(-(bioDt / bioScale()) / info.osmoticSwelling.seconds);
+        return true;
+    }
     if (const OsmoticSwellingSpec& os = info.osmoticSwelling; os.present) {
         // La cola se hincha con el agua que entra (Boyle–van 't Hoff) y se enrolla; física, en tiempo real.
         const float osm = osmosis::mediumOsmolarity(medium_.salinity, medium_.osmolytes);

@@ -103,3 +103,4 @@ TEST_CASE("lección: fragilidad osmótica se completa con su solución" * doctes
 }
 TEST_CASE("lección: Gause se completa" * doctest::test_suite("largos")) { checkLesson("gause_competition"); }
 TEST_CASE("lección: Tilman se completa" * doctest::test_suite("largos")) { checkLesson("tilman_chemostat"); }
+TEST_CASE("lección: espermiograma se completa con su solución" * doctest::test_suite("largos")) { checkLesson("spermiogram"); }
