@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="assets/icon/icon-256.png" alt="Open Microcosm icon" width="128">
+</p>
+
 <h1 align="center">Open Microcosm</h1>
 
 <p align="center">
