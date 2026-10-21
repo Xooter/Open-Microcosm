@@ -1,0 +1,9 @@
+[[term]]
+id = "motility"
+term = "Motilidad espermática"
+definition = "Clases de la OMS: progresivos (nadan avanzando), no progresivos (baten sin avanzar) e inmóviles. Límites inferiores de referencia (OMS 2021): 30 % de progresivos y 42 % de motilidad total. La vitalidad (membrana intacta) siempre es mayor o igual."
+source = "OMS, Laboratory manual, 6.ª ed. (2021)."
+alias = ["motilidad", "progresivos", "no progresivos", "inmóviles", "vitalidad"]
+related = ["casa", "spermatozoon", "q10"]
+lesson = "spermiogram"
+plate = "fresh_semen"

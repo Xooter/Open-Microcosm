@@ -1,0 +1,9 @@
+[[term]]
+id = "spermatozoon"
+term = "Espermatozoide"
+definition = "Gameto masculino: una cabeza con el núcleo haploide y el acrosoma, y un flagelo de ~50 µm que lo empuja desde atrás. No come ni se divide: vive de la fructosa del semen hasta que pierde la motilidad y muere."
+source = "OMS, Laboratory manual for the examination and processing of human semen, 6.ª ed. (2021)."
+alias = ["espermatozoides", "esperma", "semen"]
+related = ["acrosome", "casa", "motility"]
+lesson = "spermiogram"
+plate = "fresh_semen"

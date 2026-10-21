@@ -1,0 +1,9 @@
+[[term]]
+id = "casa"
+term = "CASA"
+definition = "Análisis de semen asistido por computadora: sigue la cabeza de cada espermatozoide cuadro a cuadro y mide su rapidez curvilínea (VCL), rectilínea (VSL) y media (VAP), sus cocientes (LIN, STR, WOB), el desplazamiento lateral de la cabeza (ALH) y la frecuencia de cruce del batido (BCF)."
+source = "Mortimer, S. T. (2000). Hum. Reprod. Update 6: 136; OMS (2021)."
+alias = ["vcl", "vsl", "vap", "alh", "bcf"]
+related = ["motility", "spermatozoon"]
+lesson = "spermiogram"
+plate = "fresh_semen"

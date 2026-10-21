@@ -1,0 +1,36 @@
+[[lesson]]
+id = "spermiogram"
+title = "Espermiograma: motilidad y temperatura"
+level = "universitario"
+goal = "Evaluar la motilidad de una muestra de semen como en el laboratorio (clases de la OMS) y ver por que la OMS pide hacerlo a 37 °C: el batido del flagelo es una ATPasa (dineina) y se acelera con el calor."
+source = "OMS, Laboratory manual for the examination and processing of human semen, 6ª ed. (2021); Garcia-Molina et al. 2023 (Rev. Int. Androl. 21(2)): VAP 54,5 µm/s a 37 °C y 37,4 µm/s a 23 °C."
+plate = "fresh_semen"
+seed = 1
+controls = ["environment.temperature"]
+solution = ["600 0 0 0 0 0 22 0 0 0 0 0 environment.temperature", "1800 0 0 0 0 0 37 0 0 0 0 0 environment.temperature"]
+solution_hours = 1.0
+[[lesson.locked]]
+key = "environment.salinity"
+reason = "La osmolaridad del medio cambia la forma de la cola (prueba hiposmotica): se deja fija para que solo cambie la temperatura."
+[[lesson.actions]]
+text = "Platina a 22 °C (temperatura ambiente)"
+event = "0 0 0 0 0 0 22 0 0 0 0 0 environment.temperature"
+[[lesson.actions]]
+text = "Platina a 37 °C"
+event = "0 0 0 0 0 0 37 0 0 0 0 0 environment.temperature"
+[[lesson.step]]
+text = "La muestra esta en la platina a 37 °C. Abri el panel CASA (Ver > CASA) y activa la medicion: cuenta cuantos son progresivos, no progresivos e inmoviles."
+goal = { kind = "time_h", op = ">=", value = 0.05 }
+prediction = { text = "Que fraccion de los espermatozoides de una muestra normal nada avanzando (progresivos)?", quantity = { kind = "motility", key = "human_sperm" }, unit = "fraction" }
+[[lesson.step]]
+text = "Mira la rapidez media de los progresivos a 37 °C (VAP en el panel CASA)."
+goal = { kind = "swim_speed", key = "human_sperm", op = ">=", value = 45.0 }
+prediction = { text = "Si la platina se enfria a 22 °C, ¿a que rapidez nadan los progresivos (µm/s)?", quantity = { kind = "swim_speed", key = "human_sperm" }, unit = "um/s" }
+[[lesson.step]]
+text = "Baja la platina a 22 °C (boton de la leccion) y espera unos segundos."
+goal = { kind = "swim_speed", key = "human_sperm", op = "<=", value = 40.0 }
+question = { text = "Por que nadan mas despacio a 22 °C?", options = ["El agua fria es mas viscosa y nada mas", "El batido lo mueve la dineina, una ATPasa: con menos temperatura hidroliza ATP mas despacio y el flagelo bate con menos frecuencia", "Se mueren de frio"], correct = 1, explanation = "La rapidez cae con un Q10 de ~1,3 y la frecuencia del batido con ~1,15 (medidos con CASA): es la quimica del motor, no solo la viscosidad (que con un Q10 de 2 y la viscosidad del agua daria el triple de caida). Por eso la OMS pide medir la motilidad a 37 °C, o informar la temperatura." }
+[[lesson.step]]
+text = "Volve a 37 °C. Los inmoviles, ¿estan muertos? El CASA no lo sabe: hace falta una prueba de vitalidad (placas de eosina-nigrosina y de prueba hiposmotica)."
+goal = { kind = "swim_speed", key = "human_sperm", op = ">=", value = 45.0 }
+question = { text = "Como se distingue un espermatozoide inmovil vivo de uno muerto?", options = ["Por la forma de la cabeza", "Por su membrana: la del vivo esta intacta y excluye la eosina, y en un medio hipotonico le entra agua y se le enrolla la cola; la del muerto no", "No se puede distinguir"], correct = 1, explanation = "La vitalidad se mide por la integridad de la membrana: eosina-nigrosina (los muertos se tinen de rosa) o la prueba hiposmotica (los vivos hinchan la cola). La vitalidad de una muestra siempre es mayor o igual que su motilidad total." }

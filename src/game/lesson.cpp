@@ -35,7 +35,8 @@ constexpr const char* kCheckKeys[] = {"kind", "key", "op", "value"};
 constexpr const char* kQuestionKeys[] = {"text", "options", "correct", "explanation"};
 constexpr const char* kPredictionKeys[] = {"text", "quantity", "unit"};
 constexpr const char* kCheckKinds[] = {"time_h", "population",   "bacteria",    "concentration", "ph",
-                                       "plasmolysis", "hemolysis", "near_center", "fraction"};
+                                       "plasmolysis", "hemolysis", "near_center", "fraction",
+                                       "motility", "vitality", "swollen", "swim_speed"};
 
 void readCheck(const toml::table& t, const std::string& where, LessonCheck& c, std::vector<std::string>& warnings) {
     toml_io::warnUnknown(t, kCheckKeys, where, warnings);
@@ -303,6 +304,33 @@ double lessonQuantity(const LessonCheck& c, const World* world, const CultureRun
                 lysed += b.lysed[i] ? 1 : 0;
             }
         return red ? static_cast<double>(lysed) / red : 0.0;
+    }
+    // Espermiograma (la especie en `key`): fracción de progresivos que nadan, de vivos (vitalidad), de colas
+    // enrolladas (prueba hiposmótica) y la rapidez media de nado de los progresivos [µm/s].
+    if (c.kind == "motility" || c.kind == "vitality" || c.kind == "swollen" || c.kind == "swim_speed") {
+        const std::optional<SpeciesId> id = findSpecies(c.key);
+        if (!id)
+            return 0.0;
+        int all = 0, hits = 0;
+        double speed = 0.0;
+        for (const auto [e, sp, ac, loco] : w.registry().view<const Species, const AnimalCell, const Locomotion>().each()) {
+            if (sp.id != *id)
+                continue;
+            ++all;
+            const bool alive = ac.phase != CellPhase::Dead;
+            const bool swimming = alive && ac.grade == MotilityGrade::Progressive && loco.speed > 0.0f;
+            if (c.kind == "vitality")
+                hits += alive ? 1 : 0;
+            else if (c.kind == "swollen")
+                hits += ac.swelling > 0.5f ? 1 : 0;
+            else if (swimming) {
+                ++hits;
+                speed += loco.speed;
+            }
+        }
+        if (c.kind == "swim_speed")
+            return hits ? speed / hits : 0.0;
+        return all ? static_cast<double>(hits) / all : 0.0;
     }
     if (c.kind == "near_center") {
         const std::optional<SpeciesId> id = findSpecies(c.key);

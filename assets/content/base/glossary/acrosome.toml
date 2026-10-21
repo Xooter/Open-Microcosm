@@ -1,0 +1,7 @@
+[[term]]
+id = "acrosome"
+term = "Acrosoma"
+definition = "Vesícula que cubre la mitad anterior de la cabeza del espermatozoide, con enzimas (acrosina, hialuronidasa) que digieren la cubierta del óvulo. Se libera en la reacción acrosómica, que disparan la zona pelúcida y la progesterona."
+source = "Alberts et al., Molecular Biology of the Cell, 6.ª ed., cap. 21."
+alias = ["acrosomas", "reacción acrosómica"]
+related = ["spermatozoon", "capacitation"]
