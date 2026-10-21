@@ -1836,3 +1836,14 @@ membrana	membrane
 vacuolas digestivas (bacterias)	food vacuoles (bacteria)
 reticulo endoplasmico	endoplasmic reticulum
 aparato de Golgi	Golgi apparatus
+Espermatozoide humano	Human spermatozoon
+Gameto masculino: una cabeza oval de ~4 um con el nucleo haploide y el acrosoma, y una cola de ~50 um que lo empuja desde atras. No come ni se divide: vive de la fructosa del semen. Al morir deja de nadar y queda entero e inmovil.	Male gamete: an oval head of ~4 um with the haploid nucleus and the acrosome, and a ~50 um tail that pushes it from behind. It neither eats nor divides: it lives on the fructose of semen. When it dies it stops swimming and stays whole and motionless.
+Celula humana que nada con un flagelo	Human cell that swims with a flagellum
+muerta: inmovil y entera, sin desarmarse (su membrana ya no excluye colorantes vitales como la eosina)	dead: motionless and whole, not broken up (its membrane no longer excludes vital dyes such as eosin)
+edad (pierde la motilidad)	age (loses motility)
+espermatozoide	spermatozoon
+nucleo haploide (cromatina compactada por protaminas)	haploid nucleus (chromatin compacted by protamines)
+acrosoma (enzimas para atravesar la zona pelucida)	acrosome (enzymes to cross the zona pellucida)
+vaina mitocondrial de la pieza intermedia (~50-75 mitocondrias en helice)	mitochondrial sheath of the midpiece (~50-75 mitochondria in a helix)
+flagelo: pieza intermedia, principal y terminal (axonema 9+2)	flagellum: midpiece, principal piece and end piece (9+2 axoneme)
+acrosoma	acrosome

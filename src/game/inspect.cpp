@@ -155,6 +155,8 @@ const char* kindName(const SpeciesInfo& info) {
         return "Alga colonial";
     if (info.feeding == FeedingMode::None && info.chloroplasts)
         return "Alga unicelular";
+    if (info.animalCell.present && info.locomotion == LocomotionType::Flagellum)
+        return "Celula humana que nada con un flagelo";
     switch (info.locomotion) {
     case LocomotionType::Cilia: return "Ciliado";
     case LocomotionType::Flagellum: return "Flagelado";
@@ -309,7 +311,9 @@ Inspection inspectCell(const World& w, entt::entity e) {
     if (const AnimalCell* ac = reg.try_get<AnimalCell>(e)) {
         // Célula humana: dónde está de su ciclo y por qué (fase 20b).
         const AnimalCellInfo& ai = info.animalCell;
-        if (ac->phase == CellPhase::Apoptotic)
+        if (ac->phase == CellPhase::Dead)
+            now("muerta: inmovil y entera, sin desarmarse (su membrana ya no excluye colorantes vitales como la eosina)");
+        else if (ac->phase == CellPhase::Apoptotic)
             now(fmt("en apoptosis (%.0f%%): se encoge, burbujea y se partira en cuerpos apoptoticos, sin reventar",
                     100.0f * ac->apoptosis));
         else if (ac->phase == CellPhase::G0)
