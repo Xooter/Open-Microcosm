@@ -240,7 +240,7 @@ TEST_CASE("sandbox: cada ser del catálogo cae en la categoría que le correspon
         {C::Fungi, {SpeciesId::Candida, *findSpecies("saccharomyces")}},
         {C::HumanCells, {*findSpecies("human_dermal_fibroblast"), *findSpecies("hela"), *findSpecies("neutrophil"),
                          *findSpecies("buccal_squamous_cell"), *findSpecies("lymphocyte"), *findSpecies("monocyte"),
-                         *findSpecies("nih_3t3"), *findSpecies("hacat")}},
+                         *findSpecies("nih_3t3"), *findSpecies("hacat"), *findSpecies("human_sperm")}},
         {C::PlantCells, {*findSpecies("onion_epidermal_cell"), *findSpecies("elodea_leaf_cell")}},
     };
     int listed = 0;
