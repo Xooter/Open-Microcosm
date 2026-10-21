@@ -16,7 +16,7 @@ here.
 | ID | Type | Severity | Summary |
 |---|---|---|---|
 | [`gause-displacement-too-slow`](gause-displacement-too-slow.md) | validation-gap | minor | *P. aurelia* wins Gause's competition but displaces *P. caudatum* more slowly than Gause saw. |
-| [`starved-cultures-keep-dividing`](starved-cultures-keep-dividing.md) | model-limitation | minor | Food-limited cultures plateau in biovolume but keep dividing into smaller cells. |
+| [`starved-cultures-keep-dividing`](starved-cultures-keep-dividing.md) | model-limitation | minor | The size gene evolves down within weeks: mutation far above the published rates. |
 | [`drop-bacteria-collapse`](drop-bacteria-collapse.md) | model-limitation | major | Bacteria in a drop collapse within a few biological hours; the 30-min test is skipped. |
 | [`bdellovibrio-no-prey-resistance`](bdellovibrio-no-prey-resistance.md) | model-limitation | major | *Bdellovibrio* can exterminate its prey: no phenotypic resistance. |
 | [`organic-matter-after-lysis`](organic-matter-after-lysis.md) | model-limitation | minor | Organic matter reaches hundreds of mM after a lysis in a small plate. |
