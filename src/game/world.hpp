@@ -180,6 +180,10 @@ struct WorldConfig {
     Tissue tissue;
     // Siembra inicial de una placa preparada: especie y cantidad (la aplica Run::start).
     std::vector<std::pair<SpeciesId, int>> seeding;
+    // Calidad de la muestra de los que nadan por clases ([being.motility]): las fracciones de cada clase
+    // al sembrar (espermiograma). Sin `motilitySet`, las de la especie.
+    bool motilitySet = false;
+    MotilityMix motility;
     // Células con su estado (gota de muestra de un cultivo); las ubica Run::start.
     std::vector<SampledCell> sampled;
     // Programa temporal de la placa (game/program): fotoperíodo, rampas, pulsos; se aplica una vez

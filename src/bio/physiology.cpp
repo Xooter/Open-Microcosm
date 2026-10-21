@@ -174,6 +174,7 @@ void loadTables(const toml::table& doc) {
         ph.phaseG2 = readScaled(*t, sp, "phase_g2", Kind::Time);
         ph.phaseM = readScaled(*t, sp, "phase_m", Kind::Time);
         ph.lifespan = readScaled(*t, sp, "lifespan", Kind::Time);
+        ph.motilityHalfLife = readScaled(*t, sp, "motility_half_life", Kind::Time);
         ph.confluence = readScaled(*t, sp, "confluence", Kind::Density);
         ph.glucoseVmax = readScaled(*t, sp, "glucose_vmax", Kind::Flux);
         ph.glucoseKm = readScaled(*t, sp, "glucose_km", Kind::Concentration);
@@ -302,6 +303,7 @@ const std::vector<PhysiologyKey>& physiologyKeys() {
         {"phase_g2", &P::phaseG2, "h", "Fase G2"},
         {"phase_m", &P::phaseM, "h", "Mitosis"},
         {"lifespan", &P::lifespan, "h", "Vida media"},
+        {"motility_half_life", &P::motilityHalfLife, "h", "Vida media de la motilidad"},
         {"confluence", &P::confluence, "1/cm2", "Densidad de confluencia"},
         {"glucose_vmax", &P::glucoseVmax, "fmol/h", "Captacion maxima de glucosa"},
         {"glucose_km", &P::glucoseKm, "uM", "Km de la glucosa"},

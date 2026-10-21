@@ -1457,6 +1457,12 @@ void World::applyTraits(entt::entity e) {
                      maxSpeedOf(locomotionParams_, loco.type);
     if (phys.beatFrequency.present)
         loco.helixPeriod = 1.0f / atTemperature(phys.beatFrequency, medium_.temperature);
+    // Cada nadador de una muestra tiene su rapidez; los no progresivos baten sin avanzar casi.
+    if (const AnimalCell* ac = registry_.try_get<AnimalCell>(e); ac && info.motility.present) {
+        loco.power *= ac->vigor;
+        if (ac->grade == MotilityGrade::NonProgressive)
+            loco.power *= info.motility.nonProgressiveSpeed;
+    }
     loco.gliding = info.flagellarGliding;
     loco.pusher = info.flagellumPosterior;
     loco.flagellumLength = info.flagellumLength;
@@ -2025,7 +2031,12 @@ void World::applyMotion(float dt) {
         bool contract = false;
         loco.burst = 0.0f; // el salto lo pone el piloto paso a paso
         const AnimalCell* animal = registry_.try_get<AnimalCell>(e);
-        if (animal && animal->phase == CellPhase::Dead) { // muerta e inmóvil: el agua la lleva
+        // Muerta, o viva pero sin batir: inmóvil (su clase) o sin ATP (sin fructosa ni reservas: vuelve a
+        // nadar si recupera sustrato). El agua la lleva.
+        const Metabolism* fuel = animal && loco.type != LocomotionType::Crawl ? registry_.try_get<Metabolism>(e) : nullptr;
+        if (animal && (animal->phase == CellPhase::Dead ||
+                       (loco.type != LocomotionType::Crawl &&
+                        (animal->grade == MotilityGrade::Immotile || (fuel && fuel->starving))))) {
             loco.forward = loco.turn = 0.0f;
             loco.active = false;
             loco.speed = 0.0f;

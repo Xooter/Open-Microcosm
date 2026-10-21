@@ -57,6 +57,18 @@ style = "spermatozoon"
 curvature_radius = 60.0
 rotational_diffusion = 0.3
 noise_s = 0.3
+# Una muestra normal (la mediana de los hombres de las tablas de referencia de la OMS 2021; Campbell et al.
+# 2021, Hum. Reprod. Update): progresivos ~55 % y vitalidad ~78 % (22 % muertos). Los no progresivos
+# (~5 %) y, con ellos, los inmóviles vivos son estimación. La rapidez varía entre individuos con un CV de
+# ~30 % (distribuciones de VAP de CASA; estimación). En el panel Placa se arma cualquier otra muestra.
+[being.motility]
+progressive = 0.55
+non_progressive = 0.05
+immotile = 0.18
+dead = 0.22
+speed_cv = 0.3
+non_progressive_speed = 0.2
+non_progressive_radius = 6.0
 
 [physiology.human_sperm.swim_speed]
 value = 54.5
@@ -72,11 +84,18 @@ temperature = 37.0
 q10 = 1.15
 source = "BCF con CASA: 15,3 Hz a 37 °C y 12,6 Hz a 23 °C (García-Molina et al. 2023, Rev. Int. Androl. 21(2), tabla 2): Q10 = (15,3/12,6)^(10/14) = 1,15."
 
-[physiology.human_sperm.lifespan]
-value = 24.0
+[physiology.human_sperm.motility_half_life]
+value = 12.0
 unit = "h"
 temperature = 37.0
-source = "In vitro a 37 °C la motilidad cae en horas a un día (la OMS pide evaluarla antes de 1 h de la eyaculación); en el moco cervical sobreviven varios días. Vida media de la motilidad estimada en ~1 día."
+source = "In vitro a 37 °C la motilidad de una muestra cae a la mitad en horas (la OMS pide evaluarla antes de 1 h de la eyaculación). Estimación: ~12 h."
+estimate = true
+
+[physiology.human_sperm.lifespan]
+value = 30.0
+unit = "h"
+temperature = 37.0
+source = "La membrana resiste más que la motilidad (la vitalidad de una muestra supera a su motilidad; OMS 2021); en el moco cervical sobreviven varios días. Vida media de la vitalidad estimada en ~30 h a 37 °C."
 estimate = true
 
 [physiology.human_sperm.glucose_vmax]

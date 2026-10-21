@@ -84,7 +84,7 @@ constexpr const char* kBeingKeys[] = {
     "neck_reach", "handling_hours", "chloroplasts", "raphe_glider", "b12_auxotroph", "frustule",
     "filament", "filament_cells", "fragmentation_per_hour", "zoospores", "daughter_colonies", "colony_cells",
     "mother_dies_at_release", "relative_dry_mass", "budding", "anaerobe", "posterior_mouth", "mouth_width", "divides_in_cyst", "lorica_iron_ratio", "lorica_hours", "perforation_hours", "sliding_colony", "testate", "cyclosis", "ph",
-    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "shape_wave", "star_colony", "contractile_vacuole", "semicell", "somersault", "algal_conjugation", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage", "swim_path",
+    "temperature", "max_salinity", "storage", "wall", "genome", "shape", "appearance", "cell", "process", "response", "jump", "contraction", "shape_wave", "star_colony", "contractile_vacuole", "semicell", "somersault", "algal_conjugation", "bioluminescence", "photosymbiont", "signal_toxicity", "stalk", "toxicysts", "histophagous", "release", "relay", "chemotaxis", "morph", "light_damage", "swim_path", "motility",
     "stress_pigment"};
 constexpr const char* kProcessKeys[] = {"kind",  "at",    "length", "base_width", "tip_width",
                                         "curve", "count", "spread", "body",       "fillet"};
@@ -282,6 +282,25 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
             cr.errors.push_back(cr.where + ": 'noise_s' tiene que ser positivo");
         if (s.locomotion != LocomotionType::Flagellum)
             cr.errors.push_back(cr.where + ": el recorrido pasivo es de los que nadan con un flagelo");
+        r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
+    }
+    if (const toml::table* mo = r.table("motility")) {
+        constexpr const char* kKeys[] = {"progressive", "non_progressive", "immotile", "dead", "speed_cv",
+                                         "non_progressive_speed", "non_progressive_radius"};
+        toml_io::warnUnknown(*mo, kKeys, r.where + " [motility]", warnings);
+        Reader cr{*mo, r.where + " [motility]", {}};
+        MotilitySpec& m = s.motility;
+        m.present = true;
+        cr.count("progressive", m.mix.progressive);
+        cr.count("non_progressive", m.mix.nonProgressive);
+        cr.count("immotile", m.mix.immotile);
+        cr.count("dead", m.mix.dead);
+        cr.count("speed_cv", m.speedCv);
+        cr.count("non_progressive_speed", m.nonProgressiveSpeed);
+        cr.count("non_progressive_radius", m.nonProgressiveRadius);
+        const float sum = m.mix.progressive + m.mix.nonProgressive + m.mix.immotile + m.mix.dead;
+        if (std::abs(sum - 1.0f) > 0.01f)
+            cr.errors.push_back(cr.where + ": las fracciones tienen que sumar 1");
         r.errors.insert(r.errors.end(), cr.errors.begin(), cr.errors.end());
     }
     if (const toml::table* sc = r.table("semicell")) {

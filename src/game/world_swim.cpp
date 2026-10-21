@@ -17,7 +17,8 @@ SpeciesId speciesOfEntity(const entt::registry& reg, entt::entity e) {
 
 void World::steerSwimmer(entt::entity e, const RingBody& body, Locomotion& loco, float dt) {
     PROFILE_SCOPE("World::steerSwimmer");
-    const SwimPathSpec& spec = speciesInfo(speciesOfEntity(registry_, e)).swimPath;
+    const SpeciesInfo& info = speciesInfo(speciesOfEntity(registry_, e));
+    const SwimPathSpec& spec = info.swimPath;
     SwimState* st = registry_.try_get<SwimState>(e);
     if (!st) { // el sentido de la curva, propio de cada individuo
         Rng first(config_.seed, rng_stream::kSwim, body.id, 0);
@@ -30,7 +31,12 @@ void World::steerSwimmer(entt::entity e, const RingBody& body, Locomotion& loco,
     const float sigma = std::sqrt(spec.rotationalDiffusion / tau);
     st->turnNoise += -st->turnNoise * (dt / tau) + sigma * std::sqrt(2.0f * dt / tau) * rng.normal();
     const float speed = maxSpeedOf(locomotionParams_, loco.type) * loco.power;
-    const float curve = spec.curvatureRadius > 0.0f ? st->chirality * speed / spec.curvatureRadius : 0.0f;
+    // Los no progresivos (OMS) baten sin avanzar: dan vueltas en círculos chicos.
+    const AnimalCell* ac = registry_.try_get<AnimalCell>(e);
+    const float radius = ac && info.motility.present && ac->grade == MotilityGrade::NonProgressive
+                             ? info.motility.nonProgressiveRadius
+                             : spec.curvatureRadius;
+    const float curve = radius > 0.0f ? st->chirality * speed / radius : 0.0f;
     const float omega = curve + st->turnNoise; // [rad/s]
     // El flagelo gira el cuerpo con ω = 3·Δ hacia el objetivo (bio/locomotion): el objetivo va a ω/3 del
     // rumbo actual, así el giro es el del batido y no depende de adónde quedó apuntando tras un choque.

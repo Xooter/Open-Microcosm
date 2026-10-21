@@ -15,6 +15,10 @@
 enum class CellPhase : std::uint8_t { G0, G1, S, G2, M, Apoptotic, Dead };
 const char* cellPhaseName(CellPhase phase);
 
+// Clase de motilidad de una célula que nada (OMS 2021). Muerta no es una clase: es CellPhase::Dead.
+enum class MotilityGrade : std::uint8_t { Progressive, NonProgressive, Immotile };
+const char* motilityGradeName(MotilityGrade grade);
+
 // Componente: estado de una célula animal.
 struct AnimalCell {
     CellPhase phase = CellPhase::G1;
@@ -30,6 +34,9 @@ struct AnimalCell {
     // Extensión sobre el fondo (0: redonda, recién sembrada; 1: extendida). Una célula que cae de
     // la suspensión se adhiere y se extiende en ~1 h.
     float spread = 1.0f;
+    // Las que nadan ([being.motility]): su clase y su rapidez respecto de la media de la especie.
+    MotilityGrade grade = MotilityGrade::Progressive;
+    float vigor = 1.0f;
 };
 
 // Componente marcador: adherida al sustrato por adhesiones focales. El agua no la arrastra (una

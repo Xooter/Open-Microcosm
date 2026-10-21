@@ -327,6 +327,22 @@ struct SwimPathSpec {
     float noiseSeconds = 0.3f;
 };
 
+// Fracciones de una muestra según las clases de motilidad de la OMS (2021): progresivos, no progresivos
+// (nadan sin avanzar: en círculos chicos o en el lugar), inmóviles vivos y muertos. Suman 1.
+struct MotilityMix {
+    float progressive = 1.0f, nonProgressive = 0.0f, immotile = 0.0f, dead = 0.0f;
+};
+
+// Motilidad de una población de nadadores ([being.motility]): la muestra típica, la variación de la
+// rapidez entre individuos y cómo nadan los no progresivos.
+struct MotilitySpec {
+    bool present = false;
+    MotilityMix mix;
+    float speedCv = 0.0f;             // coeficiente de variación de la rapidez entre individuos
+    float nonProgressiveSpeed = 0.2f; // fracción de la rapidez de los progresivos
+    float nonProgressiveRadius = 6.0f; // radio de sus círculos [µm]
+};
+
 struct AnimalCellInfo {
     bool present = false;
     bool adherent = true;              // adherida al fondo por adhesiones focales: el agua no la lleva
@@ -447,6 +463,7 @@ struct SpeciesInfo {
     RelaySpec relay;                    // [being.relay]
     ChemotaxisSpec chemotaxis;          // [being.chemotaxis]
     SwimPathSpec swimPath;              // [being.swim_path]
+    MotilitySpec motility;              // [being.motility]
     MorphSpec morph;                    // [being.morph]
     bool histophagous = false;
     // Se divide dentro de un quiste reproductivo (Colpoda): mientras dura el ciclo de divisiones no nada

@@ -313,6 +313,12 @@ Inspection inspectCell(const World& w, entt::entity e) {
         const AnimalCellInfo& ai = info.animalCell;
         if (ac->phase == CellPhase::Dead)
             now("muerta: inmovil y entera, sin desarmarse (su membrana ya no excluye colorantes vitales como la eosina)");
+        else if (info.motility.present && ac->grade == MotilityGrade::Immotile)
+            now("viva pero inmovil: no bate (la membrana sigue intacta: excluye la eosina)");
+        else if (info.motility.present && ac->grade == MotilityGrade::NonProgressive)
+            now("no progresivo: bate pero no avanza (da vueltas en el lugar)");
+        else if (info.motility.present)
+            now(fmt("progresivo: nada a %.0f%% de la rapidez media de la muestra", 100.0f * ac->vigor));
         else if (ac->phase == CellPhase::Apoptotic)
             now(fmt("en apoptosis (%.0f%%): se encoge, burbujea y se partira en cuerpos apoptoticos, sin reventar",
                     100.0f * ac->apoptosis));
@@ -324,6 +330,9 @@ Inspection inspectCell(const World& w, entt::entity e) {
         else
             now(fmt("ciclo celular: fase %s (%.1f h en la fase)", asciiFold(cellPhaseName(ac->phase)).c_str(),
                     ac->phaseHours * w.bioTimeScale() / w.bioScale())); // horas a su temperatura (sin el Q10)
+        if (const Metabolism* fm = reg.try_get<Metabolism>(e);
+            info.motility.present && ac->phase != CellPhase::Dead && fm && fm->starving)
+            now("sin energia (sin fructosa ni reservas): deja de batir; vuelve a nadar si recupera sustrato");
         if (ac->contact > 0.05f)
             now(fmt("toca a otras celulas en el %.0f%% de su borde%s", 100.0f * ac->contact,
                     ai.contactLocomotion ? ": se repolariza hacia el lado libre (Abercrombie)" : ""));

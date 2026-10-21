@@ -56,6 +56,8 @@ class PlatePanel : public Panel {
             drawSediment(app, p);
         if (p.kind() == PlateKind::Drop && section("Poblaciones (al crear)"))
             drawPopulations(app, p);
+        if (!p.prepared.empty() && !p.config.seeding.empty() && section("Muestra (al crear)", true))
+            drawSample(app, p);
         if (section("Placa y grilla (al crear)"))
             drawGeometry(app, p);
         if (section("Guardar y cargar", true))
@@ -192,6 +194,70 @@ class PlatePanel : public Panel {
         }
         tooltip("Fija dónde caen las células de la siembra y de cada inoculación.");
         note("Estéril al crearla: se le inocula cualquier ser desde el Catálogo (Inocular...).");
+    }
+
+    // Lo que se siembra en una placa preparada: cuántas células (como concentración de la muestra si el
+    // recipiente tiene volumen, p. ej. millones por mL de semen) y, para los que nadan por clases, la
+    // calidad de la muestra (las clases de motilidad de la OMS).
+    void drawSample(App& app, PlateSpec& p) {
+        WorldConfig& c = p.config;
+        const PreparedPlate* pp = findPreparedPlate(p.prepared);
+        const Vessel* v = pp ? findVessel(pp->vessel) : nullptr;
+        const float side = static_cast<float>(c.gridX) * c.cellSize;
+        const float areaCm2 = side * side * 1e-8f;
+        const float depthCm = v ? v->depthUm() * 1e-4f : 0.0f;
+        const SpeciesInfo* swimmer = nullptr;
+        for (std::size_t i = 0; i < c.seeding.size(); ++i) {
+            auto& [sp, count] = c.seeding[i];
+            const SpeciesInfo& info = speciesInfo(sp);
+            if (info.motility.present)
+                swimmer = &info;
+            ImGui::PushID(static_cast<int>(i));
+            ImGui::TextUnformatted(tr(info.name));
+            if (depthCm > 0.0f) {
+                float millions = static_cast<float>(count) / (areaCm2 * depthCm) * 1e-6f;
+                if (sliderLog("Concentración [millones/mL]", &millions, 0.1f, 300.0f, "%.1f",
+                              "Células por mL de la muestra (espermiograma: el límite inferior de referencia de la OMS "
+                              "2021 es 16 millones/mL).")) {
+                    count = static_cast<int>(std::round(millions * 1e6f * areaCm2 * depthCm));
+                    app.plateDirty = true;
+                }
+            } else {
+                float density = static_cast<float>(count) / areaCm2;
+                if (sliderLog("Densidad [células/cm²]", &density, 10.0f, 1e6f, "%.0f")) {
+                    count = static_cast<int>(std::round(density * areaCm2));
+                    app.plateDirty = true;
+                }
+            }
+            readout("En el campo", "%d", count);
+            ImGui::PopID();
+        }
+        if (!swimmer)
+            return;
+        MotilityMix& m = c.motility;
+        if (!c.motilitySet)
+            m = swimmer->motility.mix;
+        bool changed = false;
+        float pr = 100.0f * m.progressive, np = 100.0f * m.nonProgressive, im = 100.0f * m.immotile, dead = 100.0f * m.dead;
+        changed |= slider("Progresivos [%]", &pr, 0.0f, 100.0f, "%.0f", "Nadan avanzando (OMS 2021: límite inferior 30 %).");
+        changed |= slider("No progresivos [%]", &np, 0.0f, 100.0f, "%.0f", "Baten sin avanzar: dan vueltas en el lugar.");
+        changed |= slider("Inmóviles vivos [%]", &im, 0.0f, 100.0f, "%.0f",
+                          "No baten pero tienen la membrana intacta (excluyen la eosina; se hinchan en la prueba hiposmótica).");
+        changed |= slider("Muertos [%]", &dead, 0.0f, 100.0f, "%.0f",
+                          "Inmóviles con la membrana dañada (la eosina los tiñe). Vitalidad = 100 − muertos (OMS: ≥ 54 %).");
+        if (changed) {
+            m = {pr / 100.0f, np / 100.0f, im / 100.0f, dead / 100.0f};
+            c.motilitySet = true;
+            app.plateDirty = true;
+        }
+        const float sum = pr + np + im + dead;
+        readout("Suman", "%.0f %%", static_cast<double>(sum));
+        if (std::abs(sum - 100.0f) > 0.5f)
+            note("Se reparten en proporción a lo que suman.");
+        if (c.motilitySet && ImGui::Button(tr("Muestra típica"))) {
+            c.motilitySet = false;
+            app.plateDirty = true;
+        }
     }
 
     void drawEnvironment(App& app, PlateSpec& p) {

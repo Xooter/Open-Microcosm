@@ -27,6 +27,15 @@ const char* cellPhaseName(CellPhase phase) {
     return "";
 }
 
+const char* motilityGradeName(MotilityGrade grade) {
+    switch (grade) {
+    case MotilityGrade::Progressive: return "progresivo";
+    case MotilityGrade::NonProgressive: return "no progresivo";
+    case MotilityGrade::Immotile: return "inmovil";
+    }
+    return "";
+}
+
 namespace {
 
 // Las células animales siempre tienen especie (como en game/world.cpp).
@@ -107,9 +116,29 @@ void World::setupAnimalCell(entt::entity e, Rng& rng) {
     } else {
         ac.phase = CellPhase::G0;
     }
+    // Una muestra de nadadores por clases (espermiograma): cada uno sale con su clase y su rapidez
+    // propia. Los muertos de la muestra ya llegan muertos (enteros, inmóviles).
+    if (info.motility.present) {
+        const MotilityMix& mix = config_.motilitySet ? config_.motility : info.motility.mix;
+        const float total = std::max(1e-6f, mix.progressive + mix.nonProgressive + mix.immotile + mix.dead);
+        const float u = rng.uniform() * total;
+        if (u < mix.progressive)
+            ac.grade = MotilityGrade::Progressive;
+        else if (u < mix.progressive + mix.nonProgressive)
+            ac.grade = MotilityGrade::NonProgressive;
+        else if (u < mix.progressive + mix.nonProgressive + mix.immotile)
+            ac.grade = MotilityGrade::Immotile;
+        else {
+            ac.grade = MotilityGrade::Immotile;
+            ac.phase = CellPhase::Dead;
+        }
+        ac.vigor = std::max(0.2f, 1.0f + info.motility.speedCv * rng.normal());
+    }
     registry_.emplace_or_replace<AnimalCell>(e, ac);
     if (info.animalCell.adherent)
         registry_.emplace_or_replace<Adherent>(e);
+    if (info.motility.present)
+        applyTraits(e); // la rapidez propia y la de los no progresivos
     cultureFields_ = true; // glutamina, lactato y fMLP empiezan a difundir
 }
 
@@ -354,12 +383,20 @@ bool World::updateAnimalCell(entt::entity e, RingBody& body, Metabolism& meta, f
         Rng rng(config_.seed, rng_stream::kCells + 60, body.id, step_);
         apoptosis = apoptosis || rng.uniform() < 1.0f - std::exp(-std::log(2.0f) * hours / phys.lifespan.value);
     }
+    // Los que nadan pierden la motilidad antes que la vida (la vitalidad de una muestra siempre es mayor
+    // que su motilidad; OMS 2021): un riesgo constante con la vida media de la motilidad.
+    if (phys.motilityHalfLife.present && ac.grade != MotilityGrade::Immotile) {
+        Rng rng(config_.seed, rng_stream::kCells + 62, body.id, step_);
+        if (rng.uniform() < 1.0f - std::exp(-std::log(2.0f) * hours / phys.motilityHalfLife.value))
+            ac.grade = MotilityGrade::Immotile;
+    }
     if (apoptosis && info.animalCell.immotileDeath && !registry_.all_of<Dividing>(e)) {
         // El espermatozoide no se parte en cuerpos apoptóticos: deja de batir y queda entero, inmóvil
         // (en un espermiograma se cuenta como inmóvil, y la eosina lo tiñe porque su membrana ya no
         // la excluye). Sin metabolismo: lo que tiene queda en el cuerpo (el balance no cambia).
         const char* cause = starved ? "inanicion" : "edad (pierde la motilidad)";
         ac.phase = CellPhase::Dead;
+        ac.grade = MotilityGrade::Immotile;
         ac.phaseHours = 0.0f;
         registry_.remove<Adherent>(e);
         recordDeath(e, cause);

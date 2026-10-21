@@ -151,6 +151,9 @@ std::string serializePlate(const PlateSpec& s) {
         << "erythrocytes_cm2=" << c.erythrocytesPerCm2 << '\n' << "platelets_cm2=" << c.plateletsPerCm2 << '\n';
     for (const auto& [sp, count] : c.seeding)
         out << "seeding=" << speciesInfo(sp).key << ' ' << count << '\n';
+    if (c.motilitySet)
+        out << "motility=" << c.motility.progressive << ' ' << c.motility.nonProgressive << ' ' << c.motility.immotile
+            << ' ' << c.motility.dead << '\n';
     out << serializeProgram(c.program); // programa temporal (fase P1)
     // Versión 3: células con su estado (gota de muestra de un cultivo, fase P1).
     for (const SampledCell& sc : c.sampled) {
@@ -271,6 +274,12 @@ bool parsePlate(const std::string& text, PlateSpec& s, std::vector<std::string>*
                 lack("ser '" + id + "'");
         }
         else if (k == "rock_max") c.sediment.rockMax = static_cast<float>(x);
+        else if (k == "motility") { // calidad de la muestra: progresivos, no progresivos, inmóviles, muertos
+            std::istringstream fields(v);
+            MotilityMix& m = c.motility;
+            fields >> m.progressive >> m.nonProgressive >> m.immotile >> m.dead;
+            c.motilitySet = static_cast<bool>(fields);
+        }
         else if (k == "program" || k == "programa") { // "programa": placas de antes del contenido en inglés
             if (!programRead)
                 c.program.entries.clear();
