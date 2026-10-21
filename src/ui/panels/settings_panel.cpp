@@ -72,7 +72,8 @@ class SettingsPanel : public Panel {
             for (int i = 0; i < 4; ++i)
                 presets[i] = tr(kPresets[i]);
             int preset = static_cast<int>(o.preset);
-            if (combo("Calidad", &preset, presets, 4, "Ajusta de un toque las opciones de imagen. No cambia la simulación.")) {
+            if (combo("Calidad", &preset, presets, 4, "Ajusta de un toque las opciones de imagen y los pasos por cuadro. No cambia los resultados de la "
+                                                   "simulación.")) {
                 applyGraphicsPreset(o, static_cast<GraphicsPreset>(preset));
                 changed = true;
             }
@@ -141,7 +142,7 @@ class SettingsPanel : public Panel {
             changed |= sliderInt("Sub-pasos lejanos", &o.lodStride, 1, 10,
                                  "Con LOD, lo lejano se resuelve 1 de cada N sub-pasos con un paso más largo.");
             ImGui::EndDisabled();
-            changed |= sliderInt("Pasos por cuadro", &o.maxStepsPerFrame, 1, 16,
+            custom |= sliderInt("Pasos por cuadro", &o.maxStepsPerFrame, 1, 16,
                                  "Si la simulación se atrasa, cuántos pasos de recuperación se hacen por cuadro. Más: tiempo real a costa de "
                                  "fluidez; menos: imagen fluida y la simulación va más lenta que el reloj.");
         }

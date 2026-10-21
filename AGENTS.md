@@ -515,7 +515,7 @@ contact radius (+ slack) of another body, measured once per sub-step; two passes
 - **Options** (`Options` in `game/progress`, `<data>/openmicrocosm/options.txt`): applied by
   `App::applyOptions` (post-process, render scale, detail, VSync, threads, LOD, GPU) and the FPS cap
   by `App::applyFrameCap`; MSAA only when creating the window. Quality presets
-  (`applyGraphicsPreset`) touch only the image, never the simulation. The render scale lives in
+  (`applyGraphicsPreset`) touch the image and the steps per frame, never the simulation results. The render scale lives in
   `Renderer`: the scene is drawn smaller with the scaled camera and rescaled at the end.
 - The panel layout is saved in `<data>/openmicrocosm/layout.ini` (*View > Reset layout* rebuilds it).
   Catalogue icons are drawn once with raylib into an atlas (`ui/being_icons`).

@@ -147,6 +147,7 @@ void applyGraphicsPreset(Options& o, GraphicsPreset preset) {
         o.maxDetailed = 64;
         o.cellDetail = 2.5f;
         o.msaa = false;
+        o.maxStepsPerFrame = 1; // imagen fluida: la simulación va más lenta que el reloj si no llega
         break;
     case GraphicsPreset::Medium:
         o.renderScale = 0.85f;
@@ -155,6 +156,7 @@ void applyGraphicsPreset(Options& o, GraphicsPreset preset) {
         o.maxDetailed = 128;
         o.cellDetail = 1.5f;
         o.msaa = false;
+        o.maxStepsPerFrame = 4;
         break;
     case GraphicsPreset::High:
         o.renderScale = 1.0f;
@@ -163,6 +165,7 @@ void applyGraphicsPreset(Options& o, GraphicsPreset preset) {
         o.maxDetailed = 256;
         o.cellDetail = 1.0f;
         o.msaa = true;
+        o.maxStepsPerFrame = 4;
         break;
     case GraphicsPreset::Custom:
         break;

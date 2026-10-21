@@ -1444,8 +1444,20 @@ int App::run() {
         UnloadImage(icon);
     }
     SetExitKey(KEY_NULL); // Esc no cierra el programa
-    if (options.fullscreen)
+    if (options.fullscreen) {
         ToggleBorderlessWindowed();
+    } else {
+        // En ventana, que entre en el monitor: en una notebook (1366 × 768) o con la escala de
+        // Windows al 150 %, 1600 × 900 lo tapaba entero y parecía pantalla completa.
+        const int monitor = GetCurrentMonitor();
+        const int mw = GetMonitorWidth(monitor), mh = GetMonitorHeight(monitor);
+        if (mw > 0 && mh > 0) {
+            const int w = std::min(kScreenW, mw * 85 / 100), h = std::min(kScreenH, mh * 85 / 100);
+            const Vector2 origin = GetMonitorPosition(monitor);
+            SetWindowSize(w, h);
+            SetWindowPosition(static_cast<int>(origin.x) + (mw - w) / 2, static_cast<int>(origin.y) + (mh - h) / 2);
+        }
+    }
 
     ui::loadLanguage(options.language);
     ui::setUiScale(effectiveUiScale());
@@ -1466,7 +1478,7 @@ int App::run() {
     renderer = std::make_unique<Renderer>();
     gpuOk = gpu.init();
     camera.zoom = 1.0f;
-    camera.offset = {kScreenW * 0.5f, kScreenH * 0.5f};
+    camera.offset = {GetScreenWidth() * 0.5f, GetScreenHeight() * 0.5f};
     applyOptions();
     // ¿Quedó una sesión sin cerrar bien? (se ofrece recuperarla)
     autosavePath_ = (std::filesystem::path(optionsPath).parent_path() / "autosave.plate").string();

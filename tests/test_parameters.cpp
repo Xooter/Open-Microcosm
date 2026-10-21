@@ -91,6 +91,7 @@ TEST_CASE("opciones: van y vuelven, con la vista de modelo y la herramienta") {
     Options low;
     applyGraphicsPreset(low, GraphicsPreset::Low);
     CHECK_FALSE(low.opticFlaws); // sin post-proceso no hay imperfecciones que dibujar
+    CHECK(low.maxStepsPerFrame == 1); // calidad baja: un paso por cuadro
     CHECK(Options{}.uiScale == 0.0f); // de fábrica, la escala de la interfaz es la del monitor
     CHECK(Options{}.modelView); // de fábrica, la vista de modelo arranca activada
 }

@@ -57,7 +57,7 @@ struct Options {
     bool modelView = true;      // vista de modelo (estructuras que el microscopio no resuelve)
     int tool = 0;               // herramienta activa (app/tools: Tool; Spawn no se recuerda)
 };
-// Lleva las opciones de imagen al preset (Custom no cambia nada).
+// Lleva las opciones de imagen y los pasos por cuadro al preset (Custom no cambia nada).
 void applyGraphicsPreset(Options& options, GraphicsPreset preset);
 std::string defaultOptionsPath();
 Options loadOptions(const std::string& path);

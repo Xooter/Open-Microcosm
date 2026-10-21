@@ -143,7 +143,7 @@ Ahora:	Now:
 Ahorro en segundo plano	Background saving
 Aire	Air
 Aire libre: 0,042 %. Una incubadora de cultivo: 5-10 %, para que el bicarbonato del medio quede en pH ~7,4.	Open air: 0.042 %. A cell culture incubator: 5-10 %, so the bicarbonate of the medium stays at pH ~7.4.
-Ajusta de un toque las opciones de imagen. No cambia la simulación.	Adjusts the image options in one go. Does not change the simulation.
+Ajusta de un toque las opciones de imagen y los pasos por cuadro. No cambia los resultados de la simulación.	Adjusts the image options and the steps per frame in one go. Does not change the simulation results.
 Ajusta la curva de crecimiento: µmax, tiempo de duplicación, latencia (Pirt) y capacidad de carga (logística de Verhulst).	Fits the growth curve: µmax, doubling time, lag (Pirt) and carrying capacity (Verhulst logistic).
 Ajustar ejes	Fit axes
 Al dia 30, que fraccion de los paramecios va a ser P. aurelia?	On day 30, what fraction of the paramecia will be P. aurelia?
