@@ -449,6 +449,9 @@ struct SpeciesInfo {
     // Bandas de gránulos de pigmento a lo largo del cuerpo (stentorina de Stentor, blefarismina de
     // Blepharisma): cuántas se ven de un lado (0: sin bandas).
     int pigmentStripes = 0;
+    // Giro de una célula aplanada sobre su eje largo al nadar (la cabeza del espermatozoide, una paleta:
+    // de frente se ve ancha y de canto angosta) [Hz]; solo el dibujo. 0: no gira.
+    float rollFrequency = 0.0f;
     AnimalCellInfo animalCell;
     std::vector<ProcessSpec> processes; // [[being.process]]
     std::vector<ResponseSpec> responses; // [[being.response]]

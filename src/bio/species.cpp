@@ -133,7 +133,7 @@ constexpr std::pair<const char*, ProcessKind> kProcessKind[] = {
 constexpr const char* kAnimalCellKeys[] = {"adherent", "rounded_radius", "contact_inhibition_locomotion",
                                            "contact_inhibition_proliferation", "min_serum",
                                            "apoptosis_without_serum_h", "divides", "fmlp_chemotaxis", "death"};
-constexpr const char* kLookKeys[] = {"style", "plastid_color", "pigment_stripes"};
+constexpr const char* kLookKeys[] = {"style", "plastid_color", "pigment_stripes", "roll_hz"};
 constexpr const char* kShapeKeys[] = {"semi_major_axis", "semi_minor_axis", "shape_memory", "color",
                                       "nucleus",        "squareness",    "taper",  "taper_front", "bend", "thickness", "cytoplasm_granules"};
 
@@ -714,6 +714,8 @@ bool readBeing(const toml::table& t, const std::string& source, const std::strin
                 e.style.clear();
             }
         }
+        if (const toml::node* rh = look->get("roll_hz"))
+            s.rollFrequency = static_cast<float>(rh->value<double>().value_or(0.0));
         if (const toml::node* ps = look->get("pigment_stripes")) {
             s.pigmentStripes = static_cast<int>(ps->value<std::int64_t>().value_or(0));
             if (s.pigmentStripes < 0 || s.pigmentStripes > 40)

@@ -1038,11 +1038,32 @@ void drawSpermTail(const BodyParticles& bp, const RingBody& body, const Locomoti
 // Cabeza del espermatozoide: el núcleo, denso y homogéneo (cromatina compactada, sin nucléolos), ocupa
 // casi toda la cabeza; el acrosoma lo cubre por delante como un capuchón más claro (40–70 % de la
 // cabeza), con su borde (el segmento ecuatorial) marcado.
+//
+// Al nadar, la cabeza (una paleta de ~1,5 µm de espesor y ~2,8 de ancho) gira sobre su eje largo: vista
+// desde arriba, el núcleo y el acrosoma se angostan y se oscurecen cuando queda de canto (`roll`: el
+// ancho aparente relativo, 1 de frente).
 void drawSpermHead(const BodyParticles& bp, const RingBody& body, Vector2 nucleusAt, float nucleusR, Color fill,
-                   Color rim, float px) {
-    drawCircleFast(nucleusAt, nucleusR, fill, px);
-    drawRingFast(nucleusAt, nucleusR - std::max(0.3f, px), nucleusR, 24, rim, px);
+                   Color rim, float roll, float px) {
     const Frame f = frameOf(body);
+    const float edge = 1.0f - roll; // 0 de frente; ~0,5 de canto
+    auto shade = [edge](Color c) {
+        return Color{static_cast<unsigned char>(c.r * (1.0f - 0.35f * edge)), static_cast<unsigned char>(c.g * (1.0f - 0.35f * edge)),
+                     static_cast<unsigned char>(c.b * (1.0f - 0.35f * edge)), static_cast<unsigned char>(std::min(255.0f, c.a * (1.0f + edge)))};
+    };
+    { // el núcleo, una elipse que se angosta de canto
+        constexpr int kN = 20;
+        const Vec2 c = {nucleusAt.x, nucleusAt.y};
+        Vec2 prev{};
+        for (int k = 0; k <= kN; ++k) {
+            const float t = 6.2831853f * static_cast<float>(k) / kN;
+            const Vec2 p = c + f.h * (nucleusR * std::cos(t)) + f.side * (roll * nucleusR * std::sin(t));
+            if (k > 0) {
+                fastTriangle(toRay(c), toRay(prev), toRay(p), shade(fill));
+                fastLine(toRay(prev), toRay(p), std::max(0.3f, px), rim);
+            }
+            prev = p;
+        }
+    }
     const Vec2 cap = f.c + f.h * (0.3f * f.half);
     constexpr Color kAcrosome = {236, 238, 240, 120};
     constexpr Color kAcrosomeRim = {120, 124, 130, 140};
@@ -1052,8 +1073,12 @@ void drawSpermHead(const BodyParticles& bp, const RingBody& body, Vector2 nucleu
         // Solo la mitad delantera (un poco más: el acrosoma pasa del ecuador de la cabeza).
         if (dot(a - f.c, f.h) < -0.1f * f.half || dot(b - f.c, f.h) < -0.1f * f.half)
             continue;
-        const Vec2 ia = cap + (a - cap) * 0.85f, ib = cap + (b - cap) * 0.85f;
-        fastTriangle(toRay(cap), toRay(ia), toRay(ib), kAcrosome);
+        auto squeeze = [&](Vec2 q) { // de canto, el acrosoma también se ve angosto
+            const Vec2 d = (q - cap) * 0.85f;
+            return cap + f.h * dot(d, f.h) + f.side * (roll * dot(d, f.side));
+        };
+        const Vec2 ia = squeeze(a), ib = squeeze(b);
+        fastTriangle(toRay(cap), toRay(ia), toRay(ib), shade(kAcrosome));
         fastLine(toRay(ia), toRay(ib), std::max(0.15f, 0.6f * px), kAcrosomeRim);
     }
 }
@@ -1693,12 +1718,22 @@ void CellRenderer::drawDetails(const World& world, const Camera2D& camera, Recta
                     fillN = overColor(kNucleus, dye, 0.8f);
                     rimN = overColor(kNucleusRim, dye, 0.9f);
                 }
-                if (style == CellStyle::Spermatozoon)
+                if (style == CellStyle::Spermatozoon) {
+                    // Giro sobre el eje largo mientras bate (de frente ancha, de canto como su espesor).
+                    const SpeciesInfo& si = speciesInfo(sid);
+                    float roll = 1.0f;
+                    if (loco && loco->speed > 0.0f && si.rollFrequency > 0.0f) {
+                        const float width = std::max(1e-3f, si.spec.radiusY);
+                        const float thin = si.thickness > 0.0f ? std::min(1.0f, si.thickness / width) : 1.0f;
+                        const float phi = 6.2831853f * si.rollFrequency * time + loco->phase;
+                        roll = std::sqrt(std::cos(phi) * std::cos(phi) + thin * thin * std::sin(phi) * std::sin(phi));
+                    }
                     drawSpermHead(bp, body, {bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus],
-                                  fillN, rimN, px);
-                else
+                                  fillN, rimN, roll, px);
+                } else {
                     drawAnimalNucleus({bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]}, bp.radius[anatomy.nucleus], *animal,
                                       dividing, bodyHeading(body), style == CellStyle::Neutrophil, fillN, rimN, px);
+                }
             } else if (!colony) {
                 if (style == CellStyle::Monocyte) { // núcleo arriñonado
                     const Vector2 c = {bp.x[anatomy.nucleus], bp.y[anatomy.nucleus]};

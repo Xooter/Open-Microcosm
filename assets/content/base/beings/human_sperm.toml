@@ -35,6 +35,8 @@ wall = "none"
 [being.shape]
 semi_major_axis = 2.1
 semi_minor_axis = 1.4
+# Oval, apenas más angosta en la región post-acrosómica (OMS 2021: cabeza lisa, de contorno regular).
+taper = 0.12
 # La cabeza es aplanada como una paleta: ~1,5 µm de espesor (OMS 2021).
 thickness = 0.75
 shape_memory = 15.0
@@ -50,6 +52,9 @@ divides = false
 death = "immotile"
 [being.appearance]
 style = "spermatozoon"
+# La cabeza gira sobre su eje largo al nadar: ~6 Hz (6,0 ± 2,1 Hz en espermatozoides humanos sujetos con una
+# pinza óptica; Schiffer et al. 2020, citado en Front. Bioeng. Biotechnol. 2022, 10: 1028857).
+roll_hz = 6.0
 # Recorrido pasivo: sin sentidos ni reacción de evitación. En una cámara de ~20 µm los progresivos van en
 # arcos amplios (Woolley 2003, Reproduction 126: 259); estimación: radio ~60 µm y una difusión rotacional
 # que deja la rectitud (VSL/VAP) en ~0,8, la medida a 37 °C (García-Molina et al. 2023: 43,1/54,5).
