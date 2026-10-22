@@ -320,7 +320,10 @@ if(WIN32)
 endif()
 
 if(ipo_ok)
-    set_property(TARGET biosim microcosm PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+    # Todos los que enlazan biosim: MinGW no enlaza objetos LTO con otros sin LTO (las mismas
+    # plantillas salen en secciones COMDAT distintas y chocan como definiciones múltiples).
+    set_property(TARGET biosim microcosm microcosm_bench microcosm_batch
+                 PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
 endif()
 
 # ---------------------------------------------------------------------------
