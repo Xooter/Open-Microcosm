@@ -94,4 +94,16 @@ TEST_CASE("opciones: van y vuelven, con la vista de modelo y la herramienta") {
     CHECK(low.maxStepsPerFrame == 1); // calidad baja: un paso por cuadro
     CHECK(Options{}.uiScale == 0.0f); // de fábrica, la escala de la interfaz es la del monitor
     CHECK(Options{}.modelView); // de fábrica, la vista de modelo arranca activada
+    CHECK(Options{}.language == "en"); // de fábrica, la interfaz en inglés
+    // De fábrica, calidad media: las opciones de imagen son las del preset Medium.
+    Options medium;
+    applyGraphicsPreset(medium, GraphicsPreset::Medium);
+    const Options factory;
+    CHECK(factory.preset == GraphicsPreset::Medium);
+    CHECK(factory.renderScale == medium.renderScale);
+    CHECK(factory.postProcess == medium.postProcess);
+    CHECK(factory.maxDetailed == medium.maxDetailed);
+    CHECK(factory.cellDetail == medium.cellDetail);
+    CHECK(factory.msaa == medium.msaa);
+    CHECK(factory.maxStepsPerFrame == medium.maxStepsPerFrame);
 }

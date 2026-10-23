@@ -18,18 +18,18 @@ struct Options {
     bool opticFlaws = true;   // iluminación despareja y polvo en la óptica (con postProcess)
     bool lod = true;          // células lejanas simplificadas
     bool gpuPhysics = true;   // XPBD y contactos en la GPU (compute shaders)
-    std::string language = "es"; // idioma de la interfaz (assets/lang/<código>.txt)
+    std::string language = "en"; // idioma de la interfaz (assets/lang/<código>.txt; de fábrica, inglés)
     // --- Accesibilidad (fase P1) ---
     float uiScale = 0.0f;       // escala de la interfaz (texto y controles); 0: la del monitor (DPI)
     float bioTimeScale = 60.0f; // compresión del tiempo biológico (1 min real = 1 h)
     // --- Gráficos (fase 19) ---
-    GraphicsPreset preset = GraphicsPreset::High;
+    GraphicsPreset preset = GraphicsPreset::Medium; // de fábrica: los valores de Medium
     bool vsync = true;          // sincronía vertical
     int fpsLimit = 0;           // tope de cuadros por segundo (0: sin tope)
-    bool msaa = true;           // antialiasing de la interfaz (se aplica al reiniciar)
-    float renderScale = 1.0f;   // resolución del campo relativa a la ventana [0,5; 1]
-    int maxDetailed = 256;      // tope de bacterias dibujadas con sus estructuras por cuadro
-    float cellDetail = 1.0f;    // píxeles pedidos para apéndices y organelos ×cellDetail (1-4)
+    bool msaa = false;          // antialiasing de la interfaz (se aplica al reiniciar)
+    float renderScale = 0.85f;  // resolución del campo relativa a la ventana [0,5; 1]
+    int maxDetailed = 128;      // tope de bacterias dibujadas con sus estructuras por cuadro
+    float cellDetail = 1.5f;    // píxeles pedidos para apéndices y organelos ×cellDetail (1-4)
     bool backgroundSaver = true; // menos cuadros sin foco o minimizada
     // --- Rendimiento ---
     int threads = 0;            // hilos de la simulación (0: automático)
